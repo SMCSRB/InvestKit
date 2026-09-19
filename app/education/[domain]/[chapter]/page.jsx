@@ -26,7 +26,14 @@ export default function ChapterPage() {
   const [xpEarned, setXpEarned] = useState(0);
   const [showExplanations, setShowExplanations] = useState(false);
   const [notes, setNotes] = useState(getNote(domainId, chapterId));
+  const [newBadges, setNewBadges] = useState([]);
   const attempts = getAttempts(domainId, chapterId);
+
+  const badgeInfo = {
+    first_blood: { name: 'Premier Sang', emoji: '🩸', description: 'Complète ton premier chapitre' },
+    perfect: { name: 'Parfait', emoji: '💯', description: 'Obtiens un score de 100%' },
+    no_mistakes: { name: 'Sans Erreurs', emoji: '⭐', description: 'Complète 3 chapitres d\'affilée' },
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -103,6 +110,14 @@ export default function ChapterPage() {
       if (attempts === 0) xp += 50;
       if (score === 100) xp += 50;
       setXpEarned(xp);
+
+      // Detectar badges ganados
+      const earnedBadges = [];
+      if (progress.completedChapters.length === 0) earnedBadges.push('first_blood');
+      if (score === 100) earnedBadges.push('perfect');
+      if (progress.streak >= 2) earnedBadges.push('no_mistakes'); // streak + 1 después de completar
+      setNewBadges(earnedBadges);
+
       completeChapter(domain.id, chapter.id, score, xp);
     }
 
@@ -139,7 +154,7 @@ export default function ChapterPage() {
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-6 text-sm mb-6 flex-wrap">
               <div className="flex items-center gap-2" style={{ color: domain.color }}>
                 <span>🔥 Streak:</span>
                 <span className="font-bold">{progress.streak}</span>
@@ -153,6 +168,26 @@ export default function ChapterPage() {
                 <span className="font-bold">{progress.totalXP}</span>
               </div>
             </div>
+
+            {/* Earned Badges */}
+            {progress.badges.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-gray-400">Badges gagnés:</span>
+                {progress.badges.map((badgeId) => {
+                  const badge = badgeInfo[badgeId];
+                  return (
+                    <div
+                      key={badgeId}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-900/20 border border-purple-400/30"
+                      title={badge.description}
+                    >
+                      <span className="text-lg">{badge.emoji}</span>
+                      <span className="text-xs text-purple-300 font-semibold">{badge.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
@@ -398,11 +433,36 @@ export default function ChapterPage() {
                   </h3>
 
                   {quizScore >= chapter.quiz.passingScore && (
-                    <div className="mb-6 p-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30">
-                      <p className="text-yellow-300 font-semibold text-lg">
-                        🎯 +{xpEarned} XP Gagnés !
-                      </p>
-                    </div>
+                    <>
+                      <div className="mb-6 p-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30">
+                        <p className="text-yellow-300 font-semibold text-lg">
+                          🎯 +{xpEarned} XP Gagnés !
+                        </p>
+                      </div>
+
+                      {newBadges.length > 0 && (
+                        <div className="mb-6 p-4 rounded-lg bg-purple-400/10 border border-purple-400/30">
+                          <p className="text-purple-300 font-semibold mb-3">✨ Nouveaux Badges Gagnés !</p>
+                          <div className="flex flex-wrap gap-3">
+                            {newBadges.map((badgeId) => {
+                              const badge = badgeInfo[badgeId];
+                              return (
+                                <div
+                                  key={badgeId}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-900/30 border border-purple-400/50"
+                                >
+                                  <span className="text-2xl">{badge.emoji}</span>
+                                  <div>
+                                    <p className="text-white font-semibold text-sm">{badge.name}</p>
+                                    <p className="text-purple-300 text-xs">{badge.description}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <p className="text-gray-400 mb-8">
