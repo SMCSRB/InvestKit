@@ -10,45 +10,92 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
   const [activeSimulator, setActiveSimulator] = useState(null);
+  const [selectedPeriod, setSelectedPeriod] = useState('1y');
+  const [showNotifications, setShowNotifications] = useState(false);
+
   const [portfolioData, setPortfolioData] = useState({
     totalValue: 245680.50,
     dayChange: 1245.30,
     dayChangePercent: 0.51,
+    weekChange: 3420.75,
+    monthChange: 8560.45,
     yearGain: 32450.20,
+    ytdReturn: 18.3,
+    totalInvested: 213230.30,
+    unrealizedGain: 32450.20,
+    sharpeRatio: 1.45,
+    volatility: 12.3,
+    maxDrawdown: -8.5,
+    winRate: 72.5,
   });
+
+  const [portfolioMetrics] = useState({
+    beta: 0.85,
+    alpha: 2.34,
+    treynorRatio: 0.42,
+    sortinoRatio: 2.15,
+    informationRatio: 1.68,
+    rsquared: 0.78,
+  });
+
+  const [notifications] = useState([
+    { id: 1, type: 'alert', title: 'Rebalancement Recommandé', message: 'Votre allocation a dérivé de 3%. Un rebalancement est suggéré.', time: 'il y a 2h', severity: 'high' },
+    { id: 2, type: 'info', title: 'Dividende Reçu', message: 'Dividende de €145.50 versé sur votre PEA', time: 'il y a 4h', severity: 'medium' },
+    { id: 3, type: 'alert', title: 'Volatilité Élevée', message: 'BTC a augmenté de 5.2% aujourd\'hui', time: 'il y a 6h', severity: 'medium' },
+    { id: 4, type: 'success', title: 'Objectif Atteint', message: 'Vous avez atteint votre objectif de gain mensuel', time: 'hier', severity: 'low' },
+  ]);
+
   const [projects, setProjects] = useState([
     {
       id: 1,
       name: 'Investissement Immobilier - Premier Appart',
       type: 'immobilier',
       initialInvestment: 250000,
+      currentValue: 268500,
       projectedReturn: 18,
       timeline: '15 ans',
       status: 'active',
       riskLevel: 'modéré',
       aiNotes: 'Excellente stratégie. Le marché immobilier français offre une bonne stabilité. Recommandé de diversifier avec d\'autres actifs.',
+      allocation: '45%',
+      volatility: '3.2%',
+      sharpeRatio: 1.8,
+      yearGain: 18500,
+      monthPerformance: 4.2,
     },
     {
       id: 2,
       name: 'Portefeuille Crypto Diversifié',
       type: 'crypto',
       initialInvestment: 15000,
+      currentValue: 21750,
       projectedReturn: 45,
       timeline: '5 ans',
       status: 'active',
       riskLevel: 'élevé',
       aiNotes: 'Volatilité élevée détectée. Envisager un rebalancement. Maintenir une position conservatrice.',
+      allocation: '12%',
+      volatility: '42.8%',
+      sharpeRatio: 0.92,
+      yearGain: 6750,
+      monthPerformance: 8.5,
     },
     {
       id: 3,
       name: 'PEA Multi-Secteurs',
       type: 'pea',
       initialInvestment: 75000,
+      currentValue: 84430.50,
       projectedReturn: 12,
       timeline: '8 ans',
       status: 'active',
       riskLevel: 'faible',
       aiNotes: 'Très bon choix pour l\'imposition. Diversification optimale détectée.',
+      allocation: '35%',
+      volatility: '8.5%',
+      sharpeRatio: 1.95,
+      yearGain: 9430.50,
+      monthPerformance: 2.1,
     },
   ]);
 
@@ -276,180 +323,590 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* PORTFOLIO OVERVIEW */}
+        {/* PERIOD SELECTOR */}
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+        }}>
+          {['1d', '1w', '1m', '3m', '6m', '1y', 'all'].map((period) => (
+            <button
+              key={period}
+              onClick={() => setSelectedPeriod(period)}
+              style={{
+                padding: '8px 16px',
+                background: selectedPeriod === period ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255, 255, 255, 0.05)',
+                color: selectedPeriod === period ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                border: selectedPeriod === period ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+              }}
+            >
+              {period === '1d' && '24h'}
+              {period === '1w' && '1 sem'}
+              {period === '1m' && '1 mois'}
+              {period === '3m' && '3 mois'}
+              {period === '6m' && '6 mois'}
+              {period === '1y' && '1 an'}
+              {period === 'all' && 'Tout'}
+            </button>
+          ))}
+        </div>
+
+        {/* ADVANCED PORTFOLIO METRICS */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '16px',
           marginBottom: '40px',
         }}>
           <div className="metric-card" style={{
             background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
-            borderRadius: '20px',
-            padding: '28px',
+            borderRadius: '16px',
+            padding: '20px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             backdropFilter: 'blur(20px)',
             boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
           }}>
             <p style={{
-              fontSize: '12px',
+              fontSize: '11px',
               color: '#94a3b8',
-              margin: '0 0 8px 0',
-              fontWeight: '600',
+              margin: '0 0 6px 0',
+              fontWeight: '700',
               textTransform: 'uppercase',
+              letterSpacing: '0.5px',
             }}>
-              💼 Valeur Totale du Portefeuille
+              💼 Valeur Totale
             </p>
             <p style={{
-              fontSize: '32px',
-              fontWeight: '800',
+              fontSize: '26px',
+              fontWeight: '900',
               color: '#0f172a',
-              margin: '0 0 12px 0',
+              margin: '0 0 10px 0',
             }}>
-              €{portfolioData.totalValue.toLocaleString('fr-FR')}
+              €{portfolioData.totalValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
             </p>
             <div style={{
-              padding: '12px 16px',
+              padding: '8px 12px',
               background: 'rgba(16, 185, 129, 0.1)',
-              borderRadius: '8px',
+              borderRadius: '6px',
               borderLeft: '3px solid #10b981',
             }}>
               <span style={{
                 color: '#10b981',
-                fontSize: '14px',
-                fontWeight: '600',
+                fontSize: '12px',
+                fontWeight: '700',
               }}>
-                ↑ +€{portfolioData.dayChange.toLocaleString('fr-FR')} ({portfolioData.dayChangePercent}%)
+                ↑ +€{portfolioData.dayChange.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
               </span>
               <span style={{
                 color: '#64748b',
-                fontSize: '12px',
-                marginLeft: '8px',
+                fontSize: '10px',
+                marginLeft: '6px',
               }}>
-                aujourd'hui
+                ({portfolioData.dayChangePercent}%)
               </span>
             </div>
           </div>
 
           <div className="metric-card" style={{
             background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
-            borderRadius: '20px',
-            padding: '28px',
+            borderRadius: '16px',
+            padding: '20px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             backdropFilter: 'blur(20px)',
             boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
           }}>
             <p style={{
-              fontSize: '12px',
+              fontSize: '11px',
               color: '#94a3b8',
-              margin: '0 0 8px 0',
-              fontWeight: '600',
+              margin: '0 0 6px 0',
+              fontWeight: '700',
               textTransform: 'uppercase',
+              letterSpacing: '0.5px',
             }}>
-              📈 Gain sur 12 Mois
+              📊 Gain YTD
             </p>
             <p style={{
-              fontSize: '32px',
-              fontWeight: '800',
+              fontSize: '26px',
+              fontWeight: '900',
               color: '#0f172a',
-              margin: '0 0 12px 0',
+              margin: '0 0 10px 0',
             }}>
-              €{portfolioData.yearGain.toLocaleString('fr-FR')}
+              {portfolioData.ytdReturn}%
             </p>
             <div style={{
-              fontSize: '12px',
-              color: '#64748b',
-              padding: '12px 16px',
+              padding: '8px 12px',
               background: 'rgba(59, 130, 246, 0.1)',
-              borderRadius: '8px',
+              borderRadius: '6px',
               borderLeft: '3px solid #3b82f6',
             }}>
-              ROI: <strong>15.3%</strong> annuel
+              <span style={{
+                color: '#3b82f6',
+                fontSize: '12px',
+                fontWeight: '700',
+              }}>
+                +€{portfolioData.yearGain.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+              </span>
+              <span style={{
+                color: '#64748b',
+                fontSize: '10px',
+                marginLeft: '6px',
+              }}>
+                gain réalisé
+              </span>
             </div>
           </div>
 
           <div className="metric-card" style={{
             background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
-            borderRadius: '20px',
-            padding: '28px',
+            borderRadius: '16px',
+            padding: '20px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             backdropFilter: 'blur(20px)',
             boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
           }}>
             <p style={{
-              fontSize: '12px',
+              fontSize: '11px',
               color: '#94a3b8',
-              margin: '0 0 8px 0',
-              fontWeight: '600',
+              margin: '0 0 6px 0',
+              fontWeight: '700',
               textTransform: 'uppercase',
+              letterSpacing: '0.5px',
             }}>
-              ⚡ Diversification
+              📈 Sharpe Ratio
             </p>
             <p style={{
-              fontSize: '32px',
-              fontWeight: '800',
+              fontSize: '26px',
+              fontWeight: '900',
               color: '#0f172a',
-              margin: '0 0 12px 0',
+              margin: '0 0 10px 0',
             }}>
-              {riskAnalysis.diversificationScore}%
+              {portfolioData.sharpeRatio}
             </p>
             <div style={{
-              width: '100%',
-              height: '6px',
-              background: 'rgba(59, 130, 246, 0.15)',
-              borderRadius: '3px',
-              overflow: 'hidden',
+              padding: '8px 12px',
+              background: 'rgba(139, 92, 246, 0.1)',
+              borderRadius: '6px',
+              borderLeft: '3px solid #8b5cf6',
+            }}>
+              <span style={{
+                color: '#8b5cf6',
+                fontSize: '12px',
+                fontWeight: '700',
+              }}>
+                Rendement/Risque
+              </span>
+              <span style={{
+                color: '#64748b',
+                fontSize: '10px',
+                marginLeft: '6px',
+              }}>
+                excellent
+              </span>
+            </div>
+          </div>
+
+          <div className="metric-card" style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              color: '#94a3b8',
+              margin: '0 0 6px 0',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              ⚡ Volatilité Annualisée
+            </p>
+            <p style={{
+              fontSize: '26px',
+              fontWeight: '900',
+              color: '#0f172a',
+              margin: '0 0 10px 0',
+            }}>
+              {portfolioData.volatility}%
+            </p>
+            <div style={{
+              padding: '8px 12px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              borderRadius: '6px',
+              borderLeft: '3px solid #f59e0b',
+            }}>
+              <span style={{
+                color: '#f59e0b',
+                fontSize: '12px',
+                fontWeight: '700',
+              }}>
+                ↔ Écart-type
+              </span>
+              <span style={{
+                color: '#64748b',
+                fontSize: '10px',
+                marginLeft: '6px',
+              }}>
+                modéré
+              </span>
+            </div>
+          </div>
+
+          <div className="metric-card" style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              color: '#94a3b8',
+              margin: '0 0 6px 0',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              📉 Max Drawdown
+            </p>
+            <p style={{
+              fontSize: '26px',
+              fontWeight: '900',
+              color: '#0f172a',
+              margin: '0 0 10px 0',
+            }}>
+              {portfolioData.maxDrawdown}%
+            </p>
+            <div style={{
+              padding: '8px 12px',
+              background: 'rgba(244, 63, 94, 0.1)',
+              borderRadius: '6px',
+              borderLeft: '3px solid #f43f5e',
+            }}>
+              <span style={{
+                color: '#f43f5e',
+                fontSize: '12px',
+                fontWeight: '700',
+              }}>
+                ↓ Perte max
+              </span>
+              <span style={{
+                color: '#64748b',
+                fontSize: '10px',
+                marginLeft: '6px',
+              }}>
+                contrôlée
+              </span>
+            </div>
+          </div>
+
+          <div className="metric-card" style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+          }}>
+            <p style={{
+              fontSize: '11px',
+              color: '#94a3b8',
+              margin: '0 0 6px 0',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              🎯 Win Rate
+            </p>
+            <p style={{
+              fontSize: '26px',
+              fontWeight: '900',
+              color: '#0f172a',
+              margin: '0 0 10px 0',
+            }}>
+              {portfolioData.winRate}%
+            </p>
+            <div style={{
+              padding: '8px 12px',
+              background: 'rgba(16, 185, 129, 0.1)',
+              borderRadius: '6px',
+              borderLeft: '3px solid #10b981',
+            }}>
+              <span style={{
+                color: '#10b981',
+                fontSize: '12px',
+                fontWeight: '700',
+              }}>
+                Sessions positives
+              </span>
+              <span style={{
+                color: '#64748b',
+                fontSize: '10px',
+                marginLeft: '6px',
+              }}>
+                {portfolioData.winRate > 70 ? 'excellent' : 'bon'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ADVANCED ANALYTICS SECTION */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '16px',
+          marginBottom: '40px',
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+          }}>
+            <h4 style={{
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#0f172a',
+              margin: '0 0 16px 0',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              📊 Métriques Avancées
+            </h4>
+            <div style={{
+              display: 'grid',
+              gap: '12px',
+            }}>
+              {[
+                { label: 'Alpha', value: portfolioMetrics.alpha, unit: '%' },
+                { label: 'Beta', value: portfolioMetrics.beta, unit: '' },
+                { label: 'R-Squared', value: portfolioMetrics.rsquared, unit: '' },
+                { label: 'Information Ratio', value: portfolioMetrics.informationRatio, unit: '' },
+                { label: 'Sortino Ratio', value: portfolioMetrics.sortinoRatio, unit: '' },
+                { label: 'Treynor Ratio', value: portfolioMetrics.treynorRatio, unit: '' },
+              ].map((metric, idx) => (
+                <div key={idx} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  borderBottom: idx < 5 ? '1px solid rgba(59, 130, 246, 0.1)' : 'none',
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#64748b',
+                    fontWeight: '600',
+                  }}>
+                    {metric.label}
+                  </span>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    color: '#3b82f6',
+                  }}>
+                    {metric.value}{metric.unit}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+            borderRadius: '16px',
+            padding: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+          }}>
+            <h4 style={{
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#0f172a',
+              margin: '0 0 16px 0',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              💰 Synthèse Financière
+            </h4>
+            <div style={{
+              display: 'grid',
+              gap: '12px',
             }}>
               <div style={{
-                width: `${riskAnalysis.diversificationScore}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
-              }} />
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+              }}>
+                <span style={{
+                  fontSize: '12px',
+                  color: '#64748b',
+                  fontWeight: '600',
+                }}>
+                  Capital Investi
+                </span>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                }}>
+                  €{portfolioData.totalInvested.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+              }}>
+                <span style={{
+                  fontSize: '12px',
+                  color: '#64748b',
+                  fontWeight: '600',
+                }}>
+                  Gain Non-Réalisé
+                </span>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: '#10b981',
+                }}>
+                  +€{portfolioData.unrealizedGain.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+              }}>
+                <span style={{
+                  fontSize: '12px',
+                  color: '#64748b',
+                  fontWeight: '600',
+                }}>
+                  Variation Semaine
+                </span>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: '#10b981',
+                }}>
+                  +€{portfolioData.weekChange.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+              }}>
+                <span style={{
+                  fontSize: '12px',
+                  color: '#64748b',
+                  fontWeight: '600',
+                }}>
+                  Variation Mois
+                </span>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: '#10b981',
+                }}>
+                  +€{portfolioData.monthChange.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
             </div>
-            <span style={{
-              fontSize: '11px',
-              color: '#64748b',
-              marginTop: '8px',
-              display: 'block',
-            }}>
-              Excellent score détecté
-            </span>
           </div>
 
-          <div className="metric-card" style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
-            borderRadius: '20px',
-            padding: '28px',
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+            borderRadius: '16px',
+            padding: '20px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             backdropFilter: 'blur(20px)',
             boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+            position: 'relative',
+            overflow: 'hidden',
           }}>
-            <p style={{
-              fontSize: '12px',
-              color: '#94a3b8',
-              margin: '0 0 8px 0',
-              fontWeight: '600',
-              textTransform: 'uppercase',
-            }}>
-              🎯 Niveau de Risque
-            </p>
-            <p style={{
-              fontSize: '32px',
-              fontWeight: '800',
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                background: 'rgba(59, 130, 246, 0.1)',
+                border: 'none',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              🔔
+            </button>
+            <h4 style={{
+              fontSize: '13px',
+              fontWeight: '700',
               color: '#0f172a',
-              margin: '0 0 12px 0',
+              margin: '0 0 16px 0',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
             }}>
-              {riskAnalysis.overallRisk}
-            </p>
+              🚨 Alertes
+            </h4>
             <div style={{
-              fontSize: '12px',
-              padding: '12px 16px',
-              background: 'rgba(245, 158, 11, 0.1)',
-              borderRadius: '8px',
-              borderLeft: '3px solid #f59e0b',
-              color: '#92400e',
+              display: 'grid',
+              gap: '8px',
+              maxHeight: '200px',
+              overflowY: 'auto',
             }}>
-              Indice de Corrélation: <strong>{riskAnalysis.correlationIndex}</strong>
+              {notifications.slice(0, 3).map((notif) => (
+                <div
+                  key={notif.id}
+                  style={{
+                    padding: '10px 12px',
+                    background: notif.severity === 'high' ? 'rgba(239, 68, 68, 0.05)' : notif.severity === 'medium' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(16, 185, 129, 0.05)',
+                    borderLeft: `3px solid ${notif.severity === 'high' ? '#ef4444' : notif.severity === 'medium' ? '#f59e0b' : '#10b981'}`,
+                    borderRadius: '6px',
+                  }}
+                >
+                  <p style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: '#0f172a',
+                    margin: '0 0 2px 0',
+                  }}>
+                    {notif.title}
+                  </p>
+                  <p style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    margin: '0 0 2px 0',
+                  }}>
+                    {notif.message}
+                  </p>
+                  <p style={{
+                    fontSize: '9px',
+                    color: '#94a3b8',
+                    margin: 0,
+                  }}>
+                    {notif.time}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -492,124 +949,507 @@ export default function DashboardPage() {
         {activeTab === 'overview' && (
           <div className="accordion-content" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
             gap: '24px',
           }}>
-            {/* Quick Actions */}
+            {/* Quick Actions & Allocations */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
-              borderRadius: '20px',
-              padding: '28px',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '24px',
             }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: '700',
-                color: '#0f172a',
-                margin: '0 0 20px 0',
-              }}>
-                🚀 Actions Rapides
-              </h3>
+              {/* Quick Actions */}
               <div style={{
-                display: 'grid',
-                gap: '12px',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
               }}>
-                <button style={{
-                  padding: '12px 16px',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s',
-                }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
-                  + Ajouter des Fonds
-                </button>
-                <button style={{
-                  padding: '12px 16px',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s',
-                }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
-                  📥 Retirer des Fonds
-                </button>
-                <button style={{
-                  padding: '12px 16px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s',
-                }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
-                  📊 Générer Rapport PDF
-                </button>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: '0 0 20px 0',
+                }}>
+                  🚀 Actions Rapides
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                }}>
+                  <button style={{
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                  }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
+                    + Ajouter des Fonds
+                  </button>
+                  <button style={{
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                  }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
+                    📥 Retirer des Fonds
+                  </button>
+                  <button style={{
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                  }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
+                    📊 Générer Rapport PDF
+                  </button>
+                  <button style={{
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                  }} onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'} onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}>
+                    ⚙️ Rebalancer Automatiquement
+                  </button>
+                </div>
+              </div>
+
+              {/* Allocations */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: '0 0 20px 0',
+                }}>
+                  💰 Allocation d'Actifs
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                }}>
+                  {[
+                    { label: 'Immobilier', value: 45, color: '#3b82f6', target: 40 },
+                    { label: 'PEA/Bourse', value: 35, color: '#8b5cf6', target: 40 },
+                    { label: 'Crypto', value: 12, color: '#f59e0b', target: 10 },
+                    { label: 'Obligations', value: 8, color: '#10b981', target: 10 },
+                  ].map((item, idx) => (
+                    <div key={idx}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px',
+                        fontSize: '13px',
+                      }}>
+                        <span style={{ color: '#0f172a', fontWeight: '600' }}>{item.label}</span>
+                        <span style={{ color: '#64748b', fontWeight: '600' }}>
+                          {item.value}%
+                          <span style={{ fontSize: '11px', marginLeft: '4px', opacity: 0.6 }}>
+                            (Cible: {item.target}%)
+                          </span>
+                        </span>
+                      </div>
+                      <div style={{
+                        width: '100%',
+                        height: '8px',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}>
+                        <div style={{
+                          width: `${item.value}%`,
+                          height: '100%',
+                          background: item.color,
+                          position: 'relative',
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          width: '2px',
+                          height: '100%',
+                          background: 'rgba(0, 0, 0, 0.2)',
+                          left: `${item.target}%`,
+                          top: 0,
+                        }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Allocations */}
+            {/* Recent Activity & Dividends */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
-              borderRadius: '20px',
-              padding: '28px',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+              gap: '24px',
             }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: '700',
-                color: '#0f172a',
-                margin: '0 0 20px 0',
-              }}>
-                💰 Allocation d'Actifs
-              </h3>
+              {/* Recent Transactions */}
               <div style={{
-                display: 'grid',
-                gap: '12px',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
               }}>
-                {[
-                  { label: 'Immobilier', value: 45, color: '#3b82f6' },
-                  { label: 'PEA/Bourse', value: 35, color: '#8b5cf6' },
-                  { label: 'Crypto', value: 12, color: '#f59e0b' },
-                  { label: 'Obligations', value: 8, color: '#10b981' },
-                ].map((item, idx) => (
-                  <div key={idx}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '4px',
-                      fontSize: '13px',
-                    }}>
-                      <span style={{ color: '#0f172a', fontWeight: '600' }}>{item.label}</span>
-                      <span style={{ color: '#64748b', fontWeight: '600' }}>{item.value}%</span>
-                    </div>
-                    <div style={{
-                      width: '100%',
-                      height: '6px',
-                      background: 'rgba(59, 130, 246, 0.1)',
-                      borderRadius: '3px',
-                      overflow: 'hidden',
-                    }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: '0 0 20px 0',
+                }}>
+                  📝 Transactions Récentes
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                }}>
+                  {[
+                    { type: 'buy', asset: 'Apple Inc. (AAPL)', amount: 1500, price: 185.32, date: 'il y a 2h', change: '+2.3%' },
+                    { type: 'dividend', asset: 'ETF Vanguard S&P 500', amount: 145.50, price: 'Dividende', date: 'il y a 1j', change: '+0%' },
+                    { type: 'sell', asset: 'Tesla (TSLA)', amount: 2000, price: 142.65, date: 'il y a 3j', change: '-1.2%' },
+                    { type: 'buy', asset: 'ETF MSCI World', amount: 5000, price: 82.15, date: 'il y a 5j', change: '+1.5%' },
+                  ].map((trans, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px',
+                        background: 'rgba(59, 130, 246, 0.03)',
+                        borderRadius: '8px',
+                        borderLeft: `3px solid ${trans.type === 'buy' ? '#10b981' : trans.type === 'dividend' ? '#f59e0b' : '#ef4444'}`,
+                      }}
+                    >
                       <div style={{
-                        width: `${item.value}%`,
-                        height: '100%',
-                        background: item.color,
-                      }} />
+                        flex: 1,
+                      }}>
+                        <p style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: '#0f172a',
+                          margin: '0 0 2px 0',
+                        }}>
+                          {trans.type === 'buy' && '📈'} {trans.type === 'sell' && '📉'} {trans.type === 'dividend' && '💰'} {trans.asset}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: '#64748b',
+                          margin: 0,
+                        }}>
+                          {trans.date}
+                        </p>
+                      </div>
+                      <div style={{
+                        textAlign: 'right',
+                      }}>
+                        <p style={{
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          color: '#0f172a',
+                          margin: '0 0 2px 0',
+                        }}>
+                          €{trans.amount.toLocaleString('fr-FR')}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: trans.change.includes('-') ? '#ef4444' : '#10b981',
+                          margin: 0,
+                          fontWeight: '600',
+                        }}>
+                          {trans.change}
+                        </p>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dividends & Income */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: '0 0 20px 0',
+                }}>
+                  💵 Revenus Passifs & Dividendes
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gap: '16px',
+                }}>
+                  <div style={{
+                    padding: '16px',
+                    background: 'rgba(16, 185, 129, 0.05)',
+                    borderRadius: '12px',
+                    borderLeft: '4px solid #10b981',
+                  }}>
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      margin: '0 0 4px 0',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                    }}>
+                      Dividendes ce mois
+                    </p>
+                    <p style={{
+                      fontSize: '22px',
+                      fontWeight: '900',
+                      color: '#10b981',
+                      margin: '0 0 4px 0',
+                    }}>
+                      +€287.45
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: '#64748b',
+                      margin: 0,
+                    }}>
+                      Rendement annualisé: 3.8%
+                    </p>
                   </div>
-                ))}
+
+                  <div style={{
+                    padding: '16px',
+                    background: 'rgba(59, 130, 246, 0.05)',
+                    borderRadius: '12px',
+                    borderLeft: '4px solid #3b82f6',
+                  }}>
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      margin: '0 0 4px 0',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                    }}>
+                      Dividendes YTD
+                    </p>
+                    <p style={{
+                      fontSize: '22px',
+                      fontWeight: '900',
+                      color: '#3b82f6',
+                      margin: '0 0 4px 0',
+                    }}>
+                      +€1,245.30
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: '#64748b',
+                      margin: 0,
+                    }}>
+                      Prochains paiements: 15 oct., 22 nov.
+                    </p>
+                  </div>
+
+                  <div style={{
+                    padding: '16px',
+                    background: 'rgba(139, 92, 246, 0.05)',
+                    borderRadius: '12px',
+                    borderLeft: '4px solid #8b5cf6',
+                  }}>
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      margin: '0 0 4px 0',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                    }}>
+                      Intérêts composés
+                    </p>
+                    <p style={{
+                      fontSize: '22px',
+                      fontWeight: '900',
+                      color: '#8b5cf6',
+                      margin: '0 0 4px 0',
+                    }}>
+                      +€5,234.87
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: '#64748b',
+                      margin: 0,
+                    }}>
+                      Croissance depuis 1 an
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Calendar & Upcoming Events */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+              gap: '24px',
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: '0 0 20px 0',
+                }}>
+                  📅 Événements Importants
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                }}>
+                  {[
+                    { date: '15 Oct 2026', event: 'Dividende Apple', color: '#f59e0b' },
+                    { date: '22 Oct 2026', event: 'Résultats Vanguard ETF', color: '#8b5cf6' },
+                    { date: '01 Nov 2026', event: 'Rebalancement Automatique', color: '#3b82f6' },
+                    { date: '10 Nov 2026', event: 'Fin Période Fiscale', color: '#ef4444' },
+                  ].map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px',
+                        background: 'rgba(59, 130, 246, 0.03)',
+                        borderRadius: '8px',
+                        borderLeft: `3px solid ${item.color}`,
+                      }}
+                    >
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        background: `${item.color}20`,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '18px',
+                      }}>
+                        📌
+                      </div>
+                      <div style={{
+                        flex: 1,
+                      }}>
+                        <p style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: '#0f172a',
+                          margin: '0 0 2px 0',
+                        }}>
+                          {item.event}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: '#64748b',
+                          margin: 0,
+                        }}>
+                          {item.date}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Performance by Period */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '20px',
+                padding: '28px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: '0 0 20px 0',
+                }}>
+                  📊 Performance par Période
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                }}>
+                  {[
+                    { period: 'Dernière Semaine', return: '+2.34%', color: '#10b981' },
+                    { period: 'Dernier Mois', return: '+3.85%', color: '#10b981' },
+                    { period: 'Dernier Trimestre', return: '+8.42%', color: '#10b981' },
+                    { period: 'Année en cours', return: '+18.34%', color: '#10b981' },
+                    { period: 'Depuis le début', return: '+125.48%', color: '#3b82f6' },
+                  ].map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px',
+                        background: 'rgba(59, 130, 246, 0.03)',
+                        borderRadius: '8px',
+                        borderBottom: idx < 4 ? '1px solid rgba(59, 130, 246, 0.1)' : 'none',
+                      }}
+                    >
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#64748b',
+                      }}>
+                        {item.period}
+                      </span>
+                      <span style={{
+                        fontSize: '14px',
+                        fontWeight: '900',
+                        color: item.color,
+                      }}>
+                        {item.return}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -703,6 +1543,115 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Projects Statistics */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px',
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#94a3b8',
+                  margin: '0 0 6px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Projets Actifs
+                </p>
+                <p style={{
+                  fontSize: '24px',
+                  fontWeight: '900',
+                  color: '#0f172a',
+                  margin: 0,
+                }}>
+                  {projects.length}
+                </p>
+              </div>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#94a3b8',
+                  margin: '0 0 6px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Capital Alloué
+                </p>
+                <p style={{
+                  fontSize: '20px',
+                  fontWeight: '900',
+                  color: '#0f172a',
+                  margin: 0,
+                }}>
+                  €{projects.reduce((sum, p) => sum + p.initialInvestment, 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#94a3b8',
+                  margin: '0 0 6px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Gain Total
+                </p>
+                <p style={{
+                  fontSize: '20px',
+                  fontWeight: '900',
+                  color: '#10b981',
+                  margin: 0,
+                }}>
+                  €{projects.reduce((sum, p) => sum + p.yearGain, 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#94a3b8',
+                  margin: '0 0 6px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Retour Moyen
+                </p>
+                <p style={{
+                  fontSize: '20px',
+                  fontWeight: '900',
+                  color: '#3b82f6',
+                  margin: 0,
+                }}>
+                  {(projects.reduce((sum, p) => sum + p.projectedReturn, 0) / projects.length).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
             {/* Projects List */}
             <div style={{
               display: 'grid',
@@ -727,7 +1676,7 @@ export default function DashboardPage() {
                       padding: '20px',
                       cursor: 'pointer',
                       display: 'grid',
-                      gridTemplateColumns: 'auto 1fr auto',
+                      gridTemplateColumns: 'auto 1fr 1fr 1fr auto',
                       gap: '16px',
                       alignItems: 'center',
                     }}
@@ -752,35 +1701,79 @@ export default function DashboardPage() {
                       <div style={{
                         display: 'flex',
                         gap: '12px',
-                        fontSize: '12px',
+                        fontSize: '11px',
                         color: '#64748b',
                       }}>
-                        <span>€{project.initialInvestment.toLocaleString('fr-FR')}</span>
+                        <span>Investi: €{project.initialInvestment.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
                         <span>•</span>
-                        <span>{project.timeline}</span>
-                        <span>•</span>
-                        <span style={{
-                          color: project.riskLevel === 'élevé' ? '#ef4444' : project.riskLevel === 'modéré' ? '#f59e0b' : '#10b981',
-                        }}>
-                          {project.riskLevel}
-                        </span>
+                        <span>Valeur: €{project.currentValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
                       </div>
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '11px',
+                        color: '#94a3b8',
+                        margin: '0 0 4px 0',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                      }}>
+                        Performance
+                      </p>
+                      <p style={{
+                        fontSize: '16px',
+                        fontWeight: '900',
+                        color: '#10b981',
+                        margin: 0,
+                      }}>
+                        +{project.monthPerformance}%
+                      </p>
+                      <p style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        margin: '2px 0 0 0',
+                      }}>
+                        ce mois
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '11px',
+                        color: '#94a3b8',
+                        margin: '0 0 4px 0',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                      }}>
+                        Sharpe Ratio
+                      </p>
+                      <p style={{
+                        fontSize: '16px',
+                        fontWeight: '900',
+                        color: '#8b5cf6',
+                        margin: 0,
+                      }}>
+                        {project.sharpeRatio}
+                      </p>
+                      <p style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        margin: '2px 0 0 0',
+                      }}>
+                        ratio rendement
+                      </p>
                     </div>
                     <div style={{
                       textAlign: 'right',
                     }}>
                       <div style={{
-                        fontSize: '18px',
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        background: project.riskLevel === 'élevé' ? 'rgba(239, 68, 68, 0.1)' : project.riskLevel === 'modéré' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                        color: project.riskLevel === 'élevé' ? '#ef4444' : project.riskLevel === 'modéré' ? '#f59e0b' : '#10b981',
+                        borderRadius: '20px',
+                        fontSize: '11px',
                         fontWeight: '700',
-                        color: '#10b981',
                       }}>
-                        +{project.projectedReturn}%
-                      </div>
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#64748b',
-                      }}>
-                        retour proj.
+                        {project.riskLevel.toUpperCase()}
                       </div>
                     </div>
                   </div>
@@ -792,29 +1785,96 @@ export default function DashboardPage() {
                       background: 'rgba(59, 130, 246, 0.03)',
                     }}>
                       <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '16px',
                         marginBottom: '16px',
                       }}>
-                        <h5 style={{
-                          fontSize: '12px',
-                          color: '#94a3b8',
-                          margin: '0 0 8px 0',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                        }}>
-                          📋 Analyse IA
-                        </h5>
-                        <p style={{
-                          fontSize: '13px',
-                          color: '#475569',
-                          margin: '0',
-                          lineHeight: '1.6',
-                        }}>
-                          {project.aiNotes}
-                        </p>
+                        <div>
+                          <h5 style={{
+                            fontSize: '12px',
+                            color: '#94a3b8',
+                            margin: '0 0 8px 0',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                          }}>
+                            📊 Métriques Détaillées
+                          </h5>
+                          <div style={{
+                            display: 'grid',
+                            gap: '8px',
+                            fontSize: '12px',
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+                              paddingBottom: '6px',
+                            }}>
+                              <span style={{ color: '#64748b' }}>Allocation:</span>
+                              <span style={{ fontWeight: '700', color: '#0f172a' }}>{project.allocation}</span>
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+                              paddingBottom: '6px',
+                            }}>
+                              <span style={{ color: '#64748b' }}>Volatilité:</span>
+                              <span style={{ fontWeight: '700', color: '#f59e0b' }}>{project.volatility}</span>
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+                              paddingBottom: '6px',
+                            }}>
+                              <span style={{ color: '#64748b' }}>Sharpe:</span>
+                              <span style={{ fontWeight: '700', color: '#8b5cf6' }}>{project.sharpeRatio}</span>
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              borderBottom: '1px solid rgba(59, 130, 246, 0.1)',
+                              paddingBottom: '6px',
+                            }}>
+                              <span style={{ color: '#64748b' }}>Gain annuel:</span>
+                              <span style={{ fontWeight: '700', color: '#10b981' }}>+€{project.yearGain.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                            }}>
+                              <span style={{ color: '#64748b' }}>ROI projeté:</span>
+                              <span style={{ fontWeight: '700', color: '#3b82f6' }}>{project.projectedReturn}%</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h5 style={{
+                            fontSize: '12px',
+                            color: '#94a3b8',
+                            margin: '0 0 8px 0',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                          }}>
+                            📋 Analyse IA
+                          </h5>
+                          <p style={{
+                            fontSize: '13px',
+                            color: '#475569',
+                            margin: '0',
+                            lineHeight: '1.6',
+                          }}>
+                            {project.aiNotes}
+                          </p>
+                        </div>
                       </div>
+
                       <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
                         gap: '12px',
                       }}>
                         <button style={{
@@ -832,7 +1892,7 @@ export default function DashboardPage() {
                         }} onMouseLeave={(e) => {
                           e.target.style.background = 'rgba(59, 130, 246, 0.1)';
                         }}>
-                          📊 Détails
+                          📊 Rapport PDF
                         </button>
                         <button style={{
                           padding: '10px 16px',
@@ -850,6 +1910,40 @@ export default function DashboardPage() {
                           e.target.style.background = 'rgba(139, 92, 246, 0.1)';
                         }}>
                           🤖 Conseil IA
+                        </button>
+                        <button style={{
+                          padding: '10px 16px',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10b981',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }} onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(16, 185, 129, 0.2)';
+                        }} onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(16, 185, 129, 0.1)';
+                        }}>
+                          📈 Backtest
+                        </button>
+                        <button style={{
+                          padding: '10px 16px',
+                          background: 'rgba(245, 158, 11, 0.1)',
+                          color: '#f59e0b',
+                          border: '1px solid rgba(245, 158, 11, 0.2)',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }} onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(245, 158, 11, 0.2)';
+                        }} onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(245, 158, 11, 0.1)';
+                        }}>
+                          ⚙️ Rebalancer
                         </button>
                         <button style={{
                           padding: '10px 16px',
