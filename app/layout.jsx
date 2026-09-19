@@ -1,6 +1,6 @@
 import '../css/design-system.css';
 import '../css/performance-optimizations.css';
-import { EducationProvider } from '@/app/context/EducationContext';
+import ClientLayoutWrapper from '@/app/components/ClientLayoutWrapper';
 
 export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
@@ -156,9 +156,9 @@ export default function RootLayout({ children }) {
             </div>
           </div>
         </noscript>
-        <EducationProvider>
+        <ClientLayoutWrapper>
           {children}
-        </EducationProvider>
+        </ClientLayoutWrapper>
       </body>
     </html>
   );
