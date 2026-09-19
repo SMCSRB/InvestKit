@@ -127,10 +127,11 @@ export function EducationProvider({ children }) {
   };
 
   const isChapterUnlocked = (domainId, chapterId) => {
+    if (!domainId || !chapterId) return false;
     if (chapterId === 1) return true;
 
     const previousChapter = chapterId - 1;
-    return progress.completedChapters.some(
+    return (progress.completedChapters || []).some(
       (c) =>
         c.domainId === domainId &&
         c.chapterId === previousChapter &&
