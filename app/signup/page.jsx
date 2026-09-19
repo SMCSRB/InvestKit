@@ -27,12 +27,14 @@ export default function SignupPage() {
       if (response.ok) {
         setMessage('✅ Inscription réussie!');
         setVerificationInfo(data);
+        console.log('Signup response:', data);
         setEmail('');
         setPassword('');
         setFirstName('');
         setLastName('');
       } else {
         setMessage(`❌ ${data.error || 'Erreur lors de l\'inscription'}`);
+        console.error('Signup error:', data);
       }
     } catch (error) {
       setMessage('❌ Erreur de connexion au serveur');
