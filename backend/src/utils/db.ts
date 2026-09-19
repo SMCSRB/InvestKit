@@ -88,9 +88,9 @@ export const executeMigrations = async (): Promise<void> => {
         await pool.query(sql);
         console.log(`  ✅ ${file} completed`);
       } catch (migrationError: any) {
-        // Ignore "column already exists" errors
-        if (migrationError.code === '42701') {
-          console.log(`  ⚠️  ${file} - Column already exists (skipped)`);
+        // Ignore "column already exists" (42701) and "relation already exists" (42P07) errors
+        if (migrationError.code === '42701' || migrationError.code === '42P07') {
+          console.log(`  ⚠️  ${file} - Already exists (skipped)`);
         } else {
           console.error(`  ❌ Error in ${file}:`, migrationError.message);
           throw migrationError;
