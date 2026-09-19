@@ -15,6 +15,7 @@ export function EducationProvider({ children }) {
     badges: [],
     notes: {}, // { "domainId-chapterId": "note text" }
     attempts: {}, // { "domainId-chapterId": attemptCount }
+    selectedTheme: 'dark', // Theme seleccionado
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -169,6 +170,7 @@ export function EducationProvider({ children }) {
       badges: [],
       notes: {},
       attempts: {},
+      selectedTheme: 'dark',
     });
   };
 
@@ -208,6 +210,13 @@ export function EducationProvider({ children }) {
     }));
   };
 
+  const setSelectedTheme = (themeId) => {
+    setProgress((prev) => ({
+      ...prev,
+      selectedTheme: themeId,
+    }));
+  };
+
   const value = {
     progress,
     completeChapter,
@@ -223,6 +232,7 @@ export function EducationProvider({ children }) {
     deleteNote,
     getAttempts,
     resetStreak,
+    setSelectedTheme,
     isLoading,
   };
 

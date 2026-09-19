@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEducationProgress } from '@/app/context/EducationContext';
+import { useNotification } from '@/app/context/NotificationContext';
 import { educationDomains } from '@/data/education';
+import { themes, getUnlockedThemes, getNextTheme } from '@/data/themes';
 import PageWrapper from '@/app/components/PageWrapper';
 import Link from 'next/link';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { progress, isChapterCompleted, getChapterScore, isDomainCompleted, isLoading } = useEducationProgress();
+  const { progress, isChapterCompleted, getChapterScore, isDomainCompleted, isLoading, setSelectedTheme } = useEducationProgress();
+  const { addNotification } = useNotification();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -195,6 +198,67 @@ export default function ProfilePage() {
                       <p className="text-xs text-gray-400 mt-2">{progressPercent}% complet</p>
                     </div>
                   </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Themes Section */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">🎨 Thèmes Disponibles</h2>
+            <p className="text-gray-400 mb-6">Débloque de nouveaux thèmes en gagnant de l'XP!</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {themes.map((theme) => {
+                const isUnlocked = progress.totalXP >= theme.xpRequired;
+                const isSelected = progress.selectedTheme === theme.id;
+
+                return (
+                  <div
+                    key={theme.id}
+                    className={`p-6 rounded-lg border-2 transition-all duration-300 cursor-pointer ${
+                      isSelected
+                        ? 'border-blue-400 bg-blue-900/20'
+                        : isUnlocked
+                        ? 'border-gray-600/50 hover:border-gray-500 bg-slate-800/50'
+                        : 'border-gray-700 bg-slate-800/20 opacity-60 cursor-not-allowed'
+                    }`}
+                    onClick={() => {
+                      if (isUnlocked) {
+                        setSelectedTheme(theme.id);
+                        addNotification(`✨ Thème "${theme.name}" activé!`, 'success', 3000);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-4xl">{theme.emoji}</span>
+                        <div>
+                          <h3 className="text-white font-bold">{theme.name}</h3>
+                          <p className="text-sm text-gray-400">{theme.description}</p>
+                        </div>
+                      </div>
+                      {isSelected && <span className="text-2xl">✓</span>}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {Object.entries(theme.colors).slice(0, 4).map(([key, color]) => (
+                        <div
+                          key={key}
+                          className="w-6 h-6 rounded border border-gray-600"
+                          style={{ backgroundColor: color }}
+                          title={key}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                      {isUnlocked ? (
+                        <p className="text-green-400 text-sm font-semibold">✓ Débloqué</p>
+                      ) : (
+                        <p className="text-orange-400 text-sm font-semibold">
+                          Besoin de {theme.xpRequired - progress.totalXP} XP
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>
