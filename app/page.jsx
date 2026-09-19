@@ -1,10 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
+  const router = useRouter();
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    setIsAuthenticated(!!token);
+  }, []);
 
   return (
     <>
@@ -156,38 +164,76 @@ export default function HomePage() {
               Tarifs
             </Link>
             <div style={{ width: '1px', height: '20px', background: 'rgba(59, 130, 246, 0.2)' }} />
-            <Link href="/login" style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              color: 'rgba(255, 255, 255, 0.7)',
-              transition: 'color 0.2s',
-            }}
-            onMouseEnter={(e) => e.target.style.color = '#3b82f6'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
-            >
-              Connexion
-            </Link>
-            <Link href="/signup" style={{
-              padding: '10px 20px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-              color: 'white',
-              borderRadius: '10px',
-              fontSize: '14px',
-              fontWeight: '600',
-              transition: 'all 0.3s',
-              boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)';
-            }}
-            >
-              S'inscrire
-            </Link>
+
+            {isAuthenticated ? (
+              <>
+                <Link href="/dashboard" style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#3b82f6'}
+                onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
+                >
+                  📊 Dashboard
+                </Link>
+                <button onClick={() => {
+                  localStorage.removeItem('token');
+                  setIsAuthenticated(false);
+                  router.push('/');
+                }} style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.2s',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#ec4899'}
+                onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
+                >
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#3b82f6'}
+                onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
+                >
+                  Connexion
+                </Link>
+                <Link href="/signup" style={{
+                  padding: '10px 20px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  color: 'white',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.3s',
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)';
+                }}
+                >
+                  S'inscrire
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </header>
