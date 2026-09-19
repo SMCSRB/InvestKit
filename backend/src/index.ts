@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth';
+import { initDatabase, executeSchema, closePool } from './utils/db';
 
 const app = express();
 
@@ -33,15 +34,46 @@ app.use((err: any, req: Request, res: Response) => {
 
 // Start server
 const PORT = env.port;
-app.listen(PORT, () => {
-  console.log(`
+
+const startServer = async () => {
+  try {
+    // Initialize database connection
+    console.log('🔗 Connecting to PostgreSQL...');
+    initDatabase();
+    console.log('✅ Database connection established');
+
+    // Initialize schema (create tables if not exist)
+    if (env.isDev) {
+      console.log('🗄️ Initializing database schema...');
+      await executeSchema();
+      console.log('✅ Schema initialized');
+    }
+
+    // Start listening
+    app.listen(PORT, () => {
+      console.log(`
 ╔════════════════════════════════════════════╗
 ║  🚀 InvestKit Backend                      ║
 ║  http://localhost:${PORT}
 ║  Environment: ${env.nodeEnv}
+║  Database: ${env.database.name}
 ║  CORS Origin: ${env.corsOrigin}
 ╚════════════════════════════════════════════╝
-  `);
+      `);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n👋 Shutting down gracefully...');
+  await closePool();
+  process.exit(0);
 });
+
+startServer();
 
 export default app;
