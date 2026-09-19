@@ -623,6 +623,429 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* PHONE NEWS FEED SECTION */}
+            <div style={{ marginBottom: '32px' }}>
+              <h2 style={{
+                fontSize: '18px',
+                fontWeight: '800',
+                color: 'white',
+                margin: '0 0 16px 0',
+              }}>
+                📰 Actualités & Conseils
+              </h2>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto',
+                gap: '24px',
+                alignItems: 'start',
+              }}>
+                {/* Phone Frame */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+                  borderRadius: '40px',
+                  padding: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(20px)',
+                  position: 'relative',
+                  maxWidth: '350px',
+                  height: '620px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}>
+                  {/* Phone Notch */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '150px',
+                    height: '25px',
+                    background: '#0f172a',
+                    borderRadius: '0 0 20px 20px',
+                    zIndex: 10,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                    <div style={{
+                      width: '100px',
+                      height: '4px',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      borderRadius: '2px',
+                    }} />
+                  </div>
+
+                  {/* Phone Status Bar */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    borderRadius: '32px 32px 0 0',
+                    padding: '28px 16px 16px',
+                    marginTop: '4px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                  }}>
+                    <span>9:41</span>
+                    <span>📶 📡 🔋</span>
+                  </div>
+
+                  {/* Phone Header */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    padding: '12px 16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '800',
+                      color: 'white',
+                      margin: 0,
+                    }}>
+                      InvestKit
+                    </h3>
+                  </div>
+
+                  {/* Scrollable Content */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    scrollBehavior: 'smooth',
+                    '&::-webkit-scrollbar': {
+                      width: '4px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: 'rgba(59, 130, 246, 0.3)',
+                      borderRadius: '2px',
+                    },
+                  }}>
+                    {/* News Item 1 */}
+                    <div style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      borderLeft: '3px solid #3b82f6',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      flex: '0 0 auto',
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'start',
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{ fontSize: '16px', marginTop: '2px' }}>📈</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#60a5fa',
+                            margin: '0 0 2px 0',
+                          }}>
+                            CAC 40 en hausse
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            margin: 0,
+                          }}>
+                            L'indice gagne 1.2% aujourd'hui
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '9px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                      }}>
+                        À l'instant
+                      </span>
+                    </div>
+
+                    {/* News Item 2 */}
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      borderLeft: '3px solid #10b981',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      flex: '0 0 auto',
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'start',
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{ fontSize: '16px', marginTop: '2px' }}>💡</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#86efac',
+                            margin: '0 0 2px 0',
+                          }}>
+                            Conseil du jour
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            margin: 0,
+                          }}>
+                            Diversifiez pour réduire les risques
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '9px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                      }}>
+                        Il y a 2h
+                      </span>
+                    </div>
+
+                    {/* News Item 3 */}
+                    <div style={{
+                      background: 'rgba(168, 85, 247, 0.15)',
+                      borderLeft: '3px solid #a855f7',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      flex: '0 0 auto',
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'start',
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{ fontSize: '16px', marginTop: '2px' }}>📚</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#d8b4fe',
+                            margin: '0 0 2px 0',
+                          }}>
+                            Nouvelle formation
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            margin: 0,
+                          }}>
+                            Maîtrisez la crypto
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '9px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                      }}>
+                        Il y a 5h
+                      </span>
+                    </div>
+
+                    {/* News Item 4 */}
+                    <div style={{
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      borderLeft: '3px solid #f59e0b',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      flex: '0 0 auto',
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'start',
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{ fontSize: '16px', marginTop: '2px' }}>⚠️</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#fcd34d',
+                            margin: '0 0 2px 0',
+                          }}>
+                            Alerte BTC
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            margin: 0,
+                          }}>
+                            Prix en baisse, opportunité?
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '9px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                      }}>
+                        Il y a 1h
+                      </span>
+                    </div>
+
+                    {/* News Item 5 */}
+                    <div style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      borderLeft: '3px solid #3b82f6',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      flex: '0 0 auto',
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'start',
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{ fontSize: '16px', marginTop: '2px' }}>🏆</span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#60a5fa',
+                            margin: '0 0 2px 0',
+                          }}>
+                            Objectif atteint!
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            margin: 0,
+                          }}>
+                            +€5k de gains ce mois
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '9px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                      }}>
+                        Il y a 3h
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Phone Home Indicator */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    borderRadius: '0 0 32px 32px',
+                    padding: '8px',
+                    textAlign: 'center',
+                  }}>
+                    <div style={{
+                      width: '120px',
+                      height: '4px',
+                      background: 'rgba(255, 255, 255, 0.3)',
+                      borderRadius: '2px',
+                      margin: '0 auto',
+                    }} />
+                  </div>
+                </div>
+
+                {/* Legend & Description */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}>
+                  <div>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '800',
+                      color: 'white',
+                      margin: '0 0 12px 0',
+                    }}>
+                      Flux d'actualités
+                    </h3>
+                    <p style={{
+                      fontSize: '13px',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      margin: 0,
+                      lineHeight: '1.6',
+                    }}>
+                      Restez informé avec un fil d'actualités personnalisé directement dans votre poche
+                    </p>
+                  </div>
+
+                  {/* Categories */}
+                  <div style={{
+                    display: 'grid',
+                    gap: '10px',
+                  }}>
+                    {[
+                      { icon: '📈', label: 'Actualités', color: '#60a5fa', desc: 'Marché, indices' },
+                      { icon: '💡', label: 'Conseils', color: '#86efac', desc: 'Tips quotidiens' },
+                      { icon: '📚', label: 'Formations', color: '#d8b4fe', desc: 'Académie' },
+                      { icon: '⚠️', label: 'Alertes', color: '#fcd34d', desc: 'Notifications' },
+                    ].map((cat, idx) => (
+                      <div key={idx} style={{
+                        padding: '12px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'center',
+                      }}>
+                        <span style={{ fontSize: '18px' }}>{cat.icon}</span>
+                        <div>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: cat.color,
+                            margin: 0,
+                          }}>
+                            {cat.label}
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            margin: 0,
+                          }}>
+                            {cat.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA Button */}
+                  <button style={{
+                    padding: '14px 20px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  >
+                    Voir toutes les news →
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* PROJECTS SECTION */}
             <div style={{ marginBottom: '32px' }}>
               <h2 style={{
