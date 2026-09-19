@@ -10,6 +10,30 @@ export default function DashboardPage() {
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  const theme = {
+    dark: {
+      bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+      cardBg: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+      text: '#ffffff',
+      textSecondary: 'rgba(255, 255, 255, 0.6)',
+      textTertiary: 'rgba(255, 255, 255, 0.5)',
+      border: 'rgba(255, 255, 255, 0.1)',
+      accent: '#3b82f6',
+    },
+    light: {
+      bg: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f0f4f8 100%)',
+      cardBg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)',
+      text: '#1e293b',
+      textSecondary: 'rgba(30, 41, 59, 0.6)',
+      textTertiary: 'rgba(30, 41, 59, 0.5)',
+      border: 'rgba(30, 41, 59, 0.1)',
+      accent: '#2563eb',
+    },
+  };
+
+  const currentTheme = isDarkMode ? theme.dark : theme.light;
 
   const [portfolioData] = useState({
     totalValue: 245680.50,
@@ -89,7 +113,22 @@ export default function DashboardPage() {
     } else {
       setIsAuthenticated(true);
     }
+
+    // Load theme preference
+    const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
+    if (savedTheme === 'light') {
+      setIsDarkMode(false);
+    }
   }, [router]);
+
+  // Save theme preference
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    }
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -98,13 +137,15 @@ export default function DashboardPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+      background: currentTheme.bg,
+      color: currentTheme.text,
       display: 'grid',
       gridTemplateColumns: sidebarOpen ? '280px 1fr' : '1fr',
       gap: '24px',
       padding: '24px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       position: 'relative',
+      transition: 'background 0.3s ease, color 0.3s ease',
     }}>
       <style>{`
         @keyframes slideInUp {
@@ -161,7 +202,7 @@ export default function DashboardPage() {
 
       {/* LEFT SIDEBAR */}
       {sidebarOpen && <div style={{
-        borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRight: `1px solid ${currentTheme.border}`,
         paddingRight: '24px',
         height: 'fit-content',
       }}>
@@ -183,14 +224,14 @@ export default function DashboardPage() {
           <h3 style={{
             fontSize: '16px',
             fontWeight: '700',
-            color: 'white',
+            color: currentTheme.text,
             margin: '0 0 4px 0',
           }}>
             Jean Dupont
           </h3>
           <p style={{
             fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: currentTheme.textSecondary,
             margin: 0,
           }}>
             Investisseur Premium
@@ -299,13 +340,13 @@ export default function DashboardPage() {
         {/* User Info */}
         <div style={{
           padding: '16px',
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(30, 41, 59, 0.05)',
           borderRadius: '12px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderTop: `1px solid ${currentTheme.border}`,
         }}>
           <p style={{
             fontSize: '11px',
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: currentTheme.textTertiary,
             margin: '0 0 8px 0',
             fontWeight: '600',
           }}>
@@ -313,7 +354,7 @@ export default function DashboardPage() {
           </p>
           <p style={{
             fontSize: '13px',
-            color: 'rgba(255, 255, 255, 0.8)',
+            color: currentTheme.textSecondary,
             margin: '0 0 12px 0',
             fontWeight: '700',
           }}>
@@ -324,6 +365,7 @@ export default function DashboardPage() {
             background: 'rgba(16, 185, 129, 0.15)',
             borderRadius: '8px',
             borderLeft: '2px solid #10b981',
+            marginBottom: '12px',
           }}>
             <p style={{
               fontSize: '11px',
@@ -334,6 +376,33 @@ export default function DashboardPage() {
               ✓ KYC Vérifié
             </p>
           </div>
+
+          {/* Theme Toggle */}
+          <button onClick={toggleTheme} style={{
+            width: '100%',
+            padding: '10px 12px',
+            background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+            border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
+            borderRadius: '8px',
+            color: currentTheme.accent,
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)';
+          }}
+          >
+            {isDarkMode ? '🌙 Mode Sombre' : '☀️ Mode Clair'}
+          </button>
         </div>
       </div>}
 
@@ -350,14 +419,14 @@ export default function DashboardPage() {
             <h1 style={{
               fontSize: '32px',
               fontWeight: '900',
-              color: 'white',
+              color: currentTheme.text,
               margin: '0 0 8px 0',
               letterSpacing: '-0.5px',
             }}>
               Votre Portefeuille
             </h1>
             <p style={{
-              color: 'rgba(255, 255, 255, 0.5)',
+              color: currentTheme.textSecondary,
               margin: 0,
               fontSize: '14px',
             }}>
