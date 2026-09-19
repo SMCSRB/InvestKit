@@ -4,9 +4,82 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
+const TRANSLATIONS = {
+  fr: {
+    createAccount: 'Créer votre compte',
+    joinInvestors: 'Rejoignez des milliers d\'investisseurs',
+    progress: 'Progression',
+    email: 'Email',
+    emailAvailable: 'Email disponible',
+    password: 'Mot de passe',
+    passwordConfirm: 'Confirmer le mot de passe',
+    passwordsMatch: 'Les mots de passe correspondent',
+    passwordDontMatch: 'Les mots de passe ne correspondent pas',
+    strength: 'Force:',
+    weak: '❌ Faible',
+    medium: '⚠️ Moyen',
+    strong: '💪 Fort',
+    iamHuman: 'Je suis un humain',
+    gdprConsent: '🔒 Je consens au traitement de mes données personnelles selon le RGPD',
+    terms: 'conditions d\'utilisation',
+    signup: '✨ S\'inscrire',
+    signupError: 'Erreur lors de l\'inscription',
+    resendCode: 'Renvoyer le code',
+    serverError: 'Erreur de connexion au serveur',
+  },
+  en: {
+    createAccount: 'Create your account',
+    joinInvestors: 'Join thousands of investors',
+    progress: 'Progress',
+    email: 'Email',
+    emailAvailable: 'Email available',
+    password: 'Password',
+    passwordConfirm: 'Confirm password',
+    passwordsMatch: 'Passwords match',
+    passwordDontMatch: 'Passwords don\'t match',
+    strength: 'Strength:',
+    weak: '❌ Weak',
+    medium: '⚠️ Medium',
+    strong: '💪 Strong',
+    iamHuman: 'I\'m human',
+    gdprConsent: '🔒 I consent to the processing of my personal data according to GDPR',
+    terms: 'terms of service',
+    signup: '✨ Sign up',
+    signupError: 'Signup error',
+    serverError: 'Server connection error',
+    resendCode: 'Resend code',
+  },
+  es: {
+    createAccount: 'Crear tu cuenta',
+    joinInvestors: 'Únete a miles de inversores',
+    progress: 'Progreso',
+    email: 'Correo electrónico',
+    emailAvailable: 'Correo disponible',
+    password: 'Contraseña',
+    passwordConfirm: 'Confirmar contraseña',
+    passwordsMatch: 'Las contraseñas coinciden',
+    passwordDontMatch: 'Las contraseñas no coinciden',
+    strength: 'Fuerza:',
+    weak: '❌ Débil',
+    medium: '⚠️ Media',
+    strong: '💪 Fuerte',
+    iamHuman: 'Soy humano',
+    gdprConsent: '🔒 Doy mi consentimiento para el tratamiento de mis datos personales según RGPD',
+    terms: 'términos de servicio',
+    signup: '✨ Registrarse',
+    signupError: 'Error de registro',
+    serverError: 'Error de conexión al servidor',
+    resendCode: 'Reenviar código',
+  },
+};
+
+const EMAIL_SUGGESTIONS = ['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com'];
+
 export default function SignupPage() {
   const router = useRouter();
+  const [lang, setLang] = useState('fr');
   const [email, setEmail] = useState('');
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,11 +91,46 @@ export default function SignupPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showResendModal, setShowResendModal] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
 
+  const t = TRANSLATIONS[lang];
+
+  useEffect(() => {
+    // Simulate initial load
+    const timer = setTimeout(() => setIsInitialLoad(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleEmailChange = (value) => {
+    setEmail(value);
+    
+    // Show suggestions if user types @ or partially typed email
+    if (value.includes('@')) {
+      const [name, domain] = value.split('@');
+      if (domain.length > 0 && domain.length < 5) {
+        const suggestions = EMAIL_SUGGESTIONS
+          .filter(s => s.startsWith(domain))
+          .map(s => `${name}@${s}`);
+        setEmailSuggestions(suggestions);
+      } else {
+        setEmailSuggestions([]);
+      }
+    } else {
+      setEmailSuggestions([]);
+    }
+  };
+
+  const selectEmailSuggestion = (suggestion) => {
+    setEmail(suggestion);
+    setEmailSuggestions([]);
   };
 
   const checkEmailAvailability = async (emailToCheck) => {
@@ -104,13 +212,13 @@ export default function SignupPage() {
     setMessage('');
 
     if (!isFormValid) {
-      setMessage('❌ Veuillez remplir tous les champs correctement');
+      setMessage('❌ ' + t.signupError);
       setLoading(false);
       return;
     }
 
     if (!captchaToken) {
-      setMessage('❌ Veuillez compléter le captcha');
+      setMessage('❌ ' + t.signupError);
       setLoading(false);
       return;
     }
@@ -127,15 +235,72 @@ export default function SignupPage() {
         sessionStorage.setItem('verificationEmail', email);
         router.push('/verify-email');
       } else {
-        setMessage(`❌ ${data.error || 'Erreur lors de l\'inscription'}`);
+        setMessage(`❌ ${data.error || t.signupError}`);
         console.error('Signup error:', data);
       }
     } catch (error) {
-      setMessage('❌ Erreur de connexion au serveur');
+      setMessage('❌ ' + t.serverError);
     } finally {
       setLoading(false);
     }
   };
+
+  // Skeleton Loader
+  if (isInitialLoad) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      }}>
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+          }
+          .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 8px;
+          }
+        `}</style>
+        
+        <div style={{
+          maxWidth: '420px',
+          width: '100%',
+          background: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          padding: '40px',
+        }}>
+          {/* Skeleton Header */}
+          <div className="skeleton" style={{ width: '50px', height: '50px', borderRadius: '10px', margin: '0 auto 15px' }} />
+          <div className="skeleton" style={{ width: '100%', height: '28px', marginBottom: '10px' }} />
+          <div className="skeleton" style={{ width: '80%', height: '14px', marginBottom: '20px' }} />
+
+          {/* Skeleton Progress */}
+          <div className="skeleton" style={{ width: '100%', height: '6px', marginBottom: '30px' }} />
+
+          {/* Skeleton Fields */}
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{ marginBottom: '15px' }}>
+              <div className="skeleton" style={{ width: '60px', height: '14px', marginBottom: '8px' }} />
+              <div className="skeleton" style={{ width: '100%', height: '40px', marginBottom: '8px' }} />
+            </div>
+          ))}
+
+          {/* Skeleton Button */}
+          <div className="skeleton" style={{ width: '100%', height: '45px', marginTop: '20px' }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -184,7 +349,61 @@ export default function SignupPage() {
           overflow-y: auto;
           box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
+        .email-suggestions {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-top: none;
+          border-radius: 0 0 8px 8px;
+          max-height: 150px;
+          overflow-y: auto;
+          z-index: 100;
+        }
+        .email-suggestion {
+          padding: 10px 12px;
+          cursor: pointer;
+          border-bottom: 1px solid #e2e8f0;
+          font-size: 14px;
+          color: #2d3748;
+        }
+        .email-suggestion:hover {
+          background: #f7fafc;
+        }
+        .email-suggestion:last-child {
+          border-bottom: none;
+        }
       `}</style>
+
+      {/* Language Selector */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        display: 'flex',
+        gap: '8px',
+      }}>
+        {['fr', 'en', 'es'].map(l => (
+          <button
+            key={l}
+            onClick={() => setLang(l)}
+            style={{
+              padding: '8px 12px',
+              background: lang === l ? '#667eea' : 'rgba(255, 255, 255, 0.2)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: lang === l ? '600' : '400',
+              transition: 'all 0.3s',
+            }}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
       {/* Conteneur principal */}
       <div style={{
@@ -219,14 +438,14 @@ export default function SignupPage() {
 
         {/* Sous-titre */}
         <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-          <h2 style={{ margin: '0', fontSize: '20px', color: '#2d3748', fontWeight: '500' }}>Créer votre compte</h2>
-          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>Rejoignez des milliers d'investisseurs</p>
+          <h2 style={{ margin: '0', fontSize: '20px', color: '#2d3748', fontWeight: '500' }}>{t.createAccount}</h2>
+          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>{t.joinInvestors}</p>
         </div>
 
         {/* Progress Bar */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#718096' }}>Progression</span>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#718096' }}>{t.progress}</span>
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#667eea' }}>{formProgress}%</span>
           </div>
           <div style={{
@@ -247,14 +466,14 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Email */}
-          <div>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>📧 Email</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>📧 {t.email}</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative' }}>
               <input
                 type="email"
                 placeholder="nom@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 style={{
                   flex: 1,
                   padding: '10px 12px',
@@ -264,6 +483,8 @@ export default function SignupPage() {
                   fontFamily: 'inherit',
                   transition: 'all 0.3s ease',
                   outline: 'none',
+                  position: 'relative',
+                  zIndex: 1,
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#667eea';
@@ -277,17 +498,29 @@ export default function SignupPage() {
               />
               {checkingEmail && <span style={{ fontSize: '18px', animation: 'spin 1s linear infinite' }}>⏳</span>}
               {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
+              
+              {/* Email Suggestions */}
+              {emailSuggestions.length > 0 && (
+                <div className="email-suggestions">
+                  {emailSuggestions.map((suggestion, idx) => (
+                    <div
+                      key={idx}
+                      className="email-suggestion"
+                      onClick={() => selectEmailSuggestion(suggestion)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            {email && checkingEmail && <p style={{ fontSize: '12px', color: '#a0aec0', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
             {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Format invalide</p>}
-            {email && !checkingEmail && isEmailFormatValid && emailAvailable === false && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Email déjà utilisé</p>}
-            {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Email disponible</p>}
-            {!email && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
+            {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>✅ {t.emailAvailable}</p>}
           </div>
 
           {/* Mot de passe */}
           <div>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔒 Mot de passe</label>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔒 {t.password}</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -328,7 +561,6 @@ export default function SignupPage() {
                 }}
                 onMouseEnter={(e) => e.target.style.color = '#667eea'}
                 onMouseLeave={(e) => e.target.style.color = '#718096'}
-                title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -342,16 +574,15 @@ export default function SignupPage() {
                   <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
                 </div>
                 <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0', fontWeight: '500' }}>
-                  Force: <strong>{passwordStrength === 'fort' ? '💪 Fort' : passwordStrength === 'moyen' ? '⚠️ Moyen' : '❌ Faible'}</strong>
+                  {t.strength} <strong>{passwordStrength === 'fort' ? t.strong : passwordStrength === 'moyen' ? t.medium : t.weak}</strong>
                 </p>
               </>
             )}
-            {!password && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Minimum 6 caractères</p>}
           </div>
 
           {/* Confirmer Mot de passe */}
           <div>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔐 Confirmer le mot de passe</label>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔐 {t.passwordConfirm}</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type={showPasswordConfirm ? 'text' : 'password'}
@@ -398,14 +629,13 @@ export default function SignupPage() {
                 }}
                 onMouseEnter={(e) => e.target.style.color = '#667eea'}
                 onMouseLeave={(e) => e.target.style.color = '#718096'}
-                title={showPasswordConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               >
                 {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
               </button>
               {passwordConfirm && <span style={{ fontSize: '18px', color: passwordsMatch ? '#48bb78' : '#f56565' }}>{passwordsMatch ? '✅' : '❌'}</span>}
             </div>
-            {passwordConfirm && !passwordsMatch && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Les mots de passe ne correspondent pas</p>}
-            {passwordConfirm && passwordsMatch && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Les mots de passe correspondent</p>}
+            {passwordConfirm && !passwordsMatch && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>{t.passwordDontMatch}</p>}
+            {passwordConfirm && passwordsMatch && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>✅ {t.passwordsMatch}</p>}
           </div>
 
           {/* hCaptcha */}
@@ -442,7 +672,7 @@ export default function SignupPage() {
               required
             />
             <label htmlFor="gdpr" style={{ fontSize: '12px', color: '#234e52', margin: '0', cursor: 'pointer', flex: 1 }}>
-              🔒 Je consens au traitement de mes données personnelles selon le RGPD
+              {t.gdprConsent}
             </label>
           </div>
 
@@ -462,7 +692,7 @@ export default function SignupPage() {
                 fontWeight: '500',
               }}
             >
-              conditions d'utilisation
+              {t.terms}
             </button>
           </div>
 
@@ -506,7 +736,7 @@ export default function SignupPage() {
                 <span>Inscription...</span>
               </>
             ) : (
-              '✨ S\'inscrire'
+              t.signup
             )}
           </button>
         </form>
@@ -522,15 +752,36 @@ export default function SignupPage() {
             color: message.includes('✅') ? '#22543d' : '#742a2a',
             fontSize: '13px',
             lineHeight: '1.5',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}>
-            {message}
+            <span>{message}</span>
+            {message.includes('❌') && (
+              <button
+                type="button"
+                onClick={() => setShowResendModal(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#667eea',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  padding: 0,
+                }}
+              >
+                {t.resendCode}
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: '30px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px' }}>
-        <p style={{ margin: '0' }}>Vous avez un compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
+        <p style={{ margin: '0' }}>Pas de compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
       </div>
 
       {/* Terms Modal */}
@@ -538,21 +789,21 @@ export default function SignupPage() {
         <div className="modal-overlay" onClick={() => setShowTermsModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginTop: '0', color: '#2d3748' }}>Conditions d'Utilisation</h2>
-
+            
             <h3 style={{ color: '#667eea', marginTop: '20px' }}>1. Acceptation des Conditions</h3>
-            <p>En utilisant InvestKit, vous acceptez ces conditions d'utilisation dans leur intégralité. Si vous n'acceptez pas ces conditions, vous ne pouvez pas utiliser notre plateforme.</p>
+            <p>En utilisant InvestKit, vous acceptez ces conditions d'utilisation dans leur intégralité.</p>
 
             <h3 style={{ color: '#667eea', marginTop: '20px' }}>2. Licence d'Utilisation</h3>
-            <p>InvestKit vous accorde une licence limitée, non exclusive et révocable pour accéder et utiliser la plateforme à des fins personnelles et non commerciales.</p>
+            <p>InvestKit vous accorde une licence limitée pour accéder à la plateforme.</p>
 
             <h3 style={{ color: '#667eea', marginTop: '20px' }}>3. Restrictions d'Utilisation</h3>
-            <p>Vous ne devez pas reproduire, vendre, distribuer, transmettre ou exploiter le contenu de la plateforme sans autorisation écrite.</p>
+            <p>Vous ne devez pas reproduire ou distribuer le contenu sans autorisation.</p>
 
             <h3 style={{ color: '#667eea', marginTop: '20px' }}>4. Disclaimer</h3>
-            <p>Les informations fournies par InvestKit sont à titre informatif uniquement et ne constituent pas des conseils financiers. Consultez un professionnel avant de prendre toute décision d'investissement.</p>
+            <p>Les informations sont à titre informatif uniquement et ne constituent pas des conseils financiers.</p>
 
             <h3 style={{ color: '#667eea', marginTop: '20px' }}>5. Limitation de Responsabilité</h3>
-            <p>InvestKit n'est pas responsable des pertes ou dommages directs ou indirects résultant de l'utilisation de la plateforme.</p>
+            <p>InvestKit n'est pas responsable des pertes résultant de l'utilisation de la plateforme.</p>
 
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
               <button
