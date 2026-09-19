@@ -128,6 +128,25 @@ export default function SignupPage() {
       padding: '20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     }}>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        .spinner {
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+      `}</style>
       {/* Conteneur principal */}
       <div style={{
         maxWidth: '420px',
@@ -168,25 +187,31 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Prénom */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Prénom</label>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>👤 Prénom</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder="Jean"
+              placeholder="Votre prénom"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               style={{
                 flex: 1,
                 padding: '10px 12px',
-                border: '1px solid #e2e8f0',
+                border: '2px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
                 transition: 'all 0.3s ease',
                 outline: 'none',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#667eea';
+                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
+              }}
               required
             />
             {firstName && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
@@ -196,25 +221,31 @@ export default function SignupPage() {
 
         {/* Nom */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Nom</label>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>👤 Nom</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder="Dupont"
+              placeholder="Votre nom de famille"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               style={{
                 flex: 1,
                 padding: '10px 12px',
-                border: '1px solid #e2e8f0',
+                border: '2px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
                 transition: 'all 0.3s ease',
                 outline: 'none',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#667eea';
+                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
+              }}
               required
             />
             {lastName && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
@@ -224,28 +255,34 @@ export default function SignupPage() {
 
         {/* Email */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Email</label>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>📧 Email</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="email"
-              placeholder="vous@example.com"
+              placeholder="nom@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{
                 flex: 1,
                 padding: '10px 12px',
-                border: '1px solid #e2e8f0',
+                border: '2px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
                 transition: 'all 0.3s ease',
                 outline: 'none',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#667eea';
+                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
+              }}
               required
             />
-            {checkingEmail && <span style={{ fontSize: '18px' }}>⏳</span>}
+            {checkingEmail && <span style={{ fontSize: '18px', animation: 'spin 1s linear infinite' }}>⏳</span>}
             {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
           </div>
           {email && checkingEmail && <p style={{ fontSize: '12px', color: '#a0aec0', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
@@ -257,38 +294,44 @@ export default function SignupPage() {
 
         {/* Mot de passe */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Mot de passe</label>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔒 Mot de passe</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Minimum 6 caractères"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{
                 flex: 1,
                 padding: '10px 12px',
-                border: '1px solid #e2e8f0',
+                border: '2px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
                 transition: 'all 0.3s ease',
                 outline: 'none',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#667eea';
+                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
+              }}
               required
             />
             {password.length >= 6 && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
           </div>
           {password && (
             <>
-              <div style={{ display: 'flex', gap: '4px', margin: '8px 0', height: '4px' }}>
-                <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#f56565' : '#e2e8f0', borderRadius: '2px' }} />
-                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '2px' }} />
-                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '2px' }} />
+              <div style={{ display: 'flex', gap: '4px', margin: '8px 0', height: '5px' }}>
+                <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#f56565' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
+                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
+                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
               </div>
-              <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0' }}>
-                Force: <strong>{passwordStrength === 'fort' ? 'Fort' : passwordStrength === 'moyen' ? 'Moyen' : 'Faible'}</strong>
+              <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0', fontWeight: '500' }}>
+                Force: <strong>{passwordStrength === 'fort' ? '💪 Fort' : passwordStrength === 'moyen' ? '⚠️ Moyen' : '❌ Faible'}</strong>
               </p>
             </>
           )}
@@ -344,24 +387,42 @@ export default function SignupPage() {
           style={{
             marginTop: '10px',
             padding: '12px 16px',
-            background: isFormValid ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
+            background: isFormValid && !loading ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : loading ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
             fontSize: '15px',
             fontWeight: '600',
-            cursor: isFormValid ? 'pointer' : 'not-allowed',
+            cursor: isFormValid && !loading ? 'pointer' : 'not-allowed',
             transition: 'all 0.3s ease',
-            boxShadow: isFormValid ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
+            boxShadow: isFormValid && !loading ? '0 4px 15px rgba(102, 126, 234, 0.4)' : loading ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            opacity: loading ? 0.9 : 1,
           }}
-          onHover={(e) => {
-            if (isFormValid) {
+          onMouseEnter={(e) => {
+            if (isFormValid && !loading) {
               e.target.style.transform = 'translateY(-2px)';
               e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.5)';
             }
           }}
+          onMouseLeave={(e) => {
+            if (isFormValid && !loading) {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+            }
+          }}
         >
-          {loading ? 'Inscription en cours...' : 'S\'inscrire'}
+          {loading ? (
+            <>
+              <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderStyle: 'solid', borderColor: 'rgba(255, 255, 255, 0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <span>Inscription en cours...</span>
+            </>
+          ) : (
+            '✨ S\'inscrire'
+          )}
         </button>
         </form>
 
