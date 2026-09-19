@@ -365,7 +365,6 @@ export default function DashboardPage() {
             background: 'rgba(16, 185, 129, 0.15)',
             borderRadius: '8px',
             borderLeft: '2px solid #10b981',
-            marginBottom: '12px',
           }}>
             <p style={{
               fontSize: '11px',
@@ -376,33 +375,6 @@ export default function DashboardPage() {
               ✓ KYC Vérifié
             </p>
           </div>
-
-          {/* Theme Toggle */}
-          <button onClick={toggleTheme} style={{
-            width: '100%',
-            padding: '10px 12px',
-            background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-            border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
-            borderRadius: '8px',
-            color: currentTheme.accent,
-            fontSize: '12px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)';
-          }}
-          >
-            {isDarkMode ? '🌙 Mode Sombre' : '☀️ Mode Clair'}
-          </button>
         </div>
       </div>}
 
@@ -1197,15 +1169,150 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* SETTINGS PAGE */}
+        {activeTab === 'settings' && (
+          <div>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '800',
+              color: currentTheme.text,
+              margin: '0 0 24px 0',
+            }}>
+              ⚙️ Paramètres
+            </h2>
+
+            <div style={{
+              display: 'grid',
+              gap: '20px',
+            }}>
+              {/* Appearance Section */}
+              <div style={{
+                background: currentTheme.cardBg,
+                borderRadius: '16px',
+                padding: '24px',
+                border: `1px solid ${currentTheme.border}`,
+                backdropFilter: 'blur(20px)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 16px 0',
+                }}>
+                  🎨 Apparence
+                </h3>
+
+                {/* Theme Toggle */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingBottom: '16px',
+                  borderBottom: `1px solid ${currentTheme.border}`,
+                }}>
+                  <div>
+                    <p style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: currentTheme.text,
+                      margin: '0 0 4px 0',
+                    }}>
+                      Mode Thème
+                    </p>
+                    <p style={{
+                      fontSize: '12px',
+                      color: currentTheme.textSecondary,
+                      margin: 0,
+                    }}>
+                      {isDarkMode ? 'Mode sombre activé' : 'Mode clair activé'}
+                    </p>
+                  </div>
+                  <button onClick={toggleTheme} style={{
+                    padding: '8px 16px',
+                    background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                    border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
+                    borderRadius: '8px',
+                    color: currentTheme.accent,
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)';
+                  }}
+                  >
+                    {isDarkMode ? '🌙 Sombre' : '☀️ Clair'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Notifications Section - Placeholder */}
+              <div style={{
+                background: currentTheme.cardBg,
+                borderRadius: '16px',
+                padding: '24px',
+                border: `1px solid ${currentTheme.border}`,
+                backdropFilter: 'blur(20px)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 16px 0',
+                }}>
+                  🔔 Notifications
+                </h3>
+                <p style={{
+                  fontSize: '13px',
+                  color: currentTheme.textSecondary,
+                  margin: 0,
+                }}>
+                  Gérez vos préférences de notifications
+                </p>
+              </div>
+
+              {/* Account Section - Placeholder */}
+              <div style={{
+                background: currentTheme.cardBg,
+                borderRadius: '16px',
+                padding: '24px',
+                border: `1px solid ${currentTheme.border}`,
+                backdropFilter: 'blur(20px)',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 16px 0',
+                }}>
+                  👤 Compte
+                </h3>
+                <p style={{
+                  fontSize: '13px',
+                  color: currentTheme.textSecondary,
+                  margin: 0,
+                }}>
+                  Modifiez vos informations de compte
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* PLACEHOLDERS FOR OTHER TABS */}
-        {(['projects', 'risk', 'settings'].includes(activeTab)) && (
+        {(['projects', 'risk'].includes(activeTab)) && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+            background: currentTheme.cardBg,
             borderRadius: '16px',
             padding: '60px 40px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: `1px solid ${currentTheme.border}`,
             textAlign: 'center',
             marginTop: '20px',
+            backdropFilter: 'blur(20px)',
           }}>
             <p style={{
               fontSize: '36px',
@@ -1213,21 +1320,19 @@ export default function DashboardPage() {
             }}>
               {activeTab === 'projects' && '🎯'}
               {activeTab === 'risk' && '⚠️'}
-              {activeTab === 'settings' && '⚙️'}
             </p>
             <h3 style={{
               fontSize: '20px',
               fontWeight: '800',
-              color: 'white',
+              color: currentTheme.text,
               margin: '0 0 12px 0',
             }}>
               {activeTab === 'projects' && 'Gestion des Projets'}
               {activeTab === 'risk' && 'Analyse des Risques'}
-              {activeTab === 'settings' && 'Paramètres'}
             </h3>
             <p style={{
               fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: currentTheme.textSecondary,
               margin: 0,
             }}>
               Section en développement
