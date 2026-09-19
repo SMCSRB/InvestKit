@@ -1,31 +1,40 @@
 import nodemailer from 'nodemailer';
 
 let transporter: any = null;
+let etherealAccount: any = null;
 
 export const initEmailTransporter = async () => {
   if (transporter) return transporter;
 
   try {
-    // Use Ethereal for testing (free, no setup required)
-    const testAccount = await nodemailer.createTestAccount();
+    console.log('📧 Creating Ethereal test account...');
+    etherealAccount = await nodemailer.createTestAccount();
 
     transporter = nodemailer.createTransport({
-      host: testAccount.smtp.host,
-      port: testAccount.smtp.port,
-      secure: testAccount.smtp.secure,
+      host: etherealAccount.smtp.host,
+      port: etherealAccount.smtp.port,
+      secure: etherealAccount.smtp.secure,
       auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
+        user: etherealAccount.user,
+        pass: etherealAccount.pass,
       },
     });
 
-    console.log('📧 Ethereal test account created');
-    console.log(`   Email: ${testAccount.user}`);
-  } catch (error) {
-    console.error('❌ Failed to initialize email transporter:', error);
-    // Use a dummy transporter that doesn't send but doesn't crash
+    console.log('✅ Ethereal test account created');
+    console.log(`   Email: ${etherealAccount.user}`);
+    console.log(`   SMTP: ${etherealAccount.smtp.host}:${etherealAccount.smtp.port}`);
+  } catch (error: any) {
+    console.error('❌ Ethereal account creation failed:', error.message);
+    console.log('📧 Using fallback in-memory transporter...');
+
+    // Use a dummy transporter that logs to console
     transporter = {
-      sendMail: async () => ({ response: '250 OK (dummy)' })
+      sendMail: async (mailOptions: any) => {
+        console.log('📨 [DEV MODE] Email would be sent:');
+        console.log(`   To: ${mailOptions.to}`);
+        console.log(`   Subject: ${mailOptions.subject}`);
+        return { response: '250 OK (dev mode)' };
+      }
     };
   }
 
@@ -61,24 +70,26 @@ export const sendVerificationEmail = async (
       `,
     };
 
+    console.log(`📨 Sending verification email to ${email}...`);
     const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully to ${email}`);
 
-    // For testing, log the preview URL if available
-    if (info.response && info.response.includes('250')) {
+    // For testing with Ethereal, log the preview URL if available
+    if (etherealAccount && info.response && info.response.includes('250')) {
       try {
         const previewUrl = nodemailer.getTestMessageUrl(info);
         if (previewUrl) {
-          console.log(`📨 Email sent to ${email}`);
-          console.log(`   Preview: ${previewUrl}`);
+          console.log(`🔗 Preview: ${previewUrl}`);
         }
       } catch (e) {
-        console.log(`📨 Email queued for ${email}`);
+        // Ethereal preview not available in this mode
       }
     }
 
     return info;
-  } catch (error) {
-    console.error('📧 Error sending verification email:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('❌ Error sending email:', error.message);
+    // Don't throw - let the registration continue
+    return { error: error.message };
   }
 };
