@@ -50,11 +50,12 @@ const startServer = async () => {
     }
 
     // Start listening
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`
 ╔════════════════════════════════════════════╗
 ║  🚀 InvestKit Backend                      ║
-║  http://localhost:${PORT}
+║  http://0.0.0.0:${PORT}
+║  Local: http://127.0.0.1:${PORT}
 ║  Environment: ${env.nodeEnv}
 ║  Database: ${env.database.name}
 ║  CORS Origin: ${env.corsOrigin}
