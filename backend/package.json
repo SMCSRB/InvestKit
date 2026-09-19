@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "Backend API pour InvestKit",
   "main": "dist/index.js",
-  "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
@@ -32,7 +31,7 @@
     "@types/cors": "2.8.13",
     "@types/uuid": "9.0.2",
     "typescript": "5.3.2",
-    "tsx": "4.1.0",
+    "ts-node": "10.9.2",
     "eslint": "8.52.0",
     "prettier": "3.1.0"
   }
