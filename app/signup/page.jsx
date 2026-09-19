@@ -69,8 +69,20 @@ export default function SignupPage() {
 
   const getPasswordStrength = (password) => {
     if (password.length < 6) return 'faible';
-    if (password.length < 10 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) return 'moyen';
-    return 'fort';
+
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    const strengthScore = [hasUpperCase, hasLowerCase, hasNumber, hasSpecialChar].filter(Boolean).length;
+
+    if (password.length >= 12 && strengthScore >= 3) return 'fort';
+    if (password.length >= 10 && strengthScore >= 2) return 'moyen';
+    if (password.length >= 8 && strengthScore >= 1) return 'moyen';
+    if (password.length >= 6) return 'faible';
+
+    return 'faible';
   };
 
   const isEmailFormatValid = validateEmail(email);
