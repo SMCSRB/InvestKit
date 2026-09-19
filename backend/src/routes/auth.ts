@@ -10,6 +10,7 @@ authRoutes.post('/login', authController.login);
 authRoutes.post('/verify-email', authController.verifyEmail);
 authRoutes.post('/forgot-password', authController.forgotPassword);
 authRoutes.post('/reset-password', authController.resetPassword);
+authRoutes.get('/check-email/:email', authController.checkEmail);
 
 // Protected routes
 authRoutes.get('/me', authMiddleware, authController.getCurrentUser);

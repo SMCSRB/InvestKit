@@ -253,4 +253,25 @@ export const authController = {
       res.status(500).json({ error: 'Erreur lors de la récupération' });
     }
   },
+
+  checkEmail: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email requis' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+
+      res.json({
+        available: !user,
+        exists: !!user,
+      });
+    } catch (error) {
+      console.error('Check email error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+  },
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 export default function SignupPage() {
@@ -12,11 +12,54 @@ export default function SignupPage() {
   const [message, setMessage] = useState('');
   const [verificationInfo, setVerificationInfo] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [emailAvailable, setEmailAvailable] = useState(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const captchaRef = useRef(null);
+  const emailCheckTimeoutRef = useRef(null);
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
+
+  const checkEmailAvailability = async (emailToCheck) => {
+    if (!validateEmail(emailToCheck)) {
+      setEmailAvailable(null);
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const response = await fetch(`http://192.168.1.201:5000/api/auth/check-email/${encodeURIComponent(emailToCheck)}`);
+      const data = await response.json();
+      setEmailAvailable(data.available);
+    } catch (error) {
+      console.error('Email check error:', error);
+      setEmailAvailable(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
+  // Debounced email check
+  useEffect(() => {
+    if (emailCheckTimeoutRef.current) {
+      clearTimeout(emailCheckTimeoutRef.current);
+    }
+
+    if (email) {
+      emailCheckTimeoutRef.current = setTimeout(() => {
+        checkEmailAvailability(email);
+      }, 500);
+    } else {
+      setEmailAvailable(null);
+    }
+
+    return () => {
+      if (emailCheckTimeoutRef.current) {
+        clearTimeout(emailCheckTimeoutRef.current);
+      }
+    };
+  }, [email]);
 
   const getPasswordStrength = (password) => {
     if (password.length < 6) return 'faible';
@@ -24,7 +67,8 @@ export default function SignupPage() {
     return 'fort';
   };
 
-  const isEmailValid = validateEmail(email);
+  const isEmailFormatValid = validateEmail(email);
+  const isEmailValid = isEmailFormatValid && emailAvailable === true;
   const passwordStrength = getPasswordStrength(password);
   const isFormValid = firstName && lastName && isEmailValid && password.length >= 6 && captchaToken;
 
@@ -119,9 +163,13 @@ export default function SignupPage() {
               style={{ flex: 1 }}
               required
             />
-            {email && (isEmailValid ? <span style={{ fontSize: '18px' }}>✅</span> : <span style={{ fontSize: '18px' }}>❌</span>)}
+            {checkingEmail && <span style={{ fontSize: '18px' }}>⏳</span>}
+            {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px' }}>✅</span> : <span style={{ fontSize: '18px' }}>❌</span>)}
           </div>
-          {email && !isEmailValid && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '4px 0 0 0' }}>Email invalide</p>}
+          {email && checkingEmail && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
+          {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '4px 0 0 0' }}>Format invalide</p>}
+          {email && !checkingEmail && isEmailFormatValid && emailAvailable === false && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '4px 0 0 0' }}>Email déjà utilisé</p>}
+          {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#51cf66', margin: '4px 0 0 0' }}>Email disponible</p>}
           {!email && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
         </div>
 
