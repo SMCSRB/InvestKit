@@ -20,12 +20,22 @@ const TRANSLATIONS = {
     medium: '⚠️ Moyen',
     strong: '💪 Fort',
     iamHuman: 'Je suis un humain',
-    gdprConsent: '🔒 Je consens au traitement de mes données personnelles selon le RGPD',
+    gdprConsent: '🔒 Je consens au traitement de mes données personnelles',
+    gdprDetails: 'Voir les détails RGPD',
     terms: 'conditions d\'utilisation',
     signup: '✨ S\'inscrire',
     signupError: 'Erreur lors de l\'inscription',
     resendCode: 'Renvoyer le code',
     serverError: 'Erreur de connexion au serveur',
+    passwordRequirements: 'Exigences du mot de passe',
+    minLength: 'Au moins 8 caractères',
+    uppercase: 'Au moins une majuscule',
+    lowercase: 'Au moins une minuscule',
+    number: 'Au moins un chiffre',
+    specialChar: 'Au moins un caractère spécial',
+    gdprModal: 'Politique de Confidentialité et RGPD',
+    gdprText: 'Nous nous engageons à protéger vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD). Vos informations sont cryptées et traitées de manière sécurisée. Vous avez le droit d\'accéder, modifier ou supprimer vos données à tout moment.',
+    close: 'Fermer',
   },
   en: {
     createAccount: 'Create your account',
@@ -42,12 +52,22 @@ const TRANSLATIONS = {
     medium: '⚠️ Medium',
     strong: '💪 Strong',
     iamHuman: 'I\'m human',
-    gdprConsent: '🔒 I consent to the processing of my personal data according to GDPR',
+    gdprConsent: '🔒 I consent to the processing of my personal data',
+    gdprDetails: 'See GDPR details',
     terms: 'terms of service',
     signup: '✨ Sign up',
     signupError: 'Signup error',
     serverError: 'Server connection error',
     resendCode: 'Resend code',
+    passwordRequirements: 'Password requirements',
+    minLength: 'At least 8 characters',
+    uppercase: 'At least one uppercase letter',
+    lowercase: 'At least one lowercase letter',
+    number: 'At least one number',
+    specialChar: 'At least one special character',
+    gdprModal: 'Privacy Policy and GDPR',
+    gdprText: 'We are committed to protecting your personal data in accordance with the General Data Protection Regulation (GDPR). Your information is encrypted and processed securely. You have the right to access, modify or delete your data at any time.',
+    close: 'Close',
   },
   es: {
     createAccount: 'Crear tu cuenta',
@@ -64,12 +84,22 @@ const TRANSLATIONS = {
     medium: '⚠️ Media',
     strong: '💪 Fuerte',
     iamHuman: 'Soy humano',
-    gdprConsent: '🔒 Doy mi consentimiento para el tratamiento de mis datos personales según RGPD',
+    gdprConsent: '🔒 Doy mi consentimiento para el tratamiento de mis datos personales',
+    gdprDetails: 'Ver detalles RGPD',
     terms: 'términos de servicio',
     signup: '✨ Registrarse',
     signupError: 'Error de registro',
     serverError: 'Error de conexión al servidor',
     resendCode: 'Reenviar código',
+    passwordRequirements: 'Requisitos de contraseña',
+    minLength: 'Al menos 8 caracteres',
+    uppercase: 'Al menos una mayúscula',
+    lowercase: 'Al menos una minúscula',
+    number: 'Al menos un número',
+    specialChar: 'Al menos un carácter especial',
+    gdprModal: 'Política de Privacidad y RGPD',
+    gdprText: 'Nos comprometemos a proteger tus datos personales de conformidad con el Reglamento General de Protección de Datos (RGPD). Tu información está encriptada y se procesa de forma segura. Tienes derecho a acceder, modificar o eliminar tus datos en cualquier momento.',
+    close: 'Cerrar',
   },
 };
 
@@ -91,16 +121,17 @@ export default function SignupPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showResendModal, setShowResendModal] = useState(false);
+  const [showGdprModal, setShowGdprModal] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
+  const [showConfetti, setShowConfetti] = useState(false);
+
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
+  const formRef = useRef(null);
 
   const t = TRANSLATIONS[lang];
 
   useEffect(() => {
-    // Simulate initial load
     const timer = setTimeout(() => setIsInitialLoad(false), 800);
     return () => clearTimeout(timer);
   }, []);
@@ -111,8 +142,7 @@ export default function SignupPage() {
 
   const handleEmailChange = (value) => {
     setEmail(value);
-    
-    // Show suggestions if user types @ or partially typed email
+
     if (value.includes('@')) {
       const [name, domain] = value.split('@');
       if (domain.length > 0 && domain.length < 5) {
@@ -190,16 +220,36 @@ export default function SignupPage() {
     return 'faible';
   };
 
+  const getPasswordRequirements = () => {
+    const requirements = {
+      minLength: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      specialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    };
+    return requirements;
+  };
+
+  const requirements = getPasswordRequirements();
+
+  const triggerConfetti = () => {
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 2000);
+  };
+
   const isEmailFormatValid = validateEmail(email);
   const isEmailValid = isEmailFormatValid && emailAvailable === true;
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
-  const isFormValid = isEmailValid && passwordsMatch && captchaToken && gdprConsent;
+  const allRequirementsMet = Object.values(requirements).every(Boolean);
+  const isFormValid = isEmailValid && passwordsMatch && allRequirementsMet && captchaToken && gdprConsent;
 
   const formSteps = [
     isEmailValid,
     password.length >= 6,
     passwordsMatch,
+    allRequirementsMet,
     captchaToken !== null,
     gdprConsent,
   ];
@@ -232,8 +282,11 @@ export default function SignupPage() {
 
       const data = await response.json();
       if (response.ok) {
-        sessionStorage.setItem('verificationEmail', email);
-        router.push('/verify-email');
+        triggerConfetti();
+        setTimeout(() => {
+          sessionStorage.setItem('verificationEmail', email);
+          router.push('/verify-email');
+        }, 1500);
       } else {
         setMessage(`❌ ${data.error || t.signupError}`);
         console.error('Signup error:', data);
@@ -245,7 +298,13 @@ export default function SignupPage() {
     }
   };
 
-  // Skeleton Loader
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && isFormValid) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   if (isInitialLoad) {
     return (
       <div style={{
@@ -270,7 +329,7 @@ export default function SignupPage() {
             border-radius: 8px;
           }
         `}</style>
-        
+
         <div style={{
           maxWidth: '420px',
           width: '100%',
@@ -279,23 +338,16 @@ export default function SignupPage() {
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
           padding: '40px',
         }}>
-          {/* Skeleton Header */}
           <div className="skeleton" style={{ width: '50px', height: '50px', borderRadius: '10px', margin: '0 auto 15px' }} />
           <div className="skeleton" style={{ width: '100%', height: '28px', marginBottom: '10px' }} />
           <div className="skeleton" style={{ width: '80%', height: '14px', marginBottom: '20px' }} />
-
-          {/* Skeleton Progress */}
           <div className="skeleton" style={{ width: '100%', height: '6px', marginBottom: '30px' }} />
-
-          {/* Skeleton Fields */}
           {[1, 2, 3, 4].map(i => (
             <div key={i} style={{ marginBottom: '15px' }}>
               <div className="skeleton" style={{ width: '60px', height: '14px', marginBottom: '8px' }} />
               <div className="skeleton" style={{ width: '100%', height: '40px', marginBottom: '8px' }} />
             </div>
           ))}
-
-          {/* Skeleton Button */}
           <div className="skeleton" style={{ width: '100%', height: '45px', marginTop: '20px' }} />
         </div>
       </div>
@@ -312,76 +364,105 @@ export default function SignupPage() {
       alignItems: 'center',
       padding: '20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      position: 'relative',
     }}>
       <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .spinner {
-          display: inline-block;
-          width: 16px;
-          height: 16px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
         }
-        .modal-overlay {
+
+        @keyframes confetti-fall {
+          to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        .confetti {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          width: 10px;
+          height: 10px;
+          pointer-events: none;
+          z-index: 9999;
+          animation: confetti-fall 2s forwards;
+        }
+
+        .form-container {
+          animation: slideIn 0.5s ease-out;
+        }
+
+        .valid-input {
+          border-color: #10b981 !important;
+          background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .valid-checkmark {
+          color: #10b981;
+          font-weight: bold;
+          margin-left: 8px;
+        }
+
+        .requirement-item {
+          display: flex;
+          align-items: center;
+          padding: 8px 0;
+          font-size: 13px;
+          color: #666;
+          transition: color 0.2s;
+        }
+
+        .requirement-item.met {
+          color: #10b981;
+        }
+
+        .requirement-check {
+          display: inline-block;
+          width: 18px;
+          height: 18px;
+          border: 2px solid #ddd;
+          border-radius: 4px;
+          margin-right: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 2000;
+          font-size: 12px;
+          transition: all 0.2s;
         }
-        .modal-content {
-          background: white;
-          border-radius: 12px;
-          padding: 30px;
-          max-width: 500px;
-          max-height: 80vh;
-          overflow-y: auto;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-        .email-suggestions {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-top: none;
-          border-radius: 0 0 8px 8px;
-          max-height: 150px;
-          overflow-y: auto;
-          z-index: 100;
-        }
-        .email-suggestion {
-          padding: 10px 12px;
-          cursor: pointer;
-          border-bottom: 1px solid #e2e8f0;
-          font-size: 14px;
-          color: #2d3748;
-        }
-        .email-suggestion:hover {
-          background: #f7fafc;
-        }
-        .email-suggestion:last-child {
-          border-bottom: none;
+
+        .requirement-item.met .requirement-check {
+          border-color: #10b981;
+          background-color: #10b981;
+          color: white;
         }
       `}</style>
+
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <>
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className="confetti"
+              style={{
+                left: Math.random() * 100 + '%',
+                backgroundColor: ['#667eea', '#764ba2', '#10b981', '#f59e0b'][Math.floor(Math.random() * 4)],
+                delay: Math.random() * 0.2 + 's',
+              }}
+            />
+          ))}
+        </>
+      )}
 
       {/* Language Selector */}
       <div style={{
         position: 'absolute',
-        top: 20,
-        right: 20,
+        top: '20px',
+        right: '20px',
         display: 'flex',
         gap: '8px',
       }}>
@@ -391,10 +472,10 @@ export default function SignupPage() {
             onClick={() => setLang(l)}
             style={{
               padding: '8px 12px',
-              background: lang === l ? '#667eea' : 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
               border: 'none',
               borderRadius: '6px',
+              background: lang === l ? 'white' : 'rgba(255, 255, 255, 0.2)',
+              color: lang === l ? '#667eea' : 'white',
               cursor: 'pointer',
               fontWeight: lang === l ? '600' : '400',
               transition: 'all 0.3s',
@@ -405,422 +486,402 @@ export default function SignupPage() {
         ))}
       </div>
 
-      {/* Conteneur principal */}
-      <div style={{
+      {/* Main Form Container */}
+      <div className="form-container" style={{
         maxWidth: '420px',
         width: '100%',
         background: 'white',
         borderRadius: '12px',
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
         padding: '40px',
-        position: 'relative',
       }}>
-        {/* Header avec logo */}
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '28px',
-            fontWeight: 'bold',
-            margin: '0 auto 15px',
-          }}>
-            💼
-          </div>
-          <h1 style={{ margin: '0 0 5px 0', fontSize: '28px', color: '#2d3748', fontWeight: '600' }}>InvestKit</h1>
-          <p style={{ margin: '0', fontSize: '14px', color: '#718096' }}>Plateforme Premium d'Investissement</p>
-        </div>
-
-        {/* Sous-titre */}
-        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-          <h2 style={{ margin: '0', fontSize: '20px', color: '#2d3748', fontWeight: '500' }}>{t.createAccount}</h2>
-          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>{t.joinInvestors}</p>
+          <div style={{ fontSize: '32px', marginBottom: '10px' }}>💼</div>
+          <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', color: '#1f2937' }}>
+            {t.createAccount}
+          </h1>
+          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
+            {t.joinInvestors}
+          </p>
         </div>
 
         {/* Progress Bar */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#718096' }}>{t.progress}</span>
+        <div style={{ marginBottom: '30px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '8px',
+          }}>
+            <span style={{ fontSize: '12px', color: '#6b7280' }}>{t.progress}</span>
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#667eea' }}>{formProgress}%</span>
           </div>
           <div style={{
             width: '100%',
-            height: '6px',
-            background: '#e2e8f0',
-            borderRadius: '3px',
+            height: '4px',
+            background: '#e5e7eb',
+            borderRadius: '2px',
             overflow: 'hidden',
           }}>
             <div style={{
-              width: `${formProgress}%`,
               height: '100%',
-              background: `linear-gradient(90deg, ${formProgress < 50 ? '#f56565' : formProgress < 100 ? '#ecc94b' : '#48bb78'}, ${formProgress < 50 ? '#f56565' : formProgress < 100 ? '#ecc94b' : '#48bb78'})`,
+              background: 'linear-gradient(90deg, #667eea, #764ba2)',
+              width: `${formProgress}%`,
               transition: 'width 0.3s ease',
+              borderRadius: '2px',
             }} />
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Email */}
-          <div style={{ position: 'relative' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>📧 {t.email}</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative' }}>
+        {/* Form */}
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Email Field */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
+              {t.email}
+              {isEmailValid && <span className="valid-checkmark">✓</span>}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
                 type="email"
-                placeholder="nom@example.com"
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
+                placeholder="exemple@email.com"
                 style={{
-                  flex: 1,
-                  padding: '10px 12px',
-                  border: '2px solid #e2e8f0',
+                  width: '100%',
+                  padding: '12px',
+                  border: `2px solid ${isEmailValid ? '#10b981' : '#e5e7eb'}`,
                   borderRadius: '8px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  transition: 'all 0.3s ease',
-                  outline: 'none',
-                  position: 'relative',
-                  zIndex: 1,
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  backgroundColor: isEmailValid ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#667eea';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e2e8f0';
-                  e.target.style.boxShadow = 'none';
-                }}
-                required
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => !isEmailValid && (e.target.style.borderColor = '#e5e7eb')}
               />
-              {checkingEmail && <span style={{ fontSize: '18px', animation: 'spin 1s linear infinite' }}>⏳</span>}
-              {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
-              
-              {/* Email Suggestions */}
+              {checkingEmail && <span style={{ position: 'absolute', right: '12px', top: '12px', fontSize: '14px' }}>⏳</span>}
               {emailSuggestions.length > 0 && (
-                <div className="email-suggestions">
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderTop: 'none',
+                  borderBottomLeftRadius: '8px',
+                  borderBottomRightRadius: '8px',
+                  zIndex: 10,
+                }}>
                   {emailSuggestions.map((suggestion, idx) => (
-                    <div
+                    <button
                       key={idx}
-                      className="email-suggestion"
+                      type="button"
                       onClick={() => selectEmailSuggestion(suggestion)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: 'transparent',
+                        border: 'none',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#667eea',
+                        borderBottom: idx < emailSuggestions.length - 1 ? '1px solid #f0f0f0' : 'none',
+                      }}
+                      onMouseOver={(e) => e.target.style.background = '#f9fafb'}
+                      onMouseOut={(e) => e.target.style.background = 'transparent'}
                     >
                       {suggestion}
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
             </div>
-            {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Format invalide</p>}
-            {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>✅ {t.emailAvailable}</p>}
           </div>
 
-          {/* Mot de passe */}
+          {/* Password Field */}
           <div>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔒 {t.password}</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
+              {t.password}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Minimum 6 caractères"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
                 style={{
-                  flex: 1,
-                  padding: '10px 12px',
-                  border: '2px solid #e2e8f0',
+                  width: '100%',
+                  padding: '12px',
+                  border: `2px solid ${password.length >= 8 ? '#10b981' : '#e5e7eb'}`,
                   borderRadius: '8px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  transition: 'all 0.3s ease',
-                  outline: 'none',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  paddingRight: '40px',
+                  backgroundColor: password.length >= 8 ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#667eea';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e2e8f0';
-                  e.target.style.boxShadow = 'none';
-                }}
-                required
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => !(password.length >= 8) && (e.target.style.borderColor = '#e5e7eb')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
-                  background: 'none',
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
                   border: 'none',
-                  fontSize: '18px',
                   cursor: 'pointer',
-                  padding: '0',
-                  color: '#718096',
-                  transition: 'color 0.3s',
+                  fontSize: '18px',
+                  padding: '4px 8px',
                 }}
-                onMouseEnter={(e) => e.target.style.color = '#667eea'}
-                onMouseLeave={(e) => e.target.style.color = '#718096'}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
-              {password.length >= 6 && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
             </div>
-            {password && (
-              <>
-                <div style={{ display: 'flex', gap: '4px', margin: '8px 0', height: '5px' }}>
-                  <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#f56565' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
-                  <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
-                  <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
-                </div>
-                <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0', fontWeight: '500' }}>
-                  {t.strength} <strong>{passwordStrength === 'fort' ? t.strong : passwordStrength === 'moyen' ? t.medium : t.weak}</strong>
+
+            {/* Password Requirements */}
+            {password.length > 0 && (
+              <div style={{ marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '600', color: '#1f2937' }}>
+                  {t.passwordRequirements}
                 </p>
-              </>
+                <div>
+                  {[
+                    { met: requirements.minLength, label: t.minLength },
+                    { met: requirements.uppercase, label: t.uppercase },
+                    { met: requirements.lowercase, label: t.lowercase },
+                    { met: requirements.number, label: t.number },
+                    { met: requirements.specialChar, label: t.specialChar },
+                  ].map((req, idx) => (
+                    <div key={idx} className={`requirement-item ${req.met ? 'met' : ''}`}>
+                      <span className="requirement-check">{req.met ? '✓' : ''}</span>
+                      {req.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Confirmer Mot de passe */}
+          {/* Password Strength Indicator */}
+          {password.length >= 6 && (
+            <div style={{
+              padding: '8px 12px',
+              background: passwordStrength === 'fort' ? '#d1fae5' : passwordStrength === 'moyen' ? '#fef3c7' : '#fee2e2',
+              border: `1px solid ${passwordStrength === 'fort' ? '#6ee7b7' : passwordStrength === 'moyen' ? '#fcd34d' : '#fca5a5'}`,
+              borderRadius: '6px',
+              fontSize: '13px',
+              color: passwordStrength === 'fort' ? '#065f46' : passwordStrength === 'moyen' ? '#92400e' : '#991b1b',
+            }}>
+              {t.strength} {
+                passwordStrength === 'fort' ? t.strong :
+                passwordStrength === 'moyen' ? t.medium :
+                t.weak
+              }
+            </div>
+          )}
+
+          {/* Confirm Password Field */}
           <div>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔐 {t.passwordConfirm}</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
+              {t.passwordConfirm}
+              {passwordsMatch && password.length > 0 && <span className="valid-checkmark">✓</span>}
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
                 type={showPasswordConfirm ? 'text' : 'password'}
-                placeholder="Répétez votre mot de passe"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder="••••••••"
                 style={{
-                  flex: 1,
-                  padding: '10px 12px',
-                  border: `2px solid ${passwordConfirm ? (passwordsMatch ? '#c6f6d5' : '#fed7d7') : '#e2e8f0'}`,
+                  width: '100%',
+                  padding: '12px',
+                  border: `2px solid ${passwordsMatch && password.length > 0 ? '#10b981' : '#e5e7eb'}`,
                   borderRadius: '8px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  transition: 'all 0.3s ease',
-                  outline: 'none',
-                  backgroundColor: passwordConfirm ? (passwordsMatch ? '#f0fff4' : '#fff5f5') : 'white',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box',
+                  paddingRight: '40px',
+                  backgroundColor: passwordsMatch && password.length > 0 ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
                 }}
-                onFocus={(e) => {
-                  if (!passwordConfirm || !password) {
-                    e.target.style.borderColor = '#667eea';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }
-                }}
-                onBlur={(e) => {
-                  e.target.style.boxShadow = 'none';
-                  if (!passwordConfirm) {
-                    e.target.style.borderColor = '#e2e8f0';
-                    e.target.style.backgroundColor = 'white';
-                  }
-                }}
-                required
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => !(passwordsMatch && password.length > 0) && (e.target.style.borderColor = '#e5e7eb')}
               />
               <button
                 type="button"
                 onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
                 style={{
-                  background: 'none',
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
                   border: 'none',
-                  fontSize: '18px',
                   cursor: 'pointer',
-                  padding: '0',
-                  color: '#718096',
-                  transition: 'color 0.3s',
+                  fontSize: '18px',
+                  padding: '4px 8px',
                 }}
-                onMouseEnter={(e) => e.target.style.color = '#667eea'}
-                onMouseLeave={(e) => e.target.style.color = '#718096'}
               >
                 {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
               </button>
-              {passwordConfirm && <span style={{ fontSize: '18px', color: passwordsMatch ? '#48bb78' : '#f56565' }}>{passwordsMatch ? '✅' : '❌'}</span>}
             </div>
-            {passwordConfirm && !passwordsMatch && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>{t.passwordDontMatch}</p>}
-            {passwordConfirm && passwordsMatch && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>✅ {t.passwordsMatch}</p>}
+            {password.length > 0 && passwordConfirm.length > 0 && (
+              <p style={{
+                margin: '8px 0 0 0',
+                fontSize: '13px',
+                color: passwordsMatch ? '#10b981' : '#ef4444',
+              }}>
+                {passwordsMatch ? '✓ ' + t.passwordsMatch : '✗ ' + t.passwordDontMatch}
+              </p>
+            )}
           </div>
 
           {/* hCaptcha */}
-          <div style={{ margin: '10px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <HCaptcha
-              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
+              sitekey="7a3e40c6-1fb3-4f5f-9b2d-2f8f8d8c8c8c"
               onVerify={(token) => setCaptchaToken(token)}
               ref={captchaRef}
-              theme="light"
             />
           </div>
 
           {/* GDPR Consent */}
-          <div style={{
-            padding: '12px',
-            background: '#e6fffa',
-            border: '1px solid #81e6d9',
-            borderRadius: '8px',
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'flex-start',
-          }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
             <input
               type="checkbox"
               id="gdpr"
               checked={gdprConsent}
               onChange={(e) => setGdprConsent(e.target.checked)}
               style={{
-                marginTop: '3px',
+                marginTop: '4px',
                 cursor: 'pointer',
                 width: '18px',
                 height: '18px',
+                accentColor: '#667eea',
               }}
-              required
             />
-            <label htmlFor="gdpr" style={{ fontSize: '12px', color: '#234e52', margin: '0', cursor: 'pointer', flex: 1 }}>
-              {t.gdprConsent}
-            </label>
+            <div>
+              <label htmlFor="gdpr" style={{ fontSize: '13px', color: '#4b5563', cursor: 'pointer', margin: 0 }}>
+                {t.gdprConsent}
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowGdprModal(true)}
+                style={{
+                  marginTop: '4px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#667eea',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  padding: 0,
+                  textDecoration: 'underline',
+                }}
+              >
+                {t.gdprDetails}
+              </button>
+            </div>
           </div>
 
-          {/* Terms Link */}
-          <div style={{ textAlign: 'center', fontSize: '12px', color: '#718096' }}>
-            En créant un compte, vous acceptez nos{' '}
-            <button
-              type="button"
-              onClick={() => setShowTermsModal(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#667eea',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontSize: 'inherit',
-                fontWeight: '500',
-              }}
-            >
-              {t.terms}
-            </button>
-          </div>
+          {/* Error Message */}
+          {message && (
+            <div style={{
+              padding: '12px',
+              background: '#fee2e2',
+              border: '1px solid #fca5a5',
+              borderRadius: '6px',
+              color: '#991b1b',
+              fontSize: '13px',
+            }}>
+              {message}
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading || !isFormValid}
+            disabled={!isFormValid || loading}
             style={{
-              marginTop: '5px',
-              padding: '12px 16px',
-              background: !loading && isFormValid ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
+              width: '100%',
+              padding: '12px',
+              background: isFormValid ? 'linear-gradient(90deg, #667eea, #764ba2)' : '#d1d5db',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
               fontSize: '15px',
               fontWeight: '600',
-              cursor: !loading && isFormValid ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s ease',
-              boxShadow: !loading && isFormValid ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
+              cursor: isFormValid ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s',
+              opacity: loading ? 0.8 : 1,
             }}
-            onMouseEnter={(e) => {
-              if (!loading && isFormValid) {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.5)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading && isFormValid) {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-              }
-            }}
+            onMouseOver={(e) => isFormValid && (e.target.style.transform = 'translateY(-2px)', e.target.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.4)')}
+            onMouseOut={(e) => isFormValid && (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = 'none')}
           >
-            {loading ? (
-              <>
-                <div className="spinner" />
-                <span>Inscription...</span>
-              </>
-            ) : (
-              t.signup
-            )}
+            {loading ? '⏳ ' + t.signup : t.signup}
           </button>
         </form>
+      </div>
 
-        {/* Message */}
-        {message && (
+      {/* GDPR Modal */}
+      {showGdprModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px',
+        }}>
           <div style={{
-            marginTop: '15px',
-            padding: '12px 14px',
-            background: message.includes('✅') ? '#f0fff4' : '#fff5f5',
-            border: `1px solid ${message.includes('✅') ? '#c6f6d5' : '#fed7d7'}`,
-            borderRadius: '8px',
-            color: message.includes('✅') ? '#22543d' : '#742a2a',
-            fontSize: '13px',
-            lineHeight: '1.5',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            background: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            maxHeight: '80vh',
+            overflowY: 'auto',
           }}>
-            <span>{message}</span>
-            {message.includes('❌') && (
-              <button
-                type="button"
-                onClick={() => setShowResendModal(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#667eea',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  padding: 0,
-                }}
-              >
-                {t.resendCode}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div style={{ marginTop: '30px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px' }}>
-        <p style={{ margin: '0' }}>Pas de compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
-      </div>
-
-      {/* Terms Modal */}
-      {showTermsModal && (
-        <div className="modal-overlay" onClick={() => setShowTermsModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: '0', color: '#2d3748' }}>Conditions d'Utilisation</h2>
-            
-            <h3 style={{ color: '#667eea', marginTop: '20px' }}>1. Acceptation des Conditions</h3>
-            <p>En utilisant InvestKit, vous acceptez ces conditions d'utilisation dans leur intégralité.</p>
-
-            <h3 style={{ color: '#667eea', marginTop: '20px' }}>2. Licence d'Utilisation</h3>
-            <p>InvestKit vous accorde une licence limitée pour accéder à la plateforme.</p>
-
-            <h3 style={{ color: '#667eea', marginTop: '20px' }}>3. Restrictions d'Utilisation</h3>
-            <p>Vous ne devez pas reproduire ou distribuer le contenu sans autorisation.</p>
-
-            <h3 style={{ color: '#667eea', marginTop: '20px' }}>4. Disclaimer</h3>
-            <p>Les informations sont à titre informatif uniquement et ne constituent pas des conseils financiers.</p>
-
-            <h3 style={{ color: '#667eea', marginTop: '20px' }}>5. Limitation de Responsabilité</h3>
-            <p>InvestKit n'est pas responsable des pertes résultant de l'utilisation de la plateforme.</p>
-
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <button
-                onClick={() => setShowTermsModal(false)}
-                style={{
-                  padding: '10px 20px',
-                  background: '#667eea',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                }}
-              >
-                Fermer
-              </button>
-            </div>
+            <h2 style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#1f2937' }}>
+              {t.gdprModal}
+            </h2>
+            <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#4b5563', lineHeight: '1.6' }}>
+              {t.gdprText}
+            </p>
+            <button
+              onClick={() => setShowGdprModal(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: 'linear-gradient(90deg, #667eea, #764ba2)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+              }}
+              onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)', e.target.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.4)')}
+              onMouseOut={(e) => (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = 'none')}
+            >
+              {t.close}
+            </button>
           </div>
         </div>
       )}
