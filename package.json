@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/SMCSRB/InvestKit#readme",
   "dependencies": {
+    "@hcaptcha/react-hcaptcha": "^2.2.0",
     "@types/node": "20.x",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",

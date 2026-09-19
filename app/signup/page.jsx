@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -10,17 +11,25 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [verificationInfo, setVerificationInfo] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
+    if (!captchaToken) {
+      setMessage('❌ Veuillez compléter le captcha');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('http://192.168.1.201:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName, captchaToken }),
       });
 
       const data = await response.json();
@@ -75,6 +84,13 @@ export default function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <div style={{ margin: '10px 0' }}>
+          <HCaptcha
+            ref={captchaRef}
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
+            onVerify={(token) => setCaptchaToken(token)}
+          />
+        </div>
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? 'Inscription...' : 'S\'inscrire'}
         </button>
