@@ -1,29 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 
 export default function DomainPage() {
-  const router = useRouter();
   const params = useParams();
-  const domainId = params.domain;
+  const domainId = params?.domain;
   const { isChapterUnlocked, isChapterCompleted, getChapterScore, isDomainCompleted, isLoading } =
     useEducationProgress();
 
-  const domain = educationDomains.find((d) => d.id === domainId);
+  const domain = domainId ? educationDomains.find((d) => d.id === domainId) : null;
 
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      router.push('/login');
-    }
-  }, [router]);
-
-  if (isLoading) {
+  if (!domainId || isLoading) {
     return (
       <PageWrapper>
         <div className="min-h-screen pt-32 pb-20 px-6">
