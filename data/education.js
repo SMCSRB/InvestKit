@@ -1437,6 +1437,131 @@ export const educationDomains = [
       "passingScore": 75
     }
   }
-]
+],
+  finalQuiz: {
+    passingScore: 75,
+    questions: [
+      {
+        id: 1,
+        text: "Quel est le maximum de Bitcoin qui existera jamais ?",
+        options: [
+          "21 millions",
+          "100 millions",
+          "Illimité",
+          "1 million"
+        ],
+        correct: 0,
+        explanation: "Bitcoin a une limite fixe de 21 millions"
+      },
+      {
+        id: 2,
+        text: "Ethereum a migré vers quel mécanisme de consensus ?",
+        options: [
+          "Proof of Stake",
+          "Proof of Work",
+          "Delegated Proof of Stake",
+          "Proof of Authority"
+        ],
+        correct: 0,
+        explanation: "Ethereum a migré vers Proof of Stake en 2022"
+      },
+      {
+        id: 3,
+        text: "La DeFi signifie...",
+        options: [
+          "Décentralized Finance",
+          "Digital Financial Engineering",
+          "Distributed Finance System",
+          "Delegation Finance"
+        ],
+        correct: 0,
+        explanation: "DeFi = Décentralized Finance (Finance Décentralisée)"
+      },
+      {
+        id: 4,
+        text: "Qu'est-ce qu'un wallet crypto ?",
+        options: [
+          "Un portefeuille pour stocker des cryptos",
+          "Un compte bancaire",
+          "Une bourse d'échange",
+          "Un courtier"
+        ],
+        correct: 0,
+        explanation: "Un wallet est un portefeuille numérique pour stocker et gérer les cryptomonnaies"
+      },
+      {
+        id: 5,
+        text: "Comment sécuriser vos crypto-actifs ?",
+        options: [
+          "Utiliser un cold wallet pour les gros montants",
+          "Garder toutes les clés sur un PC",
+          "Partager les clés privées",
+          "Utiliser des mots de passe simples"
+        ],
+        correct: 0,
+        explanation: "Un cold wallet (hors ligne) est plus sécurisé pour les gros montants"
+      },
+      {
+        id: 6,
+        text: "Qu'est-ce que le staking en crypto ?",
+        options: [
+          "Verrouiller des cryptos pour valider des transactions",
+          "Vendre à court terme",
+          "Acheter des actions",
+          "Créer des copies"
+        ],
+        correct: 0,
+        explanation: "Le staking consiste à verrouiller des cryptos pour participer à la validation"
+      },
+      {
+        id: 7,
+        text: "Quel est le plus grand risque d'investissement en crypto ?",
+        options: [
+          "La volatilité et le mauvais timing",
+          "La couleur du logo",
+          "Le jour de la semaine",
+          "Le nom du fondateur"
+        ],
+        correct: 0,
+        explanation: "La volatilité extrême et les décisions de timing sont les plus grands risques"
+      },
+      {
+        id: 8,
+        text: "Comment diversifier son portefeuille crypto ?",
+        options: [
+          "Répartir entre plusieurs cryptos et marchés",
+          "Mettre tout sur une seule crypto",
+          "Ne pas diversifier",
+          "Acheter aléatoirement"
+        ],
+        correct: 0,
+        explanation: "La diversification réduit le risque en répartissant entre différents actifs"
+      },
+      {
+        id: 9,
+        text: "Qu'est-ce qu'un smart contract ?",
+        options: [
+          "Un programme auto-exécutable sur blockchain",
+          "Un contrat papier",
+          "Une police d'assurance",
+          "Un numéro de compte"
+        ],
+        correct: 0,
+        explanation: "Un smart contract est un code qui s'exécute automatiquement selon des conditions"
+      },
+      {
+        id: 10,
+        text: "Quel facteur impacte le plus le prix des cryptos ?",
+        options: [
+          "L'offre et la demande du marché",
+          "La couleur du logo",
+          "Le nombre d'employés",
+          "La date de création"
+        ],
+        correct: 0,
+        explanation: "L'offre et la demande sont les principaux facteurs de prix en crypto"
+      }
+    ]
   }
+}
 ];
