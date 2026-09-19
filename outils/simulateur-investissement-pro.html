@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur d'Investissement Pro | InvestKit</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #FFB84D;
+            --dark: #1a1a1a;
+            --light: #FFFFFF;
+            --bg-light: #FFF7ED;
+            --accent: #FEF3E2;
+            --text-dark: #2d2d2d;
+            --text-light: #666666;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--accent) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--light);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 107, 0.1);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .input-label label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        .input-value {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.6);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.6);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 184, 77, 0.1));
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--accent);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: var(--accent);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .badge-success {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .etf-card {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.05), rgba(255, 184, 77, 0.05));
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .etf-name {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .etf-details {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .etf-return {
+            color: var(--success);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: var(--text-dark);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: translateY(-2px);
+        }
+
+        .info-box {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .warning-box {
+            background: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .tax-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid var(--accent);
+        }
+
+        .toggle-btn {
+            background: var(--accent);
+            padding: 10px 15px;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            border-color: transparent;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .main-grid {
+                gap: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                font-size: 0.85rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 8px;
+            }
+
+            button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Simulateur d'Investissement Pro</h1>
+            <p class="subtitle">Projections précises à 15 ans • Optimisation fiscale PEA • Recommandations ETF</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- COLONNE 1: INPUTS ET PARAMÈTRES -->
+            <div class="card">
+                <h2>⚙️ Paramètres d'Investissement</h2>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <label>Montant mensuel</label>
+                        <span class="input-value" id="montantDisplay">100 €</span>
+                    </div>
+                    <input type="range" id="montantSlider" min="50" max="5000" value="100" step="50">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <label>Rendement annuel attendu</label>
+                        <span class="input-value" id="rendementDisplay">7.5%</span>
+                    </div>
+                    <input type="range" id="rendementSlider" min="2" max="15" value="7.5" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <label>Inflation annuelle</label>
+                        <span class="input-value" id="inflationDisplay">2%</span>
+                    </div>
+                    <input type="range" id="inflationSlider" min="0" max="5" value="2" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <label>Augmentation annuelle épargne</label>
+                        <span class="input-value" id="augmentationDisplay">0%</span>
+                    </div>
+                    <input type="range" id="augmentationSlider" min="0" max="10" value="0" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <label>Horizon d'investissement (ans)</label>
+                        <span class="input-value" id="horizonDisplay">15 ans</span>
+                    </div>
+                    <input type="range" id="horizonSlider" min="1" max="30" value="15" step="1">
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 Conseil :</strong> Un rendement de 7.5% correspond à un portefeuille équilibré (MSCI World). Le S&P 500 historiquement rend 9-10%.
+                </div>
+
+                <div class="tax-section">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">Enveloppe fiscale</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="toggle-btn active" id="peaBtn" onclick="selectTaxRegime('pea')">PEA (Optimisé)</button>
+                        <button class="toggle-btn" id="flatTaxBtn" onclick="selectTaxRegime('flatTax')">Compte-Titres 30%</button>
+                    </div>
+                    <p id="taxExplainer" style="margin-top: 10px; font-size: 0.9rem; color: var(--text-light); line-height: 1.6;">
+                        ✅ <strong>PEA après 5 ans :</strong> 17,2% prélèvements sociaux (exemption IR)
+                    </p>
+                </div>
+
+                <button class="btn-primary" onclick="calculateProjection()" style="margin-top: 20px; width: 100%;">
+                    🚀 Recalculer la Projection
+                </button>
+            </div>
+
+            <!-- COLONNE 2: GRAPHIQUE ET RÉSULTATS -->
+            <div class="card">
+                <h2>📈 Courbe de Projection</h2>
+                <div class="chart-container">
+                    <canvas id="projectionChart"></canvas>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Total investi</div>
+                        <div class="stat-value" id="totalInvesti">0 €</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Plus-value brute</div>
+                        <div class="stat-value" id="plusValue">0 €</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Impôts et prélèvements</div>
+                        <div class="stat-value" id="impots" style="color: var(--danger);">0 €</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Valeur NETTE finale</div>
+                        <div class="stat-value" id="valeurNette" style="color: var(--success); font-size: 1.5rem;">0 €</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>📊 Pouvoir d'achat réel :</strong> <span id="pouvoirAchatDisplay">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARATEUR FISCAL -->
+        <div class="card">
+            <h2>⚖️ Comparatif Fiscal : PEA vs Compte-Titres</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Critère</th>
+                        <th>PEA (recommandé)</th>
+                        <th>Compte-Titres</th>
+                        <th>Avantage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Impôts sur plus-value</strong></td>
+                        <td>17,2% (après 5 ans)</td>
+                        <td>30% (Flat Tax)</td>
+                        <td><span class="badge badge-success">+12,8%</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gains potentiels</strong></td>
+                        <td id="gainsDeclarerPEA">-</td>
+                        <td id="gainsDeclarerFlatTax">-</td>
+                        <td id="avantageGains">-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Plafond annuel</strong></td>
+                        <td>13,000 € (cotisations)</td>
+                        <td>Illimité</td>
+                        <td><span class="badge badge-warning">⚠️ Limite</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Diversification</strong></td>
+                        <td>ETF France + Europe</td>
+                        <td>Actions mondiales</td>
+                        <td>Égale</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rendement estimé 15 ans</strong></td>
+                        <td id="rendementEstimePEA">-</td>
+                        <td id="rendementEstimeFlatTax">-</td>
+                        <td id="avantageRendement">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- RECOMMANDATIONS ETF -->
+        <div class="card">
+            <h2>🎯 ETF Recommandés pour votre PEA</h2>
+
+            <div class="etf-card">
+                <div class="etf-name">📍 MSCI World (70% du portefeuille)</div>
+                <div class="etf-details">
+                    <strong>Indices :</strong> 1 500+ grandes capitalisations mondiales (Google, Apple, LVMH, etc.)<br>
+                    <strong>Secteurs :</strong> Technologie (28%), Santé (13%), Finance (12%), Industrie (10%)<br>
+                    <strong>Géographie :</strong> USA (64%), Japon (7%), Europe (8%), Autres (21%)<br>
+                    <strong>Exemples :</strong> iShares Core MSCI World UCITS ETF, Vanguard FTSE Developed World
+                </div>
+                <div class="etf-return">↗️ Rendement moyen : 7.5% - 8.5% / an</div>
+                <span class="badge badge-success">✅ RECOMMANDÉ</span>
+            </div>
+
+            <div class="etf-card">
+                <div class="etf-name">🇺🇸 S&P 500 (30% du portefeuille)</div>
+                <div class="etf-details">
+                    <strong>Indices :</strong> 500 plus grandes entreprises américaines<br>
+                    <strong>Avantage :</strong> Plus agressif, fort exposure Tech et croissance<br>
+                    <strong>Exemples :</strong> iShares Core S&P 500 UCITS ETF, Vanguard S&P 500 UCITS ETF<br>
+                    <strong>Note :</strong> Très corrélé à la tech → Plus volatil
+                </div>
+                <div class="etf-return">↗️ Rendement moyen : 9% - 10% / an</div>
+                <span class="badge badge-success">✅ ALLOCATION CROISSANCE</span>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Stratégie d'achat (DCA) :</strong> Ne cherchez pas le "bon moment". Versez automatiquement chaque mois (le 1er ou après la paie). Quand le marché baisse, vous achetez "en promotion". C'est l'intérêt composé des 10-15 ans qui fait la vraie différence, pas les fluctuations court terme.
+            </div>
+        </div>
+
+        <!-- CONSEILS PRO -->
+        <div class="card">
+            <h2>💎 Stratégie d'Investissement Pro</h2>
+
+            <h3 style="color: var(--primary); margin-top: 20px;">Les 3 Règles d'Or</h3>
+
+            <div style="margin-top: 15px; line-height: 2;">
+                <p><strong>1️⃣ Réduire les frais :</strong> Fuyez les banques (1-2% de frais). Ouvrez un PEA chez un courtier en ligne (BoursoBank, Fortuneo, Trade Republic). Frais d'entrée = 0.</p>
+
+                <p style="margin-top: 15px;"><strong>2️⃣ Automatiser :</strong> Paramétrez un virement automatique le jour suivant votre paie. Achetez qu'il pleuve, qu'il vente ou que le marché s'écroule. Quand ça baisse, c'est une promotion.</p>
+
+                <p style="margin-top: 15px;"><strong>3️⃣ Laisser reposer :</strong> Ne touchez PAS cet argent. Les 5 premières années, c'est lent. Après 10-15 ans, ça accélère exponentiellement grâce aux intérêts composés.</p>
+            </div>
+
+            <h3 style="color: var(--primary); margin-top: 25px;">Exemple Concret</h3>
+            <div class="info-box" style="background: rgba(76, 175, 80, 0.15);">
+                <p><strong>Scénario :</strong> Vous versez 100€/mois sur 15 ans, rendement 7.5%, PEA.</p>
+                <p style="margin-top: 8px;">→ <strong>Investi :</strong> 18,000 € | <strong>Gains :</strong> +12,500 € | <strong>Impôts (17.2%) :</strong> -2,150 € | <strong>Net :</strong> 28,350 €</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-light);"><em>Vous avez fait × 1.6 votre argent en 15 ans. Sur un compte-titres ? 30% d'impôts = seulement 26,150 € net.</em></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTaxRegime = 'pea';
+        let projectionData = null;
+
+        // Event Listeners pour les sliders
+        document.getElementById('montantSlider').addEventListener('input', function() {
+            document.getElementById('montantDisplay').textContent = parseFloat(this.value).toLocaleString('fr-FR') + ' €';
+            calculateProjection();
+        });
+
+        document.getElementById('rendementSlider').addEventListener('input', function() {
+            document.getElementById('rendementDisplay').textContent = this.value + '%';
+            calculateProjection();
+        });
+
+        document.getElementById('inflationSlider').addEventListener('input', function() {
+            document.getElementById('inflationDisplay').textContent = this.value + '%';
+            calculateProjection();
+        });
+
+        document.getElementById('augmentationSlider').addEventListener('input', function() {
+            document.getElementById('augmentationDisplay').textContent = this.value + '%';
+            calculateProjection();
+        });
+
+        document.getElementById('horizonSlider').addEventListener('input', function() {
+            document.getElementById('horizonDisplay').textContent = this.value + ' ans';
+            calculateProjection();
+        });
+
+        function selectTaxRegime(regime) {
+            currentTaxRegime = regime;
+            document.getElementById('peaBtn').classList.toggle('active', regime === 'pea');
+            document.getElementById('flatTaxBtn').classList.toggle('active', regime === 'flatTax');
+
+            if (regime === 'pea') {
+                document.getElementById('taxExplainer').innerHTML = '✅ <strong>PEA après 5 ans :</strong> 17,2% prélèvements sociaux (exemption IR)';
+            } else {
+                document.getElementById('taxExplainer').innerHTML = '⚠️ <strong>Compte-Titres :</strong> 30% Flat Tax immédiate sur les gains';
+            }
+            calculateProjection();
+        }
+
+        function calculateProjection() {
+            const montant = parseFloat(document.getElementById('montantSlider').value);
+            const rendement = parseFloat(document.getElementById('rendementSlider').value) / 100;
+            const inflation = parseFloat(document.getElementById('inflationSlider').value) / 100;
+            const augmentation = parseFloat(document.getElementById('augmentationSlider').value) / 100;
+            const horizon = parseFloat(document.getElementById('horizonSlider').value);
+
+            let valeur = 0;
+            let totalInvesti = 0;
+            const dataPoints = [];
+            const labels = [];
+            let versementActuel = montant;
+
+            // Calcul année par année
+            for (let an = 0; an <= horizon; an++) {
+                // Versements de l'année
+                if (an > 0) {
+                    for (let mois = 0; mois < 12; mois++) {
+                        valeur = valeur * (1 + rendement / 12) + versementActuel;
+                        totalInvesti += versementActuel;
+                    }
+                    // Augmentation annuelle de l'épargne
+                    versementActuel *= (1 + augmentation);
+                } else {
+                    // Année 0
+                    for (let mois = 0; mois < 12; mois++) {
+                        valeur = valeur * (1 + rendement / 12) + versementActuel;
+                        totalInvesti += versementActuel;
+                    }
+                }
+
+                // Calcul du pouvoir d'achat réel
+                const valeurReelle = valeur / Math.pow(1 + inflation, an);
+                dataPoints.push(Math.round(valeur));
+                labels.push(an === 0 ? 'An 0' : `An ${an}`);
+            }
+
+            // Calculs finaux
+            const valeurFinal = valeur;
+            const plusValueBrute = valeurFinal - totalInvesti;
+
+            // Impôts selon régime
+            let impots = 0;
+            let tauxImpot = 0;
+            if (currentTaxRegime === 'pea') {
+                // Après 5 ans : 17.2% sur la plus-value
+                tauxImpot = horizon >= 5 ? 0.172 : 0.302; // Avant 5 ans : Flat Tax 30%
+                impots = plusValueBrute * tauxImpot;
+            } else {
+                // Compte-titres : 30% Flat Tax
+                tauxImpot = 0.30;
+                impots = plusValueBrute * tauxImpot;
+            }
+
+            const valeurNette = valeurFinal - impots;
+            const valeurReelleFinale = valeurNette / Math.pow(1 + inflation, horizon);
+
+            // Affichage des résultats
+            document.getElementById('totalInvesti').textContent = totalInvesti.toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' €';
+            document.getElementById('plusValue').textContent = plusValueBrute.toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' €';
+            document.getElementById('impots').textContent = '-' + impots.toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' €';
+            document.getElementById('valeurNette').textContent = valeurNette.toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' €';
+            document.getElementById('pouvoirAchatDisplay').textContent = valeurReelleFinale.toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' € (valeur 2026)';
+
+            // Comparateur fiscal
+            const plusValueNet_PEA = (horizon >= 5) ? (plusValueBrute * 0.828) : (plusValueBrute * 0.70);
+            const plusValueNet_FlatTax = plusValueBrute * 0.70;
+
+            document.getElementById('gainsDeclarerPEA').textContent = (totalInvesti + plusValueNet_PEA).toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' €';
+            document.getElementById('gainsDeclarerFlatTax').textContent = (totalInvesti + plusValueNet_FlatTax).toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' €';
+
+            const avantage = Math.round((plusValueNet_PEA - plusValueNet_FlatTax) / 1000);
+            document.getElementById('avantageGains').innerHTML = avantage >= 0 ? `<span class="badge badge-success">+${avantage}k€</span>` : '<span class="badge badge-warning">-</span>';
+
+            document.getElementById('rendementEstimePEA').textContent = ((valeurNette / totalInvesti - 1) * 100).toFixed(1) + '%';
+            document.getElementById('rendementEstimeFlatTax').textContent = ((valeurFinal / totalInvesti * 0.70) * 100).toFixed(1) + '%';
+
+            const avantageRend = ((valeurNette - valeurFinal * 0.70) / (valeurFinal * 0.70) * 100).toFixed(1);
+            document.getElementById('avantageRendement').innerHTML = avantageRend > 0 ? `<span class="badge badge-success">+${avantageRend}%</span>` : '<span class="badge badge-warning">-</span>';
+
+            // Graphique
+            drawChart(labels, dataPoints);
+        }
+
+        function drawChart(labels, dataPoints) {
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Valeur du portefeuille',
+                        data: dataPoints,
+                        borderColor: '#FF6B6B',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#FFB84D',
+                        pointBorderColor: '#FF6B6B',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#2d2d2d',
+                                font: { size: 12, weight: 'bold' },
+                                padding: 15
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#666666',
+                                callback: function(value) {
+                                    return value.toLocaleString('fr-FR') + ' €';
+                                }
+                            },
+                            grid: { color: 'rgba(255, 107, 107, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#666666' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Calcul initial
+        calculateProjection();
+    </script>
+</body>
+</html>

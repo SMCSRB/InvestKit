@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres | InvestKit</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        .settings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .settings-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .settings-sidebar {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-sidebar h3 {
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .settings-nav {
+            list-style: none;
+        }
+
+        .settings-nav li {
+            margin-bottom: 10px;
+        }
+
+        .settings-nav a {
+            display: block;
+            padding: 12px 15px;
+            color: var(--text-dark);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .settings-nav a:hover,
+        .settings-nav a.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+        }
+
+        .settings-content {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .settings-section h2 {
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .settings-form {
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn-save {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-cancel {
+            padding: 12px 30px;
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: var(--primary);
+            color: var(--light);
+        }
+
+        .btn-logout {
+            padding: 12px 30px;
+            background: var(--danger);
+            color: var(--light);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(244, 67, 54, 0.3);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 184, 77, 0.1));
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--light);
+        }
+
+        .user-info h3 {
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+
+        .user-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .preference-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .preference-item label {
+            margin-bottom: 0;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .settings-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-sidebar {
+                display: flex;
+                gap: 10px;
+            }
+
+            .settings-nav {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .settings-nav li {
+                margin-bottom: 0;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .user-profile {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="navbar container">
+            <a href="index.html" class="logo">💎 InvestKit</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html#outils">Outils</a></li>
+                    <li><a href="index.html#features">Pourquoi nous</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <button class="btn-login" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SETTINGS PAGE -->
+    <div class="settings-container">
+        <h1>Paramètres de Compte</h1>
+
+        <div class="settings-layout">
+            <!-- SIDEBAR -->
+            <div class="settings-sidebar">
+                <h3>⚙️ Paramètres</h3>
+                <ul class="settings-nav">
+                    <li><a class="active" onclick="showSection('general')">Général</a></li>
+                    <li><a onclick="showSection('appearance')">Apparence</a></li>
+                    <li><a onclick="showSection('notifications')">Notifications</a></li>
+                    <li><a onclick="showSection('privacy')">Confidentialité</a></li>
+                    <li><a onclick="showSection('account')">Compte</a></li>
+                </ul>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="settings-content">
+                <!-- GENERAL SECTION -->
+                <div class="settings-section active" id="general">
+                    <h2>Paramètres Généraux</h2>
+
+                    <div class="user-profile">
+                        <div class="user-avatar" id="avatarEmoji">👤</div>
+                        <div class="user-info">
+                            <h3 id="userName">Andreja Simic</h3>
+                            <p id="userEmail">andreja@example.com</p>
+                            <small id="userProfile">Profil : Débutant</small>
+                        </div>
+                    </div>
+
+                    <form class="settings-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">Prénom</label>
+                                <input type="text" id="firstName" value="Andreja">
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Nom</label>
+                                <input type="text" id="lastName" value="Simic">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" value="andreja@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Téléphone (optionnel)</label>
+                            <input type="tel" id="phone" placeholder="+33 6 XX XX XX XX">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bio">Bio</label>
+                            <textarea id="bio" placeholder="Parlez un peu de vous et vos objectifs d'investissement..."></textarea>
+                            <small>Max 500 caractères</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="profil">Profil d'investisseur</label>
+                            <select id="profil">
+                                <option value="debutant">Débutant (< 5 ans)</option>
+                                <option value="intermediaire" selected>Intermédiaire (5-15 ans)</option>
+                                <option value="expert">Expert (15+ ans)</option>
+                            </select>
+                            <small>Cela nous aide à personnaliser les recommandations</small>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn-save" onclick="saveSettings('general')">💾 Sauvegarder</button>
+                            <button type="button" class="btn-cancel" onclick="location.reload()">Annuler</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- APPEARANCE SECTION -->
+                <div class="settings-section" id="appearance">
+                    <h2>Apparence</h2>
+
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label>Thème</label>
+                            <div class="preference-item">
+                                <label>Mode Clair (défaut)</label>
+                                <input type="radio" name="theme" value="light" checked>
+                            </div>
+                            <div class="preference-item">
+                                <label>Mode Sombre</label>
+                                <input type="radio" name="theme" value="dark">
+                            </div>
+                            <div class="preference-item">
+                                <label>Automatique (système)</label>
+                                <input type="radio" name="theme" value="auto">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Taille de police</label>
+                            <select id="fontSize">
+                                <option value="small">Petite</option>
+                                <option value="normal" selected>Normale</option>
+                                <option value="large">Grande</option>
+                            </select>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="animations" checked>
+                            <label for="animations">Activer les animations</label>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="compactView">
+                            <label for="compactView">Vue compacte</label>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn-save" onclick="saveSettings('appearance')">💾 Sauvegarder</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- NOTIFICATIONS SECTION -->
+                <div class="settings-section" id="notifications">
+                    <h2>Notifications</h2>
+
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label>Emails</label>
+                            <div class="preference-item">
+                                <label>Mises à jour de marché</label>
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="preference-item">
+                                <label>Conseils d'investissement</label>
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="preference-item">
+                                <label>Actualités produit</label>
+                                <input type="checkbox">
+                            </div>
+                            <div class="preference-item">
+                                <label>Offres et promotions</label>
+                                <input type="checkbox">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notifications en app</label>
+                            <div class="preference-item">
+                                <label>Alertes de prix</label>
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="preference-item">
+                                <label>Rappels d'actions</label>
+                                <input type="checkbox" checked>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn-save" onclick="saveSettings('notifications')">💾 Sauvegarder</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- PRIVACY SECTION -->
+                <div class="settings-section" id="privacy">
+                    <h2>Confidentialité & Sécurité</h2>
+
+                    <div class="alert alert-warning">
+                        ⚠️ Vos données sont chiffrées et jamais partagées avec des tiers.
+                    </div>
+
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <label>Visibilité du profil</label>
+                            <select id="privacy-level">
+                                <option value="private">Privé (recommandé)</option>
+                                <option value="friends">Amis seulement</option>
+                                <option value="public">Public</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Partage de données</label>
+                            <div class="preference-item">
+                                <label>Partager mes simulations avec la communauté</label>
+                                <input type="checkbox">
+                            </div>
+                            <div class="preference-item">
+                                <label>Accepter l'analyse anonyme de mes données</label>
+                                <input type="checkbox" checked>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="currentPassword">Mot de passe actuel</label>
+                            <input type="password" id="currentPassword" placeholder="••••••••">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword">Nouveau mot de passe</label>
+                            <input type="password" id="newPassword" placeholder="••••••••">
+                            <small>Laisser vide pour ne pas changer</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirmer le mot de passe</label>
+                            <input type="password" id="confirmPassword" placeholder="••••••••">
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn-save" onclick="saveSettings('privacy')">💾 Sauvegarder</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ACCOUNT SECTION -->
+                <div class="settings-section" id="account">
+                    <h2>Gestion du Compte</h2>
+
+                    <div class="alert alert-warning">
+                        ⚠️ Les actions suivantes sont irréversibles. Procédez avec prudence.
+                    </div>
+
+                    <form class="settings-form">
+                        <div class="form-group">
+                            <h3 style="color: var(--danger); margin-bottom: 15px;">⚡ Zone Danger</h3>
+                            <p style="color: var(--text-light); margin-bottom: 20px;">
+                                Supprimer définitivement votre compte et toutes vos données.
+                            </p>
+                            <button type="button" class="btn-logout" onclick="if(confirm('Êtes-vous sûr? Cette action est irréversible.')) alert('Suppression du compte en cours...')">
+                                🗑️ Supprimer mon compte
+                            </button>
+                        </div>
+
+                        <hr style="margin: 30px 0; border: none; border-top: 2px solid var(--accent);">
+
+                        <div class="form-group">
+                            <h3 style="color: var(--text-dark); margin-bottom: 15px;">📊 Mes Données</h3>
+                            <button type="button" class="btn-save" onclick="alert('Téléchargement de vos données...')">
+                                📥 Télécharger mes données (JSON)
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <h3 style="color: var(--text-dark); margin-bottom: 15px; margin-top: 30px;">🔐 Sessions Actives</h3>
+                            <div class="preference-item">
+                                <div>
+                                    <strong>Chrome - Windows</strong><br>
+                                    <small>Dernière connexion: Il y a 10 minutes</small>
+                                </div>
+                                <button type="button" class="btn-cancel" onclick="alert('Déconnexion de cette session...')">Déconnecter</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Vérifier la connexion
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                //window.location.href = 'login.html';
+            }
+
+            // Charger les données utilisateur
+            document.getElementById('userName').textContent =
+                localStorage.getItem('userName') || 'Utilisateur';
+            document.getElementById('userEmail').textContent =
+                localStorage.getItem('userEmail') || 'utilisateur@example.com';
+        });
+
+        function showSection(sectionId) {
+            // Masquer toutes les sections
+            document.querySelectorAll('.settings-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Retirer la classe active des liens
+            document.querySelectorAll('.settings-nav a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Afficher la section sélectionnée
+            document.getElementById(sectionId).classList.add('active');
+
+            // Ajouter la classe active au lien
+            event.target.classList.add('active');
+        }
+
+        function saveSettings(section) {
+            alert(`✅ Paramètres ${section} sauvegardés avec succès!`);
+
+            // TODO: Intégrer avec un backend
+            // Exemple : localStorage pour demo
+            if (section === 'general') {
+                localStorage.setItem('userName', document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value);
+            }
+        }
+
+        function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userEmail');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
