@@ -21,6 +21,22 @@ export default function ChapterPage() {
   const chapter = domain && chapterId ? domain.chapters.find((c) => c.id === chapterId) : null;
   const isUnlocked = domain && chapterId ? isChapterUnlocked(domain.id, chapterId) : false;
 
+  // Debug logging
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('ChapterPage Debug:', {
+        domainId,
+        chapterId,
+        domain: domain?.id,
+        chapter: chapter?.id,
+        isLoading,
+        isUnlocked,
+        domainsCount: educationDomains.length,
+        chaptersCount: domain?.chapters?.length
+      });
+    }
+  }, [domainId, chapterId, domain, chapter, isLoading, isUnlocked]);
+
   const [showLesson, setShowLesson] = useState(true);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
@@ -161,13 +177,61 @@ export default function ChapterPage() {
     setShowResults(true);
   };
 
-  if (isLoading || !domain || !chapter || !domainId || !chapterId) {
+  if (isLoading) {
     return (
       <PageWrapper>
         <div className="min-h-screen pt-32 pb-20 px-6">
           <div className="max-w-4xl mx-auto">
             <div className="h-12 bg-gray-700 rounded w-64 mb-4 animate-pulse" />
             <div className="h-96 bg-gray-700 rounded animate-pulse" />
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (!domainId || !chapterId) {
+    return (
+      <PageWrapper>
+        <div className="min-h-screen pt-32 pb-20 px-6 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-400 mb-4">Paramètres manquants</h1>
+            <p className="text-gray-400 mb-6">Impossible de charger le chapitre.</p>
+            <Link href="/education" className="text-blue-400 hover:text-blue-300">
+              ← Retour à l'académie
+            </Link>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (!domain) {
+    return (
+      <PageWrapper>
+        <div className="min-h-screen pt-32 pb-20 px-6 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-400 mb-4">Domaine non trouvé</h1>
+            <p className="text-gray-400 mb-6">Le domaine "{domainId}" n'existe pas.</p>
+            <Link href="/education" className="text-blue-400 hover:text-blue-300">
+              ← Retour à l'académie
+            </Link>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (!chapter) {
+    return (
+      <PageWrapper>
+        <div className="min-h-screen pt-32 pb-20 px-6 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-400 mb-4">Chapitre non trouvé</h1>
+            <p className="text-gray-400 mb-6">Le chapitre {chapterId} du domaine "{domainId}" n'existe pas.</p>
+            <Link href={`/education/${domainId}`} className="text-blue-400 hover:text-blue-300">
+              ← Retour au domaine
+            </Link>
           </div>
         </div>
       </PageWrapper>
