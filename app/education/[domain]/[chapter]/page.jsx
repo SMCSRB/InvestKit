@@ -27,12 +27,42 @@ export default function ChapterPage() {
   const [showExplanations, setShowExplanations] = useState(false);
   const [notes, setNotes] = useState(getNote(domainId, chapterId));
   const [newBadges, setNewBadges] = useState([]);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedBadgeToShare, setSelectedBadgeToShare] = useState(null);
   const attempts = getAttempts(domainId, chapterId);
 
   const badgeInfo = {
     first_blood: { name: 'Premier Sang', emoji: '🩸', description: 'Complète ton premier chapitre' },
     perfect: { name: 'Parfait', emoji: '💯', description: 'Obtiens un score de 100%' },
     no_mistakes: { name: 'Sans Erreurs', emoji: '⭐', description: 'Complète 3 chapitres d\'affilée' },
+  };
+
+  const generateShareMessage = (badgeId) => {
+    const badge = badgeInfo[badgeId];
+    return `J'ai débloqué le badge "${badge.name}" ${badge.emoji} sur InvestKit! Rejoins-moi pour apprendre à investir! 🚀 #InvestKit #Education`;
+  };
+
+  const shareOnSocial = (platform, badgeId) => {
+    const message = generateShareMessage(badgeId);
+    const encodedMessage = encodeURIComponent(message);
+    const url = `https://investkit.app`;
+
+    const shareUrls = {
+      twitter: `https://twitter.com/intent/tweet?text=${encodedMessage}&url=${encodeURIComponent(url)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodedMessage}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+    };
+
+    if (shareUrls[platform]) {
+      window.open(shareUrls[platform], '_blank', 'width=600,height=400');
+    }
+  };
+
+  const copyToClipboard = (badgeId) => {
+    const message = generateShareMessage(badgeId);
+    navigator.clipboard.writeText(message).then(() => {
+      alert('Message copié! 📋');
+    });
   };
 
   useEffect(() => {
@@ -449,13 +479,24 @@ export default function ChapterPage() {
                               return (
                                 <div
                                   key={badgeId}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-900/30 border border-purple-400/50"
+                                  className="flex flex-col gap-2 px-4 py-3 rounded-lg bg-purple-900/30 border border-purple-400/50"
                                 >
-                                  <span className="text-2xl">{badge.emoji}</span>
-                                  <div>
-                                    <p className="text-white font-semibold text-sm">{badge.name}</p>
-                                    <p className="text-purple-300 text-xs">{badge.description}</p>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-2xl">{badge.emoji}</span>
+                                    <div>
+                                      <p className="text-white font-semibold text-sm">{badge.name}</p>
+                                      <p className="text-purple-300 text-xs">{badge.description}</p>
+                                    </div>
                                   </div>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedBadgeToShare(badgeId);
+                                      setShareModalOpen(true);
+                                    }}
+                                    className="text-xs px-3 py-1 rounded bg-purple-500/50 hover:bg-purple-500/70 text-white transition-all w-fit"
+                                  >
+                                    📢 Partager
+                                  </button>
                                 </div>
                               );
                             })}
@@ -520,6 +561,192 @@ export default function ChapterPage() {
             </div>
           )}
         </div>
+
+        {/* Share Modal */}
+        {shareModalOpen && selectedBadgeToShare && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 50,
+              backdropFilter: 'blur(4px)',
+            }}
+            onClick={() => setShareModalOpen(false)}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                borderRadius: '16px',
+                padding: '32px',
+                maxWidth: '500px',
+                width: '90%',
+                border: '1px solid rgba(139, 92, 246, 0.5)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px' }}>
+                  {badgeInfo[selectedBadgeToShare].emoji}
+                </span>
+                <h3 style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+                  Partage ton succès !
+                </h3>
+                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px', margin: 0 }}>
+                  Montre à tes amis que tu as débloqué le badge "{badgeInfo[selectedBadgeToShare].name}"
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '24px',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                }}
+              >
+                <p style={{ color: '#e0e7ff', fontSize: '13px', margin: 0, lineHeight: '1.5' }}>
+                  {generateShareMessage(selectedBadgeToShare)}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={() => copyToClipboard(selectedBadgeToShare)}
+                  style={{
+                    background: 'linear-gradient(135deg, #a78bfa, #c084fc)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    fontSize: '14px',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'scale(1)';
+                  }}
+                >
+                  📋 Copier le message
+                </button>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                  <button
+                    onClick={() => {
+                      shareOnSocial('twitter', selectedBadgeToShare);
+                      setShareModalOpen(false);
+                    }}
+                    style={{
+                      background: 'rgba(29, 155, 240, 0.2)',
+                      border: '1px solid rgba(29, 155, 240, 0.5)',
+                      color: '#1da9f1',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      fontSize: '12px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(29, 155, 240, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(29, 155, 240, 0.2)';
+                    }}
+                  >
+                    𝕏 Twitter
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      shareOnSocial('facebook', selectedBadgeToShare);
+                      setShareModalOpen(false);
+                    }}
+                    style={{
+                      background: 'rgba(24, 119, 242, 0.2)',
+                      border: '1px solid rgba(24, 119, 242, 0.5)',
+                      color: '#1877f2',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      fontSize: '12px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(24, 119, 242, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(24, 119, 242, 0.2)';
+                    }}
+                  >
+                    f Facebook
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      shareOnSocial('linkedin', selectedBadgeToShare);
+                      setShareModalOpen(false);
+                    }}
+                    style={{
+                      background: 'rgba(0, 119, 181, 0.2)',
+                      border: '1px solid rgba(0, 119, 181, 0.5)',
+                      color: '#0077b5',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      fontSize: '12px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(0, 119, 181, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(0, 119, 181, 0.2)';
+                    }}
+                  >
+                    in LinkedIn
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setShareModalOpen(false)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    fontSize: '14px',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.color = 'rgba(255, 255, 255, 0.7)';
+                  }}
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageWrapper>
   );
