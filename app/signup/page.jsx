@@ -14,6 +14,7 @@ export default function SignupPage() {
   const [captchaToken, setCaptchaToken] = useState(null);
   const [emailAvailable, setEmailAvailable] = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
 
@@ -70,7 +71,7 @@ export default function SignupPage() {
   const isEmailFormatValid = validateEmail(email);
   const isEmailValid = isEmailFormatValid && emailAvailable === true;
   const passwordStrength = getPasswordStrength(password);
-  const isFormValid = firstName && lastName && isEmailValid && password.length >= 6 && captchaToken;
+  const isFormValid = firstName && lastName && isEmailValid && password.length >= 6 && captchaToken && acceptTerms;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -211,6 +212,37 @@ export default function SignupPage() {
             <p style={{ color: '#ff6b6b' }}>⚠️ hCaptcha key not configured</p>
           )}
         </div>
+
+        {/* Conditions d'utilisation */}
+        <div style={{ margin: '15px 0', padding: '10px', background: '#f9f9f9', borderRadius: '5px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              id="terms"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              style={{ marginTop: '4px', cursor: 'pointer' }}
+              required
+            />
+            <label htmlFor="terms" style={{ fontSize: '14px', cursor: 'pointer', color: '#333' }}>
+              J'accepte les <a href="/conditions" style={{ color: '#ff6b6b', textDecoration: 'none' }}>Conditions d'Utilisation</a> et la <a href="/privacy" style={{ color: '#ff6b6b', textDecoration: 'none' }}>Politique de Confidentialité</a>
+            </label>
+          </div>
+          {!acceptTerms && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
+        </div>
+
+        {/* Trust Signals / Sécurité */}
+        <div style={{ margin: '15px 0', display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '12px', color: '#666' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '16px' }}>🔒</span>
+            <span>SSL Secure</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '16px' }}>✓</span>
+            <span>hCaptcha Protected</span>
+          </div>
+        </div>
+
         <button type="submit" className="btn btn-primary" disabled={loading || !isFormValid} style={{ opacity: isFormValid ? 1 : 0.6, cursor: isFormValid ? 'pointer' : 'not-allowed' }}>
           {loading ? 'Inscription...' : 'S\'inscrire'}
         </button>
