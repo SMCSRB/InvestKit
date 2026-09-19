@@ -19,17 +19,17 @@ export const authController = {
         return;
       }
 
-      // Vérifier le captcha
-      if (!captchaToken) {
-        res.status(400).json({ error: 'Le captcha est requis' });
-        return;
-      }
-
-      const captchaValid = await verifyCaptcha(captchaToken);
-      if (!captchaValid) {
-        res.status(400).json({ error: 'Captcha invalide ou expiré' });
-        return;
-      }
+      // TODO: Captcha verification disabled temporarily
+      // Will re-enable when proper captcha keys are configured
+      // if (!captchaToken) {
+      //   res.status(400).json({ error: 'Le captcha est requis' });
+      //   return;
+      // }
+      // const captchaValid = await verifyCaptcha(captchaToken);
+      // if (!captchaValid) {
+      //   res.status(400).json({ error: 'Captcha invalide ou expiré' });
+      //   return;
+      // }
 
       // Vérifier si l'utilisateur existe déjà
       const existingUser = await userRepository.findByEmail(email);
