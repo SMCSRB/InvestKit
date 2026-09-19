@@ -21,8 +21,13 @@ CREATE TABLE users (
   last_name VARCHAR(255) NOT NULL,
   verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(10),
+  verification_code_expires_at TIMESTAMP,
   reset_token VARCHAR(255),
   reset_token_expires_at TIMESTAMP,
+  account_type VARCHAR(50),
+  interests VARCHAR(500),
+  language VARCHAR(10) DEFAULT 'fr',
+  enable_2fa BOOLEAN DEFAULT FALSE,
   last_login_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
