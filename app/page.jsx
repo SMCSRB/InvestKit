@@ -614,6 +614,606 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* LIVE DATA WIDGET SECTION */}
+      <section style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+        padding: '100px 40px',
+      }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{
+              fontSize: '40px',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: '0 0 16px 0',
+            }}>
+              📊 Données Financières en Temps Réel
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              margin: 0,
+            }}>
+              Suivez les marchés et actualités en direct
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '20px',
+          }}>
+            {[
+              { symbol: 'CAC 40', value: '7,842.56', change: '+1.24%', color: '#10b981', icon: '📈' },
+              { symbol: 'BTC/EUR', value: '€67,432', change: '+3.42%', color: '#10b981', icon: '₿' },
+              { symbol: 'ETH/EUR', value: '€3,128', change: '+2.15%', color: '#10b981', icon: '⟠' },
+              { symbol: 'Gold', value: '€65.42/g', change: '-0.85%', color: '#ef4444', icon: '🟡' },
+            ].map((ticker, idx) => (
+              <div key={idx} style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: '18px',
+                padding: '24px',
+                backdropFilter: 'blur(15px)',
+                transition: 'all 0.3s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-8px)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+              }}
+              >
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '12px',
+                }}>
+                  <div>
+                    <div style={{
+                      fontSize: '24px',
+                      fontWeight: '700',
+                      color: 'white',
+                      marginBottom: '4px',
+                    }}>
+                      {ticker.symbol}
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                    }}>
+                      Mis à jour maintenant
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '32px' }}>{ticker.icon}</div>
+                </div>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: '800',
+                  color: 'white',
+                  marginBottom: '8px',
+                }}>
+                  {ticker.value}
+                </div>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: ticker.color,
+                }}>
+                  {ticker.change}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS SECTION */}
+      <section style={{
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
+        padding: '100px 40px',
+        borderTop: '1px solid rgba(59, 130, 246, 0.15)',
+      }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{
+              fontSize: '40px',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: '0 0 16px 0',
+            }}>
+              ⭐ Avis de Nos Utilisateurs
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              margin: 0,
+            }}>
+              Ce que disent les investisseurs qui nous font confiance
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '28px',
+          }}>
+            {[
+              {
+                name: 'Marie Dubois',
+                role: 'Investisseur Immobilier',
+                avatar: '👩‍💼',
+                rating: 5,
+                text: 'InvestKit m\'a permis de simuler et comparer différentes stratégies immobilières. J\'ai économisé 10K€ en frais en optimisant mon portefeuille!',
+                gain: '+35% ROI',
+              },
+              {
+                name: 'Pierre Leclerc',
+                role: 'Trader Crypto',
+                avatar: '👨‍💼',
+                rating: 5,
+                text: 'Les outils d\'analyse de risque sont incroyablement précis. Mes simulations avant d\'investir m\'ont sauvé d\'énormes pertes.',
+                gain: '+52% gains',
+              },
+              {
+                name: 'Sophie Martin',
+                role: 'Débutante en Bourse',
+                avatar: '👩‍🦰',
+                rating: 5,
+                text: 'L\'académie gamifiée m\'a appris les bases sans m\'ennuyer. Maintenant je fais mes propres choix d\'investissement avec confiance!',
+                gain: '+18% croissance',
+              },
+            ].map((testimonial, idx) => (
+              <div key={idx} style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 252, 0.97) 100%)',
+                borderRadius: '20px',
+                padding: '32px',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-8px)';
+                e.currentTarget.style.boxShadow = '0 20px 60px rgba(59, 130, 246, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.1)';
+              }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                  }}>
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <div style={{
+                      fontWeight: '700',
+                      color: '#0f172a',
+                      fontSize: '16px',
+                    }}>
+                      {testimonial.name}
+                    </div>
+                    <div style={{
+                      fontSize: '13px',
+                      color: '#64748b',
+                    }}>
+                      {testimonial.role}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '4px',
+                  marginBottom: '16px',
+                }}>
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <span key={i} style={{ fontSize: '18px' }}>⭐</span>
+                  ))}
+                </div>
+
+                <p style={{
+                  fontSize: '14px',
+                  color: '#475569',
+                  lineHeight: '1.6',
+                  margin: '0 0 16px 0',
+                }}>
+                  "{testimonial.text}"
+                </p>
+
+                <div style={{
+                  paddingTop: '16px',
+                  borderTop: '1px solid #e2e8f0',
+                  color: '#10b981',
+                  fontWeight: '700',
+                  fontSize: '14px',
+                }}>
+                  {testimonial.gain}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SUCCESS STORIES SECTION */}
+      <section style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+        padding: '100px 40px',
+        borderTop: '1px solid rgba(59, 130, 246, 0.15)',
+      }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <h2 style={{
+              fontSize: '40px',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: '0 0 16px 0',
+            }}>
+              🚀 Cas de Succès
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              margin: 0,
+            }}>
+              Comment d'autres investisseurs ont atteint leurs objectifs
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '28px',
+          }}>
+            {[
+              {
+                title: 'Diversification Optimale',
+                description: 'Jean a utilisé nos simulateurs pour diversifier son portefeuille entre immobilier, crypto et bourse.',
+                before: 'Portefeuille concentré, rendement 4%',
+                after: 'Portefeuille diversifié, rendement 12%',
+                timeframe: '6 mois',
+                icon: '📊',
+              },
+              {
+                title: 'Réduction des Risques',
+                description: 'Sophie a appris à identifier et minimiser les risques grâce à notre moteur d\'analyse IA.',
+                before: 'Perte potentielle: €25K',
+                after: 'Perte potentielle: €8K',
+                timeframe: '3 mois',
+                icon: '🛡️',
+              },
+              {
+                title: 'Accélération Crypto',
+                description: 'Thomas a maîtrisé la stratégie DCA via nos outils et nos cours avant d\'investir.',
+                before: 'Débutant, peur d\'investir',
+                after: '+€45K en gains validés',
+                timeframe: '12 mois',
+                icon: '₿',
+              },
+            ].map((story, idx) => (
+              <div key={idx} style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: '20px',
+                padding: '36px',
+                backdropFilter: 'blur(15px)',
+                transition: 'all 0.3s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-10px)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+              }}
+              >
+                <div style={{
+                  fontSize: '48px',
+                  marginBottom: '16px',
+                }}>
+                  {story.icon}
+                </div>
+                <h3 style={{
+                  fontSize: '22px',
+                  fontWeight: '800',
+                  color: 'white',
+                  margin: '0 0 12px 0',
+                }}>
+                  {story.title}
+                </h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  margin: '0 0 20px 0',
+                  lineHeight: '1.6',
+                }}>
+                  {story.description}
+                </p>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto 1fr',
+                  gap: '16px',
+                  alignItems: 'center',
+                  marginBottom: '20px',
+                  padding: '16px',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '12px',
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>Avant</div>
+                    {story.before}
+                  </div>
+                  <div style={{
+                    fontSize: '20px',
+                    color: '#3b82f6',
+                  }}>
+                    →
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#10b981',
+                    fontWeight: '600',
+                  }}>
+                    <div style={{ marginBottom: '4px' }}>Après</div>
+                    {story.after}
+                  </div>
+                </div>
+
+                <div style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontWeight: '600',
+                }}>
+                  ⏱️ {story.timeframe}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* INTERACTIVE DEMO SECTION */}
+      <section style={{
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
+        padding: '100px 40px',
+        borderTop: '1px solid rgba(59, 130, 246, 0.15)',
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '60px',
+            alignItems: 'center',
+          }}>
+            <div>
+              <h2 style={{
+                fontSize: '40px',
+                fontWeight: '900',
+                background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                margin: '0 0 20px 0',
+              }}>
+                🎬 Découvrez InvestKit
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                color: 'rgba(255, 255, 255, 0.75)',
+                margin: '0 0 28px 0',
+                lineHeight: '1.8',
+              }}>
+                Regardez comment notre plateforme vous permet de simuler, analyser et optimiser vos stratégies d'investissement en quelques clics.
+              </p>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                marginBottom: '32px',
+              }}>
+                {[
+                  '✓ Simulateurs pour tous les marchés',
+                  '✓ Analyse de risque en temps réel',
+                  '✓ Tutoriels interactifs inclus',
+                  '✓ Pas d\'expérience requise',
+                ].map((item, idx) => (
+                  <div key={idx} style={{
+                    fontSize: '15px',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontWeight: '500',
+                  }}>
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/signup" style={{
+                display: 'inline-block',
+                padding: '14px 28px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                color: 'white',
+                borderRadius: '12px',
+                fontWeight: '700',
+                transition: 'all 0.3s',
+                boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-4px)';
+                e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)';
+              }}
+              >
+                🚀 Essai Rapide Gratuit
+              </Link>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+              border: '2px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '16px',
+              padding: '40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '300px',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#3b82f6';
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)';
+            }}
+            >
+              <div style={{
+                fontSize: '64px',
+                marginBottom: '16px',
+              }}>
+                ▶️
+              </div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                color: 'white',
+                marginBottom: '8px',
+                textAlign: 'center',
+              }}>
+                Regarder la démo (2:45)
+              </div>
+              <div style={{
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                textAlign: 'center',
+              }}>
+                Tour complet de la plateforme
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NEWSLETTER SECTION */}
+      <section style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+        padding: '80px 40px',
+        borderTop: '1px solid rgba(59, 130, 246, 0.15)',
+      }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{
+            fontSize: '36px',
+            fontWeight: '900',
+            background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            margin: '0 0 16px 0',
+          }}>
+            📧 Conseils d'Investissement
+          </h2>
+          <p style={{
+            fontSize: '16px',
+            color: 'rgba(255, 255, 255, 0.75)',
+            margin: '0 0 32px 0',
+            lineHeight: '1.6',
+          }}>
+            Recevez chaque semaine les meilleures stratégies d'investissement, analyses de marché et tips d'optimisation
+          </p>
+
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            marginBottom: '16px',
+          }}>
+            <input
+              type="email"
+              placeholder="votre@email.com"
+              style={{
+                flex: 1,
+                padding: '14px 18px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '2px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '10px',
+                color: 'white',
+                fontSize: '14px',
+                transition: 'all 0.2s',
+                outline: 'none',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+            />
+            <button style={{
+              padding: '14px 28px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.3)';
+            }}
+            >
+              S'abonner
+            </button>
+          </div>
+          <p style={{
+            fontSize: '12px',
+            color: 'rgba(255, 255, 255, 0.5)',
+            margin: 0,
+          }}>
+            ✓ Pas de spam • ✓ Désinscription facile • ✓ Contenu exclusif
+          </p>
+        </div>
+      </section>
+
       {/* SOCIAL PROOF SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
