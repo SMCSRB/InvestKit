@@ -118,90 +118,184 @@ export default function SignupPage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', textAlign: 'center' }}>
-      <h1>S'inscrire</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '20px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    }}>
+      {/* Conteneur principal */}
+      <div style={{
+        maxWidth: '420px',
+        width: '100%',
+        background: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        padding: '40px',
+        position: 'relative',
+      }}>
+        {/* Header avec logo */}
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            margin: '0 auto 15px',
+          }}>
+            💼
+          </div>
+          <h1 style={{ margin: '0 0 5px 0', fontSize: '28px', color: '#2d3748', fontWeight: '600' }}>InvestKit</h1>
+          <p style={{ margin: '0', fontSize: '14px', color: '#718096' }}>Plateforme Premium d'Investissement</p>
+        </div>
+
+        {/* Sous-titre */}
+        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+          <h2 style={{ margin: '0', fontSize: '20px', color: '#2d3748', fontWeight: '500' }}>Créer votre compte</h2>
+          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>Rejoignez des milliers d'investisseurs</p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Prénom */}
         <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Prénom</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder="Prénom"
+              placeholder="Jean"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              style={{ flex: 1 }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                transition: 'all 0.3s ease',
+                outline: 'none',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
               required
             />
-            {firstName && <span style={{ fontSize: '18px' }}>✅</span>}
+            {firstName && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
           </div>
-          {!firstName && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
+          {!firstName && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
         </div>
 
         {/* Nom */}
         <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Nom</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder="Nom"
+              placeholder="Dupont"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              style={{ flex: 1 }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                transition: 'all 0.3s ease',
+                outline: 'none',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
               required
             />
-            {lastName && <span style={{ fontSize: '18px' }}>✅</span>}
+            {lastName && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
           </div>
-          {!lastName && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
+          {!lastName && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
         </div>
 
         {/* Email */}
         <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Email</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="email"
-              placeholder="Email"
+              placeholder="vous@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ flex: 1 }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                transition: 'all 0.3s ease',
+                outline: 'none',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
               required
             />
             {checkingEmail && <span style={{ fontSize: '18px' }}>⏳</span>}
-            {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px' }}>✅</span> : <span style={{ fontSize: '18px' }}>❌</span>)}
+            {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
           </div>
-          {email && checkingEmail && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
-          {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '4px 0 0 0' }}>Format invalide</p>}
-          {email && !checkingEmail && isEmailFormatValid && emailAvailable === false && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '4px 0 0 0' }}>Email déjà utilisé</p>}
-          {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#51cf66', margin: '4px 0 0 0' }}>Email disponible</p>}
-          {!email && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
+          {email && checkingEmail && <p style={{ fontSize: '12px', color: '#a0aec0', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
+          {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Format invalide</p>}
+          {email && !checkingEmail && isEmailFormatValid && emailAvailable === false && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Email déjà utilisé</p>}
+          {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Email disponible</p>}
+          {!email && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
         </div>
 
         {/* Mot de passe */}
         <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>Mot de passe</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="password"
-              placeholder="Mot de passe"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ flex: 1 }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                transition: 'all 0.3s ease',
+                outline: 'none',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
               required
             />
-            {password.length >= 6 && <span style={{ fontSize: '18px' }}>✅</span>}
+            {password.length >= 6 && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
           </div>
           {password && (
             <>
-              <div style={{ display: 'flex', gap: '4px', margin: '6px 0', height: '4px' }}>
-                <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#ff6b6b' : '#ddd', borderRadius: '2px' }} />
-                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#51cf66' : '#ddd', borderRadius: '2px' }} />
-                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#51cf66' : '#ddd', borderRadius: '2px' }} />
+              <div style={{ display: 'flex', gap: '4px', margin: '8px 0', height: '4px' }}>
+                <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#f56565' : '#e2e8f0', borderRadius: '2px' }} />
+                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '2px' }} />
+                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '2px' }} />
               </div>
-              <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#51cf66' : '#ffa502', margin: '0' }}>
-                Force: {passwordStrength}
+              <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0' }}>
+                Force: <strong>{passwordStrength === 'fort' ? 'Fort' : passwordStrength === 'moyen' ? 'Moyen' : 'Faible'}</strong>
               </p>
             </>
           )}
-          {!password && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Min 6 caractères</p>}
+          {!password && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Minimum 6 caractères</p>}
         </div>
-        <div style={{ margin: '15px 0', padding: '10px', minHeight: '80px', display: 'flex', justifyContent: 'center' }}>
+        {/* hCaptcha */}
+        <div style={{ margin: '20px 0', padding: '12px', background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', justifyContent: 'center', minHeight: '90px' }}>
           {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
             <HCaptcha
               ref={captchaRef}
@@ -209,30 +303,30 @@ export default function SignupPage() {
               onVerify={(token) => setCaptchaToken(token)}
             />
           ) : (
-            <p style={{ color: '#ff6b6b' }}>⚠️ hCaptcha key not configured</p>
+            <p style={{ color: '#f56565', fontSize: '13px' }}>⚠️ hCaptcha key not configured</p>
           )}
         </div>
 
         {/* Conditions d'utilisation */}
-        <div style={{ margin: '15px 0', padding: '10px', background: '#f9f9f9', borderRadius: '5px' }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+        <div style={{ margin: '15px 0', padding: '12px', background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
             <input
               type="checkbox"
               id="terms"
               checked={acceptTerms}
               onChange={(e) => setAcceptTerms(e.target.checked)}
-              style={{ marginTop: '4px', cursor: 'pointer' }}
+              style={{ marginTop: '2px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#667eea' }}
               required
             />
-            <label htmlFor="terms" style={{ fontSize: '14px', cursor: 'pointer', color: '#333' }}>
-              J'accepte les <a href="/conditions" style={{ color: '#ff6b6b', textDecoration: 'none' }}>Conditions d'Utilisation</a> et la <a href="/privacy" style={{ color: '#ff6b6b', textDecoration: 'none' }}>Politique de Confidentialité</a>
+            <label htmlFor="terms" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
+              J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Conditions d'Utilisation</a> et la <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Politique de Confidentialité</a>
             </label>
           </div>
-          {!acceptTerms && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
+          {!acceptTerms && <p style={{ fontSize: '12px', color: '#f56565', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
         </div>
 
         {/* Trust Signals / Sécurité */}
-        <div style={{ margin: '15px 0', display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '12px', color: '#666' }}>
+        <div style={{ margin: '15px 0', paddingTop: '15px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '12px', color: '#718096' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontSize: '16px' }}>🔒</span>
             <span>SSL Secure</span>
@@ -243,20 +337,78 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" disabled={loading || !isFormValid} style={{ opacity: isFormValid ? 1 : 0.6, cursor: isFormValid ? 'pointer' : 'not-allowed' }}>
-          {loading ? 'Inscription...' : 'S\'inscrire'}
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={loading || !isFormValid}
+          style={{
+            marginTop: '10px',
+            padding: '12px 16px',
+            background: isFormValid ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '15px',
+            fontWeight: '600',
+            cursor: isFormValid ? 'pointer' : 'not-allowed',
+            transition: 'all 0.3s ease',
+            boxShadow: isFormValid ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
+          }}
+          onHover={(e) => {
+            if (isFormValid) {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.5)';
+            }
+          }}
+        >
+          {loading ? 'Inscription en cours...' : 'S\'inscrire'}
         </button>
-      </form>
-      {message && <p style={{ marginTop: '10px' }}>{message}</p>}
-      {verificationInfo && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#f0f0f0', borderRadius: '5px', textAlign: 'left' }}>
-          <p><strong>ID Utilisateur:</strong> {verificationInfo.userId}</p>
-          <p><strong>Code de vérification:</strong> {verificationInfo.verificationCode}</p>
-          <p style={{ fontSize: '12px', marginTop: '10px' }}>
-            ➡️ <a href="/verify-email" style={{ color: '#ff6b6b' }}>Vérifier votre email ici</a>
-          </p>
-        </div>
-      )}
+        </form>
+
+        {/* Message alert */}
+        {message && (
+          <div style={{
+            marginTop: '15px',
+            padding: '12px 14px',
+            background: message.includes('✅') ? '#f0fff4' : '#fff5f5',
+            border: `1px solid ${message.includes('✅') ? '#c6f6d5' : '#fed7d7'}`,
+            borderRadius: '8px',
+            color: message.includes('✅') ? '#22543d' : '#742a2a',
+            fontSize: '13px',
+            lineHeight: '1.5',
+          }}>
+            {message}
+          </div>
+        )}
+
+        {/* Verification Info */}
+        {verificationInfo && (
+          <div style={{
+            marginTop: '20px',
+            padding: '16px',
+            background: 'linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%)',
+            border: '1px solid #c6f6d5',
+            borderRadius: '8px',
+            textAlign: 'left',
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600', color: '#22543d' }}>✅ Inscription réussie!</h3>
+            <div style={{ fontSize: '13px', color: '#2d3748', lineHeight: '1.6' }}>
+              <p style={{ margin: '0 0 8px 0' }}><strong>ID Utilisateur:</strong> <code style={{ background: '#fff', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{verificationInfo.userId}</code></p>
+              {verificationInfo.verificationCode && (
+                <p style={{ margin: '0 0 12px 0' }}><strong>Code de vérification:</strong> <code style={{ background: '#fff', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#667eea', fontWeight: '600' }}>{verificationInfo.verificationCode}</code></p>
+              )}
+              <p style={{ margin: '12px 0 0 0', paddingTop: '12px', borderTop: '1px solid #c6f6d5' }}>
+                ➡️ <a href="/verify-email" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '600' }}>Vérifier votre email</a>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ marginTop: '30px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px' }}>
+        <p style={{ margin: '0' }}>Vous avez déjà un compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
+      </div>
     </div>
   );
 }
