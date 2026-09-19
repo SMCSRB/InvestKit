@@ -48,6 +48,43 @@ export default function DomainPage() {
   const progressPercent = Math.round((completedChaptersCount / domain.chapters.length) * 100);
   const isDomainDone = isDomainCompleted(domain.id);
 
+  // Calcular recomendaciones
+  const getRecommendations = () => {
+    const recommendations = [];
+
+    // Buscar el primer capítulo no completado desbloqueado
+    for (let i = 0; i < domain.chapters.length; i++) {
+      const chapter = domain.chapters[i];
+      if (!isChapterCompleted(domain.id, chapter.id) && isChapterUnlocked(domain.id, chapter.id)) {
+        recommendations.push({
+          type: 'continue',
+          chapter,
+          reason: 'Continuar desde aquí'
+        });
+        break;
+      }
+    }
+
+    // Buscar capítulos completados con baja puntuación (< 85%)
+    domain.chapters.forEach((chapter) => {
+      if (isChapterCompleted(domain.id, chapter.id)) {
+        const score = getChapterScore(domain.id, chapter.id);
+        if (score && score < 85) {
+          recommendations.push({
+            type: 'improve',
+            chapter,
+            score,
+            reason: `Mejorar tu puntuación (${score}%)`
+          });
+        }
+      }
+    });
+
+    return recommendations.slice(0, 2); // Solo 2 recomendaciones
+  };
+
+  const recommendations = getRecommendations();
+
   return (
     <PageWrapper animation="fade-in-up">
       <div style={{
@@ -204,6 +241,94 @@ export default function DomainPage() {
               )}
             </div>
           </div>
+
+          {/* Recommandations */}
+          {recommendations.length > 0 && (
+            <div style={{
+              marginBottom: '48px',
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: 'white',
+                marginBottom: '16px',
+              }}>
+                💡 Recommandations Personnalisées
+              </h2>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: '16px',
+              }}>
+                {recommendations.map((rec, idx) => (
+                  <Link
+                    key={idx}
+                    href={`/education/${domain.id}/${rec.chapter.id}`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div
+                      style={{
+                        background: `linear-gradient(135deg, ${domain.color}15 0%, rgba(30, 30, 30, 0.2) 100%)`,
+                        backdropFilter: 'blur(20px)',
+                        border: `2px solid ${domain.color}60`,
+                        borderRadius: '12px',
+                        padding: '16px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        height: '100%',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = domain.color;
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = `0 12px 24px ${domain.color}20`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = `${domain.color}60`;
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '8px',
+                      }}>
+                        <span style={{
+                          fontSize: '20px',
+                        }}>
+                          {rec.type === 'continue' ? '🚀' : '📈'}
+                        </span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: domain.color,
+                          textTransform: 'uppercase',
+                        }}>
+                          {rec.reason}
+                        </span>
+                      </div>
+                      <h4 style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: 'white',
+                        margin: '0 0 4px 0',
+                      }}>
+                        Chapitre {rec.chapter.id}: {rec.chapter.title}
+                      </h4>
+                      <p style={{
+                        fontSize: '13px',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        margin: '0',
+                      }}>
+                        {rec.chapter.description}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Chapitres Grid */}
           <div>
