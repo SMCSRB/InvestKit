@@ -16,6 +16,10 @@ export default function SignupPage() {
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
 
@@ -75,6 +79,19 @@ export default function SignupPage() {
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
   const isFormValid = firstName && lastName && isEmailValid && passwordsMatch && captchaToken && acceptTerms;
 
+  // Calculate form progress (0-100%)
+  const formSteps = [
+    firstName.length > 0,
+    lastName.length > 0,
+    isEmailValid,
+    password.length >= 6,
+    passwordsMatch,
+    captchaToken !== null,
+    acceptTerms,
+  ];
+  const completedSteps = formSteps.filter(Boolean).length;
+  const formProgress = Math.round((completedSteps / formSteps.length) * 100);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -103,6 +120,8 @@ export default function SignupPage() {
       if (response.ok) {
         setMessage('✅ Inscription réussie!');
         setVerificationInfo(data);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
         console.log('Signup response:', data);
         setEmail('');
         setPassword('');
@@ -130,6 +149,7 @@ export default function SignupPage() {
       alignItems: 'center',
       padding: '20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      position: 'relative',
     }}>
       <style>{`
         @keyframes spin {
@@ -140,6 +160,16 @@ export default function SignupPage() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(0) rotateZ(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotateZ(360deg);
+            opacity: 0;
+          }
+        }
         .spinner {
           display: inline-block;
           width: 16px;
@@ -149,7 +179,28 @@ export default function SignupPage() {
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
         }
+        .confetti {
+          position: fixed;
+          width: 10px;
+          height: 10px;
+          top: -10px;
+          opacity: 1;
+          animation: confetti-fall 3s ease-in forwards;
+        }
       `}</style>
+
+      {/* Confetti Animation */}
+      {showConfetti && Array.from({ length: 50 }).map((_, i) => (
+        <div
+          key={i}
+          className="confetti"
+          style={{
+            left: Math.random() * 100 + '%',
+            background: ['#667eea', '#764ba2', '#48bb78', '#f56565', '#ecc94b'][Math.floor(Math.random() * 5)],
+            animationDelay: Math.random() * 0.3 + 's',
+          }}
+        />
+      ))}
       {/* Conteneur principal */}
       <div style={{
         maxWidth: '420px',
@@ -185,6 +236,28 @@ export default function SignupPage() {
         <div style={{ textAlign: 'center', marginBottom: '25px' }}>
           <h2 style={{ margin: '0', fontSize: '20px', color: '#2d3748', fontWeight: '500' }}>Créer votre compte</h2>
           <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>Rejoignez des milliers d'investisseurs</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#718096' }}>Progression</span>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: '#667eea' }}>{formProgress}%</span>
+          </div>
+          <div style={{
+            width: '100%',
+            height: '6px',
+            background: '#e2e8f0',
+            borderRadius: '3px',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              width: `${formProgress}%`,
+              height: '100%',
+              background: `linear-gradient(90deg, ${formProgress < 50 ? '#f56565' : formProgress < 100 ? '#ecc94b' : '#48bb78'}, ${formProgress < 50 ? '#f56565' : formProgress < 100 ? '#ecc94b' : '#48bb78'})`,
+              transition: 'width 0.3s ease',
+            }} />
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -300,7 +373,7 @@ export default function SignupPage() {
           <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔒 Mot de passe</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Minimum 6 caractères"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -324,6 +397,26 @@ export default function SignupPage() {
               }}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '0',
+                display: 'flex',
+                alignItems: 'center',
+                color: '#718096',
+                transition: 'color 0.3s',
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#667eea'}
+              onMouseLeave={(e) => e.target.style.color = '#718096'}
+              title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </button>
             {password.length >= 6 && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
           </div>
           {password && (
@@ -346,7 +439,7 @@ export default function SignupPage() {
           <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔐 Confirmer le mot de passe</label>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
-              type="password"
+              type={showPasswordConfirm ? 'text' : 'password'}
               placeholder="Répétez votre mot de passe"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
@@ -376,6 +469,26 @@ export default function SignupPage() {
               }}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '0',
+                display: 'flex',
+                alignItems: 'center',
+                color: '#718096',
+                transition: 'color 0.3s',
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#667eea'}
+              onMouseLeave={(e) => e.target.style.color = '#718096'}
+              title={showPasswordConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            >
+              {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
+            </button>
             {passwordConfirm && password && (passwordsMatch ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
           </div>
           {password && !passwordConfirm && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
@@ -394,6 +507,22 @@ export default function SignupPage() {
           ) : (
             <p style={{ color: '#f56565', fontSize: '13px' }}>⚠️ hCaptcha key not configured</p>
           )}
+        </div>
+
+        {/* Newsletter Opt-in */}
+        <div style={{ margin: '15px 0', padding: '12px', background: '#f0fff4', border: '1px solid #c6f6d5', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              id="newsletter"
+              checked={newsletterOptIn}
+              onChange={(e) => setNewsletterOptIn(e.target.checked)}
+              style={{ marginTop: '2px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#667eea' }}
+            />
+            <label htmlFor="newsletter" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
+              📬 Je veux recevoir les actualités, offres exclusives et astuces d'investissement
+            </label>
+          </div>
         </div>
 
         {/* Conditions d'utilisation */}
