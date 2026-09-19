@@ -1,0 +1,236 @@
+import { Response } from 'express';
+import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+import { generateToken } from '../utils/jwt';
+import { AuthRequest } from '../middleware/auth';
+import { userRepository } from '../repositories/userRepository';
+import { env } from '../config/env';
+
+export const authController = {
+  register: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email, password, firstName, lastName, profile } = req.body;
+
+      // Validation
+      if (!email || !password || !firstName || !lastName) {
+        res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      // Vérifier si l'utilisateur existe déjà
+      const existingUser = await userRepository.findByEmail(email);
+      if (existingUser) {
+        res.status(409).json({ error: 'Cet email est déjà utilisé' });
+        return;
+      }
+
+      // Hasher le mot de passe
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Générer le code de vérification
+      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // Créer l'utilisateur en BD
+      const newUser = await userRepository.create({
+        email,
+        password_hash: hashedPassword,
+        first_name: firstName,
+        last_name: lastName,
+        verification_code: verificationCode,
+      });
+
+      // TODO: Envoyer email de vérification
+
+      res.status(201).json({
+        success: true,
+        message: 'Inscription réussie. Vérifiez votre email.',
+        userId: newUser.id,
+        verificationCode: env.isDev ? verificationCode : undefined, // Afficher le code en dev uniquement
+      });
+    } catch (error) {
+      console.error('Register error:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'inscription' });
+    }
+  },
+
+  verifyEmail: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { userId, verificationCode } = req.body;
+
+      if (!userId || !verificationCode) {
+        res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      const user = await userRepository.findById(userId);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      if (user.verification_code !== verificationCode) {
+        res.status(400).json({ error: 'Code de vérification invalide' });
+        return;
+      }
+
+      await userRepository.verifyEmail(user.id);
+
+      res.json({
+        success: true,
+        message: 'Email vérifié avec succès',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+        },
+      });
+    } catch (error) {
+      console.error('Verify email error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+  },
+
+  login: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        res.status(400).json({ error: 'Email et mot de passe requis' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+      if (!user) {
+        res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+        return;
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password_hash);
+      if (!passwordMatch) {
+        res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+        return;
+      }
+
+      if (!user.verified) {
+        res.status(403).json({ error: 'Veuillez vérifier votre email d\'abord' });
+        return;
+      }
+
+      // Mettre à jour last_login_at
+      await userRepository.updateLastLogin(user.id);
+
+      const token = generateToken(user.id, user.email);
+
+      res.json({
+        success: true,
+        message: 'Connexion réussie',
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+        },
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'Erreur lors de la connexion' });
+    }
+  },
+
+  forgotPassword: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email requis' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+      if (!user) {
+        // Pour des raisons de sécurité, ne pas révéler si l'email existe
+        res.json({
+          success: true,
+          message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
+        });
+        return;
+      }
+
+      // Générer un token de réinitialisation
+      const resetToken = uuidv4();
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 heure
+
+      await userRepository.updateResetToken(user.id, resetToken, expiresAt);
+
+      // TODO: Envoyer email avec lien de réinitialisation
+
+      res.json({
+        success: true,
+        message: 'Lien de réinitialisation envoyé à votre email',
+        resetToken: env.isDev ? resetToken : undefined, // Afficher en dev uniquement
+      });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ error: 'Erreur lors de la demande' });
+    }
+  },
+
+  resetPassword: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { resetToken, newPassword } = req.body;
+
+      if (!resetToken || !newPassword) {
+        res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      const user = await userRepository.findByResetToken(resetToken);
+      if (!user) {
+        res.status(400).json({ error: 'Token invalide ou expiré' });
+        return;
+      }
+
+      // Hasher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Mettre à jour le mot de passe
+      await userRepository.updatePassword(user.id, hashedPassword);
+
+      res.json({
+        success: true,
+        message: 'Mot de passe réinitialisé avec succès',
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: 'Erreur lors de la réinitialisation' });
+    }
+  },
+
+  getCurrentUser: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const user = await userRepository.findById(req.user.userId);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+        },
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      res.status(500).json({ error: 'Erreur lors de la récupération' });
+    }
+  },
+};
