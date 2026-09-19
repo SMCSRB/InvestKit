@@ -5,6 +5,7 @@ import { generateToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
+import { sendVerificationEmail } from '../utils/email';
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -39,7 +40,13 @@ export const authController = {
         verification_code: verificationCode,
       });
 
-      // TODO: Envoyer email de vérification
+      // Envoyer email de vérification
+      try {
+        await sendVerificationEmail(email, firstName, verificationCode);
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        // Continue anyway, user can still verify manually
+      }
 
       res.status(201).json({
         success: true,
