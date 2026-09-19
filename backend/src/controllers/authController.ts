@@ -6,15 +6,28 @@ import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail } from '../utils/email';
+import { verifyCaptcha } from '../utils/captcha';
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, password, firstName, lastName, profile } = req.body;
+      const { email, password, firstName, lastName, profile, captchaToken } = req.body;
 
       // Validation
       if (!email || !password || !firstName || !lastName) {
         res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      // Vérifier le captcha
+      if (!captchaToken) {
+        res.status(400).json({ error: 'Le captcha est requis' });
+        return;
+      }
+
+      const captchaValid = await verifyCaptcha(captchaToken);
+      if (!captchaValid) {
+        res.status(400).json({ error: 'Captcha invalide ou expiré' });
         return;
       }
 
