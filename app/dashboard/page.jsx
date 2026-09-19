@@ -1559,14 +1559,33 @@ export default function DashboardPage() {
               {/* PROFIL TAB */}
               {settingsTab === 'profile' && (
                 <div style={{ display: 'grid', gap: '20px' }}>
-                  <h3 style={{
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: currentTheme.text,
-                    margin: 0,
-                  }}>
-                    👤 Profil Utilisateur
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: '700',
+                      color: currentTheme.text,
+                      margin: 0,
+                    }}>
+                      👤 Profil Utilisateur
+                    </h3>
+                    <a href="/profile" style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      textDecoration: 'none',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}>
+                      📊 Voir profil complet →
+                    </a>
+                  </div>
 
                   {/* Profile Info */}
                   <div style={{
