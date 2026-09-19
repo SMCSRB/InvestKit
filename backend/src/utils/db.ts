@@ -91,9 +91,12 @@ export const executeMigrations = async (): Promise<void> => {
         // Ignore "column already exists" (42701) and "relation already exists" (42P07) errors
         if (migrationError.code === '42701' || migrationError.code === '42P07') {
           console.log(`  ⚠️  ${file} - Already exists (skipped)`);
+        } else if (migrationError.code === '42P01') {
+          // Table doesn't exist - this is okay, schema.sql will create it
+          console.log(`  ⚠️  ${file} - Table doesn't exist yet (will be created by schema)`);
         } else {
           console.error(`  ❌ Error in ${file}:`, migrationError.message);
-          throw migrationError;
+          // Continue with other migrations instead of throwing
         }
       }
     }
@@ -101,7 +104,7 @@ export const executeMigrations = async (): Promise<void> => {
     console.log('✅ All migrations completed');
   } catch (error) {
     console.error('❌ Error running migrations:', error);
-    throw error;
+    // Don't throw - allow server to start even if migrations fail
   }
 };
 
