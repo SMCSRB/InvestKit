@@ -20,6 +20,9 @@ export default function SignupPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [newsletterOptIn, setNewsletterOptIn] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const [hoveredTooltip, setHoveredTooltip] = useState(null);
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
 
@@ -89,7 +92,7 @@ export default function SignupPage() {
   const isEmailValid = isEmailFormatValid && emailAvailable === true;
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
-  const isFormValid = firstName && lastName && isEmailValid && passwordsMatch && captchaToken && acceptTerms;
+  const isFormValid = firstName && lastName && isEmailValid && passwordsMatch && captchaToken && acceptTerms && gdprConsent;
 
   // Calculate form progress (0-100%)
   const formSteps = [
@@ -199,6 +202,60 @@ export default function SignupPage() {
           opacity: 1;
           animation: confetti-fall 3s ease-in forwards;
         }
+        .tooltip {
+          position: relative;
+          cursor: help;
+          opacity: 0.7;
+          transition: opacity 0.3s;
+        }
+        .tooltip:hover {
+          opacity: 1;
+        }
+        .tooltip-content {
+          position: absolute;
+          bottom: 125%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #2d3748;
+          color: white;
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          white-space: nowrap;
+          z-index: 1000;
+          pointer-events: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .tooltip-content::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 4px solid transparent;
+          border-top-color: #2d3748;
+        }
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2000;
+        }
+        .modal-content {
+          background: white;
+          border-radius: 12px;
+          padding: 30px;
+          max-width: 500px;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
       `}</style>
 
       {/* Confetti Animation */}
@@ -275,7 +332,22 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Prénom */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>👤 Prénom</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>👤 Prénom</label>
+            <span
+              className="tooltip"
+              onMouseEnter={() => setHoveredTooltip('firstName')}
+              onMouseLeave={() => setHoveredTooltip(null)}
+              style={{ position: 'relative' }}
+            >
+              ❓
+              {hoveredTooltip === 'firstName' && (
+                <div className="tooltip-content">
+                  Votre prénom réel
+                </div>
+              )}
+            </span>
+          </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
@@ -309,7 +381,22 @@ export default function SignupPage() {
 
         {/* Nom */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>👤 Nom</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>👤 Nom</label>
+            <span
+              className="tooltip"
+              onMouseEnter={() => setHoveredTooltip('lastName')}
+              onMouseLeave={() => setHoveredTooltip(null)}
+              style={{ position: 'relative' }}
+            >
+              ❓
+              {hoveredTooltip === 'lastName' && (
+                <div className="tooltip-content">
+                  Votre nom de famille
+                </div>
+              )}
+            </span>
+          </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="text"
@@ -343,7 +430,22 @@ export default function SignupPage() {
 
         {/* Email */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>📧 Email</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>📧 Email</label>
+            <span
+              className="tooltip"
+              onMouseEnter={() => setHoveredTooltip('email')}
+              onMouseLeave={() => setHoveredTooltip(null)}
+              style={{ position: 'relative' }}
+            >
+              ❓
+              {hoveredTooltip === 'email' && (
+                <div className="tooltip-content">
+                  Vérification en temps réel
+                </div>
+              )}
+            </span>
+          </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type="email"
@@ -382,7 +484,22 @@ export default function SignupPage() {
 
         {/* Mot de passe */}
         <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔒 Mot de passe</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>🔒 Mot de passe</label>
+            <span
+              className="tooltip"
+              onMouseEnter={() => setHoveredTooltip('password')}
+              onMouseLeave={() => setHoveredTooltip(null)}
+              style={{ position: 'relative' }}
+            >
+              ❓
+              {hoveredTooltip === 'password' && (
+                <div className="tooltip-content">
+                  Minimum 6 caractères
+                </div>
+              )}
+            </span>
+          </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -549,10 +666,46 @@ export default function SignupPage() {
               required
             />
             <label htmlFor="terms" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
-              J'accepte les <a href="/conditions" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Conditions d'Utilisation</a> et la <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Politique de Confidentialité</a>
+              J'accepte les{' '}
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#667eea',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  padding: '0',
+                }}
+              >
+                Conditions d'Utilisation
+              </button>
+              {' '}et la{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Politique de Confidentialité</a>
             </label>
           </div>
           {!acceptTerms && <p style={{ fontSize: '12px', color: '#f56565', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
+        </div>
+
+        {/* GDPR Consent */}
+        <div style={{ margin: '15px 0', padding: '12px', background: '#e6fffa', border: '1px solid #81e6d9', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              id="gdpr"
+              checked={gdprConsent}
+              onChange={(e) => setGdprConsent(e.target.checked)}
+              style={{ marginTop: '2px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#667eea' }}
+              required
+            />
+            <label htmlFor="gdpr" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
+              🔒 Je consens au traitement de mes données personnelles selon le RGPD
+            </label>
+          </div>
+          {!gdprConsent && <p style={{ fontSize: '12px', color: '#f56565', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
         </div>
 
         {/* Trust Signals / Sécurité */}
@@ -657,6 +810,46 @@ export default function SignupPage() {
       <div style={{ marginTop: '30px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px' }}>
         <p style={{ margin: '0' }}>Vous avez déjà un compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
       </div>
+
+      {/* Terms Modal */}
+      {showTermsModal && (
+        <div className="modal-overlay" onClick={() => setShowTermsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginTop: '0', marginBottom: '15px', color: '#2d3748' }}>Conditions d'Utilisation</h2>
+            <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#4a5568' }}>
+              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>1. Acceptation des Conditions</h3>
+              <p>En accédant et en utilisant InvestKit, vous acceptez d'être lié par ces conditions d'utilisation.</p>
+
+              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>2. Licence d'Utilisation</h3>
+              <p>InvestKit vous accorde une licence limitée, non-exclusive et révocable pour utiliser ce service à des fins personnelles et non-commerciales.</p>
+
+              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>3. Restrictions d'Utilisation</h3>
+              <p>Vous ne pouvez pas utiliser le service de manière illégale, modifier le service, ou vendre l'accès au service.</p>
+
+              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>4. Disclaimer</h3>
+              <p>InvestKit fournit des outils de simulation et d'éducation à titre informatif uniquement. Les informations ne constituent pas des conseils financiers professionnels.</p>
+
+              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>5. Limitation de Responsabilité</h3>
+              <p>InvestKit ne sera pas responsable des dommages indirects, accidentels ou consécutifs résultant de votre utilisation du service.</p>
+            </div>
+            <button
+              onClick={() => setShowTermsModal(false)}
+              style={{
+                marginTop: '20px',
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+              }}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
