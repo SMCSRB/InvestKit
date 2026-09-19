@@ -5,6 +5,8 @@ import { useState } from 'react';
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -17,7 +19,7 @@ export default function SignupPage() {
       const response = await fetch('http://192.168.1.201:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
       const data = await response.json();
@@ -25,6 +27,8 @@ export default function SignupPage() {
         setMessage('✅ Inscription réussie! Vérifiez votre email.');
         setEmail('');
         setPassword('');
+        setFirstName('');
+        setLastName('');
       } else {
         setMessage(`❌ ${data.error || 'Erreur lors de l\'inscription'}`);
       }
@@ -39,6 +43,20 @@ export default function SignupPage() {
     <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', textAlign: 'center' }}>
       <h1>S'inscrire</h1>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Prénom"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+        />
+        <input
+          type="text"
+          placeholder="Nom"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          required
+        />
         <input
           type="email"
           placeholder="Email"
