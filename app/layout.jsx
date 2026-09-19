@@ -1,5 +1,6 @@
 import '../css/design-system.css';
 import '../css/performance-optimizations.css';
+import { EducationProvider } from '@/app/context/EducationContext';
 
 export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
@@ -155,7 +156,9 @@ export default function RootLayout({ children }) {
             </div>
           </div>
         </noscript>
-        {children}
+        <EducationProvider>
+          {children}
+        </EducationProvider>
       </body>
     </html>
   );
