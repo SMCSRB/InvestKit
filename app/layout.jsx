@@ -1,5 +1,4 @@
 import '../css/design-system.css';
-import { Providers } from './providers';
 
 export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
@@ -20,9 +19,7 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        {children}
       </body>
     </html>
   );
