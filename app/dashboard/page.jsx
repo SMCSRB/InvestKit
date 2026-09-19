@@ -8,6 +8,8 @@ export default function DashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [newsModalOpen, setNewsModalOpen] = useState(false);
 
   const [portfolioData] = useState({
     totalValue: 245680.50,
@@ -98,15 +100,20 @@ export default function DashboardPage() {
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
       display: 'grid',
-      gridTemplateColumns: '280px 1fr 370px',
+      gridTemplateColumns: sidebarOpen ? '280px 1fr' : '1fr',
       gap: '24px',
       padding: '24px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      position: 'relative',
     }}>
       <style>{`
         @keyframes slideInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .dashboard-content {
           animation: slideInUp 0.6s ease-out;
@@ -117,10 +124,43 @@ export default function DashboardPage() {
         .metric-card:hover {
           transform: translateY(-2px);
         }
+        .modal-overlay {
+          animation: fadeIn 0.3s ease-out;
+        }
       `}</style>
 
+      {/* SIDEBAR TOGGLE BUTTON */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
+        position: 'fixed',
+        top: '24px',
+        left: '24px',
+        zIndex: 40,
+        background: 'rgba(59, 130, 246, 0.2)',
+        border: '1px solid rgba(59, 130, 246, 0.3)',
+        borderRadius: '10px',
+        padding: '10px 14px',
+        color: '#60a5fa',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px',
+        transition: 'all 0.3s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+        e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+        e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+      }}
+      >
+        {sidebarOpen ? '✕' : '☰'}
+      </button>
+
       {/* LEFT SIDEBAR */}
-      <div style={{
+      {sidebarOpen && <div style={{
         borderRight: '1px solid rgba(255, 255, 255, 0.1)',
         paddingRight: '24px',
         height: 'fit-content',
@@ -295,28 +335,63 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* MAIN CONTENT - CENTER COLUMN */}
       <div className="dashboard-content" style={{}}>
         {/* HEADER */}
-        <div style={{ marginBottom: '40px' }}>
-          <h1 style={{
-            fontSize: '32px',
-            fontWeight: '900',
-            color: 'white',
-            margin: '0 0 8px 0',
-            letterSpacing: '-0.5px',
-          }}>
-            Votre Portefeuille
-          </h1>
-          <p style={{
-            color: 'rgba(255, 255, 255, 0.5)',
-            margin: 0,
+        <div style={{
+          marginBottom: '40px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}>
+          <div>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: '900',
+              color: 'white',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.5px',
+            }}>
+              Votre Portefeuille
+            </h1>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.5)',
+              margin: 0,
+              fontSize: '14px',
+            }}>
+              Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
+            </p>
+          </div>
+
+          {/* News Modal Button */}
+          <button onClick={() => setNewsModalOpen(true)} style={{
+            padding: '12px 20px',
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '12px',
+            color: '#60a5fa',
             fontSize: '14px',
-          }}>
-            Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
-          </p>
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
+            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)';
+            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+          }}
+          >
+            📰 Actualités
+          </button>
         </div>
 
         {/* MAIN PORTFOLIO CARD - BANK CARD STYLE */}
@@ -1092,314 +1167,358 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* RIGHT COLUMN - STICKY NEWS FEED */}
-      <div style={{
-        position: 'sticky',
-        top: '24px',
-        height: 'fit-content',
-      }}>
-        {/* Phone Frame */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-          borderRadius: '40px',
-          padding: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(20px)',
-          position: 'relative',
-          width: '100%',
-          height: '620px',
+      {/* NEWS FEED MODAL */}
+      {newsModalOpen && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
-          flexDirection: 'column',
-        }}>
-          {/* Phone Notch */}
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+        }}
+        onClick={() => setNewsModalOpen(false)}
+        >
           <div style={{
-            position: 'absolute',
-            top: '8px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '150px',
-            height: '25px',
-            background: '#0f172a',
-            borderRadius: '0 0 20px 20px',
-            zIndex: 10,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            <div style={{
-              width: '100px',
-              height: '4px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '2px',
-            }} />
-          </div>
-
-          {/* Phone Status Bar */}
-          <div style={{
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            borderRadius: '32px 32px 0 0',
-            padding: '28px 16px 16px',
-            marginTop: '4px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.8)',
-          }}>
-            <span>9:41</span>
-            <span>📶 📡 🔋</span>
-          </div>
-
-          {/* Phone Header */}
-          <div style={{
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            padding: '12px 16px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          }}>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '800',
-              color: 'white',
-              margin: 0,
-            }}>
-              InvestKit
-            </h3>
-          </div>
-
-          {/* Scrollable Content */}
-          <div style={{
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            flex: 1,
-            overflowY: 'auto',
+            position: 'relative',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+            borderRadius: '40px',
             padding: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(20px)',
+            width: '100%',
+            maxWidth: '350px',
+            height: '620px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
-            scrollBehavior: 'smooth',
-          }}>
-            {/* News Item 1 */}
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button onClick={() => setNewsModalOpen(false)} style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              zIndex: 10,
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '18px',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            }}
+            >
+              ✕
+            </button>
+
+            {/* Phone Notch */}
             <div style={{
-              background: 'rgba(59, 130, 246, 0.15)',
-              borderLeft: '3px solid #3b82f6',
-              borderRadius: '12px',
-              padding: '12px',
-              flex: '0 0 auto',
+              position: 'absolute',
+              top: '8px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '150px',
+              height: '25px',
+              background: '#0f172a',
+              borderRadius: '0 0 20px 20px',
+              zIndex: 10,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}>
               <div style={{
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'start',
-                marginBottom: '6px',
-              }}>
-                <span style={{ fontSize: '16px', marginTop: '2px' }}>📈</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: '#60a5fa',
-                    margin: '0 0 2px 0',
-                  }}>
-                    CAC 40 en hausse
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0,
-                  }}>
-                    L'indice gagne 1.2% aujourd'hui
-                  </p>
-                </div>
-              </div>
-              <span style={{
-                fontSize: '9px',
-                color: 'rgba(255, 255, 255, 0.5)',
-              }}>
-                À l'instant
-              </span>
+                width: '100px',
+                height: '4px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: '2px',
+              }} />
             </div>
 
-            {/* News Item 2 */}
+            {/* Phone Status Bar */}
             <div style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              borderLeft: '3px solid #10b981',
-              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              borderRadius: '32px 32px 0 0',
+              padding: '28px 16px 16px',
+              marginTop: '4px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.8)',
+            }}>
+              <span>9:41</span>
+              <span>📶 📡 🔋</span>
+            </div>
+
+            {/* Phone Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              padding: '12px 16px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '800',
+                color: 'white',
+                margin: 0,
+              }}>
+                InvestKit
+              </h3>
+            </div>
+
+            {/* Scrollable Content */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              flex: 1,
+              overflowY: 'auto',
               padding: '12px',
-              flex: '0 0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              scrollBehavior: 'smooth',
+            }}>
+              {/* News Item 1 */}
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.15)',
+                borderLeft: '3px solid #3b82f6',
+                borderRadius: '12px',
+                padding: '12px',
+                flex: '0 0 auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'start',
+                  marginBottom: '6px',
+                }}>
+                  <span style={{ fontSize: '16px', marginTop: '2px' }}>📈</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#60a5fa',
+                      margin: '0 0 2px 0',
+                    }}>
+                      CAC 40 en hausse
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      margin: 0,
+                    }}>
+                      L'indice gagne 1.2% aujourd'hui
+                    </p>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '9px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                }}>
+                  À l'instant
+                </span>
+              </div>
+
+              {/* News Item 2 */}
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                borderLeft: '3px solid #10b981',
+                borderRadius: '12px',
+                padding: '12px',
+                flex: '0 0 auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'start',
+                  marginBottom: '6px',
+                }}>
+                  <span style={{ fontSize: '16px', marginTop: '2px' }}>💡</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#86efac',
+                      margin: '0 0 2px 0',
+                    }}>
+                      Conseil du jour
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      margin: 0,
+                    }}>
+                      Diversifiez pour réduire les risques
+                    </p>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '9px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                }}>
+                  Il y a 2h
+                </span>
+              </div>
+
+              {/* News Item 3 */}
+              <div style={{
+                background: 'rgba(168, 85, 247, 0.15)',
+                borderLeft: '3px solid #a855f7',
+                borderRadius: '12px',
+                padding: '12px',
+                flex: '0 0 auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'start',
+                  marginBottom: '6px',
+                }}>
+                  <span style={{ fontSize: '16px', marginTop: '2px' }}>📚</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#d8b4fe',
+                      margin: '0 0 2px 0',
+                    }}>
+                      Nouvelle formation
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      margin: 0,
+                    }}>
+                      Maîtrisez la crypto
+                    </p>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '9px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                }}>
+                  Il y a 5h
+                </span>
+              </div>
+
+              {/* News Item 4 */}
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.15)',
+                borderLeft: '3px solid #f59e0b',
+                borderRadius: '12px',
+                padding: '12px',
+                flex: '0 0 auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'start',
+                  marginBottom: '6px',
+                }}>
+                  <span style={{ fontSize: '16px', marginTop: '2px' }}>⚠️</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#fcd34d',
+                      margin: '0 0 2px 0',
+                    }}>
+                      Alerte BTC
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      margin: 0,
+                    }}>
+                      Prix en baisse, opportunité?
+                    </p>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '9px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                }}>
+                  Il y a 1h
+                </span>
+              </div>
+
+              {/* News Item 5 */}
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.15)',
+                borderLeft: '3px solid #3b82f6',
+                borderRadius: '12px',
+                padding: '12px',
+                flex: '0 0 auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'start',
+                  marginBottom: '6px',
+                }}>
+                  <span style={{ fontSize: '16px', marginTop: '2px' }}>🏆</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#60a5fa',
+                      margin: '0 0 2px 0',
+                    }}>
+                      Objectif atteint!
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      margin: 0,
+                    }}>
+                      +€5k de gains ce mois
+                    </p>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '9px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                }}>
+                  Il y a 3h
+                </span>
+              </div>
+            </div>
+
+            {/* Phone Home Indicator */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              borderRadius: '0 0 32px 32px',
+              padding: '8px',
+              textAlign: 'center',
             }}>
               <div style={{
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'start',
-                marginBottom: '6px',
-              }}>
-                <span style={{ fontSize: '16px', marginTop: '2px' }}>💡</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: '#86efac',
-                    margin: '0 0 2px 0',
-                  }}>
-                    Conseil du jour
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0,
-                  }}>
-                    Diversifiez pour réduire les risques
-                  </p>
-                </div>
-              </div>
-              <span style={{
-                fontSize: '9px',
-                color: 'rgba(255, 255, 255, 0.5)',
-              }}>
-                Il y a 2h
-              </span>
+                width: '120px',
+                height: '4px',
+                background: 'rgba(255, 255, 255, 0.3)',
+                borderRadius: '2px',
+                margin: '0 auto',
+              }} />
             </div>
-
-            {/* News Item 3 */}
-            <div style={{
-              background: 'rgba(168, 85, 247, 0.15)',
-              borderLeft: '3px solid #a855f7',
-              borderRadius: '12px',
-              padding: '12px',
-              flex: '0 0 auto',
-            }}>
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'start',
-                marginBottom: '6px',
-              }}>
-                <span style={{ fontSize: '16px', marginTop: '2px' }}>📚</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: '#d8b4fe',
-                    margin: '0 0 2px 0',
-                  }}>
-                    Nouvelle formation
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0,
-                  }}>
-                    Maîtrisez la crypto
-                  </p>
-                </div>
-              </div>
-              <span style={{
-                fontSize: '9px',
-                color: 'rgba(255, 255, 255, 0.5)',
-              }}>
-                Il y a 5h
-              </span>
-            </div>
-
-            {/* News Item 4 */}
-            <div style={{
-              background: 'rgba(245, 158, 11, 0.15)',
-              borderLeft: '3px solid #f59e0b',
-              borderRadius: '12px',
-              padding: '12px',
-              flex: '0 0 auto',
-            }}>
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'start',
-                marginBottom: '6px',
-              }}>
-                <span style={{ fontSize: '16px', marginTop: '2px' }}>⚠️</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: '#fcd34d',
-                    margin: '0 0 2px 0',
-                  }}>
-                    Alerte BTC
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0,
-                  }}>
-                    Prix en baisse, opportunité?
-                  </p>
-                </div>
-              </div>
-              <span style={{
-                fontSize: '9px',
-                color: 'rgba(255, 255, 255, 0.5)',
-              }}>
-                Il y a 1h
-              </span>
-            </div>
-
-            {/* News Item 5 */}
-            <div style={{
-              background: 'rgba(59, 130, 246, 0.15)',
-              borderLeft: '3px solid #3b82f6',
-              borderRadius: '12px',
-              padding: '12px',
-              flex: '0 0 auto',
-            }}>
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'start',
-                marginBottom: '6px',
-              }}>
-                <span style={{ fontSize: '16px', marginTop: '2px' }}>🏆</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: '#60a5fa',
-                    margin: '0 0 2px 0',
-                  }}>
-                    Objectif atteint!
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0,
-                  }}>
-                    +€5k de gains ce mois
-                  </p>
-                </div>
-              </div>
-              <span style={{
-                fontSize: '9px',
-                color: 'rgba(255, 255, 255, 0.5)',
-              }}>
-                Il y a 3h
-              </span>
-            </div>
-          </div>
-
-          {/* Phone Home Indicator */}
-          <div style={{
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            borderRadius: '0 0 32px 32px',
-            padding: '8px',
-            textAlign: 'center',
-          }}>
-            <div style={{
-              width: '120px',
-              height: '4px',
-              background: 'rgba(255, 255, 255, 0.3)',
-              borderRadius: '2px',
-              margin: '0 auto',
-            }} />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
