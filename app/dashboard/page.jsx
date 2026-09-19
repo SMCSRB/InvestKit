@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEducationProgress } from '@/app/context/EducationContext';
+import { educationDomains } from '@/data/education';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
+  const [newsModalTab, setNewsModalTab] = useState('news');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [settingsTab, setSettingsTab] = useState('general');
 
@@ -60,6 +64,39 @@ export default function DashboardPage() {
     informationRatio: 1.68,
     rsquared: 0.78,
   });
+
+  const [dailyTips] = useState([
+    {
+      id: 1,
+      title: 'Règle des 50/30/20',
+      tip: 'Alloquez 50% à vos besoins, 30% à vos envies et 20% à l\'épargne/investissement',
+      icon: '💰',
+    },
+    {
+      id: 2,
+      title: 'Diversification',
+      tip: 'Ne mettez jamais tout votre argent dans un seul investissement. Répartissez le risque.',
+      icon: '📊',
+    },
+    {
+      id: 3,
+      title: 'Dollar Cost Averaging',
+      tip: 'Investissez régulièrement des montants fixes pour lisser les prix d\'achat',
+      icon: '📈',
+    },
+    {
+      id: 4,
+      title: 'Fonds d\'urgence',
+      tip: 'Maintenez 3-6 mois de dépenses en compte d\'épargne avant d\'investir',
+      icon: '🛡️',
+    },
+    {
+      id: 5,
+      title: 'Rebalancement',
+      tip: 'Réajustez votre portefeuille 2x par an pour maintenir votre allocation cible',
+      icon: '⚖️',
+    },
+  ]);
 
   const [notifications] = useState([
     { id: 1, type: 'alert', title: 'Rebalancement Recommandé', message: 'Allocation dérivée de 3%', time: 'il y a 2h', severity: 'high' },
@@ -1114,59 +1151,216 @@ export default function DashboardPage() {
         {/* EDUCATION TAB */}
         {activeTab === 'education' && (
           <div style={{ marginTop: '20px' }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '800',
-              color: 'white',
-              margin: '0 0 24px 0',
-            }}>
-              📚 Académie
-            </h2>
             <div style={{
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%)',
-              borderRadius: '16px',
-              padding: '40px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              textAlign: 'center',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px',
             }}>
-              <p style={{
-                fontSize: '48px',
-                margin: '0 0 16px 0',
-              }}>
-                📖
-              </p>
-              <h3 style={{
-                fontSize: '22px',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 12px 0',
-              }}>
-                Formations Disponibles
-              </h3>
-              <p style={{
-                fontSize: '16px',
-                color: 'rgba(255, 255, 255, 0.7)',
-                margin: '0 0 24px 0',
-              }}>
-                Accédez à notre plateforme d'apprentissage gamifiée
-              </p>
+              <div>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: '800',
+                  color: currentTheme.text,
+                  margin: '0 0 8px 0',
+                }}>
+                  📚 Académie
+                </h2>
+                <p style={{
+                  fontSize: '13px',
+                  color: currentTheme.textSecondary,
+                  margin: 0,
+                }}>
+                  Niveau {progress.userLevel} • {progress.totalXP} XP
+                </p>
+              </div>
               <a href="/education" style={{
-                display: 'inline-block',
-                padding: '12px 32px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: 'white',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                background: 'rgba(59, 130, 246, 0.2)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
                 borderRadius: '10px',
+                color: currentTheme.accent,
                 textDecoration: 'none',
-                fontWeight: '700',
-                fontSize: '14px',
+                fontSize: '13px',
+                fontWeight: '600',
                 transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                Accéder à l'Académie →
+              }}>
+                Voir tous les domaines →
               </a>
             </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '16px',
+            }}>
+              {educationDomains.slice(0, 4).map((domain) => {
+                const isCompleted = isDomainCompleted(domain.id);
+                const progressPercent = getDomainProgress(domain);
+
+                return (
+                  <a
+                    key={domain.id}
+                    href={`/education/${domain.id}`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div className="metric-card" style={{
+                      background: currentTheme.cardBg,
+                      borderRadius: '16px',
+                      padding: '20px',
+                      border: `1px solid ${currentTheme.border}`,
+                      backdropFilter: 'blur(20px)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      height: '100%',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.borderColor = domain.color;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.borderColor = currentTheme.border;
+                    }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'start',
+                        marginBottom: '12px',
+                      }}>
+                        <div style={{ fontSize: '28px' }}>{domain.icon}</div>
+                        <div style={{ fontSize: '24px' }}>
+                          {isCompleted ? domain.badge : ''}
+                        </div>
+                      </div>
+
+                      <h3 style={{
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        color: currentTheme.text,
+                        margin: '0 0 4px 0',
+                      }}>
+                        {domain.name}
+                      </h3>
+
+                      <p style={{
+                        fontSize: '12px',
+                        color: currentTheme.textSecondary,
+                        margin: '0 0 12px 0',
+                      }}>
+                        {domain.description}
+                      </p>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px',
+                        fontSize: '12px',
+                      }}>
+                        <span style={{ color: currentTheme.textTertiary }}>Progression</span>
+                        <span style={{ color: domain.color, fontWeight: '600' }}>
+                          {progressPercent}%
+                        </span>
+                      </div>
+
+                      <div style={{
+                        width: '100%',
+                        height: '6px',
+                        background: currentTheme.border,
+                        borderRadius: '3px',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          width: `${progressPercent}%`,
+                          height: '100%',
+                          background: `linear-gradient(90deg, ${domain.color}, ${domain.color}80)`,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+
+                      <div style={{
+                        marginTop: '12px',
+                        paddingTop: '12px',
+                        borderTop: `1px solid ${currentTheme.border}`,
+                        fontSize: '11px',
+                        color: currentTheme.textTertiary,
+                      }}>
+                        {isCompleted ? (
+                          <span style={{ color: '#10b981', fontWeight: '600' }}>✓ Maîtrisé</span>
+                        ) : progressPercent > 0 ? (
+                          <span style={{ color: currentTheme.accent }}>En cours...</span>
+                        ) : (
+                          <span>Commencer →</span>
+                        )}
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+
+            {progress.completedDomains.length > 0 && (
+              <div style={{ marginTop: '40px' }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 16px 0',
+                }}>
+                  🏆 Mes Badges ({progress.completedDomains.length})
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+                  gap: '12px',
+                }}>
+                  {educationDomains
+                    .filter((d) => isDomainCompleted(d.id))
+                    .map((domain) => (
+                      <div
+                        key={domain.id}
+                        style={{
+                          padding: '12px',
+                          background: currentTheme.cardBg,
+                          borderRadius: '12px',
+                          border: `2px solid ${domain.color}40`,
+                          textAlign: 'center',
+                          transition: 'all 0.3s ease',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                          e.currentTarget.style.borderColor = domain.color;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.borderColor = `${domain.color}40`;
+                        }}
+                      >
+                        <div style={{
+                          fontSize: '32px',
+                          marginBottom: '4px',
+                        }}>
+                          {domain.badge}
+                        </div>
+                        <p style={{
+                          fontSize: '10px',
+                          color: currentTheme.textSecondary,
+                          margin: 0,
+                          fontWeight: '600',
+                        }}>
+                          {domain.name}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1769,6 +1963,49 @@ export default function DashboardPage() {
               <span>📶 📡 🔋</span>
             </div>
 
+            {/* Modal Tabs */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              padding: '12px 20px',
+              display: 'flex',
+              gap: '12px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              <button
+                onClick={() => setNewsModalTab('news')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: newsModalTab === 'news' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                  border: `1px solid ${newsModalTab === 'news' ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  borderRadius: '8px',
+                  color: newsModalTab === 'news' ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                📰 Actualités
+              </button>
+              <button
+                onClick={() => setNewsModalTab('tips')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: newsModalTab === 'tips' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                  border: `1px solid ${newsModalTab === 'tips' ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  borderRadius: '8px',
+                  color: newsModalTab === 'tips' ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                💡 Conseils
+              </button>
+            </div>
 
             {/* Scrollable Content */}
             <div style={{
@@ -1781,215 +2018,271 @@ export default function DashboardPage() {
               gap: '16px',
               scrollBehavior: 'smooth',
             }}>
-              {/* News Item 1 */}
-              <div style={{
-                background: 'rgba(59, 130, 246, 0.15)',
-                borderLeft: '4px solid #3b82f6',
-                borderRadius: '16px',
-                padding: '18px',
-                flex: '0 0 auto',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'start',
-                  marginBottom: '8px',
-                }}>
-                  <span style={{ fontSize: '24px', marginTop: '2px' }}>📈</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      color: '#60a5fa',
-                      margin: '0 0 4px 0',
+              {newsModalTab === 'news' && (
+                <>
+                  {/* News Item 1 */}
+                  <div style={{
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    borderLeft: '4px solid #3b82f6',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    flex: '0 0 auto',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'start',
+                      marginBottom: '8px',
                     }}>
-                      CAC 40 en hausse
-                    </p>
-                    <p style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      margin: 0,
-                      lineHeight: '1.4',
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}>📈</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '15px',
+                          fontWeight: '700',
+                          color: '#60a5fa',
+                          margin: '0 0 4px 0',
+                        }}>
+                          CAC 40 en hausse
+                        </p>
+                        <p style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          margin: 0,
+                          lineHeight: '1.4',
+                        }}>
+                          L'indice gagne 1.2% aujourd'hui
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
                     }}>
-                      L'indice gagne 1.2% aujourd'hui
-                    </p>
+                      À l'instant
+                    </span>
                   </div>
-                </div>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                }}>
-                  À l'instant
-                </span>
-              </div>
 
-              {/* News Item 2 */}
-              <div style={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                borderLeft: '4px solid #10b981',
-                borderRadius: '16px',
-                padding: '18px',
-                flex: '0 0 auto',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'start',
-                  marginBottom: '8px',
-                }}>
-                  <span style={{ fontSize: '24px', marginTop: '2px' }}>💡</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      color: '#86efac',
-                      margin: '0 0 4px 0',
+                  {/* News Item 2 */}
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    borderLeft: '4px solid #10b981',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    flex: '0 0 auto',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'start',
+                      marginBottom: '8px',
                     }}>
-                      Conseil du jour
-                    </p>
-                    <p style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      margin: 0,
-                      lineHeight: '1.4',
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}>💡</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '15px',
+                          fontWeight: '700',
+                          color: '#86efac',
+                          margin: '0 0 4px 0',
+                        }}>
+                          Conseil du jour
+                        </p>
+                        <p style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          margin: 0,
+                          lineHeight: '1.4',
+                        }}>
+                          Diversifiez pour réduire les risques
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
                     }}>
-                      Diversifiez pour réduire les risques
-                    </p>
+                      Il y a 2h
+                    </span>
                   </div>
-                </div>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                }}>
-                  Il y a 2h
-                </span>
-              </div>
 
-              {/* News Item 3 */}
-              <div style={{
-                background: 'rgba(168, 85, 247, 0.15)',
-                borderLeft: '4px solid #a855f7',
-                borderRadius: '16px',
-                padding: '18px',
-                flex: '0 0 auto',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'start',
-                  marginBottom: '8px',
-                }}>
-                  <span style={{ fontSize: '24px', marginTop: '2px' }}>📚</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      color: '#d8b4fe',
-                      margin: '0 0 4px 0',
+                  {/* News Item 3 */}
+                  <div style={{
+                    background: 'rgba(168, 85, 247, 0.15)',
+                    borderLeft: '4px solid #a855f7',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    flex: '0 0 auto',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'start',
+                      marginBottom: '8px',
                     }}>
-                      Nouvelle formation
-                    </p>
-                    <p style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      margin: 0,
-                      lineHeight: '1.4',
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}>📚</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '15px',
+                          fontWeight: '700',
+                          color: '#d8b4fe',
+                          margin: '0 0 4px 0',
+                        }}>
+                          Nouvelle formation
+                        </p>
+                        <p style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          margin: 0,
+                          lineHeight: '1.4',
+                        }}>
+                          Maîtrisez la crypto
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
                     }}>
-                      Maîtrisez la crypto
-                    </p>
+                      Il y a 5h
+                    </span>
                   </div>
-                </div>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                }}>
-                  Il y a 5h
-                </span>
-              </div>
 
-              {/* News Item 4 */}
-              <div style={{
-                background: 'rgba(245, 158, 11, 0.15)',
-                borderLeft: '4px solid #f59e0b',
-                borderRadius: '16px',
-                padding: '18px',
-                flex: '0 0 auto',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'start',
-                  marginBottom: '8px',
-                }}>
-                  <span style={{ fontSize: '24px', marginTop: '2px' }}>⚠️</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      color: '#fcd34d',
-                      margin: '0 0 4px 0',
+                  {/* News Item 4 */}
+                  <div style={{
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    borderLeft: '4px solid #f59e0b',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    flex: '0 0 auto',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'start',
+                      marginBottom: '8px',
                     }}>
-                      Alerte BTC
-                    </p>
-                    <p style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      margin: 0,
-                      lineHeight: '1.4',
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}>⚠️</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '15px',
+                          fontWeight: '700',
+                          color: '#fcd34d',
+                          margin: '0 0 4px 0',
+                        }}>
+                          Alerte BTC
+                        </p>
+                        <p style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          margin: 0,
+                          lineHeight: '1.4',
+                        }}>
+                          Prix en baisse, opportunité?
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
                     }}>
-                      Prix en baisse, opportunité?
-                    </p>
+                      Il y a 1h
+                    </span>
                   </div>
-                </div>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                }}>
-                  Il y a 1h
-                </span>
-              </div>
 
-              {/* News Item 5 */}
-              <div style={{
-                background: 'rgba(59, 130, 246, 0.15)',
-                borderLeft: '4px solid #3b82f6',
-                borderRadius: '16px',
-                padding: '18px',
-                flex: '0 0 auto',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'start',
-                  marginBottom: '8px',
-                }}>
-                  <span style={{ fontSize: '24px', marginTop: '2px' }}>🏆</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      color: '#60a5fa',
-                      margin: '0 0 4px 0',
+                  {/* News Item 5 */}
+                  <div style={{
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    borderLeft: '4px solid #3b82f6',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    flex: '0 0 auto',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'start',
+                      marginBottom: '8px',
                     }}>
-                      Objectif atteint!
-                    </p>
-                    <p style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      margin: 0,
-                      lineHeight: '1.4',
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}>🏆</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          fontSize: '15px',
+                          fontWeight: '700',
+                          color: '#60a5fa',
+                          margin: '0 0 4px 0',
+                        }}>
+                          Objectif atteint!
+                        </p>
+                        <p style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          margin: 0,
+                          lineHeight: '1.4',
+                        }}>
+                          +€5k de gains ce mois
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
                     }}>
-                      +€5k de gains ce mois
-                    </p>
+                      Il y a 3h
+                    </span>
                   </div>
-                </div>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                }}>
-                  Il y a 3h
-                </span>
-              </div>
+                </>
+              )}
+
+              {newsModalTab === 'tips' && (
+                <>
+                  {dailyTips.map((tip) => (
+                    <div
+                      key={tip.id}
+                      style={{
+                        background: 'rgba(168, 85, 247, 0.15)',
+                        borderLeft: '4px solid #a855f7',
+                        borderRadius: '16px',
+                        padding: '18px',
+                        flex: '0 0 auto',
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'start',
+                        marginBottom: '8px',
+                      }}>
+                        <span style={{ fontSize: '24px', marginTop: '2px' }}>
+                          {tip.icon}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <p style={{
+                            fontSize: '15px',
+                            fontWeight: '700',
+                            color: '#d8b4fe',
+                            margin: '0 0 4px 0',
+                          }}>
+                            {tip.title}
+                          </p>
+                          <p style={{
+                            fontSize: '13px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            margin: 0,
+                            lineHeight: '1.4',
+                          }}>
+                            {tip.tip}
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: '11px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                      }}>
+                        Conseil quotidien
+                      </span>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
             {/* Tablet Bezel Bottom */}
