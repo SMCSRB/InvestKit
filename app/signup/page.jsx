@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { signIn } from 'next-auth/react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 export default function SignupPage() {
@@ -191,7 +192,7 @@ export default function SignupPage() {
         <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
           <button
             type="button"
-            onClick={() => console.log('Google login')}
+            onClick={() => signIn('google', { callbackUrl: '/' })}
             style={{
               flex: 1,
               padding: '10px 12px',
@@ -223,7 +224,7 @@ export default function SignupPage() {
           </button>
           <button
             type="button"
-            onClick={() => console.log('GitHub login')}
+            onClick={() => signIn('github', { callbackUrl: '/' })}
             style={{
               flex: 1,
               padding: '10px 12px',
