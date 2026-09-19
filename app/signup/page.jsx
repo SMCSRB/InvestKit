@@ -1,28 +1,23 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 export default function SignupPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [verificationInfo, setVerificationInfo] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [emailAvailable, setEmailAvailable] = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
-  const [hoveredTooltip, setHoveredTooltip] = useState(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
 
@@ -49,7 +44,6 @@ export default function SignupPage() {
     }
   };
 
-  // Debounced email check
   useEffect(() => {
     if (emailCheckTimeoutRef.current) {
       clearTimeout(emailCheckTimeoutRef.current);
@@ -92,17 +86,14 @@ export default function SignupPage() {
   const isEmailValid = isEmailFormatValid && emailAvailable === true;
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
-  const isFormValid = firstName && lastName && isEmailValid && passwordsMatch && captchaToken && acceptTerms && gdprConsent;
+  const isFormValid = isEmailValid && passwordsMatch && captchaToken && gdprConsent;
 
-  // Calculate form progress (0-100%)
   const formSteps = [
-    firstName.length > 0,
-    lastName.length > 0,
     isEmailValid,
     password.length >= 6,
     passwordsMatch,
     captchaToken !== null,
-    acceptTerms,
+    gdprConsent,
   ];
   const completedSteps = formSteps.filter(Boolean).length;
   const formProgress = Math.round((completedSteps / formSteps.length) * 100);
@@ -128,21 +119,13 @@ export default function SignupPage() {
       const response = await fetch('http://192.168.1.201:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName, captchaToken }),
+        body: JSON.stringify({ email, password, captchaToken }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        setMessage('✅ Inscription réussie!');
-        setVerificationInfo(data);
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-        console.log('Signup response:', data);
-        setEmail('');
-        setPassword('');
-        setPasswordConfirm('');
-        setFirstName('');
-        setLastName('');
+        sessionStorage.setItem('verificationEmail', email);
+        router.push('/verify-email');
       } else {
         setMessage(`❌ ${data.error || 'Erreur lors de l\'inscription'}`);
         console.error('Signup error:', data);
@@ -171,20 +154,6 @@ export default function SignupPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes confetti-fall {
-          0% {
-            transform: translateY(0) rotateZ(0deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh) rotateZ(360deg);
-            opacity: 0;
-          }
-        }
         .spinner {
           display: inline-block;
           width: 16px;
@@ -193,47 +162,6 @@ export default function SignupPage() {
           border-top-color: white;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
-        }
-        .confetti {
-          position: fixed;
-          width: 10px;
-          height: 10px;
-          top: -10px;
-          opacity: 1;
-          animation: confetti-fall 3s ease-in forwards;
-        }
-        .tooltip {
-          position: relative;
-          cursor: help;
-          opacity: 0.7;
-          transition: opacity 0.3s;
-        }
-        .tooltip:hover {
-          opacity: 1;
-        }
-        .tooltip-content {
-          position: absolute;
-          bottom: 125%;
-          left: 50%;
-          transform: translateX(-50%);
-          background: #2d3748;
-          color: white;
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          white-space: nowrap;
-          z-index: 1000;
-          pointer-events: none;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-        .tooltip-content::after {
-          content: '';
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          border: 4px solid transparent;
-          border-top-color: #2d3748;
         }
         .modal-overlay {
           position: fixed;
@@ -258,18 +186,6 @@ export default function SignupPage() {
         }
       `}</style>
 
-      {/* Confetti Animation */}
-      {showConfetti && Array.from({ length: 50 }).map((_, i) => (
-        <div
-          key={i}
-          className="confetti"
-          style={{
-            left: Math.random() * 100 + '%',
-            background: ['#667eea', '#764ba2', '#48bb78', '#f56565', '#ecc94b'][Math.floor(Math.random() * 5)],
-            animationDelay: Math.random() * 0.3 + 's',
-          }}
-        />
-      ))}
       {/* Conteneur principal */}
       <div style={{
         maxWidth: '420px',
@@ -330,443 +246,272 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Prénom */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>👤 Prénom</label>
-            <span
-              className="tooltip"
-              onMouseEnter={() => setHoveredTooltip('firstName')}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              style={{ position: 'relative' }}
-            >
-              ❓
-              {hoveredTooltip === 'firstName' && (
-                <div className="tooltip-content">
-                  Votre prénom réel
-                </div>
-              )}
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="Votre prénom"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                border: '2px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
-                outline: 'none',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'none';
-              }}
-              required
-            />
-            {firstName && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
-          </div>
-          {!firstName && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
-        </div>
-
-        {/* Nom */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>👤 Nom</label>
-            <span
-              className="tooltip"
-              onMouseEnter={() => setHoveredTooltip('lastName')}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              style={{ position: 'relative' }}
-            >
-              ❓
-              {hoveredTooltip === 'lastName' && (
-                <div className="tooltip-content">
-                  Votre nom de famille
-                </div>
-              )}
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="Votre nom de famille"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                border: '2px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
-                outline: 'none',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'none';
-              }}
-              required
-            />
-            {lastName && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
-          </div>
-          {!lastName && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
-        </div>
-
-        {/* Email */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>📧 Email</label>
-            <span
-              className="tooltip"
-              onMouseEnter={() => setHoveredTooltip('email')}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              style={{ position: 'relative' }}
-            >
-              ❓
-              {hoveredTooltip === 'email' && (
-                <div className="tooltip-content">
-                  Vérification en temps réel
-                </div>
-              )}
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="email"
-              placeholder="nom@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                border: '2px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
-                outline: 'none',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'none';
-              }}
-              required
-            />
-            {checkingEmail && <span style={{ fontSize: '18px', animation: 'spin 1s linear infinite' }}>⏳</span>}
-            {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
-          </div>
-          {email && checkingEmail && <p style={{ fontSize: '12px', color: '#a0aec0', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
-          {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Format invalide</p>}
-          {email && !checkingEmail && isEmailFormatValid && emailAvailable === false && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Email déjà utilisé</p>}
-          {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Email disponible</p>}
-          {!email && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
-        </div>
-
-        {/* Mot de passe */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748' }}>🔒 Mot de passe</label>
-            <span
-              className="tooltip"
-              onMouseEnter={() => setHoveredTooltip('password')}
-              onMouseLeave={() => setHoveredTooltip(null)}
-              style={{ position: 'relative' }}
-            >
-              ❓
-              {hoveredTooltip === 'password' && (
-                <div className="tooltip-content">
-                  Minimum 6 caractères
-                </div>
-              )}
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Minimum 6 caractères"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                border: '2px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
-                outline: 'none',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'none';
-              }}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '18px',
-                cursor: 'pointer',
-                padding: '0',
-                display: 'flex',
-                alignItems: 'center',
-                color: '#718096',
-                transition: 'color 0.3s',
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#667eea'}
-              onMouseLeave={(e) => e.target.style.color = '#718096'}
-              title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-            >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
-            </button>
-            {password.length >= 6 && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
-          </div>
-          {password && (
-            <>
-              <div style={{ display: 'flex', gap: '4px', margin: '8px 0', height: '5px' }}>
-                <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#f56565' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
-                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
-                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
-              </div>
-              <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0', fontWeight: '500' }}>
-                Force: <strong>{passwordStrength === 'fort' ? '💪 Fort' : passwordStrength === 'moyen' ? '⚠️ Moyen' : '❌ Faible'}</strong>
-              </p>
-            </>
-          )}
-          {!password && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Minimum 6 caractères</p>}
-        </div>
-
-        {/* Confirmer Mot de passe */}
-        <div>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔐 Confirmer le mot de passe</label>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type={showPasswordConfirm ? 'text' : 'password'}
-              placeholder="Répétez votre mot de passe"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                border: `2px solid ${passwordConfirm ? (passwordsMatch ? '#c6f6d5' : '#fed7d7') : '#e2e8f0'}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
-                outline: 'none',
-                backgroundColor: passwordConfirm ? (passwordsMatch ? '#f0fff4' : '#fff5f5') : 'white',
-              }}
-              onFocus={(e) => {
-                if (!passwordConfirm || !password) {
+          {/* Email */}
+          <div>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>📧 Email</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="email"
+                placeholder="nom@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.3s ease',
+                  outline: 'none',
+                }}
+                onFocus={(e) => {
                   e.target.style.borderColor = '#667eea';
                   e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }
-              }}
-              onBlur={(e) => {
-                e.target.style.boxShadow = 'none';
-                if (!passwordConfirm) {
+                }}
+                onBlur={(e) => {
                   e.target.style.borderColor = '#e2e8f0';
-                  e.target.style.backgroundColor = 'white';
-                }
-              }}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '18px',
-                cursor: 'pointer',
-                padding: '0',
-                display: 'flex',
-                alignItems: 'center',
-                color: '#718096',
-                transition: 'color 0.3s',
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#667eea'}
-              onMouseLeave={(e) => e.target.style.color = '#718096'}
-              title={showPasswordConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-            >
-              {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
-            </button>
-            {passwordConfirm && password && (passwordsMatch ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
+                  e.target.style.boxShadow = 'none';
+                }}
+                required
+              />
+              {checkingEmail && <span style={{ fontSize: '18px', animation: 'spin 1s linear infinite' }}>⏳</span>}
+              {!checkingEmail && email && (isEmailValid ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
+            </div>
+            {email && checkingEmail && <p style={{ fontSize: '12px', color: '#a0aec0', margin: '4px 0 0 0' }}>Vérification en cours...</p>}
+            {email && !checkingEmail && !isEmailFormatValid && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Format invalide</p>}
+            {email && !checkingEmail && isEmailFormatValid && emailAvailable === false && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Email déjà utilisé</p>}
+            {email && !checkingEmail && isEmailValid && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Email disponible</p>}
+            {!email && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
           </div>
-          {password && !passwordConfirm && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
-          {passwordConfirm && password && !passwordsMatch && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Les mots de passe ne correspondent pas</p>}
-          {passwordConfirm && password && passwordsMatch && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Mots de passe identiques ✓</p>}
-        </div>
 
-        {/* hCaptcha */}
-        <div style={{ margin: '20px 0', padding: '12px', background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', justifyContent: 'center', minHeight: '90px' }}>
-          {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
-            <HCaptcha
-              ref={captchaRef}
-              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
-              onVerify={(token) => setCaptchaToken(token)}
-            />
-          ) : (
-            <p style={{ color: '#f56565', fontSize: '13px' }}>⚠️ hCaptcha key not configured</p>
-          )}
-        </div>
-
-        {/* Newsletter Opt-in */}
-        <div style={{ margin: '15px 0', padding: '12px', background: '#f0fff4', border: '1px solid #c6f6d5', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-            <input
-              type="checkbox"
-              id="newsletter"
-              checked={newsletterOptIn}
-              onChange={(e) => setNewsletterOptIn(e.target.checked)}
-              style={{ marginTop: '2px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#667eea' }}
-            />
-            <label htmlFor="newsletter" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
-              📬 Je veux recevoir les actualités, offres exclusives et astuces d'investissement
-            </label>
-          </div>
-        </div>
-
-        {/* Conditions d'utilisation */}
-        <div style={{ margin: '15px 0', padding: '12px', background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-            <input
-              type="checkbox"
-              id="terms"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              style={{ marginTop: '2px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#667eea' }}
-              required
-            />
-            <label htmlFor="terms" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
-              J'accepte les{' '}
+          {/* Mot de passe */}
+          <div>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔒 Mot de passe</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Minimum 6 caractères"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.3s ease',
+                  outline: 'none',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#667eea';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.boxShadow = 'none';
+                }}
+                required
+              />
               <button
                 type="button"
-                onClick={() => setShowTermsModal(true)}
+                onClick={() => setShowPassword(!showPassword)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#667eea',
-                  textDecoration: 'underline',
+                  fontSize: '18px',
                   cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '500',
                   padding: '0',
+                  color: '#718096',
+                  transition: 'color 0.3s',
                 }}
+                onMouseEnter={(e) => e.target.style.color = '#667eea'}
+                onMouseLeave={(e) => e.target.style.color = '#718096'}
+                title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               >
-                Conditions d'Utilisation
+                {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
-              {' '}et la{' '}
-              <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Politique de Confidentialité</a>
-            </label>
+              {password.length >= 6 && <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span>}
+            </div>
+            {password && (
+              <>
+                <div style={{ display: 'flex', gap: '4px', margin: '8px 0', height: '5px' }}>
+                  <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#f56565' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
+                  <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
+                  <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#48bb78' : '#e2e8f0', borderRadius: '3px', transition: 'all 0.3s' }} />
+                </div>
+                <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#48bb78' : passwordStrength === 'moyen' ? '#ecc94b' : '#f56565', margin: '0', fontWeight: '500' }}>
+                  Force: <strong>{passwordStrength === 'fort' ? '💪 Fort' : passwordStrength === 'moyen' ? '⚠️ Moyen' : '❌ Faible'}</strong>
+                </p>
+              </>
+            )}
+            {!password && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Minimum 6 caractères</p>}
           </div>
-          {!acceptTerms && <p style={{ fontSize: '12px', color: '#f56565', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
-        </div>
 
-        {/* GDPR Consent */}
-        <div style={{ margin: '15px 0', padding: '12px', background: '#e6fffa', border: '1px solid #81e6d9', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+          {/* Confirmer Mot de passe */}
+          <div>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px', display: 'block' }}>🔐 Confirmer le mot de passe</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type={showPasswordConfirm ? 'text' : 'password'}
+                placeholder="Répétez votre mot de passe"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  border: `2px solid ${passwordConfirm ? (passwordsMatch ? '#c6f6d5' : '#fed7d7') : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.3s ease',
+                  outline: 'none',
+                  backgroundColor: passwordConfirm ? (passwordsMatch ? '#f0fff4' : '#fff5f5') : 'white',
+                }}
+                onFocus={(e) => {
+                  if (!passwordConfirm || !password) {
+                    e.target.style.borderColor = '#667eea';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                  }
+                }}
+                onBlur={(e) => {
+                  e.target.style.boxShadow = 'none';
+                  if (!passwordConfirm) {
+                    e.target.style.borderColor = '#e2e8f0';
+                    e.target.style.backgroundColor = 'white';
+                  }
+                }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  color: '#718096',
+                  transition: 'color 0.3s',
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#667eea'}
+                onMouseLeave={(e) => e.target.style.color = '#718096'}
+                title={showPasswordConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              >
+                {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
+              </button>
+              {passwordConfirm && <span style={{ fontSize: '18px', color: passwordsMatch ? '#48bb78' : '#f56565' }}>{passwordsMatch ? '✅' : '❌'}</span>}
+            </div>
+            {passwordConfirm && !passwordsMatch && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Les mots de passe ne correspondent pas</p>}
+            {passwordConfirm && passwordsMatch && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Les mots de passe correspondent</p>}
+          </div>
+
+          {/* hCaptcha */}
+          <div style={{ margin: '10px 0' }}>
+            <HCaptcha
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
+              onVerify={(token) => setCaptchaToken(token)}
+              ref={captchaRef}
+              theme="light"
+            />
+          </div>
+
+          {/* GDPR Consent */}
+          <div style={{
+            padding: '12px',
+            background: '#e6fffa',
+            border: '1px solid #81e6d9',
+            borderRadius: '8px',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'flex-start',
+          }}>
             <input
               type="checkbox"
               id="gdpr"
               checked={gdprConsent}
               onChange={(e) => setGdprConsent(e.target.checked)}
-              style={{ marginTop: '2px', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#667eea' }}
+              style={{
+                marginTop: '3px',
+                cursor: 'pointer',
+                width: '18px',
+                height: '18px',
+              }}
               required
             />
-            <label htmlFor="gdpr" style={{ fontSize: '13px', cursor: 'pointer', color: '#2d3748', lineHeight: '1.4' }}>
+            <label htmlFor="gdpr" style={{ fontSize: '12px', color: '#234e52', margin: '0', cursor: 'pointer', flex: 1 }}>
               🔒 Je consens au traitement de mes données personnelles selon le RGPD
             </label>
           </div>
-          {!gdprConsent && <p style={{ fontSize: '12px', color: '#f56565', margin: '6px 0 0 0' }}>Requis pour continuer</p>}
-        </div>
 
-        {/* Trust Signals / Sécurité */}
-        <div style={{ margin: '15px 0', paddingTop: '15px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '12px', color: '#718096' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '16px' }}>🔒</span>
-            <span>SSL Secure</span>
+          {/* Terms Link */}
+          <div style={{ textAlign: 'center', fontSize: '12px', color: '#718096' }}>
+            En créant un compte, vous acceptez nos{' '}
+            <button
+              type="button"
+              onClick={() => setShowTermsModal(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#667eea',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontSize: 'inherit',
+                fontWeight: '500',
+              }}
+            >
+              conditions d'utilisation
+            </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '16px' }}>✓</span>
-            <span>hCaptcha Protected</span>
-          </div>
-        </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading || !isFormValid}
-          style={{
-            marginTop: '10px',
-            padding: '12px 16px',
-            background: isFormValid && !loading ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : loading ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: '600',
-            cursor: isFormValid && !loading ? 'pointer' : 'not-allowed',
-            transition: 'all 0.3s ease',
-            boxShadow: isFormValid && !loading ? '0 4px 15px rgba(102, 126, 234, 0.4)' : loading ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            opacity: loading ? 0.9 : 1,
-          }}
-          onMouseEnter={(e) => {
-            if (isFormValid && !loading) {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.5)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (isFormValid && !loading) {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-            }
-          }}
-        >
-          {loading ? (
-            <>
-              <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', borderStyle: 'solid', borderColor: 'rgba(255, 255, 255, 0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              <span>Inscription en cours...</span>
-            </>
-          ) : (
-            '✨ S\'inscrire'
-          )}
-        </button>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading || !isFormValid}
+            style={{
+              marginTop: '5px',
+              padding: '12px 16px',
+              background: !loading && isFormValid ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: '600',
+              cursor: !loading && isFormValid ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s ease',
+              boxShadow: !loading && isFormValid ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => {
+              if (!loading && isFormValid) {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.5)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading && isFormValid) {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+              }
+            }}
+          >
+            {loading ? (
+              <>
+                <div className="spinner" />
+                <span>Inscription...</span>
+              </>
+            ) : (
+              '✨ S\'inscrire'
+            )}
+          </button>
         </form>
 
-        {/* Message alert */}
+        {/* Message */}
         {message && (
           <div style={{
             marginTop: '15px',
@@ -781,72 +526,50 @@ export default function SignupPage() {
             {message}
           </div>
         )}
-
-        {/* Verification Info */}
-        {verificationInfo && (
-          <div style={{
-            marginTop: '20px',
-            padding: '16px',
-            background: 'linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%)',
-            border: '1px solid #c6f6d5',
-            borderRadius: '8px',
-            textAlign: 'left',
-          }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600', color: '#22543d' }}>✅ Inscription réussie!</h3>
-            <div style={{ fontSize: '13px', color: '#2d3748', lineHeight: '1.6' }}>
-              <p style={{ margin: '0 0 8px 0' }}><strong>ID Utilisateur:</strong> <code style={{ background: '#fff', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{verificationInfo.userId}</code></p>
-              {verificationInfo.verificationCode && (
-                <p style={{ margin: '0 0 12px 0' }}><strong>Code de vérification:</strong> <code style={{ background: '#fff', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', color: '#667eea', fontWeight: '600' }}>{verificationInfo.verificationCode}</code></p>
-              )}
-              <p style={{ margin: '12px 0 0 0', paddingTop: '12px', borderTop: '1px solid #c6f6d5' }}>
-                ➡️ <a href="/verify-email" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '600' }}>Vérifier votre email</a>
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: '30px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px' }}>
-        <p style={{ margin: '0' }}>Vous avez déjà un compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
+        <p style={{ margin: '0' }}>Vous avez un compte? <a href="/login" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>Se connecter</a></p>
       </div>
 
       {/* Terms Modal */}
       {showTermsModal && (
         <div className="modal-overlay" onClick={() => setShowTermsModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: '0', marginBottom: '15px', color: '#2d3748' }}>Conditions d'Utilisation</h2>
-            <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#4a5568' }}>
-              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>1. Acceptation des Conditions</h3>
-              <p>En accédant et en utilisant InvestKit, vous acceptez d'être lié par ces conditions d'utilisation.</p>
+            <h2 style={{ marginTop: '0', color: '#2d3748' }}>Conditions d'Utilisation</h2>
 
-              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>2. Licence d'Utilisation</h3>
-              <p>InvestKit vous accorde une licence limitée, non-exclusive et révocable pour utiliser ce service à des fins personnelles et non-commerciales.</p>
+            <h3 style={{ color: '#667eea', marginTop: '20px' }}>1. Acceptation des Conditions</h3>
+            <p>En utilisant InvestKit, vous acceptez ces conditions d'utilisation dans leur intégralité. Si vous n'acceptez pas ces conditions, vous ne pouvez pas utiliser notre plateforme.</p>
 
-              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>3. Restrictions d'Utilisation</h3>
-              <p>Vous ne pouvez pas utiliser le service de manière illégale, modifier le service, ou vendre l'accès au service.</p>
+            <h3 style={{ color: '#667eea', marginTop: '20px' }}>2. Licence d'Utilisation</h3>
+            <p>InvestKit vous accorde une licence limitée, non exclusive et révocable pour accéder et utiliser la plateforme à des fins personnelles et non commerciales.</p>
 
-              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>4. Disclaimer</h3>
-              <p>InvestKit fournit des outils de simulation et d'éducation à titre informatif uniquement. Les informations ne constituent pas des conseils financiers professionnels.</p>
+            <h3 style={{ color: '#667eea', marginTop: '20px' }}>3. Restrictions d'Utilisation</h3>
+            <p>Vous ne devez pas reproduire, vendre, distribuer, transmettre ou exploiter le contenu de la plateforme sans autorisation écrite.</p>
 
-              <h3 style={{ marginTop: '15px', marginBottom: '8px', color: '#2d3748' }}>5. Limitation de Responsabilité</h3>
-              <p>InvestKit ne sera pas responsable des dommages indirects, accidentels ou consécutifs résultant de votre utilisation du service.</p>
+            <h3 style={{ color: '#667eea', marginTop: '20px' }}>4. Disclaimer</h3>
+            <p>Les informations fournies par InvestKit sont à titre informatif uniquement et ne constituent pas des conseils financiers. Consultez un professionnel avant de prendre toute décision d'investissement.</p>
+
+            <h3 style={{ color: '#667eea', marginTop: '20px' }}>5. Limitation de Responsabilité</h3>
+            <p>InvestKit n'est pas responsable des pertes ou dommages directs ou indirects résultant de l'utilisation de la plateforme.</p>
+
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button
+                onClick={() => setShowTermsModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                Fermer
+              </button>
             </div>
-            <button
-              onClick={() => setShowTermsModal(false)}
-              style={{
-                marginTop: '20px',
-                padding: '10px 20px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: '600',
-              }}
-            >
-              Fermer
-            </button>
           </div>
         </div>
       )}
