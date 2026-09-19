@@ -137,30 +137,25 @@ export const userRepository = {
   ): Promise<void> {
     const updates: string[] = [];
     const values: any[] = [];
-    let paramIndex = 1;
 
     if (preferences.account_type !== undefined) {
-      updates.push(`account_type = $${paramIndex}`);
+      updates.push(`account_type = $${updates.length + 1}`);
       values.push(preferences.account_type);
-      paramIndex++;
     }
 
     if (preferences.interests !== undefined) {
-      updates.push(`interests = $${paramIndex}`);
+      updates.push(`interests = $${updates.length + 1}`);
       values.push(preferences.interests);
-      paramIndex++;
     }
 
     if (preferences.language !== undefined) {
-      updates.push(`language = $${paramIndex}`);
+      updates.push(`language = $${updates.length + 1}`);
       values.push(preferences.language);
-      paramIndex++;
     }
 
     if (preferences.enable_2fa !== undefined) {
-      updates.push(`enable_2fa = $${paramIndex}`);
+      updates.push(`enable_2fa = $${updates.length + 1}`);
       values.push(preferences.enable_2fa);
-      paramIndex++;
     }
 
     if (updates.length === 0) return;
@@ -168,7 +163,7 @@ export const userRepository = {
     updates.push(`updated_at = NOW()`);
     values.push(id);
 
-    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`;
+    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${values.length}`;
     await query(sql, values);
   },
 };
