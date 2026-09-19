@@ -983,11 +983,11 @@ Un smart contract est un programme automatisé sur la blockchain.
 - **Déterministe** : Même résultat chaque fois
 
 ### Exemple :
-```
+\`\`\`
 Si l'utilisateur A envoie 1 ETH
 Et l'utilisateur B envoie 1 USDC
 Alors : Échange les actifs automatiquement
-```
+\`\`\`
 
 ## Protocoles DeFi Majeurs
 
