@@ -124,7 +124,6 @@ const nextConfig = {
             vendors: false,
             // Vendor chunk
             vendor: {
-              filename: 'chunks/vendor.js',
               chunks: 'all',
               reuseExistingChunk: true,
               priority: 20,
