@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [settingsTab, setSettingsTab] = useState('general');
 
   const theme = {
     dark: {
@@ -1181,56 +1182,355 @@ export default function DashboardPage() {
               ⚙️ Paramètres
             </h2>
 
+            {/* Settings Tabs */}
             <div style={{
               display: 'grid',
-              gap: '20px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: '12px',
+              marginBottom: '24px',
             }}>
-              {/* Appearance Section */}
-              <div style={{
-                background: currentTheme.cardBg,
-                borderRadius: '16px',
-                padding: '24px',
-                border: `1px solid ${currentTheme.border}`,
-                backdropFilter: 'blur(20px)',
-              }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '700',
-                  color: currentTheme.text,
-                  margin: '0 0 16px 0',
-                }}>
-                  🎨 Apparence
-                </h3>
+              {[
+                { id: 'general', label: '🎨 Affichage', icon: '🎨' },
+                { id: 'profile', label: '👤 Profil', icon: '👤' },
+                { id: 'security', label: '🔐 Sécurité', icon: '🔐' },
+                { id: 'alerts', label: '🔔 Alertes', icon: '🔔' },
+                { id: 'privacy', label: '📊 Données', icon: '📊' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSettingsTab(tab.id)}
+                  style={{
+                    padding: '12px 16px',
+                    background: settingsTab === tab.id
+                      ? 'rgba(59, 130, 246, 0.2)'
+                      : currentTheme.cardBg,
+                    border: `1px solid ${settingsTab === tab.id
+                      ? 'rgba(59, 130, 246, 0.4)'
+                      : currentTheme.border}`,
+                    borderRadius: '10px',
+                    color: settingsTab === tab.id ? currentTheme.accent : currentTheme.text,
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (settingsTab !== tab.id) {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (settingsTab !== tab.id) {
+                      e.currentTarget.style.background = currentTheme.cardBg;
+                    }
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-                {/* Theme Toggle */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingBottom: '16px',
-                  borderBottom: `1px solid ${currentTheme.border}`,
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '14px',
+            {/* Settings Content */}
+            <div style={{
+              background: currentTheme.cardBg,
+              borderRadius: '16px',
+              padding: '24px',
+              border: `1px solid ${currentTheme.border}`,
+              backdropFilter: 'blur(20px)',
+            }}>
+              {/* AFFICHAGE TAB */}
+              {settingsTab === 'general' && (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: 0,
+                  }}>
+                    🎨 Préférences d'Affichage
+                  </h3>
+
+                  {/* Theme Toggle */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Mode Thème
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        {isDarkMode ? 'Mode sombre activé' : 'Mode clair activé'}
+                      </p>
+                    </div>
+                    <button onClick={toggleTheme} style={{
+                      padding: '8px 16px',
+                      background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                      border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      fontSize: '13px',
                       fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'; }}
+                    >
+                      {isDarkMode ? '🌙 Sombre' : '☀️ Clair'}
+                    </button>
+                  </div>
+
+                  {/* Devise */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Devise
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        EUR (€)
+                      </p>
+                    </div>
+                    <select style={{
+                      padding: '8px 12px',
+                      background: `${currentTheme.border}`,
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '8px',
                       color: currentTheme.text,
-                      margin: '0 0 4px 0',
+                      fontSize: '13px',
+                      cursor: 'pointer',
                     }}>
-                      Mode Thème
+                      <option>EUR (€)</option>
+                      <option>USD ($)</option>
+                      <option>GBP (£)</option>
+                    </select>
+                  </div>
+
+                  {/* Format de date */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Format de date
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        Jour/Mois/Année
+                      </p>
+                    </div>
+                    <select style={{
+                      padding: '8px 12px',
+                      background: `${currentTheme.border}`,
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '8px',
+                      color: currentTheme.text,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}>
+                      <option>JJ/MM/AAAA</option>
+                      <option>MM/JJ/AAAA</option>
+                      <option>AAAA-MM-JJ</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* PROFIL TAB */}
+              {settingsTab === 'profile' && (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: 0,
+                  }}>
+                    👤 Profil Utilisateur
+                  </h3>
+
+                  {/* Profile Info */}
+                  <div style={{
+                    display: 'grid',
+                    gap: '12px',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        marginBottom: '6px',
+                      }}>
+                        Nom complet
+                      </label>
+                      <input type="text" defaultValue="Jean Dupont" style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: currentTheme.border,
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                      }} />
+                    </div>
+
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        marginBottom: '6px',
+                      }}>
+                        Email
+                      </label>
+                      <input type="email" defaultValue="jean.dupont@example.com" style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: currentTheme.border,
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                      }} />
+                    </div>
+                  </div>
+
+                  <button style={{
+                    padding: '10px 20px',
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px',
+                    color: currentTheme.accent,
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}>
+                    Enregistrer les modifications
+                  </button>
+                </div>
+              )}
+
+              {/* SÉCURITÉ TAB */}
+              {settingsTab === 'security' && (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: 0,
+                  }}>
+                    🔐 Sécurité
+                  </h3>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Changer le mot de passe
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        Mettez à jour votre mot de passe
+                      </p>
+                    </div>
+                    <button style={{
+                      padding: '8px 16px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}>
+                      Modifier
+                    </button>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Authentification 2FA
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        Sécurité supplémentaire
+                      </p>
+                    </div>
+                    <button style={{
+                      padding: '8px 16px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}>
+                      Activer
+                    </button>
+                  </div>
+
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 12px 0' }}>
+                      Sessions actives
                     </p>
-                    <p style={{
-                      fontSize: '12px',
-                      color: currentTheme.textSecondary,
-                      margin: 0,
-                    }}>
-                      {isDarkMode ? 'Mode sombre activé' : 'Mode clair activé'}
+                    <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                      Gérez vos sessions de connexion
                     </p>
                   </div>
-                  <button onClick={toggleTheme} style={{
-                    padding: '8px 16px',
-                    background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                    border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
+                </div>
+              )}
+
+              {/* ALERTES TAB */}
+              {settingsTab === 'alerts' && (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: 0,
+                  }}>
+                    🔔 Seuils d'Alertes Personnalisées
+                  </h3>
+
+                  <p style={{
+                    fontSize: '13px',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 12px 0',
+                  }}>
+                    Créez des alertes personnalisées basées sur vos critères
+                  </p>
+
+                  <button style={{
+                    padding: '12px 20px',
+                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
                     borderRadius: '8px',
                     color: currentTheme.accent,
                     fontSize: '13px',
@@ -1239,66 +1539,116 @@ export default function DashboardPage() {
                     transition: 'all 0.3s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)';
                   }}
                   >
-                    {isDarkMode ? '🌙 Sombre' : '☀️ Clair'}
+                    + Créer une alerte
                   </button>
+
+                  <div style={{
+                    marginTop: '16px',
+                    paddingTop: '16px',
+                    borderTop: `1px solid ${currentTheme.border}`,
+                    color: currentTheme.textSecondary,
+                    fontSize: '12px',
+                  }}>
+                    Exemples: "Si Bitcoin +20%", "Si portefeuille baisse de 10%", "Si dividende reçu"
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Notifications Section - Placeholder */}
-              <div style={{
-                background: currentTheme.cardBg,
-                borderRadius: '16px',
-                padding: '24px',
-                border: `1px solid ${currentTheme.border}`,
-                backdropFilter: 'blur(20px)',
-              }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '700',
-                  color: currentTheme.text,
-                  margin: '0 0 16px 0',
-                }}>
-                  🔔 Notifications
-                </h3>
-                <p style={{
-                  fontSize: '13px',
-                  color: currentTheme.textSecondary,
-                  margin: 0,
-                }}>
-                  Gérez vos préférences de notifications
-                </p>
-              </div>
+              {/* DONNÉES TAB */}
+              {settingsTab === 'privacy' && (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: 0,
+                  }}>
+                    📊 Données & Confidentialité
+                  </h3>
 
-              {/* Account Section - Placeholder */}
-              <div style={{
-                background: currentTheme.cardBg,
-                borderRadius: '16px',
-                padding: '24px',
-                border: `1px solid ${currentTheme.border}`,
-                backdropFilter: 'blur(20px)',
-              }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '700',
-                  color: currentTheme.text,
-                  margin: '0 0 16px 0',
-                }}>
-                  👤 Compte
-                </h3>
-                <p style={{
-                  fontSize: '13px',
-                  color: currentTheme.textSecondary,
-                  margin: 0,
-                }}>
-                  Modifiez vos informations de compte
-                </p>
-              </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Export mes données
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        Téléchargez vos données personnelles
+                      </p>
+                    </div>
+                    <button style={{
+                      padding: '8px 16px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}>
+                      Exporter
+                    </button>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        Politique de confidentialité
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                        Consultez nos conditions
+                      </p>
+                    </div>
+                    <button style={{
+                      padding: '8px 16px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}>
+                      Lire
+                    </button>
+                  </div>
+
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#f43f5e', margin: '0 0 8px 0' }}>
+                      ⚠️ Zone Danger
+                    </p>
+                    <button style={{
+                      padding: '10px 20px',
+                      background: 'rgba(244, 63, 94, 0.15)',
+                      border: '1px solid rgba(244, 63, 94, 0.3)',
+                      borderRadius: '8px',
+                      color: '#f43f5e',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}>
+                      Supprimer mon compte
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
