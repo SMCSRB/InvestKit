@@ -23,7 +23,7 @@ export const env = {
   },
 
   // CORS
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  corsOrigin: process.env.CORS_ORIGIN || '*',
 };
 
 // Validation
