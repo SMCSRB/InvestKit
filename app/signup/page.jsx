@@ -14,10 +14,30 @@ export default function SignupPage() {
   const [captchaToken, setCaptchaToken] = useState(null);
   const captchaRef = useRef(null);
 
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const getPasswordStrength = (password) => {
+    if (password.length < 6) return 'faible';
+    if (password.length < 10 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) return 'moyen';
+    return 'fort';
+  };
+
+  const isEmailValid = validateEmail(email);
+  const passwordStrength = getPasswordStrength(password);
+  const isFormValid = firstName && lastName && isEmailValid && password.length >= 6 && captchaToken;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+
+    if (!isFormValid) {
+      setMessage('❌ Veuillez remplir tous les champs correctement');
+      setLoading(false);
+      return;
+    }
 
     if (!captchaToken) {
       setMessage('❌ Veuillez compléter le captcha');
@@ -56,34 +76,82 @@ export default function SignupPage() {
     <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', textAlign: 'center' }}>
       <h1>S'inscrire</h1>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <input
-          type="text"
-          placeholder="Prénom"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Nom"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        {/* Prénom */}
+        <div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder="Prénom"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              style={{ flex: 1 }}
+              required
+            />
+            {firstName && <span style={{ fontSize: '18px' }}>✅</span>}
+          </div>
+          {!firstName && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
+        </div>
+
+        {/* Nom */}
+        <div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder="Nom"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              style={{ flex: 1 }}
+              required
+            />
+            {lastName && <span style={{ fontSize: '18px' }}>✅</span>}
+          </div>
+          {!lastName && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
+        </div>
+
+        {/* Email */}
+        <div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ flex: 1 }}
+              required
+            />
+            {email && (isEmailValid ? <span style={{ fontSize: '18px' }}>✅</span> : <span style={{ fontSize: '18px' }}>❌</span>)}
+          </div>
+          {email && !isEmailValid && <p style={{ fontSize: '12px', color: '#ff6b6b', margin: '4px 0 0 0' }}>Email invalide</p>}
+          {!email && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Requis</p>}
+        </div>
+
+        {/* Mot de passe */}
+        <div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="password"
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ flex: 1 }}
+              required
+            />
+            {password.length >= 6 && <span style={{ fontSize: '18px' }}>✅</span>}
+          </div>
+          {password && (
+            <>
+              <div style={{ display: 'flex', gap: '4px', margin: '6px 0', height: '4px' }}>
+                <div style={{ flex: 1, background: passwordStrength !== 'faible' ? '#ff6b6b' : '#ddd', borderRadius: '2px' }} />
+                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#51cf66' : '#ddd', borderRadius: '2px' }} />
+                <div style={{ flex: 1, background: passwordStrength === 'fort' ? '#51cf66' : '#ddd', borderRadius: '2px' }} />
+              </div>
+              <p style={{ fontSize: '12px', color: passwordStrength === 'fort' ? '#51cf66' : '#ffa502', margin: '0' }}>
+                Force: {passwordStrength}
+              </p>
+            </>
+          )}
+          {!password && <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0 0' }}>Min 6 caractères</p>}
+        </div>
         <div style={{ margin: '15px 0', padding: '10px', minHeight: '80px', display: 'flex', justifyContent: 'center' }}>
           {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
             <HCaptcha
@@ -95,7 +163,7 @@ export default function SignupPage() {
             <p style={{ color: '#ff6b6b' }}>⚠️ hCaptcha key not configured</p>
           )}
         </div>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        <button type="submit" className="btn btn-primary" disabled={loading || !isFormValid} style={{ opacity: isFormValid ? 1 : 0.6, cursor: isFormValid ? 'pointer' : 'not-allowed' }}>
           {loading ? 'Inscription...' : 'S\'inscrire'}
         </button>
       </form>
