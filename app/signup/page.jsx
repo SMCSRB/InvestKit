@@ -309,13 +309,15 @@ export default function SignupPage() {
     return (
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
         <style>{`
           @keyframes shimmer {
@@ -323,32 +325,33 @@ export default function SignupPage() {
             100% { background-position: 1000px 0; }
           }
           .skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
             background-size: 1000px 100%;
             animation: shimmer 2s infinite;
-            border-radius: 8px;
+            border-radius: 16px;
           }
         `}</style>
 
         <div style={{
-          maxWidth: '420px',
+          maxWidth: '460px',
           width: '100%',
-          background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+          borderRadius: '24px',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3), 0 0 100px rgba(59, 130, 246, 0.1)',
           padding: '40px',
+          backdropFilter: 'blur(10px)',
         }}>
-          <div className="skeleton" style={{ width: '50px', height: '50px', borderRadius: '10px', margin: '0 auto 15px' }} />
-          <div className="skeleton" style={{ width: '100%', height: '28px', marginBottom: '10px' }} />
-          <div className="skeleton" style={{ width: '80%', height: '14px', marginBottom: '20px' }} />
-          <div className="skeleton" style={{ width: '100%', height: '6px', marginBottom: '30px' }} />
+          <div className="skeleton" style={{ width: '60px', height: '60px', borderRadius: '20px', margin: '0 auto 20px' }} />
+          <div className="skeleton" style={{ width: '100%', height: '32px', marginBottom: '12px' }} />
+          <div className="skeleton" style={{ width: '85%', height: '16px', marginBottom: '28px', margin: '0 auto 28px' }} />
+          <div className="skeleton" style={{ width: '100%', height: '8px', marginBottom: '35px' }} />
           {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ marginBottom: '15px' }}>
-              <div className="skeleton" style={{ width: '60px', height: '14px', marginBottom: '8px' }} />
-              <div className="skeleton" style={{ width: '100%', height: '40px', marginBottom: '8px' }} />
+            <div key={i} style={{ marginBottom: '18px' }}>
+              <div className="skeleton" style={{ width: '70px', height: '16px', marginBottom: '10px' }} />
+              <div className="skeleton" style={{ width: '100%', height: '48px', marginBottom: '10px' }} />
             </div>
           ))}
-          <div className="skeleton" style={{ width: '100%', height: '45px', marginTop: '20px' }} />
+          <div className="skeleton" style={{ width: '100%', height: '50px', marginTop: '25px' }} />
         </div>
       </div>
     );
@@ -357,23 +360,25 @@ export default function SignupPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
       padding: '20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
       <style>{`
         @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-20px); }
+          from { opacity: 0; transform: translateY(-25px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
+        @keyframes floatGradient {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
         }
 
         @keyframes confetti-fall {
@@ -383,37 +388,39 @@ export default function SignupPage() {
           }
         }
 
+        @keyframes glow {
+          0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+          50% { text-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+        }
+
         .confetti {
           position: fixed;
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           pointer-events: none;
           z-index: 9999;
           animation: confetti-fall 2s forwards;
+          border-radius: 50%;
         }
 
         .form-container {
-          animation: slideIn 0.5s ease-out;
-        }
-
-        .valid-input {
-          border-color: #10b981 !important;
-          background-color: rgba(16, 185, 129, 0.05);
+          animation: slideIn 0.6s ease-out;
         }
 
         .valid-checkmark {
           color: #10b981;
           font-weight: bold;
           margin-left: 8px;
+          animation: glow 2s infinite;
         }
 
         .requirement-item {
           display: flex;
           align-items: center;
-          padding: 8px 0;
+          padding: 10px 0;
           font-size: 13px;
-          color: #666;
-          transition: color 0.2s;
+          color: #64748b;
+          transition: all 0.2s;
         }
 
         .requirement-item.met {
@@ -421,36 +428,66 @@ export default function SignupPage() {
         }
 
         .requirement-check {
-          display: inline-block;
-          width: 18px;
-          height: 18px;
-          border: 2px solid #ddd;
-          border-radius: 4px;
-          margin-right: 8px;
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          font-size: 12px;
+          width: 20px;
+          height: 20px;
+          border: 2px solid #cbd5e1;
+          border-radius: 6px;
+          margin-right: 10px;
+          font-size: 13px;
           transition: all 0.2s;
+          background: #f8fafc;
         }
 
         .requirement-item.met .requirement-check {
           border-color: #10b981;
-          background-color: #10b981;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
           color: white;
         }
+
+        input:focus {
+          outline: none;
+        }
+
+        button:hover:not(:disabled) {
+          transform: translateY(-2px);
+        }
       `}</style>
+
+      {/* Background Decorative Elements */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        right: '-10%',
+        width: '500px',
+        height: '500px',
+        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-30%',
+        left: '-5%',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
 
       {/* Confetti Animation */}
       {showConfetti && (
         <>
-          {[...Array(30)].map((_, i) => (
+          {[...Array(40)].map((_, i) => (
             <div
               key={i}
               className="confetti"
               style={{
                 left: Math.random() * 100 + '%',
-                backgroundColor: ['#667eea', '#764ba2', '#10b981', '#f59e0b'][Math.floor(Math.random() * 4)],
+                backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 5)],
                 delay: Math.random() * 0.2 + 's',
               }}
             />
@@ -461,24 +498,28 @@ export default function SignupPage() {
       {/* Language Selector */}
       <div style={{
         position: 'absolute',
-        top: '20px',
-        right: '20px',
+        top: '25px',
+        right: '25px',
         display: 'flex',
-        gap: '8px',
+        gap: '10px',
+        zIndex: 100,
       }}>
         {['fr', 'en', 'es'].map(l => (
           <button
             key={l}
             onClick={() => setLang(l)}
             style={{
-              padding: '8px 12px',
+              padding: '10px 16px',
               border: 'none',
-              borderRadius: '6px',
-              background: lang === l ? 'white' : 'rgba(255, 255, 255, 0.2)',
-              color: lang === l ? '#667eea' : 'white',
+              borderRadius: '10px',
+              background: lang === l ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'rgba(255, 255, 255, 0.15)',
+              color: lang === l ? 'white' : 'rgba(255, 255, 255, 0.7)',
               cursor: 'pointer',
-              fontWeight: lang === l ? '600' : '400',
+              fontWeight: lang === l ? '600' : '500',
+              fontSize: '13px',
               transition: 'all 0.3s',
+              backdropFilter: 'blur(10px)',
+              border: lang === l ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
             {l.toUpperCase()}
@@ -488,57 +529,98 @@ export default function SignupPage() {
 
       {/* Main Form Container */}
       <div className="form-container" style={{
-        maxWidth: '420px',
+        maxWidth: '460px',
         width: '100%',
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-        padding: '40px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+        borderRadius: '28px',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
+        padding: '45px',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        position: 'relative',
+        zIndex: 10,
       }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <div style={{ fontSize: '32px', marginBottom: '10px' }}>💼</div>
-          <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', color: '#1f2937' }}>
+        <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+          <div style={{
+            fontSize: '48px',
+            marginBottom: '15px',
+            animation: 'floatGradient 4s ease-in-out infinite',
+          }}>
+            💰
+          </div>
+          <h1 style={{
+            margin: '0 0 10px 0',
+            fontSize: '26px',
+            fontWeight: '700',
+            background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
             {t.createAccount}
           </h1>
-          <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
+          <p style={{
+            margin: 0,
+            color: '#64748b',
+            fontSize: '14px',
+            fontWeight: '500',
+          }}>
             {t.joinInvestors}
           </p>
         </div>
 
         {/* Progress Bar */}
-        <div style={{ marginBottom: '30px' }}>
+        <div style={{ marginBottom: '32px' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '8px',
+            marginBottom: '10px',
           }}>
-            <span style={{ fontSize: '12px', color: '#6b7280' }}>{t.progress}</span>
-            <span style={{ fontSize: '12px', fontWeight: '600', color: '#667eea' }}>{formProgress}%</span>
+            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{t.progress}</span>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              {formProgress}%
+            </span>
           </div>
           <div style={{
             width: '100%',
-            height: '4px',
-            background: '#e5e7eb',
-            borderRadius: '2px',
+            height: '6px',
+            background: '#e2e8f0',
+            borderRadius: '3px',
             overflow: 'hidden',
+            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
           }}>
             <div style={{
               height: '100%',
-              background: 'linear-gradient(90deg, #667eea, #764ba2)',
+              background: `linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)`,
               width: `${formProgress}%`,
-              transition: 'width 0.3s ease',
-              borderRadius: '2px',
+              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              borderRadius: '3px',
+              boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)',
             }} />
           </div>
         </div>
 
         {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
           {/* Email Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              marginBottom: '10px',
+              color: '#1e293b',
+              letterSpacing: '0.3px',
+            }}>
               {t.email}
               {isEmailValid && <span className="valid-checkmark">✓</span>}
             </label>
@@ -547,22 +629,29 @@ export default function SignupPage() {
                 type="email"
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
-                placeholder="exemple@email.com"
+                placeholder="vous@exemple.com"
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  border: `2px solid ${isEmailValid ? '#10b981' : '#e5e7eb'}`,
-                  borderRadius: '8px',
+                  padding: '13px 16px',
+                  border: `2px solid ${isEmailValid ? '#10b981' : '#e2e8f0'}`,
+                  borderRadius: '14px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxSizing: 'border-box',
-                  backgroundColor: isEmailValid ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
+                  backgroundColor: isEmailValid ? 'rgba(16, 185, 129, 0.03)' : '#f8fafc',
+                  color: '#1e293b',
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                onBlur={(e) => !isEmailValid && (e.target.style.borderColor = '#e5e7eb')}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.boxShadow = 'none';
+                  if (!isEmailValid) e.target.style.borderColor = '#e2e8f0';
+                }}
               />
-              {checkingEmail && <span style={{ position: 'absolute', right: '12px', top: '12px', fontSize: '14px' }}>⏳</span>}
+              {checkingEmail && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px' }}>⏳</span>}
               {emailSuggestions.length > 0 && (
                 <div style={{
                   position: 'absolute',
@@ -570,11 +659,13 @@ export default function SignupPage() {
                   left: 0,
                   right: 0,
                   background: 'white',
-                  border: '1px solid #e5e7eb',
+                  border: '2px solid #e2e8f0',
                   borderTop: 'none',
-                  borderBottomLeftRadius: '8px',
-                  borderBottomRightRadius: '8px',
-                  zIndex: 10,
+                  borderBottomLeftRadius: '12px',
+                  borderBottomRightRadius: '12px',
+                  zIndex: 20,
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+                  marginTop: '-2px',
                 }}>
                   {emailSuggestions.map((suggestion, idx) => (
                     <button
@@ -583,16 +674,17 @@ export default function SignupPage() {
                       onClick={() => selectEmailSuggestion(suggestion)}
                       style={{
                         width: '100%',
-                        padding: '10px 12px',
+                        padding: '12px 16px',
                         background: 'transparent',
                         border: 'none',
                         textAlign: 'left',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        color: '#667eea',
-                        borderBottom: idx < emailSuggestions.length - 1 ? '1px solid #f0f0f0' : 'none',
+                        color: '#3b82f6',
+                        borderBottom: idx < emailSuggestions.length - 1 ? '1px solid #f1f5f9' : 'none',
+                        fontWeight: '500',
                       }}
-                      onMouseOver={(e) => e.target.style.background = '#f9fafb'}
+                      onMouseOver={(e) => e.target.style.background = '#f8fafc'}
                       onMouseOut={(e) => e.target.style.background = 'transparent'}
                     >
                       {suggestion}
@@ -605,7 +697,14 @@ export default function SignupPage() {
 
           {/* Password Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              marginBottom: '10px',
+              color: '#1e293b',
+              letterSpacing: '0.3px',
+            }}>
               {t.password}
             </label>
             <div style={{ position: 'relative' }}>
@@ -616,33 +715,43 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  border: `2px solid ${password.length >= 8 ? '#10b981' : '#e5e7eb'}`,
-                  borderRadius: '8px',
+                  padding: '13px 16px',
+                  paddingRight: '45px',
+                  border: `2px solid ${password.length >= 8 ? '#10b981' : '#e2e8f0'}`,
+                  borderRadius: '14px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxSizing: 'border-box',
-                  paddingRight: '40px',
-                  backgroundColor: password.length >= 8 ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
+                  backgroundColor: password.length >= 8 ? 'rgba(16, 185, 129, 0.03)' : '#f8fafc',
+                  color: '#1e293b',
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                onBlur={(e) => !(password.length >= 8) && (e.target.style.borderColor = '#e5e7eb')}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.boxShadow = 'none';
+                  if (password.length < 8) e.target.style.borderColor = '#e2e8f0';
+                }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '18px',
-                  padding: '4px 8px',
+                  padding: '6px 8px',
+                  transition: 'transform 0.2s',
                 }}
+                onMouseOver={(e) => e.target.style.transform = 'translateY(-50%) scale(1.2)'}
+                onMouseOut={(e) => e.target.style.transform = 'translateY(-50%) scale(1)'}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -650,8 +759,14 @@ export default function SignupPage() {
 
             {/* Password Requirements */}
             {password.length > 0 && (
-              <div style={{ marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
-                <p style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '600', color: '#1f2937' }}>
+              <div style={{
+                marginTop: '14px',
+                padding: '14px 16px',
+                background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%)',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+              }}>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>
                   {t.passwordRequirements}
                 </p>
                 <div>
@@ -675,11 +790,12 @@ export default function SignupPage() {
           {/* Password Strength Indicator */}
           {password.length >= 6 && (
             <div style={{
-              padding: '8px 12px',
-              background: passwordStrength === 'fort' ? '#d1fae5' : passwordStrength === 'moyen' ? '#fef3c7' : '#fee2e2',
-              border: `1px solid ${passwordStrength === 'fort' ? '#6ee7b7' : passwordStrength === 'moyen' ? '#fcd34d' : '#fca5a5'}`,
-              borderRadius: '6px',
+              padding: '10px 14px',
+              background: passwordStrength === 'fort' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))' : passwordStrength === 'moyen' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05))' : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
+              border: `1px solid ${passwordStrength === 'fort' ? '#d1fae5' : passwordStrength === 'moyen' ? '#fef3c7' : '#fee2e2'}`,
+              borderRadius: '10px',
               fontSize: '13px',
+              fontWeight: '600',
               color: passwordStrength === 'fort' ? '#065f46' : passwordStrength === 'moyen' ? '#92400e' : '#991b1b',
             }}>
               {t.strength} {
@@ -692,7 +808,14 @@ export default function SignupPage() {
 
           {/* Confirm Password Field */}
           <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '700',
+              marginBottom: '10px',
+              color: '#1e293b',
+              letterSpacing: '0.3px',
+            }}>
               {t.passwordConfirm}
               {passwordsMatch && passwordConfirm.length > 0 && <span className="valid-checkmark">✓</span>}
             </label>
@@ -704,33 +827,43 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  border: `2px solid ${passwordsMatch && passwordConfirm.length > 0 ? '#10b981' : '#e5e7eb'}`,
-                  borderRadius: '8px',
+                  padding: '13px 16px',
+                  paddingRight: '45px',
+                  border: `2px solid ${passwordsMatch && passwordConfirm.length > 0 ? '#10b981' : '#e2e8f0'}`,
+                  borderRadius: '14px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxSizing: 'border-box',
-                  paddingRight: '40px',
-                  backgroundColor: passwordsMatch && passwordConfirm.length > 0 ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
+                  backgroundColor: passwordsMatch && passwordConfirm.length > 0 ? 'rgba(16, 185, 129, 0.03)' : '#f8fafc',
+                  color: '#1e293b',
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                onBlur={(e) => !(passwordsMatch && passwordConfirm.length > 0) && (e.target.style.borderColor = '#e5e7eb')}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.boxShadow = 'none';
+                  if (!(passwordsMatch && passwordConfirm.length > 0)) e.target.style.borderColor = '#e2e8f0';
+                }}
               />
               <button
                 type="button"
                 onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '18px',
-                  padding: '4px 8px',
+                  padding: '6px 8px',
+                  transition: 'transform 0.2s',
                 }}
+                onMouseOver={(e) => e.target.style.transform = 'translateY(-50%) scale(1.2)'}
+                onMouseOut={(e) => e.target.style.transform = 'translateY(-50%) scale(1)'}
               >
                 {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -739,6 +872,7 @@ export default function SignupPage() {
               <p style={{
                 margin: '8px 0 0 0',
                 fontSize: '13px',
+                fontWeight: '600',
                 color: passwordsMatch ? '#10b981' : '#ef4444',
               }}>
                 {passwordsMatch ? '✓ ' + t.passwordsMatch : '✗ ' + t.passwordDontMatch}
@@ -747,7 +881,11 @@ export default function SignupPage() {
           </div>
 
           {/* hCaptcha */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '8px 0',
+          }}>
             <HCaptcha
               sitekey="7a3e40c6-1fb3-4f5f-9b2d-2f8f8d8c8c8c"
               onVerify={(token) => setCaptchaToken(token)}
@@ -756,36 +894,44 @@ export default function SignupPage() {
           </div>
 
           {/* GDPR Consent */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
             <input
               type="checkbox"
               id="gdpr"
               checked={gdprConsent}
               onChange={(e) => setGdprConsent(e.target.checked)}
               style={{
-                marginTop: '4px',
+                marginTop: '6px',
                 cursor: 'pointer',
-                width: '18px',
-                height: '18px',
-                accentColor: '#667eea',
+                width: '20px',
+                height: '20px',
+                accentColor: '#3b82f6',
+                borderRadius: '6px',
               }}
             />
-            <div>
-              <label htmlFor="gdpr" style={{ fontSize: '13px', color: '#4b5563', cursor: 'pointer', margin: 0 }}>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="gdpr" style={{
+                fontSize: '13px',
+                color: '#475569',
+                cursor: 'pointer',
+                margin: 0,
+                fontWeight: '500',
+              }}>
                 {t.gdprConsent}
               </label>
               <button
                 type="button"
                 onClick={() => setShowGdprModal(true)}
                 style={{
-                  marginTop: '4px',
+                  marginTop: '6px',
                   background: 'none',
                   border: 'none',
-                  color: '#667eea',
+                  color: '#3b82f6',
                   cursor: 'pointer',
                   fontSize: '12px',
                   padding: 0,
                   textDecoration: 'underline',
+                  fontWeight: '500',
                 }}
               >
                 {t.gdprDetails}
@@ -796,12 +942,13 @@ export default function SignupPage() {
           {/* Error Message */}
           {message && (
             <div style={{
-              padding: '12px',
-              background: '#fee2e2',
-              border: '1px solid #fca5a5',
-              borderRadius: '6px',
+              padding: '13px 16px',
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
+              border: '1px solid #fee2e2',
+              borderRadius: '12px',
               color: '#991b1b',
               fontSize: '13px',
+              fontWeight: '500',
             }}>
               {message}
             </div>
@@ -813,19 +960,21 @@ export default function SignupPage() {
             disabled={!isFormValid || loading}
             style={{
               width: '100%',
-              padding: '12px',
-              background: isFormValid ? 'linear-gradient(90deg, #667eea, #764ba2)' : '#d1d5db',
+              padding: '14px 16px',
+              background: isFormValid ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)' : '#cbd5e1',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '14px',
               fontSize: '15px',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: isFormValid ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s',
-              opacity: loading ? 0.8 : 1,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: loading ? 0.9 : 1,
+              letterSpacing: '0.3px',
+              boxShadow: isFormValid ? '0 10px 30px rgba(59, 130, 246, 0.3)' : 'none',
             }}
-            onMouseOver={(e) => isFormValid && (e.target.style.transform = 'translateY(-2px)', e.target.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.4)')}
-            onMouseOut={(e) => isFormValid && (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = 'none')}
+            onMouseOver={(e) => isFormValid && (e.target.style.transform = 'translateY(-3px)', e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)')}
+            onMouseOut={(e) => isFormValid && (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)')}
           >
             {loading ? '⏳ ' + t.signup : t.signup}
           </button>
@@ -846,39 +995,55 @@ export default function SignupPage() {
           alignItems: 'center',
           zIndex: 1000,
           padding: '20px',
+          backdropFilter: 'blur(5px)',
         }}>
           <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '30px',
-            maxWidth: '500px',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
+            borderRadius: '24px',
+            padding: '32px',
+            maxWidth: '520px',
             width: '100%',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
             maxHeight: '80vh',
             overflowY: 'auto',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
           }}>
-            <h2 style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#1f2937' }}>
+            <h2 style={{
+              margin: '0 0 16px 0',
+              fontSize: '22px',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
               {t.gdprModal}
             </h2>
-            <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#4b5563', lineHeight: '1.6' }}>
+            <p style={{
+              margin: '0 0 24px 0',
+              fontSize: '14px',
+              color: '#475569',
+              lineHeight: '1.7',
+            }}>
               {t.gdprText}
             </p>
             <button
               onClick={() => setShowGdprModal(false)}
               style={{
                 width: '100%',
-                padding: '12px',
-                background: 'linear-gradient(90deg, #667eea, #764ba2)',
+                padding: '13px 16px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 fontSize: '15px',
-                fontWeight: '600',
+                fontWeight: '700',
                 cursor: 'pointer',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
               }}
-              onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)', e.target.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.4)')}
-              onMouseOut={(e) => (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = 'none')}
+              onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)', e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)')}
+              onMouseOut={(e) => (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)')}
             >
               {t.close}
             </button>
