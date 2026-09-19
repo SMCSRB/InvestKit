@@ -243,14 +243,13 @@ export default function SignupPage() {
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
   const allRequirementsMet = Object.values(requirements).every(Boolean);
-  const isFormValid = isEmailValid && passwordsMatch && allRequirementsMet && captchaToken && gdprConsent;
+  const isFormValid = isEmailValid && passwordsMatch && allRequirementsMet && gdprConsent;
 
   const formSteps = [
     isEmailValid,
     password.length >= 6,
     passwordsMatch,
     allRequirementsMet,
-    captchaToken !== null,
     gdprConsent,
   ];
   const completedSteps = formSteps.filter(Boolean).length;
@@ -267,17 +266,11 @@ export default function SignupPage() {
       return;
     }
 
-    if (!captchaToken) {
-      setMessage('❌ ' + t.signupError);
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await fetch('http://192.168.1.201:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken }),
+        body: JSON.stringify({ email, password, captchaToken: '' }),
       });
 
       const data = await response.json();
@@ -882,21 +875,14 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* hCaptcha */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            padding: '2px 0',
-            transform: 'scale(0.9)',
-            transformOrigin: 'top center',
-            marginBottom: '-12px',
-          }}>
+          {/* hCaptcha - Disabled for now */}
+          {/* <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
             <HCaptcha
-              sitekey="7a3e40c6-1fb3-4f5f-9b2d-2f8f8d8c8c8c"
+              sitekey="YOUR_HCAPTCHA_SITE_KEY"
               onVerify={(token) => setCaptchaToken(token)}
               ref={captchaRef}
             />
-          </div>
+          </div> */}
 
           {/* GDPR Consent */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
