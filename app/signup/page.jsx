@@ -529,29 +529,31 @@ export default function SignupPage() {
 
       {/* Main Form Container */}
       <div className="form-container" style={{
-        maxWidth: '460px',
+        maxWidth: '420px',
         width: '100%',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: '45px',
+        padding: '28px 32px',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         position: 'relative',
         zIndex: 10,
+        maxHeight: 'calc(100vh - 40px)',
+        overflowY: 'auto',
       }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '18px' }}>
           <div style={{
-            fontSize: '48px',
-            marginBottom: '15px',
+            fontSize: '40px',
+            marginBottom: '8px',
             animation: 'floatGradient 4s ease-in-out infinite',
           }}>
             💰
           </div>
           <h1 style={{
-            margin: '0 0 10px 0',
-            fontSize: '26px',
+            margin: '0 0 4px 0',
+            fontSize: '22px',
             fontWeight: '700',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -563,7 +565,7 @@ export default function SignupPage() {
           <p style={{
             margin: 0,
             color: '#64748b',
-            fontSize: '14px',
+            fontSize: '12px',
             fontWeight: '500',
           }}>
             {t.joinInvestors}
@@ -571,16 +573,16 @@ export default function SignupPage() {
         </div>
 
         {/* Progress Bar */}
-        <div style={{ marginBottom: '32px' }}>
+        <div style={{ marginBottom: '18px' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '10px',
+            marginBottom: '6px',
           }}>
-            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{t.progress}</span>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>{t.progress}</span>
             <span style={{
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: '700',
               background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
               WebkitBackgroundClip: 'text',
@@ -610,14 +612,14 @@ export default function SignupPage() {
         </div>
 
         {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Email Field */}
           <div>
             <label style={{
               display: 'block',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: '700',
-              marginBottom: '10px',
+              marginBottom: '6px',
               color: '#1e293b',
               letterSpacing: '0.3px',
             }}>
@@ -632,10 +634,10 @@ export default function SignupPage() {
                 placeholder="vous@exemple.com"
                 style={{
                   width: '100%',
-                  padding: '13px 16px',
+                  padding: '10px 12px',
                   border: `2px solid ${isEmailValid ? '#10b981' : '#e2e8f0'}`,
-                  borderRadius: '14px',
-                  fontSize: '14px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
                   fontFamily: 'inherit',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxSizing: 'border-box',
@@ -699,9 +701,9 @@ export default function SignupPage() {
           <div>
             <label style={{
               display: 'block',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: '700',
-              marginBottom: '10px',
+              marginBottom: '6px',
               color: '#1e293b',
               letterSpacing: '0.3px',
             }}>
@@ -715,11 +717,11 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 style={{
                   width: '100%',
-                  padding: '13px 16px',
-                  paddingRight: '45px',
+                  padding: '10px 12px',
+                  paddingRight: '40px',
                   border: `2px solid ${password.length >= 8 ? '#10b981' : '#e2e8f0'}`,
-                  borderRadius: '14px',
-                  fontSize: '14px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
                   fontFamily: 'inherit',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxSizing: 'border-box',
@@ -760,13 +762,13 @@ export default function SignupPage() {
             {/* Password Requirements */}
             {password.length > 0 && (
               <div style={{
-                marginTop: '14px',
-                padding: '14px 16px',
+                marginTop: '8px',
+                padding: '10px 12px',
                 background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%)',
                 border: '1px solid #e2e8f0',
-                borderRadius: '12px',
+                borderRadius: '10px',
               }}>
-                <p style={{ margin: '0 0 10px 0', fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>
+                <p style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: '700', color: '#1e293b' }}>
                   {t.passwordRequirements}
                 </p>
                 <div>
@@ -790,11 +792,11 @@ export default function SignupPage() {
           {/* Password Strength Indicator */}
           {password.length >= 6 && (
             <div style={{
-              padding: '10px 14px',
+              padding: '8px 12px',
               background: passwordStrength === 'fort' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))' : passwordStrength === 'moyen' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05))' : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
               border: `1px solid ${passwordStrength === 'fort' ? '#d1fae5' : passwordStrength === 'moyen' ? '#fef3c7' : '#fee2e2'}`,
               borderRadius: '10px',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: '600',
               color: passwordStrength === 'fort' ? '#065f46' : passwordStrength === 'moyen' ? '#92400e' : '#991b1b',
             }}>
@@ -810,9 +812,9 @@ export default function SignupPage() {
           <div>
             <label style={{
               display: 'block',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: '700',
-              marginBottom: '10px',
+              marginBottom: '6px',
               color: '#1e293b',
               letterSpacing: '0.3px',
             }}>
@@ -827,11 +829,11 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 style={{
                   width: '100%',
-                  padding: '13px 16px',
-                  paddingRight: '45px',
+                  padding: '10px 12px',
+                  paddingRight: '40px',
                   border: `2px solid ${passwordsMatch && passwordConfirm.length > 0 ? '#10b981' : '#e2e8f0'}`,
-                  borderRadius: '14px',
-                  fontSize: '14px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
                   fontFamily: 'inherit',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxSizing: 'border-box',
@@ -870,8 +872,8 @@ export default function SignupPage() {
             </div>
             {password.length > 0 && passwordConfirm.length > 0 && (
               <p style={{
-                margin: '8px 0 0 0',
-                fontSize: '13px',
+                margin: '4px 0 0 0',
+                fontSize: '12px',
                 fontWeight: '600',
                 color: passwordsMatch ? '#10b981' : '#ef4444',
               }}>
@@ -884,7 +886,10 @@ export default function SignupPage() {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            padding: '8px 0',
+            padding: '2px 0',
+            transform: 'scale(0.9)',
+            transformOrigin: 'top center',
+            marginBottom: '-12px',
           }}>
             <HCaptcha
               sitekey="7a3e40c6-1fb3-4f5f-9b2d-2f8f8d8c8c8c"
@@ -894,28 +899,30 @@ export default function SignupPage() {
           </div>
 
           {/* GDPR Consent */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
             <input
               type="checkbox"
               id="gdpr"
               checked={gdprConsent}
               onChange={(e) => setGdprConsent(e.target.checked)}
               style={{
-                marginTop: '6px',
+                marginTop: '4px',
                 cursor: 'pointer',
-                width: '20px',
-                height: '20px',
+                width: '18px',
+                height: '18px',
                 accentColor: '#3b82f6',
-                borderRadius: '6px',
+                borderRadius: '4px',
+                flexShrink: 0,
               }}
             />
             <div style={{ flex: 1 }}>
               <label htmlFor="gdpr" style={{
-                fontSize: '13px',
+                fontSize: '12px',
                 color: '#475569',
                 cursor: 'pointer',
                 margin: 0,
                 fontWeight: '500',
+                lineHeight: '1.4',
               }}>
                 {t.gdprConsent}
               </label>
@@ -923,12 +930,12 @@ export default function SignupPage() {
                 type="button"
                 onClick={() => setShowGdprModal(true)}
                 style={{
-                  marginTop: '6px',
+                  marginTop: '2px',
                   background: 'none',
                   border: 'none',
                   color: '#3b82f6',
                   cursor: 'pointer',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   padding: 0,
                   textDecoration: 'underline',
                   fontWeight: '500',
@@ -942,13 +949,14 @@ export default function SignupPage() {
           {/* Error Message */}
           {message && (
             <div style={{
-              padding: '13px 16px',
+              padding: '10px 12px',
               background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
               border: '1px solid #fee2e2',
-              borderRadius: '12px',
+              borderRadius: '10px',
               color: '#991b1b',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: '500',
+              marginTop: '-4px',
             }}>
               {message}
             </div>
@@ -960,18 +968,19 @@ export default function SignupPage() {
             disabled={!isFormValid || loading}
             style={{
               width: '100%',
-              padding: '14px 16px',
+              padding: '11px 14px',
               background: isFormValid ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)' : '#cbd5e1',
               color: 'white',
               border: 'none',
-              borderRadius: '14px',
-              fontSize: '15px',
+              borderRadius: '12px',
+              fontSize: '14px',
               fontWeight: '700',
               cursor: isFormValid ? 'pointer' : 'not-allowed',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               opacity: loading ? 0.9 : 1,
               letterSpacing: '0.3px',
               boxShadow: isFormValid ? '0 10px 30px rgba(59, 130, 246, 0.3)' : 'none',
+              marginTop: '-2px',
             }}
             onMouseOver={(e) => isFormValid && (e.target.style.transform = 'translateY(-3px)', e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)')}
             onMouseOut={(e) => isFormValid && (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)')}
