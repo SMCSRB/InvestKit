@@ -694,7 +694,7 @@ export default function SignupPage() {
           <div>
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#1f2937' }}>
               {t.passwordConfirm}
-              {passwordsMatch && password.length > 0 && <span className="valid-checkmark">✓</span>}
+              {passwordsMatch && passwordConfirm.length > 0 && <span className="valid-checkmark">✓</span>}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -705,17 +705,17 @@ export default function SignupPage() {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: `2px solid ${passwordsMatch && password.length > 0 ? '#10b981' : '#e5e7eb'}`,
+                  border: `2px solid ${passwordsMatch && passwordConfirm.length > 0 ? '#10b981' : '#e5e7eb'}`,
                   borderRadius: '8px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
                   transition: 'all 0.2s',
                   boxSizing: 'border-box',
                   paddingRight: '40px',
-                  backgroundColor: passwordsMatch && password.length > 0 ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
+                  backgroundColor: passwordsMatch && passwordConfirm.length > 0 ? 'rgba(16, 185, 129, 0.05)' : '#f9fafb',
                 }}
                 onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                onBlur={(e) => !(passwordsMatch && password.length > 0) && (e.target.style.borderColor = '#e5e7eb')}
+                onBlur={(e) => !(passwordsMatch && passwordConfirm.length > 0) && (e.target.style.borderColor = '#e5e7eb')}
               />
               <button
                 type="button"
