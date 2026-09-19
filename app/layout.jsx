@@ -1,7 +1,6 @@
-import type { Metadata } from 'next';
 import '../css/design-system.css';
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
   description: 'Plateforme éducative et outils de simulation financière pour investir intelligemment',
   keywords: 'investissement, simulation, PEA, ETF, éducation financière, France',
@@ -12,11 +11,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="fr">
       <head>
