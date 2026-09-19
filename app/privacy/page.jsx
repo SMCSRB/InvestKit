@@ -2,115 +2,246 @@
 
 export default function PrivacyPage() {
   return (
-    <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px', lineHeight: '1.6', color: '#333' }}>
-      <h1>Politique de Confidentialité</h1>
-      <p style={{ color: '#999', fontSize: '14px', marginBottom: '20px' }}>Dernière mise à jour : 2026-09-19</p>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+      padding: '40px 24px 60px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    }}>
+      <style>{`
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>1. Introduction</h2>
-        <p>
-          InvestKit ("nous", "notre" ou "nos") s'engage à protéger votre vie privée.
-          Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles.
-        </p>
-      </section>
+        .privacy-container {
+          animation: slideInUp 0.6s ease-out;
+        }
+      `}</style>
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>2. Données Collectées</h2>
-        <p>Nous collectons les informations suivantes :</p>
-        <ul style={{ marginLeft: '20px' }}>
-          <li><strong>Informations d'inscription :</strong> Email, nom, prénom, mot de passe</li>
-          <li><strong>Données de profil :</strong> Préférences, historique d'utilisation, projets d'investissement</li>
-          <li><strong>Données techniques :</strong> Adresse IP, type de navigateur, pages visitées, durée des sessions</li>
-          <li><strong>Données de paiement :</strong> Informations de transaction (traitées de manière sécurisée)</li>
-        </ul>
-      </section>
+      <div className="privacy-container" style={{
+        maxWidth: '900px',
+        margin: '0 auto',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+        borderRadius: '28px',
+        padding: '48px 40px',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        backdropFilter: 'blur(20px)',
+      }}>
+        {/* Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{
+            fontSize: '36px',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            margin: '0 0 12px 0',
+          }}>
+            🔒 Politique de Confidentialité
+          </h1>
+          <p style={{
+            fontSize: '13px',
+            color: '#64748b',
+            margin: 0,
+            fontWeight: '500',
+          }}>
+            Dernière mise à jour : 2026-09-19
+          </p>
+        </div>
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>3. Utilisation des Données</h2>
-        <p>Nous utilisons vos données pour :</p>
-        <ul style={{ marginLeft: '20px' }}>
-          <li>Créer et gérer votre compte</li>
-          <li>Fournir et améliorer nos services</li>
-          <li>Communiquer avec vous concernant votre compte et les mises à jour</li>
-          <li>Analyser l'utilisation et améliorer l'expérience utilisateur</li>
-          <li>Respecter nos obligations légales</li>
-        </ul>
-      </section>
+        {/* Content Sections */}
+        {[
+          {
+            title: '1. Introduction',
+            content: 'InvestKit ("nous", "notre" ou "nos") s\'engage à protéger votre vie privée. Cette politique explique comment nous collectons, utilisons et protégeons vos données personnelles.',
+            list: null,
+          },
+          {
+            title: '2. Données Collectées',
+            content: 'Nous collectons les informations suivantes :',
+            list: [
+              { label: 'Informations d\'inscription :', text: 'Email, nom, prénom, mot de passe' },
+              { label: 'Données de profil :', text: 'Préférences, historique d\'utilisation, projets d\'investissement' },
+              { label: 'Données techniques :', text: 'Adresse IP, type de navigateur, pages visitées, durée des sessions' },
+              { label: 'Données de paiement :', text: 'Informations de transaction (traitées de manière sécurisée)' },
+            ],
+          },
+          {
+            title: '3. Utilisation des Données',
+            content: 'Nous utilisons vos données pour :',
+            list: [
+              { text: 'Créer et gérer votre compte' },
+              { text: 'Fournir et améliorer nos services' },
+              { text: 'Communiquer avec vous concernant votre compte et les mises à jour' },
+              { text: 'Analyser l\'utilisation et améliorer l\'expérience utilisateur' },
+              { text: 'Respecter nos obligations légales' },
+            ],
+          },
+          {
+            title: '4. Protection des Données',
+            content: 'Nous utilisons le chiffrement SSL/TLS pour protéger vos données en transit. Vos mots de passe sont hashés avec bcrypt. Nous ne partageons jamais vos données sensibles avec des tiers sans votre consentement explicite.',
+            list: null,
+          },
+          {
+            title: '5. Cookies et Suivi',
+            content: 'Nous utilisons les cookies pour :',
+            list: [
+              { text: 'Maintenir votre session authentifiée' },
+              { text: 'Mémoriser vos préférences' },
+              { text: 'Analyser le trafic du site (outils anonymisés)' },
+            ],
+            footer: 'Vous pouvez désactiver les cookies dans les paramètres de votre navigateur.',
+          },
+          {
+            title: '6. Vos Droits',
+            content: 'Vous avez le droit de :',
+            list: [
+              { text: 'Accéder à vos données personnelles' },
+              { text: 'Rectifier les informations inexactes' },
+              { text: 'Demander la suppression de vos données' },
+              { text: 'Vous opposer au traitement de vos données' },
+              { text: 'Demander la portabilité de vos données' },
+            ],
+          },
+          {
+            title: '7. Partage de Données',
+            content: 'Nous ne vendons jamais vos données. Nous partageons vos informations uniquement avec :',
+            list: [
+              { text: 'Les prestataires de services (hébergement, email, paiement) sous contrats stricts' },
+              { text: 'Les autorités légales si requis par la loi' },
+              { text: 'Vos contacts si vous le demandez explicitement' },
+            ],
+          },
+          {
+            title: '8. Conservation des Données',
+            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. Après la suppression du compte, nous conservons les données minimum requises par la loi pendant 90 jours, puis nous les supprimons définitivement.',
+            list: null,
+          },
+          {
+            title: '9. Modifications',
+            content: 'Nous pouvons modifier cette politique de confidentialité. Les modifications seront publiées ici et nous vous notifierons des changements majeurs par email.',
+            list: null,
+          },
+          {
+            title: '10. Contact',
+            content: 'Pour toute question concernant cette politique ou vos données, contactez-nous à :',
+            list: null,
+            email: 'privacy@investkit.com',
+          },
+        ].map((section, idx) => (
+          <section key={idx} style={{
+            marginBottom: '28px',
+            paddingBottom: '28px',
+            borderBottom: idx < 9 ? '1px solid rgba(59, 130, 246, 0.1)' : 'none',
+          }}>
+            <h2 style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              color: '#0f172a',
+              margin: '0 0 12px 0',
+              background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              {section.title}
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: '#475569',
+              margin: '0 0 12px 0',
+              lineHeight: '1.6',
+            }}>
+              {section.content}
+            </p>
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>4. Protection des Données</h2>
-        <p>
-          Nous utilisons le chiffrement SSL/TLS pour protéger vos données en transit.
-          Vos mots de passe sont hashés avec bcrypt. Nous ne partageons jamais vos données sensibles
-          avec des tiers sans votre consentement explicite.
-        </p>
-      </section>
+            {section.list && (
+              <ul style={{
+                marginLeft: '20px',
+                marginTop: '12px',
+                marginBottom: 0,
+              }}>
+                {section.list.map((item, i) => (
+                  <li key={i} style={{
+                    fontSize: '13px',
+                    color: '#475569',
+                    marginBottom: '8px',
+                    lineHeight: '1.5',
+                  }}>
+                    {item.label ? (
+                      <>
+                        <strong style={{ color: '#0f172a' }}>{item.label}</strong> {item.text}
+                      </>
+                    ) : (
+                      item.text
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>5. Cookies et Suivi</h2>
-        <p>
-          Nous utilisons les cookies pour :</p>
-        <ul style={{ marginLeft: '20px' }}>
-          <li>Maintenir votre session authentifiée</li>
-          <li>Mémoriser vos préférences</li>
-          <li>Analyser le trafic du site (outils anonymisés)</li>
-        </ul>
-        <p>Vous pouvez désactiver les cookies dans les paramètres de votre navigateur.</p>
-      </section>
+            {section.footer && (
+              <p style={{
+                fontSize: '13px',
+                color: '#475569',
+                margin: '12px 0 0 0',
+                lineHeight: '1.5',
+              }}>
+                {section.footer}
+              </p>
+            )}
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>6. Vos Droits</h2>
-        <p>Vous avez le droit de :</p>
-        <ul style={{ marginLeft: '20px' }}>
-          <li>Accéder à vos données personnelles</li>
-          <li>Rectifier les informations inexactes</li>
-          <li>Demander la suppression de vos données</li>
-          <li>Vous opposer au traitement de vos données</li>
-          <li>Demander la portabilité de vos données</li>
-        </ul>
-      </section>
+            {section.email && (
+              <p style={{
+                fontSize: '14px',
+                color: '#475569',
+                margin: '12px 0 0 0',
+              }}>
+                Email: <a href={`mailto:${section.email}`} style={{
+                  color: '#3b82f6',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#8b5cf6'}
+                onMouseLeave={(e) => e.target.style.color = '#3b82f6'}
+                >
+                  {section.email}
+                </a>
+              </p>
+            )}
+          </section>
+        ))}
 
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>7. Partage de Données</h2>
-        <p>
-          Nous ne vendons jamais vos données. Nous partageons vos informations uniquement avec :
-        </p>
-        <ul style={{ marginLeft: '20px' }}>
-          <li>Les prestataires de services (hébergement, email, paiement) sous contrats stricts</li>
-          <li>Les autorités légales si requis par la loi</li>
-          <li>Vos contacts si vous le demandez explicitement</li>
-        </ul>
-      </section>
-
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>8. Conservation des Données</h2>
-        <p>
-          Nous conservons vos données aussi longtemps que votre compte est actif.
-          Après la suppression du compte, nous conservons les données minimum requises par la loi pendant 90 jours,
-          puis nous les supprimons définitivement.
-        </p>
-      </section>
-
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>9. Modifications</h2>
-        <p>
-          Nous pouvons modifier cette politique de confidentialité. Les modifications seront publiées ici
-          et nous vous notifierons des changements majeurs par email.
-        </p>
-      </section>
-
-      <section style={{ marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '20px', marginTop: '20px', marginBottom: '10px' }}>10. Contact</h2>
-        <p>
-          Pour toute question concernant cette politique ou vos données, contactez-nous :
-        </p>
-        <p>
-          Email : <a href="mailto:privacy@investkit.com" style={{ color: '#ff6b6b', textDecoration: 'none' }}>privacy@investkit.com</a>
-        </p>
-      </section>
-
-      <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-        <a href="/signup" style={{ color: '#ff6b6b', textDecoration: 'none', fontSize: '14px' }}>← Retour à l'inscription</a>
+        {/* Back Link */}
+        <div style={{
+          marginTop: '32px',
+          paddingTop: '24px',
+          borderTop: '1px solid rgba(59, 130, 246, 0.1)',
+        }}>
+          <a href="/signup" style={{
+            fontSize: '13px',
+            color: '#3b82f6',
+            textDecoration: 'none',
+            fontWeight: '600',
+            transition: 'all 0.2s',
+            display: 'inline-block',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.color = '#8b5cf6';
+            e.target.style.transform = 'translateX(-4px)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = '#3b82f6';
+            e.target.style.transform = 'translateX(0)';
+          }}
+          >
+            ← Retour à l'inscription
+          </a>
+        </div>
       </div>
     </div>
   );

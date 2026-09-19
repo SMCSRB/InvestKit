@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,8 +33,7 @@ export default function LoginPage() {
       if (response.ok) {
         setMessage('✅ Connexion réussie!');
         localStorage.setItem('token', data.token);
-        setEmail('');
-        setPassword('');
+        setTimeout(() => router.push('/dashboard'), 1500);
       } else {
         setMessage(`❌ ${data.error || 'Email ou mot de passe incorrect'}`);
       }
@@ -39,86 +47,141 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
       padding: '20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      position: 'relative',
+      overflow: 'hidden',
     }}>
       <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(-25px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes floatGradient {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        .form-container {
+          animation: slideIn 0.6s ease-out;
         }
       `}</style>
 
-      {/* Conteneur principal */}
+      {/* Background Decorative Elements */}
       <div style={{
+        position: 'absolute',
+        top: '-50%',
+        right: '-10%',
+        width: '500px',
+        height: '500px',
+        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-30%',
+        left: '-5%',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Main Form Container */}
+      <div className="form-container" style={{
         maxWidth: '420px',
         width: '100%',
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-        padding: '40px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+        borderRadius: '28px',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
+        padding: '28px 32px',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
         position: 'relative',
+        zIndex: 10,
       }}>
-        {/* Header avec logo */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{
-            width: '50px',
-            height: '50px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '10px',
+            width: '48px',
+            height: '48px',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
             fontSize: '28px',
-            fontWeight: 'bold',
-            margin: '0 auto 15px',
+            margin: '0 auto 12px',
+            animation: 'floatGradient 3s ease-in-out infinite',
+            boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
           }}>
-            💼
+            🔐
           </div>
-          <h1 style={{ margin: '0 0 5px 0', fontSize: '28px', color: '#2d3748', fontWeight: '600' }}>InvestKit</h1>
-          <p style={{ margin: '0', fontSize: '14px', color: '#718096' }}>Plateforme Premium d'Investissement</p>
-        </div>
-
-        {/* Sous-titre */}
-        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-          <h2 style={{ margin: '0', fontSize: '20px', color: '#2d3748', fontWeight: '500' }}>Bienvenue</h2>
-          <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>Connectez-vous à votre compte</p>
+          <h1 style={{
+            margin: '0 0 6px 0',
+            fontSize: '24px',
+            fontWeight: '700',
+            background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            Connexion
+          </h1>
+          <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+            Accédez à votre compte InvestKit
+          </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Email */}
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>📧 Email</label>
+            <label style={{
+              fontSize: '12px',
+              fontWeight: '700',
+              color: '#1e293b',
+              display: 'block',
+              marginBottom: '8px',
+              letterSpacing: '0.3px',
+            }}>
+              📧 Email
+            </label>
             <input
               type="email"
-              placeholder="nom@example.com"
+              placeholder="votre@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '11px 14px',
                 border: '2px solid #e2e8f0',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 outline: 'none',
                 boxSizing: 'border-box',
+                backgroundColor: '#f8fafc',
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = '#e2e8f0';
                 e.target.style.boxShadow = 'none';
+                e.target.style.backgroundColor = '#f8fafc';
               }}
               required
             />
@@ -126,105 +189,150 @@ export default function LoginPage() {
 
           {/* Password */}
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔒 Mot de passe</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label style={{
+                fontSize: '12px',
+                fontWeight: '700',
+                color: '#1e293b',
+                letterSpacing: '0.3px',
+              }}>
+                🔒 Mot de passe
+              </label>
+              <a href="/forgot-password" style={{
+                fontSize: '11px',
+                color: '#3b82f6',
+                textDecoration: 'none',
+                fontWeight: '600',
+                transition: 'color 0.2s',
+              }}
+              onMouseOver={(e) => e.target.style.color = '#8b5cf6'}
+              onMouseOut={(e) => e.target.style.color = '#3b82f6'}
+              >
+                Oublié?
+              </a>
+            </div>
             <input
               type="password"
-              placeholder="Votre mot de passe"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '11px 14px',
                 border: '2px solid #e2e8f0',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 outline: 'none',
                 boxSizing: 'border-box',
+                backgroundColor: '#f8fafc',
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = '#e2e8f0';
                 e.target.style.boxShadow = 'none';
+                e.target.style.backgroundColor = '#f8fafc';
               }}
               required
             />
           </div>
 
-          {/* Links */}
-          <div style={{ textAlign: 'right', marginBottom: '5px' }}>
-            <a href="/forgot-password" style={{ fontSize: '12px', color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>Mot de passe oublié?</a>
-          </div>
+          {/* Message */}
+          {message && (
+            <div style={{
+              padding: '10px 12px',
+              background: message.includes('✅')
+                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))'
+                : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
+              border: `1px solid ${message.includes('✅') ? '#d1fae5' : '#fee2e2'}`,
+              borderRadius: '10px',
+              color: message.includes('✅') ? '#065f46' : '#991b1b',
+              fontSize: '12px',
+              fontWeight: '600',
+              textAlign: 'center',
+            }}>
+              {message}
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !email || !password}
             style={{
-              marginTop: '5px',
-              padding: '12px 16px',
-              background: !loading ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#cbd5e0',
+              padding: '11px 14px',
+              background: !loading && email && password
+                ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)'
+                : '#cbd5e1',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '15px',
-              fontWeight: '600',
-              cursor: !loading ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s ease',
-              boxShadow: !loading ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '700',
+              cursor: !loading && email && password ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: loading ? 0.9 : 1,
+              letterSpacing: '0.3px',
+              boxShadow: !loading && email && password ? '0 10px 30px rgba(59, 130, 246, 0.3)' : 'none',
             }}
-            onMouseEnter={(e) => {
-              if (!loading) {
+            onMouseOver={(e) => {
+              if (!loading && email && password) {
                 e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.5)';
+                e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)';
               }
             }}
-            onMouseLeave={(e) => {
-              if (!loading) {
+            onMouseOut={(e) => {
+              if (!loading && email && password) {
                 e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)';
               }
             }}
           >
-            {loading ? (
-              <>
-                <div style={{ width: '16px', height: '16px', borderWidth: '2px', borderStyle: 'solid', borderColor: 'rgba(255, 255, 255, 0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <span>Connexion...</span>
-              </>
-            ) : (
-              '✨ Se connecter'
-            )}
+            {loading ? '⏳ Connexion...' : '✨ Se connecter'}
           </button>
         </form>
 
-        {/* Message */}
-        {message && (
-          <div style={{
-            marginTop: '15px',
-            padding: '12px 14px',
-            background: message.includes('✅') ? '#f0fff4' : '#fff5f5',
-            border: `1px solid ${message.includes('✅') ? '#c6f6d5' : '#fed7d7'}`,
-            borderRadius: '8px',
-            color: message.includes('✅') ? '#22543d' : '#742a2a',
-            fontSize: '13px',
-            lineHeight: '1.5',
+        {/* Footer Link */}
+        <div style={{
+          marginTop: '14px',
+          textAlign: 'center',
+          paddingTop: '12px',
+          borderTop: '1px solid #e2e8f0',
+        }}>
+          <p style={{
+            fontSize: '12px',
+            color: '#64748b',
+            margin: '0 0 8px 0',
+            fontWeight: '500',
           }}>
-            {message}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div style={{ marginTop: '30px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px' }}>
-        <p style={{ margin: '0' }}>Pas de compte? <a href="/signup" style={{ color: 'white', textDecoration: 'none', fontWeight: '600' }}>S'inscrire</a></p>
+            Pas de compte?
+          </p>
+          <a
+            href="/signup"
+            style={{
+              fontSize: '12px',
+              color: '#3b82f6',
+              textDecoration: 'none',
+              fontWeight: '600',
+              transition: 'all 0.2s',
+            }}
+            onMouseOver={(e) => {
+              e.target.style.textDecoration = 'underline';
+              e.target.style.color = '#8b5cf6';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.textDecoration = 'none';
+              e.target.style.color = '#3b82f6';
+            }}
+          >
+            Créer un compte →
+          </a>
+        </div>
       </div>
     </div>
   );
