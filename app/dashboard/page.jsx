@@ -1166,13 +1166,29 @@ export default function DashboardPage() {
                 }}>
                   📚 Académie
                 </h2>
-                <p style={{
-                  fontSize: '13px',
-                  color: currentTheme.textSecondary,
-                  margin: 0,
+                <div style={{
+                  display: 'flex',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  fontSize: '12px',
                 }}>
-                  Niveau {progress.userLevel} • {progress.totalXP} XP
-                </p>
+                  <span style={{ color: currentTheme.textSecondary }}>
+                    Niveau {progress.userLevel}
+                  </span>
+                  <span style={{ color: currentTheme.accent }}>
+                    ⭐ {progress.totalXP} XP
+                  </span>
+                  {progress.streak > 0 && (
+                    <span style={{ color: '#f59e0b' }}>
+                      🔥 Racha: {progress.streak}
+                    </span>
+                  )}
+                  {progress.badges && progress.badges.length > 0 && (
+                    <span style={{ color: '#a78bfa' }}>
+                      ✨ {progress.badges.length} Badges
+                    </span>
+                  )}
+                </div>
               </div>
               <a href="/education" style={{
                 display: 'inline-flex',
