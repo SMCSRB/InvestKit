@@ -319,96 +319,306 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* MAIN PORTFOLIO CARD */}
+        {/* MAIN PORTFOLIO CARD - BANK CARD STYLE */}
         {activeTab === 'overview' && (
           <>
             <div className="metric-card" style={{
-              background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #0c4a6e 100%)',
-              borderRadius: '20px',
-              padding: '40px',
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+              borderRadius: '24px',
+              padding: '0',
               marginBottom: '32px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 20px 60px rgba(59, 130, 246, 0.3)',
+              boxShadow: '0 20px 60px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
               position: 'relative',
               overflow: 'hidden',
+              height: '320px',
+              display: 'flex',
+              flexDirection: 'column',
+              maxWidth: '500px',
+              aspectRatio: '1.7',
             }}>
+              {/* Card Background Effects */}
               <div style={{
                 position: 'absolute',
-                top: '-100px',
-                right: '-100px',
-                width: '300px',
-                height: '300px',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                pointerEvents: 'none',
+              }} />
+
+              {/* Decorative Elements */}
+              <div style={{
+                position: 'absolute',
+                top: '-50px',
+                right: '-50px',
+                width: '200px',
+                height: '200px',
+                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
                 borderRadius: '50%',
                 pointerEvents: 'none',
               }} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <p style={{
-                  fontSize: '13px',
+
+              {/* Card Content */}
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+                padding: '32px 28px',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                justifyContent: 'space-between',
+              }}>
+                {/* Top Section - Card Type & Logo */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'start',
+                  marginBottom: '20px',
+                }}>
+                  <div>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      margin: 0,
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                    }}>
+                      INVESTKIT PREMIUM
+                    </p>
+                  </div>
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: '900',
+                  }}>
+                    💳
+                  </div>
+                </div>
+
+                {/* Middle Section - Card Number Placeholder */}
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  margin: '20px 0',
+                  fontSize: '18px',
+                  fontWeight: '700',
                   color: 'rgba(255, 255, 255, 0.7)',
-                  margin: '0 0 12px 0',
+                  letterSpacing: '3px',
+                  fontFamily: 'monospace',
+                }}>
+                  <span>••••</span>
+                  <span>••••</span>
+                  <span>••••</span>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>2024</span>
+                </div>
+
+                {/* Bottom Section - Holder & Date */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                  marginTop: 'auto',
+                }}>
+                  <div>
+                    <p style={{
+                      fontSize: '9px',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      margin: '0 0 4px 0',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      CARDHOLDER
+                    </p>
+                    <p style={{
+                      fontSize: '14px',
+                      color: 'white',
+                      margin: 0,
+                      fontWeight: '700',
+                      letterSpacing: '0.5px',
+                    }}>
+                      JEAN DUPONT
+                    </p>
+                  </div>
+                  <div style={{
+                    textAlign: 'right',
+                  }}>
+                    <p style={{
+                      fontSize: '9px',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      margin: '0 0 4px 0',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      Valid Thru
+                    </p>
+                    <p style={{
+                      fontSize: '14px',
+                      color: 'white',
+                      margin: 0,
+                      fontWeight: '700',
+                      fontFamily: 'monospace',
+                    }}>
+                      12/26
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PORTFOLIO STATS BELOW CARD */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '16px',
+              marginBottom: '32px',
+            }}>
+              {/* Total Balance */}
+              <div className="metric-card" style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  margin: '0 0 8px 0',
                   fontWeight: '600',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                 }}>
-                  Valeur Totale du Portefeuille
+                  Solde Total
+                </p>
+                <p style={{
+                  fontSize: '32px',
+                  fontWeight: '900',
+                  color: '#60a5fa',
+                  margin: '0 0 12px 0',
+                }}>
+                  €{portfolioData.totalValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
                 </p>
                 <div style={{
                   display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '12px',
-                  marginBottom: '32px',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}>
-                  <h2 style={{
-                    fontSize: '48px',
-                    fontWeight: '900',
-                    color: 'white',
-                    margin: 0,
-                  }}>
-                    €{portfolioData.totalValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
-                  </h2>
                   <span style={{
-                    fontSize: '16px',
-                    color: 'rgba(16, 185, 129, 0.9)',
+                    fontSize: '12px',
+                    color: '#10b981',
                     fontWeight: '700',
                   }}>
-                    ↑ +€{portfolioData.dayChange.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} ({portfolioData.dayChangePercent}%)
+                    ↑ +€{portfolioData.dayChange.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                  </span>
+                  <span style={{
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                  }}>
+                    ({portfolioData.dayChangePercent}% today)
                   </span>
                 </div>
+              </div>
 
-                {/* Stats Grid */}
+              {/* Available Balance */}
+              <div className="metric-card" style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  margin: '0 0 8px 0',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  Gain Année (YTD)
+                </p>
+                <p style={{
+                  fontSize: '32px',
+                  fontWeight: '900',
+                  color: '#86efac',
+                  margin: '0 0 12px 0',
+                }}>
+                  +{portfolioData.ytdReturn}%
+                </p>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  margin: 0,
+                }}>
+                  €{portfolioData.yearGain.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} gains réalisés
+                </p>
+              </div>
+
+              {/* Performance */}
+              <div className="metric-card" style={{
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '1px solid rgba(168, 85, 247, 0.3)',
+                backdropFilter: 'blur(20px)',
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  margin: '0 0 8px 0',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  Performance
+                </p>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '24px',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '16px',
+                  marginTop: '12px',
                 }}>
-                  {[
-                    { label: 'YTD Gain', value: portfolioData.ytdReturn + '%', color: '#a78bfa' },
-                    { label: 'Gain Réalisé', value: '€' + (portfolioData.yearGain / 1000).toFixed(1) + 'k', color: '#86efac' },
-                    { label: 'Investissement', value: '€' + (portfolioData.totalInvested / 1000).toFixed(0) + 'k', color: '#fbbf24' },
-                    { label: 'Win Rate', value: portfolioData.winRate + '%', color: '#60a5fa' },
-                  ].map((stat, idx) => (
-                    <div key={idx}>
-                      <p style={{
-                        fontSize: '12px',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        margin: '0 0 6px 0',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                      }}>
-                        {stat.label}
-                      </p>
-                      <p style={{
-                        fontSize: '20px',
-                        fontWeight: '900',
-                        color: stat.color,
-                        margin: 0,
-                      }}>
-                        {stat.value}
-                      </p>
-                    </div>
-                  ))}
+                  <div>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      margin: 0,
+                      fontWeight: '600',
+                    }}>
+                      Win Rate
+                    </p>
+                    <p style={{
+                      fontSize: '18px',
+                      fontWeight: '900',
+                      color: '#a78bfa',
+                      margin: '4px 0 0 0',
+                    }}>
+                      {portfolioData.winRate}%
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      margin: 0,
+                      fontWeight: '600',
+                    }}>
+                      Capital
+                    </p>
+                    <p style={{
+                      fontSize: '18px',
+                      fontWeight: '900',
+                      color: '#c4b5fd',
+                      margin: '4px 0 0 0',
+                    }}>
+                      €{(portfolioData.totalInvested / 1000).toFixed(0)}k
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
