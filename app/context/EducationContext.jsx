@@ -23,7 +23,13 @@ export function EducationProvider({ children }) {
     const savedProgress = localStorage.getItem('educationProgress');
     if (savedProgress) {
       try {
-        setProgress(JSON.parse(savedProgress));
+        const parsed = JSON.parse(savedProgress);
+        setProgress((prev) => ({
+          ...prev,
+          ...parsed,
+          notes: parsed.notes || {},
+          attempts: parsed.attempts || {},
+        }));
       } catch (error) {
         console.error('Erreur lors du chargement de la progression:', error);
       }
@@ -185,7 +191,7 @@ export function EducationProvider({ children }) {
   };
 
   const getNote = (domainId, chapterId) => {
-    return progress.notes[`${domainId}-${chapterId}`] || '';
+    return progress.notes?.[`${domainId}-${chapterId}`] || '';
   };
 
   const deleteNote = (domainId, chapterId) => {
