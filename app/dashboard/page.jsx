@@ -1187,13 +1187,13 @@ export default function DashboardPage() {
           <div style={{
             position: 'relative',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-            borderRadius: '40px',
-            padding: '12px',
+            borderRadius: '48px',
+            padding: '16px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             backdropFilter: 'blur(20px)',
             width: '100%',
-            maxWidth: '350px',
-            height: '620px',
+            maxWidth: '600px',
+            height: '800px',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8)',
@@ -1203,20 +1203,20 @@ export default function DashboardPage() {
             {/* Close Button */}
             <button onClick={() => setNewsModalOpen(false)} style={{
               position: 'absolute',
-              top: '12px',
-              right: '12px',
+              top: '20px',
+              right: '20px',
               zIndex: 10,
               background: 'rgba(255, 255, 255, 0.1)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px',
-              width: '32px',
-              height: '32px',
+              borderRadius: '10px',
+              width: '40px',
+              height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
               cursor: 'pointer',
-              fontSize: '18px',
+              fontSize: '20px',
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
@@ -1229,107 +1229,70 @@ export default function DashboardPage() {
               ✕
             </button>
 
-            {/* Phone Notch */}
-            <div style={{
-              position: 'absolute',
-              top: '8px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '150px',
-              height: '25px',
-              background: '#0f172a',
-              borderRadius: '0 0 20px 20px',
-              zIndex: 10,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-              <div style={{
-                width: '100px',
-                height: '4px',
-                background: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '2px',
-              }} />
-            </div>
-
-            {/* Phone Status Bar */}
+            {/* Tablet Bezel Top */}
             <div style={{
               background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              borderRadius: '32px 32px 0 0',
-              padding: '28px 16px 16px',
-              marginTop: '4px',
+              borderRadius: '36px 36px 0 0',
+              padding: '20px 24px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              fontSize: '12px',
+              fontSize: '13px',
               color: 'rgba(255, 255, 255, 0.8)',
             }}>
               <span>9:41</span>
+              <span style={{ fontWeight: '700' }}>InvestKit</span>
               <span>📶 📡 🔋</span>
             </div>
 
-            {/* Phone Header */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              padding: '12px 16px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: '800',
-                color: 'white',
-                margin: 0,
-              }}>
-                InvestKit
-              </h3>
-            </div>
 
             {/* Scrollable Content */}
             <div style={{
               background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
               flex: 1,
               overflowY: 'auto',
-              padding: '12px',
+              padding: '20px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
+              gap: '16px',
               scrollBehavior: 'smooth',
             }}>
               {/* News Item 1 */}
               <div style={{
                 background: 'rgba(59, 130, 246, 0.15)',
-                borderLeft: '3px solid #3b82f6',
-                borderRadius: '12px',
-                padding: '12px',
+                borderLeft: '4px solid #3b82f6',
+                borderRadius: '16px',
+                padding: '18px',
                 flex: '0 0 auto',
               }}>
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '12px',
                   alignItems: 'start',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '16px', marginTop: '2px' }}>📈</span>
+                  <span style={{ fontSize: '24px', marginTop: '2px' }}>📈</span>
                   <div style={{ flex: 1 }}>
                     <p style={{
-                      fontSize: '12px',
+                      fontSize: '15px',
                       fontWeight: '700',
                       color: '#60a5fa',
-                      margin: '0 0 2px 0',
+                      margin: '0 0 4px 0',
                     }}>
                       CAC 40 en hausse
                     </p>
                     <p style={{
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: 'rgba(255, 255, 255, 0.7)',
                       margin: 0,
+                      lineHeight: '1.4',
                     }}>
                       L'indice gagne 1.2% aujourd'hui
                     </p>
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: '11px',
                   color: 'rgba(255, 255, 255, 0.5)',
                 }}>
                   À l'instant
@@ -1339,38 +1302,39 @@ export default function DashboardPage() {
               {/* News Item 2 */}
               <div style={{
                 background: 'rgba(16, 185, 129, 0.15)',
-                borderLeft: '3px solid #10b981',
-                borderRadius: '12px',
-                padding: '12px',
+                borderLeft: '4px solid #10b981',
+                borderRadius: '16px',
+                padding: '18px',
                 flex: '0 0 auto',
               }}>
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '12px',
                   alignItems: 'start',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '16px', marginTop: '2px' }}>💡</span>
+                  <span style={{ fontSize: '24px', marginTop: '2px' }}>💡</span>
                   <div style={{ flex: 1 }}>
                     <p style={{
-                      fontSize: '12px',
+                      fontSize: '15px',
                       fontWeight: '700',
                       color: '#86efac',
-                      margin: '0 0 2px 0',
+                      margin: '0 0 4px 0',
                     }}>
                       Conseil du jour
                     </p>
                     <p style={{
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: 'rgba(255, 255, 255, 0.7)',
                       margin: 0,
+                      lineHeight: '1.4',
                     }}>
                       Diversifiez pour réduire les risques
                     </p>
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: '11px',
                   color: 'rgba(255, 255, 255, 0.5)',
                 }}>
                   Il y a 2h
@@ -1380,38 +1344,39 @@ export default function DashboardPage() {
               {/* News Item 3 */}
               <div style={{
                 background: 'rgba(168, 85, 247, 0.15)',
-                borderLeft: '3px solid #a855f7',
-                borderRadius: '12px',
-                padding: '12px',
+                borderLeft: '4px solid #a855f7',
+                borderRadius: '16px',
+                padding: '18px',
                 flex: '0 0 auto',
               }}>
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '12px',
                   alignItems: 'start',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '16px', marginTop: '2px' }}>📚</span>
+                  <span style={{ fontSize: '24px', marginTop: '2px' }}>📚</span>
                   <div style={{ flex: 1 }}>
                     <p style={{
-                      fontSize: '12px',
+                      fontSize: '15px',
                       fontWeight: '700',
                       color: '#d8b4fe',
-                      margin: '0 0 2px 0',
+                      margin: '0 0 4px 0',
                     }}>
                       Nouvelle formation
                     </p>
                     <p style={{
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: 'rgba(255, 255, 255, 0.7)',
                       margin: 0,
+                      lineHeight: '1.4',
                     }}>
                       Maîtrisez la crypto
                     </p>
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: '11px',
                   color: 'rgba(255, 255, 255, 0.5)',
                 }}>
                   Il y a 5h
@@ -1421,38 +1386,39 @@ export default function DashboardPage() {
               {/* News Item 4 */}
               <div style={{
                 background: 'rgba(245, 158, 11, 0.15)',
-                borderLeft: '3px solid #f59e0b',
-                borderRadius: '12px',
-                padding: '12px',
+                borderLeft: '4px solid #f59e0b',
+                borderRadius: '16px',
+                padding: '18px',
                 flex: '0 0 auto',
               }}>
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '12px',
                   alignItems: 'start',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '16px', marginTop: '2px' }}>⚠️</span>
+                  <span style={{ fontSize: '24px', marginTop: '2px' }}>⚠️</span>
                   <div style={{ flex: 1 }}>
                     <p style={{
-                      fontSize: '12px',
+                      fontSize: '15px',
                       fontWeight: '700',
                       color: '#fcd34d',
-                      margin: '0 0 2px 0',
+                      margin: '0 0 4px 0',
                     }}>
                       Alerte BTC
                     </p>
                     <p style={{
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: 'rgba(255, 255, 255, 0.7)',
                       margin: 0,
+                      lineHeight: '1.4',
                     }}>
                       Prix en baisse, opportunité?
                     </p>
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: '11px',
                   color: 'rgba(255, 255, 255, 0.5)',
                 }}>
                   Il y a 1h
@@ -1462,38 +1428,39 @@ export default function DashboardPage() {
               {/* News Item 5 */}
               <div style={{
                 background: 'rgba(59, 130, 246, 0.15)',
-                borderLeft: '3px solid #3b82f6',
-                borderRadius: '12px',
-                padding: '12px',
+                borderLeft: '4px solid #3b82f6',
+                borderRadius: '16px',
+                padding: '18px',
                 flex: '0 0 auto',
               }}>
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '12px',
                   alignItems: 'start',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '16px', marginTop: '2px' }}>🏆</span>
+                  <span style={{ fontSize: '24px', marginTop: '2px' }}>🏆</span>
                   <div style={{ flex: 1 }}>
                     <p style={{
-                      fontSize: '12px',
+                      fontSize: '15px',
                       fontWeight: '700',
                       color: '#60a5fa',
-                      margin: '0 0 2px 0',
+                      margin: '0 0 4px 0',
                     }}>
                       Objectif atteint!
                     </p>
                     <p style={{
-                      fontSize: '11px',
+                      fontSize: '13px',
                       color: 'rgba(255, 255, 255, 0.7)',
                       margin: 0,
+                      lineHeight: '1.4',
                     }}>
                       +€5k de gains ce mois
                     </p>
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: '11px',
                   color: 'rgba(255, 255, 255, 0.5)',
                 }}>
                   Il y a 3h
@@ -1501,17 +1468,17 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Phone Home Indicator */}
+            {/* Tablet Bezel Bottom */}
             <div style={{
               background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              borderRadius: '0 0 32px 32px',
-              padding: '8px',
+              borderRadius: '0 0 36px 36px',
+              padding: '12px',
               textAlign: 'center',
             }}>
               <div style={{
-                width: '120px',
-                height: '4px',
-                background: 'rgba(255, 255, 255, 0.3)',
+                width: '180px',
+                height: '5px',
+                background: 'rgba(255, 255, 255, 0.2)',
                 borderRadius: '2px',
                 margin: '0 auto',
               }} />
