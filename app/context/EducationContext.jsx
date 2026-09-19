@@ -10,6 +10,11 @@ export function EducationProvider({ children }) {
     completedDomains: [],
     totalXP: 0,
     userLevel: 1,
+    streak: 0,
+    maxStreak: 0,
+    badges: [],
+    notes: {}, // { "domainId-chapterId": "note text" }
+    attempts: {}, // { "domainId-chapterId": attemptCount }
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,6 +44,35 @@ export function EducationProvider({ children }) {
 
       if (alreadyCompleted) return prev;
 
+      const attemptKey = `${domainId}-${chapterId}`;
+      const attempts = (prev.attempts[attemptKey] || 0) + 1;
+
+      // Bonus XP pour premier essai
+      const bonusXP = attempts === 1 ? 50 : 0;
+      const totalXPEarned = xpEarned + bonusXP;
+
+      // Augmenter le streak
+      const newStreak = prev.streak + 1;
+      const newMaxStreak = Math.max(newStreak, prev.maxStreak);
+
+      // Vérifier les badges
+      const newBadges = [...prev.badges];
+
+      // Badge "Premier sang"
+      if (prev.completedChapters.length === 0 && !newBadges.includes('first_blood')) {
+        newBadges.push('first_blood');
+      }
+
+      // Badge "Parfait"
+      if (score === 100 && !newBadges.includes('perfect')) {
+        newBadges.push('perfect');
+      }
+
+      // Badge "Sans erreur" (3+ chapitres d'affilée)
+      if (newStreak >= 3 && !newBadges.includes('no_mistakes')) {
+        newBadges.push('no_mistakes');
+      }
+
       return {
         ...prev,
         completedChapters: [
@@ -50,8 +84,15 @@ export function EducationProvider({ children }) {
             date: new Date().toISOString(),
           },
         ],
-        totalXP: prev.totalXP + xpEarned,
-        userLevel: Math.floor(prev.totalXP / 500) + 1,
+        totalXP: prev.totalXP + totalXPEarned,
+        userLevel: Math.floor((prev.totalXP + totalXPEarned) / 500) + 1,
+        streak: newStreak,
+        maxStreak: newMaxStreak,
+        badges: newBadges,
+        attempts: {
+          ...prev.attempts,
+          [attemptKey]: attempts,
+        },
       };
     });
   };
@@ -123,7 +164,48 @@ export function EducationProvider({ children }) {
       completedDomains: [],
       totalXP: 0,
       userLevel: 1,
+      streak: 0,
+      maxStreak: 0,
+      badges: [],
+      notes: {},
+      attempts: {},
     });
+  };
+
+  const addNote = (domainId, chapterId, noteText) => {
+    setProgress((prev) => ({
+      ...prev,
+      notes: {
+        ...prev.notes,
+        [`${domainId}-${chapterId}`]: noteText,
+      },
+    }));
+  };
+
+  const getNote = (domainId, chapterId) => {
+    return progress.notes[`${domainId}-${chapterId}`] || '';
+  };
+
+  const deleteNote = (domainId, chapterId) => {
+    setProgress((prev) => {
+      const newNotes = { ...prev.notes };
+      delete newNotes[`${domainId}-${chapterId}`];
+      return {
+        ...prev,
+        notes: newNotes,
+      };
+    });
+  };
+
+  const getAttempts = (domainId, chapterId) => {
+    return progress.attempts[`${domainId}-${chapterId}`] || 0;
+  };
+
+  const resetStreak = () => {
+    setProgress((prev) => ({
+      ...prev,
+      streak: 0,
+    }));
   };
 
   const value = {
@@ -136,6 +218,11 @@ export function EducationProvider({ children }) {
     getChapterScore,
     getDomainProgress,
     resetProgress,
+    addNote,
+    getNote,
+    deleteNote,
+    getAttempts,
+    resetStreak,
     isLoading,
   };
 

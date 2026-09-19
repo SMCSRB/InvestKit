@@ -12,7 +12,7 @@ export default function ChapterPage() {
   const params = useParams();
   const domainId = params.domain;
   const chapterId = parseInt(params.chapter);
-  const { completeChapter, isChapterUnlocked, getChapterScore, isLoading } =
+  const { completeChapter, isChapterUnlocked, getChapterScore, isLoading, getAttempts, addNote, getNote, progress } =
     useEducationProgress();
 
   const domain = educationDomains.find((d) => d.id === domainId);
@@ -23,6 +23,10 @@ export default function ChapterPage() {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [quizScore, setQuizScore] = useState(null);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [showExplanations, setShowExplanations] = useState(false);
+  const [notes, setNotes] = useState(getNote(domainId, chapterId));
+  const attempts = getAttempts(domainId, chapterId);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -91,9 +95,15 @@ export default function ChapterPage() {
 
     const score = Math.round((correctCount / questions.length) * 100);
     setQuizScore(score);
+    setShowExplanations(true);
 
     if (score >= chapter.quiz.passingScore) {
-      completeChapter(domain.id, chapter.id, score);
+      // Bonus XP: 100 base + 50 pour premier essai + bonus pour score élevé
+      let xp = 100;
+      if (attempts === 0) xp += 50;
+      if (score === 100) xp += 50;
+      setXpEarned(xp);
+      completeChapter(domain.id, chapter.id, score, xp);
     }
 
     setShowResults(true);
@@ -123,9 +133,25 @@ export default function ChapterPage() {
             </div>
 
             {/* Progress */}
-            <div className="flex items-center gap-4 text-sm text-gray-400">
+            <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
               <span>⏱️ {chapter.duration}</span>
               <span>📚 Chapitre {chapter.id} sur {domain.chapters.length}</span>
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2" style={{ color: domain.color }}>
+                <span>🔥 Streak:</span>
+                <span className="font-bold">{progress.streak}</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-400">
+                <span>🎯 Tentatives:</span>
+                <span className="font-bold">{attempts}</span>
+              </div>
+              <div className="flex items-center gap-2 text-yellow-400">
+                <span>⭐ XP Total:</span>
+                <span className="font-bold">{progress.totalXP}</span>
+              </div>
             </div>
           </div>
 
@@ -205,6 +231,35 @@ export default function ChapterPage() {
                 </div>
               </div>
 
+              {/* Notes personnelles */}
+              <div className="mt-12 pt-8 border-t border-gray-700">
+                <h3 className="text-2xl font-bold text-white mb-4">📝 Mes Notes</h3>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Ajoutez vos notes personnelles sur ce chapitre..."
+                  className="w-full p-4 rounded-lg bg-slate-800/50 border border-gray-700/50 text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2"
+                  style={{ focusRingColor: domain.color }}
+                  rows={4}
+                />
+                <button
+                  onClick={() => addNote(domainId, chapterId, notes)}
+                  className="mt-3 px-6 py-2 rounded-lg font-semibold transition-all duration-300 text-sm"
+                  style={{
+                    background: `linear-gradient(135deg, ${domain.color}, ${domain.color}dd)`,
+                    color: 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'scale(1)';
+                  }}
+                >
+                  💾 Sauvegarder les notes
+                </button>
+              </div>
+
               {/* CTA */}
               <div className="mt-12 flex gap-4">
                 <button
@@ -250,36 +305,57 @@ export default function ChapterPage() {
                         </h4>
 
                         <div className="space-y-3">
-                          {question.options.map((option, optionIdx) => (
-                            <label
-                              key={optionIdx}
-                              className="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-300"
-                              style={{
-                                borderColor:
-                                  quizAnswers[question.id] === optionIdx
-                                    ? domain.color
-                                    : 'rgba(107, 114, 128, 0.3)',
-                                backgroundColor:
-                                  quizAnswers[question.id] === optionIdx
-                                    ? `${domain.color}15`
-                                    : 'transparent',
-                              }}
-                            >
-                              <input
-                                type="radio"
-                                name={`question-${question.id}`}
-                                value={optionIdx}
-                                checked={quizAnswers[question.id] === optionIdx}
-                                onChange={() => handleQuizAnswer(question.id, optionIdx)}
-                                className="mr-3"
-                                style={{
-                                  accentColor: domain.color,
-                                }}
-                              />
-                              <span className="text-gray-300">{option}</span>
-                            </label>
-                          ))}
+                          {question.options.map((option, optionIdx) => {
+                            const isSelected = quizAnswers[question.id] === optionIdx;
+                            const isCorrect = optionIdx === question.correct;
+                            const showFeedback = showExplanations && quizAnswers[question.id] !== undefined;
+
+                            return (
+                              <div key={optionIdx}>
+                                <label
+                                  className="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-300"
+                                  style={{
+                                    borderColor: showFeedback
+                                      ? isCorrect ? '#10b981' : isSelected ? '#ef4444' : 'rgba(107, 114, 128, 0.3)'
+                                      : isSelected ? domain.color : 'rgba(107, 114, 128, 0.3)',
+                                    backgroundColor: showFeedback
+                                      ? isCorrect ? 'rgba(16, 185, 129, 0.1)' : isSelected ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
+                                      : isSelected ? `${domain.color}15` : 'transparent',
+                                  }}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`question-${question.id}`}
+                                    value={optionIdx}
+                                    checked={isSelected}
+                                    onChange={() => handleQuizAnswer(question.id, optionIdx)}
+                                    className="mr-3"
+                                    style={{
+                                      accentColor: domain.color,
+                                    }}
+                                  />
+                                  <span className="text-gray-300">{option}</span>
+                                  {showFeedback && isCorrect && <span className="ml-2 text-green-400">✓</span>}
+                                  {showFeedback && isSelected && !isCorrect && <span className="ml-2 text-red-400">✗</span>}
+                                </label>
+                              </div>
+                            );
+                          })}
                         </div>
+
+                        {showExplanations && quizAnswers[question.id] !== undefined && (
+                          <div style={{
+                            marginTop: '12px',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            fontSize: '14px',
+                            color: 'rgba(255, 255, 255, 0.8)',
+                          }}>
+                            <strong style={{ color: '#60a5fa' }}>💡 Explication:</strong> {question.explanation}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -320,6 +396,14 @@ export default function ChapterPage() {
                   <h3 className="text-3xl font-bold text-white mb-2">
                     Score: {quizScore}%
                   </h3>
+
+                  {quizScore >= chapter.quiz.passingScore && (
+                    <div className="mb-6 p-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30">
+                      <p className="text-yellow-300 font-semibold text-lg">
+                        🎯 +{xpEarned} XP Gagnés !
+                      </p>
+                    </div>
+                  )}
 
                   <p className="text-gray-400 mb-8">
                     {quizScore >= chapter.quiz.passingScore
