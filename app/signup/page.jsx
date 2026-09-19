@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [emailAvailable, setEmailAvailable] = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
 
@@ -71,7 +72,8 @@ export default function SignupPage() {
   const isEmailFormatValid = validateEmail(email);
   const isEmailValid = isEmailFormatValid && emailAvailable === true;
   const passwordStrength = getPasswordStrength(password);
-  const isFormValid = firstName && lastName && isEmailValid && password.length >= 6 && captchaToken && acceptTerms;
+  const passwordsMatch = password === passwordConfirm && password.length >= 6;
+  const isFormValid = firstName && lastName && isEmailValid && passwordsMatch && captchaToken && acceptTerms;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,6 +106,7 @@ export default function SignupPage() {
         console.log('Signup response:', data);
         setEmail('');
         setPassword('');
+        setPasswordConfirm('');
         setFirstName('');
         setLastName('');
       } else {
@@ -337,6 +340,49 @@ export default function SignupPage() {
           )}
           {!password && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Minimum 6 caractères</p>}
         </div>
+
+        {/* Confirmer Mot de passe */}
+        <div>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#2d3748', marginBottom: '6px' }}>🔐 Confirmer le mot de passe</label>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="password"
+              placeholder="Répétez votre mot de passe"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                border: `2px solid ${passwordConfirm ? (passwordsMatch ? '#c6f6d5' : '#fed7d7') : '#e2e8f0'}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                transition: 'all 0.3s ease',
+                outline: 'none',
+                backgroundColor: passwordConfirm ? (passwordsMatch ? '#f0fff4' : '#fff5f5') : 'white',
+              }}
+              onFocus={(e) => {
+                if (!passwordConfirm || !password) {
+                  e.target.style.borderColor = '#667eea';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                }
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+                if (!passwordConfirm) {
+                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.backgroundColor = 'white';
+                }
+              }}
+              required
+            />
+            {passwordConfirm && password && (passwordsMatch ? <span style={{ fontSize: '18px', color: '#48bb78' }}>✅</span> : <span style={{ fontSize: '18px', color: '#f56565' }}>❌</span>)}
+          </div>
+          {password && !passwordConfirm && <p style={{ fontSize: '12px', color: '#cbd5e0', margin: '4px 0 0 0' }}>Requis</p>}
+          {passwordConfirm && password && !passwordsMatch && <p style={{ fontSize: '12px', color: '#f56565', margin: '4px 0 0 0' }}>Les mots de passe ne correspondent pas</p>}
+          {passwordConfirm && password && passwordsMatch && <p style={{ fontSize: '12px', color: '#48bb78', margin: '4px 0 0 0' }}>Mots de passe identiques ✓</p>}
+        </div>
+
         {/* hCaptcha */}
         <div style={{ margin: '20px 0', padding: '12px', background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', justifyContent: 'center', minHeight: '90px' }}>
           {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
