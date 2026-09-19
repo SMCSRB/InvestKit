@@ -1,5 +1,3 @@
-import '../css/design-system.css';
-import '../css/performance-optimizations.css';
 import ClientLayoutWrapper from '@/app/components/ClientLayoutWrapper';
 
 export const metadata = {
@@ -35,8 +33,9 @@ export default function RootLayout({ children }) {
         {/* DNS Prefetch */}
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
 
-        {/* Preload Critical Resources */}
-        <link rel="preload" as="style" href="../css/design-system.css" />
+        {/* CSS Stylesheets */}
+        <link rel="stylesheet" href="/css/design-system.css" />
+        <link rel="stylesheet" href="/css/performance-optimizations.css" />
 
         <style>{`
           * {
