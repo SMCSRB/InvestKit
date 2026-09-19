@@ -2090,70 +2090,224 @@ export default function DashboardPage() {
         {activeTab === 'market' && (
           <div className="accordion-content" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '24px',
           }}>
-            {marketData.map((data, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
-                  borderRadius: '20px',
-                  padding: '28px',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
-                }}
-              >
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'start',
-                  marginBottom: '16px',
-                }}>
-                  <h3 style={{
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: '#0f172a',
-                    margin: 0,
-                  }}>
-                    {data.name}
-                  </h3>
+            {/* Main Market Data */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '16px',
+            }}>
+              {marketData.map((data, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+                  }}
+                >
                   <div style={{
-                    padding: '4px 12px',
-                    background: data.changePercent >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    borderRadius: '20px',
-                    color: data.changePercent >= 0 ? '#10b981' : '#ef4444',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'start',
+                    marginBottom: '12px',
+                  }}>
+                    <h3 style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: '#0f172a',
+                      margin: 0,
+                    }}>
+                      {data.name}
+                    </h3>
+                    <div style={{
+                      padding: '4px 10px',
+                      background: data.changePercent >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      borderRadius: '16px',
+                      color: data.changePercent >= 0 ? '#10b981' : '#ef4444',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                    }}>
+                      {data.changePercent >= 0 ? '↑' : '↓'} {Math.abs(data.changePercent)}%
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '22px',
+                    fontWeight: '900',
+                    color: '#0f172a',
+                    marginBottom: '8px',
+                  }}>
+                    {data.value.toLocaleString('fr-FR')}
+                  </div>
+                  <div style={{
                     fontSize: '12px',
+                    color: data.change >= 0 ? '#10b981' : '#ef4444',
                     fontWeight: '700',
                   }}>
-                    {data.changePercent >= 0 ? '↑' : '↓'} {Math.abs(data.changePercent)}%
+                    {data.change >= 0 ? '+' : ''}{data.change.toLocaleString('fr-FR')}
                   </div>
                 </div>
-                <div style={{
-                  fontSize: '24px',
-                  fontWeight: '800',
-                  color: '#0f172a',
-                  marginBottom: '8px',
-                }}>
-                  {data.value.toLocaleString('fr-FR')}
-                </div>
-                <div style={{
-                  fontSize: '12px',
-                  color: data.change >= 0 ? '#10b981' : '#ef4444',
-                }}>
-                  {data.change >= 0 ? '+' : ''}{data.change.toLocaleString('fr-FR')}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
 
-        {activeTab === 'risk' && (
-          <div className="accordion-content" style={{
-            display: 'grid',
-            gap: '24px',
-          }}>
+            {/* Market Watchlist */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+              borderRadius: '20px',
+              padding: '28px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  margin: 0,
+                }}>
+                  👁️ Votre Watchlist
+                </h3>
+                <button style={{
+                  padding: '6px 12px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  color: '#3b82f6',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}>
+                  + Ajouter
+                </button>
+              </div>
+              <div style={{
+                display: 'grid',
+                gap: '12px',
+              }}>
+                {[
+                  { symbol: 'MSFT', name: 'Microsoft', price: 427.85, change: 3.45, pe: 32.1, dividend: '0.68%' },
+                  { symbol: 'NVDA', name: 'NVIDIA', price: 892.50, change: 8.23, pe: 58.4, dividend: '0.02%' },
+                  { symbol: 'JPM', name: 'JP Morgan', price: 182.30, change: -1.23, pe: 12.8, dividend: '2.85%' },
+                  { symbol: 'XOM', name: 'ExxonMobil', price: 115.75, change: 2.10, pe: 10.2, dividend: '3.92%' },
+                  { symbol: 'VTI', name: 'Vanguard Total Stock', price: 243.15, change: 1.85, pe: 22.5, dividend: '1.45%' },
+                ].map((stock, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '80px 1fr 80px 80px 80px auto',
+                      gap: '12px',
+                      alignItems: 'center',
+                      padding: '12px',
+                      background: 'rgba(59, 130, 246, 0.03)',
+                      borderRadius: '8px',
+                      borderBottom: idx < 4 ? '1px solid rgba(59, 130, 246, 0.1)' : 'none',
+                    }}
+                  >
+                    <div>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: '#0f172a',
+                        margin: 0,
+                      }}>
+                        {stock.symbol}
+                      </p>
+                      <p style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        margin: '2px 0 0 0',
+                      }}>
+                        {stock.name}
+                      </p>
+                    </div>
+                    <div />
+                    <div style={{
+                      textAlign: 'right',
+                    }}>
+                      <p style={{
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: '#0f172a',
+                        margin: 0,
+                      }}>
+                        €{stock.price.toLocaleString('fr-FR')}
+                      </p>
+                      <p style={{
+                        fontSize: '10px',
+                        color: stock.change >= 0 ? '#10b981' : '#ef4444',
+                        margin: '2px 0 0 0',
+                        fontWeight: '600',
+                      }}>
+                        {stock.change >= 0 ? '↑' : '↓'} {Math.abs(stock.change)}%
+                      </p>
+                    </div>
+                    <div style={{
+                      textAlign: 'center',
+                      fontSize: '11px',
+                    }}>
+                      <p style={{
+                        color: '#94a3b8',
+                        margin: '0 0 4px 0',
+                        fontWeight: '600',
+                      }}>
+                        P/E
+                      </p>
+                      <p style={{
+                        color: '#0f172a',
+                        margin: 0,
+                        fontWeight: '700',
+                      }}>
+                        {stock.pe}
+                      </p>
+                    </div>
+                    <div style={{
+                      textAlign: 'center',
+                      fontSize: '11px',
+                    }}>
+                      <p style={{
+                        color: '#94a3b8',
+                        margin: '0 0 4px 0',
+                        fontWeight: '600',
+                      }}>
+                        Div
+                      </p>
+                      <p style={{
+                        color: '#10b981',
+                        margin: 0,
+                        fontWeight: '700',
+                      }}>
+                        {stock.dividend}
+                      </p>
+                    </div>
+                    <button style={{
+                      padding: '6px 10px',
+                      background: 'rgba(139, 92, 246, 0.1)',
+                      color: '#8b5cf6',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                    }}>
+                      +
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Market Trends */}
             <div style={{
               background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
               borderRadius: '20px',
@@ -2168,115 +2322,473 @@ export default function DashboardPage() {
                 color: '#0f172a',
                 margin: '0 0 20px 0',
               }}>
-                📊 Analyse de Risque Détaillée
+                📈 Tendances du Marché
+              </h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '16px',
+              }}>
+                {[
+                  { category: 'Sectors Haut', items: ['Tech (+4.2%)', 'Healthcare (+2.8%)', 'Finance (+1.9%)'], icon: '📈' },
+                  { category: 'Sectors Bas', items: ['Energy (-2.1%)', 'Utilities (-1.5%)', 'Materials (-0.8%)'], icon: '📉' },
+                  { category: 'Indices Majeurs', items: ['S&P 500 (+1.8%)', 'NASDAQ (+2.5%)', 'Russell 2000 (+0.6%)'], icon: '📊' },
+                  { category: 'Cryptomonnaies', items: ['Bitcoin (+3.2%)', 'Ethereum (+2.1%)', 'Solana (+5.8%)'], icon: '₿' },
+                ].map((trend, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '16px',
+                      background: 'rgba(59, 130, 246, 0.03)',
+                      borderRadius: '12px',
+                      borderLeft: '3px solid #3b82f6',
+                    }}
+                  >
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#0f172a',
+                      margin: '0 0 12px 0',
+                    }}>
+                      {trend.icon} {trend.category}
+                    </p>
+                    <div style={{
+                      display: 'grid',
+                      gap: '6px',
+                    }}>
+                      {trend.items.map((item, i) => (
+                        <p
+                          key={i}
+                          style={{
+                            fontSize: '11px',
+                            color: item.includes('-') ? '#ef4444' : '#10b981',
+                            margin: 0,
+                            fontWeight: '600',
+                          }}
+                        >
+                          {item.includes('-') ? '↓' : '↑'} {item}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Economic Calendar */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+              borderRadius: '20px',
+              padding: '28px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#0f172a',
+                margin: '0 0 20px 0',
+              }}>
+                📅 Calendrier Économique (Prochains événements)
+              </h3>
+              <div style={{
+                display: 'grid',
+                gap: '12px',
+              }}>
+                {[
+                  { date: 'Aujourd\'hui 14:30', event: 'Données Emploi USA', impact: 'Élevé', forecast: '200K', previous: '195K' },
+                  { date: 'Demain 10:00', event: 'Inflation Zone Euro', impact: 'Élevé', forecast: '2.1%', previous: '2.4%' },
+                  { date: 'Jeudi 18:00', event: 'Réserves Fédérales', impact: 'Élevé', forecast: 'Stable', previous: '-' },
+                  { date: 'Vendredi 08:00', event: 'Ventes au Détail UK', impact: 'Moyen', forecast: '+0.1%', previous: '-0.2%' },
+                ].map((event, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '12px',
+                      background: 'rgba(59, 130, 246, 0.03)',
+                      borderRadius: '8px',
+                      borderLeft: event.impact === 'Élevé' ? '3px solid #ef4444' : '3px solid #f59e0b',
+                      display: 'grid',
+                      gridTemplateColumns: '120px 1fr auto',
+                      gap: '12px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <p style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        color: '#64748b',
+                        margin: 0,
+                      }}>
+                        {event.date}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: '#0f172a',
+                        margin: '0 0 4px 0',
+                      }}>
+                        {event.event}
+                      </p>
+                      <p style={{
+                        fontSize: '10px',
+                        color: '#64748b',
+                        margin: 0,
+                      }}>
+                        Prévu: {event.forecast} | Précédent: {event.previous}
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '4px 8px',
+                      background: event.impact === 'Élevé' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                      color: event.impact === 'Élevé' ? '#ef4444' : '#f59e0b',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {event.impact}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'risk' && (
+          <div className="accordion-content" style={{
+            display: 'grid',
+            gap: '24px',
+          }}>
+            {/* Main Risk Analysis */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '16px',
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  margin: '0 0 8px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Niveau Risque Global
+                </p>
+                <p style={{
+                  fontSize: '32px',
+                  fontWeight: '900',
+                  color: '#f59e0b',
+                  margin: '0 0 12px 0',
+                }}>
+                  {riskAnalysis.overallRisk}
+                </p>
+                <div style={{
+                  display: 'flex',
+                  gap: '4px',
+                  marginBottom: '12px',
+                }}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        height: '6px',
+                        background: i <= 3 ? '#f59e0b' : 'rgba(0, 0, 0, 0.1)',
+                        borderRadius: '3px',
+                      }}
+                    />
+                  ))}
+                </div>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#64748b',
+                  margin: 0,
+                }}>
+                  3/5 - Risque Modéré Optimal
+                </p>
+              </div>
+
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  margin: '0 0 8px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Score Diversification
+                </p>
+                <p style={{
+                  fontSize: '32px',
+                  fontWeight: '900',
+                  color: '#8b5cf6',
+                  margin: '0 0 12px 0',
+                }}>
+                  {riskAnalysis.diversificationScore}%
+                </p>
+                <div style={{
+                  width: '100%',
+                  height: '8px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    width: `${riskAnalysis.diversificationScore}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #8b5cf6, #3b82f6)',
+                  }} />
+                </div>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#64748b',
+                  margin: '8px 0 0 0',
+                }}>
+                  Très bien diversifié ✓
+                </p>
+              </div>
+
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+              }}>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  margin: '0 0 8px 0',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}>
+                  Corrélation Assets
+                </p>
+                <p style={{
+                  fontSize: '32px',
+                  fontWeight: '900',
+                  color: '#3b82f6',
+                  margin: '0 0 12px 0',
+                }}>
+                  {riskAnalysis.correlationIndex}
+                </p>
+                <p style={{
+                  fontSize: '11px',
+                  color: '#64748b',
+                  margin: 0,
+                }}>
+                  Corrélation basse = Diversification optimale
+                </p>
+              </div>
+            </div>
+
+            {/* Risk Metrics Grid */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+              borderRadius: '20px',
+              padding: '28px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#0f172a',
+                margin: '0 0 20px 0',
+              }}>
+                📊 Métriques de Risque Avancées
               </h3>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '16px',
-                marginBottom: '24px',
               }}>
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(59, 130, 246, 0.05)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(59, 130, 246, 0.1)',
-                }}>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#94a3b8',
-                    margin: '0 0 4px 0',
-                    fontWeight: '600',
-                  }}>
-                    Niveau Risque Global
-                  </p>
-                  <p style={{
-                    fontSize: '20px',
-                    fontWeight: '800',
-                    color: '#3b82f6',
-                    margin: 0,
-                  }}>
-                    {riskAnalysis.overallRisk}
-                  </p>
-                </div>
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(139, 92, 246, 0.05)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(139, 92, 246, 0.1)',
-                }}>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#94a3b8',
-                    margin: '0 0 4px 0',
-                    fontWeight: '600',
-                  }}>
-                    Score Diversification
-                  </p>
-                  <p style={{
-                    fontSize: '20px',
-                    fontWeight: '800',
-                    color: '#8b5cf6',
-                    margin: 0,
-                  }}>
-                    {riskAnalysis.diversificationScore}/100
-                  </p>
-                </div>
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(245, 158, 11, 0.05)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(245, 158, 11, 0.1)',
-                }}>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#94a3b8',
-                    margin: '0 0 4px 0',
-                    fontWeight: '600',
-                  }}>
-                    Indice Corrélation
-                  </p>
-                  <p style={{
-                    fontSize: '20px',
-                    fontWeight: '800',
-                    color: '#f59e0b',
-                    margin: 0,
-                  }}>
-                    {riskAnalysis.correlationIndex}
-                  </p>
-                </div>
+                {[
+                  { label: 'Value at Risk (95%)', value: '-€2,845.30', type: 'risk' },
+                  { label: 'Conditional VaR', value: '-€3,456.75', type: 'risk' },
+                  { label: 'Stress Test (10% chute)', value: '-€24,568.05', type: 'risk' },
+                  { label: 'Probabilité Drawdown > 10%', value: '12.3%', type: 'risk' },
+                  { label: 'Recovery Time (avg)', value: '28 jours', type: 'time' },
+                  { label: 'Coefficient d\'Asymétrie', value: '0.34', type: 'normal' },
+                ].map((metric, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '16px',
+                      background: metric.type === 'risk' ? 'rgba(239, 68, 68, 0.05)' : metric.type === 'time' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(16, 185, 129, 0.05)',
+                      borderRadius: '12px',
+                      borderLeft: `3px solid ${metric.type === 'risk' ? '#ef4444' : metric.type === 'time' ? '#3b82f6' : '#10b981'}`,
+                    }}
+                  >
+                    <p style={{
+                      fontSize: '11px',
+                      color: '#94a3b8',
+                      margin: '0 0 6px 0',
+                      fontWeight: '700',
+                    }}>
+                      {metric.label}
+                    </p>
+                    <p style={{
+                      fontSize: '18px',
+                      fontWeight: '900',
+                      color: metric.type === 'risk' ? '#ef4444' : metric.type === 'time' ? '#3b82f6' : '#10b981',
+                      margin: 0,
+                    }}>
+                      {metric.value}
+                    </p>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <div>
-                <h4 style={{
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  color: '#0f172a',
-                  margin: '0 0 16px 0',
+            {/* Correlation Matrix */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+              borderRadius: '20px',
+              padding: '28px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#0f172a',
+                margin: '0 0 20px 0',
+              }}>
+                🔗 Matrice de Corrélation entre Assets
+              </h3>
+              <div style={{
+                overflowX: 'auto',
+              }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '12px',
                 }}>
-                  💡 Recommandations Personnalisées
-                </h4>
-                <div style={{
-                  display: 'grid',
-                  gap: '12px',
-                }}>
-                  {riskAnalysis.recommendations.map((rec, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '12px 16px',
-                        background: 'rgba(16, 185, 129, 0.05)',
-                        border: '1px solid rgba(16, 185, 129, 0.1)',
-                        borderLeft: '3px solid #10b981',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        color: '#0f172a',
-                      }}
-                    >
+                  <tbody>
+                    {[
+                      { asset: 'Immobilier', val1: '1.00', val2: '0.35', val3: '-0.12', val4: '0.45' },
+                      { asset: 'PEA', val1: '0.35', val2: '1.00', val3: '0.52', val4: '0.28' },
+                      { asset: 'Crypto', val1: '-0.12', val2: '0.52', val3: '1.00', val4: '-0.08' },
+                      { asset: 'Obligations', val1: '0.45', val2: '0.28', val3: '-0.08', val4: '1.00' },
+                    ].map((row, idx) => (
+                      <tr key={idx}>
+                        <td style={{
+                          padding: '12px',
+                          fontWeight: '700',
+                          color: '#0f172a',
+                          borderRight: '1px solid rgba(59, 130, 246, 0.1)',
+                          background: 'rgba(59, 130, 246, 0.05)',
+                        }}>
+                          {row.asset}
+                        </td>
+                        {[row.val1, row.val2, row.val3, row.val4].map((val, i) => {
+                          const num = parseFloat(val);
+                          let bgColor = 'rgba(255, 255, 255, 0.5)';
+                          if (num > 0.5) bgColor = 'rgba(16, 185, 129, 0.1)';
+                          else if (num > 0) bgColor = 'rgba(59, 130, 246, 0.05)';
+                          else if (num > -0.3) bgColor = 'rgba(245, 158, 11, 0.05)';
+                          else bgColor = 'rgba(239, 68, 68, 0.1)';
+
+                          return (
+                            <td
+                              key={i}
+                              style={{
+                                padding: '12px',
+                                textAlign: 'center',
+                                background: bgColor,
+                                borderRight: i < 3 ? '1px solid rgba(59, 130, 246, 0.1)' : 'none',
+                                fontWeight: '600',
+                              }}
+                            >
+                              {val}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p style={{
+                fontSize: '11px',
+                color: '#64748b',
+                margin: '16px 0 0 0',
+              }}>
+                Les valeurs proches de -1 indiquent une corrélation négative (bonne diversification). Les valeurs proches de 1 indiquent une corrélation positive.
+              </p>
+            </div>
+
+            {/* Recommendations */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
+              borderRadius: '20px',
+              padding: '28px',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#0f172a',
+                margin: '0 0 20px 0',
+              }}>
+                💡 Recommandations IA Personnalisées
+              </h3>
+              <div style={{
+                display: 'grid',
+                gap: '12px',
+              }}>
+                {riskAnalysis.recommendations.map((rec, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '16px',
+                      background: 'rgba(16, 185, 129, 0.05)',
+                      border: '1px solid rgba(16, 185, 129, 0.1)',
+                      borderLeft: '4px solid #10b981',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                    }}
+                  >
+                    <p style={{ margin: '0 0 4px 0', fontWeight: '600' }}>
                       ✓ {rec}
-                    </div>
-                  ))}
-                </div>
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: '#64748b',
+                      margin: 0,
+                    }}>
+                      Impact estimé: +0.{3 + idx}% annuel
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
