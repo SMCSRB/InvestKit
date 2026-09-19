@@ -11,15 +11,15 @@ import PageWrapper from '@/app/components/PageWrapper';
 export default function ChapterPage() {
   const router = useRouter();
   const params = useParams();
-  const domainId = params.domain;
-  const chapterId = parseInt(params.chapter);
+  const domainId = params?.domain;
+  const chapterId = params?.chapter ? parseInt(params.chapter) : null;
   const { completeChapter, isChapterUnlocked, getChapterScore, isLoading, getAttempts, addNote, getNote, progress } =
     useEducationProgress();
   const { addNotification } = useNotification();
 
-  const domain = educationDomains.find((d) => d.id === domainId);
-  const chapter = domain?.chapters.find((c) => c.id === chapterId);
-  const isUnlocked = isChapterUnlocked(domain?.id, chapterId);
+  const domain = domainId ? educationDomains.find((d) => d.id === domainId) : null;
+  const chapter = domain && chapterId ? domain.chapters.find((c) => c.id === chapterId) : null;
+  const isUnlocked = domain && chapterId ? isChapterUnlocked(domain.id, chapterId) : false;
 
   const [showLesson, setShowLesson] = useState(true);
   const [quizAnswers, setQuizAnswers] = useState({});
@@ -27,11 +27,11 @@ export default function ChapterPage() {
   const [quizScore, setQuizScore] = useState(null);
   const [xpEarned, setXpEarned] = useState(0);
   const [showExplanations, setShowExplanations] = useState(false);
-  const [notes, setNotes] = useState(getNote(domainId, chapterId));
+  const [notes, setNotes] = useState(domainId && chapterId ? getNote(domainId, chapterId) : '');
   const [newBadges, setNewBadges] = useState([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedBadgeToShare, setSelectedBadgeToShare] = useState(null);
-  const attempts = getAttempts(domainId, chapterId);
+  const attempts = domainId && chapterId ? getAttempts(domainId, chapterId) : 0;
 
   const badgeInfo = {
     first_blood: { name: 'Premier Sang', emoji: '🩸', description: 'Complète ton premier chapitre' },
@@ -72,11 +72,7 @@ export default function ChapterPage() {
     if (!token) {
       router.push('/login');
     }
-
-    if (!isLoading && !isUnlocked) {
-      router.push(`/education/${domainId}`);
-    }
-  }, [router, isLoading, isUnlocked, domainId]);
+  }, [router]);
 
   if (isLoading || !domain || !chapter) {
     return (
@@ -164,6 +160,35 @@ export default function ChapterPage() {
 
     setShowResults(true);
   };
+
+  if (isLoading || !domain || !chapter || !domainId || !chapterId) {
+    return (
+      <PageWrapper>
+        <div className="min-h-screen pt-32 pb-20 px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="h-12 bg-gray-700 rounded w-64 mb-4 animate-pulse" />
+            <div className="h-96 bg-gray-700 rounded animate-pulse" />
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (!isUnlocked) {
+    return (
+      <PageWrapper>
+        <div className="min-h-screen pt-32 pb-20 px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-2xl font-bold text-red-400 mb-4">Chapitre non déverrouillé</h1>
+            <p className="text-gray-400 mb-8">Complète le chapitre précédent avec au moins 75% pour accéder à celui-ci.</p>
+            <Link href={`/education/${domainId}`} className="text-blue-400 hover:text-blue-300">
+              ← Retour au domaine
+            </Link>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper animation="fade-in-up">
