@@ -50,66 +50,178 @@ export default function DomainPage() {
 
   return (
     <PageWrapper animation="fade-in-up">
-      <div className="min-h-screen pt-32 pb-20 px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <Link href="/education" className="text-blue-400 hover:text-blue-300 mb-8 inline-flex items-center gap-2">
-            ← Retour
+      <div style={{
+        minHeight: '100vh',
+        paddingTop: '80px',
+        paddingBottom: '80px',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          {/* Back Link */}
+          <Link href="/education">
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#60a5fa',
+              textDecoration: 'none',
+              marginBottom: '32px',
+              fontSize: '16px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'color 0.3s ease',
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#93c5fd'}
+            onMouseLeave={(e) => e.target.style.color = '#60a5fa'}
+            >
+              ← Retour
+            </span>
           </Link>
 
-          <div className="mb-12">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="text-6xl">{domain.icon}</div>
+          {/* Header Premium */}
+          <div style={{
+            marginBottom: '48px',
+            paddingBottom: '32px',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '24px',
+              marginBottom: '24px',
+            }}>
+              <div style={{
+                fontSize: '72px',
+                lineHeight: '1',
+                filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))',
+              }}>
+                {domain.icon}
+              </div>
               <div>
-                <h1 className="text-5xl font-bold text-white mb-2">{domain.name}</h1>
-                <p className="text-xl text-gray-400">{domain.description}</p>
+                <h1 style={{
+                  fontSize: '48px',
+                  fontWeight: 'bold',
+                  margin: '0 0 8px 0',
+                  background: `linear-gradient(135deg, white, ${domain.color})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>
+                  {domain.name}
+                </h1>
+                <p style={{
+                  fontSize: '18px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  margin: '0',
+                }}>
+                  {domain.description}
+                </p>
               </div>
             </div>
 
-            {/* Progress */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 rounded-2xl border border-gray-700/50 mb-8">
-              <div className="flex items-center justify-between mb-4">
+            {/* Progress Card */}
+            <div style={{
+              background: `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.1) 0%, rgba(30, 30, 30, 0.3) 100%)`,
+              backdropFilter: 'blur(20px)',
+              border: `1px solid ${domain.color}30`,
+              borderRadius: '20px',
+              padding: '24px',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'start',
+                marginBottom: '16px',
+              }}>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Progression</h3>
-                  <p className="text-sm text-gray-400">
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: 'white',
+                    margin: '0 0 4px 0',
+                  }}>
+                    📊 Progression
+                  </h3>
+                  <p style={{
+                    fontSize: '14px',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    margin: '0',
+                  }}>
                     {completedChaptersCount} / {domain.chapters.length} chapitres complétés
                   </p>
                 </div>
-                <div className="text-right">
-                  <div
-                    className="text-3xl font-bold"
-                    style={{ color: domain.color }}
-                  >
+                <div style={{
+                  textAlign: 'right',
+                }}>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: domain.color,
+                  }}>
                     {progressPercent}%
                   </div>
                 </div>
               </div>
 
-              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${progressPercent}%`,
-                    background: `linear-gradient(90deg, ${domain.color}, ${domain.color}80)`,
-                  }}
-                />
+              {/* Progress Bar */}
+              <div style={{
+                width: '100%',
+                height: '8px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                marginBottom: '16px',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progressPercent}%`,
+                  borderRadius: '10px',
+                  background: `linear-gradient(90deg, ${domain.color}, ${domain.color}dd)`,
+                  transition: 'width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: `0 0 20px ${domain.color}80`,
+                }}/>
               </div>
 
               {isDomainDone && (
-                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                  <p className="text-green-400 font-semibold text-sm">
-                    ✓ Domaine Maîtrisé ! Vous avez déverrouillé le badge {domain.badge}
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  marginTop: '12px',
+                }}>
+                  <p style={{
+                    color: '#86efac',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    margin: '0',
+                  }}>
+                    ✨ Domaine Maîtrisé ! Vous avez déverrouillé le badge {domain.badge}
                   </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Chapitres */}
+          {/* Chapitres Grid */}
           <div>
-            <h2 className="text-2xl font-bold mb-6 text-white">Chapitres du Domaine</h2>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: 'bold',
+              color: 'white',
+              marginBottom: '24px',
+              margin: '0 0 24px 0',
+            }}>
+              📚 Chapitres du Domaine
+            </h2>
 
-            <div className="space-y-4">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '20px',
+            }}>
               {domain.chapters.map((chapter, idx) => {
                 const isCompleted = isChapterCompleted(domain.id, chapter.id);
                 const isUnlocked = isChapterUnlocked(domain.id, chapter.id);
@@ -123,69 +235,124 @@ export default function DomainPage() {
                         ? `/education/${domain.id}/${chapter.id}`
                         : '#'
                     }
+                    style={{ textDecoration: 'none' }}
                   >
                     <div
-                      className={`p-6 rounded-2xl border transition-all duration-300
-                        ${
-                          isUnlocked
-                            ? 'border-gray-700/50 hover:border-opacity-100 cursor-pointer'
-                            : 'border-gray-800 opacity-60 cursor-not-allowed'
-                        }
-                      `}
                       style={{
                         background: isUnlocked
-                          ? `linear-gradient(135deg, ${domain.color}10 0%, ${domain.color}05 100%)`
-                          : 'rgba(30, 30, 30, 0.4)',
+                          ? `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.08) 0%, rgba(30, 30, 30, 0.3) 100%)`
+                          : 'rgba(15, 23, 42, 0.4)',
+                        backdropFilter: 'blur(20px)',
+                        border: isUnlocked ? `1.5px solid ${domain.color}40` : '1.5px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '16px',
+                        padding: '24px',
+                        cursor: isUnlocked ? 'pointer' : 'not-allowed',
+                        opacity: isUnlocked ? 1 : 0.5,
                         transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
                       }}
                       onMouseEnter={(e) => {
                         if (isUnlocked) {
-                          e.currentTarget.style.transform = 'translateX(8px)';
+                          e.currentTarget.style.transform = 'translateY(-8px)';
                           e.currentTarget.style.borderColor = domain.color;
+                          e.currentTarget.style.boxShadow = `0 20px 40px ${domain.color}20`;
                         }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateX(0)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
                       }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="text-2xl">
-                              {isCompleted ? '✓' : isUnlocked ? '▶' : '🔒'}
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold text-white">
-                                Chapitre {chapter.id}: {chapter.title}
-                              </h3>
-                              <p className="text-sm text-gray-400">{chapter.description}</p>
-                            </div>
+                      {/* Chapter Header */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'start',
+                        marginBottom: '16px',
+                      }}>
+                        <div style={{
+                          fontSize: '32px',
+                        }}>
+                          {isCompleted ? '✅' : isUnlocked ? '▶️' : '🔒'}
+                        </div>
+                        {isCompleted && (
+                          <div style={{
+                            fontSize: '24px',
+                            animation: 'bounce 2s infinite',
+                            animationDelay: `${idx * 0.1}s`,
+                          }}>
+                            ⭐
                           </div>
+                        )}
+                      </div>
 
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-3">
-                            <span>⏱️ {chapter.duration}</span>
-                            {isCompleted && score && (
-                              <span className="text-green-400">
-                                Score: {score}%
-                              </span>
-                            )}
-                            {!isUnlocked && (
-                              <span className="text-red-400">
-                                Débloquez en complétant le chapitre {chapter.id - 1}
-                              </span>
-                            )}
-                          </div>
+                      {/* Chapter Title */}
+                      <h3 style={{
+                        fontSize: '18px',
+                        fontWeight: '700',
+                        color: 'white',
+                        margin: '0 0 8px 0',
+                        lineHeight: '1.3',
+                      }}>
+                        Chapitre {chapter.id}
+                      </h3>
+
+                      <h4 style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: domain.color,
+                        margin: '0 0 8px 0',
+                      }}>
+                        {chapter.title}
+                      </h4>
+
+                      {/* Description */}
+                      <p style={{
+                        fontSize: '14px',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        margin: '0 0 16px 0',
+                        flex: '1',
+                      }}>
+                        {chapter.description}
+                      </p>
+
+                      {/* Footer Info */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        paddingTop: '12px',
+                        borderTop: 'rgba(255, 255, 255, 0.1) 1px solid',
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                        }}>
+                          ⏱️ {chapter.duration}
                         </div>
 
-                        {isCompleted && (
-                          <div
-                            className="text-3xl ml-4 animate-bounce"
-                            style={{
-                              color: domain.color,
-                              animationDelay: `${idx * 0.1}s`,
-                            }}
-                          >
-                            ⭐
+                        {isCompleted && score && (
+                          <div style={{
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: '#86efac',
+                          }}>
+                            ✨ Score: {score}%
+                          </div>
+                        )}
+
+                        {!isUnlocked && (
+                          <div style={{
+                            fontSize: '13px',
+                            color: '#fca5a5',
+                            fontWeight: '500',
+                          }}>
+                            🔓 Complétez le chapitre {chapter.id - 1}
                           </div>
                         )}
                       </div>
@@ -196,56 +363,119 @@ export default function DomainPage() {
             </div>
           </div>
 
-          {/* Quiz Final */}
-          <div
-            className="mt-12 p-8 rounded-2xl border-2"
-            style={{
-              background: `linear-gradient(135deg, ${domain.color}15 0%, ${domain.color}05 100%)`,
-              borderColor: `${domain.color}50`,
-            }}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-2">
-                  🏆 Quiz Final du Domaine
+          {/* Quiz Final Section */}
+          <div style={{
+            marginTop: '48px',
+            paddingTop: '48px',
+            borderTop: '2px solid rgba(255, 255, 255, 0.1)',
+          }}>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: 'bold',
+              color: 'white',
+              marginBottom: '24px',
+              margin: '0 0 24px 0',
+            }}>
+              🏆 Quiz Final du Domaine
+            </h2>
+
+            <div
+              style={{
+                background: `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.12) 0%, rgba(30, 30, 30, 0.3) 100%)`,
+                backdropFilter: 'blur(20px)',
+                border: `2px solid ${domain.color}50`,
+                borderRadius: '20px',
+                padding: '32px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '32px',
+              }}
+            >
+              <div style={{ flex: '1' }}>
+                <h3 style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: 'white',
+                  margin: '0 0 12px 0',
+                }}>
+                  Testez Vos Connaissances
                 </h3>
-                <p className="text-gray-400 mb-4">
-                  Passez le quiz final après avoir complété tous les chapitres pour
-                  obtenir le badge {domain.badge} du domaine !
+                <p style={{
+                  fontSize: '16px',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  margin: '0 0 16px 0',
+                  lineHeight: '1.5',
+                }}>
+                  Passez le quiz final après avoir complété tous les chapitres pour obtenir le badge <strong>{domain.badge}</strong> du domaine !
                 </p>
-                <p className="text-sm text-gray-500">
-                  Score requis: {domain.finalQuiz.passingScore}%
-                </p>
+                <div style={{
+                  display: 'flex',
+                  gap: '16px',
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    📋 {domain.finalQuiz.questions.length} questions
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    ⭐ Score requis: {domain.finalQuiz.passingScore}%
+                  </div>
+                </div>
               </div>
 
               {completedChaptersCount === domain.chapters.length ? (
-                <Link href={`/education/${domain.id}/final-quiz`}>
+                <Link href={`/education/${domain.id}/final-quiz`} style={{ textDecoration: 'none' }}>
                   <button
-                    className="px-8 py-3 rounded-lg font-semibold transition-all duration-300"
                     style={{
                       background: `linear-gradient(135deg, ${domain.color}, ${domain.color}dd)`,
                       color: 'white',
+                      border: 'none',
+                      padding: '16px 32px',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      whiteSpace: 'nowrap',
+                      boxShadow: `0 8px 24px ${domain.color}40`,
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = `0 12px 32px ${domain.color}60`;
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.transform = 'scale(1)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = `0 8px 24px ${domain.color}40`;
                     }}
                   >
-                    Passer le Quiz Final →
+                    Démarrer le Quiz →
                   </button>
                 </Link>
               ) : (
                 <button
                   disabled
-                  className="px-8 py-3 rounded-lg font-semibold opacity-50 cursor-not-allowed"
                   style={{
-                    background: `linear-gradient(135deg, ${domain.color}, ${domain.color}dd)`,
-                    color: 'white',
+                    background: 'rgba(100, 116, 139, 0.3)',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '16px 32px',
+                    borderRadius: '12px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'not-allowed',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  Débloquez en complétant tous les chapitres
+                  🔒 Complétez tous les chapitres
                 </button>
               )}
             </div>
