@@ -187,6 +187,81 @@ export default function SignupPage() {
           <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#a0aec0' }}>Rejoignez des milliers d'investisseurs</p>
         </div>
 
+        {/* Social Login Buttons */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={() => console.log('Google login')}
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '500',
+              color: '#2d3748',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#f7fafc';
+              e.target.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'white';
+              e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>🔵</span>
+            <span>Google</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => console.log('GitHub login')}
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '500',
+              color: '#2d3748',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#f7fafc';
+              e.target.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'white';
+              e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>⚫</span>
+            <span>GitHub</span>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0', opacity: 0.5 }}>
+          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+          <span style={{ fontSize: '12px', color: '#a0aec0', fontWeight: '500' }}>OU</span>
+          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+        </div>
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Prénom */}
         <div>
