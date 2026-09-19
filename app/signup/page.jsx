@@ -84,12 +84,16 @@ export default function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <div style={{ margin: '10px 0' }}>
-          <HCaptcha
-            ref={captchaRef}
-            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
-            onVerify={(token) => setCaptchaToken(token)}
-          />
+        <div style={{ margin: '15px 0', padding: '10px', minHeight: '80px', display: 'flex', justifyContent: 'center' }}>
+          {process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY ? (
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
+              onVerify={(token) => setCaptchaToken(token)}
+            />
+          ) : (
+            <p style={{ color: '#ff6b6b' }}>⚠️ hCaptcha key not configured</p>
+          )}
         </div>
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? 'Inscription...' : 'S\'inscrire'}
