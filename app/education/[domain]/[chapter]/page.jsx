@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
+import { useNotification } from '@/app/context/NotificationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 
 export default function ChapterPage() {
@@ -14,6 +15,7 @@ export default function ChapterPage() {
   const chapterId = parseInt(params.chapter);
   const { completeChapter, isChapterUnlocked, getChapterScore, isLoading, getAttempts, addNote, getNote, progress } =
     useEducationProgress();
+  const { addNotification } = useNotification();
 
   const domain = educationDomains.find((d) => d.id === domainId);
   const chapter = domain?.chapters.find((c) => c.id === chapterId);
@@ -141,12 +143,21 @@ export default function ChapterPage() {
       if (score === 100) xp += 50;
       setXpEarned(xp);
 
+      // Mostrar notificación de XP
+      addNotification(`+${xp} XP gagnés! 🎉`, 'xp', 4000);
+
       // Detectar badges ganados
       const earnedBadges = [];
       if (progress.completedChapters.length === 0) earnedBadges.push('first_blood');
       if (score === 100) earnedBadges.push('perfect');
       if (progress.streak >= 2) earnedBadges.push('no_mistakes'); // streak + 1 después de completar
       setNewBadges(earnedBadges);
+
+      // Mostrar notificaciones de badges
+      earnedBadges.forEach((badgeId) => {
+        const badge = badgeInfo[badgeId];
+        addNotification(`${badge.emoji} Nouveau badge: ${badge.name}!`, 'badge', 5000);
+      });
 
       completeChapter(domain.id, chapter.id, score, xp);
     }
