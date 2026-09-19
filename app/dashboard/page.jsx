@@ -919,7 +919,7 @@ export default function DashboardPage() {
           marginBottom: '32px',
           flexWrap: 'wrap',
         }}>
-          {['overview', 'projects', 'simulators', 'market', 'risk', 'settings'].map((tab) => (
+          {['overview', 'projects', 'simulators', 'education', 'market', 'risk', 'settings'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -938,6 +938,7 @@ export default function DashboardPage() {
               {tab === 'overview' && '📊 Aperçu'}
               {tab === 'projects' && '🎯 Projets'}
               {tab === 'simulators' && '🛠️ Simulateurs'}
+              {tab === 'education' && '📚 Académie'}
               {tab === 'market' && '💹 Marché'}
               {tab === 'risk' && '⚠️ Risques'}
               {tab === 'settings' && '⚙️ Paramètres'}
@@ -2084,6 +2085,146 @@ export default function DashboardPage() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'education' && (
+          <div className="accordion-content" style={{
+            display: 'grid',
+            gap: '24px',
+          }}>
+            {/* Académie Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+              borderRadius: '16px',
+              padding: '32px',
+              border: '2px solid rgba(59, 130, 246, 0.3)',
+              textAlign: 'center',
+            }}>
+              <h2 style={{
+                fontSize: '32px',
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: '12px',
+              }}>📚 Académie InvestKit</h2>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '16px',
+                marginBottom: '24px',
+              }}>Maîtrisez l'investissement avec nos formations gamifiées et nos badges</p>
+
+              <Link href="/education" style={{ textDecoration: 'none' }}>
+                <button style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '14px 32px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-4px)';
+                  e.target.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}>
+                  Accéder à l'Académie →
+                </button>
+              </Link>
+            </div>
+
+            {/* Domaines Disponibles */}
+            <div>
+              <h3 style={{
+                fontSize: '20px',
+                fontWeight: '700',
+                color: 'white',
+                marginBottom: '16px',
+              }}>Domaines Disponibles</h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '16px',
+              }}>
+                {[
+                  { name: 'Cryptomonnaies', icon: '₿', color: '#F7931A', desc: '4 chapitres • Bitcoin, Ethereum, DeFi' },
+                  { name: 'Bourse & PEA', icon: '📈', color: '#1E40AF', desc: '3 chapitres • Actions, Analyse, Stratégies' },
+                  { name: 'Immobilier', icon: '🏠', color: '#8B4513', desc: 'À venir • Investissement locatif' },
+                  { name: 'Obligations', icon: '💼', color: '#16A34A', desc: 'À venir • Emprunts et revenus fixes' },
+                ].map((domain, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      background: `linear-gradient(135deg, ${domain.color}15 0%, ${domain.color}05 100%)`,
+                      borderRadius: '12px',
+                      padding: '20px',
+                      border: `1px solid ${domain.color}40`,
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.borderColor = domain.color;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>{domain.icon}</div>
+                    <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'white', marginBottom: '4px' }}>
+                      {domain.name}
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
+                      {domain.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Avantages */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+              borderRadius: '12px',
+              padding: '24px',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                color: '#10b981',
+                marginBottom: '16px',
+              }}>✨ Pourquoi l'Académie ?</h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px',
+              }}>
+                {[
+                  '🎓 Formations gamifiées avec badges',
+                  '⭐ Système de niveaux et XP',
+                  '🔒 Progression bloquée par compréhension',
+                  '📚 Vocabulaire interactif',
+                  '🎯 Quiz intelligents',
+                  '🏆 Certificats à débloquer',
+                ].map((benefit, idx) => (
+                  <div key={idx} style={{
+                    fontSize: '14px',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                  }}>
+                    {benefit}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
