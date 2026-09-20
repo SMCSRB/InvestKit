@@ -587,6 +587,10 @@ export default function DashboardPage() {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -1893,31 +1897,42 @@ export default function DashboardPage() {
               {['friends', 'messages', 'search', 'pending'].includes(friendsTab) && (
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '10px',
                   marginBottom: '24px',
-                  borderBottom: `1px solid ${currentTheme.border}`,
-                  paddingBottom: '12px',
-                  paddingLeft: '8px',
+                  flexWrap: 'wrap',
                 }}>
                   {[
-                    { id: 'friends', label: 'Liste d\'amis' },
-                    { id: 'pending', label: `Demandes (${userData.friendRequests.received.length})` },
-                    { id: 'search', label: 'Chercher' },
-                    { id: 'messages', label: '💬 Messages' },
+                    { id: 'friends', label: '👫 Liste d\'amis', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.2)' },
+                    { id: 'pending', label: `📬 Demandes (${userData.friendRequests.received.length})`, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.2)' },
+                    { id: 'search', label: '🔍 Chercher', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.2)' },
+                    { id: 'messages', label: '💬 Messages', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.2)' },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setFriendsTab(tab.id)}
                       style={{
-                        padding: '6px 12px',
-                        background: friendsTab === tab.id ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                        border: `1px solid ${friendsTab === tab.id ? currentTheme.accent : currentTheme.border}`,
-                        borderRadius: '6px',
-                        color: friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
-                        fontWeight: friendsTab === tab.id ? '600' : '400',
-                        fontSize: '12px',
+                        padding: '10px 16px',
+                        background: friendsTab === tab.id ? `linear-gradient(135deg, ${tab.bgColor} 0%, ${tab.bgColor.replace('0.15', '0.05')} 100%)` : 'transparent',
+                        border: `1.5px solid ${friendsTab === tab.id ? tab.borderColor : currentTheme.border}`,
+                        borderRadius: '10px',
+                        color: friendsTab === tab.id ? tab.color : currentTheme.textSecondary,
+                        fontWeight: friendsTab === tab.id ? '600' : '500',
+                        fontSize: '13px',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: 'all 0.3s ease',
+                        backdropFilter: friendsTab === tab.id ? 'blur(10px)' : 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (friendsTab !== tab.id) {
+                          e.currentTarget.style.borderColor = tab.borderColor;
+                          e.currentTarget.style.color = tab.color;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (friendsTab !== tab.id) {
+                          e.currentTarget.style.borderColor = currentTheme.border;
+                          e.currentTarget.style.color = currentTheme.textSecondary;
+                        }
                       }}
                     >
                       {tab.label}
@@ -4686,38 +4701,56 @@ export default function DashboardPage() {
               marginBottom: '32px',
             }}>
               {[
-                { label: 'Amis', value: userData.friends.length, icon: '👫', color: '#3b82f6' },
-                { label: 'Demandes reçues', value: userData.friendRequests.received.length, icon: '📬', color: '#f59e0b' },
-                { label: 'Demandes envoyées', value: userData.friendRequests.sent.length, icon: '📤', color: '#8b5cf6' },
-                { label: 'Bloqués', value: userData.blockedUsers.length, icon: '🚫', color: '#ef4444' },
+                { label: 'Amis', value: userData.friends.length, icon: '👫', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.2)' },
+                { label: 'Demandes reçues', value: userData.friendRequests.received.length, icon: '📬', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.2)' },
+                { label: 'Demandes envoyées', value: userData.friendRequests.sent.length, icon: '📤', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.2)' },
+                { label: 'Bloqués', value: userData.blockedUsers.length, icon: '🚫', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.2)' },
               ].map((stat, idx) => (
                 <div key={idx} style={{
-                  padding: '20px',
-                  background: currentTheme.cardBg,
+                  padding: '24px',
+                  background: `linear-gradient(135deg, ${stat.bgColor} 0%, ${stat.bgColor.replace('0.15', '0.05')} 100%)`,
                   borderRadius: '16px',
-                  border: `1px solid ${currentTheme.border}`,
+                  border: `1.5px solid ${stat.borderColor}`,
                   textAlign: 'center',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  cursor: 'pointer',
+                  animation: `fadeInUp 0.5s ease-out ${idx * 0.1}s both`,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
+                  e.currentTarget.style.borderColor = stat.color;
+                  e.currentTarget.style.boxShadow = `0 20px 40px ${stat.color}30`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.borderColor = stat.borderColor;
+                  e.currentTarget.style.boxShadow = 'none';
                 }}>
                   <p style={{
-                    fontSize: '28px',
-                    margin: '0 0 8px 0',
+                    fontSize: '32px',
+                    margin: '0 0 12px 0',
+                    transition: 'transform 0.3s ease',
                   }}>
                     {stat.icon}
                   </p>
                   <p style={{
-                    fontSize: '32px',
-                    fontWeight: '900',
+                    fontSize: '11px',
+                    fontWeight: '700',
                     color: stat.color,
-                    margin: '0 0 4px 0',
-                  }}>
-                    {stat.value}
-                  </p>
-                  <p style={{
-                    fontSize: '12px',
-                    color: currentTheme.textSecondary,
-                    margin: 0,
+                    margin: '0 0 8px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.8px',
                   }}>
                     {stat.label}
+                  </p>
+                  <p style={{
+                    fontSize: '36px',
+                    fontWeight: '900',
+                    color: stat.color,
+                    margin: 0,
+                  }}>
+                    {stat.value}
                   </p>
                 </div>
               ))}
@@ -4730,25 +4763,56 @@ export default function DashboardPage() {
                 fontWeight: '700',
                 color: currentTheme.text,
                 margin: '0 0 16px 0',
+                letterSpacing: '-0.5px',
               }}>
-                {userData.friends.length > 0 ? 'Mes Amis' : 'Aucun ami pour le moment'}
+                {userData.friends.length > 0 ? '👥 Mes Amis' : '👥 Aucun ami pour le moment'}
               </h3>
 
               {userData.friends.length === 0 ? (
                 <div style={{
-                  padding: '40px',
+                  padding: '48px 32px',
                   textAlign: 'center',
-                  background: currentTheme.cardBg,
+                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
                   borderRadius: '16px',
-                  border: `1px solid ${currentTheme.border}`,
+                  border: `1.5px solid rgba(139, 92, 246, 0.2)`,
+                  backdropFilter: 'blur(10px)',
+                  animation: 'fadeInUp 0.5s ease-out',
                 }}>
                   <p style={{
-                    fontSize: '16px',
-                    color: currentTheme.textSecondary,
-                    margin: 0,
+                    fontSize: '42px',
+                    margin: '0 0 16px 0',
                   }}>
-                    Partage ton code ami #{userData.friendCode} pour commencer ! 👉
+                    🤝
                   </p>
+                  <p style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: currentTheme.text,
+                    margin: '0 0 8px 0',
+                  }}>
+                    Invite tes amis à rejoindre !
+                  </p>
+                  <p style={{
+                    fontSize: '14px',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 20px 0',
+                  }}>
+                    Partage ton code ami unique
+                  </p>
+                  <div style={{
+                    background: `rgba(139, 92, 246, 0.2)`,
+                    border: `1.5px solid rgba(139, 92, 246, 0.4)`,
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    display: 'inline-block',
+                    fontFamily: 'monospace',
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#8b5cf6',
+                    letterSpacing: '1px',
+                  }}>
+                    #{userData.friendCode}
+                  </div>
                 </div>
               ) : (
                 <div style={{
@@ -4757,26 +4821,42 @@ export default function DashboardPage() {
                 }}>
                   {userData.friends.map((friend, idx) => (
                     <div key={friend.userId} style={{
-                      padding: '16px',
-                      background: currentTheme.cardBg,
-                      borderRadius: '12px',
-                      border: `1px solid ${currentTheme.border}`,
+                      padding: '18px',
+                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      borderRadius: '14px',
+                      border: `1.5px solid rgba(59, 130, 246, 0.15)`,
+                      backdropFilter: 'blur(10px)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                      animation: `fadeInUp 0.5s ease-out ${(4 + idx) * 0.08}s both`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateX(8px)';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateX(0)';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.15)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flex: 1 }}>
                         <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '12px',
+                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#fff',
                           fontWeight: '700',
-                          fontSize: '16px',
+                          fontSize: '18px',
+                          flexShrink: 0,
+                          boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
                         }}>
                           #{idx + 1}
                         </div>
@@ -4785,6 +4865,7 @@ export default function DashboardPage() {
                             color: currentTheme.text,
                             fontWeight: '600',
                             margin: '0 0 4px 0',
+                            fontSize: '14px',
                           }}>
                             {friend.name}
                           </p>
@@ -4792,11 +4873,26 @@ export default function DashboardPage() {
                             color: currentTheme.textSecondary,
                             fontSize: '12px',
                             margin: 0,
-                            fontFamily: 'monospace',
                           }}>
-                            {friend.friendCode}
+                            Ami depuis récemment
                           </p>
                         </div>
+                      </div>
+                      <div style={{
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        opacity: 0.7,
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.transform = 'scale(1.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.7';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}>
+                        💬
                       </div>
                     </div>
                   ))}
