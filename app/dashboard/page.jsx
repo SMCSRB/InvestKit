@@ -10,7 +10,7 @@ import { educationDomains } from '@/data/education';
 export default function DashboardPage() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
-  const { user: userData } = useUser();
+  const { user: userData, acceptFriendRequest, rejectFriendRequest } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
@@ -507,73 +507,41 @@ export default function DashboardPage() {
               { id: 'projects', label: '🎯 Projets' },
               { id: 'market', label: '💹 Marché' },
               { id: 'education', label: '📚 Académie' },
-              { id: 'friends', label: `👥 Amis (${userData.friends.length})`, href: '/friends' },
+              { id: 'friends', label: `👥 Amis (${userData.friends.length})` },
               { id: 'risk', label: '⚠️ Risques' },
               { id: 'settings', label: '⚙️ Paramètres' },
-            ].map((item) => {
-              if (item.href) {
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    style={{
-                      display: 'block',
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s ease',
-                      textDecoration: 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                      e.target.style.color = 'rgba(255, 255, 255, 0.8)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'transparent';
-                      e.target.style.color = 'rgba(255, 255, 255, 0.6)';
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              }
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  style={{
-                    background: activeTab === item.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                    border: 'none',
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    color: activeTab === item.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '14px',
-                    fontWeight: activeTab === item.id ? '700' : '500',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (activeTab !== item.id) {
-                      e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                      e.target.style.color = 'rgba(255, 255, 255, 0.8)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeTab !== item.id) {
-                      e.target.style.background = 'transparent';
-                      e.target.style.color = 'rgba(255, 255, 255, 0.6)';
-                    }
-                  }}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                style={{
+                  background: activeTab === item.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                  border: 'none',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  color: activeTab === item.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '14px',
+                  fontWeight: activeTab === item.id ? '700' : '500',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== item.id) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.8)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== item.id) {
+                    e.target.style.background = 'transparent';
+                    e.target.style.color = 'rgba(255, 255, 255, 0.6)';
+                  }
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1577,6 +1545,287 @@ export default function DashboardPage() {
                       </div>
                     ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FRIENDS TAB */}
+        {activeTab === 'friends' && (
+          <div style={{ marginTop: '20px' }}>
+            {/* Friends Header */}
+            <div style={{ marginBottom: '32px' }}>
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: '800',
+                color: currentTheme.text,
+                margin: '0 0 16px 0',
+              }}>
+                👥 Mes Amis
+              </h2>
+
+              {/* Friend Code Card */}
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                padding: '20px',
+                background: currentTheme.cardBg,
+                borderRadius: '16px',
+                border: `1px solid ${currentTheme.border}`,
+                marginBottom: '24px',
+                alignItems: 'center',
+              }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 8px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    Ton Code Ami Unique
+                  </p>
+                  <p style={{
+                    fontSize: '24px',
+                    fontWeight: '900',
+                    color: currentTheme.accent,
+                    margin: 0,
+                    fontFamily: 'monospace',
+                  }}>
+                    {userData.friendCode}
+                  </p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(userData.friendCode)}
+                  style={{
+                    padding: '12px 20px',
+                    background: copied ? 'rgba(16, 185, 129, 0.2)' : currentTheme.accent,
+                    border: `1px solid ${currentTheme.border}`,
+                    borderRadius: '12px',
+                    color: copied ? '#10b981' : '#fff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!copied) e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!copied) e.target.style.background = currentTheme.accent;
+                  }}
+                >
+                  {copied ? '✓ Copié!' : 'Copier Code'}
+                </button>
+              </div>
+            </div>
+
+            {/* Friends Stats */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '32px',
+            }}>
+              {[
+                { label: 'Amis', value: userData.friends.length, icon: '👫', color: '#3b82f6' },
+                { label: 'Demandes reçues', value: userData.friendRequests.received.length, icon: '📬', color: '#f59e0b' },
+                { label: 'Demandes envoyées', value: userData.friendRequests.sent.length, icon: '📤', color: '#8b5cf6' },
+                { label: 'Bloqués', value: userData.blockedUsers.length, icon: '🚫', color: '#ef4444' },
+              ].map((stat, idx) => (
+                <div key={idx} style={{
+                  padding: '20px',
+                  background: currentTheme.cardBg,
+                  borderRadius: '16px',
+                  border: `1px solid ${currentTheme.border}`,
+                  textAlign: 'center',
+                }}>
+                  <p style={{
+                    fontSize: '28px',
+                    margin: '0 0 8px 0',
+                  }}>
+                    {stat.icon}
+                  </p>
+                  <p style={{
+                    fontSize: '32px',
+                    fontWeight: '900',
+                    color: stat.color,
+                    margin: '0 0 4px 0',
+                  }}>
+                    {stat.value}
+                  </p>
+                  <p style={{
+                    fontSize: '12px',
+                    color: currentTheme.textSecondary,
+                    margin: 0,
+                  }}>
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Friends List */}
+            <div>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                color: currentTheme.text,
+                margin: '0 0 16px 0',
+              }}>
+                {userData.friends.length > 0 ? 'Mes Amis' : 'Aucun ami pour le moment'}
+              </h3>
+
+              {userData.friends.length === 0 ? (
+                <div style={{
+                  padding: '40px',
+                  textAlign: 'center',
+                  background: currentTheme.cardBg,
+                  borderRadius: '16px',
+                  border: `1px solid ${currentTheme.border}`,
+                }}>
+                  <p style={{
+                    fontSize: '16px',
+                    color: currentTheme.textSecondary,
+                    margin: 0,
+                  }}>
+                    Partage ton code ami #{userData.friendCode} pour commencer ! 👉
+                  </p>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                }}>
+                  {userData.friends.map((friend, idx) => (
+                    <div key={friend.userId} style={{
+                      padding: '16px',
+                      background: currentTheme.cardBg,
+                      borderRadius: '12px',
+                      border: `1px solid ${currentTheme.border}`,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          fontWeight: '700',
+                          fontSize: '16px',
+                        }}>
+                          #{idx + 1}
+                        </div>
+                        <div>
+                          <p style={{
+                            color: currentTheme.text,
+                            fontWeight: '600',
+                            margin: '0 0 4px 0',
+                          }}>
+                            {friend.name}
+                          </p>
+                          <p style={{
+                            color: currentTheme.textSecondary,
+                            fontSize: '12px',
+                            margin: 0,
+                            fontFamily: 'monospace',
+                          }}>
+                            {friend.friendCode}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pending Requests */}
+            {(userData.friendRequests.received.length > 0 || userData.friendRequests.sent.length > 0) && (
+              <div style={{ marginTop: '32px' }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 16px 0',
+                }}>
+                  📩 Demandes d'Ami
+                </h3>
+
+                {userData.friendRequests.received.length > 0 && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <p style={{
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: currentTheme.textSecondary,
+                      margin: '0 0 12px 0',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      À Accepter ({userData.friendRequests.received.length})
+                    </p>
+                    <div style={{ display: 'grid', gap: '10px' }}>
+                      {userData.friendRequests.received.map((req) => (
+                        <div key={req.userId} style={{
+                          padding: '12px',
+                          background: currentTheme.cardBg,
+                          borderRadius: '10px',
+                          border: `1px solid ${currentTheme.border}`,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                          <div>
+                            <p style={{ color: currentTheme.text, margin: '0 0 2px 0', fontWeight: '600' }}>
+                              {req.name}
+                            </p>
+                            <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>
+                              {req.friendCode}
+                            </p>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => acceptFriendRequest(req.friendCode, req.name)}
+                              style={{
+                                padding: '6px 12px',
+                                background: '#10b981',
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => rejectFriendRequest(req.friendCode)}
+                              style={{
+                                padding: '6px 12px',
+                                background: '#ef4444',
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
