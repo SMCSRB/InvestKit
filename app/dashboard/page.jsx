@@ -645,45 +645,150 @@ export default function DashboardPage() {
         paddingRight: '24px',
         height: 'fit-content',
       }}>
-        {/* User Profile */}
-        <div style={{ marginBottom: '40px' }}>
+        {/* User Profile - PREMIUM */}
+        <div style={{
+          marginBottom: '40px',
+          padding: '24px',
+          background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)`,
+          borderRadius: '16px',
+          border: '1.5px solid rgba(59, 130, 246, 0.2)',
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* Decorative gradient background */}
           <div style={{
-            width: '60px',
-            height: '60px',
-            background: photoPreview ? 'transparent' : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            borderRadius: '12px',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '28px',
-            overflow: 'hidden',
-          }}>
-            {photoPreview ? (
-              <img src={photoPreview} alt="Profile" style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }} />
-            ) : (
-              '👤'
-            )}
+            position: 'absolute',
+            top: '-50%',
+            right: '-50%',
+            width: '200px',
+            height: '200px',
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+            borderRadius: '50%',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            {/* Avatar Container with Premium Frame */}
+            <div style={{
+              position: 'relative',
+              width: '80px',
+              height: '80px',
+              marginBottom: '16px',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}>
+              {/* Outer ring with gradient */}
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                borderRadius: '16px',
+                padding: '3px',
+                boxShadow: '0 12px 32px rgba(59, 130, 246, 0.3)',
+                transition: 'all 0.3s ease',
+              }}>
+                {/* Inner avatar container */}
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  background: photoPreview ? 'transparent' : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '36px',
+                  overflow: 'hidden',
+                }}>
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Profile" style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }} />
+                  ) : (
+                    '👤'
+                  )}
+                </div>
+              </div>
+
+              {/* Level Badge */}
+              <div style={{
+                position: 'absolute',
+                bottom: '-4px',
+                right: '-4px',
+                width: '32px',
+                height: '32px',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '900',
+                fontSize: '14px',
+                color: '#fff',
+                border: '3px solid ' + currentTheme.sidebar,
+                boxShadow: '0 8px 16px rgba(245, 158, 11, 0.4)',
+              }}>
+                {userData.level || 1}
+              </div>
+            </div>
+
+            {/* User Info */}
+            <div>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '900',
+                color: currentTheme.text,
+                margin: '0 0 4px 0',
+                letterSpacing: '-0.5px',
+              }}>
+                {fullName}
+              </h3>
+              <p style={{
+                fontSize: '12px',
+                color: '#f59e0b',
+                margin: '0 0 8px 0',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>
+                ⭐ Investisseur Premium
+              </p>
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+              }}>
+                <div style={{
+                  height: '20px',
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${((userData.level || 1) % 10) * 10}%`,
+                    background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                    transition: 'width 0.5s ease',
+                  }} />
+                </div>
+                <span style={{
+                  fontSize: '10px',
+                  color: currentTheme.textSecondary,
+                  fontWeight: '600',
+                }}>
+                  {(userData.level || 1) % 10}/10
+                </span>
+              </div>
+            </div>
           </div>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: '700',
-            color: currentTheme.text,
-            margin: '0 0 4px 0',
-          }}>
-            {fullName}
-          </h3>
-          <p style={{
-            fontSize: '12px',
-            color: currentTheme.textSecondary,
-            margin: 0,
-          }}>
-            Investisseur Premium
-          </p>
         </div>
 
         {/* Friend Code Section */}
