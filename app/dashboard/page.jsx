@@ -3508,8 +3508,11 @@ export default function DashboardPage() {
 
                   return (
                     <button
-                      onClick={() => handleJoinGuilde(selectedGuilde)}
-                      disabled={!canJoin || alreadyMember}
+                      onClick={() => {
+                        if (!alreadyMember) {
+                          handleJoinGuilde(selectedGuilde);
+                        }
+                      }}
                       style={{
                         padding: '12px 16px',
                         background: alreadyMember ? 'rgba(34, 197, 94, 0.3)' : canJoin ? currentTheme.accent : 'rgba(107, 114, 128, 0.5)',
@@ -3517,7 +3520,7 @@ export default function DashboardPage() {
                         borderRadius: '10px',
                         color: alreadyMember ? '#86efac' : '#fff',
                         fontWeight: '600',
-                        cursor: canJoin && !alreadyMember ? 'pointer' : 'not-allowed',
+                        cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         opacity: canJoin && !alreadyMember ? 1 : 0.6,
                       }}
