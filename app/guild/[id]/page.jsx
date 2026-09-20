@@ -601,7 +601,7 @@ export default function GuildPage() {
                 </div>
                 <div>
                   <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', margin: '0 0 4px 0', textTransform: 'uppercase', fontWeight: '600' }}>Palier</p>
-                  <p style={{ color: '#fff', fontSize: '20px', fontWeight: '700', margin: 0 }}{guildTier}</p>
+                  <p style={{ color: '#fff', fontSize: '20px', fontWeight: '700', margin: 0 }}>{guildTier}</p>
                 </div>
               </div>
             </div>
