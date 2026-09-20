@@ -10,7 +10,7 @@ import { educationDomains } from '@/data/education';
 export default function DashboardPage() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
-  const { user: userData, acceptFriendRequest, rejectFriendRequest } = useUser();
+  const { user: userData, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
@@ -30,6 +30,26 @@ export default function DashboardPage() {
   const [difficultyLevel, setDifficultyLevel] = useState('intermediate');
   const [academyNotifications, setAcademyNotifications] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [friendsTab, setFriendsTab] = useState('friends'); // friends, search, pending
+
+  // Mock users database
+  const [availableUsers] = useState([
+    { friendCode: '#ABC123', name: 'Alice Dupont', level: 5, xp: 2500, avatar: '👩‍💼' },
+    { friendCode: '#XYZ789', name: 'Bob Martin', level: 8, xp: 4200, avatar: '👨‍💻' },
+    { friendCode: '#DEF456', name: 'Clara Rousseau', level: 3, xp: 1500, avatar: '👩‍🎓' },
+    { friendCode: '#GHI321', name: 'David Lemoine', level: 6, xp: 3100, avatar: '👨‍🎯' },
+    { friendCode: '#JKL654', name: 'Emma Leclerc', level: 9, xp: 5000, avatar: '👩‍💰' },
+    { friendCode: '#MNO987', name: 'Franck Blanc', level: 4, xp: 2000, avatar: '👨‍🎨' },
+    { friendCode: '#PQR321', name: 'Gabrielle Noir', level: 7, xp: 3800, avatar: '👩‍⚖️' },
+    { friendCode: '#STU654', name: 'Henri Dubois', level: 5, xp: 2200, avatar: '👨‍🔬' },
+  ]);
+
+  const searchUsers = availableUsers.filter(
+    (user) =>
+      user.friendCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const copyToClipboard = (text) => {
     if (navigator?.clipboard?.writeText) {
@@ -1559,10 +1579,43 @@ export default function DashboardPage() {
                 fontSize: '28px',
                 fontWeight: '800',
                 color: currentTheme.text,
-                margin: '0 0 16px 0',
+                margin: '0 0 24px 0',
               }}>
                 👥 Mes Amis
               </h2>
+
+              {/* Friends Tabs */}
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '24px',
+                borderBottom: `1px solid ${currentTheme.border}`,
+                paddingBottom: '12px',
+              }}>
+                {[
+                  { id: 'friends', label: `Amis (${userData.friends.length})` },
+                  { id: 'search', label: '🔍 Chercher' },
+                  { id: 'pending', label: `📩 Demandes (${userData.friendRequests.received.length})` },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFriendsTab(tab.id)}
+                    style={{
+                      padding: '8px 16px',
+                      background: friendsTab === tab.id ? 'transparent' : 'transparent',
+                      border: 'none',
+                      borderBottom: friendsTab === tab.id ? `2px solid ${currentTheme.accent}` : 'none',
+                      color: friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
+                      fontWeight: friendsTab === tab.id ? '700' : '500',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
               {/* Friend Code Card */}
               <div style={{
@@ -1620,7 +1673,177 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Friends Stats */}
+            {/* Search Section */}
+            {friendsTab === 'search' && (
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  marginBottom: '20px',
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Cherche par #ID ou nom (ex: #ABC123 ou Alice)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '12px 16px',
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '12px',
+                      color: currentTheme.text,
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = currentTheme.accent;
+                      e.target.style.boxShadow = `0 0 0 3px ${currentTheme.accent}22`;
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = currentTheme.border;
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+
+                {searchQuery.length === 0 ? (
+                  <div style={{
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: currentTheme.cardBg,
+                    borderRadius: '16px',
+                    border: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <p style={{
+                      fontSize: '16px',
+                      color: currentTheme.textSecondary,
+                      margin: 0,
+                    }}>
+                      Rentre un #ID ou un nom pour chercher des utilisateurs
+                    </p>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div style={{
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: currentTheme.cardBg,
+                    borderRadius: '16px',
+                    border: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <p style={{
+                      fontSize: '16px',
+                      color: currentTheme.textSecondary,
+                      margin: 0,
+                    }}>
+                      Aucun utilisateur trouvé
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {searchResults.map((user) => {
+                      const isFriend = userData.friends.some((f) => f.friendCode === user.friendCode);
+                      const hasSentRequest = userData.friendRequests.sent.some(
+                        (req) => req.friendCode === user.friendCode
+                      );
+
+                      return (
+                        <div
+                          key={user.friendCode}
+                          style={{
+                            padding: '16px',
+                            background: currentTheme.cardBg,
+                            borderRadius: '12px',
+                            border: `1px solid ${currentTheme.border}`,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                            <div style={{
+                              width: '44px',
+                              height: '44px',
+                              borderRadius: '50%',
+                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '24px',
+                            }}>
+                              {user.avatar}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{
+                                color: currentTheme.text,
+                                fontWeight: '600',
+                                margin: '0 0 4px 0',
+                                fontSize: '15px',
+                              }}>
+                                {user.name}
+                              </p>
+                              <p style={{
+                                color: currentTheme.textSecondary,
+                                fontSize: '12px',
+                                margin: 0,
+                                fontFamily: 'monospace',
+                              }}>
+                                {user.friendCode} • Niveau {user.level}
+                              </p>
+                            </div>
+                          </div>
+                          {isFriend ? (
+                            <span style={{
+                              color: '#10b981',
+                              fontWeight: '600',
+                              fontSize: '13px',
+                            }}>
+                              ✓ Ami
+                            </span>
+                          ) : hasSentRequest ? (
+                            <span style={{
+                              color: currentTheme.accent,
+                              fontWeight: '600',
+                              fontSize: '13px',
+                            }}>
+                              ⏳ Demande envoyée
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => sendFriendRequest(user.friendCode, user.name)}
+                              style={{
+                                padding: '8px 16px',
+                                background: currentTheme.accent,
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                fontWeight: '600',
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = currentTheme.accent;
+                              }}
+                            >
+                              ➕ Ajouter
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Friends Stats and List - Show only when on friends tab */}
+            {friendsTab === 'friends' && (
+            <>
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -1745,8 +1968,12 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+            </>
+            )}
 
             {/* Pending Requests */}
+            {friendsTab === 'pending' && (
+            <>
             {(userData.friendRequests.received.length > 0 || userData.friendRequests.sent.length > 0) && (
               <div style={{ marginTop: '32px' }}>
                 <h3 style={{
@@ -1826,6 +2053,25 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+            </>
+            )}
+            {userData.friendRequests.received.length === 0 && userData.friendRequests.sent.length === 0 && friendsTab === 'pending' && (
+              <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                background: currentTheme.cardBg,
+                borderRadius: '16px',
+                border: `1px solid ${currentTheme.border}`,
+              }}>
+                <p style={{
+                  fontSize: '16px',
+                  color: currentTheme.textSecondary,
+                  margin: 0,
+                }}>
+                  Aucune demande pour le moment
+                </p>
               </div>
             )}
           </div>
