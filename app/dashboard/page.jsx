@@ -142,6 +142,46 @@ export default function DashboardPage() {
     { id: 4, guildId: 'immobilier-pro', author: 'David Lemoine', avatar: '👨‍🎯', title: 'Nouvelle ressource disponible', content: 'Guide complet: Comment évaluer le ROI d\'un investissement immobilier', timestamp: new Date(Date.now() - 14400000) },
   ]);
 
+  // 5. LEADERBOARD GUILDES - Ranking des membres
+  const [guildLeaderboards, setGuildLeaderboards] = useState({
+    'crypto-masters': [
+      { rank: 1, name: 'Alice Dupont', xp: 5000, contribution: 85, avatar: '👩‍💼' },
+      { rank: 2, name: 'Bob Martin', xp: 4200, contribution: 72, avatar: '👨‍💻' },
+      { rank: 3, name: 'You', xp: 3500, contribution: 60, avatar: '👤' },
+    ],
+    'immobilier-pro': [
+      { rank: 1, name: 'Diana Laurent', xp: 6000, contribution: 90, avatar: '💪' },
+      { rank: 2, name: 'You', xp: 4800, contribution: 75, avatar: '👤' },
+    ]
+  });
+
+  // 6. SYSTÈME DE POINTS GUILDE - Trésor/points partagés
+  const [guildTreasures, setGuildTreasures] = useState({
+    'crypto-masters': {
+      totalPoints: 2500,
+      members: 35,
+      level: 3,
+      nextLevel: 3500,
+      recentContributions: [
+        { member: 'Alice', points: 100, action: 'Partage stratégie' },
+        { member: 'Bob', points: 75, action: 'Analyse technique' },
+        { member: 'You', points: 50, action: 'Participation défi' },
+        { member: 'Emma', points: 120, action: 'Animation community' },
+      ]
+    },
+    'immobilier-pro': {
+      totalPoints: 1800,
+      members: 18,
+      level: 2,
+      nextLevel: 2000,
+      recentContributions: [
+        { member: 'Diana', points: 80, action: 'Mentor newbie' },
+        { member: 'You', points: 60, action: 'Visite immeuble' },
+        { member: 'David', points: 95, action: 'Guide ROI' },
+      ]
+    },
+  });
+
   // 1. REAL-TIME NOTIFICATIONS - Système en temps réel
   const [realtimeNotifications, setRealtimeNotifications] = useState([
     { id: 1, type: 'new_follow', user: 'Alice Dupont', message: 'a commencé à vous suivre', timestamp: Date.now(), read: false, isNew: true }
@@ -248,46 +288,6 @@ export default function DashboardPage() {
       }
     };
   }, [notifications, pushNotifications]);
-
-  // 5. LEADERBOARD GUILDES - Ranking des membres
-  const [guildLeaderboards, setGuildLeaderboards] = useState({
-    'crypto-masters': [
-      { rank: 1, name: 'Alice Dupont', xp: 5000, contribution: 85, avatar: '👩‍💼' },
-      { rank: 2, name: 'Bob Martin', xp: 4200, contribution: 72, avatar: '👨‍💻' },
-      { rank: 3, name: 'You', xp: 3500, contribution: 60, avatar: '👤' },
-    ],
-    'immobilier-pro': [
-      { rank: 1, name: 'Diana Laurent', xp: 6000, contribution: 90, avatar: '💪' },
-      { rank: 2, name: 'You', xp: 4800, contribution: 75, avatar: '👤' },
-    ]
-  });
-
-  // 6. SYSTÈME DE POINTS GUILDE - Trésor/points partagés
-  const [guildTreasures, setGuildTreasures] = useState({
-    'crypto-masters': {
-      totalPoints: 2500,
-      members: 35,
-      level: 3,
-      nextLevel: 3500,
-      recentContributions: [
-        { member: 'Alice', points: 100, action: 'Partage stratégie' },
-        { member: 'Bob', points: 75, action: 'Analyse technique' },
-        { member: 'You', points: 50, action: 'Participation défi' },
-        { member: 'Emma', points: 120, action: 'Animation community' },
-      ]
-    },
-    'immobilier-pro': {
-      totalPoints: 1800,
-      members: 18,
-      level: 2,
-      nextLevel: 2000,
-      recentContributions: [
-        { member: 'Diana', points: 80, action: 'Mentor newbie' },
-        { member: 'You', points: 60, action: 'Visite immeuble' },
-        { member: 'David', points: 95, action: 'Guide ROI' },
-      ]
-    },
-  });
 
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
