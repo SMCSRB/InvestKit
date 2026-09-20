@@ -29,6 +29,25 @@ export default function DashboardPage() {
   const [preferredDomain, setPreferredDomain] = useState('crypto');
   const [difficultyLevel, setDifficultyLevel] = useState('intermediate');
   const [academyNotifications, setAcademyNotifications] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = (text) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const theme = {
     dark: {
@@ -397,27 +416,31 @@ export default function DashboardPage() {
           </p>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => navigator.clipboard.writeText(userData.friendCode)}
+              onClick={() => copyToClipboard(userData.friendCode)}
               style={{
                 flex: 1,
                 padding: '8px 12px',
-                background: 'rgba(59, 130, 246, 0.3)',
-                border: '1px solid rgba(59, 130, 246, 0.5)',
+                background: copied ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)',
+                border: copied ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(59, 130, 246, 0.5)',
                 borderRadius: '8px',
-                color: '#60a5fa',
+                color: copied ? '#10b981' : '#60a5fa',
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(59, 130, 246, 0.5)';
+                if (!copied) {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.5)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                if (!copied) {
+                  e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                }
               }}
             >
-              Copier
+              {copied ? '✓ Copié' : 'Copier'}
             </button>
           </div>
         </div>

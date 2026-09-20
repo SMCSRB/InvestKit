@@ -10,6 +10,26 @@ export default function FriendsPage() {
   const { progress } = useEducationProgress();
   const [activeTab, setActiveTab] = useState('friends'); // friends, requests, add, blocked
   const [searchInput, setSearchInput] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = (text) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      // Fallback pour HTTP
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
   const [mockUsers] = useState([
     { friendCode: '#ABC123', name: 'Alice Dupont', level: 5, xp: 2500 },
     { friendCode: '#XYZ789', name: 'Bob Martin', level: 8, xp: 4200 },
@@ -47,10 +67,10 @@ export default function FriendsPage() {
               <p className="text-blue-200 text-sm">Ton code d'ami unique</p>
             </div>
             <button
-              onClick={() => navigator.clipboard.writeText(user.friendCode)}
+              onClick={() => copyToClipboard(user.friendCode)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
             >
-              Copier
+              {copied ? '✓ Copié!' : 'Copier'}
             </button>
           </div>
         </div>
