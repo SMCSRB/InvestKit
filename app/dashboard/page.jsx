@@ -1358,6 +1358,15 @@ export default function DashboardPage() {
           gap: '8px',
           marginBottom: '32px',
           paddingLeft: '8px',
+          cursor: 'pointer',
+          transition: 'opacity 0.3s ease',
+        }}
+        onClick={() => router.push('/')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.opacity = '0.8';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.opacity = '1';
         }}>
           <span style={{
             fontSize: '24px',
