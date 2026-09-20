@@ -2548,11 +2548,8 @@ export default function DashboardPage() {
                               </p>
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedGuilde(myGuilde);
-                            }}
+                          <Link
+                            href={`/guild/${myGuilde.id}`}
                             style={{
                               padding: '8px 16px',
                               background: currentTheme.accent,
@@ -2563,6 +2560,8 @@ export default function DashboardPage() {
                               cursor: 'pointer',
                               fontSize: '12px',
                               transition: 'all 0.2s ease',
+                              textDecoration: 'none',
+                              display: 'inline-block',
                             }}
                             onMouseEnter={(e) => {
                               e.target.style.opacity = '0.9';
@@ -2574,7 +2573,7 @@ export default function DashboardPage() {
                             }}
                           >
                             📋 Voir Détails
-                          </button>
+                          </Link>
                         </div>
                         <p style={{
                           color: currentTheme.textSecondary,
