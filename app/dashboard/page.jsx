@@ -48,6 +48,9 @@ export default function DashboardPage() {
   const [newAchievement, setNewAchievement] = useState(null); // Achievement en cours de notification
   const [guildesCreatedCount, setGuildesCreatedCount] = useState(0); // Nombre de guildes créées
   const [leaderboardTab, setLeaderboardTab] = useState('global-guilds'); // Tab du classement
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState('all-time'); // Période du classement : week, month, all-time
+  const [leaderboardDomain, setLeaderboardDomain] = useState('all'); // Domaine : all, crypto, stocks, realestate, bonds
+  const [leaderboardLevel, setLeaderboardLevel] = useState('all'); // Niveau : all, 1-3, 4-6, 7-9, 10+
   const [guildes, setGuildes] = useState([
     {
       id: 1,
@@ -2059,6 +2062,151 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
+                {/* Filters Section - Afficher uniquement pour les onglets utilisateurs */}
+                {(leaderboardTab === 'global-users' || leaderboardTab === 'friends') && (
+                  <div style={{ marginBottom: '24px' }}>
+                    {/* Période */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        margin: '0 0 8px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        📅 Période
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                          { id: 'week', label: 'Cette semaine' },
+                          { id: 'month', label: 'Ce mois' },
+                          { id: 'all-time', label: 'Tous les temps' },
+                        ].map((period) => (
+                          <button
+                            key={period.id}
+                            onClick={() => setLeaderboardPeriod(period.id)}
+                            style={{
+                              padding: '8px 14px',
+                              background: leaderboardPeriod === period.id
+                                ? '#f59e0b'
+                                : currentTheme.cardBg,
+                              border: leaderboardPeriod === period.id
+                                ? '2px solid #d97706'
+                                : `1.5px solid ${currentTheme.border}`,
+                              borderRadius: '8px',
+                              color: leaderboardPeriod === period.id ? '#fff' : currentTheme.text,
+                              fontWeight: '600',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                            }}
+                          >
+                            {period.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Domaine */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        margin: '0 0 8px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        🎯 Domaine
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                          { id: 'all', label: 'Tous' },
+                          { id: 'crypto', label: '₿ Crypto' },
+                          { id: 'stocks', label: '📈 Bourse' },
+                          { id: 'realestate', label: '🏠 Immobilier' },
+                          { id: 'bonds', label: '💼 Obligations' },
+                        ].map((domain) => (
+                          <button
+                            key={domain.id}
+                            onClick={() => setLeaderboardDomain(domain.id)}
+                            style={{
+                              padding: '8px 14px',
+                              background: leaderboardDomain === domain.id
+                                ? '#f59e0b'
+                                : currentTheme.cardBg,
+                              border: leaderboardDomain === domain.id
+                                ? '2px solid #d97706'
+                                : `1.5px solid ${currentTheme.border}`,
+                              borderRadius: '8px',
+                              color: leaderboardDomain === domain.id ? '#fff' : currentTheme.text,
+                              fontWeight: '600',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                            }}
+                          >
+                            {domain.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Niveau */}
+                    <div>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        margin: '0 0 8px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        ⭐ Niveau
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                          { id: 'all', label: 'Tous' },
+                          { id: '1-3', label: '1-3 (Débutant)' },
+                          { id: '4-6', label: '4-6 (Intermédiaire)' },
+                          { id: '7-9', label: '7-9 (Avancé)' },
+                          { id: '10+', label: '10+ (Expert)' },
+                        ].map((level) => (
+                          <button
+                            key={level.id}
+                            onClick={() => setLeaderboardLevel(level.id)}
+                            style={{
+                              padding: '8px 14px',
+                              background: leaderboardLevel === level.id
+                                ? '#f59e0b'
+                                : currentTheme.cardBg,
+                              border: leaderboardLevel === level.id
+                                ? '2px solid #d97706'
+                                : `1.5px solid ${currentTheme.border}`,
+                              borderRadius: '8px',
+                              color: leaderboardLevel === level.id ? '#fff' : currentTheme.text,
+                              fontWeight: '600',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                            }}
+                          >
+                            {level.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{
+                      height: '1.5px',
+                      background: `linear-gradient(90deg, transparent, ${currentTheme.border}, transparent)`,
+                      margin: '20px 0',
+                    }} />
+                  </div>
+                )}
+
                 {/* Guildes Leaderboard */}
                 {leaderboardTab === 'global-guilds' && (
                   <div style={{ display: 'grid', gap: '12px' }}>
@@ -2151,13 +2299,43 @@ export default function DashboardPage() {
                 {/* Utilisateurs Leaderboard */}
                 {leaderboardTab === 'global-users' && (
                   <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { rank: 1, name: 'AlexInvestor', level: 20, xp: 8900, medal: '🥇', vs: '+1200 XP' },
-                      { rank: 2, name: 'CryptoKing', level: 19, xp: 7800, medal: '🥈', vs: '+500 XP' },
-                      { rank: 3, name: 'StockQueen', level: 19, xp: 7200, medal: '🥉', vs: '-100 XP' },
-                      { rank: 4, name: 'BondMaster', level: 18, xp: 6500, medal: '#4', vs: '-800 XP' },
-                      { rank: 5, name: 'FinanceGuru', level: 17, xp: 5900, medal: '#5', vs: '-1500 XP' },
-                    ].map((user, idx) => (
+                    {(() => {
+                      // Mock filtered users data
+                      let users = [
+                        { rank: 1, name: 'AlexInvestor', level: 20, xp: 8900, medal: '🥇', vs: '+1200 XP' },
+                        { rank: 2, name: 'CryptoKing', level: 19, xp: 7800, medal: '🥈', vs: '+500 XP' },
+                        { rank: 3, name: 'StockQueen', level: 19, xp: 7200, medal: '🥉', vs: '-100 XP' },
+                        { rank: 4, name: 'BondMaster', level: 18, xp: 6500, medal: '#4', vs: '-800 XP' },
+                        { rank: 5, name: 'FinanceGuru', level: 17, xp: 5900, medal: '#5', vs: '-1500 XP' },
+                      ];
+
+                      // Filtrer par niveau si nécessaire
+                      if (leaderboardLevel !== 'all') {
+                        users = users.filter(u => {
+                          if (leaderboardLevel === '1-3') return u.level <= 3;
+                          if (leaderboardLevel === '4-6') return u.level >= 4 && u.level <= 6;
+                          if (leaderboardLevel === '7-9') return u.level >= 7 && u.level <= 9;
+                          if (leaderboardLevel === '10+') return u.level >= 10;
+                          return true;
+                        });
+                      }
+
+                      // Filtrer par période (simulation)
+                      if (leaderboardPeriod === 'week') {
+                        users = users.map(u => ({ ...u, xp: Math.floor(u.xp * 0.2) }));
+                      } else if (leaderboardPeriod === 'month') {
+                        users = users.map(u => ({ ...u, xp: Math.floor(u.xp * 0.5) }));
+                      }
+
+                      // Réordonner selon XP filtré
+                      users = users.sort((a, b) => b.xp - a.xp).map((u, idx) => ({
+                        ...u,
+                        rank: idx + 1,
+                        medal: idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`
+                      }));
+
+                      return users;
+                    })().map((user, idx) => (
                       <div
                         key={idx}
                         style={{
@@ -2191,16 +2369,71 @@ export default function DashboardPage() {
                           }}>
                             {user.medal}
                           </div>
-                          <div>
-                            <p style={{
-                              color: currentTheme.text,
-                              fontWeight: '800',
-                              margin: '0 0 4px 0',
-                              fontSize: '15px',
-                              letterSpacing: '-0.3px',
-                            }}>
-                              {user.name}
-                            </p>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <p style={{
+                                color: currentTheme.text,
+                                fontWeight: '800',
+                                margin: 0,
+                                fontSize: '15px',
+                                letterSpacing: '-0.3px',
+                              }}>
+                                {user.name}
+                              </p>
+                              {/* Récompenses pour top 3 */}
+                              {idx === 0 && (
+                                <span style={{
+                                  padding: '2px 8px',
+                                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                  borderRadius: '12px',
+                                  fontSize: '10px',
+                                  fontWeight: '700',
+                                  color: '#000',
+                                  border: '1px solid #f59e0b',
+                                }}>
+                                  🏆 Champion
+                                </span>
+                              )}
+                              {idx === 1 && (
+                                <span style={{
+                                  padding: '2px 8px',
+                                  background: 'rgba(192, 192, 192, 0.2)',
+                                  borderRadius: '12px',
+                                  fontSize: '10px',
+                                  fontWeight: '700',
+                                  color: '#c0c0c0',
+                                  border: '1px solid #c0c0c0',
+                                }}>
+                                  🥈 Finaliste
+                                </span>
+                              )}
+                              {idx === 2 && (
+                                <span style={{
+                                  padding: '2px 8px',
+                                  background: 'rgba(205, 127, 50, 0.2)',
+                                  borderRadius: '12px',
+                                  fontSize: '10px',
+                                  fontWeight: '700',
+                                  color: '#cd7f32',
+                                  border: '1px solid #cd7f32',
+                                }}>
+                                  🥉 Podium
+                                </span>
+                              )}
+                              {idx >= 3 && idx < 10 && (
+                                <span style={{
+                                  padding: '2px 8px',
+                                  background: 'rgba(99, 102, 241, 0.15)',
+                                  borderRadius: '12px',
+                                  fontSize: '10px',
+                                  fontWeight: '700',
+                                  color: '#6366f1',
+                                  border: '1px solid #6366f1',
+                                }}>
+                                  ⭐ Top 10
+                                </span>
+                              )}
+                            </div>
                             <p style={{
                               color: currentTheme.textSecondary,
                               fontSize: '12px',
@@ -2211,24 +2444,83 @@ export default function DashboardPage() {
                             </p>
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <p style={{
-                            fontSize: '18px',
-                            fontWeight: '900',
-                            color: '#3b82f6',
-                            margin: 0,
-                            letterSpacing: '-0.5px',
-                          }}>
-                            {user.xp.toLocaleString()}
-                          </p>
-                          <p style={{
-                            fontSize: '11px',
-                            color: user.vs.includes('-') ? '#ef4444' : '#10b981',
-                            margin: '4px 0 0 0',
-                            fontWeight: '600',
-                          }}>
-                            {user.vs}
-                          </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                          <div>
+                            <p style={{
+                              fontSize: '18px',
+                              fontWeight: '900',
+                              color: '#3b82f6',
+                              margin: 0,
+                              letterSpacing: '-0.5px',
+                            }}>
+                              {user.xp.toLocaleString()}
+                            </p>
+                            <p style={{
+                              fontSize: '11px',
+                              color: user.vs.includes('-') ? '#ef4444' : '#10b981',
+                              margin: '4px 0 0 0',
+                              fontWeight: '600',
+                            }}>
+                              {user.vs}
+                            </p>
+                          </div>
+                          {/* Share buttons for top 3 */}
+                          {idx < 3 && (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                onClick={() => {
+                                  const text = `🏆 Je suis ${user.medal} au classement ! ${user.name} avec ${user.xp.toLocaleString()} XP sur InvestKit`;
+                                  navigator.clipboard.writeText(text);
+                                  alert('Copié !');
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'rgba(59, 130, 246, 0.2)',
+                                  border: '1px solid #3b82f6',
+                                  borderRadius: '6px',
+                                  color: '#3b82f6',
+                                  fontSize: '10px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                                }}
+                              >
+                                📤 Partager
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const certificatText = `${user.medal} ${user.medal === '🥇' ? 'CHAMPION' : user.medal === '🥈' ? 'FINALISTE' : 'PODIUM'}\n\n${user.name}\nNiveau ${user.level} • ${user.xp.toLocaleString()} XP\n\nClassement InvestKit`;
+                                  navigator.clipboard.writeText(certificatText);
+                                  alert('Certificat copié !');
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'rgba(245, 158, 11, 0.2)',
+                                  border: '1px solid #f59e0b',
+                                  borderRadius: '6px',
+                                  color: '#f59e0b',
+                                  fontSize: '10px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(245, 158, 11, 0.3)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(245, 158, 11, 0.2)';
+                                }}
+                              >
+                                🎖️ Certificat
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -2257,14 +2549,34 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gap: '12px' }}>
-                      {[...userData.friends]
-                        .sort((a, b) => {
-                          const aXP = availableUsers.find(u => u.friendCode === a.friendCode)?.xp || 0;
-                          const bXP = availableUsers.find(u => u.friendCode === b.friendCode)?.xp || 0;
-                          return bXP - aXP;
-                        })
-                        .map((friend, idx) => {
-                          const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
+                      {(() => {
+                        let friends = [...userData.friends]
+                          .sort((a, b) => {
+                            const aXP = availableUsers.find(u => u.friendCode === a.friendCode)?.xp || 0;
+                            const bXP = availableUsers.find(u => u.friendCode === b.friendCode)?.xp || 0;
+                            return bXP - aXP;
+                          })
+                          .map((friend, idx) => {
+                            const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
+                            return { ...friend, friendData, idx };
+                          });
+
+                        // Appliquer les filtres
+                        if (leaderboardLevel !== 'all') {
+                          friends = friends.filter(f => {
+                            const level = f.friendData?.level || 0;
+                            if (leaderboardLevel === '1-3') return level <= 3;
+                            if (leaderboardLevel === '4-6') return level >= 4 && level <= 6;
+                            if (leaderboardLevel === '7-9') return level >= 7 && level <= 9;
+                            if (leaderboardLevel === '10+') return level >= 10;
+                            return true;
+                          });
+                        }
+
+                        return friends;
+                      })().map((item, idx) => {
+                          const friend = item;
+                          const friendData = friend.friendData;
                           const myXP = progress.totalXP || 0;
                           const diff = (friendData?.xp || 0) - myXP;
                           const getMedal = (index) => index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
@@ -2324,24 +2636,56 @@ export default function DashboardPage() {
                                   </p>
                                 </div>
                               </div>
-                              <div style={{ textAlign: 'right' }}>
-                                <p style={{
-                                  fontSize: '18px',
-                                  fontWeight: '900',
-                                  color: '#8b5cf6',
-                                  margin: 0,
-                                  letterSpacing: '-0.5px',
-                                }}>
-                                  {friendData?.xp.toLocaleString()}
-                                </p>
-                                <p style={{
-                                  fontSize: '11px',
-                                  color: diff > 0 ? '#f59e0b' : diff < 0 ? '#10b981' : currentTheme.textSecondary,
-                                  margin: '4px 0 0 0',
-                                  fontWeight: '600',
-                                }}>
-                                  {diff > 0 ? `↑ +${diff.toLocaleString()}` : diff < 0 ? `↓ ${diff.toLocaleString()}` : 'Égalité'}
-                                </p>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                <div>
+                                  <p style={{
+                                    fontSize: '18px',
+                                    fontWeight: '900',
+                                    color: '#8b5cf6',
+                                    margin: 0,
+                                    letterSpacing: '-0.5px',
+                                  }}>
+                                    {friendData?.xp.toLocaleString()}
+                                  </p>
+                                  <p style={{
+                                    fontSize: '11px',
+                                    color: diff > 0 ? '#f59e0b' : diff < 0 ? '#10b981' : currentTheme.textSecondary,
+                                    margin: '4px 0 0 0',
+                                    fontWeight: '600',
+                                  }}>
+                                    {diff > 0 ? `↑ +${diff.toLocaleString()}` : diff < 0 ? `↓ ${diff.toLocaleString()}` : 'Égalité'}
+                                  </p>
+                                </div>
+                                {/* Share buttons for top 3 friends */}
+                                {idx < 3 && (
+                                  <button
+                                    onClick={() => {
+                                      const medal = getMedal(idx);
+                                      const text = `${medal} Mon ami ${friendData?.name} est ${medal} dans le classement ! ${friendData?.xp.toLocaleString()} XP sur InvestKit`;
+                                      navigator.clipboard.writeText(text);
+                                      alert('Copié !');
+                                    }}
+                                    style={{
+                                      padding: '4px 8px',
+                                      background: 'rgba(139, 92, 246, 0.2)',
+                                      border: '1px solid #8b5cf6',
+                                      borderRadius: '6px',
+                                      color: '#8b5cf6',
+                                      fontSize: '10px',
+                                      fontWeight: '600',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                                    }}
+                                  >
+                                    📤 Partager
+                                  </button>
+                                )}
                               </div>
                             </div>
                           );
