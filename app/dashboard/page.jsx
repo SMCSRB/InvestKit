@@ -1368,9 +1368,32 @@ export default function DashboardPage() {
         onMouseLeave={(e) => {
           e.currentTarget.style.opacity = '1';
         }}>
-          <span style={{
-            fontSize: '24px',
-          }}>📊</span>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            borderRadius: '8px',
+            flexShrink: 0,
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
+          }}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Upward arrow representing growth */}
+              <path d="M14 22V6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 12L14 6L20 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+              {/* Chart bars */}
+              <rect x="4" y="16" width="2.5" height="6" fill="white" opacity="0.8" rx="1" />
+              <rect x="8.5" y="14" width="2.5" height="8" fill="white" opacity="0.9" rx="1" />
+              <rect x="13" y="12" width="2.5" height="10" fill="white" rx="1" />
+              <rect x="17.5" y="14" width="2.5" height="8" fill="white" opacity="0.9" rx="1" />
+              <rect x="22" y="16" width="2.5" height="6" fill="white" opacity="0.8" rx="1" />
+            </svg>
+          </div>
           <div>
             <h2 style={{
               margin: '0',
