@@ -6,6 +6,135 @@ import Link from 'next/link';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 
+// Premium Animation Styles
+const styleSheet = `
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 4px 20px rgba(59, 130, 246, 0.3);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .fade-in-down {
+    animation: fadeInDown 0.6s ease-out;
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.6s ease-out;
+  }
+
+  .slide-in-left {
+    animation: slideInLeft 0.6s ease-out;
+  }
+
+  .scale-in {
+    animation: scaleIn 0.5s ease-out;
+  }
+
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = styleSheet;
+  document.head.appendChild(style);
+}
+
 export default function GuildPage() {
   const router = useRouter();
   const params = useParams();
@@ -515,20 +644,36 @@ export default function GuildPage() {
       {/* PREMIUM HEADER */}
       <div style={{
         background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
-        padding: '40px 24px',
+        padding: '50px 24px',
         position: 'relative',
         overflow: 'hidden',
+        boxShadow: `0 10px 40px rgba(0, 0, 0, 0.2), 0 0 80px ${guildTheme.primaryColor}20`,
+        animation: 'fadeInDown 0.8s ease-out',
       }}>
+        {/* Animated Background Elements */}
         <div style={{
           position: 'absolute',
           top: 0,
           right: 0,
           fontSize: '200px',
-          opacity: 0.1,
+          opacity: 0.08,
           lineHeight: 1,
+          animation: 'float 6s ease-in-out infinite',
         }}>
           {selectedGuilde?.emoji}
         </div>
+
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '0',
+          width: '400px',
+          height: '400px',
+          background: `radial-gradient(circle, ${guildTheme.primaryColor}30 0%, transparent 70%)`,
+          borderRadius: '50%',
+          transform: 'translate(-50%, -50%)',
+          pointerEvents: 'none',
+        }} />
 
         <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Back Button */}
@@ -538,77 +683,92 @@ export default function GuildPage() {
               router.push('/dashboard?tab=guildes');
             }}
             style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: '1.5px solid rgba(255, 255, 255, 0.35)',
               color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
               fontWeight: '600',
               cursor: 'pointer',
               fontSize: '13px',
-              marginBottom: '24px',
-              transition: 'all 0.3s ease',
-              backdropFilter: 'blur(10px)',
+              marginBottom: '28px',
+              transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              letterSpacing: '0.3px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              e.currentTarget.style.transform = 'translateX(-4px)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.transform = 'translateX(-6px) translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.25)';
+              e.currentTarget.style.border = '1.5px solid rgba(255, 255, 255, 0.5)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.transform = 'translateX(0)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'translateX(0) translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.border = '1.5px solid rgba(255, 255, 255, 0.35)';
             }}
           >
             ← Retour au Dashboard
           </button>
 
           {/* Guild Info */}
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start', animation: 'slideInLeft 0.8s ease-out 0.2s backwards' }}>
             <div style={{
-              width: '100px',
-              height: '100px',
-              borderRadius: '16px',
-              background: 'rgba(255, 255, 255, 0.2)',
+              width: '110px',
+              height: '110px',
+              borderRadius: '20px',
+              background: 'rgba(255, 255, 255, 0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '56px',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(12px)',
+              border: '2.5px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              animation: 'float 4s ease-in-out infinite',
+              position: 'relative',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.08) rotateZ(5deg)';
+              e.currentTarget.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1) rotateZ(0deg)';
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.3)';
             }}>
               {selectedGuilde?.emoji}
             </div>
             <div style={{ flex: 1 }}>
               <h1 style={{
                 color: '#fff',
-                fontWeight: '800',
-                fontSize: '42px',
-                margin: '0 0 12px 0',
-                textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                fontWeight: '900',
+                fontSize: '48px',
+                margin: '0 0 16px 0',
+                textShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                letterSpacing: '-1px',
+                lineHeight: '1.2',
               }}>
                 {selectedGuilde?.name}
               </h1>
               <div style={{
                 display: 'flex',
-                gap: '24px',
+                gap: '32px',
                 flexWrap: 'wrap',
               }}>
-                <div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', margin: '0 0 4px 0', textTransform: 'uppercase', fontWeight: '600' }}>Membres</p>
-                  <p style={{ color: '#fff', fontSize: '20px', fontWeight: '700', margin: 0 }}>{selectedGuilde?.membersList?.length || 0}</p>
-                </div>
-                <div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', margin: '0 0 4px 0', textTransform: 'uppercase', fontWeight: '600' }}>Niveau</p>
-                  <p style={{ color: '#fff', fontSize: '20px', fontWeight: '700', margin: 0 }}>Lvl {selectedGuilde?.level}</p>
-                </div>
-                <div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', margin: '0 0 4px 0', textTransform: 'uppercase', fontWeight: '600' }}>Total XP</p>
-                  <p style={{ color: '#fff', fontSize: '20px', fontWeight: '700', margin: 0 }}>{selectedGuilde?.totalXP}</p>
-                </div>
-                <div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', margin: '0 0 4px 0', textTransform: 'uppercase', fontWeight: '600' }}>Palier</p>
-                  <p style={{ color: '#fff', fontSize: '20px', fontWeight: '700', margin: 0 }}>{guildTier}</p>
-                </div>
+                {[
+                  { label: 'Membres', value: selectedGuilde?.membersList?.length || 0, icon: '👥' },
+                  { label: 'Niveau', value: `Lvl ${selectedGuilde?.level}`, icon: '⚡' },
+                  { label: 'Total XP', value: selectedGuilde?.totalXP, icon: '✨' },
+                  { label: 'Palier', value: guildTier, icon: '👑' },
+                ].map((stat, idx) => (
+                  <div key={idx} style={{ animation: `fadeInUp 0.6s ease-out ${0.3 + idx * 0.1}s backwards` }}>
+                    <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', margin: '0 0 6px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px' }}>{stat.icon} {stat.label}</p>
+                    <p style={{ color: '#fff', fontSize: '22px', fontWeight: '800', margin: 0 }}>{stat.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -622,10 +782,11 @@ export default function GuildPage() {
         <div style={{
           display: 'flex',
           overflowX: 'auto',
-          gap: '12px',
-          marginBottom: '32px',
-          paddingBottom: '16px',
+          gap: '10px',
+          marginBottom: '40px',
+          paddingBottom: '12px',
           scrollBehavior: 'smooth',
+          animation: 'fadeInUp 0.8s ease-out 0.3s backwards',
         }}>
           {[
             { id: 'info', label: 'Info', icon: '📊' },
@@ -645,40 +806,48 @@ export default function GuildPage() {
             { id: 'customize', label: 'Personnaliser', icon: '🎨' },
             { id: 'rules', label: 'Règles', icon: '🔒' },
             ...(isLeader ? [{ id: 'admin', label: 'Admin', icon: '⚙️' }] : []),
-          ].map((tab) => (
+          ].map((tab, idx) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               style={{
-                padding: '12px 20px',
+                padding: '12px 22px',
                 background: activeTab === tab.id
                   ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
                   : currentTheme.cardBg,
-                border: activeTab === tab.id ? 'none' : `1px solid ${currentTheme.border}`,
-                borderRadius: '12px',
+                border: activeTab === tab.id ? '1.5px solid rgba(255, 255, 255, 0.3)' : `1.5px solid ${currentTheme.border}`,
+                borderRadius: '14px',
                 color: activeTab === tab.id ? '#fff' : currentTheme.text,
                 fontWeight: activeTab === tab.id ? '700' : '600',
                 cursor: 'pointer',
                 fontSize: '13px',
-                transition: 'all 0.3s ease',
+                transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 whiteSpace: 'nowrap',
-                boxShadow: activeTab === tab.id ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
-                transform: activeTab === tab.id ? 'translateY(-2px)' : 'translateY(0)',
+                boxShadow: activeTab === tab.id ? `0 8px 24px ${guildTheme.primaryColor}40, 0 1px 0 rgba(255, 255, 255, 0.2) inset` : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                transform: activeTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
+                backdropFilter: 'blur(10px)',
+                position: 'relative',
+                overflow: 'hidden',
+                letterSpacing: '0.2px',
               }}
               onMouseEnter={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.background = currentTheme.border;
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.background = `${currentTheme.border}80`;
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+                  e.currentTarget.style.borderColor = guildTheme.primaryColor;
                 }
               }}
               onMouseLeave={(e) => {
                 if (activeTab !== tab.id) {
                   e.currentTarget.style.background = currentTheme.cardBg;
                   e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.borderColor = currentTheme.border;
                 }
               }}
             >
-              <span style={{ marginRight: '6px' }}>{tab.icon}</span>
+              <span style={{ marginRight: '8px', fontSize: '16px' }}>{tab.icon}</span>
               {tab.label}
             </button>
           ))}
@@ -718,73 +887,130 @@ export default function GuildPage() {
             </div>
 
             {/* STATS GRID */}
-            <div>
+            <div style={{ animation: 'fadeInUp 0.8s ease-out 0.4s backwards' }}>
               <h2 style={{
                 color: currentTheme.text,
-                fontWeight: '800',
-                fontSize: '22px',
-                margin: '0 0 20px 0',
+                fontWeight: '900',
+                fontSize: '24px',
+                margin: '0 0 28px 0',
+                letterSpacing: '-0.5px',
               }}>
                 📊 Statistiques Détaillées
               </h2>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '16px',
+                gap: '20px',
               }}>
                 {/* Card 1: Members */}
                 <div style={{
-                  padding: '24px',
-                  background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)`,
-                  borderRadius: '16px',
-                  border: `1px solid rgba(59, 130, 246, 0.2)`,
-                  backdropFilter: 'blur(10px)',
+                  padding: '28px',
+                  background: `linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.04) 100%)`,
+                  borderRadius: '18px',
+                  border: `1.5px solid rgba(59, 130, 246, 0.25)`,
+                  backdropFilter: 'blur(12px)',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(59, 130, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.25)';
                 }}>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>👥 Membres</p>
-                  <p style={{ color: currentTheme.accent, fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>{selectedGuilde.membersList?.length || 0}</p>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>Actifs cette semaine</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>👥 Membres</p>
+                  <p style={{ color: '#3b82f6', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{selectedGuilde.membersList?.length || 0}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>Actifs cette semaine</p>
                 </div>
 
                 {/* Card 2: Level */}
                 <div style={{
-                  padding: '24px',
-                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
-                  borderRadius: '16px',
-                  border: `1px solid rgba(139, 92, 246, 0.2)`,
-                  backdropFilter: 'blur(10px)',
+                  padding: '28px',
+                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 100%)`,
+                  borderRadius: '18px',
+                  border: `1.5px solid rgba(139, 92, 246, 0.25)`,
+                  backdropFilter: 'blur(12px)',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(139, 92, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.25)';
                 }}>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>🎯 Niveau</p>
-                  <p style={{ color: '#8b5cf6', fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>Lvl {selectedGuilde.level}</p>
-                  <div style={{ width: '100%', height: '6px', background: 'rgba(139, 92, 246, 0.2)', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ width: `${(selectedGuilde.level / 20) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', transition: 'width 0.5s ease' }} />
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>🎯 Niveau</p>
+                  <p style={{ color: '#8b5cf6', fontSize: '40px', fontWeight: '900', margin: '0 0 12px 0' }}>Lvl {selectedGuilde.level}</p>
+                  <div style={{ width: '100%', height: '8px', background: 'rgba(139, 92, 246, 0.15)', borderRadius: '4px', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+                    <div style={{ width: `${(selectedGuilde.level / 20) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)', borderRadius: '4px', boxShadow: '0 0 12px rgba(139, 92, 246, 0.4)' }} />
                   </div>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '8px 0 0 0' }}>{selectedGuilde.level}/20</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '10px 0 0 0', fontWeight: '600' }}>{selectedGuilde.level}/20</p>
                 </div>
 
                 {/* Card 3: XP */}
                 <div style={{
-                  padding: '24px',
-                  background: `linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)`,
-                  borderRadius: '16px',
-                  border: `1px solid rgba(16, 185, 129, 0.2)`,
-                  backdropFilter: 'blur(10px)',
+                  padding: '28px',
+                  background: `linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)`,
+                  borderRadius: '18px',
+                  border: `1.5px solid rgba(16, 185, 129, 0.25)`,
+                  backdropFilter: 'blur(12px)',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(16, 185, 129, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.25)';
                 }}>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>⚡ Total XP</p>
-                  <p style={{ color: '#10b981', fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>{selectedGuilde.totalXP}</p>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>+240 cette semaine</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>⚡ Total XP</p>
+                  <p style={{ color: '#10b981', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{selectedGuilde.totalXP}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>+240 cette semaine</p>
                 </div>
 
                 {/* Card 4: Tier */}
                 <div style={{
-                  padding: '24px',
-                  background: `linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%)`,
-                  borderRadius: '16px',
-                  border: `1px solid rgba(245, 158, 11, 0.2)`,
-                  backdropFilter: 'blur(10px)',
+                  padding: '28px',
+                  background: `linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)`,
+                  borderRadius: '18px',
+                  border: `1.5px solid rgba(245, 158, 11, 0.25)`,
+                  backdropFilter: 'blur(12px)',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(245, 158, 11, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.25)';
                 }}>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>🏆 Palier</p>
-                  <p style={{ color: '#f59e0b', fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>{guildTier}</p>
-                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>Avantages débloqués</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>🏆 Palier</p>
+                  <p style={{ color: '#f59e0b', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{guildTier}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>Avantages débloqués</p>
                 </div>
               </div>
             </div>
@@ -865,14 +1091,16 @@ export default function GuildPage() {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '14px',
+            animation: 'fadeInUp 0.8s ease-out 0.2s backwards',
           }}>
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '12px', animation: 'slideInLeft 0.8s ease-out backwards' }}>
               <h2 style={{
                 color: currentTheme.text,
-                fontWeight: '800',
-                fontSize: '22px',
+                fontWeight: '900',
+                fontSize: '24px',
                 margin: 0,
+                letterSpacing: '-0.5px',
               }}>
                 👥 Membres de la Guilde ({selectedGuilde.membersList?.length || 0})
               </h2>
@@ -882,54 +1110,64 @@ export default function GuildPage() {
               <div
                 key={member.id}
                 style={{
-                  padding: '20px',
+                  padding: '22px 24px',
                   background: currentTheme.cardBg,
-                  borderRadius: '14px',
-                  border: `1px solid ${currentTheme.border}`,
+                  borderRadius: '16px',
+                  border: `1.5px solid ${currentTheme.border}`,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  animation: `fadeInUp 0.6s ease-out ${0.15 + idx * 0.08}s backwards`,
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.05)`;
-                  e.currentTarget.style.transform = 'translateX(4px)';
+                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.08)`;
+                  e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
                   e.currentTarget.style.borderColor = guildTheme.primaryColor;
+                  e.currentTarget.style.boxShadow = `0 12px 28px ${guildTheme.primaryColor}20`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = currentTheme.cardBg;
-                  e.currentTarget.style.transform = 'translateX(0)';
+                  e.currentTarget.style.transform = 'translateX(0) translateY(0)';
                   e.currentTarget.style.borderColor = currentTheme.border;
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
                 }}
               >
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                <div style={{ display: 'flex', gap: '18px', alignItems: 'center', flex: 1 }}>
                   <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '14px',
                     background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '20px',
-                    fontWeight: '700',
+                    fontSize: '24px',
+                    fontWeight: '800',
+                    boxShadow: `0 8px 20px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.3)`,
+                    transition: 'all 0.3s ease',
                   }}>
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <p style={{
                       color: currentTheme.text,
-                      fontWeight: '700',
+                      fontWeight: '800',
                       fontSize: '15px',
-                      margin: '0 0 4px 0',
+                      margin: '0 0 6px 0',
+                      letterSpacing: '-0.3px',
                     }}>
                       {member.name}
                     </p>
                     <p style={{
                       color: currentTheme.textSecondary,
-                      fontSize: '12px',
+                      fontSize: '13px',
                       margin: 0,
+                      fontWeight: '500',
                     }}>
                       🎯 Niveau {member.level} • 📅 {member.joinedDate}
                     </p>
@@ -941,11 +1179,13 @@ export default function GuildPage() {
                     fontWeight: '800',
                     color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
                     textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    padding: '6px 12px',
-                    background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.15)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.15)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.15)' : 'rgba(0,0,0,0.1)',
-                    borderRadius: '8px',
-                    border: member.role === 'Leader' ? '1px solid rgba(251, 191, 36, 0.3)' : member.role === 'Co-leader' ? '1px solid rgba(96, 165, 250, 0.3)' : member.role === 'Elder' ? '1px solid rgba(129, 140, 248, 0.3)' : 'none',
+                    letterSpacing: '1.2px',
+                    padding: '8px 14px',
+                    background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.18)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.18)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.18)' : 'rgba(0,0,0,0.08)',
+                    borderRadius: '10px',
+                    border: member.role === 'Leader' ? '1.5px solid rgba(251, 191, 36, 0.35)' : member.role === 'Co-leader' ? '1.5px solid rgba(96, 165, 250, 0.35)' : member.role === 'Elder' ? '1.5px solid rgba(129, 140, 248, 0.35)' : `1.5px solid ${currentTheme.border}`,
+                    transition: 'all 0.3s ease',
+                    backdropFilter: 'blur(8px)',
                   }}>
                     {member.role}
                   </span>
@@ -959,87 +1199,113 @@ export default function GuildPage() {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '18px',
+            animation: 'fadeInUp 0.8s ease-out 0.2s backwards',
           }}>
             {pinnedMessages.length === 0 ? (
               <div style={{
-                padding: '40px 20px',
+                padding: '60px 40px',
                 textAlign: 'center',
                 background: currentTheme.cardBg,
-                borderRadius: '12px',
-                border: `1px solid ${currentTheme.border}`,
+                borderRadius: '18px',
+                border: `1.5px solid ${currentTheme.border}`,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                animation: 'scaleIn 0.6s ease-out',
               }}>
                 <p style={{
                   color: currentTheme.textSecondary,
-                  fontSize: '14px',
+                  fontSize: '15px',
                   margin: 0,
+                  fontWeight: '500',
+                  letterSpacing: '0.3px',
                 }}>
                   📌 Aucune annonce épinglée pour le moment
                 </p>
               </div>
             ) : (
-              pinnedMessages.map((msg) => (
+              pinnedMessages.map((msg, idx) => (
                 <div
                   key={msg.id}
                   style={{
-                    padding: '20px',
-                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%)',
-                    borderRadius: '12px',
-                    border: `2px solid rgba(251, 191, 36, 0.3)`,
+                    padding: '28px',
+                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.04) 100%)',
+                    borderRadius: '18px',
+                    border: `2px solid rgba(251, 191, 36, 0.35)`,
                     position: 'relative',
+                    overflow: 'hidden',
+                    animation: `fadeInUp 0.6s ease-out ${0.2 + idx * 0.1}s backwards`,
+                    boxShadow: '0 8px 24px rgba(251, 191, 36, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+                    transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 16px 40px rgba(251, 191, 36, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(251, 191, 36, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.35)';
                   }}
                 >
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
-                    gap: '16px',
+                    gap: '20px',
                   }}>
                     <div style={{ flex: 1 }}>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '12px',
+                        gap: '10px',
+                        marginBottom: '16px',
+                        flexWrap: 'wrap',
                       }}>
                         <span style={{
-                          fontSize: '20px',
+                          fontSize: '24px',
+                          animation: 'float 3s ease-in-out infinite',
                         }}>
                           📌
                         </span>
                         <p style={{
                           color: currentTheme.text,
-                          fontWeight: '700',
+                          fontWeight: '800',
                           fontSize: '16px',
                           margin: 0,
+                          letterSpacing: '-0.3px',
                         }}>
                           {msg.author}
                         </p>
                         <span style={{
                           fontSize: '11px',
-                          fontWeight: '700',
+                          fontWeight: '800',
                           color: '#fbbf24',
                           textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          padding: '2px 6px',
-                          background: 'rgba(251, 191, 36, 0.2)',
-                          borderRadius: '4px',
+                          letterSpacing: '1px',
+                          padding: '4px 10px',
+                          background: 'rgba(251, 191, 36, 0.25)',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(251, 191, 36, 0.4)',
+                          backdropFilter: 'blur(8px)',
                         }}>
                           Leader
                         </span>
                       </div>
                       <p style={{
                         color: currentTheme.text,
-                        fontSize: '14px',
-                        lineHeight: '1.6',
-                        margin: '0 0 12px 0',
+                        fontSize: '15px',
+                        lineHeight: '1.7',
+                        margin: '0 0 14px 0',
+                        fontWeight: '500',
                       }}>
                         {msg.message}
                       </p>
                       <p style={{
                         color: currentTheme.textSecondary,
-                        fontSize: '12px',
+                        fontSize: '13px',
                         margin: 0,
+                        fontWeight: '500',
                       }}>
                         {msg.timestamp}
                       </p>
@@ -1048,21 +1314,29 @@ export default function GuildPage() {
                       <button
                         onClick={() => togglePinnedMessage(msg.id)}
                         style={{
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           background: 'rgba(251, 191, 36, 0.2)',
-                          border: `1px solid rgba(251, 191, 36, 0.4)`,
-                          borderRadius: '6px',
+                          border: `1.5px solid rgba(251, 191, 36, 0.4)`,
+                          borderRadius: '8px',
                           color: '#fbbf24',
-                          fontWeight: '600',
+                          fontWeight: '700',
                           cursor: 'pointer',
                           fontSize: '12px',
-                          transition: 'all 0.2s ease',
+                          transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          backdropFilter: 'blur(8px)',
+                          letterSpacing: '0.3px',
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.background = 'rgba(251, 191, 36, 0.3)';
+                          e.currentTarget.style.background = 'rgba(251, 191, 36, 0.35)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.2)';
+                          e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.background = 'rgba(251, 191, 36, 0.2)';
+                          e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)';
                         }}
                       >
                         Dépingler
@@ -2364,33 +2638,36 @@ export default function GuildPage() {
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
-            height: '600px',
+            gap: '0',
+            height: '650px',
             background: currentTheme.cardBg,
-            borderRadius: '16px',
-            border: `1px solid ${currentTheme.border}`,
+            borderRadius: '20px',
+            border: `1.5px solid ${currentTheme.border}`,
             overflow: 'hidden',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+            animation: 'fadeInUp 0.8s ease-out 0.2s backwards',
           }}>
             {/* Chat Header */}
             <div style={{
-              padding: '20px',
+              padding: '24px 28px',
               background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
               color: '#fff',
-              borderBottom: `1px solid rgba(0,0,0,0.1)`,
+              borderBottom: `1.5px solid rgba(0,0,0,0.15)`,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             }}>
-              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>💬 Chat Communautaire</h2>
-              <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.8 }}>{onlineMembers.length} membre{onlineMembers.length > 1 ? 's' : ''} en ligne</p>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', letterSpacing: '-0.3px' }}>💬 Chat Communautaire</h2>
+              <p style={{ margin: '6px 0 0 0', fontSize: '13px', opacity: 0.85, fontWeight: '500' }}>🟢 {onlineMembers.length} membre{onlineMembers.length > 1 ? 's' : ''} en ligne</p>
             </div>
 
             {/* Chat Messages */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
+              gap: '14px',
               flex: 1,
               overflowY: 'auto',
-              padding: '20px',
-              paddingRight: '16px',
+              padding: '24px 28px',
+              paddingRight: '20px',
             }}>
               {(!selectedGuilde.chat || selectedGuilde.chat.length === 0) && (
                 <div style={{
@@ -2401,24 +2678,27 @@ export default function GuildPage() {
                   color: currentTheme.textSecondary,
                   textAlign: 'center',
                   flexDirection: 'column',
-                  gap: '16px',
+                  gap: '20px',
+                  animation: 'scaleIn 0.6s ease-out',
                 }}>
                   <div style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '20px',
+                    width: '90px',
+                    height: '90px',
+                    borderRadius: '24px',
                     background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '40px',
+                    fontSize: '48px',
+                    boxShadow: `0 12px 32px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)`,
+                    animation: 'float 4s ease-in-out infinite',
                   }}>
                     💬
                   </div>
                   <div>
-                    <p style={{ fontSize: '18px', fontWeight: '700', color: currentTheme.text, margin: '0 0 8px 0' }}>Bienvenue! 🎉</p>
-                    <p style={{ fontSize: '14px', margin: '0 0 4px 0' }}>Commencez une conversation avec votre guilde</p>
-                    <p style={{ fontSize: '12px', margin: '0', opacity: 0.7 }}>Partagez des idées, des stratégies et des astuces</p>
+                    <p style={{ fontSize: '20px', fontWeight: '800', color: currentTheme.text, margin: '0 0 10px 0', letterSpacing: '-0.3px' }}>Bienvenue! 🎉</p>
+                    <p style={{ fontSize: '15px', margin: '0 0 6px 0', fontWeight: '500' }}>Commencez une conversation avec votre guilde</p>
+                    <p style={{ fontSize: '13px', margin: '0', opacity: 0.65, fontWeight: '500' }}>Partagez des idées, des stratégies et des astuces</p>
                   </div>
                 </div>
               )}
@@ -2430,65 +2710,69 @@ export default function GuildPage() {
                     style={{
                       display: 'flex',
                       justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
-                      gap: '8px',
-                      animation: `slideIn 0.3s ease ${idx * 0.05}s`,
+                      gap: '10px',
+                      animation: `slideInRight 0.4s ease-out ${0.1 + idx * 0.06}s backwards`,
                     }}
                   >
                     {!isCurrentUser && (
                       <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
                         background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '14px',
-                        fontWeight: '700',
+                        fontSize: '16px',
+                        fontWeight: '800',
                         color: '#fff',
                         flexShrink: 0,
+                        boxShadow: `0 4px 12px ${guildTheme.primaryColor}30`,
+                        transition: 'all 0.3s ease',
                       }}>
                         {msg.author.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div style={{
-                      maxWidth: '65%',
-                      padding: '12px 16px',
+                      maxWidth: '68%',
+                      padding: '14px 18px',
                       background: isCurrentUser
                         ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
-                        : currentTheme.border,
+                        : `rgba(0, 0, 0, 0.05)`,
                       color: isCurrentUser ? '#fff' : currentTheme.text,
                       borderRadius: isCurrentUser
-                        ? '16px 16px 4px 16px'
-                        : '16px 16px 16px 4px',
+                        ? '18px 18px 4px 18px'
+                        : '18px 18px 18px 4px',
                       wordBreak: 'break-word',
-                      boxShadow: isCurrentUser ? `0 4px 12px rgba(59, 130, 246, 0.25)` : 'none',
-                      transition: 'all 0.2s ease',
+                      boxShadow: isCurrentUser ? `0 8px 24px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)` : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      border: isCurrentUser ? 'none' : `1px solid ${currentTheme.border}`,
                     }}>
                       {!isCurrentUser && (
                         <p style={{
                           fontSize: '11px',
                           fontWeight: '800',
-                          color: isCurrentUser ? 'rgba(255, 255, 255, 0.8)' : currentTheme.textSecondary,
+                          color: currentTheme.textSecondary,
                           margin: '0 0 6px 0',
                           textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
+                          letterSpacing: '1px',
                         }}>
                           {msg.author}
                         </p>
                       )}
                       <p style={{
-                        fontSize: '14px',
-                        lineHeight: '1.5',
+                        fontSize: '15px',
+                        lineHeight: '1.6',
                         margin: 0,
                         fontWeight: '500',
                       }}>
                         {msg.message}
                       </p>
                       <p style={{
-                        fontSize: '11px',
-                        color: isCurrentUser ? 'rgba(255, 255, 255, 0.6)' : currentTheme.textSecondary,
-                        margin: '6px 0 0 0',
+                        fontSize: '12px',
+                        color: isCurrentUser ? 'rgba(255, 255, 255, 0.65)' : currentTheme.textSecondary,
+                        margin: '8px 0 0 0',
+                        fontWeight: '500',
                       }}>
                         {msg.timestamp}
                       </p>
@@ -2501,10 +2785,11 @@ export default function GuildPage() {
             {/* Chat Input */}
             <div style={{
               display: 'flex',
-              gap: '12px',
-              padding: '16px 20px',
-              borderTop: `1px solid ${currentTheme.border}`,
+              gap: '14px',
+              padding: '18px 28px',
+              borderTop: `1.5px solid ${currentTheme.border}`,
               background: currentTheme.cardBg,
+              backdropFilter: 'blur(10px)',
             }}>
               <input
                 type="text"
@@ -2518,24 +2803,26 @@ export default function GuildPage() {
                 }}
                 style={{
                   flex: 1,
-                  padding: '12px 16px',
-                  background: 'rgba(59, 130, 246, 0.08)',
-                  border: `2px solid ${currentTheme.border}`,
-                  borderRadius: '12px',
+                  padding: '13px 18px',
+                  background: `rgba(0, 0, 0, 0.03)`,
+                  border: `1.5px solid ${currentTheme.border}`,
+                  borderRadius: '14px',
                   color: currentTheme.text,
                   fontSize: '14px',
                   fontWeight: '500',
                   outline: 'none',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  backdropFilter: 'blur(8px)',
+                  letterSpacing: '0.2px',
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = guildTheme.primaryColor;
-                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.12)`;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(59, 130, 246, 0.1)`;
+                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.08)`;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(59, 130, 246, 0.12), 0 4px 12px rgba(59, 130, 246, 0.15)`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = currentTheme.border;
-                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)';
+                  e.currentTarget.style.background = `rgba(0, 0, 0, 0.03)`;
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               />
@@ -2543,37 +2830,38 @@ export default function GuildPage() {
                 disabled={!guildChatInput.trim()}
                 onClick={handleSendMessage}
                 style={{
-                  padding: '12px 28px',
+                  padding: '13px 32px',
                   background: guildChatInput.trim()
                     ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
-                    : 'rgba(0,0,0,0.2)',
+                    : 'rgba(0,0,0,0.12)',
                   border: 'none',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   color: guildChatInput.trim() ? '#fff' : currentTheme.textSecondary,
-                  fontWeight: '700',
+                  fontWeight: '800',
                   cursor: guildChatInput.trim() ? 'pointer' : 'not-allowed',
                   fontSize: '14px',
-                  transition: 'all 0.3s ease',
-                  boxShadow: guildChatInput.trim() ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
+                  transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: guildChatInput.trim() ? `0 8px 24px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)` : 'none',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '8px',
                   whiteSpace: 'nowrap',
+                  letterSpacing: '0.2px',
                 }}
                 onMouseEnter={(e) => {
                   if (guildChatInput.trim()) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(-3px)';
+                    e.currentTarget.style.boxShadow = `0 12px 32px ${guildTheme.primaryColor}40, inset 0 1px 0 rgba(255, 255, 255, 0.3)`;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (guildChatInput.trim()) {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)`;
                   }
                 }}
               >
-                <span>✈️</span>
+                <span style={{ fontSize: '16px' }}>✈️</span>
                 <span>Envoyer</span>
               </button>
             </div>
