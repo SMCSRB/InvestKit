@@ -1458,6 +1458,68 @@ export default function DashboardPage() {
                 📖 Album ({userBadges.length}/{Object.keys(badgeDefinitions).length})
               </button>
 
+              {/* Badge Showcase - Display Pinned Badges */}
+              {pinnedBadges.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+                  border: '2px solid rgba(251, 191, 36, 0.2)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  marginBottom: '12px',
+                  position: 'relative',
+                }}>
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: 'rgba(251, 191, 36, 0.8)',
+                    marginBottom: '8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    ⭐ Mes Favoris
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                  }}>
+                    {pinnedBadges.map(badgeId => {
+                      const badge = badgeDefinitions[badgeId];
+                      return (
+                        <div key={badgeId} style={{
+                          background: getBadgeRarityColor(badge.rarity),
+                          border: getBadgeRarityBorder(badge.rarity),
+                          borderRadius: '10px',
+                          padding: '8px 10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                          e.currentTarget.style.boxShadow = `0 8px 16px rgba(0, 0, 0, 0.3)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                        title={badge.description}
+                        onClick={() => togglePinnedBadge(badgeId)}
+                        >
+                          <span>{badge.emoji}</span>
+                          <span style={{ fontSize: '11px' }}>{badge.name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Badges Stack - Display Selected Badges with Enhanced Animations */}
               {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
                 const badge = badgeDefinitions[badgeId];
