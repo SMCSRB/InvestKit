@@ -232,6 +232,8 @@ export default function DashboardPage() {
   const [totalXP, setTotalXP] = useState((userData.level || 1) * 1000 + dailyXP);
   const [xpToNextLevel, setXpToNextLevel] = useState(1000);
   const [recentLevelUp, setRecentLevelUp] = useState(false);
+  const [particles, setParticles] = useState([]);
+  const [isMilestone, setIsMilestone] = useState((userData.level || 1) % 5 === 0);
 
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
@@ -884,6 +886,23 @@ export default function DashboardPage() {
           0% { transform: scale(0.8); opacity: 1; }
           100% { transform: scale(1.2); opacity: 0; }
         }
+        @keyframes badgeRotate {
+          0% { transform: rotateZ(0deg); }
+          100% { transform: rotateZ(360deg); }
+        }
+        @keyframes particleFloat {
+          0% { transform: translate(0, 0) scale(1); opacity: 1; }
+          100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        @keyframes glowPulse {
+          0%, 100% { filter: drop-shadow(0 0 8px currentColor); }
+          50% { filter: drop-shadow(0 0 16px currentColor); }
+        }
+        @keyframes milestoneCelebrate {
+          0% { transform: scale(0.8) rotateZ(-10deg); }
+          50% { transform: scale(1.1) rotateZ(5deg); }
+          100% { transform: scale(1) rotateZ(0deg); }
+        }
         .dashboard-content {
           animation: slideInUp 0.6s ease-out;
         }
@@ -1028,18 +1047,32 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Badges Stack - Display Selected Badges with Animation */}
+              {/* Badges Stack - Display Selected Badges with Enhanced Animations */}
               {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
                 const badge = badgeDefinitions[badgeId];
                 if (!badge) return null;
                 const rarityColors = {
-                  common: { bg: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', shadow: 'rgba(100, 112, 139, 0.4)' },
-                  rare: { bg: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', shadow: 'rgba(59, 130, 246, 0.4)' },
-                  very_rare: { bg: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', shadow: 'rgba(168, 85, 247, 0.4)' },
-                  unique: { bg: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', shadow: 'rgba(251, 191, 36, 0.4)' },
+                  common: { bg: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', glow: '#64748b', shadow: 'rgba(100, 112, 139, 0.5)' },
+                  rare: { bg: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', glow: '#3b82f6', shadow: 'rgba(59, 130, 246, 0.6)' },
+                  very_rare: { bg: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', glow: '#a855f7', shadow: 'rgba(168, 85, 247, 0.6)' },
+                  unique: { bg: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', glow: '#fbbf24', shadow: 'rgba(251, 191, 36, 0.7)' },
                 };
                 const rarity = rarityColors[badge.rarity];
                 const isFirstBadge = index === 0;
+                const isUnique = badge.rarity === 'unique';
+
+                const generateParticles = (e) => {
+                  if (!isUnique) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const newParticles = Array.from({ length: 8 }).map((_, i) => ({
+                    id: Math.random(),
+                    angle: (i / 8) * Math.PI * 2,
+                    distance: 50 + Math.random() * 30,
+                  }));
+                  setParticles(newParticles);
+                  setTimeout(() => setParticles([]), 800);
+                };
+
                 return (
                   <div
                     key={badgeId}
@@ -1059,20 +1092,41 @@ export default function DashboardPage() {
                       boxShadow: `0 8px 16px ${rarity.shadow}`,
                       zIndex: selectedDisplayBadges.length - index,
                       cursor: 'help',
-                      transition: 'all 0.3s ease',
-                      animation: isFirstBadge ? 'badgePulse 2s ease-in-out infinite' : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      animation: isFirstBadge ? `badgePulse 2s ease-in-out infinite, ${isUnique ? 'glowPulse 2s ease-in-out infinite' : 'none'}` : 'none',
+                      filter: isUnique ? `drop-shadow(0 0 12px ${rarity.glow})` : 'none',
                     }}
-                    title={`${badge.name} - ${badge.rarity}`}
+                    title={`${badge.name}\n🌟 ${badge.rarity.toUpperCase()}\n💾 XP: ${badge.rarity === 'unique' ? 500 : badge.rarity === 'very_rare' ? 300 : badge.rarity === 'rare' ? 150 : 50}`}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                      e.currentTarget.style.boxShadow = `0 12px 24px ${rarity.shadow}`;
+                      e.currentTarget.style.transform = `scale(1.15) ${badge.rarity === 'unique' ? 'rotateZ(-5deg)' : ''}`;
+                      e.currentTarget.style.boxShadow = `0 14px 28px ${rarity.shadow}, 0 0 20px ${rarity.glow}`;
+                      generateParticles(e);
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.transform = 'scale(1) rotateZ(0deg)';
                       e.currentTarget.style.boxShadow = `0 8px 16px ${rarity.shadow}`;
                     }}
                   >
                     {badge.emoji}
+
+                    {/* Particle Effects pour Unique */}
+                    {isUnique && particles.length > 0 && particles.map((particle) => (
+                      <div
+                        key={particle.id}
+                        style={{
+                          position: 'absolute',
+                          width: '6px',
+                          height: '6px',
+                          background: rarity.glow,
+                          borderRadius: '50%',
+                          pointerEvents: 'none',
+                          '--tx': `${Math.cos(particle.angle) * particle.distance}px`,
+                          '--ty': `${Math.sin(particle.angle) * particle.distance}px`,
+                          animation: 'particleFloat 0.8s ease-out forwards',
+                          boxShadow: `0 0 4px ${rarity.glow}`,
+                        }}
+                      />
+                    ))}
                   </div>
                 );
               })}
@@ -1192,9 +1246,10 @@ export default function DashboardPage() {
                   <div style={{
                     height: '100%',
                     width: `${((userData.level || 1) - 1) * 10 + (Math.min((userData.level || 1) % 1, 0.9) * 10)}%`,
-                    background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                    background: isMilestone ? 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
                     transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)',
+                    boxShadow: isMilestone ? '0 0 12px rgba(251, 191, 36, 0.8)' : '0 0 8px rgba(245, 158, 11, 0.6)',
+                    animation: isMilestone ? 'glowPulse 2s ease-in-out' : 'none',
                   }} />
                   {/* Milestone markers every 10% (every level) */}
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((milestone) => (
@@ -1205,19 +1260,21 @@ export default function DashboardPage() {
                         left: `${milestone * 10}%`,
                         top: 0,
                         height: '100%',
-                        width: '1px',
-                        background: 'rgba(255, 255, 255, 0.2)',
+                        width: isMilestone && (userData.level || 1) % 10 === milestone ? '3px' : '1px',
+                        background: isMilestone && (userData.level || 1) % 10 === milestone ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
+                        boxShadow: isMilestone && (userData.level || 1) % 10 === milestone ? '0 0 4px #fbbf24' : 'none',
                       }}
                     />
                   ))}
                 </div>
                 <span style={{
                   fontSize: '10px',
-                  color: currentTheme.textSecondary,
-                  fontWeight: '600',
+                  color: isMilestone ? '#fbbf24' : currentTheme.textSecondary,
+                  fontWeight: isMilestone ? '700' : '600',
                   whiteSpace: 'nowrap',
+                  animation: isMilestone ? 'milestoneCelebrate 0.6s ease-in-out' : 'none',
                 }}>
-                  Niv. {(userData.level || 1) % 10 || 10}/10
+                  {isMilestone ? '🎯' : ''} Niv. {(userData.level || 1) % 10 || 10}/10
                 </span>
               </div>
             </div>
