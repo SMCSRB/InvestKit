@@ -14,7 +14,7 @@ export default function GuildPage() {
 
   const [guildes, setGuildes] = useState([]);
   const [selectedGuilde, setSelectedGuilde] = useState(null);
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeTab, setActiveTab] = useState('chat');
   const [guildChatInput, setGuildChatInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [memberActionMenu, setMemberActionMenu] = useState(null);
