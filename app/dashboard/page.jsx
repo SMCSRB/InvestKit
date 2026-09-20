@@ -775,9 +775,33 @@ export default function DashboardPage() {
                     userSelect: 'none',
                   }}
                   onClick={() => {
-                    navigator.clipboard.writeText(userData.friendCode);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
+                    const copyToClipboardFallback = (text) => {
+                      const textarea = document.createElement('textarea');
+                      textarea.value = text;
+                      textarea.style.position = 'fixed';
+                      textarea.style.opacity = '0';
+                      document.body.appendChild(textarea);
+                      textarea.select();
+                      try {
+                        document.execCommand('copy');
+                        return true;
+                      } catch (err) {
+                        return false;
+                      } finally {
+                        document.body.removeChild(textarea);
+                      }
+                    };
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                      navigator.clipboard.writeText(userData.friendCode).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      });
+                    } else {
+                      copyToClipboardFallback(userData.friendCode);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
