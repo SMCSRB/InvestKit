@@ -1205,6 +1205,10 @@ export default function DashboardPage() {
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s ease',
+                  position: 'relative',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== item.id) {
@@ -1219,7 +1223,25 @@ export default function DashboardPage() {
                   }
                 }}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.id === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '20px',
+                    height: '20px',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    borderRadius: '50%',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    color: '#fff',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
+                  }}>
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
