@@ -201,9 +201,7 @@ export default function DashboardPage() {
   });
 
   // 3. SYSTÈME DE NOTIFICATIONS PUSH - Alertes pop-up
-  const [pushNotifications, setPushNotifications] = useState([
-    { id: 1, title: '🎉 Félicitations!', message: 'Vous avez atteint le niveau 20!', type: 'success', timestamp: Date.now() }
-  ]);
+  const [pushNotifications, setPushNotifications] = useState([]);
 
   // Badge System - Rarity levels: common, rare, very_rare, unique
   // Enhanced with statistics, XP value, and rarity percentages
@@ -230,7 +228,7 @@ export default function DashboardPage() {
     'mystery_badge': { name: '🔮 Mystère', emoji: '🔮', rarity: 'unique', requirement: 'secret:mystery', xp: 750, rarity_percent: 1.5, category: 'secret', description: 'Un secret attendant sa révélation' },
   };
 
-  const [userBadges, setUserBadges] = useState(['first_step', 'crypto_novice']);
+  const [userBadges, setUserBadges] = useState([]);
   const [isPremium, setIsPremium] = useState(true);
   const [selectedDisplayBadges, setSelectedDisplayBadges] = useState(['first_step', 'crypto_novice']); // Max 3 badges to display
   const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)');
