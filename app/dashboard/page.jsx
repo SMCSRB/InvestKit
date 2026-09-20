@@ -38,9 +38,11 @@ export default function DashboardPage() {
   const [messageInput, setMessageInput] = useState('');
   const [selectedGuilde, setSelectedGuilde] = useState(null); // Pour voir les détails d'une guilde
   const [selectedGuildeTab, setSelectedGuildeTab] = useState('info'); // info, members, chat
-  const [userGuildes, setUserGuildes] = useState([]); // Guildes auxquelles l'utilisateur a rejoint
+  const [userGuildes, setUserGuildes] = useState([1]); // Guildes auxquelles l'utilisateur a rejoint (commencer avec guilde 1)
   const [guildMessage, setGuildMessage] = useState(null); // { type: 'success' | 'error', text: string }
   const [guildChatInput, setGuildChatInput] = useState(''); // Message input pour le chat de guilde
+  const [memberActionMenu, setMemberActionMenu] = useState(null); // { guildId, memberId } pour afficher menu d'action
+  const [roleChangeMenu, setRoleChangeMenu] = useState(null); // { guildId, memberId } pour changer de rôle
   const [guildes, setGuildes] = useState([
     {
       id: 1,
@@ -51,9 +53,10 @@ export default function DashboardPage() {
       totalXP: 4200,
       restrictions: { minLevel: 5, requiredBadges: ['crypto_master'] },
       membersList: [
-        { id: 1, name: 'Alice Dupont', level: 5, role: 'Leader', joinedDate: '2026-01-15' },
-        { id: 2, name: 'Bob Martin', level: 8, role: 'Co-leader', joinedDate: '2026-02-10' },
-        { id: 3, name: 'David Lemoine', level: 6, role: 'Elder', joinedDate: '2026-03-05' },
+        { id: 0, name: 'SMC.SRB', level: 20, role: 'Leader', joinedDate: '2026-01-01' },
+        { id: 1, name: 'Alice Dupont', level: 5, role: 'Co-leader', joinedDate: '2026-01-15' },
+        { id: 2, name: 'Bob Martin', level: 8, role: 'Elder', joinedDate: '2026-02-10' },
+        { id: 3, name: 'David Lemoine', level: 6, role: 'Member', joinedDate: '2026-03-05' },
         { id: 4, name: 'Emma Leclerc', level: 9, role: 'Member', joinedDate: '2026-03-20' },
         { id: 5, name: 'Clara Rousseau', level: 3, role: 'Member', joinedDate: '2026-04-01' },
       ],
@@ -131,6 +134,65 @@ export default function DashboardPage() {
       user.friendCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const isUserGuildLeader = (guilde) => {
+    if (!selectedGuilde) return false;
+    const userMember = guilde.membersList?.find(m => m.name === 'SMC.SRB');
+    return userMember?.role === 'Leader' || userMember?.role === 'Co-leader';
+  };
+
+  const handleKickMember = (guildId, memberId) => {
+    setGuildes(guildes.map(g => {
+      if (g.id === guildId) {
+        return {
+          ...g,
+          membersList: g.membersList.filter(m => m.id !== memberId)
+        };
+      }
+      return g;
+    }));
+
+    if (selectedGuilde?.id === guildId) {
+      const updatedGuilde = guildes.find(g => g.id === guildId);
+      if (updatedGuilde) {
+        setSelectedGuilde({
+          ...updatedGuilde,
+          membersList: updatedGuilde.membersList.filter(m => m.id !== memberId)
+        });
+      }
+    }
+
+    setMemberActionMenu(null);
+    setGuildMessage({ type: 'success', text: '✓ Membre expulsé avec succès!' });
+    setTimeout(() => setGuildMessage(null), 3000);
+  };
+
+  const handleChangeRole = (guildId, memberId, newRole) => {
+    setGuildes(guildes.map(g => {
+      if (g.id === guildId) {
+        return {
+          ...g,
+          membersList: g.membersList.map(m =>
+            m.id === memberId ? { ...m, role: newRole } : m
+          )
+        };
+      }
+      return g;
+    }));
+
+    if (selectedGuilde?.id === guildId) {
+      setSelectedGuilde({
+        ...selectedGuilde,
+        membersList: selectedGuilde.membersList.map(m =>
+          m.id === memberId ? { ...m, role: newRole } : m
+        )
+      });
+    }
+
+    setRoleChangeMenu(null);
+    setGuildMessage({ type: 'success', text: `✓ Rôle changé en ${newRole}!` });
+    setTimeout(() => setGuildMessage(null), 3000);
+  };
 
   const handleJoinGuilde = (guilde) => {
     // Vérifier l'éligibilité
@@ -3491,50 +3553,219 @@ export default function DashboardPage() {
                     👥 Membres ({selectedGuilde.membersList?.length || 0})
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {selectedGuilde.membersList?.map((member, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          padding: '10px',
-                          background: 'rgba(59, 130, 246, 0.05)',
-                          borderRadius: '8px',
-                          border: `1px solid ${currentTheme.border}`,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div>
-                          <p style={{
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            color: currentTheme.text,
-                            margin: 0,
-                          }}>
-                            {member.name}
-                          </p>
-                          <p style={{
-                            fontSize: '11px',
-                            color: currentTheme.textSecondary,
-                            margin: '2px 0 0 0',
-                          }}>
-                            Niveau {member.level} • Rejoint: {member.joinedDate}
-                          </p>
+                    {selectedGuilde.membersList?.map((member) => {
+                      const userCanManage = isUserGuildLeader(selectedGuilde) && member.name !== 'SMC.SRB';
+                      const isShowingActions = memberActionMenu?.guildId === selectedGuilde.id && memberActionMenu?.memberId === member.id;
+
+                      return (
+                        <div key={member.id} style={{ position: 'relative' }}>
+                          <div
+                            style={{
+                              padding: '10px',
+                              background: 'rgba(59, 130, 246, 0.05)',
+                              borderRadius: '8px',
+                              border: `1px solid ${currentTheme.border}`,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div>
+                              <p style={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: currentTheme.text,
+                                margin: 0,
+                              }}>
+                                {member.name}
+                              </p>
+                              <p style={{
+                                fontSize: '11px',
+                                color: currentTheme.textSecondary,
+                                margin: '2px 0 0 0',
+                              }}>
+                                Niveau {member.level} • Rejoint: {member.joinedDate}
+                              </p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: '700',
+                                color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                padding: '4px 8px',
+                                background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
+                                borderRadius: '4px',
+                              }}>
+                                {member.role}
+                              </span>
+                              {userCanManage && (
+                                <button
+                                  onClick={() => setMemberActionMenu(isShowingActions ? null : { guildId: selectedGuilde.id, memberId: member.id })}
+                                  style={{
+                                    padding: '4px 8px',
+                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    color: currentTheme.accent,
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                  }}
+                                >
+                                  ⋮
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Action Menu */}
+                          {isShowingActions && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '100%',
+                                right: 0,
+                                marginTop: '4px',
+                                background: currentTheme.cardBg,
+                                border: `1px solid ${currentTheme.border}`,
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                zIndex: 100,
+                                minWidth: '200px',
+                              }}
+                            >
+                              {/* Change Role */}
+                              <button
+                                onClick={() => setRoleChangeMenu(
+                                  roleChangeMenu?.guildId === selectedGuilde.id && roleChangeMenu?.memberId === member.id
+                                    ? null
+                                    : { guildId: selectedGuilde.id, memberId: member.id }
+                                )}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  background: 'none',
+                                  border: 'none',
+                                  borderBottom: `1px solid ${currentTheme.border}`,
+                                  color: currentTheme.text,
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                }}
+                              >
+                                👤 Changer le rôle
+                              </button>
+
+                              {/* Promote */}
+                              <button
+                                onClick={() => {
+                                  const roles = ['Member', 'Elder', 'Co-leader', 'Leader'];
+                                  const currentIdx = roles.indexOf(member.role);
+                                  if (currentIdx < roles.length - 1) {
+                                    handleChangeRole(selectedGuilde.id, member.id, roles[currentIdx + 1]);
+                                  }
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  background: 'none',
+                                  border: 'none',
+                                  borderBottom: `1px solid ${currentTheme.border}`,
+                                  color: '#86efac',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                }}
+                              >
+                                ⬆️ Promouvoir
+                              </button>
+
+                              {/* Demote */}
+                              <button
+                                onClick={() => {
+                                  const roles = ['Member', 'Elder', 'Co-leader', 'Leader'];
+                                  const currentIdx = roles.indexOf(member.role);
+                                  if (currentIdx > 0) {
+                                    handleChangeRole(selectedGuilde.id, member.id, roles[currentIdx - 1]);
+                                  }
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  background: 'none',
+                                  border: 'none',
+                                  borderBottom: `1px solid ${currentTheme.border}`,
+                                  color: '#fca5a5',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                }}
+                              >
+                                ⬇️ Rétrograder
+                              </button>
+
+                              {/* Kick */}
+                              <button
+                                onClick={() => handleKickMember(selectedGuilde.id, member.id)}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                }}
+                              >
+                                🚫 Expulser
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Role Change Menu */}
+                          {roleChangeMenu?.guildId === selectedGuilde.id && roleChangeMenu?.memberId === member.id && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '100%',
+                                right: '50px',
+                                marginTop: '4px',
+                                background: currentTheme.cardBg,
+                                border: `1px solid ${currentTheme.border}`,
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                zIndex: 101,
+                                minWidth: '150px',
+                              }}
+                            >
+                              {['Member', 'Elder', 'Co-leader', 'Leader'].map((role) => (
+                                <button
+                                  key={role}
+                                  onClick={() => handleChangeRole(selectedGuilde.id, member.id, role)}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    background: member.role === role ? 'rgba(59, 130, 246, 0.2)' : 'none',
+                                    border: 'none',
+                                    borderBottom: role !== 'Leader' ? `1px solid ${currentTheme.border}` : 'none',
+                                    color: member.role === role ? currentTheme.accent : currentTheme.text,
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    fontWeight: member.role === role ? '600' : '400',
+                                  }}
+                                >
+                                  {member.role === role && '✓ '}{role}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          padding: '4px 8px',
-                          background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
-                          borderRadius: '4px',
-                        }}>
-                          {member.role}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
