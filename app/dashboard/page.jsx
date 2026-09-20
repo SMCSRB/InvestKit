@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const [leaderboardDomain, setLeaderboardDomain] = useState('all'); // Domaine : all, crypto, stocks, realestate, bonds
   const [leaderboardLevel, setLeaderboardLevel] = useState('all'); // Niveau : all, 1-3, 4-6, 7-9, 10+
   const [selectedLeaderboardUser, setSelectedLeaderboardUser] = useState(null); // Utilisateur du classement sélectionné
+  const [selectedLeaderboardGuild, setSelectedLeaderboardGuild] = useState(null); // Guilde du classement sélectionnée
   const [guildes, setGuildes] = useState([
     {
       id: 1,
@@ -2212,14 +2213,15 @@ export default function DashboardPage() {
                 {leaderboardTab === 'global-guilds' && (
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {[
-                      { rank: 1, name: 'Crypto Traders', members: 12, xp: 5400, level: 15, medal: '🥇' },
-                      { rank: 2, name: 'Stock Masters', members: 8, xp: 4800, level: 14, medal: '🥈' },
-                      { rank: 3, name: 'Invest Elite', members: 10, xp: 4200, level: 13, medal: '🥉' },
-                      { rank: 4, name: 'Finance Fighters', members: 6, xp: 3800, level: 12, medal: '#4' },
-                      { rank: 5, name: 'Wealth Warriors', members: 9, xp: 3400, level: 11, medal: '#5' },
+                      { rank: 1, name: 'Crypto Traders', members: 12, xp: 5400, level: 15, medal: '🥇', emoji: '₿', description: 'Les meilleurs traders en crypto de la plateforme', joinedMembers: 3 },
+                      { rank: 2, name: 'Stock Masters', members: 8, xp: 4800, level: 14, medal: '🥈', emoji: '📈', description: 'Experts de la bourse et des actions', joinedMembers: 2 },
+                      { rank: 3, name: 'Invest Elite', members: 10, xp: 4200, level: 13, medal: '🥉', emoji: '💎', description: 'Une élite d\'investisseurs avertis', joinedMembers: 1 },
+                      { rank: 4, name: 'Finance Fighters', members: 6, xp: 3800, level: 12, medal: '#4', emoji: '⚔️', description: 'Combattants de la finance moderne', joinedMembers: 0 },
+                      { rank: 5, name: 'Wealth Warriors', members: 9, xp: 3400, level: 11, medal: '#5', emoji: '🛡️', description: 'Guerriers de la richesse et la prospérité', joinedMembers: 0 },
                     ].map((guild, idx) => (
                       <div
                         key={idx}
+                        onClick={() => setSelectedLeaderboardGuild(guild)}
                         style={{
                           padding: '18px 20px',
                           background: `linear-gradient(135deg, rgba(245, 158, 11, ${0.15 - idx * 0.02}) 0%, rgba(245, 158, 11, ${0.08 - idx * 0.01}) 100%)`,
@@ -3201,6 +3203,339 @@ export default function DashboardPage() {
                         }}
                       >
                         👥 Ajouter Ami
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Guild Profile Modal - Premium Design */}
+            {selectedLeaderboardGuild && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+                padding: '20px',
+                backdropFilter: 'blur(8px)',
+              }}
+              onClick={() => setSelectedLeaderboardGuild(null)}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
+                    borderRadius: '28px',
+                    padding: '0',
+                    maxWidth: '520px',
+                    width: '100%',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
+                    border: `1.5px solid rgba(255, 255, 255, 0.1)`,
+                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(245, 158, 11, 0.15)',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Header Background */}
+                  <div style={{
+                    height: '120px',
+                    background: `linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%)`,
+                    position: 'relative',
+                  }}>
+                    <button
+                      onClick={() => setSelectedLeaderboardGuild(null)}
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        color: currentTheme.text,
+                        fontWeight: '700',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Main Content */}
+                  <div style={{ padding: '0 28px 28px 28px', marginTop: '-60px', position: 'relative', zIndex: 10 }}>
+                    {/* Guild Logo & Rank */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                      <div style={{
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '24px',
+                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%)`,
+                        border: '3px solid rgba(255, 255, 255, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '54px',
+                        boxShadow: '0 12px 40px rgba(245, 158, 11, 0.2)',
+                      }}>
+                        {selectedLeaderboardGuild.emoji}
+                      </div>
+                      <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                        <div style={{
+                          fontSize: '48px',
+                          marginBottom: '4px',
+                          textShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                        }}>
+                          {selectedLeaderboardGuild.medal}
+                        </div>
+                        <div style={{
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          color: '#fff',
+                          padding: '6px 12px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                        }}>
+                          Rang #{selectedLeaderboardGuild.rank}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Guild Name & Description */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <h2 style={{
+                        color: currentTheme.text,
+                        margin: '0 0 8px 0',
+                        fontSize: '28px',
+                        fontWeight: '900',
+                        letterSpacing: '-0.5px',
+                      }}>
+                        {selectedLeaderboardGuild.name}
+                      </h2>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '14px',
+                        margin: 0,
+                        fontStyle: 'italic',
+                        lineHeight: '1.5',
+                      }}>
+                        "{selectedLeaderboardGuild.description}"
+                      </p>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      marginBottom: '24px',
+                    }} />
+
+                    {/* Stats Grid */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: '14px',
+                      marginBottom: '28px',
+                    }}>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                      }}>
+                        <p style={{
+                          color: '#f59e0b',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          👥 Membres
+                        </p>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontSize: '28px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {selectedLeaderboardGuild.members}
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                      }}>
+                        <p style={{
+                          color: '#f59e0b',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          ⭐ Niveau
+                        </p>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontSize: '28px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {selectedLeaderboardGuild.level}
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                      }}>
+                        <p style={{
+                          color: '#f59e0b',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          ⚡ XP Total
+                        </p>
+                        <p style={{
+                          color: '#f59e0b',
+                          fontSize: '26px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {(selectedLeaderboardGuild.xp / 1000).toFixed(1)}K
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(16, 185, 129, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                      }}>
+                        <p style={{
+                          color: '#10b981',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          ✨ Vos Amis
+                        </p>
+                        <p style={{
+                          color: '#10b981',
+                          fontSize: '26px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {selectedLeaderboardGuild.joinedMembers}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      marginBottom: '20px',
+                    }} />
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '12px',
+                    }}>
+                      <button
+                        onClick={() => {
+                          alert(`Vous avez rejoint ${selectedLeaderboardGuild.name}! 🎉`);
+                          setSelectedLeaderboardGuild(null);
+                        }}
+                        style={{
+                          padding: '14px 16px',
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          border: '2px solid rgba(245, 158, 11, 0.5)',
+                          borderRadius: '12px',
+                          color: '#fff',
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 8px 20px rgba(245, 158, 11, 0.2)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.2)';
+                        }}
+                      >
+                        🏛️ Rejoindre
+                      </button>
+                      <button
+                        onClick={() => {
+                          alert(`Message envoyé au leader de ${selectedLeaderboardGuild.name}!`);
+                          setSelectedLeaderboardGuild(null);
+                        }}
+                        style={{
+                          padding: '14px 16px',
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          border: '2px solid rgba(59, 130, 246, 0.5)',
+                          borderRadius: '12px',
+                          color: '#fff',
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 8px 20px rgba(59, 130, 246, 0.2)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
+                        }}
+                      >
+                        💬 Leader
                       </button>
                     </div>
                   </div>
