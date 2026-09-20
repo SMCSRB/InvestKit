@@ -8,10 +8,21 @@ export default function HomePage() {
   const router = useRouter();
   const [hoveredCard, setHoveredCard] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     setIsAuthenticated(!!token);
+  }, []);
+
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+    return () => window.removeEventListener('resize', checkMobileView);
   }, []);
 
   return (
@@ -30,13 +41,14 @@ export default function HomePage() {
         <nav style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '20px 40px',
+          padding: 'clamp(12px, 3vw, 20px) clamp(16px, 4vw, 40px)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          position: 'relative',
         }}>
           <Link href="/" style={{
-            fontSize: '24px',
+            fontSize: 'clamp(20px, 5vw, 24px)',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
             WebkitBackgroundClip: 'text',
@@ -48,11 +60,14 @@ export default function HomePage() {
           }}>
             💎 InvestKit
           </Link>
+
+          {/* Desktop Menu */}
+          {!isMobileView && (
           <div style={{
             display: 'flex',
             gap: '32px',
             alignItems: 'center',
-          }}>
+          }} className="desktop-menu">
             <Link href="/" style={{
               fontSize: '14px',
               fontWeight: '500',
@@ -174,7 +189,157 @@ export default function HomePage() {
               </>
             )}
           </div>
+          )}
+
+          {/* Mobile Hamburger Button */}
+          {isMobileView && (
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+            }}
+          >
+            <div style={{
+              width: '24px',
+              height: '2px',
+              background: 'white',
+              transition: 'all 0.3s',
+              transform: mobileMenuOpen ? 'rotate(45deg) translateY(11px)' : 'rotate(0)',
+            }} />
+            <div style={{
+              width: '24px',
+              height: '2px',
+              background: 'white',
+              transition: 'opacity 0.3s',
+              opacity: mobileMenuOpen ? 0 : 1,
+            }} />
+            <div style={{
+              width: '24px',
+              height: '2px',
+              background: 'white',
+              transition: 'all 0.3s',
+              transform: mobileMenuOpen ? 'rotate(-45deg) translateY(-11px)' : 'rotate(0)',
+            }} />
+          </button>
+          )}
         </nav>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileView && mobileMenuOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%)',
+          borderBottom: '1px solid rgba(59, 130, 246, 0.15)',
+          backdropFilter: 'blur(20px)',
+          padding: 'clamp(16px, 4vw, 24px)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          zIndex: 99,
+        }}>
+          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Accueil
+          </Link>
+          <Link href="/outils" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Outils
+          </Link>
+          <Link href="/education" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Éducation
+          </Link>
+          <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Tarifs
+          </Link>
+          <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.1)' }} />
+
+          {isAuthenticated ? (
+            <>
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.7)',
+                textDecoration: 'none',
+                padding: '8px 0',
+              }}>
+                📊 Dashboard
+              </Link>
+              <button onClick={() => {
+                localStorage.removeItem('token');
+                setIsAuthenticated(false);
+                setMobileMenuOpen(false);
+                router.push('/');
+              }} style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.7)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px 0',
+                textAlign: 'left',
+              }}>
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.7)',
+                textDecoration: 'none',
+                padding: '8px 0',
+              }}>
+                Connexion
+              </Link>
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                color: 'white',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '600',
+                textDecoration: 'none',
+                textAlign: 'center',
+              }}>
+                S'inscrire
+              </Link>
+            </>
+          )}
+        </div>
+        )}
       </header>
 
       {/* HERO SECTION */}
