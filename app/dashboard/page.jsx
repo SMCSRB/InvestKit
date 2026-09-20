@@ -1767,7 +1767,7 @@ export default function DashboardPage() {
                 👥 Mes Amis
               </h2>
 
-              {/* Friends Tabs */}
+              {/* Main Tabs */}
               <div style={{
                 display: 'flex',
                 gap: '8px',
@@ -1776,23 +1776,23 @@ export default function DashboardPage() {
                 paddingBottom: '12px',
               }}>
                 {[
-                  { id: 'friends', label: `Amis (${userData.friends.length})` },
+                  { id: 'friends', label: `👫 Amis (${userData.friends.length})` },
                   { id: 'leaderboard', label: '🏆 Classement' },
-                  { id: 'messages', label: '💬 Messages' },
                   { id: 'guildes', label: '👥 Guildes' },
-                  { id: 'search', label: '🔍 Chercher' },
-                  { id: 'pending', label: `📩 Demandes (${userData.friendRequests.received.length})` },
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setFriendsTab(tab.id)}
+                    onClick={() => {
+                      if (tab.id === 'friends') setFriendsTab('friends');
+                      else setFriendsTab(tab.id);
+                    }}
                     style={{
                       padding: '8px 16px',
-                      background: friendsTab === tab.id ? 'transparent' : 'transparent',
+                      background: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? 'rgba(59, 130, 246, 0.1)' : friendsTab === tab.id ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                       border: 'none',
-                      borderBottom: friendsTab === tab.id ? `2px solid ${currentTheme.accent}` : 'none',
-                      color: friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
-                      fontWeight: friendsTab === tab.id ? '700' : '500',
+                      borderBottom: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? `2px solid ${currentTheme.accent}` : friendsTab === tab.id ? `2px solid ${currentTheme.accent}` : 'none',
+                      color: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? currentTheme.accent : friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
+                      fontWeight: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? '700' : friendsTab === tab.id ? '700' : '500',
                       fontSize: '14px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -1802,6 +1802,43 @@ export default function DashboardPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Sub-tabs for Friends */}
+              {['friends', 'messages', 'search', 'pending'].includes(friendsTab) && (
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginBottom: '24px',
+                  borderBottom: `1px solid ${currentTheme.border}`,
+                  paddingBottom: '12px',
+                  paddingLeft: '8px',
+                }}>
+                  {[
+                    { id: 'friends', label: 'Liste d\'amis' },
+                    { id: 'pending', label: `Demandes (${userData.friendRequests.received.length})` },
+                    { id: 'search', label: 'Chercher' },
+                    { id: 'messages', label: '💬 Messages' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setFriendsTab(tab.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: friendsTab === tab.id ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                        border: `1px solid ${friendsTab === tab.id ? currentTheme.accent : currentTheme.border}`,
+                        borderRadius: '6px',
+                        color: friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
+                        fontWeight: friendsTab === tab.id ? '600' : '400',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Friend Code Card */}
               <div style={{
