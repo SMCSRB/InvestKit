@@ -655,6 +655,19 @@ export default function DashboardPage() {
           backdropFilter: 'blur(10px)',
           position: 'relative',
           overflow: 'hidden',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+        }}
+        onClick={() => setActiveTab('settings')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+          e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+          e.currentTarget.style.boxShadow = 'none';
         }}>
           {/* Decorative gradient background */}
           <div style={{
