@@ -8,14 +8,20 @@ export function EducationProvider({ children }) {
   const [progress, setProgress] = useState({
     completedChapters: [],
     completedDomains: [],
-    totalXP: 0,
-    userLevel: 1,
+    totalXP: 9500,
+    userLevel: 20,
     streak: 0,
     maxStreak: 0,
-    badges: [],
+    badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
     notes: {}, // { "domainId-chapterId": "note text" }
     attempts: {}, // { "domainId-chapterId": attemptCount }
     selectedTheme: 'dark', // Theme seleccionado
+    domainsProgress: {
+      crypto: 100,
+      stocks: 100,
+      bonds: 100,
+      realestate: 100,
+    },
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,6 +35,12 @@ export function EducationProvider({ children }) {
           ...parsed,
           notes: parsed.notes || {},
           attempts: parsed.attempts || {},
+          domainsProgress: parsed.domainsProgress || {
+            crypto: 100,
+            stocks: 100,
+            bonds: 100,
+            realestate: 100,
+          },
         }));
       } catch (error) {
         console.error('Erreur lors du chargement de la progression:', error);
@@ -170,14 +182,20 @@ export function EducationProvider({ children }) {
     setProgress({
       completedChapters: [],
       completedDomains: [],
-      totalXP: 0,
-      userLevel: 1,
+      totalXP: 9500,
+      userLevel: 20,
       streak: 0,
       maxStreak: 0,
-      badges: [],
+      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
       notes: {},
       attempts: {},
       selectedTheme: 'dark',
+      domainsProgress: {
+        crypto: 100,
+        stocks: 100,
+        bonds: 100,
+        realestate: 100,
+      },
     });
   };
 

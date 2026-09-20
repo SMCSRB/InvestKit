@@ -10,9 +10,9 @@ function generateFriendCode() {
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState({
-    friendCode: '',
-    fullName: 'Utilisateur',
-    bio: '',
+    friendCode: '#UJYD0L',
+    fullName: 'SMC.SRB',
+    bio: 'Investisseur Premium 🚀',
     profilePhoto: '',
     friends: [], // { userId, friendCode, name, status: 'confirmed', addedDate }
     friendRequests: {
@@ -49,11 +49,16 @@ export function UserProvider({ children }) {
   }, [user, isLoading]);
 
   const initializeUser = () => {
-    const newFriendCode = generateFriendCode();
-    setUser((prev) => ({
-      ...prev,
-      friendCode: newFriendCode,
-    }));
+    // Keep the preset friend code and name
+    // Only initialize if not already set
+    if (!user.friendCode || user.friendCode === '') {
+      setUser((prev) => ({
+        ...prev,
+        friendCode: '#UJYD0L',
+        fullName: 'SMC.SRB',
+        bio: 'Investisseur Premium 🚀',
+      }));
+    }
   };
 
   const sendFriendRequest = (friendCode, friendName) => {
