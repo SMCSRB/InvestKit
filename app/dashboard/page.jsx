@@ -155,7 +155,6 @@ export default function DashboardPage() {
       { id: 1, author: 'Charlie', avatar: '🎯', message: 'Quelqu\'un a des sources de crédit immo?', timestamp: new Date(Date.now() - 3600000) },
     ]
   });
-  const [guildChatInput, setGuildChatInputNew] = useState('');
 
   // 3. SYSTÈME DE NOTIFICATIONS PUSH - Alertes pop-up
   const [pushNotifications, setPushNotifications] = useState([
