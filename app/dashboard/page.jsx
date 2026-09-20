@@ -18,6 +18,8 @@ export default function DashboardPage() {
   const [settingsTab, setSettingsTab] = useState('general');
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [fullName, setFullName] = useState('Jean Dupont');
+  const [email, setEmail] = useState('jean.dupont@example.com');
 
   const theme = {
     dark: {
@@ -165,6 +167,16 @@ export default function DashboardPage() {
     if (savedPhoto) {
       setPhotoPreview(savedPhoto);
     }
+
+    // Load profile data (name, email)
+    const savedName = typeof window !== 'undefined' ? localStorage.getItem('userFullName') : null;
+    if (savedName) {
+      setFullName(savedName);
+    }
+    const savedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
   }, [router]);
 
   // Handle photo upload
@@ -182,6 +194,16 @@ export default function DashboardPage() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Save profile changes
+  const saveProfileChanges = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userFullName', fullName);
+      localStorage.setItem('userEmail', email);
+    }
+    // Optionally show a notification
+    alert('Profil mis à jour avec succès!');
   };
 
   // Save theme preference
@@ -299,7 +321,7 @@ export default function DashboardPage() {
             color: currentTheme.text,
             margin: '0 0 4px 0',
           }}>
-            Jean Dupont
+            {fullName}
           </h3>
           <p style={{
             fontSize: '12px',
@@ -628,7 +650,7 @@ export default function DashboardPage() {
                       fontWeight: '700',
                       letterSpacing: '0.5px',
                     }}>
-                      JEAN DUPONT
+                      {fullName.toUpperCase()}
                     </p>
                   </div>
                   <div style={{
@@ -1706,16 +1728,20 @@ export default function DashboardPage() {
                       }}>
                         Nom complet
                       </label>
-                      <input type="text" defaultValue="Jean Dupont" style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        background: currentTheme.border,
-                        border: `1px solid ${currentTheme.border}`,
-                        borderRadius: '8px',
-                        color: currentTheme.text,
-                        fontSize: '13px',
-                        boxSizing: 'border-box',
-                      }} />
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: currentTheme.border,
+                          border: `1px solid ${currentTheme.border}`,
+                          borderRadius: '8px',
+                          color: currentTheme.text,
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                        }} />
                     </div>
 
                     <div>
@@ -1728,16 +1754,20 @@ export default function DashboardPage() {
                       }}>
                         Email
                       </label>
-                      <input type="email" defaultValue="jean.dupont@example.com" style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        background: currentTheme.border,
-                        border: `1px solid ${currentTheme.border}`,
-                        borderRadius: '8px',
-                        color: currentTheme.text,
-                        fontSize: '13px',
-                        boxSizing: 'border-box',
-                      }} />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          background: currentTheme.border,
+                          border: `1px solid ${currentTheme.border}`,
+                          borderRadius: '8px',
+                          color: currentTheme.text,
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                        }} />
                     </div>
 
                     <div>
@@ -1766,17 +1796,25 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <button style={{
-                    padding: '10px 20px',
-                    background: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '8px',
-                    color: currentTheme.accent,
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}>
+                  <button
+                    onClick={saveProfileChanges}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'rgba(59, 130, 246, 0.2)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.accent,
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}>
                     Enregistrer les modifications
                   </button>
 
