@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const [messageInput, setMessageInput] = useState('');
   const [selectedGuilde, setSelectedGuilde] = useState(null); // Pour voir les détails d'une guilde
   const [selectedGuildeTab, setSelectedGuildeTab] = useState('info'); // info, members, chat
-  const [userGuildes, setUserGuildes] = useState([1]); // Guildes auxquelles l'utilisateur a rejoint (commencer avec guilde 1)
+  const [userGuildes, setUserGuildes] = useState([]); // Guildes auxquelles l'utilisateur a rejoint
   const [guildMessage, setGuildMessage] = useState(null); // { type: 'success' | 'error', text: string }
   const [guildChatInput, setGuildChatInput] = useState(''); // Message input pour le chat de guilde
   const [memberActionMenu, setMemberActionMenu] = useState(null); // { guildId, memberId } pour afficher menu d'action
