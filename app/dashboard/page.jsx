@@ -228,12 +228,14 @@ export default function DashboardPage() {
   const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
   const [bioEditInput, setBioEditInput] = useState('Investisseur passionné en crypto et finance');
   const [baggeBackgroundInput, setBaggeBackgroundInput] = useState('');
+  // Level tracking - synchronized with localStorage
+  const [userLevel, setUserLevel] = useState(20); // Default 20, loads from localStorage
   const [dailyXP, setDailyXP] = useState(Math.floor(Math.random() * 500) + 150); // Random XP 150-650
-  const [totalXP, setTotalXP] = useState((userData.level || 1) * 1000 + dailyXP);
+  const [totalXP, setTotalXP] = useState((userLevel || 1) * 1000 + dailyXP);
   const [xpToNextLevel, setXpToNextLevel] = useState(1000);
   const [recentLevelUp, setRecentLevelUp] = useState(false);
   const [particles, setParticles] = useState([]);
-  const [isMilestone, setIsMilestone] = useState((userData.level || 1) % 5 === 0);
+  const [isMilestone, setIsMilestone] = useState((userLevel || 1) % 5 === 0);
 
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
@@ -271,6 +273,12 @@ export default function DashboardPage() {
         setUserBio(JSON.parse(savedBio));
         setBioEditInput(JSON.parse(savedBio));
       }
+      const savedLevel = localStorage.getItem('investkit_user_level');
+      if (savedLevel) {
+        setUserLevel(JSON.parse(savedLevel));
+      } else if (userData?.level) {
+        setUserLevel(userData.level);
+      }
     } catch (e) {
       console.log('LocalStorage not available');
     }
@@ -286,14 +294,15 @@ export default function DashboardPage() {
       localStorage.setItem('investkit_display_badges', JSON.stringify(selectedDisplayBadges));
       localStorage.setItem('investkit_badge_bg', JSON.stringify(badgeBackgroundColor));
       localStorage.setItem('investkit_user_bio', JSON.stringify(userBio));
+      localStorage.setItem('investkit_user_level', JSON.stringify(userLevel));
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel]);
 
   // Auto-award badges based on level progression
   useEffect(() => {
-    const currentLevel = userData.level || 1;
+    const currentLevel = userLevel || 1;
     const newBadges = [...userBadges];
     let badgesAwarded = false;
 
@@ -331,7 +340,7 @@ export default function DashboardPage() {
     if (badgesAwarded) {
       setUserBadges(newBadges);
     }
-  }, [userData.level, progress?.completedDomains]);
+  }, [userLevel, progress?.completedDomains]);
 
   // Real-time notification simulation
   useEffect(() => {
@@ -1258,7 +1267,7 @@ export default function DashboardPage() {
                       fill="none"
                       stroke={isMilestone ? '#fbbf24' : '#f59e0b'}
                       strokeWidth="2"
-                      strokeDasharray={`${(((userData.level || 1) % 10) / 10) * 113.1} 113.1`}
+                      strokeDasharray={`${(((userLevel || 1) % 10) / 10) * 113.1} 113.1`}
                       strokeLinecap="round"
                       style={{
                         transition: 'stroke-dasharray 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -1279,7 +1288,7 @@ export default function DashboardPage() {
                       color: isMilestone ? '#fbbf24' : '#f59e0b',
                       lineHeight: '1',
                     }}>
-                      {userData.level || 1}
+                      {userLevel || 1}
                     </div>
                     <div style={{
                       fontSize: '8px',
@@ -1305,7 +1314,7 @@ export default function DashboardPage() {
                     {/* Fill */}
                     <div style={{
                       height: '100%',
-                      width: `${((userData.level || 1) % 10) * 10}%`,
+                      width: `${((userLevel || 1) % 10) * 10}%`,
                       background: isMilestone ? 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
                       transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       boxShadow: isMilestone ? 'inset 0 0 8px rgba(251, 191, 36, 0.4)' : 'inset 0 0 8px rgba(245, 158, 11, 0.3)',
@@ -1336,7 +1345,7 @@ export default function DashboardPage() {
                       color: 'rgba(255, 255, 255, 0.5)',
                       fontWeight: '600',
                     }}>
-                      Tier {Math.floor((userData.level || 1) / 10) + 1}
+                      Tier {Math.floor((userLevel || 1) / 10) + 1}
                     </span>
                     <span style={{
                       fontSize: '11px',
@@ -1344,7 +1353,7 @@ export default function DashboardPage() {
                       fontWeight: isMilestone ? '700' : '600',
                       animation: isMilestone ? 'milestoneCelebrate 0.6s ease-in-out' : 'none',
                     }}>
-                      {((userData.level || 1) % 10)}/10 {isMilestone ? '🎯' : ''}
+                      {((userLevel || 1) % 10)}/10 {isMilestone ? '🎯' : ''}
                     </span>
                   </div>
                 </div>
