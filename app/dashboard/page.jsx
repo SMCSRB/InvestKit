@@ -127,6 +127,17 @@ export default function DashboardPage() {
   ]);
   const [activityFilter, setActivityFilter] = useState('all'); // all, level_up, achievement, guild, leaderboard, investment
 
+  // Guild Events & Announcements
+  const [guildEvents, setGuildEvents] = useState([
+    { id: 1, guildId: 'crypto-masters', title: '🎯 Défi Crypto Hebdo', description: 'Investissez 1000€ en crypto et battez les autres membres', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 604800000), participants: 12, reward: '500 XP' },
+    { id: 2, guildId: 'immobilier-pro', title: '🏠 Tournoi Immobilier', description: 'Simulez l\'achat d\'un bien immobilier avec le meilleur ROI', startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 1209600000), participants: 8, reward: '1000 XP' },
+    { id: 3, guildId: 'crypto-masters', title: '💰 Challenge Portefeuille', description: 'Rebalancez votre portefeuille et gagnez des points', startDate: new Date(Date.now() - 86400000), endDate: new Date(Date.now() + 259200000), participants: 25, reward: '300 XP' },
+  ]);
+  const [guildAnnouncements, setGuildAnnouncements] = useState([
+    { id: 1, guildId: 'crypto-masters', author: 'Alice Dupont', avatar: '👩‍💼', title: 'Nouvelle stratégie DCA', content: 'On lance une nouvelle stratégie de Dollar-Cost Averaging pour BTC', timestamp: new Date(Date.now() - 3600000) },
+    { id: 2, guildId: 'immobilier-pro', author: 'Bob Martin', avatar: '👨‍💻', title: 'Réunion en direct vendredi', content: 'Rdv zoom pour discuter des opportunités immobilières', timestamp: new Date(Date.now() - 7200000) },
+  ]);
+
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
     {
@@ -5744,27 +5755,31 @@ export default function DashboardPage() {
               {/* Tabs */}
               <div style={{
                 display: 'flex',
-                gap: '8px',
+                gap: '0',
                 marginBottom: '20px',
-                borderBottom: `1px solid ${currentTheme.border}`,
+                overflowX: 'auto',
+                borderBottom: `2px solid ${currentTheme.border}`,
               }}>
-                {['info', 'members', 'chat'].map((tab) => (
+                {['info', 'events', 'announcements', 'members', 'chat'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setSelectedGuildeTab(tab)}
                     style={{
-                      padding: '10px 16px',
-                      background: 'none',
+                      padding: '10px 14px',
+                      background: selectedGuildeTab === tab ? `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)` : 'transparent',
                       border: 'none',
                       color: selectedGuildeTab === tab ? currentTheme.accent : currentTheme.textSecondary,
                       fontWeight: selectedGuildeTab === tab ? '700' : '500',
                       cursor: 'pointer',
-                      borderBottom: selectedGuildeTab === tab ? `2px solid ${currentTheme.accent}` : 'none',
-                      fontSize: '13px',
+                      borderBottom: selectedGuildeTab === tab ? `3px solid ${currentTheme.accent}` : 'none',
+                      fontSize: '12px',
                       transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {tab === 'info' && 'ℹ️ Info'}
+                    {tab === 'events' && '🎯 Événements'}
+                    {tab === 'announcements' && '📢 Annonces'}
                     {tab === 'members' && '👥 Membres'}
                     {tab === 'chat' && '💬 Chat'}
                   </button>
@@ -5912,6 +5927,143 @@ export default function DashboardPage() {
                 👋 Quitter la Guilde
               </button>
               </>
+              )}
+
+              {/* TAB: Events */}
+              {selectedGuildeTab === 'events' && (
+                <div>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    🎯 Événements en Cours
+                  </p>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {guildEvents.filter(e => e.guildId === selectedGuilde.id).length === 0 ? (
+                      <p style={{ color: currentTheme.textSecondary, fontSize: '12px', textAlign: 'center', padding: '20px 0' }}>
+                        Aucun événement pour le moment
+                      </p>
+                    ) : (
+                      guildEvents.filter(e => e.guildId === selectedGuilde.id).map((event) => (
+                        <div
+                          key={event.id}
+                          style={{
+                            padding: '12px',
+                            background: `linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%)`,
+                            borderRadius: '10px',
+                            border: `1.5px solid rgba(245, 158, 11, 0.2)`,
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+                            e.currentTarget.style.transform = 'translateX(4px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+                            e.currentTarget.style.transform = 'translateX(0)';
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                            <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: currentTheme.text }}>
+                              {event.title}
+                            </h4>
+                            <span style={{ fontSize: '11px', background: 'rgba(245, 158, 11, 0.2)', padding: '2px 8px', borderRadius: '4px', color: '#f59e0b', fontWeight: '600' }}>
+                              {event.reward}
+                            </span>
+                          </div>
+                          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
+                            {event.description}
+                          </p>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: currentTheme.textSecondary' }}>
+                            <span>👥 {event.participants} participants</span>
+                            <span>📅 {event.startDate.toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: Announcements */}
+              {selectedGuildeTab === 'announcements' && (
+                <div>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    📢 Annonces
+                  </p>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {guildAnnouncements.filter(a => a.guildId === selectedGuilde.id).length === 0 ? (
+                      <p style={{ color: currentTheme.textSecondary, fontSize: '12px', textAlign: 'center', padding: '20px 0' }}>
+                        Aucune annonce pour le moment
+                      </p>
+                    ) : (
+                      guildAnnouncements.filter(a => a.guildId === selectedGuilde.id).map((ann) => (
+                        <div
+                          key={ann.id}
+                          style={{
+                            padding: '12px',
+                            background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)`,
+                            borderRadius: '10px',
+                            border: `1.5px solid rgba(139, 92, 246, 0.2)`,
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
+                          }}
+                        >
+                          <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '16px',
+                              flexShrink: 0,
+                            }}>
+                              {ann.avatar}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '700', color: currentTheme.text }}>
+                                {ann.author}
+                              </p>
+                              <p style={{ margin: 0, fontSize: '10px', color: currentTheme.textSecondary }}>
+                                {Math.floor((Date.now() - ann.timestamp.getTime()) / 60000) < 1
+                                  ? 'À l\'instant'
+                                  : Math.floor((Date.now() - ann.timestamp.getTime()) / 60000) < 60
+                                  ? `Il y a ${Math.floor((Date.now() - ann.timestamp.getTime()) / 60000)}min`
+                                  : `Il y a ${Math.floor((Date.now() - ann.timestamp.getTime()) / 3600000)}h`
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: currentTheme.text }}>
+                            {ann.title}
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '12px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
+                            {ann.content}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
 
               {/* TAB: Members List */}
