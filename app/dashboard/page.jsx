@@ -167,6 +167,9 @@ export default function DashboardPage() {
 
   // Filter guildes based on search and filters
   const filteredGuildes = guildes.filter((guilde) => {
+    // Exclude current guild from discovery list
+    if (userGuildes.includes(guilde.id)) return false;
+
     const matchesSearch = guilde.name.toLowerCase().includes(guildeSearchQuery.toLowerCase()) ||
                           guilde.description.toLowerCase().includes(guildeSearchQuery.toLowerCase());
     const matchesLevel = guildeFilterMinLevel === 0 || !guilde.restrictions?.minLevel || guilde.restrictions.minLevel <= guildeFilterMinLevel;
@@ -2471,6 +2474,141 @@ export default function DashboardPage() {
                     <option value="realestate">🏠 Immobilier</option>
                   </select>
                 </div>
+
+                {/* My Guild Section */}
+                {userGuildes.length > 0 && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: currentTheme.accent,
+                      margin: '0 0 12px 0',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      ⭐ Ma Guilde Actuelle
+                    </h4>
+                    {guildes.filter(g => userGuildes.includes(g.id)).map((myGuilde) => (
+                      <div
+                        key={myGuilde.id}
+                        onClick={() => setSelectedGuilde(myGuilde)}
+                        style={{
+                          padding: '16px',
+                          background: `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)`,
+                          borderRadius: '12px',
+                          border: `2px solid ${currentTheme.accent}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = `linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%)`;
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)`;
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'start',
+                          marginBottom: '12px',
+                        }}>
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '10px',
+                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '24px',
+                            }}>
+                              {myGuilde.emoji}
+                            </div>
+                            <div>
+                              <p style={{
+                                color: currentTheme.text,
+                                fontWeight: '700',
+                                margin: '0 0 2px 0',
+                                fontSize: '16px',
+                              }}>
+                                {myGuilde.name}
+                              </p>
+                              <p style={{
+                                color: currentTheme.textSecondary,
+                                fontSize: '12px',
+                                margin: 0,
+                              }}>
+                                👥 {myGuilde.membersList?.length || 0} membre{(myGuilde.membersList?.length || 0) > 1 ? 's' : ''} • Niveau {myGuilde.level}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedGuilde(myGuilde);
+                            }}
+                            style={{
+                              padding: '8px 16px',
+                              background: currentTheme.accent,
+                              border: 'none',
+                              borderRadius: '6px',
+                              color: '#fff',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.opacity = '0.9';
+                              e.target.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.opacity = '1';
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                          >
+                            📋 Voir Détails
+                          </button>
+                        </div>
+                        <p style={{
+                          color: currentTheme.textSecondary,
+                          fontSize: '12px',
+                          margin: 0,
+                          lineHeight: '1.5',
+                        }}>
+                          {myGuilde.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Divider */}
+                {userGuildes.length > 0 && (
+                  <div style={{
+                    height: '1px',
+                    background: `linear-gradient(90deg, transparent, ${currentTheme.border}, transparent)`,
+                    margin: '20px 0',
+                  }} />
+                )}
+
+                {/* Discover Guildes Section */}
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: currentTheme.textSecondary,
+                  margin: userGuildes.length > 0 ? '0 0 12px 0' : 'none',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  {userGuildes.length > 0 ? '🔍 Découvrir d\'autres Guildes' : '🔍 Toutes les Guildes'}
+                </h4>
 
                 {showCreateGuilde && progress.userLevel >= 7 && (
                   <div style={{
