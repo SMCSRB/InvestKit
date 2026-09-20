@@ -741,15 +741,67 @@ export default function DashboardPage() {
 
             {/* User Info */}
             <div>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: '900',
-                color: currentTheme.text,
-                margin: '0 0 4px 0',
-                letterSpacing: '-0.5px',
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '4px',
+                flexWrap: 'wrap',
               }}>
-                {fullName}
-              </h3>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '900',
+                  color: currentTheme.text,
+                  margin: 0,
+                  letterSpacing: '-0.5px',
+                }}>
+                  {fullName}
+                </h3>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
+                  <code style={{
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    color: '#60a5fa',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    userSelect: 'none',
+                  }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(userData.friendCode);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
+                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                  }}
+                  title="Cliquez pour copier">
+                    #{userData.friendCode}
+                  </code>
+                  {copied && (
+                    <span style={{
+                      fontSize: '12px',
+                      color: '#10b981',
+                      fontWeight: '600',
+                      animation: 'fadeInUp 0.3s ease-out',
+                    }}>
+                      ✓ Copié
+                    </span>
+                  )}
+                </div>
+              </div>
               <p style={{
                 fontSize: '12px',
                 color: '#f59e0b',
