@@ -1,4 +1,4 @@
-import { ChannelType } from 'discord.js';
+import { ChannelType, EmbedBuilder } from 'discord.js';
 
 export default {
   name: 'interactionCreate',
@@ -64,23 +64,50 @@ export default {
 
 async function handleButtonInteraction(interaction) {
   const customId = interaction.customId;
+  const roleNames = {
+    role_investor: 'Investisseur',
+    role_trader: 'Trader',
+    role_learner: 'Apprenant',
+  };
 
-  if (customId === 'role_investor') {
-    await interaction.member.roles.add('ROLE_ID_INVESTOR');
+  if (!roleNames[customId]) {
     await interaction.reply({
-      content: '✅ Vous avez obtenu le rôle Investisseur!',
+      content: '❌ Ce bouton n\'est pas valide.',
       ephemeral: true,
     });
-  } else if (customId === 'role_trader') {
-    await interaction.member.roles.add('ROLE_ID_TRADER');
+    return;
+  }
+
+  try {
+    const roleName = roleNames[customId];
+    const role = interaction.guild.roles.cache.find(r => r.name === roleName);
+
+    if (!role) {
+      await interaction.reply({
+        content: `❌ Le rôle "${roleName}" n\'existe pas sur ce serveur.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    // Vérifier si l'utilisateur a déjà le rôle
+    if (interaction.member.roles.cache.has(role.id)) {
+      await interaction.member.roles.remove(role);
+      await interaction.reply({
+        content: `✅ Le rôle **${roleName}** a été retiré!`,
+        ephemeral: true,
+      });
+    } else {
+      await interaction.member.roles.add(role);
+      await interaction.reply({
+        content: `✅ Vous avez obtenu le rôle **${roleName}**! 🎉`,
+        ephemeral: true,
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erreur attribution rôle:', error);
     await interaction.reply({
-      content: '✅ Vous avez obtenu le rôle Trader!',
-      ephemeral: true,
-    });
-  } else if (customId === 'role_learner') {
-    await interaction.member.roles.add('ROLE_ID_LEARNER');
-    await interaction.reply({
-      content: '✅ Vous avez obtenu le rôle Apprenant!',
+      content: '❌ Une erreur est survenue lors de l\'attribution du rôle.',
       ephemeral: true,
     });
   }
@@ -88,7 +115,6 @@ async function handleButtonInteraction(interaction) {
 
 async function handleSelectMenuInteraction(interaction) {
   const values = interaction.values;
-  // Gérer les sélections d'alertes, notifications, etc.
   await interaction.reply({
     content: `✅ Vos préférences ont été mises à jour: ${values.join(', ')}`,
     ephemeral: true,
