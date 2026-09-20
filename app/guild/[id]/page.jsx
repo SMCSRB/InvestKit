@@ -789,14 +789,16 @@ export default function GuildPage() {
       {/* MAIN CONTENT */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 24px' }}>
 
-        {/* TABS NAVIGATION - ORGANIZED BY CATEGORY */}
+        {/* TABS NAVIGATION - PREMIUM DESIGN */}
         <div style={{
-          marginBottom: '40px',
+          marginBottom: '48px',
           animation: 'fadeInUp 0.8s ease-out 0.3s backwards',
         }}>
           {[
             {
               category: '📋 Aperçu & Gestion',
+              icon: '📋',
+              color: '#3b82f6',
               tabs: [
                 { id: 'info', label: 'À Propos', icon: '📊' },
                 { id: 'members', label: 'Membres', icon: '👥' },
@@ -805,6 +807,8 @@ export default function GuildPage() {
             },
             {
               category: '💬 Communication',
+              icon: '💬',
+              color: '#8b5cf6',
               tabs: [
                 { id: 'announcements', label: 'Annonces', icon: '📌' },
                 { id: 'chat', label: 'Chat', icon: '💬' },
@@ -813,6 +817,8 @@ export default function GuildPage() {
             },
             {
               category: '🎯 Activité & Récompenses',
+              icon: '🎯',
+              color: '#f59e0b',
               tabs: [
                 { id: 'activity', label: 'Activité', icon: '📊' },
                 { id: 'coins', label: 'Coins', icon: '💰' },
@@ -821,6 +827,8 @@ export default function GuildPage() {
             },
             {
               category: '📚 Contenu & Apprentissage',
+              icon: '📚',
+              color: '#10b981',
               tabs: [
                 { id: 'qa', label: 'Q&A', icon: '❓' },
                 { id: 'portfolio', label: 'Portfolio', icon: '💼' },
@@ -830,6 +838,8 @@ export default function GuildPage() {
             },
             {
               category: '🎪 Événements & Personnalisation',
+              icon: '🎪',
+              color: '#ec4899',
               tabs: [
                 { id: 'events', label: 'Événements', icon: '📅' },
                 { id: 'customize', label: 'Apparence', icon: '🎨' },
@@ -838,70 +848,95 @@ export default function GuildPage() {
               ]
             },
           ].map((section, sectionIdx) => (
-            <div key={sectionIdx} style={{ marginBottom: '20px' }}>
+            <div key={sectionIdx} style={{ marginBottom: '32px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '16px',
+                animation: `slideInLeft 0.6s ease-out ${0.2 + sectionIdx * 0.1}s backwards`,
+              }}>
+                <span style={{
+                  fontSize: '24px',
+                  opacity: 0.8,
+                }}>
+                  {section.icon}
+                </span>
+                <div style={{
+                  height: '2px',
+                  flex: 1,
+                  background: `linear-gradient(90deg, ${section.color}80 0%, ${section.color}20 100%)`,
+                  borderRadius: '1px',
+                }} />
+              </div>
               <p style={{
                 color: currentTheme.textSecondary,
-                fontSize: '12px',
-                margin: '0 0 12px 0',
+                fontSize: '11px',
+                margin: '0 0 20px 0',
                 textTransform: 'uppercase',
-                fontWeight: '800',
-                letterSpacing: '1px',
+                fontWeight: '900',
+                letterSpacing: '1.5px',
                 animation: `fadeInLeft 0.6s ease-out ${0.2 + sectionIdx * 0.1}s backwards`,
               }}>
                 {section.category}
               </p>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: '10px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '14px',
                 animation: `fadeInUp 0.6s ease-out ${0.25 + sectionIdx * 0.1}s backwards`,
               }}>
-                {section.tabs.map((tab) => (
+                {section.tabs.map((tab, tabIdx) => (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     style={{
-                      padding: '14px 16px',
+                      padding: '20px 18px',
                       background: activeTab === tab.id
-                        ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
-                        : currentTheme.cardBg,
-                      border: activeTab === tab.id ? '1.5px solid rgba(255, 255, 255, 0.3)' : `1.5px solid ${currentTheme.border}`,
-                      borderRadius: '14px',
+                        ? `linear-gradient(135deg, ${section.color} 0%, ${section.color}dd 100%)`
+                        : `linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%)`,
+                      border: activeTab === tab.id
+                        ? `2px solid rgba(255, 255, 255, 0.4)`
+                        : `1.5px solid ${currentTheme.border}`,
+                      borderRadius: '16px',
                       color: activeTab === tab.id ? '#fff' : currentTheme.text,
-                      fontWeight: activeTab === tab.id ? '700' : '600',
+                      fontWeight: activeTab === tab.id ? '800' : '700',
                       cursor: 'pointer',
                       fontSize: '13px',
                       transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      boxShadow: activeTab === tab.id ? `0 8px 24px ${guildTheme.primaryColor}40, 0 1px 0 rgba(255, 255, 255, 0.2) inset` : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      transform: activeTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
-                      backdropFilter: 'blur(10px)',
+                      boxShadow: activeTab === tab.id
+                        ? `0 12px 32px ${section.color}40, inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+                        : '0 4px 12px rgba(0, 0, 0, 0.15)',
+                      transform: activeTab === tab.id ? 'translateY(-6px) scale(1.02)' : 'translateY(0)',
+                      backdropFilter: 'blur(12px)',
                       position: 'relative',
                       overflow: 'hidden',
-                      letterSpacing: '0.2px',
+                      letterSpacing: '0.3px',
                       textAlign: 'center',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '8px',
+                      animation: `fadeInUp 0.5s ease-out ${0.3 + sectionIdx * 0.1 + tabIdx * 0.05}s backwards`,
                     }}
                     onMouseEnter={(e) => {
                       if (activeTab !== tab.id) {
-                        e.currentTarget.style.background = `${currentTheme.border}80`;
-                        e.currentTarget.style.transform = 'translateY(-3px)';
-                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
-                        e.currentTarget.style.borderColor = guildTheme.primaryColor;
+                        e.currentTarget.style.background = `linear-gradient(135deg, ${section.color}30 0%, ${section.color}20 100%)`;
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = `0 8px 24px ${section.color}25`;
+                        e.currentTarget.style.borderColor = section.color;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (activeTab !== tab.id) {
-                        e.currentTarget.style.background = currentTheme.cardBg;
+                        e.currentTarget.style.background = `linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%)`;
                         e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
                         e.currentTarget.style.borderColor = currentTheme.border;
                       }
                     }}
                   >
-                    <span style={{ fontSize: '18px' }}>{tab.icon}</span>
+                    <span style={{ fontSize: '28px' }}>{tab.icon}</span>
                     <span>{tab.label}</span>
                   </button>
                 ))}
