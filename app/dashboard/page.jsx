@@ -1005,26 +1005,42 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Level Badge */}
-              <div style={{
-                position: 'absolute',
-                bottom: '-4px',
-                right: '-4px',
-                width: '32px',
-                height: '32px',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: '900',
-                fontSize: '14px',
-                color: '#fff',
-                border: '3px solid ' + currentTheme.sidebar,
-                boxShadow: '0 8px 16px rgba(245, 158, 11, 0.4)',
-              }}>
-                {userData.level || 1}
-              </div>
+              {/* Badges Stack - Display Selected Badges */}
+              {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
+                const badge = badgeDefinitions[badgeId];
+                if (!badge) return null;
+                const rarityColors = {
+                  common: { bg: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', shadow: 'rgba(100, 112, 139, 0.4)' },
+                  rare: { bg: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', shadow: 'rgba(59, 130, 246, 0.4)' },
+                  very_rare: { bg: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', shadow: 'rgba(168, 85, 247, 0.4)' },
+                  unique: { bg: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', shadow: 'rgba(251, 191, 36, 0.4)' },
+                };
+                const rarity = rarityColors[badge.rarity];
+                return (
+                  <div
+                    key={badgeId}
+                    style={{
+                      position: 'absolute',
+                      bottom: `-4px`,
+                      right: `${-4 + (index * 24)}px`,
+                      width: '40px',
+                      height: '40px',
+                      background: rarity.bg,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                      border: `3px solid ${currentTheme.sidebar}`,
+                      boxShadow: `0 8px 16px ${rarity.shadow}`,
+                      zIndex: selectedDisplayBadges.length - index,
+                    }}
+                    title={badge.name}
+                  >
+                    {badge.emoji}
+                  </div>
+                );
+              })}
             </div>
 
             {/* User Info */}
@@ -1154,53 +1170,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
-        {/* Selected Badges Display */}
-        {selectedDisplayBadges.length > 0 && (
-          <div style={{ marginBottom: '40px' }}>
-            <p style={{
-              fontSize: '11px',
-              fontWeight: '700',
-              color: 'rgba(255, 255, 255, 0.6)',
-              margin: '0 0 12px 0',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              🏅 Badges Affichés ({selectedDisplayBadges.length}/3)
-            </p>
-            <div style={{
-              padding: '16px',
-              background: badgeBackgroundColor,
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              display: 'flex',
-              gap: '12px',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onClick={() => setShowProfileMenu(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}>
-              {selectedDisplayBadges.map((badgeId) => {
-                const badge = badgeDefinitions[badgeId];
-                if (!badge) return null;
-                return (
-                  <div key={badgeId} style={{
-                    textAlign: 'center',
-                  }}>
-                    <div style={{ fontSize: '32px', marginBottom: '4px' }}>{badge.emoji}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Quick Stats */}
         <div style={{ marginBottom: '40px' }}>
