@@ -107,7 +107,7 @@ export default {
         try {
           // Créer la catégorie
           let category = guild.channels.cache.find(
-            ch => ch.isCategory() && ch.name === categoryName
+            ch => ch.type === ChannelType.GuildCategory && ch.name === categoryName
           );
 
           if (!category) {
