@@ -110,6 +110,23 @@ export default function DashboardPage() {
   const [guildeFilterMinLevel, setGuildeFilterMinLevel] = useState(0);
   const [guildeFilterDomain, setGuildeFilterDomain] = useState('all');
 
+  // Notifications & Activity Feed
+  const [activeSection, setActiveSection] = useState('dashboard'); // dashboard, notifications, activity
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'follow', user: 'Alice Dupont', avatar: '👩‍💼', message: 'a commencé à vous suivre', timestamp: new Date(Date.now() - 3600000), read: false },
+    { id: 2, type: 'friend_request', user: 'Bob Martin', avatar: '👨‍💻', message: 'vous a envoyé une demande d\'ami', timestamp: new Date(Date.now() - 7200000), read: false },
+    { id: 3, type: 'guild_join', user: 'Crypto Masters', avatar: '🏆', message: 'Alice Dupont a rejoint votre guilde', timestamp: new Date(Date.now() - 10800000), read: true },
+    { id: 4, type: 'achievement', user: 'Charlie Dubois', avatar: '🎯', message: 'a déverrouillé Achievement "Millionnaire"', timestamp: new Date(Date.now() - 14400000), read: true },
+  ]);
+  const [activityFeed, setActivityFeed] = useState([
+    { id: 1, type: 'level_up', user: 'Alice Dupont', avatar: '👩‍💼', detail: 'a atteint le niveau 8', timestamp: new Date(Date.now() - 1800000) },
+    { id: 2, type: 'achievement', user: 'Bob Martin', avatar: '👨‍💻', detail: 'a déverrouillé "Investisseur Crypto"', timestamp: new Date(Date.now() - 3600000) },
+    { id: 3, type: 'guild_join', user: 'Charlie Dubois', avatar: '🎯', detail: 'a rejoint "Immobilier Pro"', timestamp: new Date(Date.now() - 5400000) },
+    { id: 4, type: 'leaderboard', user: 'Diana Laurent', avatar: '💪', detail: 'a atteint le top 10 du classement', timestamp: new Date(Date.now() - 7200000) },
+    { id: 5, type: 'investment', user: 'Eve Martin', avatar: '📈', detail: 'a acheté 0.5 BTC', timestamp: new Date(Date.now() - 9000000) },
+  ]);
+  const [activityFilter, setActivityFilter] = useState('all'); // all, level_up, achievement, guild, leaderboard, investment
+
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
     {
@@ -995,6 +1012,8 @@ export default function DashboardPage() {
               { id: 'market', label: '💹 Marché' },
               { id: 'education', label: '📚 Académie' },
               { id: 'friends', label: `👥 Amis (${userData.friends.length})` },
+              { id: 'notifications', label: `🔔 Notifications ${notifications.filter(n => !n.read).length > 0 ? `(${notifications.filter(n => !n.read).length})` : ''}` },
+              { id: 'activity', label: '📈 Activité' },
               { id: 'risk', label: '⚠️ Risques' },
               { id: 'settings', label: '⚙️ Paramètres' },
             ].map((item) => (
@@ -3810,88 +3829,243 @@ export default function DashboardPage() {
                   </>
                 ) : (
                   <>
-                    {/* Chat Header */}
+                    {/* Chat Header - Premium */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
-                      marginBottom: '20px',
-                      paddingBottom: '16px',
-                      borderBottom: `1px solid ${currentTheme.border}`,
+                      justifyContent: 'space-between',
+                      marginBottom: '16px',
+                      padding: '16px',
+                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)`,
+                      borderRadius: '14px',
+                      border: '1.5px solid rgba(59, 130, 246, 0.2)',
+                      backdropFilter: 'blur(10px)',
                     }}>
-                      <button
-                        onClick={() => setSelectedChatFriend(null)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: currentTheme.text,
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button
+                          onClick={() => setSelectedChatFriend(null)}
+                          style={{
+                            background: 'rgba(59, 130, 246, 0.2)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            borderRadius: '8px',
+                            color: currentTheme.text,
+                            fontSize: '18px',
+                            cursor: 'pointer',
+                            padding: '6px 10px',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                          }}
+                        >
+                          ←
+                        </button>
+                        <div style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           fontSize: '20px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ←
-                      </button>
-                      <div>
-                        <p style={{
-                          color: currentTheme.text,
-                          fontWeight: '600',
-                          margin: '0 0 2px 0',
+                          boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
                         }}>
-                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.name}
-                        </p>
-                        <p style={{
-                          color: currentTheme.textSecondary,
-                          fontSize: '11px',
-                          margin: 0,
-                        }}>
-                          🟢 En ligne
-                        </p>
+                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
+                        </div>
+                        <div>
+                          <p style={{
+                            color: currentTheme.text,
+                            fontWeight: '700',
+                            margin: '0 0 4px 0',
+                            fontSize: '14px',
+                          }}>
+                            {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.name}
+                          </p>
+                          <p style={{
+                            color: '#10b981',
+                            fontSize: '11px',
+                            margin: 0,
+                            fontWeight: '600',
+                          }}>
+                            🟢 En ligne
+                          </p>
+                        </div>
                       </div>
+                      <button style={{
+                        background: 'rgba(59, 130, 246, 0.2)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                        transition: 'all 0.2s ease',
+                      }}>
+                        ⓘ
+                      </button>
                     </div>
 
-                    {/* Chat Messages */}
+                    {/* Chat Messages - Premium */}
                     <div style={{
-                      background: 'rgba(0, 0, 0, 0.2)',
-                      borderRadius: '12px',
+                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%)`,
+                      borderRadius: '14px',
                       padding: '16px',
-                      height: '300px',
+                      height: '350px',
                       overflowY: 'auto',
                       marginBottom: '16px',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
+                      border: '1.5px solid rgba(59, 130, 246, 0.15)',
                     }}>
+                      {/* Message du friend */}
                       <div style={{
+                        display: 'flex',
+                        gap: '8px',
                         alignSelf: 'flex-start',
-                        maxWidth: '70%',
-                        padding: '10px 14px',
-                        background: currentTheme.cardBg,
-                        borderRadius: '12px',
-                        border: `1px solid ${currentTheme.border}`,
                       }}>
-                        <p style={{ color: currentTheme.text, margin: 0, fontSize: '13px' }}>
-                          Salut ! Comment ça va ?
-                        </p>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '16px',
+                          flexShrink: 0,
+                        }}>
+                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            maxWidth: '70%',
+                            padding: '12px 14px',
+                            background: currentTheme.cardBg,
+                            borderRadius: '14px',
+                            border: `1px solid ${currentTheme.border}`,
+                            borderTopLeftRadius: '4px',
+                          }}>
+                            <p style={{ color: currentTheme.text, margin: 0, fontSize: '14px' }}>
+                              Salut ! Comment ça va ? 👋
+                            </p>
+                          </div>
+                          <p style={{ color: currentTheme.textSecondary, fontSize: '10px', margin: '4px 0 0 0' }}>
+                            14:35
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Mon message */}
                       <div style={{
+                        display: 'flex',
+                        gap: '8px',
                         alignSelf: 'flex-end',
-                        maxWidth: '70%',
-                        padding: '10px 14px',
-                        background: currentTheme.accent,
-                        borderRadius: '12px',
-                        color: '#fff',
+                        justifyContent: 'flex-end',
                       }}>
-                        <p style={{ color: '#fff', margin: 0, fontSize: '13px' }}>
-                          Bien ! On travaille sur InvestKit 🚀
-                        </p>
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            maxWidth: '70%',
+                            marginLeft: 'auto',
+                            padding: '12px 14px',
+                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #0ea5e9 100%)`,
+                            borderRadius: '14px',
+                            borderTopRightRadius: '4px',
+                            color: '#fff',
+                          }}>
+                            <p style={{ color: '#fff', margin: 0, fontSize: '14px' }}>
+                              Bien ! On travaille sur InvestKit 🚀
+                            </p>
+                          </div>
+                          <p style={{ color: currentTheme.textSecondary, fontSize: '10px', margin: '4px 0 0 0', textAlign: 'right' }}>
+                            14:38 ✓✓
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Message ami 2 */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignSelf: 'flex-start',
+                      }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '16px',
+                          flexShrink: 0,
+                        }}>
+                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            maxWidth: '70%',
+                            padding: '12px 14px',
+                            background: currentTheme.cardBg,
+                            borderRadius: '14px',
+                            border: `1px solid ${currentTheme.border}`,
+                            borderTopLeftRadius: '4px',
+                          }}>
+                            <p style={{ color: currentTheme.text, margin: 0, fontSize: '14px' }}>
+                              C'est awesome ! 💪
+                            </p>
+                          </div>
+                          <p style={{ color: currentTheme.textSecondary, fontSize: '10px', margin: '4px 0 0 0' }}>
+                            14:41
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Indicateur "en train de taper" */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignSelf: 'flex-start',
+                        padding: '8px 12px',
+                        opacity: 0.6,
+                      }}>
+                        <span style={{ fontSize: '12px' }}>✏️ En train de taper</span>
+                        <span style={{
+                          display: 'inline-block',
+                          animation: 'pulse 1s infinite',
+                        }}>
+                          ...
+                        </span>
                       </div>
                     </div>
 
-                    {/* Chat Input */}
+                    {/* Chat Input - Premium */}
                     <div style={{
                       display: 'flex',
-                      gap: '8px',
+                      gap: '10px',
+                      alignItems: 'center',
+                      padding: '12px',
+                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      borderRadius: '14px',
+                      border: '1.5px solid rgba(59, 130, 246, 0.15)',
+                      backdropFilter: 'blur(10px)',
                     }}>
+                      <button style={{
+                        background: 'rgba(59, 130, 246, 0.2)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        padding: '8px 10px',
+                        transition: 'all 0.2s ease',
+                      }}>
+                        +
+                      </button>
                       <input
                         type="text"
                         placeholder="Écris un message..."
@@ -3901,11 +4075,20 @@ export default function DashboardPage() {
                           flex: 1,
                           padding: '10px 14px',
                           background: currentTheme.cardBg,
-                          border: `1px solid ${currentTheme.border}`,
+                          border: `1.5px solid ${currentTheme.border}`,
                           borderRadius: '10px',
                           color: currentTheme.text,
                           fontSize: '13px',
                           outline: 'none',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = currentTheme.accent;
+                          e.currentTarget.style.boxShadow = `0 0 10px rgba(59, 130, 246, 0.2)`;
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = currentTheme.border;
+                          e.currentTarget.style.boxShadow = 'none';
                         }}
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && messageInput.trim()) {
@@ -3916,20 +4099,21 @@ export default function DashboardPage() {
                       <button
                         onClick={() => setMessageInput('')}
                         style={{
-                          padding: '10px 16px',
-                          background: currentTheme.accent,
+                          padding: '10px 14px',
+                          background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #0ea5e9 100%)`,
                           border: 'none',
                           borderRadius: '10px',
                           color: '#fff',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
+                          fontSize: '16px',
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                          e.currentTarget.style.transform = 'scale(1.05)';
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.background = currentTheme.accent;
+                          e.currentTarget.style.transform = 'scale(1)';
                         }}
                       >
                         Envoyer
@@ -7138,6 +7322,269 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* NOTIFICATIONS SECTION */}
+        {activeTab === 'notifications' && (
+          <div style={{ marginTop: '20px' }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '900',
+              color: currentTheme.text,
+              margin: '0 0 24px 0',
+              letterSpacing: '-0.5px',
+            }}>
+              🔔 Notifications
+            </h2>
+
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {notifications.length === 0 ? (
+                <div style={{
+                  padding: '60px 40px',
+                  textAlign: 'center',
+                  background: currentTheme.cardBg,
+                  borderRadius: '16px',
+                  border: `1px solid ${currentTheme.border}`,
+                }}>
+                  <p style={{ fontSize: '36px', margin: '0 0 16px 0' }}>✨</p>
+                  <p style={{ color: currentTheme.textSecondary, margin: 0 }}>
+                    Aucune notification pour le moment
+                  </p>
+                </div>
+              ) : (
+                notifications.map((notif, idx) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => {
+                      setNotifications(notifications.map(n =>
+                        n.id === notif.id ? { ...n, read: true } : n
+                      ));
+                    }}
+                    style={{
+                      padding: '16px',
+                      background: notif.read ? 'transparent' : `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      borderRadius: '14px',
+                      border: `1.5px solid ${notif.read ? currentTheme.border : 'rgba(59, 130, 246, 0.2)'}`,
+                      backdropFilter: notif.read ? 'none' : 'blur(10px)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      animation: !notif.read ? `fadeInUp 0.5s ease-out ${idx * 0.08}s both` : 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateX(8px)';
+                      if (!notif.read) {
+                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateX(0)';
+                      if (!notif.read) {
+                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                      }
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flex: 1 }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '20px',
+                        flexShrink: 0,
+                        boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)',
+                      }}>
+                        {notif.avatar}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontWeight: '600',
+                          margin: '0 0 4px 0',
+                          fontSize: '14px',
+                        }}>
+                          {notif.user}
+                        </p>
+                        <p style={{
+                          color: currentTheme.textSecondary,
+                          fontSize: '12px',
+                          margin: 0,
+                        }}>
+                          {notif.message}
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        color: currentTheme.textSecondary,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {Math.floor((Date.now() - notif.timestamp.getTime()) / 60000) < 1
+                          ? 'À l\'instant'
+                          : Math.floor((Date.now() - notif.timestamp.getTime()) / 60000) < 60
+                          ? `Il y a ${Math.floor((Date.now() - notif.timestamp.getTime()) / 60000)}min`
+                          : Math.floor((Date.now() - notif.timestamp.getTime()) / 3600000) < 24
+                          ? `Il y a ${Math.floor((Date.now() - notif.timestamp.getTime()) / 3600000)}h`
+                          : `Il y a ${Math.floor((Date.now() - notif.timestamp.getTime()) / 86400000)}j`
+                        }
+                      </span>
+                      {!notif.read && (
+                        <div style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          background: '#3b82f6',
+                          flexShrink: 0,
+                        }} />
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ACTIVITY FEED SECTION */}
+        {activeTab === 'activity' && (
+          <div style={{ marginTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '900',
+                color: currentTheme.text,
+                margin: 0,
+                letterSpacing: '-0.5px',
+              }}>
+                📈 Activité de Mes Amis
+              </h2>
+            </div>
+
+            {/* Filter Buttons */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: 'Tous', emoji: '📊' },
+                { id: 'level_up', label: 'Niveaux', emoji: '⭐' },
+                { id: 'achievement', label: 'Achievements', emoji: '🏆' },
+                { id: 'guild', label: 'Guildes', emoji: '👥' },
+                { id: 'leaderboard', label: 'Classement', emoji: '🎯' },
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setActivityFilter(filter.id)}
+                  style={{
+                    padding: '10px 16px',
+                    background: activityFilter === filter.id
+                      ? `linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)`
+                      : 'transparent',
+                    border: `1.5px solid ${activityFilter === filter.id ? 'rgba(59, 130, 246, 0.3)' : currentTheme.border}`,
+                    borderRadius: '10px',
+                    color: activityFilter === filter.id ? currentTheme.accent : currentTheme.textSecondary,
+                    fontWeight: activityFilter === filter.id ? '600' : '500',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activityFilter !== filter.id) {
+                      e.currentTarget.style.borderColor = currentTheme.accent;
+                      e.currentTarget.style.color = currentTheme.accent;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activityFilter !== filter.id) {
+                      e.currentTarget.style.borderColor = currentTheme.border;
+                      e.currentTarget.style.color = currentTheme.textSecondary;
+                    }
+                  }}
+                >
+                  {filter.emoji} {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Activity Timeline */}
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {activityFeed.map((activity, idx) => (
+                (activityFilter === 'all' || activityFilter === activity.type) && (
+                  <div
+                    key={activity.id}
+                    style={{
+                      padding: '16px',
+                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      borderRadius: '14px',
+                      border: `1.5px solid rgba(59, 130, 246, 0.15)`,
+                      backdropFilter: 'blur(10px)',
+                      display: 'flex',
+                      gap: '14px',
+                      transition: 'all 0.3s ease',
+                      animation: `fadeInUp 0.5s ease-out ${idx * 0.08}s both`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateX(8px)';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateX(0)';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.15)';
+                    }}
+                  >
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                      flexShrink: 0,
+                      boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)',
+                    }}>
+                      {activity.avatar}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{
+                        color: currentTheme.text,
+                        fontWeight: '600',
+                        margin: '0 0 4px 0',
+                        fontSize: '14px',
+                      }}>
+                        {activity.user}
+                      </p>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '13px',
+                        margin: 0,
+                      }}>
+                        {activity.detail}
+                      </p>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      color: currentTheme.textSecondary,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {Math.floor((Date.now() - activity.timestamp.getTime()) / 60000) < 1
+                        ? 'À l\'instant'
+                        : Math.floor((Date.now() - activity.timestamp.getTime()) / 60000) < 60
+                        ? `Il y a ${Math.floor((Date.now() - activity.timestamp.getTime()) / 60000)}min`
+                        : Math.floor((Date.now() - activity.timestamp.getTime()) / 3600000) < 24
+                        ? `Il y a ${Math.floor((Date.now() - activity.timestamp.getTime()) / 3600000)}h`
+                        : `Il y a ${Math.floor((Date.now() - activity.timestamp.getTime()) / 86400000)}j`
+                      }
+                    </span>
+                  </div>
+                )
+              ))}
             </div>
           </div>
         )}
