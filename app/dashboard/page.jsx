@@ -37,27 +37,48 @@ export default function DashboardPage() {
   const [chatMessages, setChatMessages] = useState({}); // { friendCode: [messages] }
   const [messageInput, setMessageInput] = useState('');
   const [selectedGuilde, setSelectedGuilde] = useState(null); // Pour voir les détails d'une guilde
+  const [selectedGuildeTab, setSelectedGuildeTab] = useState('info'); // info, members, chat
   const [userGuildes, setUserGuildes] = useState([]); // Guildes auxquelles l'utilisateur a rejoint
   const [guildMessage, setGuildMessage] = useState(null); // { type: 'success' | 'error', text: string }
+  const [guildChatInput, setGuildChatInput] = useState(''); // Message input pour le chat de guilde
   const [guildes, setGuildes] = useState([
     {
-      id: 1, name: '₿ Crypto Traders', members: 5, description: 'Groupe pour les traders crypto', emoji: '₿',
+      id: 1,
+      name: '₿ Crypto Traders',
+      emoji: '₿',
+      description: 'Groupe pour les traders crypto',
+      level: 8,
+      totalXP: 4200,
       restrictions: { minLevel: 5, requiredBadges: ['crypto_master'] },
       membersList: [
-        { name: 'Alice Dupont', level: 5, role: 'Fondatrice' },
-        { name: 'Bob Martin', level: 8, role: 'Modérateur' },
-        { name: 'David Lemoine', level: 6, role: 'Membre' },
-        { name: 'Emma Leclerc', level: 9, role: 'Membre' },
-        { name: 'Clara Rousseau', level: 3, role: 'Membre' },
+        { id: 1, name: 'Alice Dupont', level: 5, role: 'Leader', joinedDate: '2026-01-15' },
+        { id: 2, name: 'Bob Martin', level: 8, role: 'Co-leader', joinedDate: '2026-02-10' },
+        { id: 3, name: 'David Lemoine', level: 6, role: 'Elder', joinedDate: '2026-03-05' },
+        { id: 4, name: 'Emma Leclerc', level: 9, role: 'Member', joinedDate: '2026-03-20' },
+        { id: 5, name: 'Clara Rousseau', level: 3, role: 'Member', joinedDate: '2026-04-01' },
+      ],
+      chat: [
+        { id: 1, author: 'Alice Dupont', message: 'Bienvenue à tous!', timestamp: '2026-09-20 10:15' },
+        { id: 2, author: 'Bob Martin', message: 'Complétez vos domaines pour débloquer les perks!', timestamp: '2026-09-20 11:30' },
+        { id: 3, author: 'David Lemoine', message: 'Qui veut participer à la quête cette semaine?', timestamp: '2026-09-20 14:45' },
       ]
     },
     {
-      id: 2, name: '📈 Stock Masters', members: 3, description: 'Investisseurs en bourse', emoji: '📈',
+      id: 2,
+      name: '📈 Stock Masters',
+      emoji: '📈',
+      description: 'Investisseurs en bourse',
+      level: 5,
+      totalXP: 2800,
       restrictions: { minLevel: 4, minStocksProgress: 60 },
       membersList: [
-        { name: 'Emma Leclerc', level: 9, role: 'Fondatrice' },
-        { name: 'Bob Martin', level: 8, role: 'Membre' },
-        { name: 'David Lemoine', level: 6, role: 'Membre' },
+        { id: 6, name: 'Emma Leclerc', level: 9, role: 'Leader', joinedDate: '2026-02-01' },
+        { id: 2, name: 'Bob Martin', level: 8, role: 'Member', joinedDate: '2026-02-15' },
+        { id: 3, name: 'David Lemoine', level: 6, role: 'Member', joinedDate: '2026-03-01' },
+      ],
+      chat: [
+        { id: 1, author: 'Emma Leclerc', message: 'Bienvenue!', timestamp: '2026-09-20 09:00' },
+        { id: 2, author: 'Bob Martin', message: 'Analyse tech du jour?', timestamp: '2026-09-20 13:20' },
       ]
     },
   ]);
@@ -3310,6 +3331,39 @@ export default function DashboardPage() {
                 </p>
               </div>
 
+              {/* Tabs */}
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '20px',
+                borderBottom: `1px solid ${currentTheme.border}`,
+              }}>
+                {['info', 'members', 'chat'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setSelectedGuildeTab(tab)}
+                    style={{
+                      padding: '10px 16px',
+                      background: 'none',
+                      border: 'none',
+                      color: selectedGuildeTab === tab ? currentTheme.accent : currentTheme.textSecondary,
+                      fontWeight: selectedGuildeTab === tab ? '700' : '500',
+                      cursor: 'pointer',
+                      borderBottom: selectedGuildeTab === tab ? `2px solid ${currentTheme.accent}` : 'none',
+                      fontSize: '13px',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {tab === 'info' && 'ℹ️ Info'}
+                    {tab === 'members' && '👥 Membres'}
+                    {tab === 'chat' && '💬 Chat'}
+                  </button>
+                ))}
+              </div>
+
+              {/* TAB: Info */}
+              {selectedGuildeTab === 'info' && (
+                <>
               {/* Description */}
               <div style={{ marginBottom: '24px' }}>
                 <p style={{
@@ -3375,7 +3429,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Members List */}
+              {/* Guild Level & XP */}
               <div style={{ marginBottom: '24px' }}>
                 <p style={{
                   fontSize: '12px',
@@ -3385,55 +3439,227 @@ export default function DashboardPage() {
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                 }}>
-                  👥 Membres ({selectedGuilde.membersList?.length || 0})
+                  ⬆️ Progression de Guilde
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {selectedGuilde.membersList?.map((member, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '10px',
-                        background: 'rgba(59, 130, 246, 0.05)',
-                        borderRadius: '8px',
-                        border: `1px solid ${currentTheme.border}`,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div>
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.text,
-                          margin: 0,
-                        }}>
-                          {member.name}
-                        </p>
-                        <p style={{
-                          fontSize: '11px',
-                          color: currentTheme.textSecondary,
-                          margin: '2px 0 0 0',
-                        }}>
-                          Niveau {Math.floor(Math.random() * 10) + 1}
-                        </p>
-                      </div>
-                      <span style={{
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        color: member.role === 'Fondatrice' ? '#fbbf24' : member.role === 'Modérateur' ? '#60a5fa' : currentTheme.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        padding: '4px 8px',
-                        background: member.role === 'Fondatrice' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Modérateur' ? 'rgba(96, 165, 250, 0.1)' : 'rgba(0,0,0,0.1)',
-                        borderRadius: '4px',
-                      }}>
-                        {member.role}
-                      </span>
-                    </div>
-                  ))}
+                <div style={{
+                  padding: '12px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: '8px',
+                  border: `1px solid rgba(59, 130, 246, 0.3)`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ color: currentTheme.text, fontWeight: '600' }}>Niveau {selectedGuilde.level}</span>
+                    <span style={{ color: currentTheme.textSecondary, fontSize: '12px' }}>{selectedGuilde.totalXP} XP</span>
+                  </div>
+                  <div style={{
+                    width: '100%',
+                    height: '8px',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      width: `${(selectedGuilde.level / 20) * 100}%`,
+                      height: '100%',
+                      background: `linear-gradient(90deg, ${currentTheme.accent}, #8b5cf6)`,
+                      transition: 'width 0.3s ease',
+                    }} />
+                  </div>
+                  <p style={{
+                    fontSize: '11px',
+                    color: currentTheme.textSecondary,
+                    margin: '8px 0 0 0',
+                  }}>
+                    Niveau max: 20
+                  </p>
                 </div>
               </div>
+              </>
+              )}
+
+              {/* TAB: Members List */}
+              {selectedGuildeTab === 'members' && (
+                <div style={{ marginBottom: '24px' }}>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 10px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    👥 Membres ({selectedGuilde.membersList?.length || 0})
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {selectedGuilde.membersList?.map((member, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '10px',
+                          background: 'rgba(59, 130, 246, 0.05)',
+                          borderRadius: '8px',
+                          border: `1px solid ${currentTheme.border}`,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: currentTheme.text,
+                            margin: 0,
+                          }}>
+                            {member.name}
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: currentTheme.textSecondary,
+                            margin: '2px 0 0 0',
+                          }}>
+                            Niveau {member.level} • Rejoint: {member.joinedDate}
+                          </p>
+                        </div>
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          padding: '4px 8px',
+                          background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
+                          borderRadius: '4px',
+                        }}>
+                          {member.role}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: Chat */}
+              {selectedGuildeTab === 'chat' && (
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    maxHeight: '250px',
+                    overflowY: 'auto',
+                    marginBottom: '12px',
+                  }}>
+                    {selectedGuilde.chat?.map((msg) => (
+                      <div
+                        key={msg.id}
+                        style={{
+                          padding: '8px 10px',
+                          background: 'rgba(59, 130, 246, 0.05)',
+                          borderRadius: '8px',
+                          border: `1px solid ${currentTheme.border}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '600', color: currentTheme.text }}>
+                            {msg.author}
+                          </span>
+                          <span style={{ fontSize: '10px', color: currentTheme.textSecondary }}>
+                            {msg.timestamp}
+                          </span>
+                        </div>
+                        <p style={{
+                          fontSize: '12px',
+                          color: currentTheme.text,
+                          margin: 0,
+                          wordBreak: 'break-word',
+                        }}>
+                          {msg.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {userGuildes.includes(selectedGuilde.id) && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        placeholder="Envoyer un message..."
+                        value={guildChatInput}
+                        onChange={(e) => setGuildChatInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && guildChatInput.trim()) {
+                            const newMessage = {
+                              id: selectedGuilde.chat.length + 1,
+                              author: 'SMC.SRB',
+                              message: guildChatInput,
+                              timestamp: new Date().toLocaleString(),
+                            };
+                            setGuildes(guildes.map(g =>
+                              g.id === selectedGuilde.id
+                                ? { ...g, chat: [...g.chat, newMessage] }
+                                : g
+                            ));
+                            setGuildChatInput('');
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '8px 10px',
+                          background: 'rgba(0, 0, 0, 0.2)',
+                          border: `1px solid ${currentTheme.border}`,
+                          borderRadius: '6px',
+                          color: currentTheme.text,
+                          fontSize: '12px',
+                          outline: 'none',
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (guildChatInput.trim()) {
+                            const newMessage = {
+                              id: selectedGuilde.chat.length + 1,
+                              author: 'SMC.SRB',
+                              message: guildChatInput,
+                              timestamp: new Date().toLocaleString(),
+                            };
+                            setGuildes(guildes.map(g =>
+                              g.id === selectedGuilde.id
+                                ? { ...g, chat: [...g.chat, newMessage] }
+                                : g
+                            ));
+                            setGuildChatInput('');
+                          }
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          background: currentTheme.accent,
+                          border: 'none',
+                          borderRadius: '6px',
+                          color: '#fff',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                        }}
+                      >
+                        📤 Envoyer
+                      </button>
+                    </div>
+                  )}
+
+                  {!userGuildes.includes(selectedGuilde.id) && (
+                    <p style={{
+                      fontSize: '12px',
+                      color: currentTheme.textSecondary,
+                      textAlign: 'center',
+                      padding: '12px',
+                    }}>
+                      Rejoins la guilde pour participer au chat
+                    </p>
+                  )}
+                </div>
+              )}
+
 
               {/* Eligibility Check */}
               <div style={{
