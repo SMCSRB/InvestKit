@@ -31,18 +31,41 @@ export default function DashboardPage() {
   const [academyNotifications, setAcademyNotifications] = useState(true);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [friendsTab, setFriendsTab] = useState('friends'); // friends, search, pending
+  const [friendsTab, setFriendsTab] = useState('friends'); // friends, search, pending, leaderboard
+  const [selectedFriendProfile, setSelectedFriendProfile] = useState(null); // Pour voir le profil d'un ami
 
-  // Mock users database
+  // Mock users database with detailed profiles
   const [availableUsers] = useState([
-    { friendCode: '#ABC123', name: 'Alice Dupont', level: 5, xp: 2500, avatar: '👩‍💼' },
-    { friendCode: '#XYZ789', name: 'Bob Martin', level: 8, xp: 4200, avatar: '👨‍💻' },
-    { friendCode: '#DEF456', name: 'Clara Rousseau', level: 3, xp: 1500, avatar: '👩‍🎓' },
-    { friendCode: '#GHI321', name: 'David Lemoine', level: 6, xp: 3100, avatar: '👨‍🎯' },
-    { friendCode: '#JKL654', name: 'Emma Leclerc', level: 9, xp: 5000, avatar: '👩‍💰' },
-    { friendCode: '#MNO987', name: 'Franck Blanc', level: 4, xp: 2000, avatar: '👨‍🎨' },
-    { friendCode: '#PQR321', name: 'Gabrielle Noir', level: 7, xp: 3800, avatar: '👩‍⚖️' },
-    { friendCode: '#STU654', name: 'Henri Dubois', level: 5, xp: 2200, avatar: '👨‍🔬' },
+    {
+      friendCode: '#ABC123', name: 'Alice Dupont', level: 5, xp: 2500, avatar: '👩‍💼',
+      completedDomains: ['crypto', 'stocks'], domainsProgress: { crypto: 100, stocks: 60, realestate: 30 },
+      badges: ['first_blood', 'perfect', 'no_mistakes'],
+      portfolio: 15000, bio: 'Investisseuse en crypto passionnée'
+    },
+    {
+      friendCode: '#XYZ789', name: 'Bob Martin', level: 8, xp: 4200, avatar: '👨‍💻',
+      completedDomains: ['crypto', 'stocks', 'bonds'], domainsProgress: { crypto: 100, stocks: 100, bonds: 75, realestate: 40 },
+      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master'],
+      portfolio: 32000, bio: 'Trader expérimenté, focus sur l\'analyse technique'
+    },
+    {
+      friendCode: '#DEF456', name: 'Clara Rousseau', level: 3, xp: 1500, avatar: '👩‍🎓',
+      completedDomains: ['crypto'], domainsProgress: { crypto: 45, stocks: 10 },
+      badges: ['first_blood'],
+      portfolio: 5000, bio: 'Débutante mais motivée !'
+    },
+    {
+      friendCode: '#GHI321', name: 'David Lemoine', level: 6, xp: 3100, avatar: '👨‍🎯',
+      completedDomains: ['crypto', 'realestate'], domainsProgress: { crypto: 100, realestate: 85, stocks: 50 },
+      badges: ['first_blood', 'perfect'],
+      portfolio: 28000, bio: 'Spécialiste en immobilier'
+    },
+    {
+      friendCode: '#JKL654', name: 'Emma Leclerc', level: 9, xp: 5000, avatar: '👩‍💰',
+      completedDomains: ['crypto', 'stocks', 'bonds', 'realestate'], domainsProgress: { crypto: 100, stocks: 100, bonds: 100, realestate: 95 },
+      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
+      portfolio: 55000, bio: 'Expert en gestion de portefeuille diversifié'
+    },
   ]);
 
   const searchUsers = availableUsers.filter(
@@ -1594,6 +1617,7 @@ export default function DashboardPage() {
               }}>
                 {[
                   { id: 'friends', label: `Amis (${userData.friends.length})` },
+                  { id: 'leaderboard', label: '🏆 Classement' },
                   { id: 'search', label: '🔍 Chercher' },
                   { id: 'pending', label: `📩 Demandes (${userData.friendRequests.received.length})` },
                 ].map((tab) => (
@@ -1672,6 +1696,142 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
+
+            {/* Leaderboard Section */}
+            {friendsTab === 'leaderboard' && (
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 20px 0',
+                }}>
+                  🏆 Classement de tes Amis
+                </h3>
+
+                {userData.friends.length === 0 ? (
+                  <div style={{
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: currentTheme.cardBg,
+                    borderRadius: '16px',
+                    border: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <p style={{
+                      fontSize: '16px',
+                      color: currentTheme.textSecondary,
+                      margin: 0,
+                    }}>
+                      Ajoute des amis pour voir le classement !
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {/* Classement par XP */}
+                    <div>
+                      <p style={{
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: currentTheme.textSecondary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        margin: '0 0 12px 0',
+                      }}>
+                        Par XP
+                      </p>
+                      {[...userData.friends]
+                        .sort((a, b) => {
+                          const aXP = availableUsers.find(u => u.friendCode === a.friendCode)?.xp || 0;
+                          const bXP = availableUsers.find(u => u.friendCode === b.friendCode)?.xp || 0;
+                          return bXP - aXP;
+                        })
+                        .map((friend, idx) => {
+                          const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
+                          const myXP = progress.totalXP || 0;
+                          const isHigher = (friendData?.xp || 0) > myXP;
+
+                          return (
+                            <div
+                              key={friend.userId}
+                              onClick={() => setSelectedFriendProfile(friendData)}
+                              style={{
+                                padding: '14px',
+                                background: currentTheme.cardBg,
+                                borderRadius: '12px',
+                                border: `1px solid ${currentTheme.border}`,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                                e.currentTarget.style.borderColor = currentTheme.accent;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = currentTheme.cardBg;
+                                e.currentTarget.style.borderColor = currentTheme.border;
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                                <div style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '50%',
+                                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '18px',
+                                  fontWeight: '700',
+                                  color: '#fff',
+                                }}>
+                                  {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <p style={{
+                                    color: currentTheme.text,
+                                    fontWeight: '600',
+                                    margin: '0 0 2px 0',
+                                    fontSize: '14px',
+                                  }}>
+                                    {friendData?.name}
+                                  </p>
+                                  <p style={{
+                                    color: currentTheme.textSecondary,
+                                    fontSize: '11px',
+                                    margin: 0,
+                                  }}>
+                                    Niveau {friendData?.level}
+                                  </p>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <p style={{
+                                  fontSize: '16px',
+                                  fontWeight: '700',
+                                  color: isHigher ? '#f59e0b' : '#10b981',
+                                  margin: '0 0 4px 0',
+                                }}>
+                                  {friendData?.xp} XP
+                                </p>
+                                <p style={{
+                                  fontSize: '11px',
+                                  color: isHigher ? '#f59e0b' : '#10b981',
+                                  margin: 0,
+                                }}>
+                                  {isHigher ? '↑ Plus que toi' : '↓ Tu le dépasses'}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Search Section */}
             {friendsTab === 'search' && (
@@ -2074,6 +2234,294 @@ export default function DashboardPage() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Friend Profile Modal */}
+        {selectedFriendProfile && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}>
+            <div style={{
+              background: currentTheme.cardBg,
+              borderRadius: '20px',
+              border: `1px solid ${currentTheme.border}`,
+              padding: '32px',
+              maxWidth: '500px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              position: 'relative',
+            }}>
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedFriendProfile(null)}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  color: currentTheme.text,
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+
+              {/* Profile Header */}
+              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '40px',
+                  margin: '0 auto 16px',
+                }}>
+                  {selectedFriendProfile.avatar}
+                </div>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: '800',
+                  color: currentTheme.text,
+                  margin: '0 0 4px 0',
+                }}>
+                  {selectedFriendProfile.name}
+                </h2>
+                <p style={{
+                  fontSize: '12px',
+                  color: currentTheme.textSecondary,
+                  margin: '0 0 12px 0',
+                  fontFamily: 'monospace',
+                }}>
+                  {selectedFriendProfile.friendCode}
+                </p>
+                <p style={{
+                  fontSize: '14px',
+                  color: currentTheme.textSecondary,
+                  margin: 0,
+                  fontStyle: 'italic',
+                }}>
+                  {selectedFriendProfile.bio}
+                </p>
+              </div>
+
+              {/* Stats Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                marginBottom: '24px',
+              }}>
+                <div style={{
+                  padding: '16px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: '12px',
+                  border: `1px solid ${currentTheme.border}`,
+                  textAlign: 'center',
+                }}>
+                  <p style={{
+                    fontSize: '28px',
+                    fontWeight: '900',
+                    color: currentTheme.accent,
+                    margin: '0 0 4px 0',
+                  }}>
+                    {selectedFriendProfile.level}
+                  </p>
+                  <p style={{
+                    fontSize: '11px',
+                    color: currentTheme.textSecondary,
+                    margin: 0,
+                    textTransform: 'uppercase',
+                    fontWeight: '600',
+                  }}>
+                    Niveau
+                  </p>
+                </div>
+                <div style={{
+                  padding: '16px',
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  borderRadius: '12px',
+                  border: `1px solid ${currentTheme.border}`,
+                  textAlign: 'center',
+                }}>
+                  <p style={{
+                    fontSize: '28px',
+                    fontWeight: '900',
+                    color: '#8b5cf6',
+                    margin: '0 0 4px 0',
+                  }}>
+                    {selectedFriendProfile.xp}
+                  </p>
+                  <p style={{
+                    fontSize: '11px',
+                    color: currentTheme.textSecondary,
+                    margin: 0,
+                    textTransform: 'uppercase',
+                    fontWeight: '600',
+                  }}>
+                    XP Total
+                  </p>
+                </div>
+              </div>
+
+              {/* Domains Progress */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  color: currentTheme.text,
+                  margin: '0 0 12px 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  📚 Progression Académie
+                </h3>
+                {Object.entries(selectedFriendProfile.domainsProgress).map(([domain, progress]) => (
+                  <div key={domain} style={{ marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.text,
+                        margin: 0,
+                        textTransform: 'capitalize',
+                      }}>
+                        {domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto'}
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: currentTheme.accent,
+                        margin: 0,
+                      }}>
+                        {progress}%
+                      </p>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '6px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '3px',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        width: `${progress}%`,
+                        height: '100%',
+                        background: `linear-gradient(90deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                        transition: 'width 0.3s ease',
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Badges */}
+              {selectedFriendProfile.badges.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    🏅 Badges
+                  </h3>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(50px, 1fr))',
+                    gap: '8px',
+                  }}>
+                    {selectedFriendProfile.badges.map((badge, idx) => {
+                      const badgeEmojis = {
+                        first_blood: '🩸',
+                        perfect: '💯',
+                        no_mistakes: '🎯',
+                        crypto_master: '₿',
+                        stocks_master: '📈',
+                      };
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '12px',
+                            background: 'rgba(245, 158, 11, 0.1)',
+                            borderRadius: '8px',
+                            border: `1px solid rgba(245, 158, 11, 0.3)`,
+                            textAlign: 'center',
+                            fontSize: '24px',
+                          }}
+                          title={badge}
+                        >
+                          {badgeEmojis[badge] || '⭐'}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                <button
+                  style={{
+                    padding: '12px 16px',
+                    background: currentTheme.accent,
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = currentTheme.accent;
+                  }}
+                >
+                  💬 Message
+                </button>
+                <button
+                  style={{
+                    padding: '12px 16px',
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    border: `1px solid ${currentTheme.accent}`,
+                    borderRadius: '10px',
+                    color: currentTheme.accent,
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                  }}
+                >
+                  🎯 Défi
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
