@@ -16,6 +16,8 @@ export default function DashboardPage() {
   const [newsModalTab, setNewsModalTab] = useState('news');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [settingsTab, setSettingsTab] = useState('general');
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const theme = {
     dark: {
@@ -157,7 +159,30 @@ export default function DashboardPage() {
     if (savedTheme === 'light') {
       setIsDarkMode(false);
     }
+
+    // Load profile photo
+    const savedPhoto = typeof window !== 'undefined' ? localStorage.getItem('profilePhoto') : null;
+    if (savedPhoto) {
+      setPhotoPreview(savedPhoto);
+    }
   }, [router]);
+
+  // Handle photo upload
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result;
+        setPhotoPreview(base64);
+        setProfilePhoto(file);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('profilePhoto', base64);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Save theme preference
   const toggleTheme = () => {
@@ -249,15 +274,24 @@ export default function DashboardPage() {
           <div style={{
             width: '60px',
             height: '60px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            background: photoPreview ? 'transparent' : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
             borderRadius: '12px',
             marginBottom: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '28px',
+            overflow: 'hidden',
           }}>
-            👤
+            {photoPreview ? (
+              <img src={photoPreview} alt="Profile" style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }} />
+            ) : (
+              '👤'
+            )}
           </div>
           <h3 style={{
             fontSize: '16px',
@@ -1585,6 +1619,74 @@ export default function DashboardPage() {
                     }}>
                       📊 Voir profil complet →
                     </a>
+                  </div>
+
+                  {/* Profile Photo Upload */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    paddingBottom: '16px',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                    alignItems: 'center',
+                  }}>
+                    <div style={{
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '12px',
+                      background: currentTheme.border,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      fontSize: '40px',
+                    }}>
+                      {photoPreview ? (
+                        <img src={photoPreview} alt="Profile" style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }} />
+                      ) : (
+                        '👤'
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'grid',
+                      gap: '8px',
+                      flex: 1,
+                    }}>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        marginBottom: '0px',
+                      }}>
+                        Photo de Profil
+                      </label>
+                      <p style={{
+                        fontSize: '12px',
+                        color: currentTheme.textSecondary,
+                        margin: '0 0 8px 0',
+                      }}>
+                        Cliquez pour uploader une photo (JPG, PNG)
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        style={{
+                          padding: '8px 12px',
+                          background: currentTheme.border,
+                          border: `1px solid ${currentTheme.border}`,
+                          borderRadius: '8px',
+                          color: currentTheme.text,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {/* Profile Info */}
