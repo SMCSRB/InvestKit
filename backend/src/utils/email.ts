@@ -107,25 +107,26 @@ export const sendVerificationEmail = async (
   verificationCode: string
 ) => {
   try {
+    await initEmailTransporter(); // Initialize first
     const provider = getEmailProvider();
     const htmlContent = generateVerificationEmailHTML(firstName, verificationCode);
 
     // Send via Resend
     if (provider === 'resend' && resendClient) {
       console.log(`📨 Sending verification email via Resend to ${email}...`);
-      const result = await resendClient.emails.send({
-        from: 'InvestKit <noreply@investkit.com>',
-        to: email,
-        subject: 'Vérifiez votre adresse email - InvestKit',
-        html: htmlContent,
-      });
+      try {
+        const result = await resendClient.emails.send({
+          from: 'onboarding@resend.dev',
+          to: email,
+          subject: 'Vérifiez votre adresse email - InvestKit',
+          html: htmlContent,
+        });
 
-      if (result.error) {
-        throw new Error(result.error.message);
+        console.log(`✅ Email sent successfully to ${email}`);
+        return result;
+      } catch (resendError: any) {
+        throw new Error(`Resend error: ${resendError.message}`);
       }
-
-      console.log(`✅ Email sent successfully to ${email} (Resend ID: ${result.data.id})`);
-      return result.data;
     }
 
     // Send via Nodemailer (Ethereal or SMTP)
