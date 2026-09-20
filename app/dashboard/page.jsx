@@ -1297,6 +1297,16 @@ export default function DashboardPage() {
         .badge-rare { filter: drop-shadow(0 0 8px rgba(139, 69, 19, 0.6)); }
         .badge-very-rare { filter: drop-shadow(0 0 12px rgba(218, 165, 32, 0.8)); }
         .badge-unique { filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1)); animation: rainbowShift 3s linear infinite; }
+        .profile-section {
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          padding-top: 16px;
+          margin-top: 16px;
+        }
+        .profile-section:first-child {
+          border-top: none;
+          padding-top: 0;
+          margin-top: 0;
+        }
       `}</style>
 
       {/* SIDEBAR TOGGLE BUTTON */}
@@ -1460,7 +1470,7 @@ export default function DashboardPage() {
 
               {/* Badge Showcase - Display Pinned Badges */}
               {pinnedBadges.length > 0 && (
-                <div style={{
+                <div className="profile-section" style={{
                   background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(236, 72, 153, 0.1) 100%)',
                   border: '2px solid rgba(251, 191, 36, 0.3)',
                   borderRadius: '14px',
@@ -1573,6 +1583,7 @@ export default function DashboardPage() {
               )}
 
               {/* Badges Stack - Display Selected Badges with Enhanced Animations */}
+              <div className="profile-section" style={{ display: selectedDisplayBadges.length > 0 ? 'block' : 'none' }}>
               {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
                 const badge = badgeDefinitions[badgeId];
                 if (!badge) return null;
@@ -1719,13 +1730,14 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
+              </div>
             </div>
 
             {/* Nearly Unlocked Badges Progress */}
             {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
               progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
             ).length > 0 && (
-              <div style={{
+              <div className="profile-section" style={{
                 background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%)',
                 border: '2px solid rgba(168, 85, 247, 0.3)',
                 borderRadius: '14px',
@@ -1856,7 +1868,7 @@ export default function DashboardPage() {
             )}
 
             {/* User Info */}
-            <div>
+            <div className="profile-section">
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
