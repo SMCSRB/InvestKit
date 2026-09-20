@@ -20,6 +20,10 @@ export default function GuildPage() {
   const [memberActionMenu, setMemberActionMenu] = useState(null);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
+  const [adminLogs, setAdminLogs] = useState([]);
+  const [editingGuilde, setEditingGuilde] = useState(null);
+  const [tempGuildeData, setTempGuildeData] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(null);
 
   // Load guildes from localStorage
   useEffect(() => {
@@ -34,6 +38,14 @@ export default function GuildPage() {
           setSelectedGuilde(guilde);
           setPinnedMessages(guilde.pinnedMessages || []);
           setActivityLog(guilde.activityLog || []);
+          setAdminLogs(guilde.adminLogs || []);
+          setTempGuildeData({
+            name: guilde.name,
+            emoji: guilde.emoji,
+            description: guilde.description,
+            minLevel: guilde.restrictions?.minLevel || 1,
+            domainRequirements: guilde.restrictions?.domainRequirements || {},
+          });
         }
       }
     } catch (error) {
@@ -81,6 +93,86 @@ export default function GuildPage() {
         ? { ...g, activityLog: updatedActivity }
         : g
     )));
+  };
+
+  const addAdminLog = (action, targetUser = null, details = '') => {
+    const newLog = {
+      id: Math.random(),
+      action,
+      targetUser,
+      details,
+      timestamp: new Date(),
+    };
+    const updatedLogs = [newLog, ...adminLogs];
+    setAdminLogs(updatedLogs);
+    setGuildes(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, adminLogs: updatedLogs }
+        : g
+    ));
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, adminLogs: updatedLogs }
+        : g
+    )));
+  };
+
+  const kickMember = (member) => {
+    const updatedMembers = selectedGuilde.membersList.filter(m => m.id !== member.id);
+    setSelectedGuilde({ ...selectedGuilde, membersList: updatedMembers });
+    setGuildes(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, membersList: updatedMembers }
+        : g
+    ));
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, membersList: updatedMembers }
+        : g
+    )));
+    addAdminLog('kick', member.name, `${member.name} a été expulsé`);
+    addActivity('join', `${member.name} a été expulsé de la guilde 🚪`);
+  };
+
+  const promoteMember = (member, newRole) => {
+    const updatedMembers = selectedGuilde.membersList.map(m =>
+      m.id === member.id ? { ...m, role: newRole } : m
+    );
+    setSelectedGuilde({ ...selectedGuilde, membersList: updatedMembers });
+    setGuildes(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, membersList: updatedMembers }
+        : g
+    ));
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, membersList: updatedMembers }
+        : g
+    )));
+    addAdminLog('promote', member.name, `Promu en ${newRole}`);
+    addActivity('level', `${member.name} a été promu ${newRole} ⬆️`);
+  };
+
+  const updateGuildeSettings = () => {
+    const updatedGuilde = {
+      ...selectedGuilde,
+      name: tempGuildeData.name,
+      emoji: tempGuildeData.emoji,
+      description: tempGuildeData.description,
+      restrictions: {
+        minLevel: tempGuildeData.minLevel,
+        domainRequirements: tempGuildeData.domainRequirements,
+      },
+    };
+    setSelectedGuilde(updatedGuilde);
+    setGuildes(guildes.map(g =>
+      g.id === selectedGuilde.id ? updatedGuilde : g
+    ));
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id ? updatedGuilde : g
+    )));
+    setEditingGuilde(false);
+    addAdminLog('settings', null, 'Paramètres de la guilde modifiés');
   };
 
   const theme = {
@@ -239,6 +331,7 @@ export default function GuildPage() {
             { id: 'stats', label: '📈 Stats', icon: '📈' },
             { id: 'activity', label: '📊 Activité', icon: '📊' },
             { id: 'chat', label: '💬 Chat', icon: '💬' },
+            ...(isLeader ? [{ id: 'admin', label: '⚙️ Admin', icon: '⚙️' }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
@@ -816,6 +909,642 @@ export default function GuildPage() {
                 );
               })
             )}
+          </div>
+        )}
+
+        {activeTab === 'admin' && isLeader && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '24px',
+          }}>
+            {/* Gestion des Membres */}
+            <div style={{
+              padding: '20px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+            }}>
+              <h2 style={{
+                color: currentTheme.text,
+                fontWeight: '700',
+                fontSize: '16px',
+                margin: '0 0 16px 0',
+              }}>
+                👥 Gestion des Membres
+              </h2>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                maxHeight: '400px',
+                overflowY: 'auto',
+              }}>
+                {selectedGuilde.membersList?.map((member) => (
+                  <div
+                    key={member.id}
+                    style={{
+                      padding: '12px',
+                      background: 'rgba(0,0,0,0.2)',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <p style={{
+                        color: currentTheme.text,
+                        fontWeight: '600',
+                        fontSize: '13px',
+                        margin: '0 0 2px 0',
+                      }}>
+                        {member.name}
+                      </p>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '11px',
+                        margin: 0,
+                      }}>
+                        {member.role}
+                      </p>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      gap: '6px',
+                    }}>
+                      {member.role !== 'Leader' && (
+                        <>
+                          {member.role !== 'Co-leader' && (
+                            <button
+                              onClick={() => {
+                                setShowConfirmDialog({
+                                  action: 'promote',
+                                  member,
+                                  newRole: 'Co-leader',
+                                });
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                background: 'rgba(96, 165, 250, 0.2)',
+                                border: '1px solid rgba(96, 165, 250, 0.4)',
+                                borderRadius: '4px',
+                                color: '#60a5fa',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                              }}
+                            >
+                              Co-L
+                            </button>
+                          )}
+                          {member.role !== 'Elder' && (
+                            <button
+                              onClick={() => {
+                                setShowConfirmDialog({
+                                  action: 'promote',
+                                  member,
+                                  newRole: 'Elder',
+                                });
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                background: 'rgba(129, 140, 248, 0.2)',
+                                border: '1px solid rgba(129, 140, 248, 0.4)',
+                                borderRadius: '4px',
+                                color: '#818cf8',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                              }}
+                            >
+                              Elder
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setShowConfirmDialog({
+                                action: 'kick',
+                                member,
+                              });
+                            }}
+                            style={{
+                              padding: '4px 8px',
+                              background: 'rgba(239, 68, 68, 0.2)',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              borderRadius: '4px',
+                              color: '#ef4444',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              fontSize: '10px',
+                            }}
+                          >
+                            Kick
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Personnalisation */}
+            <div style={{
+              padding: '20px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+            }}>
+              <h2 style={{
+                color: currentTheme.text,
+                fontWeight: '700',
+                fontSize: '16px',
+                margin: '0 0 16px 0',
+              }}>
+                ✏️ Personnalisation
+              </h2>
+              {!editingGuilde ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}>
+                  <div>
+                    <p style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '11px',
+                      margin: '0 0 4px 0',
+                      textTransform: 'uppercase',
+                    }}>
+                      Nom
+                    </p>
+                    <p style={{
+                      color: currentTheme.text,
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      margin: 0,
+                    }}>
+                      {selectedGuilde.name}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '11px',
+                      margin: '0 0 4px 0',
+                      textTransform: 'uppercase',
+                    }}>
+                      Emoji
+                    </p>
+                    <p style={{
+                      fontSize: '28px',
+                      margin: 0,
+                    }}>
+                      {selectedGuilde.emoji}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '11px',
+                      margin: '0 0 4px 0',
+                      textTransform: 'uppercase',
+                    }}>
+                      Description
+                    </p>
+                    <p style={{
+                      color: currentTheme.text,
+                      fontSize: '13px',
+                      lineHeight: '1.4',
+                      margin: 0,
+                    }}>
+                      {selectedGuilde.description}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setEditingGuilde(true)}
+                    style={{
+                      padding: '10px 16px',
+                      background: currentTheme.accent,
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      marginTop: '8px',
+                    }}
+                  >
+                    Modifier
+                  </button>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}>
+                  <div>
+                    <label style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      display: 'block',
+                      marginBottom: '4px',
+                    }}>
+                      Nom
+                    </label>
+                    <input
+                      type="text"
+                      value={tempGuildeData?.name || ''}
+                      onChange={(e) => setTempGuildeData({
+                        ...tempGuildeData,
+                        name: e.target.value,
+                      })}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '6px',
+                        color: currentTheme.text,
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      display: 'block',
+                      marginBottom: '4px',
+                    }}>
+                      Emoji
+                    </label>
+                    <input
+                      type="text"
+                      maxLength="2"
+                      value={tempGuildeData?.emoji || ''}
+                      onChange={(e) => setTempGuildeData({
+                        ...tempGuildeData,
+                        emoji: e.target.value,
+                      })}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '6px',
+                        color: currentTheme.text,
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      display: 'block',
+                      marginBottom: '4px',
+                    }}>
+                      Description
+                    </label>
+                    <textarea
+                      value={tempGuildeData?.description || ''}
+                      onChange={(e) => setTempGuildeData({
+                        ...tempGuildeData,
+                        description: e.target.value,
+                      })}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '6px',
+                        color: currentTheme.text,
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        minHeight: '60px',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                  }}>
+                    <button
+                      onClick={updateGuildeSettings}
+                      style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        background: currentTheme.accent,
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}
+                    >
+                      Sauvegarder
+                    </button>
+                    <button
+                      onClick={() => setEditingGuilde(false)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Gestion des Règles */}
+            <div style={{
+              padding: '20px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+            }}>
+              <h2 style={{
+                color: currentTheme.text,
+                fontWeight: '700',
+                fontSize: '16px',
+                margin: '0 0 16px 0',
+              }}>
+                🔒 Règles d'Accès
+              </h2>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}>
+                <div>
+                  <label style={{
+                    color: currentTheme.textSecondary,
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: '6px',
+                  }}>
+                    Niveau Minimum: {tempGuildeData?.minLevel}
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="50"
+                    value={tempGuildeData?.minLevel || 1}
+                    onChange={(e) => setTempGuildeData({
+                      ...tempGuildeData,
+                      minLevel: parseInt(e.target.value),
+                    })}
+                    style={{
+                      width: '100%',
+                    }}
+                  />
+                </div>
+                <div>
+                  <p style={{
+                    color: currentTheme.textSecondary,
+                    fontSize: '11px',
+                    textTransform: 'uppercase',
+                    margin: '0 0 8px 0',
+                  }}>
+                    Domaines Requis
+                  </p>
+                  {['realestate', 'crypto', 'stocks', 'bonds'].map((domain) => {
+                    const domainLabel = domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto';
+                    return (
+                      <div key={domain} style={{ marginBottom: '8px' }}>
+                        <label style={{
+                          color: currentTheme.text,
+                          fontSize: '12px',
+                          marginBottom: '4px',
+                          display: 'block',
+                        }}>
+                          {domainLabel}: {tempGuildeData?.domainRequirements?.[domain] || 0}%
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="10"
+                          value={tempGuildeData?.domainRequirements?.[domain] || 0}
+                          onChange={(e) => setTempGuildeData({
+                            ...tempGuildeData,
+                            domainRequirements: {
+                              ...tempGuildeData.domainRequirements,
+                              [domain]: parseInt(e.target.value),
+                            },
+                          })}
+                          style={{
+                            width: '100%',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Historique des Actions */}
+            <div style={{
+              padding: '20px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+            }}>
+              <h2 style={{
+                color: currentTheme.text,
+                fontWeight: '700',
+                fontSize: '16px',
+                margin: '0 0 16px 0',
+              }}>
+                📋 Journal des Actions
+              </h2>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+              }}>
+                {adminLogs.length === 0 ? (
+                  <p style={{
+                    color: currentTheme.textSecondary,
+                    fontSize: '12px',
+                    margin: 0,
+                  }}>
+                    Aucune action enregistrée
+                  </p>
+                ) : (
+                  adminLogs.map((log) => {
+                    const timeAgo = Math.floor((new Date() - new Date(log.timestamp)) / 1000);
+                    let timeDisplay = '';
+                    if (timeAgo < 60) timeDisplay = 'À l\'instant';
+                    else if (timeAgo < 3600) timeDisplay = `${Math.floor(timeAgo / 60)}m`;
+                    else if (timeAgo < 86400) timeDisplay = `${Math.floor(timeAgo / 3600)}h`;
+                    else timeDisplay = `${Math.floor(timeAgo / 86400)}j`;
+
+                    const actionLabel = log.action === 'kick' ? '🚪' : log.action === 'promote' ? '⬆️' : log.action === 'settings' ? '⚙️' : '📝';
+
+                    return (
+                      <div
+                        key={log.id}
+                        style={{
+                          padding: '8px',
+                          background: 'rgba(0,0,0,0.2)',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                          <div>
+                            <p style={{
+                              color: currentTheme.text,
+                              fontWeight: '600',
+                              margin: '0 0 2px 0',
+                            }}>
+                              {actionLabel} {log.action.toUpperCase()}
+                            </p>
+                            {log.targetUser && (
+                              <p style={{
+                                color: currentTheme.textSecondary,
+                                margin: '0 0 2px 0',
+                              }}>
+                                {log.targetUser}
+                              </p>
+                            )}
+                            {log.details && (
+                              <p style={{
+                                color: currentTheme.textSecondary,
+                                margin: 0,
+                              }}>
+                                {log.details}
+                              </p>
+                            )}
+                          </div>
+                          <p style={{
+                            color: currentTheme.textSecondary,
+                            margin: 0,
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {timeDisplay}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Dialog */}
+        {showConfirmDialog && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}>
+            <div style={{
+              background: currentTheme.bg,
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '400px',
+              border: `1px solid ${currentTheme.border}`,
+            }}>
+              <h2 style={{
+                color: currentTheme.text,
+                fontWeight: '700',
+                fontSize: '18px',
+                margin: '0 0 12px 0',
+              }}>
+                {showConfirmDialog.action === 'kick' ? '⚠️ Confirmer l\'expulsion' : '⬆️ Confirmer la promotion'}
+              </h2>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '14px',
+                margin: '0 0 16px 0',
+              }}>
+                {showConfirmDialog.action === 'kick'
+                  ? `Êtes-vous sûr de vouloir expulser ${showConfirmDialog.member.name} de la guilde?`
+                  : `Promouvoir ${showConfirmDialog.member.name} en ${showConfirmDialog.newRole}?`}
+              </p>
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+              }}>
+                <button
+                  onClick={() => {
+                    if (showConfirmDialog.action === 'kick') {
+                      kickMember(showConfirmDialog.member);
+                    } else {
+                      promoteMember(showConfirmDialog.member, showConfirmDialog.newRole);
+                    }
+                    setShowConfirmDialog(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: showConfirmDialog.action === 'kick' ? 'rgba(239, 68, 68, 0.3)' : currentTheme.accent,
+                    border: `1px solid ${showConfirmDialog.action === 'kick' ? 'rgba(239, 68, 68, 0.5)' : currentTheme.accent}`,
+                    borderRadius: '8px',
+                    color: showConfirmDialog.action === 'kick' ? '#ef4444' : '#fff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                  }}
+                >
+                  Confirmer
+                </button>
+                <button
+                  onClick={() => setShowConfirmDialog(null)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: `1px solid ${currentTheme.border}`,
+                    borderRadius: '8px',
+                    color: currentTheme.text,
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                  }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
