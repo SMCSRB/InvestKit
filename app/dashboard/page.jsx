@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const [leaderboardPeriod, setLeaderboardPeriod] = useState('all-time'); // Période du classement : week, month, all-time
   const [leaderboardDomain, setLeaderboardDomain] = useState('all'); // Domaine : all, crypto, stocks, realestate, bonds
   const [leaderboardLevel, setLeaderboardLevel] = useState('all'); // Niveau : all, 1-3, 4-6, 7-9, 10+
+  const [selectedLeaderboardUser, setSelectedLeaderboardUser] = useState(null); // Utilisateur du classement sélectionné
   const [guildes, setGuildes] = useState([
     {
       id: 1,
@@ -2300,13 +2301,43 @@ export default function DashboardPage() {
                 {leaderboardTab === 'global-users' && (
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {(() => {
-                      // Mock filtered users data
+                      // Mock filtered users data with full profiles
                       let users = [
-                        { rank: 1, name: 'AlexInvestor', level: 20, xp: 8900, medal: '🥇', vs: '+1200 XP' },
-                        { rank: 2, name: 'CryptoKing', level: 19, xp: 7800, medal: '🥈', vs: '+500 XP' },
-                        { rank: 3, name: 'StockQueen', level: 19, xp: 7200, medal: '🥉', vs: '-100 XP' },
-                        { rank: 4, name: 'BondMaster', level: 18, xp: 6500, medal: '#4', vs: '-800 XP' },
-                        { rank: 5, name: 'FinanceGuru', level: 17, xp: 5900, medal: '#5', vs: '-1500 XP' },
+                        {
+                          rank: 1, name: 'AlexInvestor', level: 20, xp: 8900, medal: '🥇', vs: '+1200 XP',
+                          avatar: '👨‍💼', bio: 'Trader expérimenté & coach d\'investissement',
+                          badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
+                          completedDomains: ['crypto', 'stocks', 'bonds', 'realestate'],
+                          portfolio: 125000, friendCode: '#LEA001'
+                        },
+                        {
+                          rank: 2, name: 'CryptoKing', level: 19, xp: 7800, medal: '🥈', vs: '+500 XP',
+                          avatar: '👨‍💻', bio: 'Spécialiste crypto & blockchain enthusiast',
+                          badges: ['first_blood', 'perfect', 'crypto_master'],
+                          completedDomains: ['crypto', 'bonds'],
+                          portfolio: 95000, friendCode: '#CRK002'
+                        },
+                        {
+                          rank: 3, name: 'StockQueen', level: 19, xp: 7200, medal: '🥉', vs: '-100 XP',
+                          avatar: '👩‍💰', bio: 'Reine du marché boursier, analyse technique PRO',
+                          badges: ['first_blood', 'perfect', 'stocks_master'],
+                          completedDomains: ['stocks', 'crypto'],
+                          portfolio: 87000, friendCode: '#SQN003'
+                        },
+                        {
+                          rank: 4, name: 'BondMaster', level: 18, xp: 6500, medal: '#4', vs: '-800 XP',
+                          avatar: '👨‍🎯', bio: 'Maître des obligations et revenus passifs',
+                          badges: ['first_blood'],
+                          completedDomains: ['bonds', 'realestate'],
+                          portfolio: 72000, friendCode: '#BDM004'
+                        },
+                        {
+                          rank: 5, name: 'FinanceGuru', level: 17, xp: 5900, medal: '#5', vs: '-1500 XP',
+                          avatar: '🧑‍🏫', bio: 'Gourou de la finance personnelle & diversification',
+                          badges: ['first_blood'],
+                          completedDomains: ['crypto', 'stocks'],
+                          portfolio: 65000, friendCode: '#FGU005'
+                        },
                       ];
 
                       // Filtrer par niveau si nécessaire
@@ -2338,6 +2369,7 @@ export default function DashboardPage() {
                     })().map((user, idx) => (
                       <div
                         key={idx}
+                        onClick={() => setSelectedLeaderboardUser(user)}
                         style={{
                           padding: '18px 20px',
                           background: `linear-gradient(135deg, rgba(59, 130, 246, ${0.12 - idx * 0.02}) 0%, rgba(59, 130, 246, ${0.06 - idx * 0.01}) 100%)`,
@@ -2693,6 +2725,382 @@ export default function DashboardPage() {
                     </div>
                   )
                 )}
+              </div>
+            )}
+
+            {/* Leaderboard User Profile Modal */}
+            {selectedLeaderboardUser && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.7)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+                padding: '20px',
+              }}
+              onClick={() => setSelectedLeaderboardUser(null)}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    background: currentTheme.bg,
+                    borderRadius: '20px',
+                    padding: '32px',
+                    maxWidth: '500px',
+                    width: '100%',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
+                    border: `1.5px solid ${currentTheme.border}`,
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setSelectedLeaderboardUser(null)}
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      right: '16px',
+                      background: 'transparent',
+                      border: 'none',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      padding: '8px',
+                    }}
+                  >
+                    ✕
+                  </button>
+
+                  {/* Profile Header */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginBottom: '28px',
+                    paddingTop: '16px',
+                  }}>
+                    <div style={{
+                      fontSize: '72px',
+                      marginBottom: '12px',
+                    }}>
+                      {selectedLeaderboardUser.avatar}
+                    </div>
+                    <h2 style={{
+                      color: currentTheme.text,
+                      margin: '0 0 8px 0',
+                      fontSize: '24px',
+                      fontWeight: '900',
+                    }}>
+                      {selectedLeaderboardUser.name}
+                    </h2>
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'center',
+                      marginBottom: '8px',
+                    }}>
+                      <span style={{ fontSize: '28px' }}>{selectedLeaderboardUser.medal}</span>
+                      <span style={{
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        color: '#f59e0b',
+                      }}>
+                        Rang #{selectedLeaderboardUser.rank}
+                      </span>
+                    </div>
+                    <p style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '13px',
+                      margin: 0,
+                      fontStyle: 'italic',
+                    }}>
+                      {selectedLeaderboardUser.bio}
+                    </p>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px',
+                    marginBottom: '24px',
+                  }}>
+                    <div style={{
+                      padding: '16px',
+                      background: currentTheme.cardBg,
+                      borderRadius: '12px',
+                      border: `1.5px solid ${currentTheme.border}`,
+                    }}>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        margin: '0 0 6px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        Niveau
+                      </p>
+                      <p style={{
+                        color: currentTheme.text,
+                        fontSize: '22px',
+                        fontWeight: '900',
+                        margin: 0,
+                      }}>
+                        {selectedLeaderboardUser.level}
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '16px',
+                      background: currentTheme.cardBg,
+                      borderRadius: '12px',
+                      border: `1.5px solid ${currentTheme.border}`,
+                    }}>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        margin: '0 0 6px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        XP Total
+                      </p>
+                      <p style={{
+                        color: '#f59e0b',
+                        fontSize: '22px',
+                        fontWeight: '900',
+                        margin: 0,
+                      }}>
+                        {selectedLeaderboardUser.xp.toLocaleString()}
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '16px',
+                      background: currentTheme.cardBg,
+                      borderRadius: '12px',
+                      border: `1.5px solid ${currentTheme.border}`,
+                    }}>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        margin: '0 0 6px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        Domaines
+                      </p>
+                      <p style={{
+                        color: currentTheme.text,
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        margin: 0,
+                      }}>
+                        {selectedLeaderboardUser.completedDomains.length}
+                      </p>
+                    </div>
+                    <div style={{
+                      padding: '16px',
+                      background: currentTheme.cardBg,
+                      borderRadius: '12px',
+                      border: `1.5px solid ${currentTheme.border}`,
+                    }}>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        margin: '0 0 6px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        Portefeuille
+                      </p>
+                      <p style={{
+                        color: '#10b981',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        margin: 0,
+                      }}>
+                        ${(selectedLeaderboardUser.portfolio / 1000).toFixed(0)}K
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Badges Section */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <h3 style={{
+                      color: currentTheme.text,
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      margin: '0 0 12px 0',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      🏆 Badges ({selectedLeaderboardUser.badges.length})
+                    </h3>
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                      flexWrap: 'wrap',
+                    }}>
+                      {selectedLeaderboardUser.badges.map((badge) => {
+                        const badgeEmoji = badge === 'first_blood' ? '🩸' : badge === 'perfect' ? '💯' : badge === 'no_mistakes' ? '✅' : badge === 'crypto_master' ? '₿' : badge === 'stocks_master' ? '📈' : '⭐';
+                        return (
+                          <div
+                            key={badge}
+                            style={{
+                              padding: '8px 12px',
+                              background: 'rgba(245, 158, 11, 0.15)',
+                              borderRadius: '8px',
+                              border: '1.5px solid rgba(245, 158, 11, 0.3)',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#f59e0b',
+                              display: 'flex',
+                              gap: '4px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span>{badgeEmoji}</span>
+                            {badge}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Completed Domains */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <h3 style={{
+                      color: currentTheme.text,
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      margin: '0 0 12px 0',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      📚 Domaines Complétés
+                    </h3>
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                      flexWrap: 'wrap',
+                    }}>
+                      {selectedLeaderboardUser.completedDomains.map((domain) => {
+                        const domainInfo = {
+                          crypto: { emoji: '₿', label: 'Crypto' },
+                          stocks: { emoji: '📈', label: 'Bourse' },
+                          realestate: { emoji: '🏠', label: 'Immobilier' },
+                          bonds: { emoji: '💼', label: 'Obligations' },
+                        };
+                        const info = domainInfo[domain] || { emoji: '📚', label: domain };
+                        return (
+                          <div
+                            key={domain}
+                            style={{
+                              padding: '8px 12px',
+                              background: 'rgba(59, 130, 246, 0.15)',
+                              borderRadius: '8px',
+                              border: '1.5px solid rgba(59, 130, 246, 0.3)',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#3b82f6',
+                              display: 'flex',
+                              gap: '4px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span>{info.emoji}</span>
+                            {info.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '12px',
+                  }}>
+                    <button
+                      onClick={() => {
+                        // Envoyez un message
+                        setSelectedChatFriend(selectedLeaderboardUser);
+                        setSelectedLeaderboardUser(null);
+                        setFriendsTab('messages');
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                        border: '2px solid rgba(59, 130, 246, 0.5)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      💬 Message
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Demander en amis
+                        const isFriend = userData.friends.some(f => f.friendCode === selectedLeaderboardUser.friendCode);
+                        const hasSentRequest = userData.friendRequests?.sent?.some(
+                          (req) => req.friendCode === selectedLeaderboardUser.friendCode
+                        );
+
+                        if (!isFriend && !hasSentRequest) {
+                          sendFriendRequest(selectedLeaderboardUser.friendCode, selectedLeaderboardUser.name);
+                          alert('Demande d\'ami envoyée ! 🎉');
+                        } else if (isFriend) {
+                          alert('Vous êtes déjà amis ! 👋');
+                        } else {
+                          alert('Demande d\'ami déjà envoyée ! ⏳');
+                        }
+                        setSelectedLeaderboardUser(null);
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        border: '2px solid rgba(245, 158, 11, 0.5)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      👥 Ajouter en Ami
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
