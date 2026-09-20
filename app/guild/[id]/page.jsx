@@ -423,22 +423,28 @@ export default function GuildPage() {
 
   const theme = {
     dark: {
-      bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      cardBg: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+      bg: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f3d66 100%)',
+      cardBg: 'rgba(20, 28, 52, 0.6)',
       text: '#ffffff',
-      textSecondary: 'rgba(255, 255, 255, 0.6)',
-      textTertiary: 'rgba(255, 255, 255, 0.5)',
-      border: 'rgba(255, 255, 255, 0.1)',
+      textSecondary: 'rgba(255, 255, 255, 0.65)',
+      textTertiary: 'rgba(255, 255, 255, 0.45)',
+      border: 'rgba(255, 255, 255, 0.08)',
       accent: '#3b82f6',
+      success: '#10b981',
+      warning: '#f59e0b',
+      danger: '#ef4444',
     },
     light: {
       bg: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f0f4f8 100%)',
-      cardBg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)',
+      cardBg: 'rgba(241, 245, 250, 0.8)',
       text: '#1e293b',
-      textSecondary: 'rgba(30, 41, 59, 0.6)',
+      textSecondary: 'rgba(30, 41, 59, 0.7)',
       textTertiary: 'rgba(30, 41, 59, 0.5)',
-      border: 'rgba(30, 41, 59, 0.1)',
+      border: 'rgba(30, 41, 59, 0.08)',
       accent: '#2563eb',
+      success: '#059669',
+      warning: '#d97706',
+      danger: '#dc2626',
     },
   };
 
@@ -681,80 +687,104 @@ export default function GuildPage() {
         {/* CONTENT SECTIONS */}
         {activeTab === 'info' && (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr',
-            gap: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '32px',
           }}>
-            {/* Description */}
+            {/* DESCRIPTION CARD */}
             <div style={{
-              padding: '20px',
+              padding: '32px',
               background: currentTheme.cardBg,
-              borderRadius: '12px',
+              borderRadius: '20px',
               border: `1px solid ${currentTheme.border}`,
+              backdropFilter: 'blur(10px)',
             }}>
               <h2 style={{
                 color: currentTheme.text,
-                fontWeight: '700',
-                fontSize: '16px',
-                margin: '0 0 12px 0',
+                fontWeight: '800',
+                fontSize: '22px',
+                margin: '0 0 16px 0',
               }}>
-                À propos
+                📖 À propos de cette Guilde
               </h2>
               <p style={{
                 color: currentTheme.textSecondary,
-                fontSize: '14px',
-                lineHeight: '1.6',
+                fontSize: '15px',
+                lineHeight: '1.8',
                 margin: 0,
               }}>
                 {selectedGuilde.description}
               </p>
             </div>
 
-            {/* Stats */}
-            <div style={{
-              padding: '20px',
-              background: currentTheme.cardBg,
-              borderRadius: '12px',
-              border: `1px solid ${currentTheme.border}`,
-            }}>
+            {/* STATS GRID */}
+            <div>
               <h2 style={{
                 color: currentTheme.text,
-                fontWeight: '700',
-                fontSize: '16px',
-                margin: '0 0 12px 0',
+                fontWeight: '800',
+                fontSize: '22px',
+                margin: '0 0 20px 0',
               }}>
-                Statistiques
+                📊 Statistiques Détaillées
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div>
-                  <p style={{
-                    color: currentTheme.textSecondary,
-                    fontSize: '12px',
-                    margin: '0 0 4px 0',
-                  }}>
-                    Progression
-                  </p>
-                  <div style={{
-                    width: '100%',
-                    height: '6px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '3px',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      width: `${(selectedGuilde.level / 20) * 100}%`,
-                      height: '100%',
-                      background: `linear-gradient(90deg, ${currentTheme.accent}, #8b5cf6)`,
-                    }} />
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: '16px',
+              }}>
+                {/* Card 1: Members */}
+                <div style={{
+                  padding: '24px',
+                  background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)`,
+                  borderRadius: '16px',
+                  border: `1px solid rgba(59, 130, 246, 0.2)`,
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>👥 Membres</p>
+                  <p style={{ color: currentTheme.accent, fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>{selectedGuilde.membersList?.length || 0}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>Actifs cette semaine</p>
+                </div>
+
+                {/* Card 2: Level */}
+                <div style={{
+                  padding: '24px',
+                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                  borderRadius: '16px',
+                  border: `1px solid rgba(139, 92, 246, 0.2)`,
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>🎯 Niveau</p>
+                  <p style={{ color: '#8b5cf6', fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>Lvl {selectedGuilde.level}</p>
+                  <div style={{ width: '100%', height: '6px', background: 'rgba(139, 92, 246, 0.2)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: `${(selectedGuilde.level / 20) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', transition: 'width 0.5s ease' }} />
                   </div>
-                  <p style={{
-                    color: currentTheme.text,
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    margin: '4px 0 0 0',
-                  }}>
-                    Niveau {selectedGuilde.level}/20
-                  </p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '8px 0 0 0' }}>{selectedGuilde.level}/20</p>
+                </div>
+
+                {/* Card 3: XP */}
+                <div style={{
+                  padding: '24px',
+                  background: `linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)`,
+                  borderRadius: '16px',
+                  border: `1px solid rgba(16, 185, 129, 0.2)`,
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>⚡ Total XP</p>
+                  <p style={{ color: '#10b981', fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>{selectedGuilde.totalXP}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>+240 cette semaine</p>
+                </div>
+
+                {/* Card 4: Tier */}
+                <div style={{
+                  padding: '24px',
+                  background: `linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                  borderRadius: '16px',
+                  border: `1px solid rgba(245, 158, 11, 0.2)`,
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px' }}>🏆 Palier</p>
+                  <p style={{ color: '#f59e0b', fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' }}>{guildTier}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>Avantages débloqués</p>
                 </div>
               </div>
             </div>
@@ -833,51 +863,93 @@ export default function GuildPage() {
 
         {activeTab === 'members' && (
           <div style={{
-            display: 'grid',
-            gap: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
           }}>
-            {selectedGuilde.membersList?.map((member) => (
+            <div style={{ marginBottom: '16px' }}>
+              <h2 style={{
+                color: currentTheme.text,
+                fontWeight: '800',
+                fontSize: '22px',
+                margin: 0,
+              }}>
+                👥 Membres de la Guilde ({selectedGuilde.membersList?.length || 0})
+              </h2>
+            </div>
+
+            {selectedGuilde.membersList?.map((member, idx) => (
               <div
                 key={member.id}
                 style={{
-                  padding: '16px',
+                  padding: '20px',
                   background: currentTheme.cardBg,
-                  borderRadius: '10px',
+                  borderRadius: '14px',
                   border: `1px solid ${currentTheme.border}`,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.05)`;
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                  e.currentTarget.style.borderColor = guildTheme.primaryColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = currentTheme.cardBg;
+                  e.currentTarget.style.transform = 'translateX(0)';
+                  e.currentTarget.style.borderColor = currentTheme.border;
                 }}
               >
-                <div>
-                  <p style={{
-                    color: currentTheme.text,
-                    fontWeight: '600',
-                    fontSize: '14px',
-                    margin: '0 0 4px 0',
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    fontWeight: '700',
                   }}>
-                    {member.name}
-                  </p>
-                  <p style={{
-                    color: currentTheme.textSecondary,
-                    fontSize: '12px',
-                    margin: 0,
-                  }}>
-                    Niveau {member.level} • Rejoint: {member.joinedDate}
-                  </p>
+                    {member.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{
+                      color: currentTheme.text,
+                      fontWeight: '700',
+                      fontSize: '15px',
+                      margin: '0 0 4px 0',
+                    }}>
+                      {member.name}
+                    </p>
+                    <p style={{
+                      color: currentTheme.textSecondary,
+                      fontSize: '12px',
+                      margin: 0,
+                    }}>
+                      🎯 Niveau {member.level} • 📅 {member.joinedDate}
+                    </p>
+                  </div>
                 </div>
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  padding: '4px 8px',
-                  background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
-                  borderRadius: '4px',
-                }}>
-                  {member.role}
-                </span>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    padding: '6px 12px',
+                    background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.15)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.15)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.15)' : 'rgba(0,0,0,0.1)',
+                    borderRadius: '8px',
+                    border: member.role === 'Leader' ? '1px solid rgba(251, 191, 36, 0.3)' : member.role === 'Co-leader' ? '1px solid rgba(96, 165, 250, 0.3)' : member.role === 'Elder' ? '1px solid rgba(129, 140, 248, 0.3)' : 'none',
+                  }}>
+                    {member.role}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -2329,13 +2401,28 @@ export default function GuildPage() {
                   color: currentTheme.textSecondary,
                   textAlign: 'center',
                   flexDirection: 'column',
+                  gap: '16px',
                 }}>
-                  <p style={{ fontSize: '48px', margin: 0 }}>💬</p>
-                  <p style={{ fontSize: '14px', margin: '8px 0 0 0' }}>Commencez une conversation!</p>
-                  <p style={{ fontSize: '12px', margin: '4px 0 0 0', opacity: 0.7 }}>Soyez le premier à écrire un message</p>
+                  <div style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '20px',
+                    background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '40px',
+                  }}>
+                    💬
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '18px', fontWeight: '700', color: currentTheme.text, margin: '0 0 8px 0' }}>Bienvenue! 🎉</p>
+                    <p style={{ fontSize: '14px', margin: '0 0 4px 0' }}>Commencez une conversation avec votre guilde</p>
+                    <p style={{ fontSize: '12px', margin: '0', opacity: 0.7 }}>Partagez des idées, des stratégies et des astuces</p>
+                  </div>
                 </div>
               )}
-              {selectedGuilde.chat?.map((msg) => {
+              {selectedGuilde.chat?.map((msg, idx) => {
                 const isCurrentUser = msg.author === 'SMC.SRB';
                 return (
                   <div
@@ -2343,29 +2430,49 @@ export default function GuildPage() {
                     style={{
                       display: 'flex',
                       justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
-                      animation: 'fadeIn 0.3s ease',
+                      gap: '8px',
+                      animation: `slideIn 0.3s ease ${idx * 0.05}s`,
                     }}
                   >
+                    {!isCurrentUser && (
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        flexShrink: 0,
+                      }}>
+                        {msg.author.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div style={{
-                      maxWidth: '70%',
+                      maxWidth: '65%',
                       padding: '12px 16px',
                       background: isCurrentUser
-                        ? guildTheme.primaryColor
+                        ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
                         : currentTheme.border,
                       color: isCurrentUser ? '#fff' : currentTheme.text,
                       borderRadius: isCurrentUser
                         ? '16px 16px 4px 16px'
                         : '16px 16px 16px 4px',
                       wordBreak: 'break-word',
-                      boxShadow: isCurrentUser ? `0 2px 8px rgba(${parseInt(guildTheme.primaryColor.slice(1,3), 16)}, ${parseInt(guildTheme.primaryColor.slice(3,5), 16)}, ${parseInt(guildTheme.primaryColor.slice(5,7), 16)}, 0.2)` : 'none',
+                      boxShadow: isCurrentUser ? `0 4px 12px rgba(59, 130, 246, 0.25)` : 'none',
+                      transition: 'all 0.2s ease',
                     }}>
                       {!isCurrentUser && (
                         <p style={{
                           fontSize: '11px',
-                          fontWeight: '700',
-                          color: currentTheme.textSecondary,
-                          margin: '0 0 4px 0',
+                          fontWeight: '800',
+                          color: isCurrentUser ? 'rgba(255, 255, 255, 0.8)' : currentTheme.textSecondary,
+                          margin: '0 0 6px 0',
                           textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
                         }}>
                           {msg.author}
                         </p>
@@ -2374,13 +2481,14 @@ export default function GuildPage() {
                         fontSize: '14px',
                         lineHeight: '1.5',
                         margin: 0,
+                        fontWeight: '500',
                       }}>
                         {msg.message}
                       </p>
                       <p style={{
                         fontSize: '11px',
-                        color: isCurrentUser ? 'rgba(255, 255, 255, 0.7)' : currentTheme.textSecondary,
-                        margin: '4px 0 0 0',
+                        color: isCurrentUser ? 'rgba(255, 255, 255, 0.6)' : currentTheme.textSecondary,
+                        margin: '6px 0 0 0',
                       }}>
                         {msg.timestamp}
                       </p>
@@ -2400,7 +2508,7 @@ export default function GuildPage() {
             }}>
               <input
                 type="text"
-                placeholder="Écrivez votre message..."
+                placeholder="✨ Écrivez votre message..."
                 value={guildChatInput}
                 onChange={(e) => setGuildChatInput(e.target.value)}
                 onKeyPress={(e) => {
@@ -2411,47 +2519,62 @@ export default function GuildPage() {
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  background: 'rgba(0,0,0,0.2)',
-                  border: `1px solid ${currentTheme.border}`,
-                  borderRadius: '10px',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: `2px solid ${currentTheme.border}`,
+                  borderRadius: '12px',
                   color: currentTheme.text,
                   fontSize: '14px',
+                  fontWeight: '500',
                   outline: 'none',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.3s ease',
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = guildTheme.primaryColor;
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
+                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.12)`;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(59, 130, 246, 0.1)`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = currentTheme.border;
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.2)';
+                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.08)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               />
               <button
+                disabled={!guildChatInput.trim()}
                 onClick={handleSendMessage}
                 style={{
-                  padding: '12px 24px',
-                  background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
+                  padding: '12px 28px',
+                  background: guildChatInput.trim()
+                    ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
+                    : 'rgba(0,0,0,0.2)',
                   border: 'none',
-                  borderRadius: '10px',
-                  color: '#fff',
+                  borderRadius: '12px',
+                  color: guildChatInput.trim() ? '#fff' : currentTheme.textSecondary,
                   fontWeight: '700',
-                  cursor: 'pointer',
-                  fontSize: '13px',
+                  cursor: guildChatInput.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                  boxShadow: guildChatInput.trim() ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                  if (guildChatInput.trim()) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                  if (guildChatInput.trim()) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                  }
                 }}
               >
-                ✈️ Envoyer
+                <span>✈️</span>
+                <span>Envoyer</span>
               </button>
             </div>
           </div>
