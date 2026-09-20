@@ -218,9 +218,16 @@ export default function DashboardPage() {
     'legend': { name: 'Légende Investisseur', emoji: '⭐', rarity: 'unique', requirement: 'level:50', xp: 1000, rarity_percent: 0.5, category: 'milestone', description: 'Atteindre le niveau 50 - Légende !' },
     'founder': { name: 'Fondateur', emoji: '👑', rarity: 'unique', requirement: 'event:founder', xp: 750, rarity_percent: 0.1, category: 'event', description: 'Membre fondateur d\'InvestKit' },
     'event_champion': { name: 'Champion Événement', emoji: '🏆', rarity: 'very_rare', requirement: 'event:win', xp: 350, rarity_percent: 5.2, category: 'event', description: 'Gagnant d\'un événement' },
-    'spring_collector': { name: 'Collecteur Printemps', emoji: '🌸', rarity: 'rare', requirement: 'seasonal:spring', xp: 200, rarity_percent: 25.0, category: 'seasonal', description: 'Badge saisonnier Printemps' },
-    'summer_master': { name: 'Maître Été', emoji: '☀️', rarity: 'very_rare', requirement: 'seasonal:summer', xp: 350, rarity_percent: 12.0, category: 'seasonal', description: 'Badge saisonnier Été' },
-    'mystery_badge': { name: '???', emoji: '❓', rarity: 'unique', requirement: 'secret', xp: 600, rarity_percent: 2.1, category: 'secret', description: 'À découvrir...' },
+    'spring_collector': { name: 'Collecteur Printemps', emoji: '🌸', rarity: 'rare', requirement: 'seasonal:spring', xp: 200, rarity_percent: 25.0, category: 'seasonal', description: 'Actif au printemps', season: 'spring' },
+    'summer_master': { name: 'Maître Été', emoji: '☀️', rarity: 'very_rare', requirement: 'seasonal:summer', xp: 350, rarity_percent: 12.0, category: 'seasonal', description: 'Maître de l\'été', season: 'summer' },
+    'autumn_warrior': { name: 'Guerrier Automne', emoji: '🍂', rarity: 'rare', requirement: 'seasonal:autumn', xp: 200, rarity_percent: 20.0, category: 'seasonal', description: 'Combattant d\'automne', season: 'autumn' },
+    'winter_champion': { name: 'Champion Hiver', emoji: '❄️', rarity: 'very_rare', requirement: 'seasonal:winter', xp: 350, rarity_percent: 18.0, category: 'seasonal', description: 'Roi de l\'hiver', season: 'winter' },
+    'night_trader': { name: 'Trader Nocturne', emoji: '🌙', rarity: 'rare', requirement: 'secret:night', xp: 200, rarity_percent: 8.5, category: 'secret', description: 'Trader qui travaille la nuit' },
+    'lucky_seven': { name: 'Sept Chanceuse', emoji: '7️⃣', rarity: 'very_rare', requirement: 'secret:lucky', xp: 300, rarity_percent: 3.2, category: 'secret', description: 'Un hasard fortuné s\'est produit' },
+    'speedster': { name: 'Rapide comme l\'éclair', emoji: '⚡', rarity: 'rare', requirement: 'secret:speed', xp: 250, rarity_percent: 6.8, category: 'secret', description: 'Atteindre 3 niveaux en un jour' },
+    'million_club': { name: 'Club Million', emoji: '💰', rarity: 'very_rare', requirement: 'secret:wealth', xp: 400, rarity_percent: 4.1, category: 'secret', description: 'Simuler un million en gains' },
+    'perfectionist': { name: 'Perfectionniste', emoji: '✨', rarity: 'unique', requirement: 'secret:perfect', xp: 600, rarity_percent: 0.3, category: 'secret', description: 'Compléter tous les cours au 100%' },
+    'mystery_badge': { name: '🔮 Mystère', emoji: '🔮', rarity: 'unique', requirement: 'secret:mystery', xp: 750, rarity_percent: 1.5, category: 'secret', description: 'Un secret attendant sa révélation' },
   };
 
   const [userBadges, setUserBadges] = useState(['first_step', 'crypto_novice']);
@@ -526,6 +533,37 @@ export default function DashboardPage() {
       }
     });
   }, [userLevel, userBadges, isDomainCompleted]);
+
+  // Auto-unlock seasonal badges based on current month
+  useEffect(() => {
+    const currentMonth = new Date().getMonth();
+    let seasonalBadgeId = null;
+
+    if (currentMonth >= 2 && currentMonth <= 4) { // Mars-Mai
+      seasonalBadgeId = 'spring_collector';
+    } else if (currentMonth >= 5 && currentMonth <= 7) { // Juin-Août
+      seasonalBadgeId = 'summer_master';
+    } else if (currentMonth >= 8 && currentMonth <= 10) { // Septembre-Novembre
+      seasonalBadgeId = 'autumn_warrior';
+    } else { // Décembre-Février
+      seasonalBadgeId = 'winter_champion';
+    }
+
+    if (seasonalBadgeId && !userBadges.includes(seasonalBadgeId)) {
+      unlockBadge(seasonalBadgeId);
+    }
+  }, []);
+
+  // Random secret badge unlock chance (1% per mount)
+  useEffect(() => {
+    if (Math.random() < 0.01) {
+      const secretBadges = ['night_trader', 'lucky_seven', 'speedster', 'million_club'];
+      const randomSecret = secretBadges[Math.floor(Math.random() * secretBadges.length)];
+      if (!userBadges.includes(randomSecret)) {
+        unlockBadge(randomSecret);
+      }
+    }
+  }, [userBadges, unlockBadge]);
 
   // Real-time notification simulation
   useEffect(() => {
@@ -1325,6 +1363,41 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Badge Album Button */}
+              <button
+                onClick={() => setShowBadgeAlbum(true)}
+                style={{
+                  position: 'absolute',
+                  top: '-50px',
+                  right: '0',
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+                  border: '2px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '12px',
+                  padding: '8px 12px',
+                  color: '#f59e0b',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(251, 191, 36, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                📖 Album ({userBadges.length}/{Object.keys(badgeDefinitions).length})
+              </button>
+
               {/* Badges Stack - Display Selected Badges with Enhanced Animations */}
               {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
                 const badge = badgeDefinitions[badgeId];
@@ -1473,6 +1546,80 @@ export default function DashboardPage() {
                 );
               })}
             </div>
+
+            {/* Nearly Unlocked Badges Progress */}
+            {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
+              progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
+            ).length > 0 && (
+              <div style={{
+                background: 'rgba(168, 85, 247, 0.1)',
+                border: '1px solid rgba(168, 85, 247, 0.2)',
+                borderRadius: '12px',
+                padding: '12px',
+                marginTop: '12px',
+              }}>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: 'rgba(168, 85, 247, 0.8)',
+                  marginBottom: '8px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  🎯 Presque débloqués
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}>
+                  {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
+                    progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
+                  ).slice(0, 3).map(([badgeId, progress]) => {
+                    const badge = badgeDefinitions[badgeId];
+                    return (
+                      <div key={badgeId} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '12px',
+                      }}>
+                        <span style={{ fontSize: '16px' }}>{badge.emoji}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '11px',
+                            marginBottom: '3px',
+                          }}>
+                            {badge.name}
+                          </div>
+                          <div style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: '4px',
+                            height: '4px',
+                            overflow: 'hidden',
+                          }}>
+                            <div style={{
+                              background: `linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%)`,
+                              height: '100%',
+                              width: `${progress.percent}%`,
+                              transition: 'width 0.3s ease',
+                            }} />
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: '10px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          fontWeight: '600',
+                        }}>
+                          {progress.percent}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* User Info */}
             <div>
