@@ -52,6 +52,17 @@ const styleSheet = `
     }
   }
 
+  @keyframes fadeInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
   @keyframes scaleIn {
     from {
       opacity: 0;
@@ -778,78 +789,124 @@ export default function GuildPage() {
       {/* MAIN CONTENT */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 24px' }}>
 
-        {/* TABS NAVIGATION - PREMIUM DESIGN */}
+        {/* TABS NAVIGATION - ORGANIZED BY CATEGORY */}
         <div style={{
-          display: 'flex',
-          overflowX: 'auto',
-          gap: '10px',
           marginBottom: '40px',
-          paddingBottom: '12px',
-          scrollBehavior: 'smooth',
           animation: 'fadeInUp 0.8s ease-out 0.3s backwards',
         }}>
           {[
-            { id: 'info', label: 'Info', icon: '📊' },
-            { id: 'members', label: 'Membres', icon: '👥' },
-            { id: 'announcements', label: 'Annonces', icon: '📌' },
-            { id: 'stats', label: 'Stats', icon: '📈' },
-            { id: 'activity', label: 'Activité', icon: '📊' },
-            { id: 'coins', label: 'Coins', icon: '💰' },
-            { id: 'tiers', label: 'Paliers', icon: '🎯' },
-            { id: 'chat', label: 'Chat', icon: '💬' },
-            { id: 'qa', label: 'Q&A', icon: '❓' },
-            { id: 'portfolio', label: 'Portfolio', icon: '💼' },
-            { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-            { id: 'analyses', label: 'Analyses', icon: '📋' },
-            { id: 'events', label: 'Événements', icon: '📅' },
-            { id: 'messages', label: 'Messages', icon: '📞' },
-            { id: 'customize', label: 'Personnaliser', icon: '🎨' },
-            { id: 'rules', label: 'Règles', icon: '🔒' },
-            ...(isLeader ? [{ id: 'admin', label: 'Admin', icon: '⚙️' }] : []),
-          ].map((tab, idx) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              style={{
-                padding: '12px 22px',
-                background: activeTab === tab.id
-                  ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
-                  : currentTheme.cardBg,
-                border: activeTab === tab.id ? '1.5px solid rgba(255, 255, 255, 0.3)' : `1.5px solid ${currentTheme.border}`,
-                borderRadius: '14px',
-                color: activeTab === tab.id ? '#fff' : currentTheme.text,
-                fontWeight: activeTab === tab.id ? '700' : '600',
-                cursor: 'pointer',
-                fontSize: '13px',
-                transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                whiteSpace: 'nowrap',
-                boxShadow: activeTab === tab.id ? `0 8px 24px ${guildTheme.primaryColor}40, 0 1px 0 rgba(255, 255, 255, 0.2) inset` : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                transform: activeTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
-                backdropFilter: 'blur(10px)',
-                position: 'relative',
-                overflow: 'hidden',
-                letterSpacing: '0.2px',
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== tab.id) {
-                  e.currentTarget.style.background = `${currentTheme.border}80`;
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
-                  e.currentTarget.style.borderColor = guildTheme.primaryColor;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== tab.id) {
-                  e.currentTarget.style.background = currentTheme.cardBg;
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                  e.currentTarget.style.borderColor = currentTheme.border;
-                }
-              }}
-            >
-              <span style={{ marginRight: '8px', fontSize: '16px' }}>{tab.icon}</span>
-              {tab.label}
-            </button>
+            {
+              category: '📋 Aperçu & Gestion',
+              tabs: [
+                { id: 'info', label: 'À Propos', icon: '📊' },
+                { id: 'members', label: 'Membres', icon: '👥' },
+                { id: 'stats', label: 'Statistiques', icon: '📈' },
+              ]
+            },
+            {
+              category: '💬 Communication',
+              tabs: [
+                { id: 'announcements', label: 'Annonces', icon: '📌' },
+                { id: 'chat', label: 'Chat', icon: '💬' },
+                { id: 'messages', label: 'Messages Privés', icon: '📞' },
+              ]
+            },
+            {
+              category: '🎯 Activité & Récompenses',
+              tabs: [
+                { id: 'activity', label: 'Activité', icon: '📊' },
+                { id: 'coins', label: 'Coins', icon: '💰' },
+                { id: 'tiers', label: 'Paliers', icon: '🎯' },
+              ]
+            },
+            {
+              category: '📚 Contenu & Apprentissage',
+              tabs: [
+                { id: 'qa', label: 'Q&A', icon: '❓' },
+                { id: 'portfolio', label: 'Portfolio', icon: '💼' },
+                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+                { id: 'analyses', label: 'Analyses', icon: '📋' },
+              ]
+            },
+            {
+              category: '🎪 Événements & Personnalisation',
+              tabs: [
+                { id: 'events', label: 'Événements', icon: '📅' },
+                { id: 'customize', label: 'Apparence', icon: '🎨' },
+                { id: 'rules', label: 'Règles', icon: '🔒' },
+                ...(isLeader ? [{ id: 'admin', label: 'Administration', icon: '⚙️' }] : []),
+              ]
+            },
+          ].map((section, sectionIdx) => (
+            <div key={sectionIdx} style={{ marginBottom: '20px' }}>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '0 0 12px 0',
+                textTransform: 'uppercase',
+                fontWeight: '800',
+                letterSpacing: '1px',
+                animation: `fadeInLeft 0.6s ease-out ${0.2 + sectionIdx * 0.1}s backwards`,
+              }}>
+                {section.category}
+              </p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '10px',
+                animation: `fadeInUp 0.6s ease-out ${0.25 + sectionIdx * 0.1}s backwards`,
+              }}>
+                {section.tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    style={{
+                      padding: '14px 16px',
+                      background: activeTab === tab.id
+                        ? `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`
+                        : currentTheme.cardBg,
+                      border: activeTab === tab.id ? '1.5px solid rgba(255, 255, 255, 0.3)' : `1.5px solid ${currentTheme.border}`,
+                      borderRadius: '14px',
+                      color: activeTab === tab.id ? '#fff' : currentTheme.text,
+                      fontWeight: activeTab === tab.id ? '700' : '600',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      boxShadow: activeTab === tab.id ? `0 8px 24px ${guildTheme.primaryColor}40, 0 1px 0 rgba(255, 255, 255, 0.2) inset` : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      transform: activeTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
+                      backdropFilter: 'blur(10px)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      letterSpacing: '0.2px',
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (activeTab !== tab.id) {
+                        e.currentTarget.style.background = `${currentTheme.border}80`;
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+                        e.currentTarget.style.borderColor = guildTheme.primaryColor;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeTab !== tab.id) {
+                        e.currentTarget.style.background = currentTheme.cardBg;
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                        e.currentTarget.style.borderColor = currentTheme.border;
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 
