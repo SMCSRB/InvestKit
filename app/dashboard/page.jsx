@@ -31,8 +31,18 @@ export default function DashboardPage() {
   const [academyNotifications, setAcademyNotifications] = useState(true);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [friendsTab, setFriendsTab] = useState('friends'); // friends, search, pending, leaderboard
+  const [friendsTab, setFriendsTab] = useState('friends'); // friends, search, pending, leaderboard, messages, guildes
   const [selectedFriendProfile, setSelectedFriendProfile] = useState(null); // Pour voir le profil d'un ami
+  const [selectedChatFriend, setSelectedChatFriend] = useState(null); // Pour le chat avec un ami
+  const [chatMessages, setChatMessages] = useState({}); // { friendCode: [messages] }
+  const [messageInput, setMessageInput] = useState('');
+  const [guildes, setGuildes] = useState([
+    { id: 1, name: '₿ Crypto Traders', members: 5, description: 'Groupe pour les traders crypto', emoji: '₿' },
+    { id: 2, name: '📈 Stock Masters', members: 3, description: 'Investisseurs en bourse', emoji: '📈' },
+  ]);
+  const [showCreateGuilde, setShowCreateGuilde] = useState(false);
+  const [newGuildeName, setNewGuildeName] = useState('');
+  const [newGuildeDesc, setNewGuildeDesc] = useState('');
 
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
@@ -1618,6 +1628,8 @@ export default function DashboardPage() {
                 {[
                   { id: 'friends', label: `Amis (${userData.friends.length})` },
                   { id: 'leaderboard', label: '🏆 Classement' },
+                  { id: 'messages', label: '💬 Messages' },
+                  { id: 'guildes', label: '👥 Guildes' },
                   { id: 'search', label: '🔍 Chercher' },
                   { id: 'pending', label: `📩 Demandes (${userData.friendRequests.received.length})` },
                 ].map((tab) => (
@@ -1830,6 +1842,446 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Messages Section */}
+            {friendsTab === 'messages' && (
+              <div style={{ marginBottom: '32px' }}>
+                {!selectedChatFriend ? (
+                  <>
+                    <h3 style={{
+                      fontSize: '20px',
+                      fontWeight: '700',
+                      color: currentTheme.text,
+                      margin: '0 0 20px 0',
+                    }}>
+                      💬 Messages
+                    </h3>
+                    {userData.friends.length === 0 ? (
+                      <div style={{
+                        padding: '40px',
+                        textAlign: 'center',
+                        background: currentTheme.cardBg,
+                        borderRadius: '16px',
+                        border: `1px solid ${currentTheme.border}`,
+                      }}>
+                        <p style={{
+                          fontSize: '16px',
+                          color: currentTheme.textSecondary,
+                          margin: 0,
+                        }}>
+                          Ajoute des amis pour commencer à discuter !
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: '10px' }}>
+                        {userData.friends.map((friend) => {
+                          const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
+                          const unreadCount = Math.random() > 0.6 ? Math.floor(Math.random() * 5) + 1 : 0;
+                          return (
+                            <div
+                              key={friend.userId}
+                              onClick={() => setSelectedChatFriend(friend)}
+                              style={{
+                                padding: '14px',
+                                background: currentTheme.cardBg,
+                                borderRadius: '12px',
+                                border: `1px solid ${currentTheme.border}`,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                                e.currentTarget.style.borderColor = currentTheme.accent;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = currentTheme.cardBg;
+                                e.currentTarget.style.borderColor = currentTheme.border;
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                                <div style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '50%',
+                                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '18px',
+                                }}>
+                                  {friendData?.avatar}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <p style={{
+                                    color: currentTheme.text,
+                                    fontWeight: '600',
+                                    margin: '0 0 2px 0',
+                                    fontSize: '14px',
+                                  }}>
+                                    {friendData?.name}
+                                  </p>
+                                  <p style={{
+                                    color: currentTheme.textSecondary,
+                                    fontSize: '11px',
+                                    margin: 0,
+                                  }}>
+                                    Clique pour discuter
+                                  </p>
+                                </div>
+                              </div>
+                              {unreadCount > 0 && (
+                                <div style={{
+                                  background: '#ef4444',
+                                  color: '#fff',
+                                  borderRadius: '50%',
+                                  width: '24px',
+                                  height: '24px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '12px',
+                                  fontWeight: '700',
+                                }}>
+                                  {unreadCount}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Chat Header */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '20px',
+                      paddingBottom: '16px',
+                      borderBottom: `1px solid ${currentTheme.border}`,
+                    }}>
+                      <button
+                        onClick={() => setSelectedChatFriend(null)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: currentTheme.text,
+                          fontSize: '20px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ←
+                      </button>
+                      <div>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontWeight: '600',
+                          margin: '0 0 2px 0',
+                        }}>
+                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.name}
+                        </p>
+                        <p style={{
+                          color: currentTheme.textSecondary,
+                          fontSize: '11px',
+                          margin: 0,
+                        }}>
+                          🟢 En ligne
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Chat Messages */}
+                    <div style={{
+                      background: 'rgba(0, 0, 0, 0.2)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      height: '300px',
+                      overflowY: 'auto',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                    }}>
+                      <div style={{
+                        alignSelf: 'flex-start',
+                        maxWidth: '70%',
+                        padding: '10px 14px',
+                        background: currentTheme.cardBg,
+                        borderRadius: '12px',
+                        border: `1px solid ${currentTheme.border}`,
+                      }}>
+                        <p style={{ color: currentTheme.text, margin: 0, fontSize: '13px' }}>
+                          Salut ! Comment ça va ?
+                        </p>
+                      </div>
+                      <div style={{
+                        alignSelf: 'flex-end',
+                        maxWidth: '70%',
+                        padding: '10px 14px',
+                        background: currentTheme.accent,
+                        borderRadius: '12px',
+                        color: '#fff',
+                      }}>
+                        <p style={{ color: '#fff', margin: 0, fontSize: '13px' }}>
+                          Bien ! On travaille sur InvestKit 🚀
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Chat Input */}
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                    }}>
+                      <input
+                        type="text"
+                        placeholder="Écris un message..."
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: '10px 14px',
+                          background: currentTheme.cardBg,
+                          border: `1px solid ${currentTheme.border}`,
+                          borderRadius: '10px',
+                          color: currentTheme.text,
+                          fontSize: '13px',
+                          outline: 'none',
+                        }}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && messageInput.trim()) {
+                            setMessageInput('');
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => setMessageInput('')}
+                        style={{
+                          padding: '10px 16px',
+                          background: currentTheme.accent,
+                          border: 'none',
+                          borderRadius: '10px',
+                          color: '#fff',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = currentTheme.accent;
+                        }}
+                      >
+                        Envoyer
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Guildes Section */}
+            {friendsTab === 'guildes' && (
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px',
+                }}>
+                  <h3 style={{
+                    fontSize: '20px',
+                    fontWeight: '700',
+                    color: currentTheme.text,
+                    margin: 0,
+                  }}>
+                    👥 Guildes & Groupes
+                  </h3>
+                  <button
+                    onClick={() => setShowCreateGuilde(!showCreateGuilde)}
+                    style={{
+                      padding: '8px 16px',
+                      background: currentTheme.accent,
+                      border: 'none',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                    }}
+                  >
+                    {showCreateGuilde ? '✕' : '➕'} Créer
+                  </button>
+                </div>
+
+                {showCreateGuilde && (
+                  <div style={{
+                    padding: '16px',
+                    background: currentTheme.cardBg,
+                    borderRadius: '12px',
+                    border: `1px solid ${currentTheme.border}`,
+                    marginBottom: '20px',
+                  }}>
+                    <input
+                      type="text"
+                      placeholder="Nom de la guilde (ex: Crypto Traders)"
+                      value={newGuildeName}
+                      onChange={(e) => setNewGuildeName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        marginBottom: '10px',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <textarea
+                      placeholder="Description de la guilde..."
+                      value={newGuildeDesc}
+                      onChange={(e) => setNewGuildeDesc(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        marginBottom: '12px',
+                        fontSize: '13px',
+                        outline: 'none',
+                        minHeight: '60px',
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newGuildeName.trim()) {
+                          setGuildes([...guildes, {
+                            id: guildes.length + 1,
+                            name: newGuildeName,
+                            members: 1,
+                            description: newGuildeDesc,
+                            emoji: '✨'
+                          }]);
+                          setNewGuildeName('');
+                          setNewGuildeDesc('');
+                          setShowCreateGuilde(false);
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: currentTheme.accent,
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}
+                    >
+                      Créer la Guilde
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {guildes.map((guilde) => (
+                    <div
+                      key={guilde.id}
+                      style={{
+                        padding: '16px',
+                        background: currentTheme.cardBg,
+                        borderRadius: '12px',
+                        border: `1px solid ${currentTheme.border}`,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = currentTheme.cardBg;
+                        e.currentTarget.style.borderColor = currentTheme.border;
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'start',
+                        marginBottom: '8px',
+                      }}>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '8px',
+                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '20px',
+                          }}>
+                            {guilde.emoji}
+                          </div>
+                          <div>
+                            <p style={{
+                              color: currentTheme.text,
+                              fontWeight: '700',
+                              margin: '0 0 2px 0',
+                              fontSize: '14px',
+                            }}>
+                              {guilde.name}
+                            </p>
+                            <p style={{
+                              color: currentTheme.textSecondary,
+                              fontSize: '11px',
+                              margin: 0,
+                            }}>
+                              👥 {guilde.members} membre{guilde.members > 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          style={{
+                            padding: '6px 12px',
+                            background: currentTheme.accent,
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: '#fff',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                          }}
+                        >
+                          Rejoindre
+                        </button>
+                      </div>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '12px',
+                        margin: 0,
+                      }}>
+                        {guilde.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
