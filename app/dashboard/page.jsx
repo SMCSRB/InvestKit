@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [unlockedAchievements, setUnlockedAchievements] = useState([]); // Achievements débloqués
   const [newAchievement, setNewAchievement] = useState(null); // Achievement en cours de notification
   const [guildesCreatedCount, setGuildesCreatedCount] = useState(0); // Nombre de guildes créées
+  const [leaderboardTab, setLeaderboardTab] = useState('global-guilds'); // Tab du classement
   const [guildes, setGuildes] = useState([
     {
       id: 1,
@@ -1978,48 +1979,284 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Leaderboard Section */}
+            {/* Leaderboard Section - ULTRA PREMIUM */}
             {friendsTab === 'leaderboard' && (
               <div style={{ marginBottom: '32px' }}>
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: currentTheme.text,
-                  margin: '0 0 20px 0',
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '28px',
                 }}>
-                  🏆 Classement de tes Amis
-                </h3>
-
-                {userData.friends.length === 0 ? (
-                  <div style={{
-                    padding: '40px',
-                    textAlign: 'center',
-                    background: currentTheme.cardBg,
-                    borderRadius: '16px',
-                    border: `1px solid ${currentTheme.border}`,
+                  <h3 style={{
+                    fontSize: '24px',
+                    fontWeight: '900',
+                    color: currentTheme.text,
+                    margin: 0,
+                    letterSpacing: '-0.5px',
                   }}>
-                    <p style={{
-                      fontSize: '16px',
-                      color: currentTheme.textSecondary,
-                      margin: 0,
-                    }}>
-                      Ajoute des amis pour voir le classement !
-                    </p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {/* Classement par XP */}
-                    <div>
-                      <p style={{
+                    🏆 Classements
+                  </h3>
+                </div>
+
+                {/* Leaderboard Tabs */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '12px',
+                  marginBottom: '28px',
+                }}>
+                  {[
+                    { id: 'global-guilds', label: 'Guildes Mondiales', icon: '🏛️' },
+                    { id: 'global-users', label: 'Utilisateurs Mondiaux', icon: '🌍' },
+                    { id: 'friends', label: 'Mes Amis', icon: '👥' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setLeaderboardTab(tab.id)}
+                      style={{
+                        padding: '16px',
+                        background: leaderboardTab === tab.id
+                          ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`
+                          : currentTheme.cardBg,
+                        border: leaderboardTab === tab.id
+                          ? '2px solid rgba(255, 255, 255, 0.4)'
+                          : `1.5px solid ${currentTheme.border}`,
+                        borderRadius: '14px',
+                        color: leaderboardTab === tab.id ? '#fff' : currentTheme.text,
+                        fontWeight: leaderboardTab === tab.id ? '800' : '700',
+                        cursor: 'pointer',
                         fontSize: '13px',
-                        fontWeight: '700',
+                        transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        boxShadow: leaderboardTab === tab.id
+                          ? '0 12px 32px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                          : '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        transform: leaderboardTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
+                        backdropFilter: 'blur(12px)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (leaderboardTab !== tab.id) {
+                          e.currentTarget.style.background = `rgba(245, 158, 11, 0.15)`;
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.borderColor = '#f59e0b';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (leaderboardTab !== tab.id) {
+                          e.currentTarget.style.background = currentTheme.cardBg;
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = currentTheme.border;
+                        }
+                      }}
+                    >
+                      <span style={{ fontSize: '20px' }}>{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Guildes Leaderboard */}
+                {leaderboardTab === 'global-guilds' && (
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {[
+                      { rank: 1, name: 'Crypto Traders', members: 12, xp: 5400, level: 15, medal: '🥇' },
+                      { rank: 2, name: 'Stock Masters', members: 8, xp: 4800, level: 14, medal: '🥈' },
+                      { rank: 3, name: 'Invest Elite', members: 10, xp: 4200, level: 13, medal: '🥉' },
+                      { rank: 4, name: 'Finance Fighters', members: 6, xp: 3800, level: 12, medal: '#4' },
+                      { rank: 5, name: 'Wealth Warriors', members: 9, xp: 3400, level: 11, medal: '#5' },
+                    ].map((guild, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '18px 20px',
+                          background: `linear-gradient(135deg, rgba(245, 158, 11, ${0.15 - idx * 0.02}) 0%, rgba(245, 158, 11, ${0.08 - idx * 0.01}) 100%)`,
+                          border: `1.5px solid rgba(245, 158, 11, ${0.3 - idx * 0.04})`,
+                          borderRadius: '16px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          boxShadow: `0 4px 12px rgba(0, 0, 0, 0.1)`,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 12px 28px rgba(245, 158, 11, 0.2)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateX(0) translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                          <div style={{
+                            fontSize: '32px',
+                            fontWeight: '900',
+                            minWidth: '50px',
+                            textAlign: 'center',
+                            animation: idx < 3 ? 'pulse 2s ease-in-out infinite' : 'none',
+                          }}>
+                            {guild.medal}
+                          </div>
+                          <div>
+                            <p style={{
+                              color: currentTheme.text,
+                              fontWeight: '800',
+                              margin: '0 0 4px 0',
+                              fontSize: '15px',
+                              letterSpacing: '-0.3px',
+                            }}>
+                              {guild.name}
+                            </p>
+                            <p style={{
+                              color: currentTheme.textSecondary,
+                              fontSize: '12px',
+                              margin: 0,
+                              fontWeight: '500',
+                            }}>
+                              👥 {guild.members} membres • Lvl {guild.level}
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{
+                            fontSize: '18px',
+                            fontWeight: '900',
+                            color: '#f59e0b',
+                            margin: 0,
+                            letterSpacing: '-0.5px',
+                          }}>
+                            {guild.xp.toLocaleString()}
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: currentTheme.textSecondary,
+                            margin: '4px 0 0 0',
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}>
+                            XP Total
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Utilisateurs Leaderboard */}
+                {leaderboardTab === 'global-users' && (
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {[
+                      { rank: 1, name: 'AlexInvestor', level: 20, xp: 8900, medal: '🥇', vs: '+1200 XP' },
+                      { rank: 2, name: 'CryptoKing', level: 19, xp: 7800, medal: '🥈', vs: '+500 XP' },
+                      { rank: 3, name: 'StockQueen', level: 19, xp: 7200, medal: '🥉', vs: '-100 XP' },
+                      { rank: 4, name: 'BondMaster', level: 18, xp: 6500, medal: '#4', vs: '-800 XP' },
+                      { rank: 5, name: 'FinanceGuru', level: 17, xp: 5900, medal: '#5', vs: '-1500 XP' },
+                    ].map((user, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '18px 20px',
+                          background: `linear-gradient(135deg, rgba(59, 130, 246, ${0.12 - idx * 0.02}) 0%, rgba(59, 130, 246, ${0.06 - idx * 0.01}) 100%)`,
+                          border: `1.5px solid rgba(59, 130, 246, ${0.25 - idx * 0.04})`,
+                          borderRadius: '16px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 12px 28px rgba(59, 130, 246, 0.2)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateX(0) translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
+                          <div style={{
+                            fontSize: '32px',
+                            fontWeight: '900',
+                            minWidth: '50px',
+                            textAlign: 'center',
+                            animation: idx < 3 ? 'pulse 2s ease-in-out infinite' : 'none',
+                          }}>
+                            {user.medal}
+                          </div>
+                          <div>
+                            <p style={{
+                              color: currentTheme.text,
+                              fontWeight: '800',
+                              margin: '0 0 4px 0',
+                              fontSize: '15px',
+                              letterSpacing: '-0.3px',
+                            }}>
+                              {user.name}
+                            </p>
+                            <p style={{
+                              color: currentTheme.textSecondary,
+                              fontSize: '12px',
+                              margin: 0,
+                              fontWeight: '500',
+                            }}>
+                              Niveau {user.level}
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{
+                            fontSize: '18px',
+                            fontWeight: '900',
+                            color: '#3b82f6',
+                            margin: 0,
+                            letterSpacing: '-0.5px',
+                          }}>
+                            {user.xp.toLocaleString()}
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: user.vs.includes('-') ? '#ef4444' : '#10b981',
+                            margin: '4px 0 0 0',
+                            fontWeight: '600',
+                          }}>
+                            {user.vs}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Friends Leaderboard */}
+                {leaderboardTab === 'friends' && (
+                  userData.friends.length === 0 ? (
+                    <div style={{
+                      padding: '60px 40px',
+                      textAlign: 'center',
+                      background: currentTheme.cardBg,
+                      borderRadius: '18px',
+                      border: `1.5px solid ${currentTheme.border}`,
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    }}>
+                      <p style={{
+                        fontSize: '16px',
                         color: currentTheme.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        margin: '0 0 12px 0',
+                        margin: 0,
+                        fontWeight: '500',
                       }}>
-                        Par XP
+                        👥 Ajoute des amis pour voir le classement!
                       </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '12px' }}>
                       {[...userData.friends]
                         .sort((a, b) => {
                           const aXP = availableUsers.find(u => u.friendCode === a.friendCode)?.xp || 0;
@@ -2029,60 +2266,59 @@ export default function DashboardPage() {
                         .map((friend, idx) => {
                           const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
                           const myXP = progress.totalXP || 0;
-                          const isHigher = (friendData?.xp || 0) > myXP;
+                          const diff = (friendData?.xp || 0) - myXP;
+                          const getMedal = (index) => index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
 
                           return (
                             <div
                               key={friend.userId}
                               onClick={() => setSelectedFriendProfile(friendData)}
                               style={{
-                                padding: '14px',
-                                background: currentTheme.cardBg,
-                                borderRadius: '12px',
-                                border: `1px solid ${currentTheme.border}`,
+                                padding: '18px 20px',
+                                background: `linear-gradient(135deg, rgba(139, 92, 246, ${0.12 - idx * 0.02}) 0%, rgba(139, 92, 246, ${0.06 - idx * 0.01}) 100%)`,
+                                border: `1.5px solid rgba(139, 92, 246, ${0.25 - idx * 0.04})`,
+                                borderRadius: '16px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s ease',
+                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-                                e.currentTarget.style.borderColor = currentTheme.accent;
+                                e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
+                                e.currentTarget.style.boxShadow = `0 12px 28px rgba(139, 92, 246, 0.2)`;
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background = currentTheme.cardBg;
-                                e.currentTarget.style.borderColor = currentTheme.border;
+                                e.currentTarget.style.transform = 'translateX(0) translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
                               }}
                             >
-                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
+                              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
                                 <div style={{
-                                  width: '40px',
-                                  height: '40px',
-                                  borderRadius: '50%',
-                                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '18px',
-                                  fontWeight: '700',
-                                  color: '#fff',
+                                  fontSize: '32px',
+                                  fontWeight: '900',
+                                  minWidth: '50px',
+                                  textAlign: 'center',
+                                  animation: idx < 3 ? 'pulse 2s ease-in-out infinite' : 'none',
                                 }}>
-                                  {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                                  {getMedal(idx)}
                                 </div>
-                                <div style={{ flex: 1 }}>
+                                <div>
                                   <p style={{
                                     color: currentTheme.text,
-                                    fontWeight: '600',
-                                    margin: '0 0 2px 0',
-                                    fontSize: '14px',
+                                    fontWeight: '800',
+                                    margin: '0 0 4px 0',
+                                    fontSize: '15px',
+                                    letterSpacing: '-0.3px',
                                   }}>
                                     {friendData?.name}
                                   </p>
                                   <p style={{
                                     color: currentTheme.textSecondary,
-                                    fontSize: '11px',
+                                    fontSize: '12px',
                                     margin: 0,
+                                    fontWeight: '500',
                                   }}>
                                     Niveau {friendData?.level}
                                   </p>
@@ -2090,26 +2326,28 @@ export default function DashboardPage() {
                               </div>
                               <div style={{ textAlign: 'right' }}>
                                 <p style={{
-                                  fontSize: '16px',
-                                  fontWeight: '700',
-                                  color: isHigher ? '#f59e0b' : '#10b981',
-                                  margin: '0 0 4px 0',
+                                  fontSize: '18px',
+                                  fontWeight: '900',
+                                  color: '#8b5cf6',
+                                  margin: 0,
+                                  letterSpacing: '-0.5px',
                                 }}>
-                                  {friendData?.xp} XP
+                                  {friendData?.xp.toLocaleString()}
                                 </p>
                                 <p style={{
                                   fontSize: '11px',
-                                  color: isHigher ? '#f59e0b' : '#10b981',
-                                  margin: 0,
+                                  color: diff > 0 ? '#f59e0b' : diff < 0 ? '#10b981' : currentTheme.textSecondary,
+                                  margin: '4px 0 0 0',
+                                  fontWeight: '600',
                                 }}>
-                                  {isHigher ? '↑ Plus que toi' : '↓ Tu le dépasses'}
+                                  {diff > 0 ? `↑ +${diff.toLocaleString()}` : diff < 0 ? `↓ ${diff.toLocaleString()}` : 'Égalité'}
                                 </p>
                               </div>
                             </div>
                           );
                         })}
                     </div>
-                  </div>
+                  )
                 )}
               </div>
             )}
