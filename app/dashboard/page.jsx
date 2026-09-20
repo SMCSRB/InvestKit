@@ -354,6 +354,18 @@ export default function DashboardPage() {
     }
   };
 
+  const formatRelativeTime = (timestamp) => {
+    const ms = Date.now() - (timestamp instanceof Date ? timestamp.getTime() : timestamp);
+    const mins = Math.floor(ms / 60000);
+    const hours = Math.floor(ms / 3600000);
+    const days = Math.floor(ms / 86400000);
+
+    if (mins < 1) return 'À l\'instant';
+    if (mins < 60) return `Il y a ${mins}min`;
+    if (hours < 24) return `Il y a ${hours}h`;
+    return `Il y a ${days}j`;
+  };
+
   const isUserGuildLeader = (guilde) => {
     if (!selectedGuilde) return false;
     const userMember = guilde.membersList?.find(m => m.name === 'SMC.SRB');
@@ -6404,12 +6416,7 @@ export default function DashboardPage() {
                                 {ann.author}
                               </p>
                               <p style={{ margin: 0, fontSize: '10px', color: currentTheme.textSecondary }}>
-                                {Math.floor((Date.now() - ann.timestamp.getTime()) / 60000) < 1
-                                  ? 'À l\'instant'
-                                  : Math.floor((Date.now() - ann.timestamp.getTime()) / 60000) < 60
-                                  ? `Il y a ${Math.floor((Date.now() - ann.timestamp.getTime()) / 60000)}min`
-                                  : `Il y a ${Math.floor((Date.now() - ann.timestamp.getTime()) / 3600000)}h`
-                                }
+                                {formatRelativeTime(ann.timestamp)}
                               </p>
                             </div>
                           </div>
@@ -7841,15 +7848,43 @@ export default function DashboardPage() {
         {/* NOTIFICATIONS SECTION */}
         {activeTab === 'notifications' && (
           <div style={{ marginTop: '20px' }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '900',
-              color: currentTheme.text,
-              margin: '0 0 24px 0',
-              letterSpacing: '-0.5px',
-            }}>
-              🔔 Notifications
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '900',
+                color: currentTheme.text,
+                margin: 0,
+                letterSpacing: '-0.5px',
+              }}>
+                🔔 Notifications
+              </h2>
+              {notifications.some(n => !n.read) && (
+                <button
+                  onClick={() => {
+                    setNotifications(notifications.map(n => ({ ...n, read: true })));
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px',
+                    color: '#3b82f6',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                  }}
+                >
+                  ✓ Marquer tout comme lu
+                </button>
+              )}
+            </div>
 
             <div style={{ display: 'grid', gap: '12px' }}>
               {notifications.length === 0 ? (
@@ -7939,14 +7974,7 @@ export default function DashboardPage() {
                         color: currentTheme.textSecondary,
                         whiteSpace: 'nowrap',
                       }}>
-                        {Math.floor((Date.now() - notif.timestamp.getTime()) / 60000) < 1
-                          ? 'À l\'instant'
-                          : Math.floor((Date.now() - notif.timestamp.getTime()) / 60000) < 60
-                          ? `Il y a ${Math.floor((Date.now() - notif.timestamp.getTime()) / 60000)}min`
-                          : Math.floor((Date.now() - notif.timestamp.getTime()) / 3600000) < 24
-                          ? `Il y a ${Math.floor((Date.now() - notif.timestamp.getTime()) / 3600000)}h`
-                          : `Il y a ${Math.floor((Date.now() - notif.timestamp.getTime()) / 86400000)}j`
-                        }
+                        {formatRelativeTime(notif.timestamp)}
                       </span>
                       {!notif.read && (
                         <div style={{
@@ -8085,14 +8113,7 @@ export default function DashboardPage() {
                       color: currentTheme.textSecondary,
                       whiteSpace: 'nowrap',
                     }}>
-                      {Math.floor((Date.now() - activity.timestamp.getTime()) / 60000) < 1
-                        ? 'À l\'instant'
-                        : Math.floor((Date.now() - activity.timestamp.getTime()) / 60000) < 60
-                        ? `Il y a ${Math.floor((Date.now() - activity.timestamp.getTime()) / 60000)}min`
-                        : Math.floor((Date.now() - activity.timestamp.getTime()) / 3600000) < 24
-                        ? `Il y a ${Math.floor((Date.now() - activity.timestamp.getTime()) / 3600000)}h`
-                        : `Il y a ${Math.floor((Date.now() - activity.timestamp.getTime()) / 86400000)}j`
-                      }
+                      {formatRelativeTime(activity.timestamp)}
                     </span>
                   </div>
                 )
