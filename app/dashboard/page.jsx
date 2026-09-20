@@ -205,6 +205,27 @@ export default function DashboardPage() {
     { id: 1, title: '🎉 Félicitations!', message: 'Vous avez atteint le niveau 20!', type: 'success', timestamp: Date.now() }
   ]);
 
+  // Badge System - Rarity levels: common, rare, very_rare, unique
+  const badgeDefinitions = {
+    'first_step': { name: 'Premier Pas', emoji: '👶', rarity: 'common', requirement: 'level:1' },
+    'crypto_novice': { name: 'Novice Crypto', emoji: '₿', rarity: 'rare', requirement: 'course:crypto' },
+    'stock_master': { name: 'Maître Boursier', emoji: '📈', rarity: 'rare', requirement: 'course:stocks' },
+    'real_estate_pro': { name: 'Pro Immobilier', emoji: '🏠', rarity: 'rare', requirement: 'course:realestate' },
+    'investment_guru': { name: 'Gourou Investisseur', emoji: '🧠', rarity: 'very_rare', requirement: 'level:10' },
+    'crypto_master': { name: 'Maître Crypto', emoji: '👑', rarity: 'very_rare', requirement: 'level:15' },
+    'portfolio_genius': { name: 'Génie Portefeuille', emoji: '💎', rarity: 'very_rare', requirement: 'level:20' },
+    'legend': { name: 'Légende Investisseur', emoji: '⭐', rarity: 'unique', requirement: 'level:50' },
+    'founder': { name: 'Fondateur', emoji: '👑', rarity: 'unique', requirement: 'event:founder' },
+    'event_champion': { name: 'Champion Événement', emoji: '🏆', rarity: 'very_rare', requirement: 'event:win' },
+  };
+
+  const [userBadges, setUserBadges] = useState(['first_step', 'crypto_novice']);
+  const [isPremium, setIsPremium] = useState(true);
+  const [customFriendCode, setCustomFriendCode] = useState('');
+  const [showCustomCodeModal, setShowCustomCodeModal] = useState(false);
+  const [codeEditInput, setCodeEditInput] = useState('');
+  const [codeError, setCodeError] = useState('');
+
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
     try {
@@ -224,6 +245,14 @@ export default function DashboardPage() {
       if (savedTreasures) {
         setGuildTreasures(JSON.parse(savedTreasures));
       }
+      const savedBadges = localStorage.getItem('investkit_badges');
+      if (savedBadges) {
+        setUserBadges(JSON.parse(savedBadges));
+      }
+      const savedCustomCode = localStorage.getItem('investkit_custom_code');
+      if (savedCustomCode) {
+        setCustomFriendCode(JSON.parse(savedCustomCode));
+      }
     } catch (e) {
       console.log('LocalStorage not available');
     }
@@ -235,10 +264,54 @@ export default function DashboardPage() {
       localStorage.setItem('investkit_activity', JSON.stringify(activityFeed));
       localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
       localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
+      localStorage.setItem('investkit_badges', JSON.stringify(userBadges));
+      localStorage.setItem('investkit_custom_code', JSON.stringify(customFriendCode));
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, customFriendCode]);
+
+  // Auto-award badges based on level progression
+  useEffect(() => {
+    const currentLevel = userData.level || 1;
+    const newBadges = [...userBadges];
+    let badgesAwarded = false;
+
+    // Level-based badges
+    const levelBadges = {
+      1: 'first_step',
+      10: 'investment_guru',
+      15: 'crypto_master',
+      20: 'portfolio_genius',
+      50: 'legend',
+    };
+
+    Object.entries(levelBadges).forEach(([level, badgeId]) => {
+      if (currentLevel >= parseInt(level) && !newBadges.includes(badgeId)) {
+        newBadges.push(badgeId);
+        badgesAwarded = true;
+      }
+    });
+
+    // Course completion badges
+    const completedCourses = progress?.completedDomains || [];
+    const courseBadges = {
+      'crypto': 'crypto_novice',
+      'stocks': 'stock_master',
+      'realestate': 'real_estate_pro',
+    };
+
+    Object.entries(courseBadges).forEach(([course, badgeId]) => {
+      if (completedCourses.includes(course) && !newBadges.includes(badgeId)) {
+        newBadges.push(badgeId);
+        badgesAwarded = true;
+      }
+    });
+
+    if (badgesAwarded) {
+      setUserBadges(newBadges);
+    }
+  }, [userData.level, progress?.completedDomains]);
 
   // Real-time notification simulation
   useEffect(() => {
@@ -1065,6 +1138,138 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Badges Section */}
+        <div style={{ marginBottom: '40px' }}>
+          <p style={{
+            fontSize: '11px',
+            fontWeight: '700',
+            color: 'rgba(255, 255, 255, 0.6)',
+            margin: '0 0 12px 0',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            🏅 Badges ({userBadges.length})
+          </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+            gap: '12px',
+            marginBottom: '16px',
+          }}>
+            {userBadges.map((badgeId) => {
+              const badge = badgeDefinitions[badgeId];
+              if (!badge) return null;
+              const rarityColors = {
+                common: '#64748b',
+                rare: '#3b82f6',
+                very_rare: '#a855f7',
+                unique: '#fbbf24',
+              };
+              return (
+                <div key={badgeId} style={{
+                  padding: '8px',
+                  background: `${rarityColors[badge.rarity]}20`,
+                  border: `2px solid ${rarityColors[badge.rarity]}`,
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
+                }}>
+                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>{badge.emoji}</div>
+                  <p style={{
+                    fontSize: '9px',
+                    color: rarityColors[badge.rarity],
+                    fontWeight: '600',
+                    margin: 0,
+                  }}>
+                    {badge.name}
+                  </p>
+                  <p style={{
+                    fontSize: '8px',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    fontWeight: '500',
+                    margin: '2px 0 0 0',
+                  }}>
+                    {badge.rarity}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Friend Code Customization */}
+        <div style={{
+          marginBottom: '40px',
+          padding: '16px',
+          background: isPremium ? 'rgba(251, 191, 36, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+          borderRadius: '12px',
+          border: `1px solid ${isPremium ? 'rgba(251, 191, 36, 0.3)' : 'rgba(107, 114, 128, 0.3)'}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: '700',
+              color: isPremium ? '#fbbf24' : 'rgba(255, 255, 255, 0.6)',
+              margin: 0,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              {isPremium ? '🔐 Personnalisez votre code' : '🔒 Personnalisation Premium'}
+            </p>
+          </div>
+          {!isPremium && (
+            <p style={{
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              margin: 0,
+            }}>
+              Passez à Premium pour personnaliser votre code ami!
+            </p>
+          )}
+          {isPremium && (
+            <div>
+              <p style={{
+                fontSize: '13px',
+                fontWeight: '700',
+                color: '#fbbf24',
+                margin: '8px 0 12px 0',
+              }}>
+                {customFriendCode || userData.friendCode}
+              </p>
+              <button
+                onClick={() => {
+                  setShowCustomCodeModal(true);
+                  setCodeEditInput(customFriendCode || userData.friendCode);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: 'rgba(251, 191, 36, 0.2)',
+                  border: '1px solid rgba(251, 191, 36, 0.4)',
+                  borderRadius: '8px',
+                  color: '#fbbf24',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(251, 191, 36, 0.3)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+                }}
+              >
+                ✏️ Modifier
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick Stats */}
@@ -8602,6 +8807,196 @@ export default function DashboardPage() {
                 borderRadius: '2px',
                 margin: '0 auto',
               }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FRIEND CODE CUSTOMIZATION MODAL */}
+      {showCustomCodeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 51,
+        }}
+        onClick={() => setShowCustomCodeModal(false)}
+        >
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 52, 96, 0.95) 100%)',
+            borderRadius: '20px',
+            padding: '32px',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+            backdropFilter: 'blur(20px)',
+            maxWidth: '450px',
+            width: '90%',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '900',
+              color: '#fbbf24',
+              margin: '0 0 8px 0',
+            }}>
+              Personnalisez votre code
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              margin: '0 0 20px 0',
+            }}>
+              Choisissez un code unique et facile à retenir pour vos amis
+            </p>
+
+            {/* Input Field */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.7)',
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>
+                Votre nouveau code ami
+              </label>
+              <input
+                type="text"
+                value={codeEditInput}
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase();
+                  if (/^[A-Z0-9]*$/.test(val) && val.length <= 10) {
+                    setCodeEditInput(val);
+                    setCodeError('');
+                  }
+                }}
+                placeholder={userData.friendCode}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: `2px solid ${codeError ? '#ef4444' : 'rgba(251, 191, 36, 0.3)'}`,
+                  borderRadius: '12px',
+                  color: '#fbbf24',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  fontFamily: 'monospace',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
+                  e.currentTarget.style.background = 'rgba(251, 191, 36, 0.05)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = codeError ? '#ef4444' : 'rgba(251, 191, 36, 0.3)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                }}
+              />
+              <p style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                margin: '6px 0 0 0',
+              }}>
+                {codeEditInput.length}/10 caractères • Lettres et chiffres uniquement
+              </p>
+            </div>
+
+            {codeError && (
+              <div style={{
+                padding: '12px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                marginBottom: '20px',
+              }}>
+                <p style={{
+                  fontSize: '13px',
+                  color: '#ef4444',
+                  margin: 0,
+                  fontWeight: '600',
+                }}>
+                  ⚠️ {codeError}
+                </p>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+            }}>
+              <button
+                onClick={() => setShowCustomCodeModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  if (!codeEditInput) {
+                    setCodeError('Le code ne peut pas être vide');
+                    return;
+                  }
+                  if (codeEditInput.length < 3) {
+                    setCodeError('Le code doit contenir au moins 3 caractères');
+                    return;
+                  }
+                  setCustomFriendCode(codeEditInput);
+                  setShowCustomCodeModal(false);
+                  setCodeError('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(217, 119, 6, 0.3) 100%)',
+                  border: '2px solid rgba(251, 191, 36, 0.5)',
+                  borderRadius: '10px',
+                  color: '#fbbf24',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.4) 0%, rgba(217, 119, 6, 0.4) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.7)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(217, 119, 6, 0.3) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                }}
+              >
+                ✓ Sauvegarder
+              </button>
             </div>
           </div>
         </div>
