@@ -20,6 +20,12 @@ export default function DashboardPage() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [fullName, setFullName] = useState('Jean Dupont');
   const [email, setEmail] = useState('jean.dupont@example.com');
+  const [profileVisibility, setProfileVisibility] = useState('public');
+  const [hideStats, setHideStats] = useState(false);
+  const [shareProgress, setShareProgress] = useState(true);
+  const [preferredDomain, setPreferredDomain] = useState('crypto');
+  const [difficultyLevel, setDifficultyLevel] = useState('intermediate');
+  const [academyNotifications, setAcademyNotifications] = useState(true);
 
   const theme = {
     dark: {
@@ -177,6 +183,34 @@ export default function DashboardPage() {
     if (savedEmail) {
       setEmail(savedEmail);
     }
+
+    // Load visibility settings
+    const savedVisibility = typeof window !== 'undefined' ? localStorage.getItem('profileVisibility') : null;
+    if (savedVisibility) {
+      setProfileVisibility(savedVisibility);
+    }
+    const savedHideStats = typeof window !== 'undefined' ? localStorage.getItem('hideStats') : null;
+    if (savedHideStats) {
+      setHideStats(JSON.parse(savedHideStats));
+    }
+    const savedShareProgress = typeof window !== 'undefined' ? localStorage.getItem('shareProgress') : null;
+    if (savedShareProgress !== null) {
+      setShareProgress(JSON.parse(savedShareProgress));
+    }
+
+    // Load learning preferences
+    const savedDomain = typeof window !== 'undefined' ? localStorage.getItem('preferredDomain') : null;
+    if (savedDomain) {
+      setPreferredDomain(savedDomain);
+    }
+    const savedDifficulty = typeof window !== 'undefined' ? localStorage.getItem('difficultyLevel') : null;
+    if (savedDifficulty) {
+      setDifficultyLevel(savedDifficulty);
+    }
+    const savedNotifications = typeof window !== 'undefined' ? localStorage.getItem('academyNotifications') : null;
+    if (savedNotifications !== null) {
+      setAcademyNotifications(JSON.parse(savedNotifications));
+    }
   }, [router]);
 
   // Handle photo upload
@@ -201,8 +235,13 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('userFullName', fullName);
       localStorage.setItem('userEmail', email);
+      localStorage.setItem('profileVisibility', profileVisibility);
+      localStorage.setItem('hideStats', JSON.stringify(hideStats));
+      localStorage.setItem('shareProgress', JSON.stringify(shareProgress));
+      localStorage.setItem('preferredDomain', preferredDomain);
+      localStorage.setItem('difficultyLevel', difficultyLevel);
+      localStorage.setItem('academyNotifications', JSON.stringify(academyNotifications));
     }
-    // Optionally show a notification
     alert('Profil mis à jour avec succès!');
   };
 
@@ -1867,6 +1906,268 @@ export default function DashboardPage() {
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Badges</p>
                         <p style={{ fontSize: '18px', fontWeight: '700', color: '#a78bfa', margin: 0 }}>{progress.badges?.length || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visibility Settings */}
+                  <div style={{
+                    paddingTop: '16px',
+                    borderTop: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: currentTheme.text,
+                      margin: '0 0 16px 0',
+                    }}>
+                      👤 Visibilité du Profil
+                    </h4>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      {/* Profile Visibility */}
+                      <div style={{
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: currentTheme.textSecondary,
+                          marginBottom: '6px',
+                        }}>
+                          Visibilité du profil
+                        </label>
+                        <select
+                          value={profileVisibility}
+                          onChange={(e) => setProfileVisibility(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            background: currentTheme.border,
+                            border: `1px solid ${currentTheme.border}`,
+                            borderRadius: '8px',
+                            color: currentTheme.text,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                          }}>
+                          <option value="public">🌍 Public</option>
+                          <option value="private">🔒 Privé</option>
+                          <option value="friends">👥 Amis seulement</option>
+                        </select>
+                      </div>
+
+                      {/* Hide Stats */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <div>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                            Masquer les statistiques
+                          </p>
+                          <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: 0 }}>
+                            Cacher votre XP et niveau publiquement
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setHideStats(!hideStats)}
+                          style={{
+                            position: 'relative',
+                            width: '40px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            background: hideStats ? '#3b82f6' : '#6b7280',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                          }}>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '2px',
+                              left: hideStats ? '20px' : '2px',
+                              width: '20px',
+                              height: '20px',
+                              background: 'white',
+                              borderRadius: '50%',
+                              transition: 'left 0.3s ease',
+                            }}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Share Progress */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <div>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                            Partager la progression
+                          </p>
+                          <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: 0 }}>
+                            Autoriser le partage de vos données
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShareProgress(!shareProgress)}
+                          style={{
+                            position: 'relative',
+                            width: '40px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            background: shareProgress ? '#3b82f6' : '#6b7280',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                          }}>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '2px',
+                              left: shareProgress ? '20px' : '2px',
+                              width: '20px',
+                              height: '20px',
+                              background: 'white',
+                              borderRadius: '50%',
+                              transition: 'left 0.3s ease',
+                            }}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Learning Preferences */}
+                  <div style={{
+                    paddingTop: '16px',
+                    borderTop: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: currentTheme.text,
+                      margin: '0 0 16px 0',
+                    }}>
+                      🎓 Préférences d'Apprentissage
+                    </h4>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      {/* Preferred Domain */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: currentTheme.textSecondary,
+                          marginBottom: '6px',
+                        }}>
+                          Domaine d'investissement préféré
+                        </label>
+                        <select
+                          value={preferredDomain}
+                          onChange={(e) => setPreferredDomain(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            background: currentTheme.border,
+                            border: `1px solid ${currentTheme.border}`,
+                            borderRadius: '8px',
+                            color: currentTheme.text,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                          }}>
+                          <option value="crypto">🪙 Crypto-monnaies</option>
+                          <option value="stocks">📈 Actions/Bourse</option>
+                          <option value="real-estate">🏠 Immobilier</option>
+                          <option value="bonds">📊 Obligations</option>
+                          <option value="forex">💱 Forex</option>
+                          <option value="general">🎯 Tous les domaines</option>
+                        </select>
+                      </div>
+
+                      {/* Difficulty Level */}
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: currentTheme.textSecondary,
+                          marginBottom: '6px',
+                        }}>
+                          Niveau de difficulté préféré
+                        </label>
+                        <select
+                          value={difficultyLevel}
+                          onChange={(e) => setDifficultyLevel(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            background: currentTheme.border,
+                            border: `1px solid ${currentTheme.border}`,
+                            borderRadius: '8px',
+                            color: currentTheme.text,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                          }}>
+                          <option value="beginner">🌱 Débutant</option>
+                          <option value="intermediate">📚 Intermédiaire</option>
+                          <option value="advanced">⭐ Avancé</option>
+                          <option value="expert">🏆 Expert</option>
+                        </select>
+                      </div>
+
+                      {/* Academy Notifications */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <div>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                            Notifications d'académie
+                          </p>
+                          <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: 0 }}>
+                            Recevoir les rappels d'apprentissage
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setAcademyNotifications(!academyNotifications)}
+                          style={{
+                            position: 'relative',
+                            width: '40px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            background: academyNotifications ? '#3b82f6' : '#6b7280',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                          }}>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '2px',
+                              left: academyNotifications ? '20px' : '2px',
+                              width: '20px',
+                              height: '20px',
+                              background: 'white',
+                              borderRadius: '50%',
+                              transition: 'left 0.3s ease',
+                            }}
+                          />
+                        </button>
                       </div>
                     </div>
                   </div>
