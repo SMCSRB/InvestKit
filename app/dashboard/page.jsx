@@ -294,8 +294,9 @@ export default function DashboardPage() {
 
   // Create confetti particles for celebration
   const createConfetti = useCallback((badgeId) => {
+    const uniqueSetId = `${Date.now()}-${Math.random()}`;
     const confettiPieces = Array.from({ length: 30 }, (_, i) => ({
-      id: `${badgeId}-confetti-${i}`,
+      id: `${badgeId}-confetti-${i}-${uniqueSetId}`,
       left: Math.random() * 100,
       delay: Math.random() * 0.3,
       duration: 2 + Math.random() * 1,
