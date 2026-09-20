@@ -43,6 +43,10 @@ export default function DashboardPage() {
   const [guildChatInput, setGuildChatInput] = useState(''); // Message input pour le chat de guilde
   const [memberActionMenu, setMemberActionMenu] = useState(null); // { guildId, memberId } pour afficher menu d'action
   const [roleChangeMenu, setRoleChangeMenu] = useState(null); // { guildId, memberId } pour changer de rôle
+  const [showConfetti, setShowConfetti] = useState(false); // Pour l'animation confetti
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]); // Achievements débloqués
+  const [newAchievement, setNewAchievement] = useState(null); // Achievement en cours de notification
+  const [guildesCreatedCount, setGuildesCreatedCount] = useState(0); // Nombre de guildes créées
   const [guildes, setGuildes] = useState([
     {
       id: 1,
@@ -134,6 +138,20 @@ export default function DashboardPage() {
       user.friendCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const triggerConfetti = () => {
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3000);
+  };
+
+  const unlockAchievement = (achievementId, achievementData) => {
+    if (!unlockedAchievements.includes(achievementId)) {
+      setUnlockedAchievements([...unlockedAchievements, achievementId]);
+      setNewAchievement(achievementData);
+      triggerConfetti();
+      setTimeout(() => setNewAchievement(null), 4000);
+    }
+  };
 
   const isUserGuildLeader = (guilde) => {
     if (!selectedGuilde) return false;
@@ -2571,6 +2589,8 @@ export default function DashboardPage() {
                     <button
                       onClick={() => {
                         if (newGuildeName.trim() && progress.userLevel >= 7) {
+                          const newCount = guildesCreatedCount + 1;
+                          setGuildesCreatedCount(newCount);
                           setGuildes([...guildes, {
                             id: guildes.length + 1,
                             name: newGuildeName,
@@ -2596,6 +2616,16 @@ export default function DashboardPage() {
                             text: '✓ Guilde créée avec succès! Elle est maintenant visible pour tous.'
                           });
                           setTimeout(() => setGuildMessage(null), 4000);
+
+                          // Débloquer achievement à la première guilde
+                          if (newCount === 1) {
+                            unlockAchievement('guild_master', {
+                              title: 'Guild Master',
+                              description: 'Tu as créé ta première guilde!',
+                              icon: '🏰',
+                              reward: '+500 XP'
+                            });
+                          }
                         }
                       }}
                       style={{
@@ -5552,6 +5582,122 @@ export default function DashboardPage() {
               }} />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <>
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'fixed',
+                left: Math.random() * 100 + '%',
+                top: '-10px',
+                width: '10px',
+                height: '10px',
+                background: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 5)],
+                borderRadius: '50%',
+                animation: `fall 3s linear forwards`,
+                pointerEvents: 'none',
+              }}
+            />
+          ))}
+          <style>{`
+            @keyframes fall {
+              to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+              }
+            }
+          `}</style>
+        </>
+      )}
+
+      {/* Achievement Notification */}
+      {newAchievement && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10000,
+            animation: 'slideDown 0.5s ease-out, slideUp 0.5s ease-in 3.5s forwards',
+          }}
+        >
+          <div style={{
+            padding: '20px 32px',
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%)',
+            borderRadius: '12px',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '12px',
+              animation: 'bounce 0.6s ease-in-out',
+            }}>
+              {newAchievement.icon}
+            </div>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: '800',
+              color: '#fff',
+              marginBottom: '4px',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+            }}>
+              {newAchievement.title}
+            </div>
+            <div style={{
+              fontSize: '13px',
+              color: 'rgba(255, 255, 255, 0.9)',
+              marginBottom: '8px',
+            }}>
+              {newAchievement.description}
+            </div>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '700',
+              color: '#fbbf24',
+            }}>
+              {newAchievement.reward}
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideDown {
+              from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+              }
+              to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+              }
+            }
+            @keyframes slideUp {
+              from {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+              }
+              to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px);
+              }
+            }
+            @keyframes bounce {
+              0%, 100% {
+                transform: scale(1);
+              }
+              50% {
+                transform: scale(1.2);
+              }
+            }
+          `}</style>
         </div>
       )}
     </div>
