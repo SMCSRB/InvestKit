@@ -1927,61 +1927,6 @@ export default function DashboardPage() {
               )}
 
               {/* Friend Code Card */}
-              {friendsTab !== 'guildes' && (
-              <div style={{
-                display: 'flex',
-                gap: '16px',
-                padding: '20px',
-                background: currentTheme.cardBg,
-                borderRadius: '16px',
-                border: `1px solid ${currentTheme.border}`,
-                marginBottom: '24px',
-                alignItems: 'center',
-              }}>
-                <div style={{ flex: 1 }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 8px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    Ton Code Ami Unique
-                  </p>
-                  <p style={{
-                    fontSize: '24px',
-                    fontWeight: '900',
-                    color: currentTheme.accent,
-                    margin: 0,
-                    fontFamily: 'monospace',
-                  }}>
-                    {userData.friendCode}
-                  </p>
-                </div>
-                <button
-                  onClick={() => copyToClipboard(userData.friendCode)}
-                  style={{
-                    padding: '12px 20px',
-                    background: copied ? 'rgba(16, 185, 129, 0.2)' : currentTheme.accent,
-                    border: `1px solid ${currentTheme.border}`,
-                    borderRadius: '12px',
-                    color: copied ? '#10b981' : '#fff',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!copied) e.target.style.background = 'rgba(59, 130, 246, 0.8)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!copied) e.target.style.background = currentTheme.accent;
-                  }}
-                >
-                  {copied ? '✓ Copié!' : 'Copier Code'}
-                </button>
-              </div>
-              )}
             </div>
 
             {/* Leaderboard Section - ULTRA PREMIUM */}
