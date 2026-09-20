@@ -1637,6 +1637,31 @@ export default function DashboardPage() {
                         boxSizing: 'border-box',
                       }} />
                     </div>
+
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: currentTheme.textSecondary,
+                        marginBottom: '6px',
+                      }}>
+                        Bio
+                      </label>
+                      <textarea defaultValue="Passionné par l'investissement et l'apprentissage 🚀" style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: currentTheme.border,
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '8px',
+                        color: currentTheme.text,
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                        minHeight: '80px',
+                      }} />
+                    </div>
                   </div>
 
                   <button style={{
@@ -1652,6 +1677,59 @@ export default function DashboardPage() {
                   }}>
                     Enregistrer les modifications
                   </button>
+
+                  {/* Stats Section */}
+                  <div style={{
+                    paddingTop: '16px',
+                    borderTop: `1px solid ${currentTheme.border}`,
+                  }}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: currentTheme.text,
+                      margin: '0 0 16px 0',
+                    }}>
+                      📊 Mes Statistiques Académie
+                    </h4>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                      gap: '12px',
+                    }}>
+                      <div style={{
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Niveau</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#3b82f6', margin: 0 }}>Lvl {progress.userLevel}</p>
+                      </div>
+                      <div style={{
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>XP Total</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b', margin: 0 }}>{progress.totalXP} XP</p>
+                      </div>
+                      <div style={{
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Racha</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b', margin: 0 }}>🔥 {progress.streak}</p>
+                      </div>
+                      <div style={{
+                        padding: '12px',
+                        background: currentTheme.border,
+                        borderRadius: '8px',
+                      }}>
+                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Badges</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#a78bfa', margin: 0 }}>{progress.badges?.length || 0}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
