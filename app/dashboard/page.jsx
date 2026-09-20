@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useEducationProgress } from '@/app/context/EducationContext';
+import { useUser } from '@/app/context/UserContext';
 import { educationDomains } from '@/data/education';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
+  const { user: userData } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
@@ -371,6 +374,54 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* Friend Code Section */}
+        <div style={{ marginBottom: '40px', padding: '16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+          <p style={{
+            fontSize: '11px',
+            fontWeight: '700',
+            color: 'rgba(255, 255, 255, 0.6)',
+            margin: '0 0 8px 0',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            Mon Code Ami
+          </p>
+          <p style={{
+            fontSize: '18px',
+            fontWeight: '900',
+            color: '#60a5fa',
+            margin: '0 0 12px 0',
+            fontFamily: 'monospace',
+          }}>
+            {userData.friendCode}
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => navigator.clipboard.writeText(userData.friendCode)}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                background: 'rgba(59, 130, 246, 0.3)',
+                border: '1px solid rgba(59, 130, 246, 0.5)',
+                borderRadius: '8px',
+                color: '#60a5fa',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(59, 130, 246, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+              }}
+            >
+              Copier
+            </button>
+          </div>
+        </div>
+
         {/* Quick Stats */}
         <div style={{ marginBottom: '40px' }}>
           <p style={{
@@ -433,40 +484,73 @@ export default function DashboardPage() {
               { id: 'projects', label: '🎯 Projets' },
               { id: 'market', label: '💹 Marché' },
               { id: 'education', label: '📚 Académie' },
+              { id: 'friends', label: `👥 Amis (${userData.friends.length})`, href: '/friends' },
               { id: 'risk', label: '⚠️ Risques' },
               { id: 'settings', label: '⚙️ Paramètres' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  background: activeTab === item.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  color: activeTab === item.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '14px',
-                  fontWeight: activeTab === item.id ? '700' : '500',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== item.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.8)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== item.id) {
-                    e.target.style.background = 'transparent';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.6)';
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
+            ].map((item) => {
+              if (item.href) {
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    style={{
+                      display: 'block',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.target.style.color = 'rgba(255, 255, 255, 0.8)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                      e.target.style.color = 'rgba(255, 255, 255, 0.6)';
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    background: activeTab === item.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    border: 'none',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    color: activeTab === item.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '14px',
+                    fontWeight: activeTab === item.id ? '700' : '500',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeTab !== item.id) {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.target.style.color = 'rgba(255, 255, 255, 0.8)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeTab !== item.id) {
+                      e.target.style.background = 'transparent';
+                      e.target.style.color = 'rgba(255, 255, 255, 0.6)';
+                    }
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
