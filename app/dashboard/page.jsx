@@ -206,17 +206,21 @@ export default function DashboardPage() {
   ]);
 
   // Badge System - Rarity levels: common, rare, very_rare, unique
+  // Enhanced with statistics, XP value, and rarity percentages
   const badgeDefinitions = {
-    'first_step': { name: 'Premier Pas', emoji: '👶', rarity: 'common', requirement: 'level:1' },
-    'crypto_novice': { name: 'Novice Crypto', emoji: '₿', rarity: 'rare', requirement: 'course:crypto' },
-    'stock_master': { name: 'Maître Boursier', emoji: '📈', rarity: 'rare', requirement: 'course:stocks' },
-    'real_estate_pro': { name: 'Pro Immobilier', emoji: '🏠', rarity: 'rare', requirement: 'course:realestate' },
-    'investment_guru': { name: 'Gourou Investisseur', emoji: '🧠', rarity: 'very_rare', requirement: 'level:10' },
-    'crypto_master': { name: 'Maître Crypto', emoji: '👑', rarity: 'very_rare', requirement: 'level:15' },
-    'portfolio_genius': { name: 'Génie Portefeuille', emoji: '💎', rarity: 'very_rare', requirement: 'level:20' },
-    'legend': { name: 'Légende Investisseur', emoji: '⭐', rarity: 'unique', requirement: 'level:50' },
-    'founder': { name: 'Fondateur', emoji: '👑', rarity: 'unique', requirement: 'event:founder' },
-    'event_champion': { name: 'Champion Événement', emoji: '🏆', rarity: 'very_rare', requirement: 'event:win' },
+    'first_step': { name: 'Premier Pas', emoji: '👶', rarity: 'common', requirement: 'level:1', xp: 50, rarity_percent: 98.5, category: 'milestone', description: 'Débuter ton parcours d\'investisseur' },
+    'crypto_novice': { name: 'Novice Crypto', emoji: '₿', rarity: 'rare', requirement: 'course:crypto', xp: 150, rarity_percent: 45.2, category: 'education', description: 'Première leçon de crypto complétée' },
+    'stock_master': { name: 'Maître Boursier', emoji: '📈', rarity: 'rare', requirement: 'course:stocks', xp: 150, rarity_percent: 38.7, category: 'education', description: 'Maîtriser la bourse et les PEA' },
+    'real_estate_pro': { name: 'Pro Immobilier', emoji: '🏠', rarity: 'rare', requirement: 'course:realestate', xp: 150, rarity_percent: 32.1, category: 'education', description: 'Devenir expert en immobilier' },
+    'investment_guru': { name: 'Gourou Investisseur', emoji: '🧠', rarity: 'very_rare', requirement: 'level:10', xp: 300, rarity_percent: 22.5, category: 'milestone', description: 'Atteindre le niveau 10' },
+    'crypto_master': { name: 'Maître Crypto', emoji: '👑', rarity: 'very_rare', requirement: 'level:15', xp: 400, rarity_percent: 12.8, category: 'milestone', description: 'Atteindre le niveau 15' },
+    'portfolio_genius': { name: 'Génie Portefeuille', emoji: '💎', rarity: 'very_rare', requirement: 'level:20', xp: 500, rarity_percent: 8.3, category: 'milestone', description: 'Atteindre le niveau 20' },
+    'legend': { name: 'Légende Investisseur', emoji: '⭐', rarity: 'unique', requirement: 'level:50', xp: 1000, rarity_percent: 0.5, category: 'milestone', description: 'Atteindre le niveau 50 - Légende !' },
+    'founder': { name: 'Fondateur', emoji: '👑', rarity: 'unique', requirement: 'event:founder', xp: 750, rarity_percent: 0.1, category: 'event', description: 'Membre fondateur d\'InvestKit' },
+    'event_champion': { name: 'Champion Événement', emoji: '🏆', rarity: 'very_rare', requirement: 'event:win', xp: 350, rarity_percent: 5.2, category: 'event', description: 'Gagnant d\'un événement' },
+    'spring_collector': { name: 'Collecteur Printemps', emoji: '🌸', rarity: 'rare', requirement: 'seasonal:spring', xp: 200, rarity_percent: 25.0, category: 'seasonal', description: 'Badge saisonnier Printemps' },
+    'summer_master': { name: 'Maître Été', emoji: '☀️', rarity: 'very_rare', requirement: 'seasonal:summer', xp: 350, rarity_percent: 12.0, category: 'seasonal', description: 'Badge saisonnier Été' },
+    'mystery_badge': { name: '???', emoji: '❓', rarity: 'unique', requirement: 'secret', xp: 600, rarity_percent: 2.1, category: 'secret', description: 'À découvrir...' },
   };
 
   const [userBadges, setUserBadges] = useState(['first_step', 'crypto_novice']);
@@ -236,6 +240,159 @@ export default function DashboardPage() {
   const [recentLevelUp, setRecentLevelUp] = useState(false);
   const [particles, setParticles] = useState([]);
   const [isMilestone, setIsMilestone] = useState((userLevel || 1) % 5 === 0);
+
+  // NEW: Enhanced Badge System States
+  const [badgeUnlockToasts, setBadgeUnlockToasts] = useState([]); // Toast notifications for new badges
+  const [badgeConfetti, setBadgeConfetti] = useState([]); // Confetti particles for celebrations
+  const [badgeDateObtained, setBadgeDateObtained] = useState({}); // { badgeId: timestamp }
+  const [badgeUnlockProgress, setBadgeUnlockProgress] = useState({}); // Progress for near-unlock badges
+  const [showBadgeAlbum, setShowBadgeAlbum] = useState(false); // Badge collection album modal
+  const [badgeAlbumFilter, setBadgeAlbumFilter] = useState('all'); // all, obtained, locked, seasonal, secret
+  const [hoveredBadge, setHoveredBadge] = useState(null); // For flip effect and interactions
+  const [soundEnabled, setSoundEnabled] = useState(true); // Sound effects toggle
+  const [badgeFlipStates, setBadgeFlipStates] = useState({}); // Track which badges are flipped
+
+  // ============ HELPER FUNCTIONS FOR BADGE SYSTEM ============
+
+  // Play sound effect for badge unlock (if enabled)
+  const playSound = useCallback((type = 'unlock') => {
+    if (!soundEnabled) return;
+    // Create audio context and play tone
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    if (type === 'unlock') {
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } else if (type === 'flip') {
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.05);
+    }
+  }, [soundEnabled]);
+
+  // Create confetti particles for celebration
+  const createConfetti = useCallback((badgeId) => {
+    const confettiPieces = Array.from({ length: 30 }, (_, i) => ({
+      id: `${badgeId}-confetti-${i}`,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.3,
+      duration: 2 + Math.random() * 1,
+      color: ['#fbbf24', '#f59e0b', '#d97706', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)],
+    }));
+    setBadgeConfetti(prev => [...prev, ...confettiPieces]);
+    setTimeout(() => {
+      setBadgeConfetti(prev => prev.filter(c => !confettiPieces.find(p => p.id === c.id)));
+    }, 3000);
+  }, []);
+
+  // Show toast notification for badge unlock
+  const showBadgeToast = useCallback((badgeId) => {
+    const badge = badgeDefinitions[badgeId];
+    if (!badge) return;
+
+    const toastId = `toast-${badgeId}-${Date.now()}`;
+    const toast = {
+      id: toastId,
+      badgeId,
+      badgeName: badge.name,
+      badgeEmoji: badge.emoji,
+      rarity: badge.rarity,
+      xp: badge.xp,
+    };
+
+    setBadgeUnlockToasts(prev => [...prev, toast]);
+    playSound('unlock');
+    createConfetti(badgeId);
+
+    setTimeout(() => {
+      setBadgeUnlockToasts(prev => prev.filter(t => t.id !== toastId));
+    }, 4000);
+  }, [badgeDefinitions, playSound, createConfetti]);
+
+  // Unlock a new badge with all animations and effects
+  const unlockBadge = useCallback((badgeId) => {
+    if (userBadges.includes(badgeId)) return;
+
+    setUserBadges(prev => [...prev, badgeId]);
+    setBadgeDateObtained(prev => ({
+      ...prev,
+      [badgeId]: new Date().toISOString(),
+    }));
+    showBadgeToast(badgeId);
+  }, [userBadges, showBadgeToast]);
+
+  // Calculate progress for near-unlock badges
+  const calculateBadgeProgress = useCallback(() => {
+    const progress = {};
+    Object.entries(badgeDefinitions).forEach(([badgeId, badge]) => {
+      if (userBadges.includes(badgeId)) {
+        progress[badgeId] = { current: 100, required: 100 };
+        return;
+      }
+
+      const [type, value] = badge.requirement.split(':');
+
+      if (type === 'level') {
+        const required = parseInt(value);
+        progress[badgeId] = {
+          current: Math.min(userLevel, required),
+          required,
+          percent: Math.floor((Math.min(userLevel, required) / required) * 100),
+        };
+      } else if (type === 'course') {
+        progress[badgeId] = {
+          current: isDomainCompleted(value) ? 1 : 0,
+          required: 1,
+          percent: isDomainCompleted(value) ? 100 : 0,
+        };
+      } else if (type === 'seasonal' || type === 'event' || type === 'secret') {
+        progress[badgeId] = { current: 0, required: 1, percent: 0 };
+      }
+    });
+    setBadgeUnlockProgress(progress);
+  }, [userLevel, userBadges, badgeDefinitions, isDomainCompleted]);
+
+  // Toggle badge flip state
+  const toggleBadgeFlip = useCallback((badgeId) => {
+    setBadgeFlipStates(prev => ({
+      ...prev,
+      [badgeId]: !prev[badgeId],
+    }));
+    playSound('flip');
+  }, [playSound]);
+
+  // Get badge rarity color
+  const getBadgeRarityColor = (rarity) => {
+    const colors = {
+      common: 'rgba(156, 163, 175, 0.2)',
+      rare: 'rgba(59, 130, 246, 0.2)',
+      very_rare: 'rgba(168, 85, 247, 0.2)',
+      unique: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%)',
+    };
+    return colors[rarity] || colors.common;
+  };
+
+  // Get badge rarity border
+  const getBadgeRarityBorder = (rarity) => {
+    const borders = {
+      common: '1px solid rgba(156, 163, 175, 0.3)',
+      rare: '1px solid rgba(59, 130, 246, 0.5)',
+      very_rare: '2px solid rgba(168, 85, 247, 0.6)',
+      unique: '2px solid rgba(251, 191, 36, 0.8)',
+    };
+    return borders[rarity] || borders.common;
+  };
 
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
@@ -279,6 +436,15 @@ export default function DashboardPage() {
       } else if (userData?.level) {
         setUserLevel(userData.level);
       }
+      // NEW: Load enhanced badge system data
+      const savedBadgeDates = localStorage.getItem('investkit_badge_dates');
+      if (savedBadgeDates) {
+        setBadgeDateObtained(JSON.parse(savedBadgeDates));
+      }
+      const savedBadgeProgress = localStorage.getItem('investkit_badge_progress');
+      if (savedBadgeProgress) {
+        setBadgeUnlockProgress(JSON.parse(savedBadgeProgress));
+      }
     } catch (e) {
       console.log('LocalStorage not available');
     }
@@ -295,10 +461,13 @@ export default function DashboardPage() {
       localStorage.setItem('investkit_badge_bg', JSON.stringify(badgeBackgroundColor));
       localStorage.setItem('investkit_user_bio', JSON.stringify(userBio));
       localStorage.setItem('investkit_user_level', JSON.stringify(userLevel));
+      // NEW: Save enhanced badge system data
+      localStorage.setItem('investkit_badge_dates', JSON.stringify(badgeDateObtained));
+      localStorage.setItem('investkit_badge_progress', JSON.stringify(badgeUnlockProgress));
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress]);
 
   // Auto-award badges based on level progression
   useEffect(() => {
@@ -341,6 +510,22 @@ export default function DashboardPage() {
       setUserBadges(newBadges);
     }
   }, [userLevel, progress?.completedDomains]);
+
+  // Calculate badge unlock progress and trigger toasts for newly unlocked badges
+  useEffect(() => {
+    calculateBadgeProgress();
+
+    // Check for newly unlocked badges and show toasts
+    userBadges.forEach(badgeId => {
+      if (!badgeDateObtained[badgeId] && !badgeUnlockToasts.some(t => t.badgeId === badgeId)) {
+        showBadgeToast(badgeId);
+        setBadgeDateObtained(prev => ({
+          ...prev,
+          [badgeId]: new Date().toISOString(),
+        }));
+      }
+    });
+  }, [userLevel, userBadges, isDomainCompleted]);
 
   // Real-time notification simulation
   useEffect(() => {
@@ -930,6 +1115,90 @@ export default function DashboardPage() {
         .badge-glow {
           animation: badgeGlow 2s ease-in-out infinite;
         }
+        /* NEW: Advanced Badge Animations */
+        @keyframes badgeFlip {
+          0% { transform: rotateY(0deg); }
+          50% { transform: rotateY(90deg); }
+          100% { transform: rotateY(0deg); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        @keyframes levitate {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(0) rotateZ(0deg) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(200px) rotateZ(720deg) scale(0);
+            opacity: 0;
+          }
+        }
+        @keyframes toastSlideIn {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        @keyframes toastSlideOut {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+        }
+        @keyframes badgeUnlock {
+          0% {
+            transform: scale(0) rotate(-180deg);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.1) rotate(10deg);
+          }
+          100% {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+          }
+        }
+        @keyframes rainbowShift {
+          0% { filter: hue-rotate(0deg); }
+          100% { filter: hue-rotate(360deg); }
+        }
+        .badge-flip-active {
+          animation: badgeFlip 0.6s ease-in-out;
+        }
+        .badge-shimmer {
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite;
+        }
+        .badge-levitate {
+          animation: levitate 3s ease-in-out infinite;
+        }
+        .toast-notification {
+          animation: toastSlideIn 0.4s ease-out;
+        }
+        .toast-notification.closing {
+          animation: toastSlideOut 0.4s ease-in forwards;
+        }
+        .badge-unlock-animation {
+          animation: badgeUnlock 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .badge-rare { filter: drop-shadow(0 0 8px rgba(139, 69, 19, 0.6)); }
+        .badge-very-rare { filter: drop-shadow(0 0 12px rgba(218, 165, 32, 0.8)); }
+        .badge-unique { filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1)); animation: rainbowShift 3s linear infinite; }
       `}</style>
 
       {/* SIDEBAR TOGGLE BUTTON */}
@@ -1083,40 +1352,104 @@ export default function DashboardPage() {
                 };
 
                 return (
-                  <div
-                    key={badgeId}
-                    style={{
+                  <div key={badgeId} style={{ position: 'relative' }}>
+                    {/* Badge Circle */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: `-4px`,
+                        right: `${-4 + (index * 24)}px`,
+                        width: '40px',
+                        height: '40px',
+                        background: rarity.bg,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '20px',
+                        border: `3px solid ${currentTheme.sidebar}`,
+                        boxShadow: `0 8px 16px ${rarity.shadow}`,
+                        zIndex: selectedDisplayBadges.length - index,
+                        cursor: 'help',
+                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        animation: isFirstBadge ? `badgePulse 2s ease-in-out infinite, ${isUnique ? 'glowPulse 2s ease-in-out infinite' : 'none'}` : 'none',
+                        filter: isUnique ? `drop-shadow(0 0 12px ${rarity.glow})` : 'none',
+                        transformOrigin: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = `scale(1.2) ${isUnique ? 'rotateZ(8deg)' : ''}`;
+                        e.currentTarget.style.boxShadow = `0 16px 32px ${rarity.shadow}, 0 0 24px ${rarity.glow}`;
+                        generateParticles(e);
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1) rotateZ(0deg)';
+                        e.currentTarget.style.boxShadow = `0 8px 16px ${rarity.shadow}`;
+                      }}
+                    >
+                      {badge.emoji}
+                    </div>
+
+                    {/* Advanced Tooltip */}
+                    <div style={{
                       position: 'absolute',
-                      bottom: `-4px`,
-                      right: `${-4 + (index * 24)}px`,
-                      width: '40px',
-                      height: '40px',
-                      background: rarity.bg,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '20px',
-                      border: `3px solid ${currentTheme.sidebar}`,
-                      boxShadow: `0 8px 16px ${rarity.shadow}`,
-                      zIndex: selectedDisplayBadges.length - index,
-                      cursor: 'help',
-                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      animation: isFirstBadge ? `badgePulse 2s ease-in-out infinite, ${isUnique ? 'glowPulse 2s ease-in-out infinite' : 'none'}` : 'none',
-                      filter: isUnique ? `drop-shadow(0 0 12px ${rarity.glow})` : 'none',
+                      bottom: '55px',
+                      right: `${index * 24}px`,
+                      background: 'rgba(0, 0, 0, 0.95)',
+                      border: `2px solid ${rarity.glow}`,
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      minWidth: '240px',
+                      zIndex: 10001,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      transition: 'opacity 0.2s ease',
+                      backdropFilter: 'blur(10px)',
                     }}
-                    title={`${badge.name}\n🌟 ${badge.rarity.toUpperCase()}\n💾 XP: ${badge.rarity === 'unique' ? 500 : badge.rarity === 'very_rare' ? 300 : badge.rarity === 'rare' ? 150 : 50}`}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = `scale(1.15) ${badge.rarity === 'unique' ? 'rotateZ(-5deg)' : ''}`;
-                      e.currentTarget.style.boxShadow = `0 14px 28px ${rarity.shadow}, 0 0 20px ${rarity.glow}`;
-                      generateParticles(e);
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1) rotateZ(0deg)';
-                      e.currentTarget.style.boxShadow = `0 8px 16px ${rarity.shadow}`;
-                    }}
-                  >
-                    {badge.emoji}
+                    onMouseEnter={(e) => { e.parentElement.style.opacity = '1'; }}
+                    onMouseLeave={(e) => { e.parentElement.style.opacity = '0'; }}>
+                      <div style={{
+                        color: rarity.glow,
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        marginBottom: '8px',
+                      }}>
+                        {badge.emoji} {badge.name}
+                      </div>
+                      <div style={{
+                        fontSize: '11px',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        marginBottom: '8px',
+                      }}>
+                        {badge.description}
+                      </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '8px',
+                        fontSize: '10px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                        paddingTop: '8px',
+                      }}>
+                        <div>
+                          <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Rareté</div>
+                          <div style={{ color: rarity.glow, fontWeight: '600' }}>
+                            {badge.rarity.replace('_', ' ').toUpperCase()} ({badge.rarity_percent}%)
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>XP</div>
+                          <div style={{ color: '#fbbf24', fontWeight: '600' }}>+{badge.xp} XP</div>
+                        </div>
+                        {badgeDateObtained[badgeId] && (
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Obtenu</div>
+                            <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                              {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
                     {/* Particle Effects pour Unique */}
                     {isUnique && particles.length > 0 && particles.map((particle) => (
@@ -9478,6 +9811,225 @@ export default function DashboardPage() {
           }
         }
       `}</style>
+
+      {/* NEW: Badge Unlock Toast Notifications */}
+      <div style={{
+        position: 'fixed',
+        bottom: '30px',
+        right: '30px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        zIndex: 9999,
+        pointerEvents: 'none',
+      }}>
+        {badgeUnlockToasts.map(toast => (
+          <div key={toast.id} style={{
+            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(236, 72, 153, 0.95) 100%)',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            animation: 'toastSlideIn 0.4s ease-out',
+            pointerEvents: 'auto',
+          }}>
+            <div style={{ fontSize: '32px' }}>{toast.badgeEmoji}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '700',
+                color: '#fff',
+                marginBottom: '4px',
+              }}>🎉 Nouveau Badge!</div>
+              <div style={{
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.9)',
+                marginBottom: '2px',
+              }}>{toast.badgeName}</div>
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.7)',
+              }}>+{toast.xp} XP • {toast.rarity.replace('_', ' ').toUpperCase()}</div>
+            </div>
+            <div style={{
+              fontSize: '20px',
+              animation: 'milestoneCelebrate 0.6s ease-out',
+            }}>✨</div>
+          </div>
+        ))}
+      </div>
+
+      {/* NEW: Confetti Particles */}
+      {badgeConfetti.map(piece => (
+        <div key={piece.id} style={{
+          position: 'fixed',
+          left: `${piece.left}%`,
+          bottom: '-10px',
+          width: '12px',
+          height: '12px',
+          background: piece.color,
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          zIndex: 9998,
+          animation: `confetti-fall ${piece.duration}s ease-in`,
+          animationDelay: `${piece.delay}s`,
+          boxShadow: `0 0 8px ${piece.color}`,
+        }} />
+      ))}
+
+      {/* NEW: Badge Album Modal */}
+      {showBadgeAlbum && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(4px)',
+        }} onClick={() => setShowBadgeAlbum(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '2px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: '800px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px',
+            }}>
+              <h2 style={{
+                margin: 0,
+                color: '#fff',
+                fontSize: '24px',
+                fontWeight: '700',
+              }}>
+                📖 Album de Badges
+              </h2>
+              <button onClick={() => setShowBadgeAlbum(false)} style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                fontSize: '24px',
+                cursor: 'pointer',
+                padding: 0,
+              }}>✕</button>
+            </div>
+
+            {/* Stats */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              fontSize: '14px',
+              color: 'rgba(255, 255, 255, 0.8)',
+            }}>
+              <strong>{userBadges.length} / {Object.keys(badgeDefinitions).length}</strong> badges collectés ({Math.round((userBadges.length / Object.keys(badgeDefinitions).length) * 100)}%)
+            </div>
+
+            {/* Filter Tabs */}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              marginBottom: '20px',
+              overflowX: 'auto',
+            }}>
+              {['all', 'obtained', 'locked', 'seasonal', 'secret'].map(filter => (
+                <button key={filter} onClick={() => setBadgeAlbumFilter(filter)} style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: badgeAlbumFilter === filter ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
+                  background: badgeAlbumFilter === filter ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  color: badgeAlbumFilter === filter ? '#f59e0b' : 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Badge Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+              gap: '16px',
+            }}>
+              {Object.entries(badgeDefinitions).map(([badgeId, badge]) => {
+                const isObtained = userBadges.includes(badgeId);
+                const shouldShow = badgeAlbumFilter === 'all' ||
+                  (badgeAlbumFilter === 'obtained' && isObtained) ||
+                  (badgeAlbumFilter === 'locked' && !isObtained) ||
+                  (badgeAlbumFilter === 'seasonal' && badge.category === 'seasonal') ||
+                  (badgeAlbumFilter === 'secret' && badge.category === 'secret');
+
+                if (!shouldShow) return null;
+
+                return (
+                  <div key={badgeId} style={{
+                    background: getBadgeRarityColor(badge.rarity),
+                    border: getBadgeRarityBorder(badge.rarity),
+                    borderRadius: '12px',
+                    padding: '12px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: isObtained ? 1 : 0.5,
+                    transform: hoveredBadge === badgeId ? 'scale(1.05)' : 'scale(1)',
+                    position: 'relative',
+                  }}
+                  onMouseEnter={() => setHoveredBadge(badgeId)}
+                  onMouseLeave={() => setHoveredBadge(null)}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                      {badge.emoji}
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: '#fff',
+                      marginBottom: '4px',
+                    }}>
+                      {badge.name}
+                    </div>
+                    {!isObtained && badgeUnlockProgress[badgeId] && badgeUnlockProgress[badgeId].percent > 0 && (
+                      <div style={{
+                        fontSize: '9px',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        marginTop: '4px',
+                      }}>
+                        {badgeUnlockProgress[badgeId].percent}% progressé
+                      </div>
+                    )}
+                    {isObtained && badgeDateObtained[badgeId] && (
+                      <div style={{
+                        fontSize: '8px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        marginTop: '4px',
+                      }}>
+                        {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
