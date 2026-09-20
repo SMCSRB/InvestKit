@@ -25,6 +25,58 @@ export default function GuildPage() {
   const [tempGuildeData, setTempGuildeData] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(null);
 
+  // 💰 Guild Coins System
+  const [guildCoins, setGuildCoins] = useState({});
+
+  // 🎯 Guild Tiers/Levels
+  const [guildTier, setGuildTier] = useState('Bronze');
+
+  // 😊 Reactions System
+  const [messageReactions, setMessageReactions] = useState({});
+
+  // 💬 Threads System
+  const [threads, setThreads] = useState([]);
+  const [selectedThread, setSelectedThread] = useState(null);
+
+  // 🟢 Online Status
+  const [onlineMembers, setOnlineMembers] = useState([]);
+  const [memberStatus, setMemberStatus] = useState({});
+
+  // ❤️ Likes System
+  const [messageLikes, setMessageLikes] = useState({});
+
+  // ❓ Q&A Section
+  const [questions, setQuestions] = useState([]);
+  const [newQuestion, setNewQuestion] = useState('');
+
+  // 💼 Shared Portfolio
+  const [sharedPortfolio, setSharedPortfolio] = useState(null);
+
+  // 📈 Performance Dashboard
+  const [performanceMetrics, setPerformanceMetrics] = useState({});
+
+  // 📋 Collaborative Analysis
+  const [analyses, setAnalyses] = useState([]);
+
+  // 📅 Events Calendar
+  const [events, setEvents] = useState([]);
+  const [newEvent, setNewEvent] = useState({ title: '', date: '', type: 'event' });
+
+  // 📞 Private Messages
+  const [privateMessages, setPrivateMessages] = useState({});
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // 🎨 Guild Customization
+  const [guildTheme, setGuildTheme] = useState({
+    primaryColor: '#3b82f6',
+    secondaryColor: '#8b5cf6',
+    bannerEmoji: '🎪',
+  });
+
+  // 🔒 Guild Rules
+  const [guildRules, setGuildRules] = useState([]);
+  const [newRule, setNewRule] = useState('');
+
   // Load guildes from localStorage
   useEffect(() => {
     try {
@@ -46,6 +98,21 @@ export default function GuildPage() {
             minLevel: guilde.restrictions?.minLevel || 1,
             domainRequirements: guilde.restrictions?.domainRequirements || {},
           });
+          setGuildCoins(guilde.guildCoins || {});
+          setGuildTier(guilde.guildTier || 'Bronze');
+          setMessageReactions(guilde.messageReactions || {});
+          setThreads(guilde.threads || []);
+          setOnlineMembers(guilde.membersList?.map(m => m.id) || []);
+          setMemberStatus(guilde.memberStatus || {});
+          setMessageLikes(guilde.messageLikes || {});
+          setQuestions(guilde.questions || []);
+          setSharedPortfolio(guilde.sharedPortfolio || null);
+          setPerformanceMetrics(guilde.performanceMetrics || {});
+          setAnalyses(guilde.analyses || []);
+          setEvents(guilde.events || []);
+          setPrivateMessages(guilde.privateMessages || {});
+          setGuildTheme(guilde.guildTheme || { primaryColor: '#3b82f6', secondaryColor: '#8b5cf6', bannerEmoji: '🎪' });
+          setGuildRules(guilde.guildRules || []);
         }
       }
     } catch (error) {
@@ -173,6 +240,170 @@ export default function GuildPage() {
     )));
     setEditingGuilde(false);
     addAdminLog('settings', null, 'Paramètres de la guilde modifiés');
+  };
+
+  const addGuildCoins = (memberId, amount, reason) => {
+    const updated = { ...guildCoins };
+    updated[memberId] = (updated[memberId] || 0) + amount;
+    setGuildCoins(updated);
+    const updatedGuilde = { ...selectedGuilde, guildCoins: updated };
+    setSelectedGuilde(updatedGuilde);
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id ? updatedGuilde : g
+    )));
+  };
+
+  const addReaction = (messageId, emoji) => {
+    const reactions = { ...messageReactions };
+    reactions[messageId] = reactions[messageId] || {};
+    reactions[messageId][emoji] = (reactions[messageId][emoji] || 0) + 1;
+    setMessageReactions(reactions);
+  };
+
+  const addLike = (messageId) => {
+    const likes = { ...messageLikes };
+    likes[messageId] = (likes[messageId] || 0) + 1;
+    setMessageLikes(likes);
+    addGuildCoins(userData?.id, 1, 'Message likés');
+  };
+
+  const postQuestion = (text) => {
+    const newQ = {
+      id: Math.random(),
+      author: userData?.name || 'Anonymous',
+      text,
+      timestamp: new Date(),
+      answers: [],
+      likes: 0,
+    };
+    const updated = [newQ, ...questions];
+    setQuestions(updated);
+    addGuildCoins(userData?.id, 5, 'Question posée');
+  };
+
+  const answerQuestion = (questionId, answerText) => {
+    const updated = questions.map(q =>
+      q.id === questionId
+        ? {
+            ...q,
+            answers: [...q.answers, {
+              id: Math.random(),
+              author: userData?.name || 'Anonymous',
+              text: answerText,
+              timestamp: new Date(),
+              likes: 0,
+            }],
+          }
+        : q
+    );
+    setQuestions(updated);
+    addGuildCoins(userData?.id, 3, 'Réponse donnée');
+  };
+
+  const createThread = (messageId) => {
+    const msg = selectedGuilde.chat?.find(m => m.id === messageId);
+    if (!msg) return;
+    const newThread = {
+      id: Math.random(),
+      originalMessageId: messageId,
+      originalMessage: msg,
+      replies: [],
+      createdAt: new Date(),
+    };
+    setThreads([newThread, ...threads]);
+  };
+
+  const replyToThread = (threadId, replyText) => {
+    const updated = threads.map(t =>
+      t.id === threadId
+        ? {
+            ...t,
+            replies: [...t.replies, {
+              id: Math.random(),
+              author: userData?.name || 'Anonymous',
+              text: replyText,
+              timestamp: new Date(),
+            }],
+          }
+        : t
+    );
+    setThreads(updated);
+  };
+
+  const toggleOnlineStatus = (memberId) => {
+    if (onlineMembers.includes(memberId)) {
+      setOnlineMembers(onlineMembers.filter(id => id !== memberId));
+    } else {
+      setOnlineMembers([...onlineMembers, memberId]);
+    }
+  };
+
+  const setMemberStatusMessage = (memberId, status) => {
+    setMemberStatus({ ...memberStatus, [memberId]: status });
+  };
+
+  const addEvent = (title, date, type) => {
+    const newEv = {
+      id: Math.random(),
+      title,
+      date,
+      type,
+      attendees: [],
+      createdBy: userData?.name,
+      createdAt: new Date(),
+    };
+    setEvents([...events, newEv]);
+    addActivity('level', `Nouvel événement: ${title} 📅`);
+  };
+
+  const rsvpEvent = (eventId) => {
+    const updated = events.map(e =>
+      e.id === eventId && !e.attendees.includes(userData?.id)
+        ? { ...e, attendees: [...e.attendees, userData?.id] }
+        : e
+    );
+    setEvents(updated);
+  };
+
+  const sendPrivateMessage = (recipientId, text) => {
+    const key = [userData?.id, recipientId].sort().join('-');
+    const msgs = privateMessages[key] || [];
+    const updated = {
+      ...privateMessages,
+      [key]: [...msgs, {
+        id: Math.random(),
+        senderId: userData?.id,
+        senderName: userData?.name,
+        text,
+        timestamp: new Date(),
+      }],
+    };
+    setPrivateMessages(updated);
+  };
+
+  const addAnalysis = (title, content) => {
+    const newAnalysis = {
+      id: Math.random(),
+      title,
+      content,
+      author: userData?.name,
+      createdAt: new Date(),
+      collaborators: [],
+      comments: [],
+    };
+    setAnalyses([newAnalysis, ...analyses]);
+    addGuildCoins(userData?.id, 10, 'Analyse créée');
+  };
+
+  const addGuildRule = (rule) => {
+    if (isLeader && rule.trim()) {
+      setGuildRules([...guildRules, {
+        id: Math.random(),
+        text: rule,
+        createdAt: new Date(),
+      }]);
+      setNewRule('');
+    }
   };
 
   const theme = {
@@ -330,7 +561,17 @@ export default function GuildPage() {
             { id: 'announcements', label: '📌 Annonces', icon: '📌' },
             { id: 'stats', label: '📈 Stats', icon: '📈' },
             { id: 'activity', label: '📊 Activité', icon: '📊' },
+            { id: 'coins', label: '💰 Coins', icon: '💰' },
+            { id: 'tiers', label: '🎯 Paliers', icon: '🎯' },
             { id: 'chat', label: '💬 Chat', icon: '💬' },
+            { id: 'qa', label: '❓ Q&A', icon: '❓' },
+            { id: 'portfolio', label: '💼 Portfolio', icon: '💼' },
+            { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
+            { id: 'analyses', label: '📋 Analyses', icon: '📋' },
+            { id: 'events', label: '📅 Événements', icon: '📅' },
+            { id: 'messages', label: '📞 Messages', icon: '📞' },
+            { id: 'customize', label: '🎨 Perso', icon: '🎨' },
+            { id: 'rules', label: '🔒 Règles', icon: '🔒' },
             ...(isLeader ? [{ id: 'admin', label: '⚙️ Admin', icon: '⚙️' }] : []),
           ].map((tab) => (
             <button
@@ -1543,6 +1784,421 @@ export default function GuildPage() {
                 >
                   Annuler
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'coins' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '18px', margin: '0 0 16px 0' }}>💰 Mes Coins</h2>
+              <p style={{ color: currentTheme.accent, fontSize: '32px', fontWeight: '700', margin: '0 0 12px 0' }}>{guildCoins[userData?.id] || 0}</p>
+              <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>Coins disponibles dans la guilde</p>
+            </div>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '18px', margin: '0 0 16px 0' }}>🛍️ Boutique</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                  <p style={{ color: currentTheme.text, fontWeight: '600', fontSize: '13px', margin: '0 0 4px 0' }}>Badge Spécial</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>50 coins</p>
+                </div>
+                <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                  <p style={{ color: currentTheme.text, fontWeight: '600', fontSize: '13px', margin: '0 0 4px 0' }}>2x XP Boost</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>100 coins</p>
+                </div>
+              </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1', padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 16px 0' }}>💳 Classement par Coins</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {Object.entries(guildCoins).slice(0, 5).map(([memberId, coins], idx) => (
+                  <div key={memberId} style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                    <p style={{ color: currentTheme.text, fontWeight: '600', fontSize: '13px', margin: 0 }}>#{idx + 1} Membre</p>
+                    <p style={{ color: currentTheme.accent, fontWeight: '700', fontSize: '13px', margin: 0 }}>{coins} 💰</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tiers' && (
+          <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+            <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '18px', margin: '0 0 20px 0' }}>🎯 Paliers de Guilde</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+              {['Bronze', 'Silver', 'Gold', 'Platinum'].map((tier, idx) => (
+                <div key={tier} style={{
+                  padding: '20px',
+                  background: tier === guildTier ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.2)',
+                  borderRadius: '10px',
+                  border: tier === guildTier ? `2px solid ${currentTheme.accent}` : `1px solid ${currentTheme.border}`,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                }}>
+                  <p style={{ fontSize: '28px', margin: '0 0 8px 0' }}>{'🥉🥈🥇💎'[idx]}</p>
+                  <p style={{ color: currentTheme.text, fontWeight: '700', fontSize: '14px', margin: '0 0 8px 0' }}>{tier}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>Niveau {(idx + 1) * 5}/20</p>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px' }}>
+              <h3 style={{ color: currentTheme.text, fontWeight: '600', fontSize: '14px', margin: '0 0 12px 0' }}>📊 Bénéfices Débloqués</h3>
+              <ul style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0, paddingLeft: '20px' }}>
+                <li>✅ +10% XP au tier Silver</li>
+                <li>✅ Accès Premium au tier Gold</li>
+                <li>✅ Statut Elite au tier Platinum</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'qa' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '24px' }}>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}`, height: 'fit-content' }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 12px 0' }}>❓ Poser une Question</h2>
+              <textarea
+                value={newQuestion}
+                onChange={(e) => setNewQuestion(e.target.value)}
+                placeholder="Votre question..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(0,0,0,0.2)',
+                  border: `1px solid ${currentTheme.border}`,
+                  borderRadius: '8px',
+                  color: currentTheme.text,
+                  fontSize: '13px',
+                  minHeight: '100px',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                }}
+              />
+              <button
+                onClick={() => { if (newQuestion.trim()) { postQuestion(newQuestion); setNewQuestion(''); } }}
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  padding: '10px',
+                  background: currentTheme.accent,
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                Envoyer
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {questions.map((q) => (
+                <div key={q.id} style={{ padding: '16px', background: currentTheme.cardBg, borderRadius: '10px', border: `1px solid ${currentTheme.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <p style={{ color: currentTheme.text, fontWeight: '600', fontSize: '13px', margin: 0 }}>{q.author}</p>
+                    <p style={{ color: currentTheme.accent, fontWeight: '700', fontSize: '12px', margin: 0 }}>❤️ {q.likes}</p>
+                  </div>
+                  <p style={{ color: currentTheme.text, fontSize: '13px', margin: '0 0 8px 0' }}>{q.text}</p>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>{q.answers.length} réponses</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'portfolio' && (
+          <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+            <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '18px', margin: '0 0 16px 0' }}>💼 Portefeuille Collectif</h2>
+            <div style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', marginBottom: '16px' }}>
+              <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '0 0 8px 0' }}>Portefeuille Commun</p>
+              <p style={{ color: currentTheme.accent, fontSize: '24px', fontWeight: '700', margin: 0 }}>+15.2%</p>
+            </div>
+            <div style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px' }}>
+              <p style={{ color: currentTheme.text, fontWeight: '600', fontSize: '13px', margin: '0 0 12px 0' }}>🗳️ Votes Actifs</p>
+              <div style={{ padding: '8px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '6px', marginBottom: '8px' }}>
+                <p style={{ color: currentTheme.text, fontSize: '12px', margin: '0 0 4px 0' }}>Acheter Bitcoin?</p>
+                <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>8 votes pour - 2 votes contre</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'dashboard' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 8px 0' }}>Performance</p>
+              <p style={{ color: currentTheme.accent, fontSize: '28px', fontWeight: '700', margin: 0 }}>+8.3%</p>
+            </div>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 8px 0' }}>Croissance XP</p>
+              <p style={{ color: currentTheme.accent, fontSize: '28px', fontWeight: '700', margin: 0 }}>↑ 2500</p>
+            </div>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 8px 0' }}>Engagement</p>
+              <p style={{ color: currentTheme.accent, fontSize: '28px', fontWeight: '700', margin: 0 }}>94%</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analyses' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ padding: '16px', background: currentTheme.cardBg, borderRadius: '10px', border: `1px solid ${currentTheme.border}` }}>
+              <h3 style={{ color: currentTheme.text, fontWeight: '600', fontSize: '14px', margin: '0 0 8px 0' }}>📋 Nouvelles Analyses</h3>
+              <textarea
+                placeholder="Créer une analyse collaborative..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(0,0,0,0.2)',
+                  border: `1px solid ${currentTheme.border}`,
+                  borderRadius: '8px',
+                  color: currentTheme.text,
+                  fontSize: '13px',
+                  minHeight: '80px',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
+            {analyses.map((a) => (
+              <div key={a.id} style={{ padding: '16px', background: currentTheme.cardBg, borderRadius: '10px', border: `1px solid ${currentTheme.border}` }}>
+                <h3 style={{ color: currentTheme.text, fontWeight: '600', fontSize: '14px', margin: '0 0 4px 0' }}>{a.title}</h3>
+                <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 8px 0' }}>Par {a.author}</p>
+                <p style={{ color: currentTheme.text, fontSize: '12px', margin: 0 }}>{a.content.substring(0, 100)}...</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'events' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}`, height: 'fit-content' }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 12px 0' }}>📅 Créer un Événement</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="Titre"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  style={{
+                    padding: '8px 12px',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: `1px solid ${currentTheme.border}`,
+                    borderRadius: '6px',
+                    color: currentTheme.text,
+                    fontSize: '12px',
+                  }}
+                />
+                <input
+                  type="datetime-local"
+                  value={newEvent.date}
+                  onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                  style={{
+                    padding: '8px 12px',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: `1px solid ${currentTheme.border}`,
+                    borderRadius: '6px',
+                    color: currentTheme.text,
+                    fontSize: '12px',
+                  }}
+                />
+                <button
+                  onClick={() => { if (newEvent.title && newEvent.date) { addEvent(newEvent.title, newEvent.date, 'event'); setNewEvent({ title: '', date: '', type: 'event' }); } }}
+                  style={{
+                    padding: '8px',
+                    background: currentTheme.accent,
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: '#fff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                  }}
+                >
+                  Créer
+                </button>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {events.map((e) => (
+                <div key={e.id} style={{ padding: '16px', background: currentTheme.cardBg, borderRadius: '10px', border: `1px solid ${currentTheme.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <h3 style={{ color: currentTheme.text, fontWeight: '600', fontSize: '14px', margin: 0 }}>{e.title}</h3>
+                    <button
+                      onClick={() => rsvpEvent(e.id)}
+                      style={{
+                        padding: '4px 12px',
+                        background: e.attendees.includes(userData?.id) ? currentTheme.accent : 'rgba(0,0,0,0.2)',
+                        border: 'none',
+                        borderRadius: '4px',
+                        color: e.attendees.includes(userData?.id) ? '#fff' : currentTheme.text,
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                      }}
+                    >
+                      {e.attendees.includes(userData?.id) ? '✓ RSVP' : 'RSVP'}
+                    </button>
+                  </div>
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>📅 {new Date(e.date).toLocaleString('fr-FR')}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '16px', minHeight: '500px' }}>
+            <div style={{ padding: '16px', background: currentTheme.cardBg, borderRadius: '10px', border: `1px solid ${currentTheme.border}` }}>
+              <h3 style={{ color: currentTheme.text, fontWeight: '600', fontSize: '14px', margin: '0 0 12px 0' }}>📞 Contacts</h3>
+              {selectedGuilde.membersList?.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedUser(m.id)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    marginBottom: '8px',
+                    background: selectedUser === m.id ? currentTheme.accent : 'rgba(0,0,0,0.2)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: selectedUser === m.id ? '#fff' : currentTheme.text,
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    textAlign: 'left',
+                  }}
+                >
+                  {m.name}
+                </button>
+              ))}
+            </div>
+            {selectedUser && (
+              <div style={{ display: 'flex', flexDirection: 'column', padding: '16px', background: currentTheme.cardBg, borderRadius: '10px', border: `1px solid ${currentTheme.border}` }}>
+                <div style={{ flex: 1, marginBottom: '16px', overflowY: 'auto', maxHeight: '400px' }}>
+                  {/* Messages displayed here */}
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', textAlign: 'center', margin: 0 }}>Conversation privée</p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="Message privé..."
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      background: 'rgba(0,0,0,0.2)',
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '6px',
+                      color: currentTheme.text,
+                      fontSize: '12px',
+                    }}
+                  />
+                  <button
+                    style={{
+                      padding: '8px 16px',
+                      background: currentTheme.accent,
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: '#fff',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    Envoyer
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'customize' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 16px 0' }}>🎨 Thème</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ color: currentTheme.textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>Couleur Primaire</label>
+                  <input type="color" value={guildTheme.primaryColor} onChange={(e) => setGuildTheme({ ...guildTheme, primaryColor: e.target.value })} style={{ width: '100%', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }} />
+                </div>
+                <div>
+                  <label style={{ color: currentTheme.textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>Couleur Secondaire</label>
+                  <input type="color" value={guildTheme.secondaryColor} onChange={(e) => setGuildTheme({ ...guildTheme, secondaryColor: e.target.value })} style={{ width: '100%', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }} />
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 16px 0' }}>👀 Aperçu</h2>
+              <div style={{
+                padding: '20px',
+                background: `linear-gradient(135deg, ${guildTheme.primaryColor} 0%, ${guildTheme.secondaryColor} 100%)`,
+                borderRadius: '10px',
+                textAlign: 'center',
+                color: '#fff',
+              }}>
+                <p style={{ fontSize: '32px', margin: '0 0 8px 0' }}>{guildTheme.bannerEmoji}</p>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Aperçu de Votre Guilde</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'rules' && (
+          <div style={{ display: 'grid', gridTemplateColumns: isLeader ? '1fr 1fr' : '1fr', gap: '24px' }}>
+            {isLeader && (
+              <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}`, height: 'fit-content' }}>
+                <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 12px 0' }}>➕ Ajouter Règle</h2>
+                <textarea
+                  value={newRule}
+                  onChange={(e) => setNewRule(e.target.value)}
+                  placeholder="Nouvelle règle..."
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: `1px solid ${currentTheme.border}`,
+                    borderRadius: '8px',
+                    color: currentTheme.text,
+                    fontSize: '12px',
+                    minHeight: '80px',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                  }}
+                />
+                <button
+                  onClick={() => addGuildRule(newRule)}
+                  style={{
+                    width: '100%',
+                    marginTop: '12px',
+                    padding: '10px',
+                    background: currentTheme.accent,
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                  }}
+                >
+                  Ajouter
+                </button>
+              </div>
+            )}
+            <div style={{ padding: '20px', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
+              <h2 style={{ color: currentTheme.text, fontWeight: '700', fontSize: '16px', margin: '0 0 16px 0' }}>🔒 Règles de la Guilde</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {guildRules.length === 0 ? (
+                  <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: 0 }}>Aucune règle définie</p>
+                ) : (
+                  guildRules.map((r, idx) => (
+                    <div key={r.id} style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                      <p style={{ color: currentTheme.text, fontSize: '12px', margin: '0 0 4px 0', fontWeight: '600' }}>#{idx + 1}</p>
+                      <p style={{ color: currentTheme.text, fontSize: '12px', margin: 0 }}>{r.text}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
