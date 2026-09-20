@@ -221,10 +221,13 @@ export default function DashboardPage() {
 
   const [userBadges, setUserBadges] = useState(['first_step', 'crypto_novice']);
   const [isPremium, setIsPremium] = useState(true);
-  const [customFriendCode, setCustomFriendCode] = useState('');
-  const [showCustomCodeModal, setShowCustomCodeModal] = useState(false);
-  const [codeEditInput, setCodeEditInput] = useState('');
-  const [codeError, setCodeError] = useState('');
+  const [selectedDisplayBadges, setSelectedDisplayBadges] = useState(['first_step', 'crypto_novice']); // Max 3 badges to display
+  const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)');
+  const [userBio, setUserBio] = useState('Investisseur passionné en crypto et finance');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
+  const [bioEditInput, setBioEditInput] = useState('Investisseur passionné en crypto et finance');
+  const [baggeBackgroundInput, setBaggeBackgroundInput] = useState('');
 
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
@@ -249,9 +252,18 @@ export default function DashboardPage() {
       if (savedBadges) {
         setUserBadges(JSON.parse(savedBadges));
       }
-      const savedCustomCode = localStorage.getItem('investkit_custom_code');
-      if (savedCustomCode) {
-        setCustomFriendCode(JSON.parse(savedCustomCode));
+      const savedDisplayBadges = localStorage.getItem('investkit_display_badges');
+      if (savedDisplayBadges) {
+        setSelectedDisplayBadges(JSON.parse(savedDisplayBadges));
+      }
+      const savedBadgeBg = localStorage.getItem('investkit_badge_bg');
+      if (savedBadgeBg) {
+        setBadgeBackgroundColor(JSON.parse(savedBadgeBg));
+      }
+      const savedBio = localStorage.getItem('investkit_user_bio');
+      if (savedBio) {
+        setUserBio(JSON.parse(savedBio));
+        setBioEditInput(JSON.parse(savedBio));
       }
     } catch (e) {
       console.log('LocalStorage not available');
@@ -265,11 +277,13 @@ export default function DashboardPage() {
       localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
       localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
       localStorage.setItem('investkit_badges', JSON.stringify(userBadges));
-      localStorage.setItem('investkit_custom_code', JSON.stringify(customFriendCode));
+      localStorage.setItem('investkit_display_badges', JSON.stringify(selectedDisplayBadges));
+      localStorage.setItem('investkit_badge_bg', JSON.stringify(badgeBackgroundColor));
+      localStorage.setItem('investkit_user_bio', JSON.stringify(userBio));
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, customFriendCode]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio]);
 
   // Auto-award badges based on level progression
   useEffect(() => {
@@ -950,6 +964,7 @@ export default function DashboardPage() {
               marginBottom: '16px',
               cursor: 'pointer',
             }}
+            onClick={() => setShowProfileMenu(true)}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'scale(1.05)';
             }}
@@ -1140,137 +1155,52 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Badges Section */}
-        <div style={{ marginBottom: '40px' }}>
-          <p style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            color: 'rgba(255, 255, 255, 0.6)',
-            margin: '0 0 12px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            🏅 Badges ({userBadges.length})
-          </p>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-            gap: '12px',
-            marginBottom: '16px',
-          }}>
-            {userBadges.map((badgeId) => {
-              const badge = badgeDefinitions[badgeId];
-              if (!badge) return null;
-              const rarityColors = {
-                common: '#64748b',
-                rare: '#3b82f6',
-                very_rare: '#a855f7',
-                unique: '#fbbf24',
-              };
-              return (
-                <div key={badgeId} style={{
-                  padding: '8px',
-                  background: `${rarityColors[badge.rarity]}20`,
-                  border: `2px solid ${rarityColors[badge.rarity]}`,
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                }}>
-                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>{badge.emoji}</div>
-                  <p style={{
-                    fontSize: '9px',
-                    color: rarityColors[badge.rarity],
-                    fontWeight: '600',
-                    margin: 0,
-                  }}>
-                    {badge.name}
-                  </p>
-                  <p style={{
-                    fontSize: '8px',
-                    color: 'rgba(255, 255, 255, 0.4)',
-                    fontWeight: '500',
-                    margin: '2px 0 0 0',
-                  }}>
-                    {badge.rarity}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Friend Code Customization */}
-        <div style={{
-          marginBottom: '40px',
-          padding: '16px',
-          background: isPremium ? 'rgba(251, 191, 36, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-          borderRadius: '12px',
-          border: `1px solid ${isPremium ? 'rgba(251, 191, 36, 0.3)' : 'rgba(107, 114, 128, 0.3)'}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        {/* Selected Badges Display */}
+        {selectedDisplayBadges.length > 0 && (
+          <div style={{ marginBottom: '40px' }}>
             <p style={{
               fontSize: '11px',
               fontWeight: '700',
-              color: isPremium ? '#fbbf24' : 'rgba(255, 255, 255, 0.6)',
-              margin: 0,
+              color: 'rgba(255, 255, 255, 0.6)',
+              margin: '0 0 12px 0',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}>
-              {isPremium ? '🔐 Personnalisez votre code' : '🔒 Personnalisation Premium'}
+              🏅 Badges Affichés ({selectedDisplayBadges.length}/3)
             </p>
-          </div>
-          {!isPremium && (
-            <p style={{
-              fontSize: '12px',
-              color: 'rgba(255, 255, 255, 0.6)',
-              margin: 0,
+            <div style={{
+              padding: '16px',
+              background: badgeBackgroundColor,
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onClick={() => setShowProfileMenu(true)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
             }}>
-              Passez à Premium pour personnaliser votre code ami!
-            </p>
-          )}
-          {isPremium && (
-            <div>
-              <p style={{
-                fontSize: '13px',
-                fontWeight: '700',
-                color: '#fbbf24',
-                margin: '8px 0 12px 0',
-              }}>
-                {customFriendCode || userData.friendCode}
-              </p>
-              <button
-                onClick={() => {
-                  setShowCustomCodeModal(true);
-                  setCodeEditInput(customFriendCode || userData.friendCode);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: 'rgba(251, 191, 36, 0.2)',
-                  border: '1px solid rgba(251, 191, 36, 0.4)',
-                  borderRadius: '8px',
-                  color: '#fbbf24',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(251, 191, 36, 0.3)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)';
-                }}
-              >
-                ✏️ Modifier
-              </button>
+              {selectedDisplayBadges.map((badgeId) => {
+                const badge = badgeDefinitions[badgeId];
+                if (!badge) return null;
+                return (
+                  <div key={badgeId} style={{
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: '32px', marginBottom: '4px' }}>{badge.emoji}</div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Quick Stats */}
         <div style={{ marginBottom: '40px' }}>
@@ -8812,8 +8742,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* FRIEND CODE CUSTOMIZATION MODAL */}
-      {showCustomCodeModal && (
+      {/* PROFILE CUSTOMIZATION MODAL */}
+      {showProfileMenu && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -8827,118 +8757,286 @@ export default function DashboardPage() {
           justifyContent: 'center',
           zIndex: 51,
         }}
-        onClick={() => setShowCustomCodeModal(false)}
+        onClick={() => setShowProfileMenu(false)}
         >
           <div style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 52, 96, 0.95) 100%)',
             borderRadius: '20px',
-            padding: '32px',
-            border: '1px solid rgba(251, 191, 36, 0.3)',
+            padding: '0',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
             backdropFilter: 'blur(20px)',
-            maxWidth: '450px',
+            maxWidth: '600px',
             width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
             boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8)',
           }}
           onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '900',
-              color: '#fbbf24',
-              margin: '0 0 8px 0',
+            {/* Header */}
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}>
-              Personnalisez votre code
-            </h2>
-            <p style={{
-              fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.6)',
-              margin: '0 0 20px 0',
-            }}>
-              Choisissez un code unique et facile à retenir pour vos amis
-            </p>
-
-            {/* Input Field */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '12px',
-                fontWeight: '600',
-                color: 'rgba(255, 255, 255, 0.7)',
-                marginBottom: '8px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '900',
+                color: '#fff',
+                margin: 0,
               }}>
-                Votre nouveau code ami
-              </label>
-              <input
-                type="text"
-                value={codeEditInput}
-                onChange={(e) => {
-                  const val = e.target.value.toUpperCase();
-                  if (/^[A-Z0-9]*$/.test(val) && val.length <= 10) {
-                    setCodeEditInput(val);
-                    setCodeError('');
-                  }
-                }}
-                placeholder={userData.friendCode}
+                Mon Profil
+              </h2>
+              <button
+                onClick={() => setShowProfileMenu(false)}
                 style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: `2px solid ${codeError ? '#ef4444' : 'rgba(251, 191, 36, 0.3)'}`,
-                  borderRadius: '12px',
-                  color: '#fbbf24',
-                  fontSize: '18px',
-                  fontWeight: '700',
-                  fontFamily: 'monospace',
-                  boxSizing: 'border-box',
-                  outline: 'none',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '20px',
                   transition: 'all 0.2s ease',
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
-                  e.currentTarget.style.background = 'rgba(251, 191, 36, 0.05)';
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                 }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = codeError ? '#ef4444' : 'rgba(251, 191, 36, 0.3)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                 }}
-              />
-              <p style={{
-                fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.5)',
-                margin: '6px 0 0 0',
-              }}>
-                {codeEditInput.length}/10 caractères • Lettres et chiffres uniquement
-              </p>
+              >
+                ✕
+              </button>
             </div>
 
-            {codeError && (
-              <div style={{
-                padding: '12px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '8px',
-                marginBottom: '20px',
-              }}>
-                <p style={{
-                  fontSize: '13px',
-                  color: '#ef4444',
-                  margin: 0,
-                  fontWeight: '600',
-                }}>
-                  ⚠️ {codeError}
-                </p>
-              </div>
-            )}
-
-            {/* Buttons */}
+            {/* Tabs */}
             <div style={{
+              display: 'flex',
+              gap: '0',
+              padding: '0 24px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(0, 0, 0, 0.2)',
+            }}>
+              {[
+                { id: 'badges', label: '🏅 Badges', icon: '🏅' },
+                { id: 'bio', label: '📝 Bio', icon: '📝' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setProfileMenuTab(tab.id)}
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    background: profileMenuTab === tab.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    border: 'none',
+                    borderBottom: profileMenuTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
+                    color: profileMenuTab === tab.id ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (profileMenuTab !== tab.id) {
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (profileMenuTab !== tab.id) {
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)';
+                    }
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px' }}>
+              {profileMenuTab === 'badges' && (
+                <div>
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      marginBottom: '12px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      📦 Fond du Badge (Sélectionnez max 3 badges)
+                    </label>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '8px',
+                      marginBottom: '16px',
+                    }}>
+                      {[
+                        { id: 'blue', name: 'Bleu', value: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)' },
+                        { id: 'purple', name: 'Violet', value: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)' },
+                        { id: 'gold', name: 'Or', value: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)' },
+                        { id: 'green', name: 'Vert', value: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)' },
+                        { id: 'pink', name: 'Rose', value: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(190, 24, 93, 0.1) 100%)' },
+                        { id: 'red', name: 'Rouge', value: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(190, 24, 93, 0.1) 100%)' },
+                      ].map((color) => (
+                        <button
+                          key={color.id}
+                          onClick={() => setBadgeBackgroundColor(color.value)}
+                          style={{
+                            padding: '12px',
+                            background: color.value,
+                            border: badgeBackgroundColor === color.value ? '2px solid #60a5fa' : '2px solid rgba(255, 255, 255, 0.2)',
+                            borderRadius: '12px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {color.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      marginBottom: '12px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      🏅 Vos Badges ({selectedDisplayBadges.length}/3)
+                    </label>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
+                      gap: '12px',
+                    }}>
+                      {userBadges.map((badgeId) => {
+                        const badge = badgeDefinitions[badgeId];
+                        if (!badge) return null;
+                        const isSelected = selectedDisplayBadges.includes(badgeId);
+                        const rarityColors = {
+                          common: '#64748b',
+                          rare: '#3b82f6',
+                          very_rare: '#a855f7',
+                          unique: '#fbbf24',
+                        };
+                        return (
+                          <button
+                            key={badgeId}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedDisplayBadges(selectedDisplayBadges.filter(b => b !== badgeId));
+                              } else if (selectedDisplayBadges.length < 3) {
+                                setSelectedDisplayBadges([...selectedDisplayBadges, badgeId]);
+                              }
+                            }}
+                            style={{
+                              padding: '12px',
+                              background: isSelected ? `${rarityColors[badge.rarity]}30` : 'rgba(255, 255, 255, 0.05)',
+                              border: `2px solid ${isSelected ? rarityColors[badge.rarity] : 'rgba(255, 255, 255, 0.1)'}`,
+                              borderRadius: '12px',
+                              textAlign: 'center',
+                              cursor: selectedDisplayBadges.length >= 3 && !isSelected ? 'not-allowed' : 'pointer',
+                              transition: 'all 0.2s ease',
+                              opacity: selectedDisplayBadges.length >= 3 && !isSelected ? 0.5 : 1,
+                            }}
+                          >
+                            <div style={{ fontSize: '28px', marginBottom: '4px' }}>{badge.emoji}</div>
+                            <p style={{
+                              fontSize: '9px',
+                              color: rarityColors[badge.rarity],
+                              fontWeight: '600',
+                              margin: 0,
+                            }}>
+                              {badge.name}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {profileMenuTab === 'bio' && (
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    marginBottom: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    📝 Ma Bio
+                  </label>
+                  <textarea
+                    value={bioEditInput}
+                    onChange={(e) => setBioEditInput(e.target.value.slice(0, 150))}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontFamily: 'inherit',
+                      minHeight: '100px',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    }}
+                    placeholder="Parlez-nous de vous..."
+                  />
+                  <p style={{
+                    fontSize: '11px',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    margin: '6px 0 0 0',
+                  }}>
+                    {bioEditInput.length}/150 caractères
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer - Save Button */}
+            <div style={{
+              padding: '24px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(0, 0, 0, 0.2)',
               display: 'flex',
               gap: '12px',
             }}>
               <button
-                onClick={() => setShowCustomCodeModal(false)}
+                onClick={() => setShowProfileMenu(false)}
                 style={{
                   flex: 1,
                   padding: '12px 16px',
@@ -8962,40 +9060,31 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => {
-                  if (!codeEditInput) {
-                    setCodeError('Le code ne peut pas être vide');
-                    return;
-                  }
-                  if (codeEditInput.length < 3) {
-                    setCodeError('Le code doit contenir au moins 3 caractères');
-                    return;
-                  }
-                  setCustomFriendCode(codeEditInput);
-                  setShowCustomCodeModal(false);
-                  setCodeError('');
+                  setUserBio(bioEditInput);
+                  setShowProfileMenu(false);
                 }}
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(217, 119, 6, 0.3) 100%)',
-                  border: '2px solid rgba(251, 191, 36, 0.5)',
+                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)',
+                  border: '2px solid rgba(59, 130, 246, 0.5)',
                   borderRadius: '10px',
-                  color: '#fbbf24',
+                  color: '#60a5fa',
                   fontSize: '14px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.4) 0%, rgba(217, 119, 6, 0.4) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.7)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.4) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.7)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(217, 119, 6, 0.3) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
                 }}
               >
-                ✓ Sauvegarder
+                ✓ Sauvegarder & Synchroniser
               </button>
             </div>
           </div>
