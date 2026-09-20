@@ -164,9 +164,9 @@ export const authController = {
 
   savePreferences: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, accountType, interests, language, enable2FA } = req.body;
+      const { email, username, accountType, interests, language, enable2FA } = req.body;
 
-      if (!email || !accountType) {
+      if (!email || !username || !accountType) {
         res.status(400).json({ error: 'Données manquantes' });
         return;
       }
@@ -177,8 +177,9 @@ export const authController = {
         return;
       }
 
-      // Sauvegarder les préférences
+      // Sauvegarder les préférences et le username
       await userRepository.updatePreferences(user.id, {
+        username: username.trim(),
         account_type: accountType,
         interests: JSON.stringify(interests || []),
         language: language || 'fr',
@@ -195,6 +196,7 @@ export const authController = {
         user: {
           id: user.id,
           email: user.email,
+          username: username.trim(),
           accountType,
         },
       });

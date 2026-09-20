@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [accountType, setAccountType] = useState('');
   const [interests, setInterests] = useState([]);
@@ -67,6 +68,12 @@ export default function OnboardingPage() {
     setLoading(true);
     setMessage('');
 
+    if (!username.trim()) {
+      setMessage('❌ Veuillez entrer votre pseudo');
+      setLoading(false);
+      return;
+    }
+
     if (!accountType) {
       setMessage('❌ Veuillez sélectionner un type de compte');
       setLoading(false);
@@ -79,6 +86,7 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
+          username: username.trim(),
           accountType,
           interests,
           language,
@@ -226,6 +234,57 @@ export default function OnboardingPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Username Input */}
+          <div>
+            <label style={{
+              fontSize: '12px',
+              fontWeight: '700',
+              color: '#1e293b',
+              display: 'block',
+              marginBottom: '8px',
+              letterSpacing: '0.3px',
+            }}>
+              0️⃣ Votre Pseudo
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+              placeholder="ex: InvestorPro123"
+              maxLength="30"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                outline: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.02)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
+                e.target.style.backgroundColor = '#f8fafc';
+              }}
+              required
+            />
+            <p style={{
+              fontSize: '11px',
+              color: '#94a3b8',
+              margin: '4px 0 0 0',
+            }}>
+              {username.length}/30 caractères • Lettres, chiffres, - et _ uniquement
+            </p>
+          </div>
+
           {/* Account Type Selection */}
           <div>
             <label style={{

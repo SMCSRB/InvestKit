@@ -240,7 +240,7 @@ export default function DashboardPage() {
   const [bioEditInput, setBioEditInput] = useState('Investisseur passionné en crypto et finance');
   const [baggeBackgroundInput, setBaggeBackgroundInput] = useState('');
   // Level tracking - synchronized with localStorage
-  const [userLevel, setUserLevel] = useState(20); // Default 20, loads from localStorage
+  const [userLevel, setUserLevel] = useState(1); // Default 1, loads from localStorage
   const [dailyXP, setDailyXP] = useState(Math.floor(Math.random() * 500) + 150); // Random XP 150-650
   const [totalXP, setTotalXP] = useState((userLevel || 1) * 1000 + dailyXP);
   const [xpToNextLevel, setXpToNextLevel] = useState(1000);
