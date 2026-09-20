@@ -1067,58 +1067,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Friend Code Section */}
-        <div style={{ marginBottom: '40px', padding: '16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-          <p style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            color: 'rgba(255, 255, 255, 0.6)',
-            margin: '0 0 8px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            Mon Code Ami
-          </p>
-          <p style={{
-            fontSize: '18px',
-            fontWeight: '900',
-            color: '#60a5fa',
-            margin: '0 0 12px 0',
-            fontFamily: 'monospace',
-          }}>
-            {userData.friendCode}
-          </p>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => copyToClipboard(userData.friendCode)}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                background: copied ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)',
-                border: copied ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(59, 130, 246, 0.5)',
-                borderRadius: '8px',
-                color: copied ? '#10b981' : '#60a5fa',
-                fontSize: '12px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!copied) {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.5)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!copied) {
-                  e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-                }
-              }}
-            >
-              {copied ? '✓ Copié' : 'Copier'}
-            </button>
-          </div>
-        </div>
-
         {/* Quick Stats */}
         <div style={{ marginBottom: '40px' }}>
           <p style={{
