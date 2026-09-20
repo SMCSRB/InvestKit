@@ -5,17 +5,31 @@ import { generateToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
+import { sendVerificationEmail } from '../utils/email';
+import { verifyCaptcha } from '../utils/captcha';
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, password, firstName, lastName, profile } = req.body;
+      const { email, password, captchaToken } = req.body;
 
       // Validation
-      if (!email || !password || !firstName || !lastName) {
+      if (!email || !password) {
         res.status(400).json({ error: 'Données manquantes' });
         return;
       }
+
+      // TODO: Captcha verification disabled temporarily
+      // Will re-enable when proper captcha keys are configured
+      // if (!captchaToken) {
+      //   res.status(400).json({ error: 'Le captcha est requis' });
+      //   return;
+      // }
+      // const captchaValid = await verifyCaptcha(captchaToken);
+      // if (!captchaValid) {
+      //   res.status(400).json({ error: 'Captcha invalide ou expiré' });
+      //   return;
+      // }
 
       // Vérifier si l'utilisateur existe déjà
       const existingUser = await userRepository.findByEmail(email);
@@ -27,19 +41,27 @@ export const authController = {
       // Hasher le mot de passe
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Générer le code de vérification
-      const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Générer un code de vérification à 6 chiffres
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Créer l'utilisateur en BD
       const newUser = await userRepository.create({
         email,
         password_hash: hashedPassword,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: 'Unknown',
+        last_name: 'Unknown',
         verification_code: verificationCode,
+        verification_code_expires_at: verificationCodeExpiresAt,
       });
 
-      // TODO: Envoyer email de vérification
+      // Envoyer email de vérification
+      try {
+        await sendVerificationEmail(email, 'User', verificationCode);
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        // Continue anyway, user can still request resend
+      }
 
       res.status(201).json({
         success: true,
@@ -55,21 +77,27 @@ export const authController = {
 
   verifyEmail: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { userId, verificationCode } = req.body;
+      const { email, code } = req.body;
 
-      if (!userId || !verificationCode) {
+      if (!email || !code) {
         res.status(400).json({ error: 'Données manquantes' });
         return;
       }
 
-      const user = await userRepository.findById(userId);
+      const user = await userRepository.findByEmail(email);
       if (!user) {
         res.status(404).json({ error: 'Utilisateur non trouvé' });
         return;
       }
 
-      if (user.verification_code !== verificationCode) {
+      if (user.verification_code !== code) {
         res.status(400).json({ error: 'Code de vérification invalide' });
+        return;
+      }
+
+      // Vérifier si le code a expiré
+      if (user.verification_code_expires_at && new Date() > user.verification_code_expires_at) {
+        res.status(400).json({ error: 'Code expiré' });
         return;
       }
 
@@ -87,6 +115,92 @@ export const authController = {
     } catch (error) {
       console.error('Verify email error:', error);
       res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+  },
+
+  resendCode: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email requis' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      if (user.verified) {
+        res.status(400).json({ error: 'Cet utilisateur est déjà vérifié' });
+        return;
+      }
+
+      // Générer un nouveau code
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      await userRepository.updateVerificationCode(user.id, newCode, expiresAt);
+
+      // Envoyer email
+      try {
+        await sendVerificationEmail(email, user.first_name, newCode);
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+      }
+
+      res.json({
+        success: true,
+        message: 'Code renvoyé avec succès',
+        verificationCode: env.isDev ? newCode : undefined,
+      });
+    } catch (error) {
+      console.error('Resend code error:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'envoi du code' });
+    }
+  },
+
+  savePreferences: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email, accountType, interests, language, enable2FA } = req.body;
+
+      if (!email || !accountType) {
+        res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      // Sauvegarder les préférences
+      await userRepository.updatePreferences(user.id, {
+        account_type: accountType,
+        interests: JSON.stringify(interests || []),
+        language: language || 'fr',
+        enable_2fa: enable2FA || false,
+      });
+
+      // Générer un token JWT
+      const token = generateToken(user.id, user.email);
+
+      res.json({
+        success: true,
+        message: 'Préférences sauvegardées',
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          accountType,
+        },
+      });
+    } catch (error) {
+      console.error('Save preferences error:', error);
+      res.status(500).json({ error: 'Erreur lors de la sauvegarde' });
     }
   },
 
@@ -231,6 +345,27 @@ export const authController = {
     } catch (error) {
       console.error('Get current user error:', error);
       res.status(500).json({ error: 'Erreur lors de la récupération' });
+    }
+  },
+
+  checkEmail: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json({ error: 'Email requis' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+
+      res.json({
+        available: !user,
+        exists: !!user,
+      });
+    } catch (error) {
+      console.error('Check email error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification' });
     }
   },
 };

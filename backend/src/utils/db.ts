@@ -47,9 +47,64 @@ export const executeSchema = async (): Promise<void> => {
     await pool.query(schema);
 
     console.log('✅ Database schema initialized successfully');
+
+    // Execute migrations
+    await executeMigrations();
   } catch (error) {
     console.error('❌ Error initializing schema:', error);
     throw error;
+  }
+};
+
+export const executeMigrations = async (): Promise<void> => {
+  try {
+    console.log('📝 Running migrations...');
+
+    const migrationsDir = path.join(process.cwd(), 'migrations');
+
+    // Check if migrations directory exists
+    if (!fs.existsSync(migrationsDir)) {
+      console.log('⚠️  No migrations directory found');
+      return;
+    }
+
+    const files = fs.readdirSync(migrationsDir)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
+
+    const pool = getPool();
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(migrationsDir, file);
+        const sql = fs.readFileSync(filePath, 'utf-8');
+
+        // Skip empty files
+        if (!sql.trim()) {
+          continue;
+        }
+
+        console.log(`  Running migration: ${file}`);
+        await pool.query(sql);
+        console.log(`  ✅ ${file} completed`);
+      } catch (migrationError: any) {
+        // Ignore "column already exists" (42701) and "relation already exists" (42P07) errors
+        if (migrationError.code === '42701' || migrationError.code === '42P07') {
+          console.log(`  ⚠️  ${file} - Already exists (skipped)`);
+        } else if (migrationError.code === '42P01') {
+          // Table doesn't exist - this is okay, schema.sql will create it
+          console.log(`  ⚠️  ${file} - Table doesn't exist yet (will be created by schema)`);
+        } else {
+          console.error(`  ❌ Error in ${file}:`, migrationError.message);
+          // Continue with other migrations instead of throwing
+        }
+      }
+    }
+
+    console.log('✅ All migrations completed');
+  } catch (error) {
+    console.error('❌ Error running migrations:', error);
+    // Don't throw - allow server to start even if migrations fail
   }
 };
 

@@ -8,8 +8,13 @@ export interface User {
   last_name: string;
   verified: boolean;
   verification_code?: string;
+  verification_code_expires_at?: Date;
   reset_token?: string;
   reset_token_expires_at?: Date;
+  account_type?: string;
+  interests?: string;
+  language?: string;
+  enable_2fa?: boolean;
   last_login_at?: Date;
   created_at: Date;
   updated_at: Date;
@@ -40,10 +45,11 @@ export const userRepository = {
     first_name: string;
     last_name: string;
     verification_code: string;
+    verification_code_expires_at?: Date;
   }): Promise<User> {
     const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, verification_code, verified)
-       VALUES ($1, $2, $3, $4, $5, FALSE)
+      `INSERT INTO users (email, password_hash, first_name, last_name, verification_code, verification_code_expires_at, verified)
+       VALUES ($1, $2, $3, $4, $5, $6, FALSE)
        RETURNING *`,
       [
         data.email,
@@ -51,6 +57,7 @@ export const userRepository = {
         data.first_name,
         data.last_name,
         data.verification_code,
+        data.verification_code_expires_at,
       ]
     );
     return result.rows[0];
@@ -104,5 +111,59 @@ export const userRepository = {
        WHERE id = $2`,
       [passwordHash, id]
     );
+  },
+
+  async updateVerificationCode(
+    id: string,
+    code: string,
+    expiresAt: Date
+  ): Promise<void> {
+    await query(
+      `UPDATE users
+       SET verification_code = $1, verification_code_expires_at = $2, updated_at = NOW()
+       WHERE id = $3`,
+      [code, expiresAt, id]
+    );
+  },
+
+  async updatePreferences(
+    id: string,
+    preferences: {
+      account_type?: string;
+      interests?: string;
+      language?: string;
+      enable_2fa?: boolean;
+    }
+  ): Promise<void> {
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (preferences.account_type !== undefined) {
+      updates.push(`account_type = $${updates.length + 1}`);
+      values.push(preferences.account_type);
+    }
+
+    if (preferences.interests !== undefined) {
+      updates.push(`interests = $${updates.length + 1}`);
+      values.push(preferences.interests);
+    }
+
+    if (preferences.language !== undefined) {
+      updates.push(`language = $${updates.length + 1}`);
+      values.push(preferences.language);
+    }
+
+    if (preferences.enable_2fa !== undefined) {
+      updates.push(`enable_2fa = $${updates.length + 1}`);
+      values.push(preferences.enable_2fa);
+    }
+
+    if (updates.length === 0) return;
+
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${values.length}`;
+    await query(sql, values);
   },
 };

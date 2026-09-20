@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Bancaire ULTRA PRO - Andreja</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-darker: #1a0a2e;
+            --purple: #a855f7;
+            --pink: #ec4899;
+            --green: #10b981;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --text-light: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --border: #2a2a3e;
+        }
+
+        body.light-mode {
+            --bg-dark: #ffffff;
+            --bg-darker: #f8f9fa;
+            --purple: #9333ea;
+            --pink: #db2777;
+            --green: #059669;
+            --red: #dc2626;
+            --blue: #2563eb;
+            --text-light: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            color: var(--purple);
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-header {
+            padding: 10px 15px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .btn-header:hover {
+            background: var(--pink);
+            transform: translateY(-2px);
+        }
+
+        .toggle-mode {
+            padding: 10px 15px;
+            background: var(--border);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .toggle-mode:hover {
+            background: var(--purple);
+            border-color: var(--purple);
+        }
+
+        /* MAIN LAYOUT */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: rgba(42, 42, 62, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--purple);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* FORMS */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--purple);
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 8px 12px;
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--purple);
+            border: 1px solid var(--purple);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            background: var(--pink);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: var(--red);
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-light);
+        }
+
+        .tab-btn.active {
+            color: var(--purple);
+            border-bottom-color: var(--purple);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            background: rgba(42, 42, 62, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        /* RESULTS DISPLAY */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .result-card {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--purple);
+        }
+
+        .result-card.green .result-value {
+            color: var(--green);
+        }
+
+        .result-card.red .result-value {
+            color: var(--red);
+        }
+
+        .verdict-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .verdict-approved {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--green);
+            color: var(--green);
+        }
+
+        .verdict-rejected {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--red);
+            color: var(--red);
+        }
+
+        .verdict-maybe {
+            background: rgba(59, 130, 246, 0.2);
+            border: 2px solid var(--blue);
+            color: var(--blue);
+        }
+
+        /* COMPARISON */
+        .comparison-card {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .comparison-card:hover {
+            background: rgba(168, 85, 247, 0.15);
+            border-color: var(--purple);
+        }
+
+        .comparison-header {
+            font-weight: 600;
+            color: var(--purple);
+            margin-bottom: 10px;
+            font-size: 1.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9em;
+        }
+
+        .comparison-row:last-child {
+            border-bottom: none;
+        }
+
+        /* AMORTISSEMENT TABLE */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--purple);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85em;
+        }
+
+        tr:hover {
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-darker);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--border);
+            border: none;
+            color: var(--text-light);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        /* NOTIFICATIONS */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--green);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+            z-index: 999;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        /* SAVINGS HISTORY */
+        .history-item {
+            background: rgba(168, 85, 247, 0.1);
+            border-left: 3px solid var(--purple);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .history-date {
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        .history-desc {
+            font-weight: 500;
+            margin: 5px 0;
+        }
+
+        .history-amount {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        /* PDF STYLE */
+        .pdf-document {
+            display: none;
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            color: #000;
+            padding: 30mm;
+            font-family: 'Calibri', Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .pdf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 20px;
+        }
+
+        .pdf-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        .pdf-date {
+            text-align: right;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .pdf-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .pdf-subtitle {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .pdf-section {
+            margin-bottom: 25px;
+        }
+
+        .pdf-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4f46e5;
+            background: #f3f4f6;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .pdf-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .pdf-label {
+            color: #666;
+        }
+
+        .pdf-value {
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10px;
+        }
+
+        .pdf-table th {
+            background: #4f46e5;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .pdf-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .pdf-table tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .pdf-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 10px;
+            color: #9ca3af;
+            text-align: center;
+        }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 800px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            height: 350px;
+        }
+
+        /* INFO BOX */
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid var(--blue);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            color: var(--text-light);
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--red);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            color: var(--red);
+        }
+
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--green);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            color: var(--green);
+        }
+
+        /* CHECKBOX STYLING */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .checkbox-desc {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>💰 Simulateur Bancaire ULTRA PRO</h1>
+        <div class="header-controls">
+            <button class="btn-header" onclick="exporterPDF()">📥 Export PDF PRO</button>
+            <button class="btn-header" onclick="copierLien()">🔗 Partager Lien</button>
+            <button class="btn-header" onclick="afficherHistorique()">📋 Historique</button>
+            <button class="toggle-mode" onclick="toggleMode()">🌙 Mode</button>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="section-title">📊 Revenus & Charges</div>
+                <div class="form-group">
+                    <label>Salaire net mensuel (€)</label>
+                    <input type="number" id="salaire" value="2500" min="0" oninput="majRevenu()" onchange="majRevenu()">
+                </div>
+                <div class="form-group">
+                    <label>Revenus locatifs (€)</label>
+                    <input type="number" id="revenus_loc" value="0" min="0" oninput="majRevenu()" onchange="majRevenu()">
+                </div>
+                <div class="form-group">
+                    <label>Autres revenus (€)</label>
+                    <input type="number" id="autres_rev" value="0" min="0" oninput="majRevenu()" onchange="majRevenu()">
+                </div>
+
+                <div style="margin-top: 15px; margin-bottom: 15px;">
+                    <label style="display: flex; gap: 8px; cursor: pointer; font-size: 0.9em; color: var(--text-muted);">
+                        <input type="checkbox" id="show_charges" checked onchange="afficherCharges()">
+                        Afficher charges
+                    </label>
+                </div>
+
+                <div id="charges_list"></div>
+
+                <button class="btn-secondary" onclick="ajouterCharge()" style="width: 100%; margin-top: 10px;">+ Ajouter Charge</button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">🏦 Simulation Prêt</div>
+                
+                <div class="form-group">
+                    <label>Type de prêt</label>
+                    <select id="type_pret" onchange="majAffichageEtudiant()">
+                        <option value="immo">Prêt Immobilier</option>
+                        <option value="construction">Prêt Construction</option>
+                        <option value="auto">Prêt Auto</option>
+                        <option value="perso">Prêt Personnel</option>
+                        <option value="etudiant">Prêt Étudiant</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Banque</label>
+                    <select id="banque">
+                        <option value="bourso">Boursobank</option>
+                        <option value="fortuneo">Fortuneo</option>
+                        <option value="ca">Crédit Agricole</option>
+                        <option value="bnp">BNP Paribas</option>
+                        <option value="sg">Société Générale</option>
+                        <option value="caisse">Caisse d'Épargne</option>
+                        <option value="lcl">LCL</option>
+                    </select>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Montant (€)</label>
+                        <input type="number" id="montant" value="100000" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Durée (ans)</label>
+                        <input type="number" id="duree" value="20" min="1" max="50">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Taux nominal (%)</label>
+                    <input type="number" id="taux" value="3.5" min="0" step="0.01" onchange="majTaux()">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Apport personnel (€)</label>
+                        <input type="number" id="apport" value="0" min="0">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; gap: 10px; cursor: pointer; color: var(--text-muted);">
+                        <input type="checkbox" id="assur_deces" checked onchange="majAffichageAssurance()"> Assurance Décès
+                    </label>
+                </div>
+
+                <!-- OPTIONS ÉTUDIANT -->
+                <div id="options_etudiant" style="display: none; background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--pink);">
+                    <div class="section-title" style="margin-top: 0; font-size: 0.95em; margin-bottom: 12px;">📚 Options Étudiant</div>
+                    
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="franchise_amortissement">
+                            <div>
+                                <div class="checkbox-label">Franchise d'amortissement</div>
+                                <div class="checkbox-desc">Payez intérêts seulement durant études</div>
+                            </div>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="garantie_bpi" checked>
+                            <div>
+                                <div class="checkbox-label">Garantie Caution Mutuelle (BPI)</div>
+                                <div class="checkbox-desc">Taux réduit + protection garantie</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Revenu des parents (€)</label>
+                        <input type="number" id="revenu_parents" value="0" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Parent co-emprunteur?</label>
+                        <select id="parent_coem">
+                            <option value="non">Non</option>
+                            <option value="oui">Oui</option>
+                            <option value="garant">Garant uniquement</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="calculerSimulation()">🚀 Calculer Simulation</button>
+
+                <button class="btn-secondary" onclick="sauvegarderSimulation()" style="width: 100%; margin-top: 8px;">💾 Enregistrer Simulation</button>
+
+                <div class="info-box" style="margin-top: 15px;">
+                    ℹ️ Simulateur avec <strong>règle 35%</strong> d'endettement et règles bancaires réalistes.
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('resultat')">📊 Résultats</button>
+                <button class="tab-btn" onclick="switchTab('comparateur')">🏦 Comparateur</button>
+                <button class="tab-btn" onclick="switchTab('amortissement')">📈 Amortissement</button>
+                <button class="tab-btn" onclick="switchTab('graphiques')">📉 Graphiques</button>
+                <button class="tab-btn" onclick="switchTab('scenarios')">🔄 Scénarios</button>
+                <button class="tab-btn" onclick="switchTab('conseils')">📚 Conseils</button>
+            </div>
+
+            <!-- TAB: RÉSULTATS -->
+            <div id="resultat" class="tab-content active">
+                <div id="verdict_box" class="verdict-box verdict-approved" style="display: none;">
+                    Chargement...
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-label">Montant Emprunt</div>
+                        <div class="result-value" id="det_montant">0 €</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Durée</div>
+                        <div class="result-value" id="det_duree">0 mois</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Taux Nominal</div>
+                        <div class="result-value" id="det_taux">0 %</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Mensualité TTC</div>
+                        <div class="result-value green" id="det_mensa">0 €</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Ratio Endettement</div>
+                        <div class="result-value" id="det_ratio">0 %</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Coût Total (Intérêts + Frais)</div>
+                        <div class="result-value red" id="det_cout">0 €</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 Conseil:</strong> Une mensualité élevée? Augmentez la durée ou réduisez le montant pour améliorer votre ratio d'endettement.
+                </div>
+
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <div class="section-title">Détails Financiers</div>
+                    <div class="result-card">
+                        <div class="result-label">Frais de dossier</div>
+                        <div class="result-value" id="det_frais">0 €</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Assurance mensuelle</div>
+                        <div class="result-value" id="det_assur">0 €</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Revenu disponible</div>
+                        <div class="result-value green" id="det_revenu">0 €</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: COMPARATEUR -->
+            <div id="comparateur" class="tab-content">
+                <div class="section-title">Comparaison Bancaire (7 établissements)</div>
+                <div id="zone_comp"></div>
+            </div>
+
+            <!-- TAB: AMORTISSEMENT -->
+            <div id="amortissement" class="tab-content">
+                <div style="margin-bottom: 15px;">
+                    <label style="color: var(--text-muted); font-size: 0.9em;">Affichage:</label>
+                    <select id="affichage_amort" onchange="genAmortissement()" style="padding: 8px; margin-top: 8px; background: rgba(168, 85, 247, 0.1); border: 1px solid var(--border); color: var(--text-light); border-radius: 6px;">
+                        <option value="12">12 premiers mois</option>
+                        <option value="24">24 premiers mois</option>
+                        <option value="60">5 premières années</option>
+                        <option value="all">Tous les mois</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="table_amort">
+                        <thead>
+                            <tr>
+                                <th>Mois</th>
+                                <th>Capital Dû</th>
+                                <th>Intérêts</th>
+                                <th>Capital Remboursé</th>
+                                <th>Mensualité</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: GRAPHIQUES -->
+            <div id="graphiques" class="tab-content">
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <canvas id="chartCapital"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartComposition"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SCÉNARIOS -->
+            <div id="scenarios" class="tab-content">
+                <div class="section-title">Comparez Vos Scénarios</div>
+                
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Montant à tester</label>
+                            <input type="number" id="scenario_montant" value="100000" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Mensualité MAX acceptable (€)</label>
+                            <input type="number" id="scenario_mensa_max" value="500" min="0" placeholder="Ex: 500">
+                        </div>
+                    </div>
+
+                    <button class="btn-secondary" onclick="calculerMaxEmprunt()" style="width: 100%; margin-bottom: 15px;">📊 Calculer Max Emprunt</button>
+
+                    <button class="btn-secondary" onclick="genComparaisonScenarios()" style="width: 100%;">⚖️ Comparer Avant/Après</button>
+                </div>
+
+                <div id="zone_scenarios"></div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <strong>🎯 Remboursement Anticipé:</strong>
+                    <div style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label>Montant à rembourser (€)</label>
+                            <input type="number" id="rembourser_montant" value="10000" min="0">
+                        </div>
+                        <button class="btn-secondary" onclick="calculerRembRemboursement()" style="width: 100%; margin-top: 10px;">💰 Simuler Remboursement</button>
+                    </div>
+                    <div id="zone_rembours" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- TAB: CONSEILS -->
+            <div id="conseils" class="tab-content">
+                <div class="section-title">📚 Guide Bancaire</div>
+                
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="cursor: pointer; font-weight: 600; color: var(--purple); display: flex; justify-content: space-between; align-items: center;" onclick="toggleCollapsible(this)">
+                        📄 Documents à Préparer
+                        <span>+</span>
+                    </div>
+                    <div style="display: none; margin-top: 10px; font-size: 0.9em; color: var(--text-muted);">
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>3 derniers bulletins de salaire</li>
+                            <li>Avis d'imposition N-1</li>
+                            <li>Relevé d'identité bancaire (RIB)</li>
+                            <li>Justificatifs de revenus complémentaires</li>
+                            <li>Contrats de travail (CDI/CDD)</li>
+                            <li>Situation du compte bancaire</li>
+                            <li>État des dettes et crédits</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="cursor: pointer; font-weight: 600; color: var(--blue); display: flex; justify-content: space-between; align-items: center;" onclick="toggleCollapsible(this)">
+                        ⏱️ Délais Moyens
+                        <span>+</span>
+                    </div>
+                    <div style="display: none; margin-top: 10px; font-size: 0.9em; color: var(--text-muted);">
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li><strong>Demande de crédit:</strong> 30-45 jours</li>
+                            <li><strong>Accord de principe:</strong> 7-10 jours</li>
+                            <li><strong>Offre de crédit:</strong> 14 jours pour accepter</li>
+                            <li><strong>Délai de rétractation:</strong> 14 jours</li>
+                            <li><strong>Déblocage des fonds:</strong> 5-7 jours ouvrables</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="cursor: pointer; font-weight: 600; color: var(--green); display: flex; justify-content: space-between; align-items: center;" onclick="toggleCollapsible(this)">
+                        ✅ Règles Bancaires
+                        <span>+</span>
+                    </div>
+                    <div style="display: none; margin-top: 10px; font-size: 0.9em; color: var(--text-muted);">
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li><strong>Ratio endettement:</strong> MAX 35% du revenu mensuel</li>
+                            <li><strong>Reste à vivre:</strong> MIN 65% du revenu disponible</li>
+                            <li><strong>Apport personnel:</strong> 10-20% du montant (recommandé)</li>
+                            <li><strong>Durée max immobilier:</strong> 25-30 ans</li>
+                            <li><strong>Durée max auto:</strong> 5-7 ans</li>
+                            <li><strong>Durée max personnel:</strong> 3-7 ans</li>
+                            <li><strong>Scoring:</strong> Basé sur historique de crédit</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 8px;">
+                    <div style="cursor: pointer; font-weight: 600; color: var(--red); display: flex; justify-content: space-between; align-items: center;" onclick="toggleCollapsible(this)">
+                        ⚠️ Pièges à Éviter
+                        <span>+</span>
+                    </div>
+                    <div style="display: none; margin-top: 10px; font-size: 0.9em; color: var(--text-muted);">
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>❌ Multiplier les demandes de crédit (mauvais scoring)</li>
+                            <li>❌ Changer de travail avant le déblocage des fonds</li>
+                            <li>❌ Faire de gros achats à crédit pendant le dossier</li>
+                            <li>❌ Négliger les assurances obligatoires</li>
+                            <li>❌ Ne pas comparer les différentes banques</li>
+                            <li>❌ Emprunter sans apport personnel</li>
+                            <li>❌ Ignorer les frais cachés et assurances</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HISTORIQUE -->
+<div id="modalHistorique" class="modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="fermerHistorique()">×</button>
+        <h2 style="margin-bottom: 20px; color: var(--purple);">📋 Historique Simulations</h2>
+        <div id="zone_historique"></div>
+    </div>
+</div>
+
+<!-- PDF DOCUMENT (invisible) -->
+<div id="pdf_document" class="pdf-document"></div>
+
+<!-- NOTIFICATION -->
+<div id="notification" class="notification" style="display: none;"></div>
+
+<!-- SCRIPTS -->
+<script>
+// ===== CONFIGURATION =====
+const taux_base = {
+    immo: { ca: 2.8, bnp: 2.9, sg: 2.9, lcl: 3.1, bourso: 2.65, fortuneo: 2.7, caisse: 3.0 },
+    construction: { ca: 3.1, bnp: 3.2, sg: 3.2, lcl: 3.3, bourso: 2.95, fortuneo: 3.0, caisse: 3.2 },
+    auto: { ca: 4.5, bnp: 4.6, sg: 4.7, lcl: 4.8, bourso: 4.2, fortuneo: 4.3, caisse: 4.8 },
+    perso: { ca: 6.5, bnp: 6.7, sg: 6.8, lcl: 7.0, bourso: 6.2, fortuneo: 6.3, caisse: 7.0 },
+    etudiant: { ca: 1.5, bnp: 1.6, sg: 1.7, lcl: 1.8, bourso: 1.4, fortuneo: 1.5, caisse: 1.8 }
+};
+
+const noms_banques = {
+    ca: '🌾 Crédit Agricole',
+    bnp: '🏦 BNP Paribas',
+    sg: '🏛️ Société Générale',
+    lcl: '💳 LCL',
+    bourso: '📱 Boursobank',
+    fortuneo: '💻 Fortuneo',
+    caisse: '🏦 Caisse d\'Épargne'
+};
+
+// ===== STATE =====
+let mes_charges = {};
+let chart1 = null, chart2 = null;
+let dernier_calcul = null;
+let scenario_avant = null;
+
+// ===== UTILITAIRES =====
+function formatEuro(val) {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
+}
+
+function toggleMode() {
+    document.body.classList.toggle('light-mode');
+    localStorage.setItem('darkMode', !document.body.classList.contains('light-mode'));
+}
+
+function chargerMode() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'false') {
+        document.body.classList.add('light-mode');
+    }
+}
+
+function showNotif(msg, type = 'success') {
+    const notif = document.getElementById('notification');
+    notif.textContent = msg;
+    notif.style.background = type === 'success' ? 'var(--green)' : 'var(--red)';
+    notif.style.display = 'block';
+    setTimeout(() => notif.style.display = 'none', 3000);
+}
+
+function toggleCollapsible(elem) {
+    const content = elem.nextElementSibling;
+    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+    elem.querySelector('span').textContent = content.style.display === 'none' ? '+' : '−';
+}
+
+// ===== CHARGES =====
+function ajouterCharge() {
+    const id = 'charge_' + Date.now();
+    mes_charges[id] = { label: '', montant: 0 };
+    afficherCharges();
+}
+
+function afficherCharges() {
+    const div = document.getElementById('charges_list');
+    div.innerHTML = '';
+    
+    for (let [id, charge] of Object.entries(mes_charges)) {
+        div.innerHTML += `
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="text" placeholder="Label" value="${charge.label}" onchange="mes_charges['${id}'].label = this.value" style="flex: 1; padding: 8px; background: rgba(168, 85, 247, 0.1); border: 1px solid var(--border); color: var(--text-light); border-radius: 6px;">
+                <input type="number" placeholder="Montant" value="${charge.montant}" min="0" onchange="mes_charges['${id}'].montant = parseFloat(this.value); majRevenu()" style="width: 100px; padding: 8px; background: rgba(168, 85, 247, 0.1); border: 1px solid var(--border); color: var(--text-light); border-radius: 6px;">
+                <button class="btn-small" onclick="delete mes_charges['${id}']; majRevenu();">🗑️</button>
+            </div>
+        `;
+    }
+}
+
+function majRevenu() {
+    const salaire = parseFloat(document.getElementById('salaire').value) || 0;
+    const loc = parseFloat(document.getElementById('revenus_loc').value) || 0;
+    const autres = parseFloat(document.getElementById('autres_rev').value) || 0;
+    
+    let charges = 0;
+    for (let c of Object.values(mes_charges)) {
+        charges += c.montant;
+    }
+    
+    const revenu_total = salaire + loc + autres;
+    const revenu_dispo = revenu_total - charges;
+    
+    // Affichage dans détails
+    if (dernier_calcul) {
+        document.getElementById('det_revenu').textContent = formatEuro(revenu_dispo);
+    }
+}
+
+// ===== AFFICHAGE ÉTUDIANT =====
+function majAffichageEtudiant() {
+    const type = document.getElementById('type_pret').value;
+    const zone = document.getElementById('options_etudiant');
+    const assur = document.getElementById('assur_deces');
+    
+    if (type === 'etudiant') {
+        zone.style.display = 'block';
+        assur.checked = false;
+        assur.parentElement.style.display = 'none';
+    } else {
+        zone.style.display = 'none';
+        assur.parentElement.style.display = 'flex';
+    }
+}
+
+function majAffichageAssurance() {
+    const type = document.getElementById('type_pret').value;
+    if (type === 'etudiant') {
+        calculerSimulation();
+    }
+}
+
+// ===== TAUX =====
+function majTaux() {
+    const type = document.getElementById('type_pret').value;
+    const banque = document.getElementById('banque').value;
+    const taux_custom = parseFloat(document.getElementById('taux').value);
+    
+    // Recalculer si le taux change
+    if (dernier_calcul) {
+        calculerSimulation();
+    }
+}
+
+// ===== SIMULATION =====
+function calculerSimulation() {
+    const montant = parseFloat(document.getElementById('montant').value) || 0;
+    const duree = parseFloat(document.getElementById('duree').value) || 1;
+    const taux = parseFloat(document.getElementById('taux').value) || 0;
+    const type = document.getElementById('type_pret').value;
+    const banque = document.getElementById('banque').value;
+    const assur = document.getElementById('assur_deces').checked;
+    
+    // Options étudiant
+    const franchise = type === 'etudiant' && document.getElementById('franchise_amortissement').checked;
+    const bpi = type === 'etudiant' && document.getElementById('garantie_bpi').checked;
+    const duree_franchise = franchise ? 2 : 0;
+    
+    const mois = duree * 12;
+    const mois_franchise = franchise ? (duree_franchise * 12) : 0;
+    const mois_total = mois + mois_franchise;
+    
+    // Frais
+    const frais = type === 'etudiant' ? 100 : Math.max(200, montant * 0.002);
+    
+    // Assurance
+    const taux_assur = (type !== 'etudiant' && assur) ? 0.004 : 0;
+    
+    // Taux avec BPI
+    let tap = taux;
+    if (type === 'etudiant' && bpi) {
+        tap = Math.max(taux - 0.5, taux * 0.8);
+    }
+    tap = tap + taux_assur * 100;
+    
+    const tm = tap / 100 / 12;
+    
+    // Calcul mensualité
+    let mensualite, assur_mensa, mensa_ttc, cout;
+    
+    if (franchise && type === 'etudiant') {
+        const interet_mensuel = montant * tm;
+        const mensualite_amortissement = montant * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+        
+        mensa_ttc = interet_mensuel;
+        assur_mensa = 0;
+        
+        const cout_interet_franchise = interet_mensuel * mois_franchise;
+        const cout_amortissement = (mensualite_amortissement * mois) - montant;
+        cout = cout_interet_franchise + cout_amortissement + frais;
+        mensualite = interet_mensuel;
+    } else {
+        mensualite = montant * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+        assur_mensa = montant * taux_assur / 12;
+        mensa_ttc = mensualite + assur_mensa;
+        cout = (mensualite * mois) - montant + frais;
+    }
+    
+    // Revenus et charges
+    let revenu_tot = parseFloat(document.getElementById('salaire').value) || 0;
+    revenu_tot += parseFloat(document.getElementById('revenus_loc').value) || 0;
+    revenu_tot += parseFloat(document.getElementById('autres_rev').value) || 0;
+    
+    let charges_tot = 0;
+    for (let c of Object.values(mes_charges)) {
+        charges_tot += c.montant;
+    }
+    
+    const revenu_dispo = revenu_tot - charges_tot;
+    const ratio = revenu_tot > 0 ? (mensa_ttc / revenu_tot) * 100 : 0;
+    
+    // VERDICT
+    let verdict = 'approved';
+    let msg = '✅ Dossier approuvé';
+    
+    if (type === 'etudiant') {
+        const revenu_parents = parseFloat(document.getElementById('revenu_parents').value) || 0;
+        const parent_coem = document.getElementById('parent_coem').value;
+        
+        if (montant > 50000 && revenu_parents < 30000 && parent_coem === 'non') {
+            verdict = 'maybe';
+            msg = '⚠️ Montant important: co-emprunteur parent recommandé';
+        } else if (montant > 80000) {
+            verdict = 'maybe';
+            msg = '⚠️ Montant très élevé: vérifier conditions';
+        } else {
+            msg = '✅ Prêt étudiant approuvé' + (franchise ? ' (franchise active)' : '');
+        }
+    } else {
+        if (ratio > 35) {
+            verdict = 'rejected';
+            msg = `❌ Endettement trop élevé (${ratio.toFixed(1)}% > 35%)`;
+        } else if (revenu_dispo - mensa_ttc < 1200) {
+            verdict = 'maybe';
+            msg = `⚠️ Reste à vivre faible`;
+        }
+    }
+    
+    // AFFICHAGE
+    const verdict_box = document.getElementById('verdict_box');
+    verdict_box.className = `verdict-box verdict-${verdict}`;
+    verdict_box.textContent = msg;
+    verdict_box.style.display = 'block';
+    
+    document.getElementById('det_montant').textContent = formatEuro(montant);
+    document.getElementById('det_duree').textContent = franchise ? (mois + ' mois + ' + (duree_franchise * 12) + ' mois franchise') : (mois + ' mois');
+    document.getElementById('det_taux').textContent = taux.toFixed(2) + ' %';
+    document.getElementById('det_frais').textContent = formatEuro(frais);
+    document.getElementById('det_assur').textContent = type === 'etudiant' ? 'Aucune' : formatEuro(assur_mensa);
+    document.getElementById('det_mensa').textContent = formatEuro(mensa_ttc);
+    document.getElementById('det_cout').textContent = formatEuro(cout);
+    document.getElementById('det_ratio').textContent = ratio.toFixed(1) + ' %';
+    document.getElementById('det_revenu').textContent = formatEuro(revenu_dispo);
+    
+    // Màj couleur ratio
+    const ratio_card = document.getElementById('det_ratio').parentElement.parentElement;
+    ratio_card.classList.remove('green', 'red');
+    if (ratio > 35) {
+        ratio_card.classList.add('red');
+    } else if (ratio < 20) {
+        ratio_card.classList.add('green');
+    }
+    
+    // SAUVEGARDER CALCUL
+    dernier_calcul = {
+        montant, duree, taux, type, banque, assur, mensa_ttc, ratio, cout, frais, revenu_tot, mois
+    };
+    
+    // GÉNÉRER CONTENU
+    genComparateur(montant, type, tap, revenu_tot);
+    genAmortissement();
+    genGraphiques(montant, mois, tm);
+}
+
+// ===== COMPARATEUR =====
+function genComparateur(montant, type, tap, revenu_tot) {
+    const div = document.getElementById('zone_comp');
+    div.innerHTML = '';
+    
+    const banques_list = ['ca', 'bnp', 'sg', 'lcl', 'bourso', 'fortuneo', 'caisse'];
+    const duree = parseFloat(document.getElementById('duree').value);
+    const mois = duree * 12;
+    const franchise = type === 'etudiant' && document.getElementById('franchise_amortissement').checked;
+    const bpi = type === 'etudiant' && document.getElementById('garantie_bpi').checked;
+    
+    let comps = [];
+    for (let b of banques_list) {
+        const taux_base_b = taux_base[type][b];
+        
+        let tap_b = taux_base_b;
+        if (type === 'etudiant' && bpi) {
+            tap_b = Math.max(taux_base_b - 0.5, taux_base_b * 0.8);
+        } else if (type !== 'etudiant') {
+            tap_b = taux_base_b + 0.4;
+        }
+        
+        const tm = tap_b / 100 / 12;
+        const mensa = montant * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+        const ratio = revenu_tot > 0 ? (mensa / revenu_tot) * 100 : 0;
+        
+        let ok = true;
+        if (type === 'etudiant') {
+            ok = montant <= 80000;
+        } else {
+            ok = ratio <= 35;
+        }
+        
+        comps.push({
+            nom: noms_banques[b],
+            taux: taux_base_b,
+            tap: tap_b,
+            mensa: mensa,
+            ratio: ratio,
+            ok: ok,
+            bpi_applicable: type === 'etudiant'
+        });
+    }
+    
+    comps.sort((a, b) => a.mensa - b.mensa);
+    
+    for (let c of comps) {
+        const badge_bpi = c.bpi_applicable && bpi ? '<span style="background: var(--green); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 10px;">🛡️ BPI ✓</span>' : '';
+        
+        div.innerHTML += `
+            <div class="comparison-card">
+                <div class="comparison-header">${c.nom} ${badge_bpi}</div>
+                <div class="comparison-row">
+                    <span>Taux:</span>
+                    <strong>${c.taux.toFixed(2)}%</strong>
+                </div>
+                <div class="comparison-row">
+                    <span>TAEG:</span>
+                    <strong>${c.tap.toFixed(2)}%</strong>
+                </div>
+                <div class="comparison-row">
+                    <span>Mensualité:</span>
+                    <strong>${formatEuro(c.mensa)}</strong>
+                </div>
+                <div class="comparison-row">
+                    <span>Ratio:</span>
+                    <strong>${c.ratio.toFixed(1)}%</strong>
+                </div>
+                <div class="comparison-row">
+                    <span>Verdict:</span>
+                    <strong>${c.ok ? '✅ OUI' : '❌ NON'}</strong>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ===== AMORTISSEMENT =====
+function genAmortissement() {
+    if (!dernier_calcul) return;
+    
+    const { montant, taux, mois } = dernier_calcul;
+    const affichage = document.getElementById('affichage_amort').value;
+    
+    let lignes = parseInt(affichage) || mois;
+    lignes = Math.min(lignes, mois);
+    
+    const tap = parseFloat(document.getElementById('taux').value) || 0;
+    const tm = tap / 100 / 12;
+    
+    const mensa = montant * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+    
+    const tbody = document.querySelector('#table_amort tbody');
+    tbody.innerHTML = '';
+    
+    let capital_restant = montant;
+    
+    for (let i = 1; i <= lignes; i++) {
+        const interet = capital_restant * tm;
+        const capital_rem = mensa - interet;
+        capital_restant -= capital_rem;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${i}</td>
+            <td>${formatEuro(Math.max(0, capital_restant))}</td>
+            <td>${formatEuro(interet)}</td>
+            <td>${formatEuro(capital_rem)}</td>
+            <td>${formatEuro(mensa)}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+// ===== GRAPHIQUES =====
+function genGraphiques(montant, mois, tm) {
+    // Chart 1: Capital restant dû
+    let capital_data = [];
+    let mois_labels = [];
+    let capital = montant;
+    
+    const mensa = montant * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+    
+    for (let i = 0; i <= mois; i += Math.max(1, Math.floor(mois / 50))) {
+        capital_data.push(Math.max(0, capital));
+        mois_labels.push('M' + i);
+        
+        if (i < mois) {
+            const interet = capital * tm;
+            const capital_rem = mensa - interet;
+            capital -= capital_rem;
+        }
+    }
+    
+    const ctx1 = document.getElementById('chartCapital');
+    if (chart1) chart1.destroy();
+    chart1 = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: mois_labels,
+            datasets: [{
+                label: 'Capital Restant Dû',
+                data: capital_data,
+                borderColor: 'rgb(168, 85, 247)',
+                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: 'rgba(224, 224, 224, 0.8)' } }
+            },
+            scales: {
+                y: { ticks: { color: 'rgba(224, 224, 224, 0.6)' } },
+                x: { ticks: { color: 'rgba(224, 224, 224, 0.6)' } }
+            }
+        }
+    });
+    
+    // Chart 2: Composition mensualité
+    const interet_total = (mensa * mois) - montant;
+    const ctx2 = document.getElementById('chartComposition');
+    if (chart2) chart2.destroy();
+    chart2 = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ['Capital', 'Intérêts'],
+            datasets: [{
+                data: [montant, interet_total],
+                backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(239, 68, 68, 0.8)']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: 'rgba(224, 224, 224, 0.8)' } }
+            }
+        }
+    });
+}
+
+// ===== SCÉNARIOS =====
+function calculerMaxEmprunt() {
+    const type = document.getElementById('type_pret').value;
+    const mensa_max = parseFloat(document.getElementById('scenario_mensa_max').value) || 500;
+    const duree = parseFloat(document.getElementById('duree').value) || 20;
+    const tap = parseFloat(document.getElementById('taux').value) || 0;
+    
+    let revenu_tot = parseFloat(document.getElementById('salaire').value) || 0;
+    revenu_tot += parseFloat(document.getElementById('revenus_loc').value) || 0;
+    revenu_tot += parseFloat(document.getElementById('autres_rev').value) || 0;
+    
+    // Chercher le montant max possible
+    let montant_max = 0;
+    const tm = tap / 100 / 12;
+    const mois = duree * 12;
+    
+    // Dichotomie
+    let low = 0, high = 500000;
+    while (high - low > 10) {
+        const mid = (low + high) / 2;
+        const mensa = mid * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+        
+        if (mensa <= mensa_max && (mensa / revenu_tot) * 100 <= 35) {
+            montant_max = mid;
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    
+    const zone = document.getElementById('zone_scenarios');
+    zone.innerHTML = `
+        <div class="success-box">
+            <strong>💡 Résultat:</strong><br>
+            Avec une mensualité MAX de <strong>${formatEuro(mensa_max)}</strong> et une durée de <strong>${duree} ans</strong>:<br>
+            <br>
+            ✅ Montant max empruntable: <strong style="font-size: 1.2em; color: var(--green);">${formatEuro(montant_max)}</strong>
+        </div>
+    `;
+}
+
+function genComparaisonScenarios() {
+    if (!dernier_calcul) {
+        showNotif('Calculez d\'abord une simulation!', 'error');
+        return;
+    }
+    
+    scenario_avant = { ...dernier_calcul };
+    
+    const zone = document.getElementById('zone_scenarios');
+    zone.innerHTML = `
+        <div class="info-box">
+            <strong>📊 Scénario 1 (Avant):</strong><br>
+            Montant: ${formatEuro(scenario_avant.montant)} | Durée: ${scenario_avant.mois} mois | Mensualité: ${formatEuro(scenario_avant.mensa_ttc)}
+        </div>
+        <p style="text-align: center; color: var(--text-muted); margin: 15px 0;">Modifiez les paramètres et cliquez "Calculer Simulation" pour comparer avec le Scénario 2</p>
+    `;
+}
+
+function calculerRembRemboursement() {
+    if (!dernier_calcul) {
+        showNotif('Calculez d\'abord une simulation!', 'error');
+        return;
+    }
+    
+    const montant_remb = parseFloat(document.getElementById('rembourser_montant').value) || 0;
+    if (montant_remb === 0) {
+        showNotif('Entrez un montant à rembourser!', 'error');
+        return;
+    }
+    
+    const { montant, mois, taux } = dernier_calcul;
+    const tm = taux / 100 / 12;
+    
+    // Capital restant après remboursement (estimation)
+    const mensa = montant * (tm * Math.pow(1 + tm, mois)) / (Math.pow(1 + tm, mois) - 1);
+    
+    const montant_apres = Math.max(0, montant - montant_remb);
+    const mois_apres = montant_apres > 0 ? mois : 0;
+    
+    const mensa_apres = montant_apres * (tm * Math.pow(1 + tm, mois_apres)) / (Math.pow(1 + tm, mois_apres) - 1);
+    
+    const economies = (mensa * mois) - (mensa_apres * mois_apres);
+    
+    const zone = document.getElementById('zone_rembours');
+    zone.innerHTML = `
+        <div class="success-box">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <strong>Avant remboursement:</strong><br>
+                    Mensualité: ${formatEuro(mensa)}<br>
+                    Durée: ${mois} mois
+                </div>
+                <div>
+                    <strong>Après remboursement:</strong><br>
+                    Mensualité: ${formatEuro(mensa_apres)}<br>
+                    Durée: ${mois_apres} mois
+                </div>
+            </div>
+            <br>
+            💰 <strong>Économies réalisées: ${formatEuro(economies)}</strong>
+        </div>
+    `;
+}
+
+// ===== SAUVEGARDE =====
+function sauvegarderSimulation() {
+    if (!dernier_calcul) {
+        showNotif('Calculez d\'abord une simulation!', 'error');
+        return;
+    }
+    
+    const simulation = {
+        timestamp: new Date().toLocaleString('fr-FR'),
+        montant: parseFloat(document.getElementById('montant').value),
+        duree: parseFloat(document.getElementById('duree').value),
+        type: document.getElementById('type_pret').value,
+        banque: document.getElementById('banque').value,
+        taux: parseFloat(document.getElementById('taux').value),
+        mensa_ttc: dernier_calcul.mensa_ttc,
+        ratio: dernier_calcul.ratio
+    };
+    
+    let historique = JSON.parse(localStorage.getItem('simulations_bancaires') || '[]');
+    historique.unshift(simulation);
+    historique = historique.slice(0, 20); // Garder dernières 20
+    
+    localStorage.setItem('simulations_bancaires', JSON.stringify(historique));
+    showNotif('✅ Simulation enregistrée!', 'success');
+}
+
+function afficherHistorique() {
+    const historique = JSON.parse(localStorage.getItem('simulations_bancaires') || '[]');
+    const zone = document.getElementById('zone_historique');
+    
+    if (historique.length === 0) {
+        zone.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Aucune simulation enregistrée</p>';
+        document.getElementById('modalHistorique').classList.add('active');
+        return;
+    }
+    
+    zone.innerHTML = '';
+    for (let sim of historique) {
+        const desc = `${sim.type.toUpperCase()} • ${sim.banque} • ${sim.duree}ans`;
+        zone.innerHTML += `
+            <div class="history-item" onclick="restaurerSimulation(${JSON.stringify(sim).replace(/"/g, '&quot;')})">
+                <div class="history-date">${sim.timestamp}</div>
+                <div class="history-desc">${desc}</div>
+                <div class="history-amount">${formatEuro(sim.montant)} → ${formatEuro(sim.mensa_ttc)}/mois</div>
+            </div>
+        `;
+    }
+    
+    document.getElementById('modalHistorique').classList.add('active');
+}
+
+function restaurerSimulation(sim) {
+    document.getElementById('montant').value = sim.montant;
+    document.getElementById('duree').value = sim.duree;
+    document.getElementById('type_pret').value = sim.type;
+    document.getElementById('banque').value = sim.banque;
+    document.getElementById('taux').value = sim.taux;
+    
+    fermerHistorique();
+    calculerSimulation();
+    showNotif('✅ Simulation restaurée!', 'success');
+}
+
+function fermerHistorique() {
+    document.getElementById('modalHistorique').classList.remove('active');
+}
+
+// ===== EXPORT PDF PRO =====
+function exporterPDF() {
+    if (!dernier_calcul) {
+        showNotif('Calculez d\'abord une simulation!', 'error');
+        return;
+    }
+    
+    const { montant, duree, taux, type, banque, mensa_ttc, ratio, cout, frais, mois } = dernier_calcul;
+    
+    const date = new Date().toLocaleDateString('fr-FR');
+    const heure = new Date().toLocaleTimeString('fr-FR');
+    
+    const salaire = parseFloat(document.getElementById('salaire').value) || 0;
+    const revenus_loc = parseFloat(document.getElementById('revenus_loc').value) || 0;
+    const autres_rev = parseFloat(document.getElementById('autres_rev').value) || 0;
+    const revenu_total = salaire + revenus_loc + autres_rev;
+    
+    const html = `
+        <div class="pdf-document">
+            <div class="pdf-header">
+                <div>
+                    <div class="pdf-logo">🏦 SIMULATION BANCAIRE</div>
+                    <div class="pdf-subtitle">Rapport de Simulation de Prêt</div>
+                </div>
+                <div class="pdf-date">
+                    <strong>Andreja - Portfolio Investisseur</strong><br>
+                    ${date} à ${heure}
+                </div>
+            </div>
+            
+            <div class="pdf-section">
+                <div class="pdf-section-title">📋 PARAMÈTRES DE SIMULATION</div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Type de Prêt:</span>
+                    <span class="pdf-value">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Établissement Bancaire:</span>
+                    <span class="pdf-value">${noms_banques[banque]}</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Montant Demandé:</span>
+                    <span class="pdf-value">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(montant)}</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Durée:</span>
+                    <span class="pdf-value">${duree} ans (${mois} mois)</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Taux Nominal:</span>
+                    <span class="pdf-value">${taux.toFixed(2)}%</span>
+                </div>
+            </div>
+            
+            <div class="pdf-section">
+                <div class="pdf-section-title">💰 SITUATION FINANCIÈRE</div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Salaire Net Mensuel:</span>
+                    <span class="pdf-value">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(salaire)}</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Revenus Locatifs:</span>
+                    <span class="pdf-value">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(revenus_loc)}</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Autres Revenus:</span>
+                    <span class="pdf-value">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(autres_rev)}</span>
+                </div>
+                <div class="pdf-row" style="border-top: 1px solid #e5e7eb; margin-top: 8px; padding-top: 8px;">
+                    <span class="pdf-label"><strong>Revenu Total Mensuel:</strong></span>
+                    <span class="pdf-value"><strong>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(revenu_total)}</strong></span>
+                </div>
+            </div>
+            
+            <div class="pdf-section">
+                <div class="pdf-section-title">📊 RÉSULTATS DE LA SIMULATION</div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Mensualité TTC:</span>
+                    <span class="pdf-value" style="color: #059669;"><strong>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(mensa_ttc)}</strong></span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Ratio d'Endettement:</span>
+                    <span class="pdf-value">${ratio.toFixed(2)}% (max: 35%)</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Frais de Dossier:</span>
+                    <span class="pdf-value">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(frais)}</span>
+                </div>
+                <div class="pdf-row">
+                    <span class="pdf-label">Coût Total (Intérêts + Frais):</span>
+                    <span class="pdf-value" style="color: #dc2626;"><strong>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(cout)}</strong></span>
+                </div>
+            </div>
+            
+            <div class="pdf-section">
+                <div class="pdf-section-title">✅ VERDICT BANCAIRE</div>
+                <div style="padding: 15px; background: #f0fdf4; border-left: 4px solid #059669; margin: 15px 0;">
+                    <div style="font-weight: bold; color: #059669; font-size: 14px;">
+                        ${ratio <= 35 ? '✅ DOSSIER APPROUVÉ' : '❌ CONDITIONS NON RÉUNIES'}
+                    </div>
+                    <div style="margin-top: 8px; color: #666; font-size: 11px;">
+                        ${ratio <= 35 
+                            ? `Votre ratio d'endettement (${ratio.toFixed(2)}%) respecte les normes bancaires (max 35%). Votre dossier peut être approuvé.`
+                            : `Votre ratio d'endettement (${ratio.toFixed(2)}%) dépasse les normes bancaires (max 35%). Veuillez ajuster les paramètres.`
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pdf-section">
+                <div class="pdf-section-title">📌 RECOMMANDATIONS</div>
+                <ul style="margin-left: 20px; font-size: 11px; color: #666;">
+                    <li>Préparez 3 derniers bulletins de salaire</li>
+                    <li>Rassemblez vos justificatifs de revenus complémentaires</li>
+                    <li>Préparez votre dernier avis d'imposition</li>
+                    <li>Vérifiez votre scoring crédit auprès des établissements</li>
+                    <li>Comparez les offres de plusieurs banques avant de signer</li>
+                    <li>N'oubliez pas les frais annexes (assurances, hypothèque, etc.)</li>
+                </ul>
+            </div>
+            
+            <div class="pdf-footer">
+                Simulateur Bancaire Professional • www.portfolio-andreja.fr<br>
+                Ce document est issu d'une simulation et n'engage pas les établissements bancaires mentionnés.<br>
+                Pour information: Les taux, frais et conditions affichés sont à titre indicatif et peuvent varier selon votre dossier.
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('pdf_document').innerHTML = html;
+    
+    const element = document.getElementById('pdf_document');
+    const opt = {
+        margin: 0,
+        filename: `simulation-bancaire-${type}-${new Date().getTime()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+    showNotif('📥 PDF généré avec succès!', 'success');
+}
+
+// ===== PARTAGE URL =====
+function copierLien() {
+    if (!dernier_calcul) {
+        showNotif('Calculez d\'abord une simulation!', 'error');
+        return;
+    }
+    
+    const { montant, duree, taux, type, banque } = dernier_calcul;
+    const params = new URLSearchParams({
+        montant,
+        duree,
+        taux,
+        type,
+        banque
+    });
+    
+    const lien = window.location.origin + window.location.pathname + '?' + params.toString();
+    
+    navigator.clipboard.writeText(lien).then(() => {
+        showNotif('✅ Lien copié! Partagez-le maintenant.', 'success');
+    });
+}
+
+function chargerParamsURL() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('montant')) {
+        document.getElementById('montant').value = params.get('montant');
+        document.getElementById('duree').value = params.get('duree') || 20;
+        document.getElementById('taux').value = params.get('taux') || 3.5;
+        document.getElementById('type_pret').value = params.get('type') || 'immo';
+        document.getElementById('banque').value = params.get('banque') || 'bourso';
+        
+        setTimeout(calculerSimulation, 100);
+    }
+}
+
+// ===== ONGLETS =====
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(tab).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// ===== INIT =====
+chargerMode();
+chargerParamsURL();
+afficherCharges();
+document.getElementById('salaire').dispatchEvent(new Event('input'));
+</script>
+
+</body>
+</html>

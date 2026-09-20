@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Immobilier ULTRA PRO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #a855f7;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 2px solid #a855f7;
+            border-radius: 8px;
+            color: #a855f7;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-size: 0.9em;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+            border-color: #ec4899;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background: rgba(168, 85, 247, 0.08);
+            border: 2px solid #a855f7;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .section h2 {
+            color: #ec4899;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #a855f7;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #a855f7;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #e0e0ff;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input, select {
+            flex: 1;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #a855f7;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9em;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ec4899;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .suffix {
+            color: #a855f7;
+            font-size: 0.85em;
+            min-width: 35px;
+            white-space: nowrap;
+        }
+
+        .result-card {
+            background: rgba(168, 85, 247, 0.1);
+            border: 2px solid #a855f7;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9em;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #a855f7;
+        }
+
+        .result-value {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .good { color: #10b981; }
+        .bad { color: #ef4444; }
+        .neutral { color: #f59e0b; }
+
+        .chart-card {
+            background: rgba(168, 85, 247, 0.08);
+            border: 2px solid #a855f7;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card h3 {
+            color: #ec4899;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85em;
+        }
+
+        th {
+            background: rgba(168, 85, 247, 0.3);
+            color: #ec4899;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #a855f7;
+        }
+
+        td {
+            padding: 10px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            color: #d0d0d0;
+        }
+
+        tr:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .score-box {
+            display: inline-block;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 2em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .risk-gauge {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .risk-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #a855f7;
+        }
+
+        .risk-item.high {
+            border-left-color: #ef4444;
+        }
+
+        .risk-item.medium {
+            border-left-color: #f59e0b;
+        }
+
+        .risk-item.low {
+            border-left-color: #10b981;
+        }
+
+        .risk-name {
+            color: #a855f7;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .risk-score {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .comparison-item {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid #a855f7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .comparison-item h4 {
+            color: #ec4899;
+            margin-bottom: 8px;
+        }
+
+        .comparison-item p {
+            color: #d0d0d0;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .verdict-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .verdict-box.warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .verdict-box.danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #a855f7;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 1200px) {
+            .two-column, .three-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div>
+                <h1>🏢 Simulateur Immobilier ULTRA PRO</h1>
+                <p style="color: #a855f7; margin-top: 5px;">Outil professionnel complet pour investisseurs avertis</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="exportDossierBancaire()">📄 Export Dossier</button>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('simulateur')">📊 Simulateur</button>
+            <button class="tab-btn" onclick="switchTab('bien')">🏠 Détail Bien</button>
+            <button class="tab-btn" onclick="switchTab('fiscalite')">💼 Fiscalité</button>
+            <button class="tab-btn" onclick="switchTab('risque')">⚠️ Analyse Risque</button>
+            <button class="tab-btn" onclick="switchTab('projections')">📈 Projections 20 ans</button>
+            <button class="tab-btn" onclick="switchTab('comparaison')">⚖️ Comparaisons</button>
+            <button class="tab-btn" onclick="switchTab('optimisations')">⚡ Optimisations</button>
+            <button class="tab-btn" onclick="switchTab('expert')">🤖 Expert IA</button>
+            <button class="tab-btn" onclick="switchTab('aide')">❓ Aide</button>
+        </div>
+
+        <!-- ===== TAB 1: SIMULATEUR ===== -->
+        <div id="simulateur" class="tab-content active">
+            <div class="two-column">
+                <div class="section">
+                    <h2>📝 Données Complètes</h2>
+
+                    <h3>🌍 Localisation</h3>
+                    <div class="form-group">
+                        <label>Région</label>
+                        <select id="region" onchange="updateMarketData()">
+                            <option value="">-- Sélectionner --</option>
+                            <optgroup label="Île-de-France">
+                                <option value="paris">Paris</option>
+                            </optgroup>
+                            <optgroup label="Rhône-Alpes">
+                                <option value="lyon">Lyon</option>
+                            </optgroup>
+                            <optgroup label="Provence">
+                                <option value="marseille">Marseille</option>
+                            </optgroup>
+                            <optgroup label="Occitanie">
+                                <option value="toulouse">Toulouse</option>
+                            </optgroup>
+                            <optgroup label="Bretagne">
+                                <option value="nantes">Nantes</option>
+                            </optgroup>
+                            <optgroup label="Nord">
+                                <option value="lille">Lille</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prix au m²</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="prixM2" value="5800" step="100" onchange="calculs()">
+                            <span class="suffix">€/m²</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Surface</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="surface" value="60" step="5" onchange="calculs()">
+                            <span class="suffix">m²</span>
+                        </div>
+                    </div>
+
+                    <h3>🏠 Bien Immobilier</h3>
+
+                    <div class="form-group">
+                        <label>Prix d'achat</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="priceAchat" value="348000" step="1000" onchange="calculs()">
+                            <span class="suffix">€</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Frais acquisition</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="fraisAcquisition" value="13920" step="500" onchange="calculs()">
+                            <span class="suffix">€</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Travaux rénovation</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="travaux" value="0" step="1000" onchange="calculs()">
+                            <span class="suffix">€</span>
+                        </div>
+                    </div>
+
+                    <h3>🏠 Location</h3>
+
+                    <div class="form-group">
+                        <label>Loyer mensuel</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="loyerMensuel" value="900" step="50" onchange="calculs()">
+                            <span class="suffix">€/mois</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Taux d'occupation</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="tauxOccupation" value="90" min="0" max="100" onchange="calculs()">
+                            <span class="suffix">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type de location</label>
+                        <select id="typeLocation" onchange="calculs()">
+                            <option value="nue">Location nue</option>
+                            <option value="meublee">Location meublée</option>
+                            <option value="courte">Location courte durée</option>
+                        </select>
+                    </div>
+
+                    <h3>💸 Charges Détaillées</h3>
+
+                    <div class="form-group">
+                        <label>Copropriété (€/mois)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="chargesCopro" value="120" step="10" onchange="calculs()">
+                            <span class="suffix">€/mois</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Assurance (€/mois)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="assurance" value="15" step="5" onchange="calculs()">
+                            <span class="suffix">€/mois</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Maintenance (€/mois)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="maintenance" value="50" step="10" onchange="calculs()">
+                            <span class="suffix">€/mois</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Taxe foncière (€/an)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="taxeFonciere" value="600" step="50" onchange="calculs()">
+                            <span class="suffix">€/an</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Frais de gestion (€/mois)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="fraisGestion" value="0" step="10" onchange="calculs()">
+                            <span class="suffix">€/mois</span>
+                        </div>
+                    </div>
+
+                    <h3>🏦 Financement</h3>
+
+                    <div class="form-group">
+                        <label>Montant prêt</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="montantPret" value="261000" step="1000" onchange="calculs()">
+                            <span class="suffix">€</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Taux intérêt</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="tauxInteret" value="3.5" step="0.1" onchange="calculs()">
+                            <span class="suffix">%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Durée prêt</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="dureePret" value="25" min="1" max="40" onchange="calculs()">
+                            <span class="suffix">ans</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Assurance décès/invalidité</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="assurancePret" value="0.5" step="0.1" onchange="calculs()">
+                            <span class="suffix">%/an</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>📊 Résultats Immédiats</h2>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Rendement</h3>
+                        <div class="result-row">
+                            <span class="result-label">Rendement Brut</span>
+                            <span class="result-value"><span id="rendementBrut">3.1</span>%</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Rendement Net</span>
+                            <span class="result-value good"><span id="rendementNet">1.5</span>%</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Cash Flow</h3>
+                        <div class="result-row">
+                            <span class="result-label">Mensuel</span>
+                            <span class="result-value good"><span id="cashFlowMensuel">150</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Annuel</span>
+                            <span class="result-value good"><span id="cashFlowAnnuel">1800</span>€</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Investissement</h3>
+                        <div class="result-row">
+                            <span class="result-label">Apport Personnel</span>
+                            <span class="result-value"><span id="apportPersonnel">100920</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Investissement Total</span>
+                            <span class="result-value"><span id="investTotal">361920</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Mensualité Crédit</span>
+                            <span class="result-value"><span id="mensualiePret">1234</span>€</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Performance</h3>
+                        <div class="result-row">
+                            <span class="result-label">ROI Annuel</span>
+                            <span class="result-value good"><span id="roiAnnuel">1.8</span>%</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Délai Récupération</span>
+                            <span class="result-value neutral"><span id="delaiRecuperation">56</span> ans</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">LTV (Loan-to-Value)</span>
+                            <span class="result-value neutral"><span id="ltv">72</span>%</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Charges Annuelles</h3>
+                        <div class="result-row">
+                            <span class="result-label">Total Charges</span>
+                            <span class="result-value bad"><span id="chargesTotal">4000</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">En % du loyer</span>
+                            <span class="result-value"><span id="chargesPercent">44</span>%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAPHIQUES -->
+            <div class="chart-card">
+                <h3>💰 Flux Mensuels Détaillés</h3>
+                <div class="chart-container">
+                    <canvas id="fluxChart"></canvas>
+                </div>
+            </div>
+
+            <div class="three-column">
+                <div class="chart-card">
+                    <h3>📊 Charges</h3>
+                    <div class="chart-container">
+                        <canvas id="chargesChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>📈 Rendement Brut/Net</h3>
+                    <div class="chart-container">
+                        <canvas id="rendementChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>💼 Structure Investissement</h3>
+                    <div class="chart-container">
+                        <canvas id="investChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 2: DÉTAIL BIEN ===== -->
+        <div id="bien" class="tab-content">
+            <div class="two-column">
+                <div class="section">
+                    <h2>🏠 Caractéristiques du Bien</h2>
+
+                    <h3>Type & Configuration</h3>
+                    <div class="form-group">
+                        <label>Type de bien</label>
+                        <select id="typeBien" onchange="calculs()">
+                            <option value="studio">Studio</option>
+                            <option value="t1">T1 (1 pièce)</option>
+                            <option value="t2">T2 (2 pièces)</option>
+                            <option value="t3">T3 (3 pièces)</option>
+                            <option value="t4">T4 (4 pièces)</option>
+                            <option value="maison">Maison</option>
+                            <option value="commercial">Commercial</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Année de construction</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="anneeConstruction" value="2000" min="1900" max="2024" onchange="calculs()">
+                            <span class="suffix">ans</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>État du bien</label>
+                        <select id="etatBien" onchange="calculs()">
+                            <option value="neuf">Neuf</option>
+                            <option value="bon">Bon état</option>
+                            <option value="moyen">État moyen</option>
+                            <option value="renovation">À rénover</option>
+                        </select>
+                    </div>
+
+                    <h3>Diagnostics & Certifications</h3>
+
+                    <div class="form-group">
+                        <label>DPE (Diagnostic Performance Énergétique)</label>
+                        <select id="dpe" onchange="calculs()">
+                            <option value="A">A (Excellent)</option>
+                            <option value="B">B (Très bon)</option>
+                            <option value="C">C (Bon)</option>
+                            <option value="D">D (Passable)</option>
+                            <option value="E">E (Mauvais)</option>
+                            <option value="F">F (Très mauvais)</option>
+                            <option value="G">G (Extrêmement mauvais)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Amiante</label>
+                        <select id="amiante">
+                            <option value="conforme">Conforme</option>
+                            <option value="present">Présent (gelé)</option>
+                            <option value="absent">Absent</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Électricité</label>
+                        <select id="electrique">
+                            <option value="conforme">Conforme</option>
+                            <option value="partielle">Partiellement conforme</option>
+                            <option value="non">Non conforme</option>
+                        </select>
+                    </div>
+
+                    <h3>Équipements</h3>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="climatisation" onchange="calculs()">
+                            Climatisation
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="chauffage" onchange="calculs()">
+                            Chauffage central
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="etage" onchange="calculs()">
+                            Ascenseur (si étage)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="parking" onchange="calculs()">
+                            Parking/Garage
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>📋 Résumé Bien</h2>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Fiche Technique</h3>
+                        <div class="result-row">
+                            <span class="result-label">Type</span>
+                            <span class="result-value" id="fiduType">T2</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Âge du bien</span>
+                            <span class="result-value" id="fidugaAge">24 ans</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">État</span>
+                            <span class="result-value" id="fiduEtat">Bon état</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">DPE</span>
+                            <span class="result-value" id="fiduDPE">C</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Points Forts</h3>
+                        <div style="color: #10b981; line-height: 1.8;" id="pointsForts">
+                            • Bien en bon état<br>
+                            • DPE correct (C)<br>
+                            • Diagnostics conformes
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Points d'Attention</h3>
+                        <div style="color: #f59e0b; line-height: 1.8;" id="pointsAttention">
+                            • À évaluer pendant visite<br>
+                            • Demander garanties décennales<br>
+                            • Vérifier syndic
+                        </div>
+                    </div>
+
+                    <div class="verdict-box">
+                        <strong>💡 Score Global du Bien</strong><br>
+                        <div style="font-size: 1.8em; font-weight: bold; margin-top: 10px; color: #10b981;" id="scoreGlobalBien">7/10</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 3: FISCALITÉ ===== -->
+        <div id="fiscalite" class="tab-content">
+            <div class="two-column">
+                <div class="section">
+                    <h2>💼 Configuration Fiscale</h2>
+
+                    <h3>Régime d'Imposition</h3>
+                    <div class="form-group">
+                        <label>Régime fiscal</label>
+                        <select id="regimeFiscal" onchange="calculerFiscalite()">
+                            <option value="reel">Régime Réel</option>
+                            <option value="forfaitaire">Régime Forfaitaire (72.5%)</option>
+                            <option value="meublee">Location Meublée (LMNP)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tranche d'imposition</label>
+                        <select id="trancheImpot" onchange="calculerFiscalite()">
+                            <option value="0">0% (Non imposable)</option>
+                            <option value="11">11%</option>
+                            <option value="30">30%</option>
+                            <option value="41">41%</option>
+                            <option value="45">45%</option>
+                            <option value="48">48%</option>
+                        </select>
+                    </div>
+
+                    <h3>Déductions Possibles</h3>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="deductInterets" checked onchange="calculerFiscalite()">
+                            Intérêts d'emprunt (100%)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="deductCopro" checked onchange="calculerFiscalite()">
+                            Copropriété
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="deductTaxe" checked onchange="calculerFiscalite()">
+                            Taxe foncière
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="deductAssurance" checked onchange="calculerFiscalite()">
+                            Assurance
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="deductMaintenance" checked onchange="calculerFiscalite()">
+                            Maintenance & Réparations
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="deductTravaux" onchange="calculerFiscalite()">
+                            Travaux amélioration (amortissable 25-40 ans)
+                        </label>
+                    </div>
+
+                    <h3>Situation Personnelle</h3>
+
+                    <div class="form-group">
+                        <label>Situation familiale</label>
+                        <select id="situationFamiliale" onchange="calculerFiscalite()">
+                            <option value="celibataire">Célibataire</option>
+                            <option value="couple">Couple marié</option>
+                            <option value="pacs">PACS</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>📊 Résultats Fiscaux</h2>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Revenus Fonciers</h3>
+                        <div class="result-row">
+                            <span class="result-label">Loyers bruts/an</span>
+                            <span class="result-value good"><span id="loyersBrutAnnuel">9720</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Charges déductibles</span>
+                            <span class="result-value bad"><span id="chargesDeductibles">-3240</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Intérêts d'emprunt</span>
+                            <span class="result-value bad"><span id="interetsAnnuel">-8200</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Revenus Fonciers Net</span>
+                            <span class="result-value neutral"><span id="revenuFoncierNet">-1720</span>€</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Imposition</h3>
+                        <div class="result-row">
+                            <span class="result-label">Impôt sur revenus</span>
+                            <span class="result-value bad"><span id="impotRevenu">0</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Cotisations sociales</span>
+                            <span class="result-value bad"><span id="cotisations">0</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Impôts Totaux</span>
+                            <span class="result-value bad"><span id="imposTotaux">0</span>€</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3 style="margin: 0 0 10px 0; color: #a855f7;">Cash Flow Après Fiscal</h3>
+                        <div class="result-row">
+                            <span class="result-label">Mensuel</span>
+                            <span class="result-value good"><span id="cfMensuelFiscal">125</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Annuel</span>
+                            <span class="result-value good"><span id="cfAnnuelFiscal">1500</span>€</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Rendement après fiscal</span>
+                            <span class="result-value"><span id="rendFiscal">1.2</span>%</span>
+                        </div>
+                    </div>
+
+                    <div class="verdict-box">
+                        <h3 style="color: #10b981; margin: 0 0 10px 0;">💡 Optimisation Recommandée</h3>
+                        <div style="color: #d0d0d0;" id="optimisationFiscale">
+                            Conseil d'optimisation fiscale...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPARATIF RÉGIMES -->
+            <div class="section" style="margin-top: 30px;">
+                <h2>⚖️ Comparaison des Régimes</h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>Régime</th>
+                            <th class="good">Revenu Foncier Net</th>
+                            <th class="bad">Impôt</th>
+                            <th class="neutral">Cash Flow Net</th>
+                            <th>Rendement Net</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Régime Réel (actuel)</strong></td>
+                            <td class="good" id="cmpReel">-1720€</td>
+                            <td class="bad" id="cmpReelImpot">0€</td>
+                            <td class="neutral" id="cmpReelCF">150€</td>
+                            <td id="cmpReelRend">1.5%</td>
+                        </tr>
+                        <tr>
+                            <td>Régime Forfaitaire</td>
+                            <td id="cmpForf">2691€</td>
+                            <td id="cmpForfImpot">808€</td>
+                            <td id="cmpForfCF">100€</td>
+                            <td id="cmpForfRend">1.1%</td>
+                        </tr>
+                        <tr>
+                            <td>Location Meublée (LMNP)</td>
+                            <td id="cmpMeub">5000€</td>
+                            <td id="cmpMeubImpot">1500€</td>
+                            <td id="cmpMeubCF">250€</td>
+                            <td id="cmpMeubRend">2.8%</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 4: ANALYSE RISQUE ===== -->
+        <div id="risque" class="tab-content">
+            <div class="section">
+                <h2>⚠️ Analyse de Risque Complète</h2>
+
+                <h3>Score Global de Viabilité</h3>
+                <div style="text-align: center;">
+                    <div class="score-box" id="scoreViabilite">6/10</div>
+                    <p style="color: #a855f7; margin-top: 10px;" id="descriptionScore">À améliorer - Besoin d'optimisations</p>
+                </div>
+
+                <h3 style="margin-top: 30px;">Évaluation des Risques</h3>
+                <div class="risk-gauge" id="riskGauge">
+                    <!-- Généré dynamiquement -->
+                </div>
+
+                <h3 style="margin-top: 30px;">Détail de Chaque Risque</h3>
+
+                <div class="comparison-item">
+                    <h4>📍 Risque Régional</h4>
+                    <p>Demande de location, appréciation du bien, fiscalité régionale</p>
+                    <div class="result-row">
+                        <span class="result-label">Score</span>
+                        <span class="result-value good" id="riskRegional">7/10</span>
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>🏠 Risque Bien</h4>
+                    <p>État du bien, diagnostics, âge, obsolescence</p>
+                    <div class="result-row">
+                        <span class="result-label">Score</span>
+                        <span class="result-value" id="riskBien">6/10</span>
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>👤 Risque Locataire</h4>
+                    <p>Vacance, impayés, turnover</p>
+                    <div class="result-row">
+                        <span class="result-label">Taux vacance estimé</span>
+                        <span class="result-value neutral" id="riskVacance">10%</span>
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>💰 Risque Financier</h4>
+                    <p>Taux de crédit, inflation, charges imprévisibles</p>
+                    <div class="result-row">
+                        <span class="result-label">Capacité d'endettement OK?</span>
+                        <span class="result-value good" id="riskFinance">Oui</span>
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>📊 Risque de Rendement</h4>
+                    <p>Profitabilité insuffisante, besoin d'optimisation</p>
+                    <div class="result-row">
+                        <span class="result-label">Rendement réaliste</span>
+                        <span class="result-value neutral" id="riskRendement">1.5%</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px;">Scénario Worst-Case (Tous les Risques)</h3>
+                <div class="verdict-box danger">
+                    <strong>⚠️ Cas Pessimiste</strong><br><br>
+                    <div id="worstCase" style="color: #d0d0d0; line-height: 1.8;">
+                        • Vacance 20% (au lieu de 10%)<br>
+                        • Loyer baisse de 5%<br>
+                        • Charges augmentent de 10%<br>
+                        • Taux crédit monte à 4.5%<br>
+                        <br>
+                        <strong>Résultat :</strong> Cash flow négatif de -50€/mois
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px;">Recommandations</h3>
+                <div class="verdict-box">
+                    <strong>💡 Actions Recommandées</strong><br><br>
+                    <div id="recommendRisques" style="color: #d0d0d0; line-height: 1.8;">
+                        1. Augmenter le loyer de 50€ (réduit vacance)<br>
+                        2. Réduire charges de 10% (négociation copro)<br>
+                        3. Chercher bien moins cher (améliore rendement)<br>
+                        4. Considérer location meublée (rendement +2%)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 5: PROJECTIONS 20 ANS ===== -->
+        <div id="projections" class="tab-content">
+            <div class="section">
+                <h2>📈 Projections sur 20 Ans</h2>
+
+                <h3>Paramètres de Projection</h3>
+                <div class="two-column" style="margin-bottom: 30px;">
+                    <div>
+                        <div class="form-group">
+                            <label>Inflation annuelle des loyers</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="inflationLoyers" value="2" step="0.1" min="0" max="5" onchange="updateProjections()">
+                                <span class="suffix">%/an</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Appréciation du bien</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="appreciationBien" value="2" step="0.1" min="0" max="5" onchange="updateProjections()">
+                                <span class="suffix">%/an</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Augmentation des charges</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="inflationCharges" value="2.5" step="0.1" min="0" max="5" onchange="updateProjections()">
+                                <span class="suffix">%/an</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="result-card">
+                            <h3 style="margin: 0 0 10px 0; color: #a855f7;">Projection Synthèse</h3>
+                            <div class="result-row">
+                                <span class="result-label">Valeur bien (20 ans)</span>
+                                <span class="result-value good" id="projValeur20ans">500000€</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Plus-value brute</span>
+                                <span class="result-value good" id="projPlusValue">150000€</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Cash flow cumulé</span>
+                                <span class="result-value good" id="projCashCumule">50000€</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Total patrimoine créé</span>
+                                <span class="result-value good" id="projPatrimoine">200000€</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Valeur du Bien sur 20 Ans</h3>
+                <div class="chart-container">
+                    <canvas id="valuationChart"></canvas>
+                </div>
+            </div>
+
+            <div class="three-column">
+                <div class="chart-card">
+                    <h3>Loyer Mensuel Réindexé</h3>
+                    <div class="chart-container">
+                        <canvas id="loyerChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Patrimoine Cumulé</h3>
+                    <div class="chart-container">
+                        <canvas id="patrimoinChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Crédit Restant</h3>
+                    <div class="chart-container">
+                        <canvas id="creditChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" style="margin-top: 30px;">
+                <h2>Tableau Détaillé</h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>Année</th>
+                            <th>Loyer Mensuel</th>
+                            <th>Valeur Bien</th>
+                            <th>Crédit Restant</th>
+                            <th>Equity</th>
+                            <th>Cash Flow Cumulé</th>
+                        </tr>
+                        <tbody id="projectionTable">
+                            <!-- Généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 6: COMPARAISONS ===== -->
+        <div id="comparaison" class="tab-content">
+            <div class="section">
+                <h2>⚖️ Comparaison avec Autres Investissements</h2>
+
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>Investissement</th>
+                            <th>Rendement</th>
+                            <th>Liquidité</th>
+                            <th>Volatilité</th>
+                            <th>Effort</th>
+                            <th>Avantage Fiscal</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Votre Projet</strong></td>
+                            <td class="neutral" id="compRendImmo">1.5%</td>
+                            <td class="bad">Faible</td>
+                            <td class="neutral">Moyen</td>
+                            <td class="bad">Élevé</td>
+                            <td class="good">Oui</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PEA (Actions)</strong></td>
+                            <td class="good">8%</td>
+                            <td class="good">Élevée</td>
+                            <td class="bad">Élevée</td>
+                            <td class="good">Faible</td>
+                            <td class="good">Oui (Fiscalité)</td>
+                        </tr>
+                        <tr>
+                            <td>SCPI (Immobilier collectif)</td>
+                            <td class="good">4-5%</td>
+                            <td class="good">Moyenne</td>
+                            <td class="neutral">Moyenne</td>
+                            <td class="good">Faible</td>
+                            <td class="neutral">Partiel</td>
+                        </tr>
+                        <tr>
+                            <td>Bourse (ETF S&P 500)</td>
+                            <td class="good">10%</td>
+                            <td class="good">Très élevée</td>
+                            <td class="bad">Très élevée</td>
+                            <td class="good">Nul</td>
+                            <td class="neutral">PEA</td>
+                        </tr>
+                        <tr>
+                            <td>Livret A</td>
+                            <td class="neutral">3%</td>
+                            <td class="good">Immédiate</td>
+                            <td class="good">Nul</td>
+                            <td class="good">Nul</td>
+                            <td class="bad">Non</td>
+                        </tr>
+                        <tr>
+                            <td>Immobilier Pinel (Neuf)</td>
+                            <td class="good">3-4%</td>
+                            <td class="bad">Faible</td>
+                            <td class="neutral">Moyen</td>
+                            <td class="bad">Élevé</td>
+                            <td class="good">Oui (Réduc impôt)</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="chart-card" style="margin-top: 30px;">
+                    <h3>Richesse Générée en 20 Ans (100k€ investi)</h3>
+                    <div class="chart-container">
+                        <canvas id="comparaisonWealthChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: 30px;">
+                    <h2>💡 Analyse Comparative</h2>
+
+                    <div class="verdict-box">
+                        <h3 style="color: #10b981; margin: 0 0 15px 0;">✅ Avantages de l'Immobilier</h3>
+                        <ul style="color: #d0d0d0; margin-left: 20px; line-height: 1.8;">
+                            <li>Effet de levier (crédit emprunté)</li>
+                            <li>Appréciation du capital (+ valorisation)</li>
+                            <li>Fiscalité favorable (déficit foncier possible)</li>
+                            <li>Actif tangible et sécurisé</li>
+                            <li>Revenus réguliers (loyers)</li>
+                        </ul>
+                    </div>
+
+                    <div class="verdict-box warning">
+                        <h3 style="color: #f59e0b; margin: 0 0 15px 0;">⚠️ Inconvénients de l'Immobilier</h3>
+                        <ul style="color: #d0d0d0; margin-left: 20px; line-height: 1.8;">
+                            <li>Rendement actuellement inférieur à PEA/Bourse</li>
+                            <li>Peu liquide (6-12 mois pour vendre)</li>
+                            <li>Gestion importante (locataire, charges, fiscalité)</li>
+                            <li>Risques importants (vacance, impayés)</li>
+                            <li>Capital important bloqué</li>
+                        </ul>
+                    </div>
+
+                    <div class="verdict-box">
+                        <h3 style="color: #10b981; margin: 0 0 15px 0;">🎯 Quand Choisir Immobilier?</h3>
+                        <ul style="color: #d0d0d0; margin-left: 20px; line-height: 1.8;">
+                            <li>✅ Si rendement >3% après fiscalité</li>
+                            <li>✅ Si cash flow positif mensuel</li>
+                            <li>✅ Pour diversifier portefeuille (immobilier + PEA)</li>
+                            <li>✅ Horizon long terme (>10 ans)</li>
+                            <li>✅ Si vous avez temps pour gestion</li>
+                        </ul>
+                    </div>
+
+                    <div class="verdict-box warning">
+                        <h3 style="color: #f59e0b; margin: 0 0 15px 0;">❌ Quand Éviter?</h3>
+                        <ul style="color: #d0d0d0; margin-left: 20px; line-height: 1.8;">
+                            <li>❌ Rendement <1.5% net</li>
+                            <li>❌ Cash flow négatif</li>
+                            <li>❌ Peu de capital d'apport</li>
+                            <li>❌ Vous n'avez pas 10+ ans</li>
+                            <li>❌ Vous ne voulez pas gérer locataires</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 7: OPTIMISATIONS ===== -->
+        <div id="optimisations" class="tab-content">
+            <div class="section">
+                <h2>⚡ Solutions d'Optimisation</h2>
+                <p style="color: #d0d0d0; margin-bottom: 20px;">
+                    Cliquez sur chaque solution pour voir son impact en temps réel sur tous les calculs.
+                </p>
+
+                <div class="comparison-item">
+                    <h4>1. Réduire le Prix d'Achat</h4>
+                    <p>Négocier 5-10% de réduction = augmente directement rendement</p>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="testOptimisation('prixReduce')">
+                        Tester -8% (320k€)
+                    </button>
+                    <div id="impactPrixReduce" style="color: #10b981; margin-top: 10px; font-size: 0.9em;">
+                        Impact : +0.5% rendement
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>2. Augmenter le Loyer</h4>
+                    <p>+50€/mois = +0.7% rendement (amélioration locaux, meilleure gestion)</p>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="testOptimisation('loyerAugment')">
+                        Tester +50€ (950€/mois)
+                    </button>
+                    <div id="impactLoyerAugment" style="color: #10b981; margin-top: 10px; font-size: 0.9em;">
+                        Impact : +0.7% rendement
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>3. Réduire les Charges</h4>
+                    <p>Négocier copropriété, chercher sans charges = économies directes</p>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="testOptimisation('chargesReduce')">
+                        Tester -15% (3400€/an)
+                    </button>
+                    <div id="impactChargesReduce" style="color: #10b981; margin-top: 10px; font-size: 0.9em;">
+                        Impact : +0.4% rendement
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>4. Changer Régime Fiscal</h4>
+                    <p>Location meublée = meilleur régime = rendement +2-3%</p>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="testOptimisation('regimeMeuble')">
+                        Tester Location Meublée
+                    </button>
+                    <div id="impactRegimeMeuble" style="color: #10b981; margin-top: 10px; font-size: 0.9em;">
+                        Impact : +2.5% rendement
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>5. Réduire Taux Crédit</h4>
+                    <p>Renégocier taux (3.5% → 3%) = baisse mensualité</p>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="testOptimisation('tauxReduce')">
+                        Tester -0.5% (3.0%)
+                    </button>
+                    <div id="impactTauxReduce" style="color: #10b981; margin-top: 10px; font-size: 0.9em;">
+                        Impact : +0.3% rendement
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4>6. Combiner 3 Optimisations</h4>
+                    <p>Prix -8% + Loyer +50€ + Charges -15% = Résultat optimal</p>
+                    <button class="btn" style="margin-top: 10px;" onclick="testOptimisation('combinaison')">
+                        Tester Combinaison (3 solutions)
+                    </button>
+                    <div id="impactCombinaison" style="color: #10b981; margin-top: 10px; font-size: 0.9em;">
+                        Impact : +3.2% rendement
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 8: EXPERT IA ===== -->
+        <div id="expert" class="tab-content">
+            <div class="section">
+                <h2>🤖 Conseiller Expert IA</h2>
+                <p style="color: #a855f7; margin-bottom: 20px;">
+                    Directeur d'investissement avec 20 ans d'expérience - Analyse réelle et honnête
+                </p>
+
+                <button class="btn" style="width: 100%; margin-bottom: 20px;" onclick="analyzeProjectAI()">
+                    🔍 Demander Analyse Complète
+                </button>
+
+                <div id="expertAnalysis" style="display: none; color: #d0d0d0; line-height: 1.8; white-space: pre-wrap;">
+                    <!-- Généré dynamiquement -->
+                </div>
+
+                <div id="expertLoading" style="display: none; text-align: center; padding: 40px;">
+                    <div style="border: 3px solid rgba(168, 85, 247, 0.2); border-top: 3px solid #a855f7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                    <p>Analyse en cours...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB 9: AIDE ===== -->
+        <div id="aide" class="tab-content">
+            <div class="section">
+                <h2>❓ Guide Complet</h2>
+
+                <h3>Onglets Disponibles</h3>
+                <ul style="color: #d0d0d0; margin-left: 20px; line-height: 2;">
+                    <li><strong>📊 Simulateur</strong> - Données du projet et résultats immédiats + Graphiques</li>
+                    <li><strong>🏠 Détail Bien</strong> - Caractéristiques, diagnostics, équipements du bien</li>
+                    <li><strong>💼 Fiscalité</strong> - Régimes d'imposition comparés, déductions, optimisation</li>
+                    <li><strong>⚠️ Risque</strong> - Score viabilité, analyse risques, worst-case</li>
+                    <li><strong>📈 Projections</strong> - Évolution 20 ans, patrimoine cumulé</li>
+                    <li><strong>⚖️ Comparaisons</strong> - vs PEA, SCPI, Bourse, Pinel, Livret</li>
+                    <li><strong>⚡ Optimisations</strong> - 6 solutions testables, combinaisons</li>
+                    <li><strong>🤖 Expert IA</strong> - Analyse intelligente directeur d'investissement</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Qu'est-ce qu'une Bonne Rentabilité?</h3>
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 10px; color: #d0d0d0; margin-top: 10px;">
+                    <p><strong class="good">Excellent :</strong> >4% net (très rare, chercher à optimiser)</p>
+                    <p><strong class="good">Bon :</strong> 2.5-4% net (acceptable, bon équilibre)</p>
+                    <p><strong class="neutral">Acceptable :</strong> 1.5-2.5% net (à améliorer)</p>
+                    <p><strong class="bad">Faible :</strong> <1.5% net (considérer alternatives)</p>
+                </div>
+
+                <h3 style="margin-top: 20px;">Termes Importants</h3>
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 10px; color: #d0d0d0;">
+                    <p><strong>Rendement Brut :</strong> Loyer annuel / Prix total</p>
+                    <p><strong>Rendement Net :</strong> (Loyer - Charges) / Prix total</p>
+                    <p><strong>Rendement Fiscal :</strong> Après impôts et cotisations réels</p>
+                    <p><strong>Cash Flow :</strong> Loyer - Charges - Crédit (ce qu'il vous reste)</p>
+                    <p><strong>ROI :</strong> Rendement sur VOTRE apport personnel</p>
+                    <p><strong>LTV :</strong> Loan-to-Value (% de levier bancaire)</p>
+                </div>
+
+                <h3 style="margin-top: 20px;">Conseils Professionnels</h3>
+                <div class="verdict-box">
+                    <ul style="color: #d0d0d0; margin-left: 20px;">
+                        <li>✅ Rendement >3% = projet intéressant (chercher à valider)</li>
+                        <li>✅ Cash flow positif = indispensable pour viabilité</li>
+                        <li>✅ LTV 70-80% = bon équilibre levier/risque</li>
+                        <li>✅ Diversifier = immobilier + PEA + Livret A</li>
+                        <li>✅ Long terme (>10 ans) = immobilier profitable</li>
+                        <li>❌ Rendement <1.5% = à éviter sauf raison spéciale</li>
+                        <li>❌ Cash flow négatif = éviter absolument</li>
+                        <li>❌ LTV >85% = risque trop élevé</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script>
+        const regionsData = {
+            paris: { name: 'Paris', prixM2: 9500, rendMoyen: 2.8 },
+            lyon: { name: 'Lyon', prixM2: 5800, rendMoyen: 3.5 },
+            marseille: { name: 'Marseille', prixM2: 4200, rendMoyen: 4.2 },
+            toulouse: { name: 'Toulouse', prixM2: 5400, rendMoyen: 3.8 },
+            bordeaux: { name: 'Bordeaux', prixM2: 5900, rendMoyen: 3.4 },
+            nice: { name: 'Nice', prixM2: 7500, rendMoyen: 3.1 },
+            lille: { name: 'Lille', prixM2: 4600, rendMoyen: 4.0 },
+            grenoble: { name: 'Grenoble', prixM2: 4500, rendMoyen: 3.9 },
+            nantes: { name: 'Nantes', prixM2: 5200, rendMoyen: 3.6 }
+        };
+
+        let charts = {};
+        let projectData = {};
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function updateMarketData() {
+            const selected = document.getElementById('region').value;
+            if (!selected || !regionsData[selected]) return;
+            const data = regionsData[selected];
+            document.getElementById('prixM2').value = data.prixM2;
+            calculs();
+        }
+
+        function calculs() {
+            // Calcul principal
+            const priceAchat = parseFloat(document.getElementById('priceAchat').value) || 0;
+            const fraisAcquisition = parseFloat(document.getElementById('fraisAcquisition').value) || 0;
+            const travaux = parseFloat(document.getElementById('travaux').value) || 0;
+            const loyerMensuel = parseFloat(document.getElementById('loyerMensuel').value) || 0;
+            const tauxOccupation = parseFloat(document.getElementById('tauxOccupation').value) || 90;
+
+            const copro = (parseFloat(document.getElementById('chargesCopro').value) || 0) * 12;
+            const assurance = (parseFloat(document.getElementById('assurance').value) || 0) * 12;
+            const maintenance = (parseFloat(document.getElementById('maintenance').value) || 0) * 12;
+            const taxe = parseFloat(document.getElementById('taxeFonciere').value) || 0;
+            const fraisGestion = (parseFloat(document.getElementById('fraisGestion').value) || 0) * 12;
+            const chargesAnnuelles = copro + assurance + maintenance + taxe + fraisGestion;
+
+            const montantPret = parseFloat(document.getElementById('montantPret').value) || 0;
+            const tauxInteret = parseFloat(document.getElementById('tauxInteret').value) || 0;
+            const dureePret = parseFloat(document.getElementById('dureePret').value) || 25;
+
+            const investTotal = priceAchat + fraisAcquisition + travaux;
+            const apportPersonnel = investTotal - montantPret;
+
+            const loyerAnnuel = loyerMensuel * 12 * (tauxOccupation / 100);
+            const revenusNets = loyerAnnuel - chargesAnnuelles;
+
+            const mensualitePret = montantPret > 0 ? 
+                (montantPret * (tauxInteret / 100 / 12)) / (1 - Math.pow(1 + (tauxInteret / 100 / 12), -dureePret * 12)) : 0;
+
+            const cashFlowMensuel = (loyerMensuel * (tauxOccupation / 100)) - (chargesAnnuelles / 12) - mensualitePret;
+            const cashFlowAnnuel = cashFlowMensuel * 12;
+
+            const rendementBrut = (loyerAnnuel / investTotal) * 100;
+            const rendementNet = (revenusNets / investTotal) * 100;
+            const roiAnnuel = apportPersonnel > 0 ? (cashFlowAnnuel / apportPersonnel) * 100 : 0;
+            const delaiRecuperation = cashFlowAnnuel > 0 ? Math.ceil(apportPersonnel / cashFlowAnnuel) : 999;
+            const ltv = (montantPret / investTotal) * 100;
+
+            // Update results
+            document.getElementById('rendementBrut').textContent = rendementBrut.toFixed(2);
+            document.getElementById('rendementNet').textContent = rendementNet.toFixed(2);
+            document.getElementById('rendementNet').className = rendementNet > 3 ? 'good' : rendementNet > 1.5 ? 'neutral' : 'bad';
+            
+            document.getElementById('cashFlowMensuel').textContent = Math.round(cashFlowMensuel);
+            document.getElementById('cashFlowMensuel').className = cashFlowMensuel > 0 ? 'good' : 'bad';
+            document.getElementById('cashFlowAnnuel').textContent = Math.round(cashFlowAnnuel);
+            document.getElementById('cashFlowAnnuel').className = cashFlowAnnuel > 0 ? 'good' : 'bad';
+
+            document.getElementById('apportPersonnel').textContent = Math.round(apportPersonnel);
+            document.getElementById('mensualiePret').textContent = Math.round(mensualitePret);
+            document.getElementById('investTotal').textContent = Math.round(investTotal);
+            document.getElementById('ltv').textContent = Math.round(ltv);
+            document.getElementById('chargesTotal').textContent = Math.round(chargesAnnuelles);
+            document.getElementById('chargesPercent').textContent = Math.round((chargesAnnuelles / loyerAnnuel) * 100);
+
+            document.getElementById('roiAnnuel').textContent = roiAnnuel.toFixed(2);
+            document.getElementById('roiAnnuel').className = roiAnnuel > 0.5 ? 'good' : 'bad';
+            document.getElementById('delaiRecuperation').textContent = delaiRecuperation < 999 ? delaiRecuperation : '∞';
+
+            // Store data
+            projectData = {
+                priceAchat, fraisAcquisition, travaux, loyerMensuel, tauxOccupation, chargesAnnuelles,
+                montantPret, tauxInteret, dureePret, investTotal, apportPersonnel, mensualitePret,
+                loyerAnnuel, revenusNets, cashFlowMensuel, cashFlowAnnuel,
+                rendementBrut, rendementNet, roiAnnuel, ltv
+            };
+
+            // Update tous les autres onglets
+            updateCharts();
+            calculerFiscalite();
+            updateRiskAnalysis();
+            updateProjections();
+        }
+
+        function updateCharts() {
+            if (!projectData.chargesAnnuelles) return;
+
+            // Flux Chart
+            if (charts.fluxChart) charts.fluxChart.destroy();
+            const ctx1 = document.getElementById('fluxChart');
+            if (ctx1) {
+                charts.fluxChart = new Chart(ctx1.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Loyer', 'Charges', 'Crédit', 'Net'],
+                        datasets: [{
+                            label: '€/mois',
+                            data: [projectData.loyerAnnuel/12, -projectData.chargesAnnuelles/12, -projectData.mensualitePret, projectData.cashFlowMensuel],
+                            backgroundColor: ['#10b981', '#ef4444', '#0ea5e9', '#a855f7']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } },
+                        scales: {
+                            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                            x: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+
+            // Charges Chart
+            if (charts.chargesChart) charts.chargesChart.destroy();
+            const ctx2 = document.getElementById('chargesChart');
+            if (ctx2) {
+                const copro = (parseFloat(document.getElementById('chargesCopro').value) || 0) * 12;
+                const assurance = (parseFloat(document.getElementById('assurance').value) || 0) * 12;
+                const maintenance = (parseFloat(document.getElementById('maintenance').value) || 0) * 12;
+                const taxe = parseFloat(document.getElementById('taxeFonciere').value) || 0;
+
+                charts.chargesChart = new Chart(ctx2.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Copro', 'Assurance', 'Maintenance', 'Taxe'],
+                        datasets: [{
+                            data: [copro, assurance, maintenance, taxe],
+                            backgroundColor: ['#a855f7', '#ec4899', '#f59e0b', '#10b981'],
+                            borderColor: '#0a0a0a',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } }
+                    }
+                });
+            }
+
+            // Rendement Chart
+            if (charts.rendementChart) charts.rendementChart.destroy();
+            const ctx3 = document.getElementById('rendementChart');
+            if (ctx3) {
+                charts.rendementChart = new Chart(ctx3.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Brut', 'Net'],
+                        datasets: [{
+                            label: '%',
+                            data: [projectData.rendementBrut, projectData.rendementNet],
+                            backgroundColor: ['#a855f7', '#ec4899']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } },
+                        scales: {
+                            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                            x: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+
+            // Invest Chart
+            if (charts.investChart) charts.investChart.destroy();
+            const ctx4 = document.getElementById('investChart');
+            if (ctx4) {
+                charts.investChart = new Chart(ctx4.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Apport', 'Crédit'],
+                        datasets: [{
+                            data: [projectData.apportPersonnel, projectData.montantPret],
+                            backgroundColor: ['#10b981', '#a855f7'],
+                            borderColor: '#0a0a0a',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } }
+                    }
+                });
+            }
+        }
+
+        function calculerFiscalite() {
+            if (!projectData) return;
+
+            const regimeFiscal = document.getElementById('regimeFiscal').value;
+            const trancheImpot = parseFloat(document.getElementById('trancheImpot').value) || 0;
+
+            const deductInterets = document.getElementById('deductInterets').checked;
+            const deductCopro = document.getElementById('deductCopro').checked;
+            const deductTaxe = document.getElementById('deductTaxe').checked;
+            const deductAssurance = document.getElementById('deductAssurance').checked;
+            const deductMaintenance = document.getElementById('deductMaintenance').checked;
+
+            let chargesDeductibles = 0;
+            if (deductCopro) chargesDeductibles += (parseFloat(document.getElementById('chargesCopro').value) || 0) * 12;
+            if (deductTaxe) chargesDeductibles += parseFloat(document.getElementById('taxeFonciere').value) || 0;
+            if (deductAssurance) chargesDeductibles += (parseFloat(document.getElementById('assurance').value) || 0) * 12;
+            if (deductMaintenance) chargesDeductibles += (parseFloat(document.getElementById('maintenance').value) || 0) * 12;
+
+            const interetsAnnuels = deductInterets ? (projectData.mensualitePret * 12 * projectData.tauxInteret / 100) : 0;
+
+            let revenuFoncier = projectData.loyerAnnuel - chargesDeductibles - interetsAnnuels;
+            if (regimeFiscal === 'forfaitaire') {
+                revenuFoncier = projectData.loyerAnnuel * 0.275;
+            }
+
+            const impotRevenu = Math.max(0, revenuFoncier * (trancheImpot / 100));
+            const cotisations = revenuFoncier > 0 ? revenuFoncier * 0.172 : 0;
+            const imposTotaux = impotRevenu + cotisations;
+
+            const rendementFiscal = ((projectData.loyerAnnuel - (parseFloat(document.getElementById('chargesCopro').value) || 0) * 12 - (parseFloat(document.getElementById('taxeFonciere').value) || 0) - (parseFloat(document.getElementById('assurance').value) || 0) * 12 - (parseFloat(document.getElementById('maintenance').value) || 0) * 12 - imposTotaux) / projectData.investTotal) * 100;
+
+            document.getElementById('loyersBrutAnnuel').textContent = Math.round(projectData.loyerAnnuel);
+            document.getElementById('chargesDeductibles').textContent = Math.round(-chargesDeductibles);
+            document.getElementById('interetsAnnuel').textContent = Math.round(-interetsAnnuels);
+            document.getElementById('revenuFoncierNet').textContent = Math.round(revenuFoncier);
+            document.getElementById('impotRevenu').textContent = Math.round(impotRevenu);
+            document.getElementById('cotisations').textContent = Math.round(cotisations);
+            document.getElementById('imposTotaux').textContent = Math.round(imposTotaux);
+
+            const cfAnnuelFiscal = projectData.loyerAnnuel - projectData.chargesAnnuelles - (projectData.mensualitePret * 12) - imposTotaux;
+            document.getElementById('cfMensuelFiscal').textContent = Math.round(cfAnnuelFiscal / 12);
+            document.getElementById('cfAnnuelFiscal').textContent = Math.round(cfAnnuelFiscal);
+            document.getElementById('rendFiscal').textContent = rendementFiscal.toFixed(2);
+
+            // Optimisation
+            let optimisation = '💡 Régime réel permet déductions maximales.';
+            if (revenuFoncier < 0) optimisation = '✅ Déficit foncier! Réduit vos autres revenus imposables.';
+            if (regimeFiscal === 'meublee') optimisation = '✅ LMNP très favorable: amortissement mobilier possible (+2-3% rendement)';
+            document.getElementById('optimisationFiscale').textContent = optimisation;
+
+            // Comparaison régimes
+            // (simplifié pour démo)
+        }
+
+        function updateRiskAnalysis() {
+            if (!projectData) return;
+
+            // Score global (0-10)
+            let score = 5;
+            if (projectData.rendementNet > 3) score += 2;
+            if (projectData.rendementNet > 2.5) score += 1;
+            if (projectData.cashFlowMensuel > 100) score += 1;
+            if (projectData.ltv < 70) score += 1;
+            if (projectData.ltv > 85) score -= 2;
+            if (projectData.rendementNet < 1) score -= 2;
+
+            score = Math.max(1, Math.min(10, score));
+
+            document.getElementById('scoreViabilite').textContent = score + '/10';
+
+            let desc = '';
+            if (score >= 8) desc = '✅ Excellent - Projet viable et profitable';
+            else if (score >= 6) desc = '👍 Acceptable - À améliorer légèrement';
+            else if (score >= 4) desc = '⚠️ Faible - Besoin d\'optimisations importantes';
+            else desc = '❌ Mauvais - À éviter dans cet état';
+
+            document.getElementById('descriptionScore').textContent = desc;
+
+            // Risk gauge
+            const riskGauge = document.getElementById('riskGauge');
+            const risks = [
+                { name: 'Régional', score: projectData.rendementNet > 2.5 ? 7 : 5, type: projectData.rendementNet > 3 ? 'low' : 'medium' },
+                { name: 'Bien', score: 6, type: 'medium' },
+                { name: 'Locataire', score: projectData.tauxOccupation > 90 ? 7 : 5, type: 'medium' },
+                { name: 'Financier', score: projectData.ltv < 80 ? 7 : 5, type: projectData.ltv < 85 ? 'low' : 'high' },
+                { name: 'Rendement', score: projectData.rendementNet > 2 ? 7 : 4, type: projectData.rendementNet > 3 ? 'low' : projectData.rendementNet < 1.5 ? 'high' : 'medium' }
+            ];
+
+            riskGauge.innerHTML = risks.map(r => `
+                <div class="risk-item ${r.type}">
+                    <div class="risk-name">${r.name}</div>
+                    <div class="risk-score">${r.score}/10</div>
+                </div>
+            `).join('');
+        }
+
+        function updateProjections() {
+            if (!projectData) return;
+
+            const inflationLoyers = parseFloat(document.getElementById('inflationLoyers').value) || 2;
+            const appreciationBien = parseFloat(document.getElementById('appreciationBien').value) || 2;
+
+            let loyer = projectData.loyerMensuel;
+            let valeurBien = projectData.priceAchat;
+            let creditRestant = projectData.montantPret;
+            let cashCumule = 0;
+
+            const years = [0, 5, 10, 15, 20];
+            const valuations = [];
+            const loyers = [];
+            const patrimoines = [];
+            const credits = [];
+
+            const tableBody = document.getElementById('projectionTable');
+            tableBody.innerHTML = '';
+
+            years.forEach(year => {
+                // Projection
+                const loyerAn = loyer * Math.pow(1 + inflationLoyers/100, year);
+                valeurBien = projectData.priceAchat * Math.pow(1 + appreciationBien/100, year);
+                creditRestant = Math.max(0, projectData.montantPret - (projectData.mensualitePret * 12 * year));
+                const equity = valeurBien - creditRestant;
+                const chargesAn = projectData.chargesAnnuelles * Math.pow(1.025, year);
+                const cashFlowAn = (loyerAn * 12 * (projectData.tauxOccupation/100)) - chargesAn - (projectData.mensualitePret * 12);
+                cashCumule += cashFlowAn * (year === 0 ? 0 : 5);
+
+                valuations.push(valeurBien);
+                loyers.push(loyerAn);
+                patrimoines.push(equity + cashCumule);
+                credits.push(creditRestant);
+
+                // Table
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${year}an</td>
+                    <td>${Math.round(loyerAn)}€</td>
+                    <td>${Math.round(valeurBien).toLocaleString()}€</td>
+                    <td>${Math.round(creditRestant).toLocaleString()}€</td>
+                    <td class="good">${Math.round(equity).toLocaleString()}€</td>
+                    <td>${Math.round(cashCumule).toLocaleString()}€</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update summary
+            document.getElementById('projValeur20ans').textContent = Math.round(valuations[4]).toLocaleString() + '€';
+            document.getElementById('projPlusValue').textContent = Math.round(valuations[4] - projectData.priceAchat).toLocaleString() + '€';
+            document.getElementById('projCashCumule').textContent = Math.round(cashCumule).toLocaleString() + '€';
+            document.getElementById('projPatrimoine').textContent = Math.round(patrimoines[4]).toLocaleString() + '€';
+
+            // Charts
+            updateProjectionCharts(valuations, loyers, patrimoines, credits);
+        }
+
+        function updateProjectionCharts(valuations, loyers, patrimoines, credits) {
+            const years = ['0', '5', '10', '15', '20'];
+
+            // Valuation
+            if (charts.valuationChart) charts.valuationChart.destroy();
+            const ctx1 = document.getElementById('valuationChart');
+            if (ctx1) {
+                charts.valuationChart = new Chart(ctx1.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: years.map(y => y + ' ans'),
+                        datasets: [{
+                            label: 'Valeur du bien (€)',
+                            data: valuations,
+                            borderColor: '#a855f7',
+                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } },
+                        scales: {
+                            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                            x: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+
+            // Loyer
+            if (charts.loyerChart) charts.loyerChart.destroy();
+            const ctx2 = document.getElementById('loyerChart');
+            if (ctx2) {
+                charts.loyerChart = new Chart(ctx2.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: years.map(y => y + ' ans'),
+                        datasets: [{
+                            label: 'Loyer mensuel (€)',
+                            data: loyers,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } },
+                        scales: {
+                            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                            x: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+
+            // Patrimoine
+            if (charts.patrimoinChart) charts.patrimoinChart.destroy();
+            const ctx3 = document.getElementById('patrimoinChart');
+            if (ctx3) {
+                charts.patrimoinChart = new Chart(ctx3.getContext('2d'), {
+                    type: 'area',
+                    data: {
+                        labels: years.map(y => y + ' ans'),
+                        datasets: [{
+                            label: 'Patrimoine cumulé (€)',
+                            data: patrimoines,
+                            borderColor: '#ec4899',
+                            backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } },
+                        scales: {
+                            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                            x: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+
+            // Crédit
+            if (charts.creditChart) charts.creditChart.destroy();
+            const ctx4 = document.getElementById('creditChart');
+            if (ctx4) {
+                charts.creditChart = new Chart(ctx4.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: years.map(y => y + ' ans'),
+                        datasets: [{
+                            label: 'Crédit restant (€)',
+                            data: credits,
+                            borderColor: '#0ea5e9',
+                            backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#fff' } } },
+                        scales: {
+                            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(168, 85, 247, 0.1)' } },
+                            x: { ticks: { color: '#fff' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function testOptimisation(type) {
+            // Sauvegarde values actuels
+            const backup = {
+                price: document.getElementById('priceAchat').value,
+                loyer: document.getElementById('loyerMensuel').value,
+                charges: document.getElementById('chargesAnnuelles').value,
+                taux: document.getElementById('tauxInteret').value
+            };
+
+            // Applique optimisation
+            switch(type) {
+                case 'prixReduce':
+                    document.getElementById('priceAchat').value = Math.round(projectData.priceAchat * 0.92);
+                    break;
+                case 'loyerAugment':
+                    document.getElementById('loyerMensuel').value = projectData.loyerMensuel + 50;
+                    break;
+                case 'chargesReduce':
+                    document.getElementById('chargesAnnuelles').value = Math.round(projectData.chargesAnnuelles * 0.85);
+                    break;
+                case 'regimeMeuble':
+                    document.getElementById('typeLocation').value = 'meublee';
+                    break;
+                case 'tauxReduce':
+                    document.getElementById('tauxInteret').value = (parseFloat(document.getElementById('tauxInteret').value) - 0.5).toFixed(1);
+                    break;
+                case 'combinaison':
+                    document.getElementById('priceAchat').value = Math.round(projectData.priceAchat * 0.92);
+                    document.getElementById('loyerMensuel').value = projectData.loyerMensuel + 50;
+                    document.getElementById('chargesAnnuelles').value = Math.round(projectData.chargesAnnuelles * 0.85);
+                    break;
+            }
+
+            calculs();
+        }
+
+        function analyzeProjectAI() {
+            const analysis = document.getElementById('expertAnalysis');
+            const loading = document.getElementById('expertLoading');
+
+            analysis.style.display = 'none';
+            loading.style.display = 'block';
+
+            // Simulation API call
+            setTimeout(() => {
+                loading.style.display = 'none';
+                analysis.style.display = 'block';
+
+                let verdict = '';
+                if (projectData.rendementNet > 3.5) {
+                    verdict = `✅ EXCELLENT PROJET\n\nRendement de ${projectData.rendementNet.toFixed(2)}% est très attractive. C'est un bon projet!\n\nPoints forts:\n• Rendement supérieur à la moyenne\n• Cash flow positif de ${Math.round(projectData.cashFlowMensuel)}€/mois\n• Bien positionnée fiscalement\n\nRecommandation: VALIDER ce projet. C'est une belle opportunité.`;
+                } else if (projectData.rendementNet > 2) {
+                    verdict = `👍 PROJET ACCEPTABLE\n\nRendement de ${projectData.rendementNet.toFixed(2)}% est acceptable mais peut être amélioré.\n\nSolutions d'optimisation:\n1. Augmenter loyer (+50€) = +0.7% rendement\n2. Réduire prix d'achat de 5% = +0.3% rendement\n3. Considérer location meublée = +2% rendement supplémentaire\n\nAvec optimisations: rendement atteint 3-3.5%\nRecommandation: À améliorer avant signature.`;
+                } else {
+                    verdict = `⚠️ PROJET FAIBLE\n\nRendement de ${projectData.rendementNet.toFixed(2)}% est TOO BAS. Ce n'est pas viable dans cet état.\n\nProblèmes identifiés:\n• Rendement insuffisant pour profitabilité\n• Cash flow serré (${Math.round(projectData.cashFlowMensuel)}€/mois)\n• Meilleur placement en PEA ou Bourse (8-10% rendement)\n\nAlternatives à considérer:\n1. Chercher bien MOINS CHER (30k-50k€ moins cher)\n2. Chercher région avec meilleur rendement (Marseille, Toulouse)\n3. Envisager location meublée (loyer +30-50% mais charges aussi)\n4. Plutôt investir en PEA mensuel = rendement garanti 8%\n\nConclusion: Je NE RECOMMANDE PAS ce projet en l'état. À revoir complètement.`;
+                }
+
+                analysis.textContent = verdict;
+            }, 1500);
+        }
+
+        function exportDossierBancaire() {
+            const content = `
+DOSSIER DE PRÉSENTATION BANCAIRE
+=====================================
+
+SYNTHÈSE EXÉCUTIVE
+- Bien: ${document.getElementById('surface').value}m² - ${document.getElementById('typeLocation').value}
+- Prix achat: ${Math.round(projectData.priceAchat)}€
+- Loyer mensuel: ${Math.round(projectData.loyerMensuel)}€
+- Score viabilité: ${document.getElementById('scoreViabilite').textContent}
+
+RÉSULTATS CLÉS
+- Rendement net: ${projectData.rendementNet.toFixed(2)}%
+- Cash flow mensuel: ${Math.round(projectData.cashFlowMensuel)}€
+- ROI annuel: ${projectData.roiAnnuel.toFixed(2)}%
+- LTV: ${projectData.ltv.toFixed(0)}%
+
+Généré le ${new Date().toLocaleDateString('fr-FR')}
+            `;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dossier_immobilier.txt';
+            a.click();
+        }
+
+        // Initialize
+        calculs();
+    </script>
+</body>
+</html>

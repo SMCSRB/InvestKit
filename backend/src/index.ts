@@ -43,11 +43,9 @@ const startServer = async () => {
     console.log('✅ Database connection established');
 
     // Initialize schema (create tables if not exist)
-    if (env.isDev) {
-      console.log('🗄️ Initializing database schema...');
-      await executeSchema();
-      console.log('✅ Schema initialized');
-    }
+    console.log('🗄️ Initializing database schema...');
+    await executeSchema();
+    console.log('✅ Schema initialized');
 
     // Start listening
     app.listen(PORT, '0.0.0.0', () => {
