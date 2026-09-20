@@ -99,7 +99,11 @@ export default {
         '🔐 MODÉRATION': ['mod-logs', 'mod-actions', 'reports', 'mod-discussion'],
       };
 
+      console.log('🔍 Début création catégories et canaux...');
+      console.log(`📊 Nombre de catégories à créer: ${Object.keys(categories).length}`);
+
       for (const [categoryName, channels] of Object.entries(categories)) {
+        console.log(`\n🔍 Traitement catégorie: ${categoryName}`);
         try {
           // Créer la catégorie
           let category = guild.channels.cache.find(
@@ -107,15 +111,19 @@ export default {
           );
 
           if (!category) {
+            console.log(`  → Création de la catégorie: ${categoryName}`);
             category = await guild.channels.create({
               name: categoryName,
               type: ChannelType.GuildCategory,
             });
             categoryCount++;
-            console.log(`📂 Catégorie: ${categoryName}`);
+            console.log(`  ✅ Catégorie créée: ${categoryName} (ID: ${category.id})`);
+          } else {
+            console.log(`  ℹ️ Catégorie existe déjà: ${categoryName}`);
           }
 
           // Créer les canaux
+          console.log(`  → Création de ${channels.length} canaux...`);
           for (const channelName of channels) {
             try {
               const existing = guild.channels.cache.find(
@@ -129,16 +137,22 @@ export default {
                   parent: category.id,
                 });
                 channelCount++;
-                console.log(`  📝 Canal: #${channelName}`);
+                console.log(`    ✅ Canal créé: #${channelName}`);
+              } else {
+                console.log(`    ℹ️ Canal existe déjà: #${channelName}`);
               }
             } catch (error) {
-              console.error(`  ❌ Canal ${channelName}:`, error.message);
+              console.error(`    ❌ Erreur canal ${channelName}:`, error.message);
+              console.error(`       Code: ${error.code}, Détails:`, error);
             }
           }
         } catch (error) {
-          console.error(`❌ Catégorie ${categoryName}:`, error.message);
+          console.error(`❌ Erreur catégorie ${categoryName}:`, error.message);
+          console.error(`   Code: ${error.code}, Détails:`, error);
         }
       }
+
+      console.log(`\n✅ Création des catégories et canaux terminée: ${categoryCount} catégories, ${channelCount} canaux`);
 
       // 3. Message final
       await interaction.editReply({
