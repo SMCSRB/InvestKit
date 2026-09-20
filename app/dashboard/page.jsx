@@ -99,6 +99,11 @@ export default function DashboardPage() {
     domainRequirements: {}, // { 'crypto': 50, 'stocks': 30 }
   });
 
+  // Guild search & filter states
+  const [guildeSearchQuery, setGuildeSearchQuery] = useState('');
+  const [guildeFilterMinLevel, setGuildeFilterMinLevel] = useState(0);
+  const [guildeFilterDomain, setGuildeFilterDomain] = useState('all');
+
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
     {
@@ -138,6 +143,39 @@ export default function DashboardPage() {
       user.friendCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Load guildes from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedGuildes = localStorage.getItem('guildes');
+      if (savedGuildes) {
+        setGuildes(JSON.parse(savedGuildes));
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des guildes:', error);
+    }
+  }, []);
+
+  // Save guildes to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('guildes', JSON.stringify(guildes));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des guildes:', error);
+    }
+  }, [guildes]);
+
+  // Filter guildes based on search and filters
+  const filteredGuildes = guildes.filter((guilde) => {
+    const matchesSearch = guilde.name.toLowerCase().includes(guildeSearchQuery.toLowerCase()) ||
+                          guilde.description.toLowerCase().includes(guildeSearchQuery.toLowerCase());
+    const matchesLevel = guildeFilterMinLevel === 0 || !guilde.restrictions?.minLevel || guilde.restrictions.minLevel <= guildeFilterMinLevel;
+    const matchesDomain = guildeFilterDomain === 'all' || !guilde.restrictions?.domainRequirements ||
+                          Object.keys(guilde.restrictions.domainRequirements).length === 0 ||
+                          guilde.restrictions.domainRequirements[guildeFilterDomain] > 0;
+
+    return matchesSearch && matchesLevel && matchesDomain;
+  });
 
   const triggerConfetti = () => {
     setShowConfetti(true);
@@ -2365,6 +2403,75 @@ export default function DashboardPage() {
                   )}
                 </div>
 
+                {/* Search & Filter Section */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '12px',
+                  marginBottom: '20px',
+                }}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Chercher une guilde..."
+                    value={guildeSearchQuery}
+                    onChange={(e) => setGuildeSearchQuery(e.target.value)}
+                    style={{
+                      padding: '10px 12px',
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '8px',
+                      color: currentTheme.text,
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.2s ease',
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = currentTheme.accent}
+                    onBlur={(e) => e.target.style.borderColor = currentTheme.border}
+                  />
+                  <select
+                    value={guildeFilterMinLevel}
+                    onChange={(e) => setGuildeFilterMinLevel(Number(e.target.value))}
+                    style={{
+                      padding: '10px 12px',
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '8px',
+                      color: currentTheme.text,
+                      fontSize: '13px',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value={0}>📊 Tous les niveaux</option>
+                    <option value={1}>Niveau 1+</option>
+                    <option value={5}>Niveau 5+</option>
+                    <option value={7}>Niveau 7+</option>
+                    <option value={10}>Niveau 10+</option>
+                    <option value={15}>Niveau 15+</option>
+                    <option value={20}>Niveau 20+</option>
+                  </select>
+                  <select
+                    value={guildeFilterDomain}
+                    onChange={(e) => setGuildeFilterDomain(e.target.value)}
+                    style={{
+                      padding: '10px 12px',
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      borderRadius: '8px',
+                      color: currentTheme.text,
+                      fontSize: '13px',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="all">📚 Tous les domaines</option>
+                    <option value="crypto">₿ Crypto</option>
+                    <option value="stocks">📈 Bourse</option>
+                    <option value="bonds">📋 Obligations</option>
+                    <option value="realestate">🏠 Immobilier</option>
+                  </select>
+                </div>
+
                 {showCreateGuilde && progress.userLevel >= 7 && (
                   <div style={{
                     padding: '20px',
@@ -2700,8 +2807,24 @@ export default function DashboardPage() {
                   </div>
                 )}
 
+                {/* Results Count */}
+                {filteredGuildes.length === 0 && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    color: currentTheme.textSecondary,
+                  }}>
+                    <p style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 8px 0' }}>🔍 Aucune guilde trouvée</p>
+                    <p style={{ fontSize: '13px', margin: 0 }}>
+                      {guildeSearchQuery || guildeFilterMinLevel > 0 || guildeFilterDomain !== 'all'
+                        ? 'Essaie de modifier tes filtres'
+                        : 'Commence par créer une guilde!'}
+                    </p>
+                  </div>
+                )}
+
                 <div style={{ display: 'grid', gap: '12px' }}>
-                  {guildes.map((guilde) => (
+                  {filteredGuildes.map((guilde) => (
                     <div
                       key={guilde.id}
                       style={{
@@ -2755,23 +2878,39 @@ export default function DashboardPage() {
                               fontSize: '11px',
                               margin: 0,
                             }}>
-                              👥 {guilde.members} membre{guilde.members > 1 ? 's' : ''}
+                              👥 {guilde.membersList?.length || 0} membre{(guilde.membersList?.length || 0) > 1 ? 's' : ''}
                             </p>
                           </div>
                         </div>
                         <button
+                          onClick={() => {
+                            if (userGuildes.includes(guilde.id)) {
+                              setSelectedGuilde(guilde);
+                            } else {
+                              handleJoinGuilde(guilde);
+                            }
+                          }}
                           style={{
                             padding: '6px 12px',
-                            background: currentTheme.accent,
+                            background: userGuildes.includes(guilde.id) ? 'rgba(74, 222, 128, 0.3)' : currentTheme.accent,
                             border: 'none',
                             borderRadius: '6px',
-                            color: '#fff',
+                            color: userGuildes.includes(guilde.id) ? '#4ade80' : '#fff',
                             fontWeight: '600',
                             cursor: 'pointer',
                             fontSize: '12px',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!userGuildes.includes(guilde.id)) {
+                              e.target.style.opacity = '0.9';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.opacity = '1';
                           }}
                         >
-                          Rejoindre
+                          {userGuildes.includes(guilde.id) ? '✓ Membre' : '➕ Rejoindre'}
                         </button>
                       </div>
                       <p style={{
