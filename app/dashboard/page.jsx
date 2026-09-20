@@ -1231,51 +1231,123 @@ export default function DashboardPage() {
               </p>
               <div style={{
                 display: 'flex',
-                gap: '8px',
+                gap: '12px',
                 alignItems: 'center',
               }}>
+                {/* Circular Progress + Level Display */}
                 <div style={{
-                  height: '20px',
-                  flex: 1,
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
                   position: 'relative',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
                 }}>
-                  {/* Progress bar showing progression to next tier */}
-                  <div style={{
-                    height: '100%',
-                    width: `${((userData.level || 1) - 1) * 10 + (Math.min((userData.level || 1) % 1, 0.9) * 10)}%`,
-                    background: isMilestone ? 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
-                    transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    boxShadow: isMilestone ? '0 0 12px rgba(251, 191, 36, 0.8)' : '0 0 8px rgba(245, 158, 11, 0.6)',
-                    animation: isMilestone ? 'glowPulse 2s ease-in-out' : 'none',
-                  }} />
-                  {/* Milestone markers every 10% (every level) */}
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((milestone) => (
-                    <div
-                      key={milestone}
+                  {/* Outer ring - background */}
+                  <svg width="44" height="44" style={{ position: 'absolute' }}>
+                    <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="2" />
+                  </svg>
+
+                  {/* Progress ring */}
+                  <svg width="44" height="44" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      fill="none"
+                      stroke={isMilestone ? '#fbbf24' : '#f59e0b'}
+                      strokeWidth="2"
+                      strokeDasharray={`${(((userData.level || 1) % 10) / 10) * 113.1} 113.1`}
+                      strokeLinecap="round"
                       style={{
-                        position: 'absolute',
-                        left: `${milestone * 10}%`,
-                        top: 0,
-                        height: '100%',
-                        width: isMilestone && (userData.level || 1) % 10 === milestone ? '3px' : '1px',
-                        background: isMilestone && (userData.level || 1) % 10 === milestone ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
-                        boxShadow: isMilestone && (userData.level || 1) % 10 === milestone ? '0 0 4px #fbbf24' : 'none',
+                        transition: 'stroke-dasharray 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        filter: isMilestone ? 'drop-shadow(0 0 4px #fbbf24)' : 'none',
                       }}
                     />
-                  ))}
+                  </svg>
+
+                  {/* Center text - Level */}
+                  <div style={{
+                    position: 'absolute',
+                    textAlign: 'center',
+                    zIndex: 1,
+                  }}>
+                    <div style={{
+                      fontSize: '18px',
+                      fontWeight: '900',
+                      color: isMilestone ? '#fbbf24' : '#f59e0b',
+                      lineHeight: '1',
+                    }}>
+                      {userData.level || 1}
+                    </div>
+                    <div style={{
+                      fontSize: '8px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontWeight: '600',
+                      marginTop: '2px',
+                    }}>
+                      LEVEL
+                    </div>
+                  </div>
                 </div>
-                <span style={{
-                  fontSize: '10px',
-                  color: isMilestone ? '#fbbf24' : currentTheme.textSecondary,
-                  fontWeight: isMilestone ? '700' : '600',
-                  whiteSpace: 'nowrap',
-                  animation: isMilestone ? 'milestoneCelebrate 0.6s ease-in-out' : 'none',
-                }}>
-                  {isMilestone ? '🎯' : ''} Niv. {(userData.level || 1) % 10 || 10}/10
-                </span>
+
+                {/* Progress Bar */}
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    height: '18px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: '9px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}>
+                    {/* Fill */}
+                    <div style={{
+                      height: '100%',
+                      width: `${((userData.level || 1) % 10) * 10}%`,
+                      background: isMilestone ? 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                      transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      boxShadow: isMilestone ? 'inset 0 0 8px rgba(251, 191, 36, 0.4)' : 'inset 0 0 8px rgba(245, 158, 11, 0.3)',
+                      position: 'relative',
+                    }}>
+                      {/* Animated shimmer */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                        animation: 'slideInUp 2s ease-in-out infinite',
+                      }} />
+                    </div>
+                  </div>
+
+                  {/* Tier progress text */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '4px',
+                  }}>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontWeight: '600',
+                    }}>
+                      Tier {Math.floor((userData.level || 1) / 10) + 1}
+                    </span>
+                    <span style={{
+                      fontSize: '11px',
+                      color: isMilestone ? '#fbbf24' : 'rgba(255, 255, 255, 0.6)',
+                      fontWeight: isMilestone ? '700' : '600',
+                      animation: isMilestone ? 'milestoneCelebrate 0.6s ease-in-out' : 'none',
+                    }}>
+                      {((userData.level || 1) % 10)}/10 {isMilestone ? '🎯' : ''}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
