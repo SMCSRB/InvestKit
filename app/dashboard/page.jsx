@@ -37,6 +37,8 @@ export default function DashboardPage() {
   const [chatMessages, setChatMessages] = useState({}); // { friendCode: [messages] }
   const [messageInput, setMessageInput] = useState('');
   const [selectedGuilde, setSelectedGuilde] = useState(null); // Pour voir les détails d'une guilde
+  const [userGuildes, setUserGuildes] = useState([]); // Guildes auxquelles l'utilisateur a rejoint
+  const [guildMessage, setGuildMessage] = useState(null); // { type: 'success' | 'error', text: string }
   const [guildes, setGuildes] = useState([
     {
       id: 1, name: '₿ Crypto Traders', members: 5, description: 'Groupe pour les traders crypto', emoji: '₿',
@@ -108,6 +110,46 @@ export default function DashboardPage() {
       user.friendCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleJoinGuilde = (guilde) => {
+    // Vérifier l'éligibilité
+    const levelOk = !guilde.restrictions.minLevel || progress.userLevel >= guilde.restrictions.minLevel;
+    const missingDomains = [];
+
+    Object.entries(guilde.restrictions.domainRequirements || {}).forEach(([domain, requirement]) => {
+      if (requirement > 0) {
+        const userProgress = progress.domainsProgress?.[domain] || 0;
+        if (userProgress < requirement) {
+          const domainLabel = domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto';
+          missingDomains.push(`${domainLabel}: ${requirement}% (tu as ${userProgress}%)`);
+        }
+      }
+    });
+
+    if (!levelOk || missingDomains.length > 0) {
+      // Afficher le message d'erreur
+      let errorMsg = '❌ Tu ne peux pas rejoindre cette guilde.\n\n';
+      if (!levelOk) {
+        errorMsg += `📊 Niveau insuffisant: tu es niveau ${progress.userLevel} (niveau ${guilde.restrictions.minLevel} requis)\n`;
+      }
+      if (missingDomains.length > 0) {
+        errorMsg += `📈 Progression domaine insuffisante:\n${missingDomains.map(d => `  • ${d}`).join('\n')}`;
+      }
+
+      setGuildMessage({ type: 'error', text: errorMsg });
+      setTimeout(() => setGuildMessage(null), 5000);
+    } else {
+      // Rejoindre avec succès
+      setUserGuildes([...userGuildes, guilde.id]);
+      setGuildMessage({
+        type: 'success',
+        text: `✓ Bravo! Tu as rejoint ${guilde.name}!\n\nTu peux maintenant participer aux discussions et activités de la guilde.`
+      });
+      setTimeout(() => setGuildMessage(null), 5000);
+      // Fermer le modal après 2 secondes
+      setTimeout(() => setSelectedGuilde(null), 2000);
+    }
+  };
 
   const copyToClipboard = (text) => {
     if (navigator?.clipboard?.writeText) {
@@ -3417,6 +3459,7 @@ export default function DashboardPage() {
                 })(),
                 marginBottom: '20px',
                 textAlign: 'center',
+                whiteSpace: 'pre-wrap',
               }}>
                 {(() => {
                   const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
@@ -3434,28 +3477,68 @@ export default function DashboardPage() {
                 })()}
               </div>
 
+              {/* Guild Message Display */}
+              {guildMessage && (
+                <div style={{
+                  padding: '12px',
+                  background: guildMessage.type === 'success' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  borderRadius: '10px',
+                  border: guildMessage.type === 'success' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                  marginBottom: '20px',
+                  whiteSpace: 'pre-wrap',
+                  fontSize: '12px',
+                  lineHeight: '1.6',
+                  color: guildMessage.type === 'success' ? '#86efac' : '#fca5a5',
+                }}>
+                  {guildMessage.text}
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
-                <button
-                  style={{
-                    padding: '12px 16px',
-                    background: currentTheme.accent,
-                    border: 'none',
-                    borderRadius: '10px',
-                    color: '#fff',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.8)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = currentTheme.accent;
-                  }}
-                >
-                  ➕ Rejoindre
-                </button>
+                {(() => {
+                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
+                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
+                    if (requirement === 0) return true;
+                    const userProgress = progress.domainsProgress?.[domain] || 0;
+                    return userProgress >= requirement;
+                  });
+                  const canJoin = levelOk && domainsOk;
+                  const alreadyMember = userGuildes.includes(selectedGuilde.id);
+
+                  return (
+                    <button
+                      onClick={() => handleJoinGuilde(selectedGuilde)}
+                      disabled={!canJoin || alreadyMember}
+                      style={{
+                        padding: '12px 16px',
+                        background: alreadyMember ? 'rgba(34, 197, 94, 0.3)' : canJoin ? currentTheme.accent : 'rgba(107, 114, 128, 0.5)',
+                        border: alreadyMember ? '1px solid rgba(34, 197, 94, 0.5)' : 'none',
+                        borderRadius: '10px',
+                        color: alreadyMember ? '#86efac' : '#fff',
+                        fontWeight: '600',
+                        cursor: canJoin && !alreadyMember ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.2s ease',
+                        opacity: canJoin && !alreadyMember ? 1 : 0.6,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (canJoin && !alreadyMember) {
+                          e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (canJoin && !alreadyMember) {
+                          e.target.style.background = currentTheme.accent;
+                        } else if (alreadyMember) {
+                          e.target.style.background = 'rgba(34, 197, 94, 0.3)';
+                        }
+                      }}
+                    >
+                      {alreadyMember ? '✓ Membre' : '➕ Rejoindre'}
+                    </button>
+                  );
+                })()}
+
                 <button
                   onClick={() => setSelectedGuilde(null)}
                   style={{
