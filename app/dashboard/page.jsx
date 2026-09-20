@@ -2728,7 +2728,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Leaderboard User Profile Modal */}
+            {/* Leaderboard User Profile Modal - Premium Design */}
             {selectedLeaderboardUser && (
               <div style={{
                 position: 'fixed',
@@ -2736,369 +2736,473 @@ export default function DashboardPage() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'rgba(0, 0, 0, 0.7)',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 zIndex: 1000,
                 padding: '20px',
+                backdropFilter: 'blur(8px)',
               }}
               onClick={() => setSelectedLeaderboardUser(null)}
               >
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{
-                    background: currentTheme.bg,
-                    borderRadius: '20px',
-                    padding: '32px',
-                    maxWidth: '500px',
+                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
+                    borderRadius: '28px',
+                    padding: '0',
+                    maxWidth: '520px',
                     width: '100%',
                     maxHeight: '90vh',
                     overflowY: 'auto',
-                    border: `1.5px solid ${currentTheme.border}`,
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                    border: `1.5px solid rgba(255, 255, 255, 0.1)`,
+                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(59, 130, 246, 0.15)',
+                    position: 'relative',
                   }}
                 >
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setSelectedLeaderboardUser(null)}
-                    style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '16px',
-                      background: 'transparent',
-                      border: 'none',
-                      fontSize: '24px',
-                      cursor: 'pointer',
-                      padding: '8px',
-                    }}
-                  >
-                    ✕
-                  </button>
-
-                  {/* Profile Header */}
+                  {/* Header Background Gradient */}
                   <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    marginBottom: '28px',
-                    paddingTop: '16px',
+                    height: '120px',
+                    background: `linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)`,
+                    position: 'relative',
                   }}>
-                    <div style={{
-                      fontSize: '72px',
-                      marginBottom: '12px',
-                    }}>
-                      {selectedLeaderboardUser.avatar}
+                    <button
+                      onClick={() => setSelectedLeaderboardUser(null)}
+                      style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '20px',
+                        cursor: 'pointer',
+                        color: currentTheme.text,
+                        fontWeight: '700',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Main Content */}
+                  <div style={{ padding: '0 28px 28px 28px', marginTop: '-60px', position: 'relative', zIndex: 10 }}>
+                    {/* Avatar & Rank */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                      <div style={{
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '24px',
+                        background: `linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)`,
+                        border: '3px solid rgba(255, 255, 255, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '54px',
+                        boxShadow: '0 12px 40px rgba(59, 130, 246, 0.2)',
+                      }}>
+                        {selectedLeaderboardUser.avatar}
+                      </div>
+                      <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                        <div style={{
+                          fontSize: '48px',
+                          marginBottom: '4px',
+                          textShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                        }}>
+                          {selectedLeaderboardUser.medal}
+                        </div>
+                        <div style={{
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          color: '#fff',
+                          padding: '6px 12px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                        }}>
+                          Rang #{selectedLeaderboardUser.rank}
+                        </div>
+                      </div>
                     </div>
-                    <h2 style={{
-                      color: currentTheme.text,
-                      margin: '0 0 8px 0',
-                      fontSize: '24px',
-                      fontWeight: '900',
-                    }}>
-                      {selectedLeaderboardUser.name}
-                    </h2>
+
+                    {/* Name & Bio */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <h2 style={{
+                        color: currentTheme.text,
+                        margin: '0 0 8px 0',
+                        fontSize: '28px',
+                        fontWeight: '900',
+                        letterSpacing: '-0.5px',
+                      }}>
+                        {selectedLeaderboardUser.name}
+                      </h2>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '14px',
+                        margin: 0,
+                        fontStyle: 'italic',
+                        lineHeight: '1.5',
+                      }}>
+                        "{selectedLeaderboardUser.bio}"
+                      </p>
+                    </div>
+
+                    {/* Divider */}
                     <div style={{
-                      display: 'flex',
+                      height: '1px',
+                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      marginBottom: '24px',
+                    }} />
+
+                    {/* Stats Grid - Premium */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: '14px',
+                      marginBottom: '28px',
+                    }}>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(59, 130, 246, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        transition: 'all 0.3s ease',
+                      }}>
+                        <p style={{
+                          color: '#3b82f6',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          ⭐ Niveau
+                        </p>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontSize: '28px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {selectedLeaderboardUser.level}
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        transition: 'all 0.3s ease',
+                      }}>
+                        <p style={{
+                          color: '#f59e0b',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          ⚡ XP Total
+                        </p>
+                        <p style={{
+                          color: '#f59e0b',
+                          fontSize: '26px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {(selectedLeaderboardUser.xp / 1000).toFixed(1)}K
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(139, 92, 246, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        transition: 'all 0.3s ease',
+                      }}>
+                        <p style={{
+                          color: '#8b5cf6',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          📚 Domaines
+                        </p>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontSize: '28px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          {selectedLeaderboardUser.completedDomains.length}/4
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '18px',
+                        background: `linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)`,
+                        borderRadius: '16px',
+                        border: '1.5px solid rgba(16, 185, 129, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        transition: 'all 0.3s ease',
+                      }}>
+                        <p style={{
+                          color: '#10b981',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                        }}>
+                          💰 Portefeuille
+                        </p>
+                        <p style={{
+                          color: '#10b981',
+                          fontSize: '26px',
+                          fontWeight: '900',
+                          margin: 0,
+                        }}>
+                          ${(selectedLeaderboardUser.portfolio / 1000).toFixed(0)}K
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Badges Section */}
+                    {selectedLeaderboardUser.badges.length > 0 && (
+                      <>
+                        <div style={{
+                          height: '1px',
+                          background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                          marginBottom: '20px',
+                        }} />
+                        <div style={{ marginBottom: '24px' }}>
+                          <h3 style={{
+                            color: currentTheme.text,
+                            fontSize: '13px',
+                            fontWeight: '800',
+                            margin: '0 0 14px 0',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                          }}>
+                            🏆 Badges ({selectedLeaderboardUser.badges.length})
+                          </h3>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+                            gap: '10px',
+                          }}>
+                            {selectedLeaderboardUser.badges.map((badge) => {
+                              const badgeData = {
+                                first_blood: { emoji: '🩸', label: 'Premier Sang', color: '#ef4444' },
+                                perfect: { emoji: '💯', label: 'Parfait', color: '#ec4899' },
+                                no_mistakes: { emoji: '✅', label: 'Sans Erreur', color: '#10b981' },
+                                crypto_master: { emoji: '₿', label: 'Maître Crypto', color: '#f59e0b' },
+                                stocks_master: { emoji: '📈', label: 'Maître Bourse', color: '#3b82f6' },
+                              };
+                              const data = badgeData[badge] || { emoji: '⭐', label: badge, color: '#8b5cf6' };
+                              return (
+                                <div
+                                  key={badge}
+                                  style={{
+                                    padding: '12px',
+                                    background: `rgba(${parseInt(data.color.slice(1,3), 16)}, ${parseInt(data.color.slice(3,5), 16)}, ${parseInt(data.color.slice(5,7), 16)}, 0.15)`,
+                                    border: `2px solid ${data.color}`,
+                                    borderRadius: '14px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.3s ease',
+                                    cursor: 'default',
+                                  }}
+                                >
+                                  <span style={{ fontSize: '22px' }}>{data.emoji}</span>
+                                  <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: '700',
+                                    color: data.color,
+                                    textAlign: 'center',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                  }}>
+                                    {data.label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Domains */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      marginBottom: '20px',
+                    }} />
+                    <div style={{ marginBottom: '28px' }}>
+                      <h3 style={{
+                        color: currentTheme.text,
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        margin: '0 0 14px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}>
+                        📚 Domaines Complétés
+                      </h3>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                        gap: '10px',
+                      }}>
+                        {selectedLeaderboardUser.completedDomains.map((domain) => {
+                          const domainInfo = {
+                            crypto: { emoji: '₿', label: 'Crypto', color: '#f59e0b' },
+                            stocks: { emoji: '📈', label: 'Bourse', color: '#3b82f6' },
+                            realestate: { emoji: '🏠', label: 'Immobilier', color: '#ec4899' },
+                            bonds: { emoji: '💼', label: 'Obligations', color: '#10b981' },
+                          };
+                          const info = domainInfo[domain] || { emoji: '📚', label: domain, color: '#8b5cf6' };
+                          return (
+                            <div
+                              key={domain}
+                              style={{
+                                padding: '12px',
+                                background: `rgba(${parseInt(info.color.slice(1,3), 16)}, ${parseInt(info.color.slice(3,5), 16)}, ${parseInt(info.color.slice(5,7), 16)}, 0.15)`,
+                                border: `2px solid ${info.color}`,
+                                borderRadius: '14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                transition: 'all 0.3s ease',
+                                cursor: 'default',
+                              }}
+                            >
+                              <span style={{ fontSize: '24px' }}>{info.emoji}</span>
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                color: info.color,
+                                textAlign: 'center',
+                              }}>
+                                {info.label}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      marginBottom: '20px',
+                    }} />
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
                       gap: '12px',
-                      alignItems: 'center',
-                      marginBottom: '8px',
                     }}>
-                      <span style={{ fontSize: '28px' }}>{selectedLeaderboardUser.medal}</span>
-                      <span style={{
-                        fontSize: '14px',
-                        fontWeight: '700',
-                        color: '#f59e0b',
-                      }}>
-                        Rang #{selectedLeaderboardUser.rank}
-                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedChatFriend(selectedLeaderboardUser);
+                          setSelectedLeaderboardUser(null);
+                          setFriendsTab('messages');
+                        }}
+                        style={{
+                          padding: '14px 16px',
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          border: '2px solid rgba(59, 130, 246, 0.5)',
+                          borderRadius: '12px',
+                          color: '#fff',
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 8px 20px rgba(59, 130, 246, 0.2)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
+                        }}
+                      >
+                        💬 Message
+                      </button>
+                      <button
+                        onClick={() => {
+                          const isFriend = userData.friends.some(f => f.friendCode === selectedLeaderboardUser.friendCode);
+                          const hasSentRequest = userData.friendRequests?.sent?.some(
+                            (req) => req.friendCode === selectedLeaderboardUser.friendCode
+                          );
+                          if (!isFriend && !hasSentRequest) {
+                            sendFriendRequest(selectedLeaderboardUser.friendCode, selectedLeaderboardUser.name);
+                            alert('Demande d\'ami envoyée ! 🎉');
+                          } else if (isFriend) {
+                            alert('Vous êtes déjà amis ! 👋');
+                          } else {
+                            alert('Demande d\'ami déjà envoyée ! ⏳');
+                          }
+                          setSelectedLeaderboardUser(null);
+                        }}
+                        style={{
+                          padding: '14px 16px',
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          border: '2px solid rgba(245, 158, 11, 0.5)',
+                          borderRadius: '12px',
+                          color: '#fff',
+                          fontWeight: '800',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 8px 20px rgba(245, 158, 11, 0.2)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.2)';
+                        }}
+                      >
+                        👥 Ajouter Ami
+                      </button>
                     </div>
-                    <p style={{
-                      color: currentTheme.textSecondary,
-                      fontSize: '13px',
-                      margin: 0,
-                      fontStyle: 'italic',
-                    }}>
-                      {selectedLeaderboardUser.bio}
-                    </p>
-                  </div>
-
-                  {/* Stats Grid */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '12px',
-                    marginBottom: '24px',
-                  }}>
-                    <div style={{
-                      padding: '16px',
-                      background: currentTheme.cardBg,
-                      borderRadius: '12px',
-                      border: `1.5px solid ${currentTheme.border}`,
-                    }}>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        margin: '0 0 6px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        Niveau
-                      </p>
-                      <p style={{
-                        color: currentTheme.text,
-                        fontSize: '22px',
-                        fontWeight: '900',
-                        margin: 0,
-                      }}>
-                        {selectedLeaderboardUser.level}
-                      </p>
-                    </div>
-                    <div style={{
-                      padding: '16px',
-                      background: currentTheme.cardBg,
-                      borderRadius: '12px',
-                      border: `1.5px solid ${currentTheme.border}`,
-                    }}>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        margin: '0 0 6px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        XP Total
-                      </p>
-                      <p style={{
-                        color: '#f59e0b',
-                        fontSize: '22px',
-                        fontWeight: '900',
-                        margin: 0,
-                      }}>
-                        {selectedLeaderboardUser.xp.toLocaleString()}
-                      </p>
-                    </div>
-                    <div style={{
-                      padding: '16px',
-                      background: currentTheme.cardBg,
-                      borderRadius: '12px',
-                      border: `1.5px solid ${currentTheme.border}`,
-                    }}>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        margin: '0 0 6px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        Domaines
-                      </p>
-                      <p style={{
-                        color: currentTheme.text,
-                        fontSize: '14px',
-                        fontWeight: '700',
-                        margin: 0,
-                      }}>
-                        {selectedLeaderboardUser.completedDomains.length}
-                      </p>
-                    </div>
-                    <div style={{
-                      padding: '16px',
-                      background: currentTheme.cardBg,
-                      borderRadius: '12px',
-                      border: `1.5px solid ${currentTheme.border}`,
-                    }}>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        margin: '0 0 6px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        Portefeuille
-                      </p>
-                      <p style={{
-                        color: '#10b981',
-                        fontSize: '14px',
-                        fontWeight: '700',
-                        margin: 0,
-                      }}>
-                        ${(selectedLeaderboardUser.portfolio / 1000).toFixed(0)}K
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Badges Section */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <h3 style={{
-                      color: currentTheme.text,
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      margin: '0 0 12px 0',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      🏆 Badges ({selectedLeaderboardUser.badges.length})
-                    </h3>
-                    <div style={{
-                      display: 'flex',
-                      gap: '8px',
-                      flexWrap: 'wrap',
-                    }}>
-                      {selectedLeaderboardUser.badges.map((badge) => {
-                        const badgeEmoji = badge === 'first_blood' ? '🩸' : badge === 'perfect' ? '💯' : badge === 'no_mistakes' ? '✅' : badge === 'crypto_master' ? '₿' : badge === 'stocks_master' ? '📈' : '⭐';
-                        return (
-                          <div
-                            key={badge}
-                            style={{
-                              padding: '8px 12px',
-                              background: 'rgba(245, 158, 11, 0.15)',
-                              borderRadius: '8px',
-                              border: '1.5px solid rgba(245, 158, 11, 0.3)',
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              color: '#f59e0b',
-                              display: 'flex',
-                              gap: '4px',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <span>{badgeEmoji}</span>
-                            {badge}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Completed Domains */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <h3 style={{
-                      color: currentTheme.text,
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      margin: '0 0 12px 0',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      📚 Domaines Complétés
-                    </h3>
-                    <div style={{
-                      display: 'flex',
-                      gap: '8px',
-                      flexWrap: 'wrap',
-                    }}>
-                      {selectedLeaderboardUser.completedDomains.map((domain) => {
-                        const domainInfo = {
-                          crypto: { emoji: '₿', label: 'Crypto' },
-                          stocks: { emoji: '📈', label: 'Bourse' },
-                          realestate: { emoji: '🏠', label: 'Immobilier' },
-                          bonds: { emoji: '💼', label: 'Obligations' },
-                        };
-                        const info = domainInfo[domain] || { emoji: '📚', label: domain };
-                        return (
-                          <div
-                            key={domain}
-                            style={{
-                              padding: '8px 12px',
-                              background: 'rgba(59, 130, 246, 0.15)',
-                              borderRadius: '8px',
-                              border: '1.5px solid rgba(59, 130, 246, 0.3)',
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              color: '#3b82f6',
-                              display: 'flex',
-                              gap: '4px',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <span>{info.emoji}</span>
-                            {info.label}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '12px',
-                  }}>
-                    <button
-                      onClick={() => {
-                        // Envoyez un message
-                        setSelectedChatFriend(selectedLeaderboardUser);
-                        setSelectedLeaderboardUser(null);
-                        setFriendsTab('messages');
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                        border: '2px solid rgba(59, 130, 246, 0.5)',
-                        borderRadius: '10px',
-                        color: '#fff',
-                        fontWeight: '700',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      💬 Message
-                    </button>
-                    <button
-                      onClick={() => {
-                        // Demander en amis
-                        const isFriend = userData.friends.some(f => f.friendCode === selectedLeaderboardUser.friendCode);
-                        const hasSentRequest = userData.friendRequests?.sent?.some(
-                          (req) => req.friendCode === selectedLeaderboardUser.friendCode
-                        );
-
-                        if (!isFriend && !hasSentRequest) {
-                          sendFriendRequest(selectedLeaderboardUser.friendCode, selectedLeaderboardUser.name);
-                          alert('Demande d\'ami envoyée ! 🎉');
-                        } else if (isFriend) {
-                          alert('Vous êtes déjà amis ! 👋');
-                        } else {
-                          alert('Demande d\'ami déjà envoyée ! ⏳');
-                        }
-                        setSelectedLeaderboardUser(null);
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                        border: '2px solid rgba(245, 158, 11, 0.5)',
-                        borderRadius: '10px',
-                        color: '#fff',
-                        fontWeight: '700',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      👥 Ajouter en Ami
-                    </button>
                   </div>
                 </div>
               </div>
