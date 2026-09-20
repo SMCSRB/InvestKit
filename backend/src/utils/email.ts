@@ -10,6 +10,9 @@ const getEmailProvider = () => {
   if (env.emailProvider === 'resend' && env.resendApiKey) {
     return 'resend';
   }
+  if (env.emailProvider === 'smtp' && env.smtp.host && env.smtp.user && env.smtp.pass) {
+    return 'smtp';
+  }
   return 'ethereal';
 };
 
@@ -24,6 +27,22 @@ export const initEmailTransporter = async () => {
     resendClient = new Resend(env.resendApiKey);
     transporter = { provider: 'resend' };
     console.log('✅ Resend initialized');
+    return transporter;
+  }
+
+  // SMTP provider (Gmail, Outlook, custom)
+  if (provider === 'smtp') {
+    console.log('📧 Initializing SMTP provider...');
+    transporter = nodemailer.createTransport({
+      host: env.smtp.host,
+      port: env.smtp.port,
+      secure: env.smtp.secure,
+      auth: {
+        user: env.smtp.user,
+        pass: env.smtp.pass,
+      },
+    });
+    console.log(`✅ SMTP initialized (${env.smtp.host}:${env.smtp.port})`);
     return transporter;
   }
 
