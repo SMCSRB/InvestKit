@@ -228,6 +228,10 @@ export default function DashboardPage() {
   const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
   const [bioEditInput, setBioEditInput] = useState('Investisseur passionné en crypto et finance');
   const [baggeBackgroundInput, setBaggeBackgroundInput] = useState('');
+  const [dailyXP, setDailyXP] = useState(Math.floor(Math.random() * 500) + 150); // Random XP 150-650
+  const [totalXP, setTotalXP] = useState((userData.level || 1) * 1000 + dailyXP);
+  const [xpToNextLevel, setXpToNextLevel] = useState(1000);
+  const [recentLevelUp, setRecentLevelUp] = useState(false);
 
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
@@ -867,6 +871,19 @@ export default function DashboardPage() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
+        @keyframes badgePulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 8px 16px rgba(245, 158, 11, 0.4); }
+          50% { transform: scale(1.05); box-shadow: 0 12px 24px rgba(245, 158, 11, 0.6); }
+        }
+        @keyframes badgeGlow {
+          0% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+          50% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.8)); }
+          100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+        }
+        @keyframes levelUpBurst {
+          0% { transform: scale(0.8); opacity: 1; }
+          100% { transform: scale(1.2); opacity: 0; }
+        }
         .dashboard-content {
           animation: slideInUp 0.6s ease-out;
         }
@@ -878,6 +895,12 @@ export default function DashboardPage() {
         }
         .modal-overlay {
           animation: fadeIn 0.3s ease-out;
+        }
+        .badge-animated {
+          animation: badgePulse 2s ease-in-out infinite;
+        }
+        .badge-glow {
+          animation: badgeGlow 2s ease-in-out infinite;
         }
       `}</style>
 
@@ -1005,7 +1028,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Badges Stack - Display Selected Badges */}
+              {/* Badges Stack - Display Selected Badges with Animation */}
               {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
                 const badge = badgeDefinitions[badgeId];
                 if (!badge) return null;
@@ -1016,6 +1039,7 @@ export default function DashboardPage() {
                   unique: { bg: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', shadow: 'rgba(251, 191, 36, 0.4)' },
                 };
                 const rarity = rarityColors[badge.rarity];
+                const isFirstBadge = index === 0;
                 return (
                   <div
                     key={badgeId}
@@ -1034,8 +1058,19 @@ export default function DashboardPage() {
                       border: `3px solid ${currentTheme.sidebar}`,
                       boxShadow: `0 8px 16px ${rarity.shadow}`,
                       zIndex: selectedDisplayBadges.length - index,
+                      cursor: 'help',
+                      transition: 'all 0.3s ease',
+                      animation: isFirstBadge ? 'badgePulse 2s ease-in-out infinite' : 'none',
                     }}
-                    title={badge.name}
+                    title={`${badge.name} - ${badge.rarity}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                      e.currentTarget.style.boxShadow = `0 12px 24px ${rarity.shadow}`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = `0 8px 16px ${rarity.shadow}`;
+                    }}
                   >
                     {badge.emoji}
                   </div>
@@ -1151,20 +1186,38 @@ export default function DashboardPage() {
                   background: 'rgba(255, 255, 255, 0.1)',
                   borderRadius: '10px',
                   overflow: 'hidden',
+                  position: 'relative',
                 }}>
+                  {/* Progress bar showing progression to next tier */}
                   <div style={{
                     height: '100%',
-                    width: `${((userData.level || 1) % 10) * 10}%`,
+                    width: `${((userData.level || 1) - 1) * 10 + (Math.min((userData.level || 1) % 1, 0.9) * 10)}%`,
                     background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
-                    transition: 'width 0.5s ease',
+                    transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)',
                   }} />
+                  {/* Milestone markers every 10% (every level) */}
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((milestone) => (
+                    <div
+                      key={milestone}
+                      style={{
+                        position: 'absolute',
+                        left: `${milestone * 10}%`,
+                        top: 0,
+                        height: '100%',
+                        width: '1px',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                      }}
+                    />
+                  ))}
                 </div>
                 <span style={{
                   fontSize: '10px',
                   color: currentTheme.textSecondary,
                   fontWeight: '600',
+                  whiteSpace: 'nowrap',
                 }}>
-                  {(userData.level || 1) % 10}/10
+                  Niv. {(userData.level || 1) % 10 || 10}/10
                 </span>
               </div>
             </div>
