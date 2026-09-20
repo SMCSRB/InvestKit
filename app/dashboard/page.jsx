@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEducationProgress } from '@/app/context/EducationContext';
@@ -137,6 +137,116 @@ export default function DashboardPage() {
     { id: 1, guildId: 'crypto-masters', author: 'Alice Dupont', avatar: '👩‍💼', title: 'Nouvelle stratégie DCA', content: 'On lance une nouvelle stratégie de Dollar-Cost Averaging pour BTC', timestamp: new Date(Date.now() - 3600000) },
     { id: 2, guildId: 'immobilier-pro', author: 'Bob Martin', avatar: '👨‍💻', title: 'Réunion en direct vendredi', content: 'Rdv zoom pour discuter des opportunités immobilières', timestamp: new Date(Date.now() - 7200000) },
   ]);
+
+  // 1. REAL-TIME NOTIFICATIONS - Système en temps réel
+  const [realtimeNotifications, setRealtimeNotifications] = useState([
+    { id: 1, type: 'new_follow', user: 'Alice Dupont', message: 'a commencé à vous suivre', timestamp: Date.now(), read: false, isNew: true }
+  ]);
+  const notificationIntervalRef = useRef(null);
+
+  // 2. CHAT GUILDES AMÉLIORÉ - Sidebar chat intégré
+  const [selectedGuildChat, setSelectedGuildChat] = useState(null);
+  const [guildChatMessages, setGuildChatMessages] = useState({
+    'crypto-masters': [
+      { id: 1, author: 'Alice', avatar: '👩‍💼', message: 'Qui pense que le BTC va atteindre 100k?', timestamp: new Date(Date.now() - 1800000) },
+      { id: 2, author: 'Bob', avatar: '👨‍💻', message: 'Possible d\'ici 2025!', timestamp: new Date(Date.now() - 1500000) },
+    ],
+    'immobilier-pro': [
+      { id: 1, author: 'Charlie', avatar: '🎯', message: 'Quelqu\'un a des sources de crédit immo?', timestamp: new Date(Date.now() - 3600000) },
+    ]
+  });
+  const [guildChatInput, setGuildChatInputNew] = useState('');
+
+  // 3. SYSTÈME DE NOTIFICATIONS PUSH - Alertes pop-up
+  const [pushNotifications, setPushNotifications] = useState([
+    { id: 1, title: '🎉 Félicitations!', message: 'Vous avez atteint le niveau 20!', type: 'success', timestamp: Date.now() }
+  ]);
+
+  // 4. PERSISTANCE DES DONNÉES - LocalStorage
+  useEffect(() => {
+    try {
+      const savedNotifications = localStorage.getItem('investkit_notifications');
+      if (savedNotifications) {
+        setNotifications(JSON.parse(savedNotifications));
+      }
+      const savedActivity = localStorage.getItem('investkit_activity');
+      if (savedActivity) {
+        setActivityFeed(JSON.parse(savedActivity));
+      }
+    } catch (e) {
+      console.log('LocalStorage not available');
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('investkit_notifications', JSON.stringify(notifications));
+    } catch (e) {
+      console.log('Could not save notifications');
+    }
+  }, [notifications]);
+
+  // Real-time notification simulation
+  useEffect(() => {
+    notificationIntervalRef.current = setInterval(() => {
+      const notificationMessages = [
+        { type: 'follow', user: 'Eve Martin', avatar: '📈', message: 'a commencé à vous suivre' },
+        { type: 'friend_request', user: 'Frank Leclerc', avatar: '🎸', message: 'vous a envoyé une demande d\'ami' },
+        { type: 'achievement', user: 'Grace Chen', avatar: '🌟', message: 'a déverrouillé "Expert Crypto"' },
+        { type: 'guild_join', user: 'Crypto Masters', avatar: '🏆', message: 'Henry Wilson a rejoint votre guilde' },
+      ];
+
+      // 30% chance d'une nouvelle notification toutes les 30 secondes
+      if (Math.random() > 0.7) {
+        const randomNotif = notificationMessages[Math.floor(Math.random() * notificationMessages.length)];
+        const newNotif = {
+          id: Math.max(...notifications.map(n => n.id), 0) + 1,
+          type: randomNotif.type,
+          user: randomNotif.user,
+          avatar: randomNotif.avatar,
+          message: randomNotif.message,
+          timestamp: new Date(),
+          read: false,
+        };
+
+        setNotifications(prev => [newNotif, ...prev]);
+
+        // Ajouter une push notification
+        setPushNotifications(prev => [{
+          id: Math.max(...prev.map(p => p.id), 0) + 1,
+          title: newNotif.user,
+          message: newNotif.message,
+          type: newNotif.type,
+          timestamp: Date.now(),
+        }, ...prev.slice(0, 4)]);
+      }
+    }, 30000); // Vérifier toutes les 30 secondes
+
+    return () => {
+      if (notificationIntervalRef.current) {
+        clearInterval(notificationIntervalRef.current);
+      }
+    };
+  }, [notifications]);
+
+  // 5. LEADERBOARD GUILDES - Ranking des membres
+  const [guildLeaderboards, setGuildLeaderboards] = useState({
+    'crypto-masters': [
+      { rank: 1, name: 'Alice Dupont', xp: 5000, contribution: 85, avatar: '👩‍💼' },
+      { rank: 2, name: 'Bob Martin', xp: 4200, contribution: 72, avatar: '👨‍💻' },
+      { rank: 3, name: 'You', xp: 3500, contribution: 60, avatar: '👤' },
+    ],
+    'immobilier-pro': [
+      { rank: 1, name: 'Diana Laurent', xp: 6000, contribution: 90, avatar: '💪' },
+      { rank: 2, name: 'You', xp: 4800, contribution: 75, avatar: '👤' },
+    ]
+  });
+
+  // 6. SYSTÈME DE POINTS GUILDE - Trésor/points partagés
+  const [guildTreasures, setGuildTreasures] = useState({
+    'crypto-masters': { totalPoints: 2500, members: 35, level: 3, nextLevel: 3500, recentContributions: [{ member: 'Alice', points: 100, action: 'Partage stratégie' }] },
+    'immobilier-pro': { totalPoints: 1800, members: 18, level: 2, nextLevel: 2000, recentContributions: [{ member: 'Diana', points: 80, action: 'Mentor newbie' }] },
+  });
 
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
@@ -5760,7 +5870,7 @@ export default function DashboardPage() {
                 overflowX: 'auto',
                 borderBottom: `2px solid ${currentTheme.border}`,
               }}>
-                {['info', 'events', 'announcements', 'members', 'chat'].map((tab) => (
+                {['info', 'leaderboard', 'treasure', 'events', 'announcements', 'members', 'chat'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setSelectedGuildeTab(tab)}
@@ -5778,6 +5888,8 @@ export default function DashboardPage() {
                     }}
                   >
                     {tab === 'info' && 'ℹ️ Info'}
+                    {tab === 'leaderboard' && '🏆 Ranking'}
+                    {tab === 'treasure' && '💰 Trésor'}
                     {tab === 'events' && '🎯 Événements'}
                     {tab === 'announcements' && '📢 Annonces'}
                     {tab === 'members' && '👥 Membres'}
@@ -5927,6 +6039,238 @@ export default function DashboardPage() {
                 👋 Quitter la Guilde
               </button>
               </>
+              )}
+
+              {/* TAB: Leaderboard - Ranking des membres */}
+              {selectedGuildeTab === 'leaderboard' && (
+                <div>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    🏆 Ranking des Membres
+                  </p>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    {guildLeaderboards[selectedGuilde.id]?.map((member) => (
+                      <div
+                        key={member.rank}
+                        style={{
+                          padding: '12px',
+                          background: member.rank === 1 ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%)' :
+                                      member.rank === 2 ? 'linear-gradient(135deg, rgba(107, 114, 128, 0.15) 0%, rgba(75, 85, 99, 0.05) 100%)' :
+                                      member.rank === 3 ? 'linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(161, 98, 7, 0.05) 100%)' :
+                                      'rgba(59, 130, 246, 0.08)',
+                          borderRadius: '10px',
+                          border: `1.5px solid ${
+                            member.rank === 1 ? 'rgba(245, 158, 11, 0.3)' :
+                            member.rank === 2 ? 'rgba(107, 114, 128, 0.3)' :
+                            member.rank === 3 ? 'rgba(217, 119, 6, 0.3)' :
+                            'rgba(59, 130, 246, 0.2)'
+                          }`,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: member.rank === 1 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+                                        member.rank === 2 ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)' :
+                                        member.rank === 3 ? 'linear-gradient(135deg, #d97706 0%, #a16207 100%)' :
+                                        'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: '700',
+                            color: '#fff',
+                            fontSize: '14px',
+                            flexShrink: 0,
+                          }}>
+                            {member.rank === 1 ? '🥇' : member.rank === 2 ? '🥈' : member.rank === 3 ? '🥉' : member.rank}
+                          </div>
+                          <div>
+                            <p style={{
+                              margin: '0 0 2px 0',
+                              fontSize: '13px',
+                              fontWeight: '700',
+                              color: currentTheme.text,
+                            }}>
+                              {member.name}
+                            </p>
+                            <p style={{
+                              margin: 0,
+                              fontSize: '11px',
+                              color: currentTheme.textSecondary,
+                            }}>
+                              {member.xp} XP
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{
+                          textAlign: 'right',
+                        }}>
+                          <p style={{
+                            margin: '0 0 2px 0',
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            color: '#3b82f6',
+                          }}>
+                            {member.contribution}%
+                          </p>
+                          <p style={{
+                            margin: 0,
+                            fontSize: '10px',
+                            color: currentTheme.textSecondary,
+                          }}>
+                            contribution
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: Trésor - Système de points partagés */}
+              {selectedGuildeTab === 'treasure' && (
+                <div>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    💰 Trésor de Guilde
+                  </p>
+
+                  {guildTreasures[selectedGuilde.id] && (
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      {/* Treasury Stats */}
+                      <div style={{
+                        padding: '14px',
+                        background: `linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.05) 100%)`,
+                        borderRadius: '10px',
+                        border: '1.5px solid rgba(34, 197, 94, 0.3)',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Points Totaux</span>
+                          <span style={{ fontSize: '14px', fontWeight: '700', color: '#22c55e' }}>
+                            {guildTreasures[selectedGuilde.id].totalPoints}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Niveau</span>
+                          <span style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text }}>
+                            Niveau {guildTreasures[selectedGuilde.id].level}
+                          </span>
+                        </div>
+                        <div style={{
+                          height: '6px',
+                          background: 'rgba(34, 197, 94, 0.2)',
+                          borderRadius: '3px',
+                          overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${(guildTreasures[selectedGuilde.id].totalPoints / guildTreasures[selectedGuilde.id].nextLevel) * 100}%`,
+                            background: 'linear-gradient(90deg, #22c55e 0%, #10b981 100%)',
+                            transition: 'width 0.5s ease',
+                          }} />
+                        </div>
+                        <p style={{
+                          fontSize: '10px',
+                          color: currentTheme.textSecondary,
+                          margin: '6px 0 0 0',
+                        }}>
+                          {guildTreasures[selectedGuilde.id].totalPoints} / {guildTreasures[selectedGuilde.id].nextLevel} pour le prochain niveau
+                        </p>
+                      </div>
+
+                      {/* Guild Stats */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '10px',
+                      }}>
+                        <div style={{
+                          padding: '12px',
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(59, 130, 246, 0.2)',
+                          textAlign: 'center',
+                        }}>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: currentTheme.textSecondary }}>Membres</p>
+                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: currentTheme.accent }}>
+                            {guildTreasures[selectedGuilde.id].members}
+                          </p>
+                        </div>
+                        <div style={{
+                          padding: '12px',
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          textAlign: 'center',
+                        }}>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: currentTheme.textSecondary }}>Moy. par membre</p>
+                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#8b5cf6' }}>
+                            {Math.round(guildTreasures[selectedGuilde.id].totalPoints / guildTreasures[selectedGuilde.id].members)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Recent Contributions */}
+                      <div>
+                        <p style={{
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: currentTheme.textSecondary,
+                          margin: '0 0 8px 0',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}>
+                          📈 Contributions Récentes
+                        </p>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          {guildTreasures[selectedGuilde.id].recentContributions?.map((contrib, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                padding: '10px',
+                                background: 'rgba(245, 158, 11, 0.08)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(245, 158, 11, 0.15)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <div>
+                                <p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: currentTheme.text }}>
+                                  {contrib.member}
+                                </p>
+                                <p style={{ margin: 0, fontSize: '11px', color: currentTheme.textSecondary }}>
+                                  {contrib.action}
+                                </p>
+                              </div>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#f59e0b' }}>
+                                +{contrib.points}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* TAB: Events */}
@@ -8313,6 +8657,118 @@ export default function DashboardPage() {
           `}</style>
         </div>
       )}
+
+      {/* PUSH NOTIFICATIONS - Système de notifications pop-up en temps réel */}
+      <div style={{
+        position: 'fixed',
+        top: '24px',
+        right: '24px',
+        zIndex: 10000,
+        display: 'grid',
+        gap: '12px',
+        maxWidth: '360px',
+      }}>
+        {pushNotifications.map((notif, idx) => (
+          <div
+            key={notif.id}
+            style={{
+              padding: '16px',
+              background: `linear-gradient(135deg, ${
+                notif.type === 'success' ? 'rgba(16, 185, 129, 0.15)' :
+                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.15)' :
+                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.15)' :
+                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.15)' :
+                'rgba(59, 130, 246, 0.15)'
+              } 0%, ${
+                notif.type === 'success' ? 'rgba(16, 185, 129, 0.05)' :
+                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.05)' :
+                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.05)' :
+                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.05)' :
+                'rgba(59, 130, 246, 0.05)'
+              } 100%)`,
+              border: `1.5px solid ${
+                notif.type === 'success' ? 'rgba(16, 185, 129, 0.3)' :
+                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.3)' :
+                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.3)' :
+                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.3)' :
+                'rgba(59, 130, 246, 0.3)'
+              }`,
+              borderRadius: '14px',
+              backdropFilter: 'blur(10px)',
+              boxShadow: `0 12px 32px rgba(0, 0, 0, 0.3)`,
+              animation: `slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateX(-8px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateX(0)';
+            }}
+            onClick={() => {
+              setPushNotifications(prev => prev.filter(p => p.id !== notif.id));
+            }}
+          >
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
+              <span style={{ fontSize: '20px', flexShrink: 0 }}>
+                {notif.type === 'success' ? '🎉' :
+                 notif.type === 'follow' ? '👤' :
+                 notif.type === 'achievement' ? '🏆' :
+                 notif.type === 'guild_join' ? '👥' :
+                 '🔔'}
+              </span>
+              <div style={{ flex: 1 }}>
+                <p style={{
+                  color: currentTheme.text,
+                  fontWeight: '700',
+                  margin: '0 0 4px 0',
+                  fontSize: '13px',
+                }}>
+                  {notif.title}
+                </p>
+                <p style={{
+                  color: currentTheme.textSecondary,
+                  fontSize: '12px',
+                  margin: 0,
+                }}>
+                  {notif.message}
+                </p>
+              </div>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: currentTheme.textSecondary,
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  padding: 0,
+                  flexShrink: 0,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPushNotifications(prev => prev.filter(p => p.id !== notif.id));
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(400px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
