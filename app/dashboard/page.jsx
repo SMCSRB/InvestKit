@@ -610,12 +610,6 @@ export default function DashboardPage() {
     },
   ]);
 
-  const [notifications] = useState([
-    { id: 1, type: 'alert', title: 'Rebalancement Recommandé', message: 'Allocation dérivée de 3%', time: 'il y a 2h', severity: 'high' },
-    { id: 2, type: 'info', title: 'Dividende Reçu', message: '€145.50 versé sur PEA', time: 'il y a 4h', severity: 'medium' },
-    { id: 3, type: 'alert', title: 'Volatilité Élevée', message: 'BTC +5.2% aujourd\'hui', time: 'il y a 6h', severity: 'medium' },
-  ]);
-
   const [projects] = useState([
     {
       id: 1,
