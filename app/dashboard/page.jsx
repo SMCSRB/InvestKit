@@ -172,6 +172,14 @@ export default function DashboardPage() {
       if (savedActivity) {
         setActivityFeed(JSON.parse(savedActivity));
       }
+      const savedLeaderboards = localStorage.getItem('investkit_leaderboards');
+      if (savedLeaderboards) {
+        setGuildLeaderboards(JSON.parse(savedLeaderboards));
+      }
+      const savedTreasures = localStorage.getItem('investkit_treasures');
+      if (savedTreasures) {
+        setGuildTreasures(JSON.parse(savedTreasures));
+      }
     } catch (e) {
       console.log('LocalStorage not available');
     }
@@ -180,10 +188,13 @@ export default function DashboardPage() {
   useEffect(() => {
     try {
       localStorage.setItem('investkit_notifications', JSON.stringify(notifications));
+      localStorage.setItem('investkit_activity', JSON.stringify(activityFeed));
+      localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
+      localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
     } catch (e) {
-      console.log('Could not save notifications');
+      console.log('Could not save data to localStorage');
     }
-  }, [notifications]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures]);
 
   // Real-time notification simulation
   useEffect(() => {
@@ -211,13 +222,19 @@ export default function DashboardPage() {
         setNotifications(prev => [newNotif, ...prev]);
 
         // Ajouter une push notification
+        const pushNotifId = Math.max(...pushNotifications.map(p => p.id), 0) + 1;
         setPushNotifications(prev => [{
-          id: Math.max(...prev.map(p => p.id), 0) + 1,
+          id: pushNotifId,
           title: newNotif.user,
           message: newNotif.message,
           type: newNotif.type,
           timestamp: Date.now(),
         }, ...prev.slice(0, 4)]);
+
+        // Auto-dismiss push notification after 5 seconds
+        setTimeout(() => {
+          setPushNotifications(prev => prev.filter(p => p.id !== pushNotifId));
+        }, 5000);
       }
     }, 30000); // Vérifier toutes les 30 secondes
 
@@ -226,7 +243,7 @@ export default function DashboardPage() {
         clearInterval(notificationIntervalRef.current);
       }
     };
-  }, [notifications]);
+  }, [notifications, pushNotifications]);
 
   // 5. LEADERBOARD GUILDES - Ranking des membres
   const [guildLeaderboards, setGuildLeaderboards] = useState({
