@@ -18,6 +18,8 @@ export default function GuildPage() {
   const [guildChatInput, setGuildChatInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [memberActionMenu, setMemberActionMenu] = useState(null);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
 
   // Load guildes from localStorage
   useEffect(() => {
@@ -30,12 +32,56 @@ export default function GuildPage() {
         const guilde = parsed.find(g => g.id === parseInt(params.id));
         if (guilde) {
           setSelectedGuilde(guilde);
+          setPinnedMessages(guilde.pinnedMessages || []);
+          setActivityLog(guilde.activityLog || []);
         }
       }
     } catch (error) {
       console.error('Erreur lors du chargement des guildes:', error);
     }
   }, [params.id]);
+
+  const isLeader = userData?.name === selectedGuilde?.leader;
+
+  const togglePinnedMessage = (messageId) => {
+    const isPinned = pinnedMessages.find(pm => pm.id === messageId);
+    const updatedPinned = isPinned
+      ? pinnedMessages.filter(pm => pm.id !== messageId)
+      : [...pinnedMessages, selectedGuilde.chat.find(m => m.id === messageId)];
+
+    setPinnedMessages(updatedPinned);
+    setGuildes(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, pinnedMessages: updatedPinned }
+        : g
+    ));
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, pinnedMessages: updatedPinned }
+        : g
+    )));
+  };
+
+  const addActivity = (type, description) => {
+    const newActivity = {
+      id: Math.random(),
+      type,
+      description,
+      timestamp: new Date(),
+    };
+    const updatedActivity = [newActivity, ...activityLog];
+    setActivityLog(updatedActivity);
+    setGuildes(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, activityLog: updatedActivity }
+        : g
+    ));
+    localStorage.setItem('guildes', JSON.stringify(guildes.map(g =>
+      g.id === selectedGuilde.id
+        ? { ...g, activityLog: updatedActivity }
+        : g
+    )));
+  };
 
   const theme = {
     dark: {
@@ -111,6 +157,7 @@ export default function GuildPage() {
           : g
       )));
 
+      addActivity('message', `${newMessage.author} a envoyé un message 💬`);
       setGuildChatInput('');
     }
   };
@@ -188,6 +235,9 @@ export default function GuildPage() {
           {[
             { id: 'info', label: '📊 Info', icon: '📊' },
             { id: 'members', label: '👥 Membres', icon: '👥' },
+            { id: 'announcements', label: '📌 Annonces', icon: '📌' },
+            { id: 'stats', label: '📈 Stats', icon: '📈' },
+            { id: 'activity', label: '📊 Activité', icon: '📊' },
             { id: 'chat', label: '💬 Chat', icon: '💬' },
           ].map((tab) => (
             <button
@@ -412,6 +462,360 @@ export default function GuildPage() {
                 </span>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'announcements' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}>
+            {pinnedMessages.length === 0 ? (
+              <div style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                background: currentTheme.cardBg,
+                borderRadius: '12px',
+                border: `1px solid ${currentTheme.border}`,
+              }}>
+                <p style={{
+                  color: currentTheme.textSecondary,
+                  fontSize: '14px',
+                  margin: 0,
+                }}>
+                  📌 Aucune annonce épinglée pour le moment
+                </p>
+              </div>
+            ) : (
+              pinnedMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  style={{
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%)',
+                    borderRadius: '12px',
+                    border: `2px solid rgba(251, 191, 36, 0.3)`,
+                    position: 'relative',
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: '16px',
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '12px',
+                      }}>
+                        <span style={{
+                          fontSize: '20px',
+                        }}>
+                          📌
+                        </span>
+                        <p style={{
+                          color: currentTheme.text,
+                          fontWeight: '700',
+                          fontSize: '16px',
+                          margin: 0,
+                        }}>
+                          {msg.author}
+                        </p>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          color: '#fbbf24',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          padding: '2px 6px',
+                          background: 'rgba(251, 191, 36, 0.2)',
+                          borderRadius: '4px',
+                        }}>
+                          Leader
+                        </span>
+                      </div>
+                      <p style={{
+                        color: currentTheme.text,
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        margin: '0 0 12px 0',
+                      }}>
+                        {msg.message}
+                      </p>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '12px',
+                        margin: 0,
+                      }}>
+                        {msg.timestamp}
+                      </p>
+                    </div>
+                    {isLeader && (
+                      <button
+                        onClick={() => togglePinnedMessage(msg.id)}
+                        style={{
+                          padding: '8px 12px',
+                          background: 'rgba(251, 191, 36, 0.2)',
+                          border: `1px solid rgba(251, 191, 36, 0.4)`,
+                          borderRadius: '6px',
+                          color: '#fbbf24',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(251, 191, 36, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(251, 191, 36, 0.2)';
+                        }}
+                      >
+                        Dépingler
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'stats' && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '20px',
+          }}>
+            {/* Total XP */}
+            <div style={{
+              padding: '24px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+              textAlign: 'center',
+            }}>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '0 0 12px 0',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                fontWeight: '600',
+              }}>
+                Total XP Gagné
+              </p>
+              <p style={{
+                color: currentTheme.accent,
+                fontSize: '36px',
+                fontWeight: '700',
+                margin: 0,
+              }}>
+                {selectedGuilde.totalXP}
+              </p>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '8px 0 0 0',
+              }}>
+                💪 Niveau {selectedGuilde.level}/20
+              </p>
+            </div>
+
+            {/* Domains Completed */}
+            <div style={{
+              padding: '24px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+              textAlign: 'center',
+            }}>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '0 0 12px 0',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                fontWeight: '600',
+              }}>
+                Domaines Complétés
+              </p>
+              <p style={{
+                color: currentTheme.accent,
+                fontSize: '36px',
+                fontWeight: '700',
+                margin: 0,
+              }}>
+                {selectedGuilde.domainsCompleted || 0}/4
+              </p>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '8px 0 0 0',
+              }}>
+                ✅ Progression
+              </p>
+            </div>
+
+            {/* Most Active Member */}
+            <div style={{
+              padding: '24px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+              textAlign: 'center',
+            }}>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '0 0 12px 0',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                fontWeight: '600',
+              }}>
+                Membre le Plus Actif
+              </p>
+              <p style={{
+                color: currentTheme.text,
+                fontSize: '16px',
+                fontWeight: '700',
+                margin: '0 0 8px 0',
+              }}>
+                {selectedGuilde.membersList && selectedGuilde.membersList.length > 0
+                  ? selectedGuilde.membersList[0].name
+                  : 'N/A'}
+              </p>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '8px 0 0 0',
+              }}>
+                ⭐ {selectedGuilde.membersList && selectedGuilde.membersList.length > 0
+                  ? selectedGuilde.membersList[0].level
+                  : 0} Niveau
+              </p>
+            </div>
+
+            {/* Global Progression */}
+            <div style={{
+              padding: '24px',
+              background: currentTheme.cardBg,
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.border}`,
+              textAlign: 'center',
+            }}>
+              <p style={{
+                color: currentTheme.textSecondary,
+                fontSize: '12px',
+                margin: '0 0 12px 0',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                fontWeight: '600',
+              }}>
+                Progression Globale
+              </p>
+              <p style={{
+                color: currentTheme.accent,
+                fontSize: '36px',
+                fontWeight: '700',
+                margin: 0,
+              }}>
+                {Math.round((selectedGuilde.level / 20) * 100)}%
+              </p>
+              <div style={{
+                width: '100%',
+                height: '6px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                marginTop: '12px',
+              }}>
+                <div style={{
+                  width: `${(selectedGuilde.level / 20) * 100}%`,
+                  height: '100%',
+                  background: `linear-gradient(90deg, ${currentTheme.accent}, #8b5cf6)`,
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'activity' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}>
+            {activityLog.length === 0 ? (
+              <div style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                background: currentTheme.cardBg,
+                borderRadius: '12px',
+                border: `1px solid ${currentTheme.border}`,
+              }}>
+                <p style={{
+                  color: currentTheme.textSecondary,
+                  fontSize: '14px',
+                  margin: 0,
+                }}>
+                  📊 Aucune activité pour le moment
+                </p>
+              </div>
+            ) : (
+              activityLog.map((activity) => {
+                const timeAgo = Math.floor((new Date() - new Date(activity.timestamp)) / 1000);
+                let timeDisplay = '';
+                if (timeAgo < 60) timeDisplay = 'À l\'instant';
+                else if (timeAgo < 3600) timeDisplay = `${Math.floor(timeAgo / 60)}m`;
+                else if (timeAgo < 86400) timeDisplay = `${Math.floor(timeAgo / 3600)}h`;
+                else timeDisplay = `${Math.floor(timeAgo / 86400)}j`;
+
+                return (
+                  <div
+                    key={activity.id}
+                    style={{
+                      padding: '16px',
+                      background: currentTheme.cardBg,
+                      borderRadius: '10px',
+                      border: `1px solid ${currentTheme.border}`,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <p style={{
+                        color: currentTheme.text,
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        margin: '0 0 4px 0',
+                      }}>
+                        {activity.description}
+                      </p>
+                      <p style={{
+                        color: currentTheme.textSecondary,
+                        fontSize: '12px',
+                        margin: 0,
+                      }}>
+                        {timeDisplay}
+                      </p>
+                    </div>
+                    <span style={{
+                      fontSize: '18px',
+                      opacity: 0.7,
+                    }}>
+                      {activity.type === 'message' ? '💬' : activity.type === 'join' ? '🎉' : activity.type === 'level' ? '⬆️' : '✨'}
+                    </span>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
 
