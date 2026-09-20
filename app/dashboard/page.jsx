@@ -1461,61 +1461,113 @@ export default function DashboardPage() {
               {/* Badge Showcase - Display Pinned Badges */}
               {pinnedBadges.length > 0 && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
-                  border: '2px solid rgba(251, 191, 36, 0.2)',
-                  borderRadius: '12px',
-                  padding: '12px',
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(236, 72, 153, 0.1) 100%)',
+                  border: '2px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '14px',
+                  padding: '14px',
                   marginBottom: '12px',
                   position: 'relative',
+                  overflow: 'hidden',
+                  backdropFilter: 'blur(8px)',
                 }}>
                   <div style={{
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    color: 'rgba(251, 191, 36, 0.8)',
-                    marginBottom: '8px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    position: 'relative',
+                    zIndex: 1,
                   }}>
-                    ⭐ Mes Favoris
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    flexWrap: 'wrap',
-                  }}>
-                    {pinnedBadges.map(badgeId => {
-                      const badge = badgeDefinitions[badgeId];
-                      return (
-                        <div key={badgeId} style={{
-                          background: getBadgeRarityColor(badge.rarity),
-                          border: getBadgeRarityBorder(badge.rarity),
-                          borderRadius: '10px',
-                          padding: '8px 10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                          e.currentTarget.style.boxShadow = `0 8px 16px rgba(0, 0, 0, 0.3)`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        title={badge.description}
-                        onClick={() => togglePinnedBadge(badgeId)}
-                        >
-                          <span>{badge.emoji}</span>
-                          <span style={{ fontSize: '11px' }}>{badge.name}</span>
-                        </div>
-                      );
-                    })}
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      color: '#fbbf24',
+                      marginBottom: '10px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}>
+                      <span>⭐</span>
+                      <span>Mes Favoris</span>
+                      <span style={{
+                        marginLeft: 'auto',
+                        background: 'rgba(251, 191, 36, 0.2)',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                      }}>
+                        {pinnedBadges.length}/3
+                      </span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      gap: '10px',
+                      flexWrap: 'wrap',
+                    }}>
+                      {pinnedBadges.map((badgeId, idx) => {
+                        const badge = badgeDefinitions[badgeId];
+                        const rarityGlow = {
+                          common: '#64748b',
+                          rare: '#3b82f6',
+                          very_rare: '#a855f7',
+                          unique: '#fbbf24',
+                        };
+                        return (
+                          <div key={badgeId} style={{
+                            background: getBadgeRarityColor(badge.rarity),
+                            border: getBadgeRarityBorder(badge.rarity),
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            position: 'relative',
+                            boxShadow: `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${rarityGlow[badge.rarity]}66`,
+                            flex: idx === 0 ? '1' : 'auto',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+                            e.currentTarget.style.boxShadow = `0 12px 24px rgba(0, 0, 0, 0.3), 0 0 20px ${rarityGlow[badge.rarity]}`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                            e.currentTarget.style.boxShadow = `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${rarityGlow[badge.rarity]}66`;
+                          }}
+                          title={`${badge.name}\n${badge.description}\nClique pour débloquer`}
+                          onClick={() => togglePinnedBadge(badgeId)}
+                          >
+                            <span style={{
+                              fontSize: '20px',
+                              filter: `drop-shadow(0 0 6px ${rarityGlow[badge.rarity]})`,
+                            }}>
+                              {badge.emoji}
+                            </span>
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '2px',
+                            }}>
+                              <span style={{ fontSize: '12px', fontWeight: '800' }}>
+                                {badge.name}
+                              </span>
+                              <span style={{
+                                fontSize: '9px',
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                fontWeight: '600',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                              }}>
+                                {badge.rarity.replace('_', ' ')} • {badge.xp} XP
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1674,71 +1726,131 @@ export default function DashboardPage() {
               progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
             ).length > 0 && (
               <div style={{
-                background: 'rgba(168, 85, 247, 0.1)',
-                border: '1px solid rgba(168, 85, 247, 0.2)',
-                borderRadius: '12px',
-                padding: '12px',
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%)',
+                border: '2px solid rgba(168, 85, 247, 0.3)',
+                borderRadius: '14px',
+                padding: '14px',
                 marginTop: '12px',
+                position: 'relative',
+                overflow: 'hidden',
               }}>
                 <div style={{
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  color: 'rgba(168, 85, 247, 0.8)',
-                  marginBottom: '8px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  position: 'relative',
+                  zIndex: 1,
                 }}>
-                  🎯 Presque débloqués
-                </div>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}>
-                  {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
-                    progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
-                  ).slice(0, 3).map(([badgeId, progress]) => {
-                    const badge = badgeDefinitions[badgeId];
-                    return (
-                      <div key={badgeId} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '12px',
-                      }}>
-                        <span style={{ fontSize: '16px' }}>{badge.emoji}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            fontSize: '11px',
-                            marginBottom: '3px',
+                  <div style={{
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    color: '#a855f7',
+                    marginBottom: '12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    <span>🎯</span>
+                    <span>Presque Débloqués</span>
+                    <span style={{
+                      marginLeft: 'auto',
+                      background: 'rgba(168, 85, 247, 0.3)',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                    }}>
+                      {Object.values(badgeUnlockProgress).filter(p => p.percent > 0 && p.percent < 100).length} badges
+                    </span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                  }}>
+                    {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
+                      progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
+                    ).slice(0, 3).map(([badgeId, progress]) => {
+                      const badge = badgeDefinitions[badgeId];
+                      return (
+                        <div key={badgeId} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          fontSize: '12px',
+                          padding: '8px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(168, 85, 247, 0.15)',
+                          transition: 'all 0.3s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(168, 85, 247, 0.08)';
+                          e.currentTarget.style.border = '1px solid rgba(168, 85, 247, 0.3)';
+                          e.currentTarget.style.transform = 'translateX(4px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                          e.currentTarget.style.border = '1px solid rgba(168, 85, 247, 0.15)';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                        }}>
+                          <span style={{
+                            fontSize: '18px',
+                            filter: `drop-shadow(0 0 4px rgba(168, 85, 247, 0.6))`,
                           }}>
-                            {badge.name}
+                            {badge.emoji}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              color: '#fff',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              marginBottom: '4px',
+                            }}>
+                              {badge.name}
+                            </div>
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.08)',
+                              borderRadius: '6px',
+                              height: '6px',
+                              overflow: 'hidden',
+                              position: 'relative',
+                              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
+                            }}>
+                              <div style={{
+                                background: `linear-gradient(90deg, #a855f7 0%, #ec4899 ${progress.percent}%, rgba(168, 85, 247, 0.2) ${progress.percent}%, rgba(168, 85, 247, 0.2) 100%)`,
+                                height: '100%',
+                                width: '100%',
+                                transition: 'background 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                borderRadius: '6px',
+                                boxShadow: `0 0 8px rgba(236, 72, 153, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)`,
+                              }} />
+                            </div>
                           </div>
                           <div style={{
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            borderRadius: '4px',
-                            height: '4px',
-                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '2px',
                           }}>
-                            <div style={{
-                              background: `linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%)`,
-                              height: '100%',
-                              width: `${progress.percent}%`,
-                              transition: 'width 0.3s ease',
-                            }} />
+                            <span style={{
+                              fontSize: '11px',
+                              color: '#a855f7',
+                              fontWeight: '700',
+                            }}>
+                              {progress.percent}%
+                            </span>
+                            <span style={{
+                              fontSize: '8px',
+                              color: 'rgba(255, 255, 255, 0.4)',
+                              fontWeight: '600',
+                            }}>
+                              {progress.current}/{progress.required}
+                            </span>
                           </div>
                         </div>
-                        <span style={{
-                          fontSize: '10px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          fontWeight: '600',
-                        }}>
-                          {progress.percent}%
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
