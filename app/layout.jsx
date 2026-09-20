@@ -1,3 +1,4 @@
+import './globals.css';
 import ClientLayoutWrapper from '@/app/components/ClientLayoutWrapper';
 
 export const metadata = {

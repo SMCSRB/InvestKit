@@ -24,6 +24,20 @@ export const env = {
 
   // CORS
   corsOrigin: process.env.CORS_ORIGIN || '*',
+
+  // Email Configuration
+  emailProvider: process.env.EMAIL_PROVIDER || 'ethereal', // 'resend', 'ethereal', or 'smtp'
+  resendApiKey: process.env.RESEND_API_KEY,
+  emailFrom: process.env.EMAIL_FROM || 'noreply@investkit.com',
+
+  // SMTP Configuration (for Gmail, Outlook, etc.)
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    secure: process.env.SMTP_SECURE === 'true',
+  },
 };
 
 // Validation

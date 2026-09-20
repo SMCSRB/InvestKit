@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      padding: '40px 24px 60px',
+      padding: 'clamp(30px, 8vw, 40px) clamp(16px, 4vw, 24px) clamp(40px, 10vw, 60px)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     }}>
       <style>{`
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         margin: '0 auto',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
-        padding: '48px 40px',
+        padding: 'clamp(30px, 6vw, 48px) clamp(20px, 5vw, 40px)',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         backdropFilter: 'blur(20px)',
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{
-            fontSize: '36px',
+            fontSize: 'clamp(24px, 7vw, 36px)',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',

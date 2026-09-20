@@ -24,7 +24,7 @@ export default function PEASimulatorPage() {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      padding: '24px',
+      padding: 'clamp(16px, 4vw, 24px)',
     }}>
       <div style={{
         maxWidth: '1600px',
@@ -35,9 +35,11 @@ export default function PEASimulatorPage() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px',
         }}>
           <h1 style={{
-            fontSize: '28px',
+            fontSize: 'clamp(20px, 6vw, 28px)',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -50,15 +52,16 @@ export default function PEASimulatorPage() {
           <button
             onClick={() => router.back()}
             style={{
-              padding: '10px 20px',
+              padding: 'clamp(8px, 2vw, 10px) clamp(12px, 4vw, 20px)',
               background: 'rgba(255, 255, 255, 0.1)',
               color: 'white',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: '8px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: 'clamp(12px, 3vw, 14px)',
               fontWeight: '600',
               transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
               e.target.style.background = 'rgba(255, 255, 255, 0.15)';

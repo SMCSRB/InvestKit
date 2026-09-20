@@ -4,36 +4,33 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const EducationContext = createContext();
 
+const DEFAULT_PROGRESS = {
+  completedChapters: [],
+  completedDomains: [],
+  totalXP: 9500,
+  userLevel: 20,
+  streak: 0,
+  maxStreak: 0,
+  badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
+  notes: {},
+  attempts: {},
+  selectedTheme: 'dark',
+  domainsProgress: {
+    crypto: 100,
+    stocks: 100,
+    bonds: 100,
+    realestate: 100,
+  },
+};
+
 export function EducationProvider({ children }) {
-  const [progress, setProgress] = useState({
-    completedChapters: [],
-    completedDomains: [],
-    totalXP: 0,
-    userLevel: 1,
-    streak: 0,
-    maxStreak: 0,
-    badges: [],
-    notes: {}, // { "domainId-chapterId": "note text" }
-    attempts: {}, // { "domainId-chapterId": attemptCount }
-    selectedTheme: 'dark', // Theme seleccionado
-  });
+  const [progress, setProgress] = useState(DEFAULT_PROGRESS);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem('educationProgress');
-    if (savedProgress) {
-      try {
-        const parsed = JSON.parse(savedProgress);
-        setProgress((prev) => ({
-          ...prev,
-          ...parsed,
-          notes: parsed.notes || {},
-          attempts: parsed.attempts || {},
-        }));
-      } catch (error) {
-        console.error('Erreur lors du chargement de la progression:', error);
-      }
-    }
+    // Always use default progress - override any old localStorage data
+    localStorage.setItem('educationProgress', JSON.stringify(DEFAULT_PROGRESS));
+    setProgress(DEFAULT_PROGRESS);
     setIsLoading(false);
   }, []);
 
@@ -170,14 +167,20 @@ export function EducationProvider({ children }) {
     setProgress({
       completedChapters: [],
       completedDomains: [],
-      totalXP: 0,
-      userLevel: 1,
+      totalXP: 9500,
+      userLevel: 20,
       streak: 0,
       maxStreak: 0,
-      badges: [],
+      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
       notes: {},
       attempts: {},
       selectedTheme: 'dark',
+      domainsProgress: {
+        crypto: 100,
+        stocks: 100,
+        bonds: 100,
+        realestate: 100,
+      },
     });
   };
 

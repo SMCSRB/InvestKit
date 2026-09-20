@@ -3,16 +3,26 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import styles from './page.module.css';
 
 export default function HomePage() {
   const router = useRouter();
   const [hoveredCard, setHoveredCard] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     setIsAuthenticated(!!token);
+  }, []);
+
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+    return () => window.removeEventListener('resize', checkMobileView);
   }, []);
 
   return (
@@ -31,13 +41,14 @@ export default function HomePage() {
         <nav style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '20px 40px',
+          padding: 'clamp(12px, 3vw, 20px) clamp(16px, 4vw, 40px)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          position: 'relative',
         }}>
           <Link href="/" style={{
-            fontSize: '24px',
+            fontSize: 'clamp(20px, 5vw, 24px)',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
             WebkitBackgroundClip: 'text',
@@ -49,11 +60,14 @@ export default function HomePage() {
           }}>
             💎 InvestKit
           </Link>
+
+          {/* Desktop Menu */}
+          {!isMobileView && (
           <div style={{
             display: 'flex',
             gap: '32px',
             alignItems: 'center',
-          }}>
+          }} className="desktop-menu">
             <Link href="/" style={{
               fontSize: '14px',
               fontWeight: '500',
@@ -175,7 +189,157 @@ export default function HomePage() {
               </>
             )}
           </div>
+          )}
+
+          {/* Mobile Hamburger Button */}
+          {isMobileView && (
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+            }}
+          >
+            <div style={{
+              width: '24px',
+              height: '2px',
+              background: 'white',
+              transition: 'all 0.3s',
+              transform: mobileMenuOpen ? 'rotate(45deg) translateY(11px)' : 'rotate(0)',
+            }} />
+            <div style={{
+              width: '24px',
+              height: '2px',
+              background: 'white',
+              transition: 'opacity 0.3s',
+              opacity: mobileMenuOpen ? 0 : 1,
+            }} />
+            <div style={{
+              width: '24px',
+              height: '2px',
+              background: 'white',
+              transition: 'all 0.3s',
+              transform: mobileMenuOpen ? 'rotate(-45deg) translateY(-11px)' : 'rotate(0)',
+            }} />
+          </button>
+          )}
         </nav>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileView && mobileMenuOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%)',
+          borderBottom: '1px solid rgba(59, 130, 246, 0.15)',
+          backdropFilter: 'blur(20px)',
+          padding: 'clamp(16px, 4vw, 24px)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          zIndex: 99,
+        }}>
+          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Accueil
+          </Link>
+          <Link href="/outils" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Outils
+          </Link>
+          <Link href="/education" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Éducation
+          </Link>
+          <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'rgba(255, 255, 255, 0.7)',
+            textDecoration: 'none',
+            padding: '8px 0',
+          }}>
+            Tarifs
+          </Link>
+          <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.1)' }} />
+
+          {isAuthenticated ? (
+            <>
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.7)',
+                textDecoration: 'none',
+                padding: '8px 0',
+              }}>
+                📊 Dashboard
+              </Link>
+              <button onClick={() => {
+                localStorage.removeItem('token');
+                setIsAuthenticated(false);
+                setMobileMenuOpen(false);
+                router.push('/');
+              }} style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.7)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px 0',
+                textAlign: 'left',
+              }}>
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.7)',
+                textDecoration: 'none',
+                padding: '8px 0',
+              }}>
+                Connexion
+              </Link>
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                color: 'white',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '600',
+                textDecoration: 'none',
+                textAlign: 'center',
+              }}>
+                S'inscrire
+              </Link>
+            </>
+          )}
+        </div>
+        )}
       </header>
 
       {/* HERO SECTION */}
@@ -185,7 +349,7 @@ export default function HomePage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '60px 40px',
+        padding: 'clamp(30px, 5vw, 60px) clamp(16px, 5vw, 40px)',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -249,7 +413,7 @@ export default function HomePage() {
           </div>
 
           <h1 style={{
-            fontSize: '72px',
+            fontSize: 'clamp(28px, 8vw, 72px)',
             fontWeight: '900',
             background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #bfdbfe 100%)',
             WebkitBackgroundClip: 'text',
@@ -263,7 +427,7 @@ export default function HomePage() {
           </h1>
 
           <p style={{
-            fontSize: '20px',
+            fontSize: 'clamp(14px, 4vw, 20px)',
             color: 'rgba(255, 255, 255, 0.8)',
             margin: '0 0 40px 0',
             lineHeight: '1.7',
@@ -285,11 +449,11 @@ export default function HomePage() {
             marginBottom: '60px',
           }}>
             <Link href="/signup" style={{
-              padding: '16px 32px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
               background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
               color: 'white',
               borderRadius: '14px',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: '700',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 12px 40px rgba(59, 130, 246, 0.4)',
@@ -308,12 +472,12 @@ export default function HomePage() {
               🚀 Commencer Gratuitement
             </Link>
             <Link href="/outils" style={{
-              padding: '16px 32px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
               background: 'rgba(255, 255, 255, 0.1)',
               border: '2px solid rgba(255, 255, 255, 0.2)',
               color: 'white',
               borderRadius: '14px',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: '700',
               transition: 'all 0.3s',
               backdropFilter: 'blur(10px)',
@@ -410,13 +574,13 @@ export default function HomePage() {
       {/* FEATURES SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         position: 'relative',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
             <h2 style={{
-              fontSize: '48px',
+              fontSize: 'clamp(28px, 7vw, 48px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -514,7 +678,7 @@ export default function HomePage() {
                   {feature.icon}
                 </div>
                 <h3 style={{
-                  fontSize: '22px',
+                  fontSize: 'clamp(18px, 4vw, 22px)',
                   fontWeight: '800',
                   color: 'white',
                   margin: '0 0 12px 0',
@@ -557,12 +721,12 @@ export default function HomePage() {
       {/* LIVE DATA WIDGET SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 7vw, 40px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -573,7 +737,7 @@ export default function HomePage() {
               📊 Données Financières en Temps Réel
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0,
             }}>
@@ -657,13 +821,13 @@ export default function HomePage() {
       {/* TESTIMONIALS SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 7vw, 40px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -674,7 +838,7 @@ export default function HomePage() {
               ⭐ Avis de Nos Utilisateurs
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0,
             }}>
@@ -796,13 +960,13 @@ export default function HomePage() {
       {/* SUCCESS STORIES SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 7vw, 40px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -813,7 +977,7 @@ export default function HomePage() {
               🚀 Cas de Succès
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0,
             }}>
@@ -876,7 +1040,7 @@ export default function HomePage() {
                   {story.icon}
                 </div>
                 <h3 style={{
-                  fontSize: '22px',
+                  fontSize: 'clamp(18px, 4vw, 22px)',
                   fontWeight: '800',
                   color: 'white',
                   margin: '0 0 12px 0',
@@ -941,19 +1105,19 @@ export default function HomePage() {
       {/* INTERACTIVE DEMO SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-            gap: '60px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 'clamp(30px, 5vw, 60px)',
             alignItems: 'center',
           }}>
             <div>
               <h2 style={{
-                fontSize: '40px',
+                fontSize: 'clamp(28px, 7vw, 40px)',
                 fontWeight: '900',
                 background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
                 WebkitBackgroundClip: 'text',
@@ -1069,12 +1233,12 @@ export default function HomePage() {
       {/* NEWSLETTER SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '80px 40px',
+        padding: 'clamp(40px, 8vw, 80px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: 'clamp(24px, 6vw, 36px)',
             fontWeight: '900',
             background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
             WebkitBackgroundClip: 'text',
@@ -1097,6 +1261,7 @@ export default function HomePage() {
             display: 'flex',
             gap: '12px',
             marginBottom: '16px',
+            flexDirection: 'column',
           }}>
             <input
               type="email"
@@ -1157,13 +1322,13 @@ export default function HomePage() {
       {/* SOCIAL PROOF SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
-        padding: '80px 40px',
+        padding: 'clamp(40px, 8vw, 80px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
         borderBottom: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: 'clamp(24px, 6vw, 36px)',
             fontWeight: '800',
             textAlign: 'center',
             color: 'white',
@@ -1224,7 +1389,7 @@ export default function HomePage() {
       {/* CTA SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '120px 40px',
+        padding: 'clamp(60px, 10vw, 120px) clamp(16px, 5vw, 40px)',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -1259,7 +1424,7 @@ export default function HomePage() {
           </div>
 
           <h2 style={{
-            fontSize: '52px',
+            fontSize: 'clamp(28px, 8vw, 52px)',
             fontWeight: '900',
             color: 'white',
             margin: '0 0 20px 0',
@@ -1357,14 +1522,14 @@ export default function HomePage() {
       <footer style={{
         background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
-        padding: '80px 40px 40px',
+        padding: 'clamp(40px, 8vw, 80px) clamp(16px, 5vw, 40px) clamp(20px, 4vw, 40px)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Main Footer Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '50px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: 'clamp(30px, 5vw, 50px)',
             marginBottom: '60px',
           }}>
             {/* Brand Column */}
