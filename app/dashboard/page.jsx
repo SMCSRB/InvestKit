@@ -2416,10 +2416,71 @@ export default function DashboardPage() {
                       <p style={{
                         color: currentTheme.textSecondary,
                         fontSize: '12px',
-                        margin: 0,
+                        margin: '0 0 10px 0',
                       }}>
                         {guilde.description}
                       </p>
+
+                      {/* Requirements */}
+                      {guilde.restrictions && (
+                        <div style={{
+                          padding: '10px',
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          borderRadius: '6px',
+                          border: `1px solid rgba(59, 130, 246, 0.2)`,
+                          marginBottom: '10px',
+                        }}>
+                          <p style={{
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            color: currentTheme.textSecondary,
+                            margin: '0 0 6px 0',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}>
+                            🔒 Conditions d'accès
+                          </p>
+                          <div style={{ fontSize: '11px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
+                            {guilde.restrictions.minLevel > 1 && (
+                              <div style={{ marginBottom: '3px' }}>
+                                📊 Niveau: {guilde.restrictions.minLevel}+ {progress.userLevel >= guilde.restrictions.minLevel ? '✓' : '✗'}
+                              </div>
+                            )}
+                            {Object.entries(guilde.restrictions.domainRequirements || {}).map(([domain, requirement]) => {
+                              if (requirement > 0) {
+                                const domainLabel = domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto';
+                                const userProgress = progress.domainsProgress?.[domain] || 0;
+                                return (
+                                  <div key={domain} style={{ marginBottom: '2px' }}>
+                                    📈 {domainLabel}: {requirement}% {userProgress >= requirement ? '✓' : '✗'}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Status */}
+                      {guilde.restrictions && (
+                        <div style={{ marginTop: '8px', fontSize: '11px' }}>
+                          {(() => {
+                            const levelOk = !guilde.restrictions.minLevel || progress.userLevel >= guilde.restrictions.minLevel;
+                            const domainsOk = Object.entries(guilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
+                              if (requirement === 0) return true;
+                              const userProgress = progress.domainsProgress?.[domain] || 0;
+                              return userProgress >= requirement;
+                            });
+                            const canJoin = levelOk && domainsOk;
+                            return canJoin ? (
+                              <span style={{ color: '#4ade80', fontWeight: '600' }}>✓ Conditions remplies</span>
+                            ) : (
+                              <span style={{ color: '#f87171', fontWeight: '600' }}>✗ Conditions non remplies</span>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
