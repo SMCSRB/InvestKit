@@ -43,8 +43,10 @@ export default function EducationPage() {
           {/* Header */}
           <div className="text-center mb-16 stagger-container">
             <h1
-              className="text-5xl md:text-6xl font-bold mb-6"
               style={{
+                fontSize: 'clamp(32px, 8vw, 64px)',
+                fontWeight: 'bold',
+                marginBottom: '24px',
                 background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -59,7 +61,7 @@ export default function EducationPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16 stagger-container">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-16 stagger-container">
             <div
               className="p-6 rounded-2xl border border-blue-500/20"
               style={{
@@ -135,9 +137,16 @@ export default function EducationPage() {
 
           {/* Domaines */}
           <div className="mb-20">
-            <h2 className="text-3xl font-bold mb-8 text-white">Mes Domaines</h2>
+            <h2 style={{
+              fontSize: 'clamp(24px, 6vw, 32px)',
+              fontWeight: 'bold',
+              marginBottom: '32px',
+              color: 'white',
+            }}>
+              Mes Domaines
+            </h2>
 
-            <div className="grid md:grid-cols-2 gap-6 stagger-container">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 stagger-container">
               {educationDomains.map((domain, idx) => {
                 const isCompleted = isDomainCompleted(domain.id);
                 const progressPercent = getDomainProgress(domain);
