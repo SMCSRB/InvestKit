@@ -14,7 +14,8 @@ export default function GuildPage() {
 
   const [guildes, setGuildes] = useState([]);
   const [selectedGuilde, setSelectedGuilde] = useState(null);
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('info');
+  const [lastGuildeTab, setLastGuildeTab] = useState('info');
   const [guildChatInput, setGuildChatInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [memberActionMenu, setMemberActionMenu] = useState(null);
@@ -113,12 +114,26 @@ export default function GuildPage() {
           setPrivateMessages(guilde.privateMessages || {});
           setGuildTheme(guilde.guildTheme || { primaryColor: '#3b82f6', secondaryColor: '#8b5cf6', bannerEmoji: '🎪' });
           setGuildRules(guilde.guildRules || []);
+
+          // Charger l'onglet sauvegardé
+          const savedTab = localStorage.getItem(`guild-${params.id}-tab`);
+          if (savedTab) {
+            setActiveTab(savedTab);
+            setLastGuildeTab(savedTab);
+          }
         }
       }
     } catch (error) {
       console.error('Erreur lors du chargement des guildes:', error);
     }
   }, [params.id]);
+
+  // Sauvegarder l'onglet actif
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setLastGuildeTab(tabId);
+    localStorage.setItem(`guild-${params.id}-tab`, tabId);
+  };
 
   const isLeader = userData?.name === selectedGuilde?.leader;
 
@@ -506,15 +521,34 @@ export default function GuildPage() {
           borderBottom: `1px solid ${currentTheme.border}`,
         }}>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Link href="/dashboard" style={{
-              color: currentTheme.accent,
-              fontSize: '20px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              fontWeight: '600',
-            }}>
-              ←
-            </Link>
+            <button
+              onClick={() => {
+                localStorage.setItem(`guild-${params.id}-tab`, activeTab);
+                router.push('/dashboard?tab=guildes');
+              }}
+              style={{
+                color: currentTheme.accent,
+                fontSize: '20px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              ← Retour
+            </button>
             <div style={{
               width: '56px',
               height: '56px',
@@ -576,7 +610,7 @@ export default function GuildPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               style={{
                 padding: '12px 20px',
                 background: activeTab === tab.id ? currentTheme.accent : 'transparent',
