@@ -36,14 +36,27 @@ export default function DashboardPage() {
   const [selectedChatFriend, setSelectedChatFriend] = useState(null); // Pour le chat avec un ami
   const [chatMessages, setChatMessages] = useState({}); // { friendCode: [messages] }
   const [messageInput, setMessageInput] = useState('');
+  const [selectedGuilde, setSelectedGuilde] = useState(null); // Pour voir les détails d'une guilde
   const [guildes, setGuildes] = useState([
     {
       id: 1, name: '₿ Crypto Traders', members: 5, description: 'Groupe pour les traders crypto', emoji: '₿',
-      restrictions: { minLevel: 5, requiredBadges: ['crypto_master'] }
+      restrictions: { minLevel: 5, requiredBadges: ['crypto_master'] },
+      membersList: [
+        { name: 'Alice Dupont', level: 5, role: 'Fondatrice' },
+        { name: 'Bob Martin', level: 8, role: 'Modérateur' },
+        { name: 'David Lemoine', level: 6, role: 'Membre' },
+        { name: 'Emma Leclerc', level: 9, role: 'Membre' },
+        { name: 'Clara Rousseau', level: 3, role: 'Membre' },
+      ]
     },
     {
       id: 2, name: '📈 Stock Masters', members: 3, description: 'Investisseurs en bourse', emoji: '📈',
-      restrictions: { minLevel: 4, minStocksProgress: 60 }
+      restrictions: { minLevel: 4, minStocksProgress: 60 },
+      membersList: [
+        { name: 'Emma Leclerc', level: 9, role: 'Fondatrice' },
+        { name: 'Bob Martin', level: 8, role: 'Membre' },
+        { name: 'David Lemoine', level: 6, role: 'Membre' },
+      ]
     },
   ]);
   const [showCreateGuilde, setShowCreateGuilde] = useState(false);
@@ -2352,6 +2365,7 @@ export default function DashboardPage() {
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                       }}
+                      onClick={() => setSelectedGuilde(guilde)}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
                         e.currentTarget.style.borderColor = currentTheme.accent;
@@ -3173,6 +3187,295 @@ export default function DashboardPage() {
                   }}
                 >
                   🎯 Défi
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* GUILD DETAILS MODAL */}
+        {selectedGuilde && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}>
+            <div style={{
+              background: currentTheme.cardBg,
+              borderRadius: '20px',
+              border: `1px solid ${currentTheme.border}`,
+              padding: '32px',
+              maxWidth: '550px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative',
+            }}>
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedGuilde(null)}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  color: currentTheme.text,
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+
+              {/* Guild Header */}
+              <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '40px',
+                  margin: '0 auto 16px',
+                }}>
+                  {selectedGuilde.emoji}
+                </div>
+                <h2 style={{
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  color: currentTheme.text,
+                  margin: '0 0 8px 0',
+                }}>
+                  {selectedGuilde.name}
+                </h2>
+                <p style={{
+                  fontSize: '13px',
+                  color: currentTheme.textSecondary,
+                  margin: 0,
+                }}>
+                  👥 {selectedGuilde.members} membre{selectedGuilde.members > 1 ? 's' : ''}
+                </p>
+              </div>
+
+              {/* Description */}
+              <div style={{ marginBottom: '24px' }}>
+                <p style={{
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: currentTheme.textSecondary,
+                  margin: '0 0 8px 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  À propos
+                </p>
+                <p style={{
+                  fontSize: '14px',
+                  color: currentTheme.text,
+                  margin: 0,
+                  lineHeight: '1.6',
+                }}>
+                  {selectedGuilde.description}
+                </p>
+              </div>
+
+              {/* Access Conditions */}
+              {selectedGuilde.restrictions && (
+                <div style={{
+                  padding: '12px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: '10px',
+                  border: `1px solid rgba(59, 130, 246, 0.3)`,
+                  marginBottom: '24px',
+                }}>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: currentTheme.textSecondary,
+                    margin: '0 0 10px 0',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    🔒 Conditions d'accès
+                  </p>
+                  <div style={{ fontSize: '12px', color: currentTheme.text, lineHeight: '1.6' }}>
+                    {selectedGuilde.restrictions.minLevel > 1 && (
+                      <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>📊 Niveau minimum</span>
+                        <span style={{ fontWeight: '600' }}>{selectedGuilde.restrictions.minLevel} {progress.userLevel >= selectedGuilde.restrictions.minLevel ? '✓' : '✗'}</span>
+                      </div>
+                    )}
+                    {Object.entries(selectedGuilde.restrictions.domainRequirements || {}).map(([domain, requirement]) => {
+                      if (requirement > 0) {
+                        const domainLabel = domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto';
+                        const userProgress = progress.domainsProgress?.[domain] || 0;
+                        return (
+                          <div key={domain} style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📈 {domainLabel}</span>
+                            <span style={{ fontWeight: '600' }}>{requirement}% {userProgress >= requirement ? '✓' : '✗'}</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Members List */}
+              <div style={{ marginBottom: '24px' }}>
+                <p style={{
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: currentTheme.textSecondary,
+                  margin: '0 0 10px 0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  👥 Membres ({selectedGuilde.membersList?.length || 0})
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {selectedGuilde.membersList?.map((member, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '10px',
+                        background: 'rgba(59, 130, 246, 0.05)',
+                        borderRadius: '8px',
+                        border: `1px solid ${currentTheme.border}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div>
+                        <p style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: currentTheme.text,
+                          margin: 0,
+                        }}>
+                          {member.name}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: currentTheme.textSecondary,
+                          margin: '2px 0 0 0',
+                        }}>
+                          Niveau {Math.floor(Math.random() * 10) + 1}
+                        </p>
+                      </div>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        color: member.role === 'Fondatrice' ? '#fbbf24' : member.role === 'Modérateur' ? '#60a5fa' : currentTheme.textSecondary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        padding: '4px 8px',
+                        background: member.role === 'Fondatrice' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Modérateur' ? 'rgba(96, 165, 250, 0.1)' : 'rgba(0,0,0,0.1)',
+                        borderRadius: '4px',
+                      }}>
+                        {member.role}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Eligibility Check */}
+              <div style={{
+                padding: '12px',
+                background: (() => {
+                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
+                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
+                    if (requirement === 0) return true;
+                    const userProgress = progress.domainsProgress?.[domain] || 0;
+                    return userProgress >= requirement;
+                  });
+                  return levelOk && domainsOk ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                })(),
+                borderRadius: '10px',
+                border: (() => {
+                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
+                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
+                    if (requirement === 0) return true;
+                    const userProgress = progress.domainsProgress?.[domain] || 0;
+                    return userProgress >= requirement;
+                  });
+                  return levelOk && domainsOk ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)';
+                })(),
+                marginBottom: '20px',
+                textAlign: 'center',
+              }}>
+                {(() => {
+                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
+                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
+                    if (requirement === 0) return true;
+                    const userProgress = progress.domainsProgress?.[domain] || 0;
+                    return userProgress >= requirement;
+                  });
+                  const canJoin = levelOk && domainsOk;
+                  return canJoin ? (
+                    <span style={{ color: '#22c55e', fontWeight: '600', fontSize: '13px' }}>✓ Tu peux rejoindre cette guilde!</span>
+                  ) : (
+                    <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '13px' }}>✗ Tu ne remplis pas les conditions</span>
+                  );
+                })()}
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                <button
+                  style={{
+                    padding: '12px 16px',
+                    background: currentTheme.accent,
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = currentTheme.accent;
+                  }}
+                >
+                  ➕ Rejoindre
+                </button>
+                <button
+                  onClick={() => setSelectedGuilde(null)}
+                  style={{
+                    padding: '12px 16px',
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    border: `1px solid ${currentTheme.accent}`,
+                    borderRadius: '10px',
+                    color: currentTheme.accent,
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                  }}
+                >
+                  Fermer
                 </button>
               </div>
             </div>
