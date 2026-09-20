@@ -6436,7 +6436,7 @@ export default function DashboardPage() {
                           <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
                             {event.description}
                           </p>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: currentTheme.textSecondary' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: currentTheme.textSecondary }}>
                             <span>👥 {event.participants} participants</span>
                             <span>📅 {event.startDate.toLocaleDateString()}</span>
                           </div>
