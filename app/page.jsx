@@ -184,7 +184,7 @@ export default function HomePage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '60px 40px',
+        padding: 'clamp(30px, 5vw, 60px) clamp(16px, 5vw, 40px)',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -248,7 +248,7 @@ export default function HomePage() {
           </div>
 
           <h1 style={{
-            fontSize: '72px',
+            fontSize: 'clamp(28px, 8vw, 72px)',
             fontWeight: '900',
             background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #bfdbfe 100%)',
             WebkitBackgroundClip: 'text',
@@ -262,7 +262,7 @@ export default function HomePage() {
           </h1>
 
           <p style={{
-            fontSize: '20px',
+            fontSize: 'clamp(14px, 4vw, 20px)',
             color: 'rgba(255, 255, 255, 0.8)',
             margin: '0 0 40px 0',
             lineHeight: '1.7',
@@ -284,11 +284,11 @@ export default function HomePage() {
             marginBottom: '60px',
           }}>
             <Link href="/signup" style={{
-              padding: '16px 32px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
               background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
               color: 'white',
               borderRadius: '14px',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: '700',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 12px 40px rgba(59, 130, 246, 0.4)',
@@ -307,12 +307,12 @@ export default function HomePage() {
               🚀 Commencer Gratuitement
             </Link>
             <Link href="/outils" style={{
-              padding: '16px 32px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
               background: 'rgba(255, 255, 255, 0.1)',
               border: '2px solid rgba(255, 255, 255, 0.2)',
               color: 'white',
               borderRadius: '14px',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               fontWeight: '700',
               transition: 'all 0.3s',
               backdropFilter: 'blur(10px)',
@@ -409,13 +409,13 @@ export default function HomePage() {
       {/* FEATURES SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         position: 'relative',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
             <h2 style={{
-              fontSize: '48px',
+              fontSize: 'clamp(28px, 7vw, 48px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -513,7 +513,7 @@ export default function HomePage() {
                   {feature.icon}
                 </div>
                 <h3 style={{
-                  fontSize: '22px',
+                  fontSize: 'clamp(18px, 4vw, 22px)',
                   fontWeight: '800',
                   color: 'white',
                   margin: '0 0 12px 0',
@@ -556,12 +556,12 @@ export default function HomePage() {
       {/* LIVE DATA WIDGET SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 7vw, 40px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -572,7 +572,7 @@ export default function HomePage() {
               📊 Données Financières en Temps Réel
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0,
             }}>
@@ -656,13 +656,13 @@ export default function HomePage() {
       {/* TESTIMONIALS SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 7vw, 40px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -673,7 +673,7 @@ export default function HomePage() {
               ⭐ Avis de Nos Utilisateurs
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0,
             }}>
@@ -795,13 +795,13 @@ export default function HomePage() {
       {/* SUCCESS STORIES SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2 style={{
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 7vw, 40px)',
               fontWeight: '900',
               background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
               WebkitBackgroundClip: 'text',
@@ -812,7 +812,7 @@ export default function HomePage() {
               🚀 Cas de Succès
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0,
             }}>
@@ -875,7 +875,7 @@ export default function HomePage() {
                   {story.icon}
                 </div>
                 <h3 style={{
-                  fontSize: '22px',
+                  fontSize: 'clamp(18px, 4vw, 22px)',
                   fontWeight: '800',
                   color: 'white',
                   margin: '0 0 12px 0',
@@ -940,19 +940,19 @@ export default function HomePage() {
       {/* INTERACTIVE DEMO SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
-        padding: '100px 40px',
+        padding: 'clamp(40px, 8vw, 100px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-            gap: '60px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 'clamp(30px, 5vw, 60px)',
             alignItems: 'center',
           }}>
             <div>
               <h2 style={{
-                fontSize: '40px',
+                fontSize: 'clamp(28px, 7vw, 40px)',
                 fontWeight: '900',
                 background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
                 WebkitBackgroundClip: 'text',
@@ -1068,12 +1068,12 @@ export default function HomePage() {
       {/* NEWSLETTER SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '80px 40px',
+        padding: 'clamp(40px, 8vw, 80px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: 'clamp(24px, 6vw, 36px)',
             fontWeight: '900',
             background: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%)',
             WebkitBackgroundClip: 'text',
@@ -1096,6 +1096,7 @@ export default function HomePage() {
             display: 'flex',
             gap: '12px',
             marginBottom: '16px',
+            flexDirection: 'column',
           }}>
             <input
               type="email"
@@ -1156,13 +1157,13 @@ export default function HomePage() {
       {/* SOCIAL PROOF SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
-        padding: '80px 40px',
+        padding: 'clamp(40px, 8vw, 80px) clamp(16px, 5vw, 40px)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
         borderBottom: '1px solid rgba(59, 130, 246, 0.15)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: 'clamp(24px, 6vw, 36px)',
             fontWeight: '800',
             textAlign: 'center',
             color: 'white',
@@ -1223,7 +1224,7 @@ export default function HomePage() {
       {/* CTA SECTION */}
       <section style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        padding: '120px 40px',
+        padding: 'clamp(60px, 10vw, 120px) clamp(16px, 5vw, 40px)',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -1258,7 +1259,7 @@ export default function HomePage() {
           </div>
 
           <h2 style={{
-            fontSize: '52px',
+            fontSize: 'clamp(28px, 8vw, 52px)',
             fontWeight: '900',
             color: 'white',
             margin: '0 0 20px 0',
@@ -1356,14 +1357,14 @@ export default function HomePage() {
       <footer style={{
         background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%)',
         borderTop: '1px solid rgba(59, 130, 246, 0.15)',
-        padding: '80px 40px 40px',
+        padding: 'clamp(40px, 8vw, 80px) clamp(16px, 5vw, 40px) clamp(20px, 4vw, 40px)',
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Main Footer Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '50px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: 'clamp(30px, 5vw, 50px)',
             marginBottom: '60px',
           }}>
             {/* Brand Column */}
