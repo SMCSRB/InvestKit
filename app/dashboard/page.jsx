@@ -1351,6 +1351,43 @@ export default function DashboardPage() {
         paddingTop: '24px',
         paddingBottom: '24px',
       }}>
+        {/* InvestKit Branding */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '32px',
+          paddingLeft: '8px',
+        }}>
+          <span style={{
+            fontSize: '24px',
+          }}>📊</span>
+          <div>
+            <h2 style={{
+              margin: '0',
+              fontSize: '18px',
+              fontWeight: '900',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.5px',
+            }}>
+              InvestKit
+            </h2>
+            <p style={{
+              margin: '2px 0 0 0',
+              fontSize: '10px',
+              color: 'rgba(255, 255, 255, 0.5)',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              Investissez Intelligemment
+            </p>
+          </div>
+        </div>
+
         {/* User Profile - PREMIUM */}
         <div style={{
           marginBottom: '40px',
