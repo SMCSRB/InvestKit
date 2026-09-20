@@ -132,10 +132,14 @@ export default function DashboardPage() {
     { id: 1, guildId: 'crypto-masters', title: '🎯 Défi Crypto Hebdo', description: 'Investissez 1000€ en crypto et battez les autres membres', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 604800000), participants: 12, reward: '500 XP' },
     { id: 2, guildId: 'immobilier-pro', title: '🏠 Tournoi Immobilier', description: 'Simulez l\'achat d\'un bien immobilier avec le meilleur ROI', startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 1209600000), participants: 8, reward: '1000 XP' },
     { id: 3, guildId: 'crypto-masters', title: '💰 Challenge Portefeuille', description: 'Rebalancez votre portefeuille et gagnez des points', startDate: new Date(Date.now() - 86400000), endDate: new Date(Date.now() + 259200000), participants: 25, reward: '300 XP' },
+    { id: 4, guildId: 'crypto-masters', title: '📊 Analyse Technique Marathon', description: 'Analysez les patterns sur 5 paires différentes et partagez vos prédictions', startDate: new Date(Date.now() + 345600000), endDate: new Date(Date.now() + 432000000), participants: 18, reward: '750 XP' },
+    { id: 5, guildId: 'immobilier-pro', title: '🔍 Visite Virtuelle d\'Immeubles', description: 'Tour virtuel de 10 propriétés prestigieuses et évaluation de leur potentiel', startDate: new Date(Date.now() + 259200000), endDate: new Date(Date.now() + 604800000), participants: 22, reward: '600 XP' },
   ]);
   const [guildAnnouncements, setGuildAnnouncements] = useState([
     { id: 1, guildId: 'crypto-masters', author: 'Alice Dupont', avatar: '👩‍💼', title: 'Nouvelle stratégie DCA', content: 'On lance une nouvelle stratégie de Dollar-Cost Averaging pour BTC', timestamp: new Date(Date.now() - 3600000) },
     { id: 2, guildId: 'immobilier-pro', author: 'Bob Martin', avatar: '👨‍💻', title: 'Réunion en direct vendredi', content: 'Rdv zoom pour discuter des opportunités immobilières', timestamp: new Date(Date.now() - 7200000) },
+    { id: 3, guildId: 'crypto-masters', author: 'Emma Leclerc', avatar: '👩‍💰', title: 'Résultats du Challenge Portefeuille', content: 'Félicitations à tous les participants! Les gagnants seront annoncés demain.', timestamp: new Date(Date.now() - 10800000) },
+    { id: 4, guildId: 'immobilier-pro', author: 'David Lemoine', avatar: '👨‍🎯', title: 'Nouvelle ressource disponible', content: 'Guide complet: Comment évaluer le ROI d\'un investissement immobilier', timestamp: new Date(Date.now() - 14400000) },
   ]);
 
   // 1. REAL-TIME NOTIFICATIONS - Système en temps réel
@@ -260,8 +264,29 @@ export default function DashboardPage() {
 
   // 6. SYSTÈME DE POINTS GUILDE - Trésor/points partagés
   const [guildTreasures, setGuildTreasures] = useState({
-    'crypto-masters': { totalPoints: 2500, members: 35, level: 3, nextLevel: 3500, recentContributions: [{ member: 'Alice', points: 100, action: 'Partage stratégie' }] },
-    'immobilier-pro': { totalPoints: 1800, members: 18, level: 2, nextLevel: 2000, recentContributions: [{ member: 'Diana', points: 80, action: 'Mentor newbie' }] },
+    'crypto-masters': {
+      totalPoints: 2500,
+      members: 35,
+      level: 3,
+      nextLevel: 3500,
+      recentContributions: [
+        { member: 'Alice', points: 100, action: 'Partage stratégie' },
+        { member: 'Bob', points: 75, action: 'Analyse technique' },
+        { member: 'You', points: 50, action: 'Participation défi' },
+        { member: 'Emma', points: 120, action: 'Animation community' },
+      ]
+    },
+    'immobilier-pro': {
+      totalPoints: 1800,
+      members: 18,
+      level: 2,
+      nextLevel: 2000,
+      recentContributions: [
+        { member: 'Diana', points: 80, action: 'Mentor newbie' },
+        { member: 'You', points: 60, action: 'Visite immeuble' },
+        { member: 'David', points: 95, action: 'Guide ROI' },
+      ]
+    },
   });
 
   // Mock users database with detailed profiles
