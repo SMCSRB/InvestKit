@@ -212,7 +212,28 @@ export default function DashboardPage() {
     setTimeout(() => setGuildMessage(null), 3000);
   };
 
+  const handleLeaveGuilde = (guildId) => {
+    setUserGuildes(userGuildes.filter(id => id !== guildId));
+    setSelectedGuilde(null);
+    setGuildMessage({
+      type: 'success',
+      text: `✓ Tu as quitté la guilde.\n\nTu peux maintenant en rejoindre ou en créer une autre.`
+    });
+    setTimeout(() => setGuildMessage(null), 4000);
+  };
+
   const handleJoinGuilde = (guilde) => {
+    // Vérifier si l'utilisateur est déjà dans une guilde (max 1 guilde)
+    if (userGuildes.length > 0) {
+      const currentGuilde = guildes.find(g => g.id === userGuildes[0]);
+      setGuildMessage({
+        type: 'error',
+        text: `🚫 Tu ne peux être que dans 1 seule guilde à la fois.\n\nTu es actuellement dans: ${currentGuilde?.name || 'une guilde'}\n\nQuitte d'abord cette guilde pour en rejoindre une autre.`
+      });
+      setTimeout(() => setGuildMessage(null), 5000);
+      return;
+    }
+
     // Vérifier l'éligibilité
     const levelOk = !guilde.restrictions.minLevel || progress.userLevel >= guilde.restrictions.minLevel;
     const missingDomains = [];
@@ -2590,11 +2611,32 @@ export default function DashboardPage() {
                     {/* Create Button */}
                     <button
                       onClick={() => {
-                        if (newGuildeName.trim() && progress.userLevel >= 7) {
+                        if (userGuildes.length > 0) {
+                          // Utilisateur déjà dans une guilde
+                          const currentGuilde = guildes.find(g => g.id === userGuildes[0]);
+                          setGuildMessage({
+                            type: 'error',
+                            text: `🚫 Tu ne peux créer qu'une seule guilde.\n\nTu es actuellement leader de: ${currentGuilde?.name || 'une guilde'}\n\nQuitte ou supprime d'abord cette guilde pour en créer une autre.`
+                          });
+                          setTimeout(() => setGuildMessage(null), 5000);
+                        } else if (!newGuildeName.trim()) {
+                          setGuildMessage({
+                            type: 'error',
+                            text: '❌ Le nom de la guilde ne peut pas être vide.'
+                          });
+                          setTimeout(() => setGuildMessage(null), 3000);
+                        } else if (progress.userLevel < 7) {
+                          setGuildMessage({
+                            type: 'error',
+                            text: `❌ Tu dois être niveau 7+ pour créer une guilde.\n\nNiveau actuel: ${progress.userLevel}\nNiveau requis: 7`
+                          });
+                          setTimeout(() => setGuildMessage(null), 5000);
+                        } else {
                           const newCount = guildesCreatedCount + 1;
+                          const newGuildeId = guildes.length + 1;
                           setGuildesCreatedCount(newCount);
                           setGuildes([...guildes, {
-                            id: guildes.length + 1,
+                            id: newGuildeId,
                             name: newGuildeName,
                             emoji: '✨',
                             description: newGuildeDesc,
@@ -2606,6 +2648,7 @@ export default function DashboardPage() {
                             ],
                             chat: []
                           }]);
+                          setUserGuildes([newGuildeId]);
                           setNewGuildeName('');
                           setNewGuildeDesc('');
                           setGuildeRestrictions({
@@ -3715,6 +3758,33 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Leave Guild Button */}
+              <button
+                onClick={() => handleLeaveGuilde(selectedGuilde.id)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  borderRadius: '8px',
+                  color: '#ef4444',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(239, 68, 68, 0.3)';
+                  e.target.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                  e.target.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                }}
+              >
+                👋 Quitter la Guilde
+              </button>
               </>
               )}
 
