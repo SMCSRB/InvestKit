@@ -3843,14 +3843,6 @@ export default function DashboardPage() {
                   {selectedFriendProfile.name}
                 </h2>
                 <p style={{
-                  fontSize: '12px',
-                  color: currentTheme.textSecondary,
-                  margin: '0 0 12px 0',
-                  fontFamily: 'monospace',
-                }}>
-                  {selectedFriendProfile.friendCode}
-                </p>
-                <p style={{
                   fontSize: '14px',
                   color: currentTheme.textSecondary,
                   margin: 0,
