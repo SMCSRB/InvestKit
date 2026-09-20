@@ -23,6 +23,12 @@ export default function ProfilePage() {
     emailNotifications: false,
   });
   const [activeSettingsTab, setActiveSettingsTab] = useState('display');
+  const [profileData, setProfileData] = useState({
+    username: 'InvestKitUser',
+    bio: 'Passionné par l\'investissement et l\'apprentissage 🚀',
+    avatar: '👤',
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -38,7 +44,21 @@ export default function ProfilePage() {
         ...JSON.parse(savedSettings),
       }));
     }
+    const savedProfile = localStorage.getItem('userProfile');
+    if (savedProfile) {
+      setProfileData((prev) => ({
+        ...prev,
+        ...JSON.parse(savedProfile),
+      }));
+    }
   }, [router]);
+
+  const saveProfileData = (newData) => {
+    setProfileData(newData);
+    localStorage.setItem('userProfile', JSON.stringify(newData));
+    setIsEditingProfile(false);
+    addNotification('Profil mis à jour ✓', 'success', 2000);
+  };
 
   const updateSetting = (key, value) => {
     const newSettings = { ...settings, [key]: value };
@@ -96,12 +116,92 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-4xl font-bold text-white mb-2">Mon Profil</h1>
-                <p className="text-gray-400">Tableau de bord personnalisé</p>
+              <div className="flex items-center gap-6">
+                <div className="text-8xl">{profileData.avatar}</div>
+                <div>
+                  <h1 className="text-4xl font-bold text-white mb-2">{profileData.username}</h1>
+                  <p className="text-gray-400 mb-3">{profileData.bio}</p>
+                  <button
+                    onClick={() => setIsEditingProfile(true)}
+                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
+                  >
+                    ✏️ Modifier le profil
+                  </button>
+                </div>
               </div>
-              <div className="text-6xl">👤</div>
             </div>
+
+            {/* Edit Profile Modal */}
+            {isEditingProfile && (
+              <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                <div className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-gray-700">
+                  <h3 className="text-2xl font-bold text-white mb-6">Modifier le Profil</h3>
+
+                  <div className="space-y-4">
+                    {/* Avatar Selection */}
+                    <div>
+                      <label className="block text-white font-semibold mb-2">Avatar</label>
+                      <div className="grid grid-cols-6 gap-2">
+                        {['👤', '👨', '👩', '🧑', '🎭', '⭐'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => setProfileData({ ...profileData, avatar: emoji })}
+                            className={`text-3xl p-2 rounded-lg transition-all duration-300 ${
+                              profileData.avatar === emoji
+                                ? 'bg-blue-600'
+                                : 'bg-slate-700 hover:bg-slate-600'
+                            }`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Username */}
+                    <div>
+                      <label className="block text-white font-semibold mb-2">Username</label>
+                      <input
+                        type="text"
+                        value={profileData.username}
+                        onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
+                        placeholder="Votre username"
+                      />
+                    </div>
+
+                    {/* Bio */}
+                    <div>
+                      <label className="block text-white font-semibold mb-2">Bio</label>
+                      <textarea
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
+                        placeholder="Parlez-nous de vous..."
+                        rows="3"
+                      />
+                      <p className="text-gray-400 text-xs mt-1">{profileData.bio.length}/150 caractères</p>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => saveProfileData(profileData)}
+                        className="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
+                      >
+                        Sauvegarder
+                      </button>
+                      <button
+                        onClick={() => setIsEditingProfile(false)}
+                        className="flex-1 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold transition-all duration-300"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Main Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -460,6 +560,150 @@ export default function ProfilePage() {
                   </Link>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Certificates Section */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">🎖️ Certificats</h2>
+            {totalDomainsCompleted > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {educationDomains.map((domain) => {
+                  const isCompleted = isDomainCompleted(domain.id);
+                  if (!isCompleted) return null;
+
+                  const completedDate = progress.completedDomains.find((d) => d.domainId === domain.id)?.date;
+                  const formattedDate = completedDate ? new Date(completedDate).toLocaleDateString('fr-FR') : '';
+
+                  return (
+                    <div
+                      key={domain.id}
+                      className="p-6 rounded-xl bg-gradient-to-br from-amber-900/30 to-amber-800/20 border-2 border-amber-400/50 hover:border-amber-400 transition-all duration-300"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-4xl">{domain.icon}</span>
+                        <span className="text-2xl">✅</span>
+                      </div>
+                      <h3 className="text-white font-bold mb-1">Certificat</h3>
+                      <p className="text-amber-300 font-semibold mb-3">{domain.name}</p>
+                      <p className="text-gray-400 text-sm mb-4">Complété le {formattedDate}</p>
+                      <div className="flex gap-2">
+                        <button className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all duration-300">
+                          📥 Télécharger
+                        </button>
+                        <button className="flex-1 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all duration-300">
+                          📤 Partager
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-400">Complète un domaine pour recevoir un certificat! 🎯</p>
+            )}
+          </div>
+
+          {/* Learning Calendar */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">📅 Activité d'Apprentissage</h2>
+            <div className="bg-slate-800/50 p-6 rounded-lg border border-gray-700/50">
+              <p className="text-gray-400 mb-4">Jours d'étude ce mois-ci: <span className="text-blue-400 font-bold">{Math.min(progress.completedChapters.length, 30)}/30</span></p>
+              <div className="grid grid-cols-7 gap-1">
+                {[...Array(42)].map((_, i) => {
+                  const isActive = Math.random() > 0.6 || i < progress.completedChapters.length;
+                  return (
+                    <div
+                      key={i}
+                      className={`w-6 h-6 rounded transition-all duration-300 ${
+                        isActive
+                          ? 'bg-green-500 hover:ring-2 ring-green-300'
+                          : 'bg-gray-700 hover:bg-gray-600'
+                      }`}
+                      title={`Jour ${i + 1}`}
+                    />
+                  );
+                })}
+              </div>
+              <p className="text-gray-400 text-xs mt-4">🟢 = Jour d'étude · 🟫 = Jour sans activité</p>
+            </div>
+          </div>
+
+          {/* Statistics Section */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">📊 Statistiques Mensuelles</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* XP Progress */}
+              <div className="p-6 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                <h3 className="text-white font-bold mb-4">Progression XP</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">XP ce mois</p>
+                    <p className="text-3xl font-bold text-yellow-400">{progress.totalXP}</p>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400"
+                      style={{
+                        width: `${Math.min((progress.totalXP / 1000) * 100, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-gray-400 text-xs">Vers {Math.ceil(progress.totalXP / 500) * 500} XP</p>
+                </div>
+              </div>
+
+              {/* Quiz Stats */}
+              <div className="p-6 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                <h3 className="text-white font-bold mb-4">Statistiques Quiz</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Complétés</span>
+                    <span className="text-green-400 font-bold">{totalChaptersCompleted}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Taux de réussite</span>
+                    <span className="text-blue-400 font-bold">
+                      {totalChaptersCompleted > 0
+                        ? Math.round(
+                            (progress.completedChapters.reduce((sum, c) => sum + c.score, 0) /
+                              (totalChaptersCompleted * 100)) *
+                              100
+                          )
+                        : 0}
+                      %
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Meilleur score</span>
+                    <span className="text-purple-400 font-bold">
+                      {totalChaptersCompleted > 0
+                        ? Math.max(...progress.completedChapters.map((c) => c.score))
+                        : 0}
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Time Stats */}
+              <div className="p-6 rounded-lg bg-slate-800/50 border border-gray-700/50 md:col-span-2">
+                <h3 className="text-white font-bold mb-4">Temps d'Apprentissage</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-2">Racha actuelle</p>
+                    <p className="text-3xl font-bold text-orange-400">🔥 {progress.streak}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-2">Max racha</p>
+                    <p className="text-3xl font-bold text-yellow-400">⭐ {progress.maxStreak}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-2">Niveau actuel</p>
+                    <p className="text-3xl font-bold text-blue-400">Lvl {progress.userLevel}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
