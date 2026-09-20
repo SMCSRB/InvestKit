@@ -801,34 +801,36 @@ export default function DashboardPage() {
       `}</style>
 
       {/* SIDEBAR TOGGLE BUTTON */}
-      <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
-        position: 'fixed',
-        top: '24px',
-        left: '24px',
-        zIndex: 40,
-        background: 'rgba(59, 130, 246, 0.2)',
-        border: '1px solid rgba(59, 130, 246, 0.3)',
-        borderRadius: '10px',
-        padding: '10px 14px',
-        color: '#60a5fa',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '18px',
-        transition: 'all 0.3s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-        e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-        e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-      }}
-      >
-        {sidebarOpen ? '✕' : '☰'}
-      </button>
+      {!sidebarOpen && (
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
+          position: 'fixed',
+          top: '24px',
+          left: '24px',
+          zIndex: 40,
+          background: 'rgba(59, 130, 246, 0.2)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '10px',
+          padding: '10px 14px',
+          color: '#60a5fa',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '18px',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+          e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+          e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+        }}
+        >
+          ☰
+        </button>
+      )}
 
       {/* LEFT SIDEBAR */}
       {sidebarOpen && <div style={{
@@ -1285,6 +1287,43 @@ export default function DashboardPage() {
               ✓ KYC Vérifié
             </p>
           </div>
+        </div>
+
+        {/* Close Sidebar Button */}
+        <div style={{
+          marginTop: '24px',
+          paddingTop: '16px',
+          borderTop: `1px solid ${currentTheme.border}`,
+        }}>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: `1px solid rgba(59, 130, 246, 0.2)`,
+              borderRadius: '10px',
+              color: '#60a5fa',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+            }}
+          >
+            ✕ Fermer
+          </button>
         </div>
       </div>}
 
