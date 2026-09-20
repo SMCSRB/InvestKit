@@ -258,6 +258,10 @@ export default function DashboardPage() {
   const [hoveredBadge, setHoveredBadge] = useState(null); // For flip effect and interactions
   const [soundEnabled, setSoundEnabled] = useState(true); // Sound effects toggle
   const [badgeFlipStates, setBadgeFlipStates] = useState({}); // Track which badges are flipped
+  const [pinnedBadges, setPinnedBadges] = useState([]); // Pinned favorite badges (max 3)
+  const [badgeCustomTitles, setBadgeCustomTitles] = useState({}); // Custom titles for badges (premium)
+  const [badgeAuraColors, setBadgeAuraColors] = useState({}); // Custom aura colors (premium)
+  const [badgeShowcaseTab, setBadgeShowcaseTab] = useState('rarity'); // rarity, newest, pinned
 
   // ============ HELPER FUNCTIONS FOR BADGE SYSTEM ============
 
@@ -401,6 +405,46 @@ export default function DashboardPage() {
     return borders[rarity] || borders.common;
   };
 
+  // Pin/Unpin badge for showcase (max 3)
+  const togglePinnedBadge = useCallback((badgeId) => {
+    setPinnedBadges(prev => {
+      if (prev.includes(badgeId)) {
+        return prev.filter(id => id !== badgeId);
+      } else if (prev.length < 3) {
+        return [...prev, badgeId];
+      }
+      return prev;
+    });
+  }, []);
+
+  // Get badges sorted by rarity for showcase
+  const getShowcaseBadges = useCallback(() => {
+    const rarityOrder = { unique: 0, very_rare: 1, rare: 2, common: 3 };
+    const obtained = userBadges
+      .map(id => ({ id, badge: badgeDefinitions[id], date: badgeDateObtained[id] }))
+      .filter(b => b.badge);
+
+    if (badgeShowcaseTab === 'rarity') {
+      return obtained.sort((a, b) => rarityOrder[a.badge.rarity] - rarityOrder[b.badge.rarity]).slice(0, 6);
+    } else if (badgeShowcaseTab === 'newest') {
+      return obtained.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 6);
+    } else if (badgeShowcaseTab === 'pinned') {
+      return pinnedBadges.map(id => ({
+        id,
+        badge: badgeDefinitions[id],
+        date: badgeDateObtained[id],
+      })).filter(b => b.badge);
+    }
+    return [];
+  }, [userBadges, badgeDefinitions, badgeDateObtained, badgeShowcaseTab, pinnedBadges]);
+
+  // Get badge rarity rank (1 = rarest)
+  const getBadgeRarityRank = useCallback((badgeId) => {
+    const badge = badgeDefinitions[badgeId];
+    const rarityRanks = { unique: 1, very_rare: 2, rare: 3, common: 4 };
+    return rarityRanks[badge.rarity] || 4;
+  }, [badgeDefinitions]);
+
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
     try {
@@ -452,6 +496,19 @@ export default function DashboardPage() {
       if (savedBadgeProgress) {
         setBadgeUnlockProgress(JSON.parse(savedBadgeProgress));
       }
+      // Load premium badge features
+      const savedPinnedBadges = localStorage.getItem('investkit_pinned_badges');
+      if (savedPinnedBadges) {
+        setPinnedBadges(JSON.parse(savedPinnedBadges));
+      }
+      const savedBadgeTitles = localStorage.getItem('investkit_badge_titles');
+      if (savedBadgeTitles) {
+        setBadgeCustomTitles(JSON.parse(savedBadgeTitles));
+      }
+      const savedBadgeAuras = localStorage.getItem('investkit_badge_auras');
+      if (savedBadgeAuras) {
+        setBadgeAuraColors(JSON.parse(savedBadgeAuras));
+      }
     } catch (e) {
       console.log('LocalStorage not available');
     }
@@ -471,10 +528,13 @@ export default function DashboardPage() {
       // NEW: Save enhanced badge system data
       localStorage.setItem('investkit_badge_dates', JSON.stringify(badgeDateObtained));
       localStorage.setItem('investkit_badge_progress', JSON.stringify(badgeUnlockProgress));
+      localStorage.setItem('investkit_pinned_badges', JSON.stringify(pinnedBadges));
+      localStorage.setItem('investkit_badge_titles', JSON.stringify(badgeCustomTitles));
+      localStorage.setItem('investkit_badge_auras', JSON.stringify(badgeAuraColors));
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress, pinnedBadges, badgeCustomTitles, badgeAuraColors]);
 
   // Auto-award badges based on level progression
   useEffect(() => {
@@ -10086,6 +10146,52 @@ export default function DashboardPage() {
               <strong>{userBadges.length} / {Object.keys(badgeDefinitions).length}</strong> badges collectés ({Math.round((userBadges.length / Object.keys(badgeDefinitions).length) * 100)}%)
             </div>
 
+            {/* Detailed Statistics Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%)',
+              border: '1px solid rgba(168, 85, 247, 0.2)',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px',
+            }}>
+              <h3 style={{
+                margin: '0 0 12px 0',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>📊 Statistiques de Collection</h3>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: '12px',
+              }}>
+                {[
+                  { label: 'Unique', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'unique').length, color: '#fbbf24' },
+                  { label: 'Très Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'very_rare').length, color: '#a855f7' },
+                  { label: 'Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'rare').length, color: '#3b82f6' },
+                  { label: 'Commun', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'common').length, color: '#64748b' },
+                ].map(stat => (
+                  <div key={stat.label} style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    textAlign: 'center',
+                    borderLeft: `3px solid ${stat.color}`,
+                  }}>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: stat.color }}>
+                      {stat.count}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Filter Tabs */}
             <div style={{
               display: 'flex',
@@ -10126,49 +10232,98 @@ export default function DashboardPage() {
 
                 if (!shouldShow) return null;
 
+                const isPinned = pinnedBadges.includes(badgeId);
                 return (
                   <div key={badgeId} style={{
-                    background: getBadgeRarityColor(badge.rarity),
-                    border: getBadgeRarityBorder(badge.rarity),
-                    borderRadius: '12px',
-                    padding: '12px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    opacity: isObtained ? 1 : 0.5,
-                    transform: hoveredBadge === badgeId ? 'scale(1.05)' : 'scale(1)',
                     position: 'relative',
-                  }}
-                  onMouseEnter={() => setHoveredBadge(badgeId)}
-                  onMouseLeave={() => setHoveredBadge(null)}>
-                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>
-                      {badge.emoji}
-                    </div>
+                  }}>
                     <div style={{
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      color: '#fff',
-                      marginBottom: '4px',
-                    }}>
-                      {badge.name}
-                    </div>
-                    {!isObtained && badgeUnlockProgress[badgeId] && badgeUnlockProgress[badgeId].percent > 0 && (
-                      <div style={{
-                        fontSize: '9px',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        marginTop: '4px',
-                      }}>
-                        {badgeUnlockProgress[badgeId].percent}% progressé
+                      background: getBadgeRarityColor(badge.rarity),
+                      border: getBadgeRarityBorder(badge.rarity),
+                      borderRadius: '12px',
+                      padding: '12px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      opacity: isObtained ? 1 : 0.5,
+                      transform: hoveredBadge === badgeId ? 'scale(1.08)' : 'scale(1)',
+                      position: 'relative',
+                      boxShadow: isPinned ? `0 0 12px ${badgeDefinitions[badgeId]?.rarity === 'unique' ? '#fbbf24' : '#a855f7'}` : 'none',
+                    }}
+                    onMouseEnter={() => setHoveredBadge(badgeId)}
+                    onMouseLeave={() => setHoveredBadge(null)}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                        {badge.emoji}
                       </div>
-                    )}
-                    {isObtained && badgeDateObtained[badgeId] && (
+                      <div style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        color: '#fff',
+                        marginBottom: '4px',
+                      }}>
+                        {badge.name}
+                      </div>
                       <div style={{
                         fontSize: '8px',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        marginTop: '4px',
+                        fontWeight: '600',
+                        color: badge.rarity === 'unique' ? '#fbbf24' : badge.rarity === 'very_rare' ? '#a855f7' : badge.rarity === 'rare' ? '#3b82f6' : '#64748b',
+                        textTransform: 'uppercase',
+                        marginBottom: '4px',
                       }}>
-                        {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
+                        {badge.rarity.replace('_', ' ')}
                       </div>
+                      {!isObtained && badgeUnlockProgress[badgeId] && badgeUnlockProgress[badgeId].percent > 0 && (
+                        <div style={{
+                          fontSize: '9px',
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          marginTop: '4px',
+                        }}>
+                          {badgeUnlockProgress[badgeId].percent}% progressé
+                        </div>
+                      )}
+                      {isObtained && badgeDateObtained[badgeId] && (
+                        <div style={{
+                          fontSize: '8px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          marginTop: '4px',
+                        }}>
+                          {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pin Button - Show on hover for obtained badges */}
+                    {isObtained && hoveredBadge === badgeId && (
+                      <button
+                        onClick={() => togglePinnedBadge(badgeId)}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          background: isPinned ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
+                          border: `2px solid ${isPinned ? '#f59e0b' : 'rgba(255, 255, 255, 0.4)'}`,
+                          color: isPinned ? '#000' : '#fff',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s ease',
+                          zIndex: 10,
+                        }}
+                        title={isPinned ? 'Débloquer' : 'Épingler'}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        {isPinned ? '📌' : '📍'}
+                      </button>
                     )}
                   </div>
                 );
