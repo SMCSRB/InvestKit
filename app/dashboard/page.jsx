@@ -1859,6 +1859,7 @@ export default function DashboardPage() {
               )}
 
               {/* Friend Code Card */}
+              {friendsTab !== 'guildes' && (
               <div style={{
                 display: 'flex',
                 gap: '16px',
@@ -1912,6 +1913,7 @@ export default function DashboardPage() {
                   {copied ? '✓ Copié!' : 'Copier Code'}
                 </button>
               </div>
+              )}
             </div>
 
             {/* Leaderboard Section */}
