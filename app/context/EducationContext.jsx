@@ -31,16 +31,20 @@ export function EducationProvider({ children }) {
       try {
         const parsed = JSON.parse(savedProgress);
         setProgress((prev) => ({
-          ...prev,
-          ...parsed,
-          notes: parsed.notes || {},
-          attempts: parsed.attempts || {},
-          domainsProgress: parsed.domainsProgress || {
+          // Start with default values
+          totalXP: 9500,
+          userLevel: 20,
+          badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
+          domainsProgress: {
             crypto: 100,
             stocks: 100,
             bonds: 100,
             realestate: 100,
           },
+          // Then merge with saved data
+          ...parsed,
+          notes: parsed.notes || {},
+          attempts: parsed.attempts || {},
         }));
       } catch (error) {
         console.error('Erreur lors du chargement de la progression:', error);
