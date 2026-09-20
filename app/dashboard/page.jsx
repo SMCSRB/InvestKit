@@ -1346,7 +1346,10 @@ export default function DashboardPage() {
       {sidebarOpen && <div style={{
         borderRight: `1px solid ${currentTheme.border}`,
         paddingRight: '24px',
-        height: 'fit-content',
+        maxHeight: 'calc(100vh - 60px)',
+        overflowY: 'auto',
+        paddingTop: '24px',
+        paddingBottom: '24px',
       }}>
         {/* User Profile - PREMIUM */}
         <div style={{
