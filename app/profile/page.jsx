@@ -14,6 +14,15 @@ export default function ProfilePage() {
   const { progress, isChapterCompleted, getChapterScore, isDomainCompleted, isLoading, setSelectedTheme } = useEducationProgress();
   const { addNotification } = useNotification();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [settings, setSettings] = useState({
+    darkMode: true,
+    notificationsEnabled: true,
+    soundEnabled: true,
+    remindersEnabled: true,
+    profilePublic: true,
+    emailNotifications: false,
+  });
+  const [activeSettingsTab, setActiveSettingsTab] = useState('display');
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -22,7 +31,21 @@ export default function ProfilePage() {
     } else {
       setIsAuthenticated(true);
     }
+    const savedSettings = localStorage.getItem('userSettings');
+    if (savedSettings) {
+      setSettings((prev) => ({
+        ...prev,
+        ...JSON.parse(savedSettings),
+      }));
+    }
   }, [router]);
+
+  const updateSetting = (key, value) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    localStorage.setItem('userSettings', JSON.stringify(newSettings));
+    addNotification('Paramètre mis à jour ✓', 'success', 2000);
+  };
 
   if (!isAuthenticated || isLoading) {
     return (
@@ -99,6 +122,243 @@ export default function ProfilePage() {
                 <p className="text-white text-3xl font-bold">⭐ {progress.maxStreak}</p>
               </div>
             </div>
+          </div>
+
+          {/* Settings Section */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">⚙️ Paramètres</h2>
+
+            {/* Settings Tabs */}
+            <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-700">
+              {[
+                { id: 'display', label: '🎨 Affichage', icon: '🎨' },
+                { id: 'notifications', label: '🔔 Notifications', icon: '🔔' },
+                { id: 'privacy', label: '🔒 Confidentialité', icon: '🔒' },
+                { id: 'account', label: '👤 Compte', icon: '👤' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSettingsTab(tab.id)}
+                  className={`px-4 py-3 font-semibold transition-all duration-300 border-b-2 ${
+                    activeSettingsTab === tab.id
+                      ? 'border-blue-400 text-blue-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Display Settings */}
+            {activeSettingsTab === 'display' && (
+              <div className="space-y-6">
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Mode Sombre</h3>
+                    <p className="text-gray-400 text-sm">Activer le thème sombre automatiquement</p>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('darkMode', !settings.darkMode)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.darkMode ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                        settings.darkMode ? 'left-7' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Animation Settings */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Animations</h3>
+                    <p className="text-gray-400 text-sm">Activer les animations et transitions</p>
+                  </div>
+                  <button className="relative w-14 h-8 rounded-full bg-blue-600">
+                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-7" />
+                  </button>
+                </div>
+
+                {/* Compact Mode */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Mode Compact</h3>
+                    <p className="text-gray-400 text-sm">Interface condensée pour petits écrans</p>
+                  </div>
+                  <button className="relative w-14 h-8 rounded-full bg-gray-600">
+                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-1" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Notification Settings */}
+            {activeSettingsTab === 'notifications' && (
+              <div className="space-y-6">
+                {/* Enable Notifications */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Notifications In-App</h3>
+                    <p className="text-gray-400 text-sm">Recevoir les notifications dans l'application</p>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('notificationsEnabled', !settings.notificationsEnabled)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.notificationsEnabled ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                        settings.notificationsEnabled ? 'left-7' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Sound Notifications */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Son</h3>
+                    <p className="text-gray-400 text-sm">Son pour les notifications importantes</p>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.soundEnabled ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                        settings.soundEnabled ? 'left-7' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Daily Reminders */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Rappels Quotidiens</h3>
+                    <p className="text-gray-400 text-sm">Rappels d'apprentissage quotidiens</p>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('remindersEnabled', !settings.remindersEnabled)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.remindersEnabled ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                        settings.remindersEnabled ? 'left-7' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Email Notifications */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Notifications par Email</h3>
+                    <p className="text-gray-400 text-sm">Résumé hebdomadaire de vos progrès</p>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('emailNotifications', !settings.emailNotifications)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.emailNotifications ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                        settings.emailNotifications ? 'left-7' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Privacy Settings */}
+            {activeSettingsTab === 'privacy' && (
+              <div className="space-y-6">
+                {/* Public Profile */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Profil Public</h3>
+                    <p className="text-gray-400 text-sm">Permettre aux autres de voir votre profil</p>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('profilePublic', !settings.profilePublic)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.profilePublic ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                        settings.profilePublic ? 'left-7' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Hide XP Publicly */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <div>
+                    <h3 className="text-white font-semibold">Masquer votre XP publiquement</h3>
+                    <p className="text-gray-400 text-sm">Vos statistiques ne seront pas visibles</p>
+                  </div>
+                  <button className="relative w-14 h-8 rounded-full bg-gray-600">
+                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-1" />
+                  </button>
+                </div>
+
+                {/* Delete Data */}
+                <button className="w-full p-4 rounded-lg bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-400 font-semibold transition-all duration-300">
+                  🗑️ Supprimer toutes mes données
+                </button>
+              </div>
+            )}
+
+            {/* Account Settings */}
+            {activeSettingsTab === 'account' && (
+              <div className="space-y-6">
+                {/* Change Email */}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <h3 className="text-white font-semibold mb-3">Email</h3>
+                  <p className="text-gray-400 text-sm mb-3">andrejasimic05@gmail.com</p>
+                  <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300">
+                    Modifier l'email
+                  </button>
+                </div>
+
+                {/* Change Password */}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <h3 className="text-white font-semibold mb-3">Mot de Passe</h3>
+                  <p className="text-gray-400 text-sm mb-3">Dernière modification il y a 3 mois</p>
+                  <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300">
+                    Changer le mot de passe
+                  </button>
+                </div>
+
+                {/* Export Progress */}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
+                  <h3 className="text-white font-semibold mb-3">Exporter Mes Données</h3>
+                  <p className="text-gray-400 text-sm mb-3">Télécharger vos données de progression en JSON</p>
+                  <button className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300">
+                    📥 Exporter
+                  </button>
+                </div>
+
+                {/* Logout */}
+                <button className="w-full p-4 rounded-lg bg-slate-700/50 border border-gray-600/50 hover:border-gray-500 text-gray-300 font-semibold transition-all duration-300">
+                  🚪 Se déconnecter
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Progress Section */}
