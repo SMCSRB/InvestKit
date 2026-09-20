@@ -2717,8 +2717,15 @@ export default function DashboardPage() {
 
                     {/* Create Button */}
                     <button
+                      disabled={!newGuildeName.trim()}
                       onClick={() => {
-                        if (userGuildes.length > 0) {
+                        if (!newGuildeName.trim()) {
+                          setGuildMessage({
+                            type: 'error',
+                            text: '❌ Le nom de la guilde est obligatoire.\n\nVeuillez entrer un nom avant de créer.'
+                          });
+                          setTimeout(() => setGuildMessage(null), 3000);
+                        } else if (userGuildes.length > 0) {
                           // Utilisateur déjà dans une guilde
                           const currentGuilde = guildes.find(g => g.id === userGuildes[0]);
                           setGuildMessage({
@@ -2726,12 +2733,6 @@ export default function DashboardPage() {
                             text: `🚫 Tu ne peux créer qu'une seule guilde.\n\nTu es actuellement leader de: ${currentGuilde?.name || 'une guilde'}\n\nQuitte ou supprime d'abord cette guilde pour en créer une autre.`
                           });
                           setTimeout(() => setGuildMessage(null), 5000);
-                        } else if (!newGuildeName.trim()) {
-                          setGuildMessage({
-                            type: 'error',
-                            text: '❌ Le nom de la guilde ne peut pas être vide.'
-                          });
-                          setTimeout(() => setGuildMessage(null), 3000);
                         } else if (progress.userLevel < 7) {
                           setGuildMessage({
                             type: 'error',
@@ -2783,23 +2784,32 @@ export default function DashboardPage() {
                       style={{
                         width: '100%',
                         padding: '14px',
-                        background: `linear-gradient(135deg, ${currentTheme.accent}, #8b5cf6)`,
+                        background: !newGuildeName.trim()
+                          ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4))'
+                          : `linear-gradient(135deg, ${currentTheme.accent}, #8b5cf6)`,
                         border: 'none',
                         borderRadius: '10px',
-                        color: '#fff',
+                        color: !newGuildeName.trim() ? 'rgba(255, 255, 255, 0.5)' : '#fff',
                         fontWeight: '700',
-                        cursor: 'pointer',
+                        cursor: !newGuildeName.trim() ? 'not-allowed' : 'pointer',
                         fontSize: '14px',
                         transition: 'all 0.3s ease',
-                        boxShadow: `0 4px 12px ${currentTheme.accent}40`,
+                        boxShadow: !newGuildeName.trim()
+                          ? 'none'
+                          : `0 4px 12px ${currentTheme.accent}40`,
+                        opacity: !newGuildeName.trim() ? 0.6 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        e.target.style.transform = 'translateY(-2px)';
-                        e.target.style.boxShadow = `0 6px 16px ${currentTheme.accent}60`;
+                        if (newGuildeName.trim()) {
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = `0 6px 16px ${currentTheme.accent}60`;
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
+                        if (newGuildeName.trim()) {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
+                        }
                       }}
                     >
                       ✨ Créer la Guilde
