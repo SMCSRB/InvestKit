@@ -527,7 +527,7 @@ export default function SignupPage() {
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: '28px 32px',
+        padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         position: 'relative',
@@ -546,7 +546,7 @@ export default function SignupPage() {
           </div>
           <h1 style={{
             margin: '0 0 4px 0',
-            fontSize: '22px',
+            fontSize: 'clamp(18px, 5vw, 22px)',
             fontWeight: '700',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
