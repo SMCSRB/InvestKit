@@ -37,12 +37,24 @@ export default function DashboardPage() {
   const [chatMessages, setChatMessages] = useState({}); // { friendCode: [messages] }
   const [messageInput, setMessageInput] = useState('');
   const [guildes, setGuildes] = useState([
-    { id: 1, name: '₿ Crypto Traders', members: 5, description: 'Groupe pour les traders crypto', emoji: '₿' },
-    { id: 2, name: '📈 Stock Masters', members: 3, description: 'Investisseurs en bourse', emoji: '📈' },
+    {
+      id: 1, name: '₿ Crypto Traders', members: 5, description: 'Groupe pour les traders crypto', emoji: '₿',
+      restrictions: { minLevel: 5, requiredBadges: ['crypto_master'] }
+    },
+    {
+      id: 2, name: '📈 Stock Masters', members: 3, description: 'Investisseurs en bourse', emoji: '📈',
+      restrictions: { minLevel: 4, minStocksProgress: 60 }
+    },
   ]);
   const [showCreateGuilde, setShowCreateGuilde] = useState(false);
   const [newGuildeName, setNewGuildeName] = useState('');
   const [newGuildeDesc, setNewGuildeDesc] = useState('');
+  const [guildeRestrictions, setGuildeRestrictions] = useState({
+    minLevel: 1,
+    minXP: 0,
+    requiredBadges: [],
+    domainRequirements: {}, // { 'crypto': 50, 'stocks': 30 }
+  });
 
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
@@ -2105,24 +2117,39 @@ export default function DashboardPage() {
                   }}>
                     👥 Guildes & Groupes
                   </h3>
-                  <button
-                    onClick={() => setShowCreateGuilde(!showCreateGuilde)}
-                    style={{
+                  {progress.userLevel >= 7 ? (
+                    <button
+                      onClick={() => setShowCreateGuilde(!showCreateGuilde)}
+                      style={{
+                        padding: '8px 16px',
+                        background: currentTheme.accent,
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}
+                    >
+                      {showCreateGuilde ? '✕' : '➕'} Créer
+                    </button>
+                  ) : (
+                    <div style={{
                       padding: '8px 16px',
-                      background: currentTheme.accent,
-                      border: 'none',
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.5)',
                       borderRadius: '8px',
-                      color: '#fff',
+                      color: '#fca5a5',
                       fontWeight: '600',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
-                  >
-                    {showCreateGuilde ? '✕' : '➕'} Créer
-                  </button>
+                      fontSize: '12px',
+                      cursor: 'not-allowed',
+                    }}>
+                      🔒 Niveau 7+ requis
+                    </div>
+                  )}
                 </div>
 
-                {showCreateGuilde && (
+                {showCreateGuilde && progress.userLevel >= 7 && (
                   <div style={{
                     padding: '16px',
                     background: currentTheme.cardBg,
@@ -2130,6 +2157,7 @@ export default function DashboardPage() {
                     border: `1px solid ${currentTheme.border}`,
                     marginBottom: '20px',
                   }}>
+                    {/* Name & Description */}
                     <input
                       type="text"
                       placeholder="Nom de la guilde (ex: Crypto Traders)"
@@ -2167,18 +2195,131 @@ export default function DashboardPage() {
                         fontFamily: 'inherit',
                       }}
                     />
+
+                    {/* Restrictions */}
+                    <div style={{
+                      padding: '12px',
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      borderRadius: '8px',
+                      border: `1px solid rgba(59, 130, 246, 0.3)`,
+                      marginBottom: '12px',
+                    }}>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: currentTheme.text,
+                        margin: '0 0 10px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}>
+                        🔒 Restrictions (Optionnel)
+                      </p>
+
+                      {/* Min Level */}
+                      <div style={{ marginBottom: '10px' }}>
+                        <label style={{
+                          fontSize: '12px',
+                          color: currentTheme.textSecondary,
+                          display: 'block',
+                          marginBottom: '4px',
+                        }}>
+                          Niveau minimum requis
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={guildeRestrictions.minLevel}
+                          onChange={(e) => setGuildeRestrictions({
+                            ...guildeRestrictions,
+                            minLevel: parseInt(e.target.value) || 1
+                          })}
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            background: 'rgba(0, 0, 0, 0.2)',
+                            border: `1px solid ${currentTheme.border}`,
+                            borderRadius: '6px',
+                            color: currentTheme.text,
+                            fontSize: '12px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+
+                      {/* Domain Requirements */}
+                      <div style={{ marginBottom: '10px' }}>
+                        <label style={{
+                          fontSize: '12px',
+                          color: currentTheme.textSecondary,
+                          display: 'block',
+                          marginBottom: '6px',
+                        }}>
+                          Progression domaine minimum (optionnel)
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          {['crypto', 'stocks', 'realestate', 'bonds'].map((domain) => (
+                            <div key={domain}>
+                              <label style={{
+                                fontSize: '11px',
+                                color: currentTheme.textSecondary,
+                                display: 'block',
+                                marginBottom: '3px',
+                                textTransform: 'capitalize',
+                              }}>
+                                {domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto'}
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder="0%"
+                                value={guildeRestrictions.domainRequirements[domain] || 0}
+                                onChange={(e) => setGuildeRestrictions({
+                                  ...guildeRestrictions,
+                                  domainRequirements: {
+                                    ...guildeRestrictions.domainRequirements,
+                                    [domain]: parseInt(e.target.value) || 0
+                                  }
+                                })}
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  background: 'rgba(0, 0, 0, 0.2)',
+                                  border: `1px solid ${currentTheme.border}`,
+                                  borderRadius: '4px',
+                                  color: currentTheme.text,
+                                  fontSize: '11px',
+                                  outline: 'none',
+                                  boxSizing: 'border-box',
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => {
-                        if (newGuildeName.trim()) {
+                        if (newGuildeName.trim() && progress.userLevel >= 7) {
                           setGuildes([...guildes, {
                             id: guildes.length + 1,
                             name: newGuildeName,
                             members: 1,
                             description: newGuildeDesc,
-                            emoji: '✨'
+                            emoji: '✨',
+                            restrictions: guildeRestrictions
                           }]);
                           setNewGuildeName('');
                           setNewGuildeDesc('');
+                          setGuildeRestrictions({
+                            minLevel: 1,
+                            minXP: 0,
+                            requiredBadges: [],
+                            domainRequirements: {},
+                          });
                           setShowCreateGuilde(false);
                         }
                       }}
