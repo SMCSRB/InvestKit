@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS users (
   first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
   username VARCHAR(30) UNIQUE,
+  role VARCHAR(20) NOT NULL DEFAULT 'user', -- user, admin
+  subscription_tier VARCHAR(20) NOT NULL DEFAULT 'free', -- free, pro
+  free_domain VARCHAR(50), -- domaine débloqué gratuitement (Dashboard Pro limité à 1 domaine en free)
   verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(10),
   verification_code_expires_at TIMESTAMP,
@@ -35,6 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_verification_code ON users(verification_code);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- ============================================
 -- 📊 INVESTOR PROFILES TABLE
@@ -66,6 +70,10 @@ CREATE TABLE IF NOT EXISTS investment_projects (
   expected_return DECIMAL(5,2),
   investment_horizon_months INT,
   status VARCHAR(50) DEFAULT 'draft', -- draft, active, completed, abandoned
+  tags TEXT[], -- étiquettes libres posées par l'utilisateur
+  is_draft BOOLEAN NOT NULL DEFAULT TRUE,
+  version INT NOT NULL DEFAULT 1,
+  parent_project_id UUID REFERENCES investment_projects(id) ON DELETE SET NULL, -- versioning: pointe vers la version précédente
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -73,6 +81,7 @@ CREATE TABLE IF NOT EXISTS investment_projects (
 CREATE INDEX IF NOT EXISTS idx_investment_projects_user_id ON investment_projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_investment_projects_status ON investment_projects(status);
 CREATE INDEX IF NOT EXISTS idx_investment_projects_type ON investment_projects(project_type);
+CREATE INDEX IF NOT EXISTS idx_investment_projects_parent ON investment_projects(parent_project_id);
 
 -- ============================================
 -- 🛡️ RISK ANALYSIS TABLE
@@ -137,6 +146,139 @@ CREATE TABLE IF NOT EXISTS user_progress (
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_progress_course_id ON user_progress(course_id);
 CREATE INDEX IF NOT EXISTS idx_user_progress_completion ON user_progress(completion_percentage);
+
+-- ============================================
+-- 💳 SUBSCRIPTIONS TABLE (Phase 2A - historique et statut des abonnements)
+-- ============================================
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  tier VARCHAR(20) NOT NULL, -- free, pro
+  status VARCHAR(20) NOT NULL DEFAULT 'active', -- active, canceled, expired, trialing, past_due
+  payment_provider VARCHAR(50), -- stripe, paypal, etc.
+  external_subscription_id VARCHAR(255), -- id côté fournisseur de paiement
+  started_at TIMESTAMP DEFAULT NOW(),
+  current_period_end TIMESTAMP,
+  canceled_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+-- ============================================
+-- 🔒 API QUOTA TABLES (quota technique interne, invisible pour l'utilisateur)
+-- ============================================
+CREATE TABLE IF NOT EXISTS api_quota (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  quota_type VARCHAR(50) NOT NULL, -- ex: 'simulation', 'ai_recommendation', 'export_pdf'
+  used_count INT NOT NULL DEFAULT 0,
+  quota_limit INT NOT NULL,
+  period_start TIMESTAMP NOT NULL DEFAULT NOW(),
+  period_end TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, quota_type, period_start)
+);
+
+CREATE INDEX IF NOT EXISTS idx_api_quota_user_id ON api_quota(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_quota_type ON api_quota(quota_type);
+
+CREATE TABLE IF NOT EXISTS quota_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  quota_type VARCHAR(50) NOT NULL,
+  amount INT NOT NULL, -- consommation (positif) ou reset/octroi (négatif ou remise à zéro)
+  action VARCHAR(20) NOT NULL, -- consume, reset, grant
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_quota_transactions_user_id ON quota_transactions(user_id);
+
+-- ============================================
+-- 🪙 INVESTCOINS TABLES (Phase 2B - économie virtuelle)
+-- ============================================
+CREATE TABLE IF NOT EXISTS investcoins_balance (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  balance INT NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS investcoins_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INT NOT NULL, -- positif = gain, négatif = dépense
+  reason VARCHAR(100) NOT NULL, -- quiz, streak, checklist, level_up, referral, first_simulation, daily_reward, trade...
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_investcoins_transactions_user_id ON investcoins_transactions(user_id);
+
+-- ============================================
+-- 📈 VIRTUAL PORTFOLIOS TABLE (trading simulé, par utilisateur et par mode)
+-- ============================================
+CREATE TABLE IF NOT EXISTS virtual_portfolios (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  mode VARCHAR(20) NOT NULL, -- realtime, accelerated
+  domain VARCHAR(50) NOT NULL, -- crypto, stocks, real_estate, bonds, global (Pro)
+  cash_balance DECIMAL(15,2) NOT NULL DEFAULT 0,
+  positions JSONB NOT NULL DEFAULT '[]', -- positions ouvertes (actif, quantité, prix d'entrée...)
+  started_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, mode, domain)
+);
+
+CREATE INDEX IF NOT EXISTS idx_virtual_portfolios_user_id ON virtual_portfolios(user_id);
+
+-- ============================================
+-- 🏆 LEADERBOARD RANKINGS TABLE (classement séparé par mode)
+-- ============================================
+CREATE TABLE IF NOT EXISTS leaderboard_rankings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  mode VARCHAR(20) NOT NULL, -- realtime, accelerated
+  domain VARCHAR(50) NOT NULL, -- crypto, stocks, real_estate, bonds, global
+  period VARCHAR(20) NOT NULL DEFAULT 'all-time', -- week, month, all-time
+  performance_pct DECIMAL(8,4) NOT NULL DEFAULT 0,
+  rank INT,
+  computed_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, mode, domain, period)
+);
+
+CREATE INDEX IF NOT EXISTS idx_leaderboard_rankings_lookup ON leaderboard_rankings(mode, domain, period, rank);
+
+-- ============================================
+-- 📝 AUDIT LOGS TABLE (append-only)
+-- ============================================
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- NULL si action système
+  action VARCHAR(100) NOT NULL, -- ex: 'login', 'password_reset', 'subscription_change', 'admin_impersonate'
+  entity_type VARCHAR(50),
+  entity_id UUID,
+  metadata JSONB,
+  ip_address VARCHAR(45),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+
+-- ============================================
+-- 🚩 FEATURE FLAGS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS feature_flags (
+  key VARCHAR(100) PRIMARY KEY,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  description TEXT,
+  rollout_percentage INT NOT NULL DEFAULT 0, -- 0-100, pour un déploiement progressif
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 
 -- ============================================
 -- ✅ INITIALIZE DATA (une seule fois, table vide uniquement)

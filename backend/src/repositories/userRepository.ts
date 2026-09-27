@@ -7,6 +7,9 @@ export interface User {
   first_name: string;
   last_name: string;
   username?: string;
+  role: 'user' | 'admin';
+  subscription_tier: 'free' | 'pro';
+  free_domain?: string;
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
