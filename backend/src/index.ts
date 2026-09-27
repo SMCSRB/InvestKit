@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { env } from './config/env';
@@ -12,11 +12,20 @@ const app = express();
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: env.corsOrigin }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || env.corsOrigins.includes('*') || env.corsOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origine non autorisée par CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use('/api', apiLimiter);
 
 // Health check
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -24,12 +33,12 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route non trouvée' });
 });
 
-// Error handler
-app.use((err: any, req: Request, res: Response) => {
+// Error handler (4 paramètres obligatoires pour qu'Express le reconnaisse comme tel)
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Erreur:', err);
   res.status(500).json({
     error: env.isDev ? err.message : 'Erreur serveur interne',
@@ -60,7 +69,7 @@ const startServer = async () => {
 ║  Local: http://127.0.0.1:${PORT}
 ║  Environment: ${env.nodeEnv}
 ║  Database: ${env.database.name}
-║  CORS Origin: ${env.corsOrigin}
+║  CORS Origins: ${env.corsOrigins.join(', ')}
 ╚════════════════════════════════════════════╝
       `);
     });

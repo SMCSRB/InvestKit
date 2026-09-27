@@ -22,8 +22,8 @@ export const env = {
     password: process.env.DB_PASSWORD || 'password',
   },
 
-  // CORS
-  corsOrigin: process.env.CORS_ORIGIN || '*',
+  // CORS - accepte une liste d'origines séparées par des virgules
+  corsOrigins: (process.env.CORS_ORIGIN || '*').split(',').map((o) => o.trim()),
 
   // Email Configuration
   emailProvider: process.env.EMAIL_PROVIDER || 'ethereal', // 'resend', 'ethereal', or 'smtp'
