@@ -171,7 +171,7 @@ export default function SignupPage() {
 
     setCheckingEmail(true);
     try {
-      const response = await fetch(`http://192.168.1.201:5000/api/auth/check-email/${encodeURIComponent(emailToCheck)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check-email/${encodeURIComponent(emailToCheck)}`);
       const data = await response.json();
       setEmailAvailable(data.available);
     } catch (error) {
@@ -267,7 +267,7 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch('http://192.168.1.201:5000/api/auth/register', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, captchaToken: '' }),

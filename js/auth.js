@@ -1,5 +1,7 @@
 // Configuration
-const API_URL = 'http://192.168.1.201:5000/api';
+// S'adapte automatiquement au domaine/IP utilisé pour charger la page
+// (fonctionne en local, sur le réseau, et une fois déployé sur le vrai domaine)
+const API_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
 
 // ==========================================
 // 🔐 AUTHENTIFICATION
