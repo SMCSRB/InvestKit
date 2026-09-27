@@ -29,7 +29,10 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API routes
+// API routes (versionnées dès le départ - /api/v1/...)
+// /api/auth reste disponible en alias pour ne pas casser un frontend
+// déjà déployé pointant vers l'ancienne URL le temps de la transition.
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 
 // 404 handler
