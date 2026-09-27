@@ -6,6 +6,7 @@ export interface User {
   password_hash: string;
   first_name: string;
   last_name: string;
+  username?: string;
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
@@ -129,6 +130,7 @@ export const userRepository = {
   async updatePreferences(
     id: string,
     preferences: {
+      username?: string;
       account_type?: string;
       interests?: string;
       language?: string;
@@ -137,6 +139,11 @@ export const userRepository = {
   ): Promise<void> {
     const updates: string[] = [];
     const values: any[] = [];
+
+    if (preferences.username !== undefined) {
+      updates.push(`username = $${updates.length + 1}`);
+      values.push(preferences.username);
+    }
 
     if (preferences.account_type !== undefined) {
       updates.push(`account_type = $${updates.length + 1}`);

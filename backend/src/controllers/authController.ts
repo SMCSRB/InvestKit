@@ -200,7 +200,11 @@ export const authController = {
           accountType,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === '23505') {
+        res.status(409).json({ error: 'Ce pseudo est déjà pris' });
+        return;
+      }
       console.error('Save preferences error:', error);
       res.status(500).json({ error: 'Erreur lors de la sauvegarde' });
     }
@@ -246,6 +250,7 @@ export const authController = {
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,
+          username: user.username,
         },
       });
     } catch (error) {
@@ -342,6 +347,7 @@ export const authController = {
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,
+          username: user.username,
         },
       });
     } catch (error) {

@@ -1,15 +1,19 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth';
+import { apiLimiter } from './middleware/rateLimiter';
 import { initDatabase, executeSchema, closePool } from './utils/db';
 
 const app = express();
 
 // Middleware
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: env.corsOrigin }));
+app.use('/api', apiLimiter);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {

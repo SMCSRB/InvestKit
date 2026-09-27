@@ -2,23 +2,22 @@
 -- InvestKit Database Schema
 -- ============================================
 
--- Drop existing objects if they exist (dev only)
-DROP TABLE IF EXISTS user_progress CASCADE;
-DROP TABLE IF EXISTS courses CASCADE;
-DROP TABLE IF EXISTS risk_analysis CASCADE;
-DROP TABLE IF EXISTS investment_projects CASCADE;
-DROP TABLE IF EXISTS investor_profiles CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
+-- NOTE: ce script tourne à CHAQUE démarrage du serveur (voir executeSchema()).
+-- Il ne doit donc JAMAIS supprimer les tables existantes (DROP TABLE) sous peine
+-- d'effacer tous les comptes utilisateurs à chaque redémarrage/déploiement.
+-- Toute évolution de schéma doit passer par une migration idempotente dans
+-- backend/migrations/ (ALTER TABLE ... IF NOT EXISTS).
 
 -- ============================================
 -- 👥 USERS TABLE
 -- ============================================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
+  username VARCHAR(30) UNIQUE,
   verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(10),
   verification_code_expires_at TIMESTAMP,
@@ -33,13 +32,14 @@ CREATE TABLE users (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_verification_code ON users(verification_code);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_verification_code ON users(verification_code);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
 -- ============================================
 -- 📊 INVESTOR PROFILES TABLE
 -- ============================================
-CREATE TABLE investor_profiles (
+CREATE TABLE IF NOT EXISTS investor_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   risk_tolerance VARCHAR(50), -- low, medium, high
@@ -51,12 +51,12 @@ CREATE TABLE investor_profiles (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_investor_profiles_user_id ON investor_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_investor_profiles_user_id ON investor_profiles(user_id);
 
 -- ============================================
 -- 💼 INVESTMENT PROJECTS TABLE
 -- ============================================
-CREATE TABLE investment_projects (
+CREATE TABLE IF NOT EXISTS investment_projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   project_type VARCHAR(50), -- real_estate, crypto, stocks, bonds, etf, etc.
@@ -70,14 +70,14 @@ CREATE TABLE investment_projects (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_investment_projects_user_id ON investment_projects(user_id);
-CREATE INDEX idx_investment_projects_status ON investment_projects(status);
-CREATE INDEX idx_investment_projects_type ON investment_projects(project_type);
+CREATE INDEX IF NOT EXISTS idx_investment_projects_user_id ON investment_projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_investment_projects_status ON investment_projects(status);
+CREATE INDEX IF NOT EXISTS idx_investment_projects_type ON investment_projects(project_type);
 
 -- ============================================
 -- 🛡️ RISK ANALYSIS TABLE
 -- ============================================
-CREATE TABLE risk_analysis (
+CREATE TABLE IF NOT EXISTS risk_analysis (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES investment_projects(id) ON DELETE CASCADE,
   current_risk_score DECIMAL(5,2), -- 0-100
@@ -91,13 +91,13 @@ CREATE TABLE risk_analysis (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_risk_analysis_project_id ON risk_analysis(project_id);
-CREATE INDEX idx_risk_analysis_date ON risk_analysis(analysis_date);
+CREATE INDEX IF NOT EXISTS idx_risk_analysis_project_id ON risk_analysis(project_id);
+CREATE INDEX IF NOT EXISTS idx_risk_analysis_date ON risk_analysis(analysis_date);
 
 -- ============================================
 -- 📚 COURSES TABLE
 -- ============================================
-CREATE TABLE courses (
+CREATE TABLE IF NOT EXISTS courses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR(255) NOT NULL,
   description TEXT,
@@ -112,14 +112,14 @@ CREATE TABLE courses (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_courses_category ON courses(category);
-CREATE INDEX idx_courses_level ON courses(level);
-CREATE INDEX idx_courses_published ON courses(is_published);
+CREATE INDEX IF NOT EXISTS idx_courses_category ON courses(category);
+CREATE INDEX IF NOT EXISTS idx_courses_level ON courses(level);
+CREATE INDEX IF NOT EXISTS idx_courses_published ON courses(is_published);
 
 -- ============================================
 -- 🎓 USER PROGRESS TABLE
 -- ============================================
-CREATE TABLE user_progress (
+CREATE TABLE IF NOT EXISTS user_progress (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
@@ -134,18 +134,19 @@ CREATE TABLE user_progress (
   UNIQUE(user_id, course_id)
 );
 
-CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
-CREATE INDEX idx_user_progress_course_id ON user_progress(course_id);
-CREATE INDEX idx_user_progress_completion ON user_progress(completion_percentage);
+CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_course_id ON user_progress(course_id);
+CREATE INDEX IF NOT EXISTS idx_user_progress_completion ON user_progress(completion_percentage);
 
 -- ============================================
--- ✅ INITIALIZE DATA
+-- ✅ INITIALIZE DATA (une seule fois, table vide uniquement)
 -- ============================================
 
--- Insert sample courses
 INSERT INTO courses (title, description, category, level, duration_minutes, content, order_index, is_published)
-VALUES
+SELECT * FROM (VALUES
   ('Introduction aux Stocks', 'Apprenez les bases de l''investissement en actions', 'stocks', 'beginner', 30, 'Contenu du cours...', 1, TRUE),
   ('Comprendre la Crypto', 'Guide complet sur la blockchain et les cryptomonnaies', 'crypto', 'beginner', 45, 'Contenu du cours...', 1, TRUE),
   ('L''Immobilier pour Débuter', 'Les fondamentaux de l''investissement immobilier', 'real_estate', 'beginner', 50, 'Contenu du cours...', 1, TRUE),
-  ('Stratégies Avancées en Bourse', 'Techniques avancées pour investisseurs expérimentés', 'stocks', 'expert', 120, 'Contenu du cours...', 2, TRUE);
+  ('Stratégies Avancées en Bourse', 'Techniques avancées pour investisseurs expérimentés', 'stocks', 'expert', 120, 'Contenu du cours...', 2, TRUE)
+) AS seed(title, description, category, level, duration_minutes, content, order_index, is_published)
+WHERE NOT EXISTS (SELECT 1 FROM courses);
