@@ -48,6 +48,32 @@ export function UserProvider({ children }) {
     }
   }, [user, isLoading]);
 
+  // Récupère la vraie identité du compte connecté (pseudo, email) et
+  // l'affiche à la place des données fictives par défaut. Le reste
+  // (amis, guildes...) reste en local en attendant le vrai backend.
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setUser((prev) => ({
+            ...prev,
+            email: data.user.email,
+            username: data.user.username,
+            fullName: data.user.username || prev.fullName,
+          }));
+        }
+      })
+      .catch((error) => {
+        console.error('Erreur lors de la récupération du compte:', error);
+      });
+  }, []);
+
   const initializeUser = () => {
     // Keep the preset friend code and name
     // Only initialize if not already set

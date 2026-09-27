@@ -12,7 +12,7 @@ export default function EducationPage() {
   const { progress, isDomainCompleted, getDomainProgress, isLoading } = useEducationProgress();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
     }
