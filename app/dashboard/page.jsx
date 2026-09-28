@@ -31,6 +31,11 @@ export default function DashboardPage() {
   // Abonnement Stripe
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState('');
+  // InvestCoins (économie virtuelle)
+  const [coinsBalance, setCoinsBalance] = useState(null);
+  const [coinsStreak, setCoinsStreak] = useState(0);
+  const [canClaimDaily, setCanClaimDaily] = useState(false);
+  const [claimingDaily, setClaimingDaily] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [fullName, setFullName] = useState('Jean Dupont');
@@ -388,6 +393,45 @@ export default function DashboardPage() {
     } catch (err) {
       setBillingError(err.message);
       setBillingLoading(false);
+    }
+  };
+
+  // ============ InvestCoins (économie virtuelle) ============
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/economy/balance`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setCoinsBalance(data.balance);
+          setCoinsStreak(data.dailyStreak);
+          setCanClaimDaily(data.canClaimToday);
+        }
+      })
+      .catch((err) => console.error('Erreur récupération solde InvestCoins:', err));
+  }, []);
+
+  const claimDailyCoins = async () => {
+    setClaimingDaily(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/economy/daily-reward`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setCoinsBalance(data.balance);
+      setCoinsStreak(data.newStreak);
+      setCanClaimDaily(false);
+      triggerConfetti();
+    } catch (err) {
+      console.error('Erreur réclamation quotidienne:', err);
+    } finally {
+      setClaimingDaily(false);
     }
   };
 
@@ -2519,6 +2563,48 @@ export default function DashboardPage() {
             </p>
           </div>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* InvestCoins Wallet */}
+            {coinsBalance !== null && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 16px',
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '12px',
+              }}>
+                <span style={{ fontSize: '14px', fontWeight: '700', color: '#f59e0b', whiteSpace: 'nowrap' }}>
+                  🪙 {coinsBalance.toLocaleString('fr-FR')}
+                </span>
+                {coinsStreak > 0 && (
+                  <span style={{ fontSize: '11px', color: currentTheme.textSecondary, whiteSpace: 'nowrap' }}>
+                    🔥 {coinsStreak}j
+                  </span>
+                )}
+                {canClaimDaily && (
+                  <button
+                    onClick={claimDailyCoins}
+                    disabled={claimingDaily}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#f59e0b',
+                      color: '#1a1a2e',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      cursor: claimingDaily ? 'wait' : 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {claimingDaily ? '...' : '+ Réclamer'}
+                  </button>
+                )}
+              </div>
+            )}
+
           {/* News Modal Button */}
           <button onClick={() => setNewsModalOpen(true)} style={{
             padding: '12px 20px',
@@ -2546,6 +2632,7 @@ export default function DashboardPage() {
           >
             📰 Actualités
           </button>
+          </div>
         </div>
 
         {/* MAIN PORTFOLIO CARD - BANK CARD STYLE */}
