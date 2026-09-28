@@ -66,6 +66,9 @@ export function UserProvider({ children }) {
             email: data.user.email,
             username: data.user.username,
             fullName: data.user.username || prev.fullName,
+            subscriptionTier: data.user.subscriptionTier,
+            freeDomain: data.user.freeDomain,
+            enable2FA: data.user.enable2FA,
           }));
         }
       })

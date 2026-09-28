@@ -365,6 +365,7 @@ export const authController = {
           username: user.username,
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
+          enable2FA: user.enable_2fa,
         },
       });
     } catch (error) {

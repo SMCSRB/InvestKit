@@ -10,7 +10,7 @@ import { educationDomains } from '@/data/education';
 export default function DashboardPage() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
-  const { user: userData, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
+  const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedProject, setExpandedProject] = useState(null);
@@ -19,6 +19,18 @@ export default function DashboardPage() {
   const [newsModalTab, setNewsModalTab] = useState('news');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [settingsTab, setSettingsTab] = useState('general');
+  // 2FA - configuration réelle (backend TOTP)
+  const [twoFAModal, setTwoFAModal] = useState(null); // null | 'setup' | 'verify' | 'backup-codes' | 'disable'
+  const [twoFAQrCode, setTwoFAQrCode] = useState('');
+  const [twoFASecret, setTwoFASecret] = useState('');
+  const [twoFACodeInput, setTwoFACodeInput] = useState('');
+  const [twoFABackupCodes, setTwoFABackupCodes] = useState([]);
+  const [twoFADisablePassword, setTwoFADisablePassword] = useState('');
+  const [twoFAError, setTwoFAError] = useState('');
+  const [twoFALoading, setTwoFALoading] = useState(false);
+  // Abonnement Stripe
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState('');
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [fullName, setFullName] = useState('Jean Dupont');
@@ -260,6 +272,124 @@ export default function DashboardPage() {
   const [badgeCustomTitles, setBadgeCustomTitles] = useState({}); // Custom titles for badges (premium)
   const [badgeAuraColors, setBadgeAuraColors] = useState({}); // Custom aura colors (premium)
   const [badgeShowcaseTab, setBadgeShowcaseTab] = useState('rarity'); // rarity, newest, pinned
+
+  // ============ 2FA (TOTP réel, backend) ============
+  const getAuthToken = () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+
+  const startTwoFASetup = async () => {
+    setTwoFAError('');
+    setTwoFALoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/2fa/setup`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la configuration');
+      setTwoFAQrCode(data.qrCode);
+      setTwoFASecret(data.secret);
+      setTwoFACodeInput('');
+      setTwoFAModal('setup');
+    } catch (err) {
+      setTwoFAError(err.message);
+    } finally {
+      setTwoFALoading(false);
+    }
+  };
+
+  const confirmTwoFASetup = async () => {
+    setTwoFAError('');
+    setTwoFALoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/2fa/verify-setup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`,
+        },
+        body: JSON.stringify({ code: twoFACodeInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Code invalide');
+      setTwoFABackupCodes(data.backupCodes);
+      setTwoFAModal('backup-codes');
+      setUser((prev) => ({ ...prev, enable2FA: true }));
+    } catch (err) {
+      setTwoFAError(err.message);
+    } finally {
+      setTwoFALoading(false);
+    }
+  };
+
+  const confirmTwoFADisable = async () => {
+    setTwoFAError('');
+    setTwoFALoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/2fa/disable`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`,
+        },
+        body: JSON.stringify({ password: twoFADisablePassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Mot de passe incorrect');
+      setTwoFAModal(null);
+      setTwoFADisablePassword('');
+      setUser((prev) => ({ ...prev, enable2FA: false }));
+    } catch (err) {
+      setTwoFAError(err.message);
+    } finally {
+      setTwoFALoading(false);
+    }
+  };
+
+  const closeTwoFAModal = () => {
+    setTwoFAModal(null);
+    setTwoFAError('');
+    setTwoFACodeInput('');
+    setTwoFADisablePassword('');
+  };
+
+  // ============ Abonnement Stripe ============
+  const startCheckout = async (plan) => {
+    setBillingError('');
+    setBillingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getAuthToken()}`,
+        },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la création du paiement');
+      window.location.href = data.url;
+    } catch (err) {
+      setBillingError(err.message);
+      setBillingLoading(false);
+    }
+  };
+
+  const openBillingPortal = async () => {
+    setBillingError('');
+    setBillingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/billing/create-portal-session`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'ouverture du portail');
+      window.location.href = data.url;
+    } catch (err) {
+      setBillingError(err.message);
+      setBillingLoading(false);
+    }
+  };
 
   // ============ HELPER FUNCTIONS FOR BADGE SYSTEM ============
 
@@ -8791,20 +8921,25 @@ export default function DashboardPage() {
                         Authentification 2FA
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Sécurité supplémentaire
+                        {userData?.enable2FA ? '✅ Activée' : 'Sécurité supplémentaire'}
                       </p>
                     </div>
-                    <button style={{
-                      padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      borderRadius: '8px',
-                      color: currentTheme.accent,
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}>
-                      Activer
+                    <button
+                      onClick={() => (userData?.enable2FA ? setTwoFAModal('disable') : startTwoFASetup())}
+                      disabled={twoFALoading}
+                      style={{
+                        padding: '8px 16px',
+                        background: userData?.enable2FA ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.2)',
+                        border: `1px solid ${userData?.enable2FA ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+                        borderRadius: '8px',
+                        color: userData?.enable2FA ? '#ef4444' : currentTheme.accent,
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: twoFALoading ? 'wait' : 'pointer',
+                        opacity: twoFALoading ? 0.6 : 1,
+                      }}
+                    >
+                      {twoFALoading ? '...' : userData?.enable2FA ? 'Désactiver' : 'Activer'}
                     </button>
                   </div>
 
@@ -10586,6 +10721,181 @@ export default function DashboardPage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ MODAL 2FA ============ */}
+      {twoFAModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '16px',
+          }}
+          onClick={closeTwoFAModal}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: currentTheme.cardBg,
+              border: `1px solid ${currentTheme.border}`,
+              borderRadius: '16px',
+              padding: '28px',
+              maxWidth: '400px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            {twoFAModal === 'setup' && (
+              <>
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}>
+                  🔐 Activer la 2FA
+                </h3>
+                <p style={{ fontSize: '13px', color: currentTheme.textSecondary, margin: '0 0 16px' }}>
+                  Scannez ce QR code avec Google Authenticator, Authy ou une app équivalente.
+                </p>
+                {twoFAQrCode && (
+                  <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                    <img src={twoFAQrCode} alt="QR code 2FA" style={{ width: '180px', height: '180px', borderRadius: '8px' }} />
+                  </div>
+                )}
+                <p style={{ fontSize: '11px', color: currentTheme.textSecondary, textAlign: 'center', marginBottom: '16px', wordBreak: 'break-all' }}>
+                  Ou entrez manuellement : <code>{twoFASecret}</code>
+                </p>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Code à 6 chiffres"
+                  value={twoFACodeInput}
+                  onChange={(e) => setTwoFACodeInput(e.target.value.replace(/\D/g, ''))}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `1px solid ${currentTheme.border}`,
+                    background: currentTheme.bg,
+                    color: currentTheme.text,
+                    fontSize: '16px',
+                    textAlign: 'center',
+                    letterSpacing: '4px',
+                    marginBottom: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {twoFAError && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={closeTwoFAModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${currentTheme.border}`, background: 'transparent', color: currentTheme.text, cursor: 'pointer' }}>
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmTwoFASetup}
+                    disabled={twoFALoading || twoFACodeInput.length !== 6}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      cursor: twoFACodeInput.length === 6 ? 'pointer' : 'not-allowed',
+                      opacity: twoFACodeInput.length === 6 ? 1 : 0.5,
+                    }}
+                  >
+                    {twoFALoading ? '...' : 'Confirmer'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {twoFAModal === 'backup-codes' && (
+              <>
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}>
+                  ✅ 2FA activée !
+                </h3>
+                <p style={{ fontSize: '13px', color: currentTheme.textSecondary, margin: '0 0 16px' }}>
+                  Notez ces 8 codes de secours dans un endroit sûr. Chacun ne fonctionne qu'une seule fois, en cas de perte de votre téléphone.
+                </p>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '8px',
+                  background: currentTheme.bg,
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginBottom: '16px',
+                }}>
+                  {twoFABackupCodes.map((code) => (
+                    <code key={code} style={{ fontSize: '13px', color: currentTheme.text }}>{code}</code>
+                  ))}
+                </div>
+                <button
+                  onClick={closeTwoFAModal}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  J'ai noté mes codes
+                </button>
+              </>
+            )}
+
+            {twoFAModal === 'disable' && (
+              <>
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}>
+                  Désactiver la 2FA
+                </h3>
+                <p style={{ fontSize: '13px', color: currentTheme.textSecondary, margin: '0 0 16px' }}>
+                  Confirmez votre mot de passe pour désactiver la double authentification.
+                </p>
+                <input
+                  type="password"
+                  placeholder="Mot de passe"
+                  value={twoFADisablePassword}
+                  onChange={(e) => setTwoFADisablePassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `1px solid ${currentTheme.border}`,
+                    background: currentTheme.bg,
+                    color: currentTheme.text,
+                    fontSize: '14px',
+                    marginBottom: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {twoFAError && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={closeTwoFAModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${currentTheme.border}`, background: 'transparent', color: currentTheme.text, cursor: 'pointer' }}>
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmTwoFADisable}
+                    disabled={twoFALoading || !twoFADisablePassword}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#ef4444',
+                      color: '#fff',
+                      fontWeight: 600,
+                      cursor: twoFADisablePassword ? 'pointer' : 'not-allowed',
+                      opacity: twoFADisablePassword ? 1 : 0.5,
+                    }}
+                  >
+                    {twoFALoading ? '...' : 'Désactiver'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
