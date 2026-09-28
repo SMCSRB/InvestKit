@@ -171,3 +171,95 @@ describe('chaque profil peut acheter au moins un bien, chaque année', () => {
     expect(counts[1]).toBeLessThanOrEqual(counts[2]);
   });
 });
+
+// ── Modèle de loyers dans le catalogue (jamais figé annonce par annonce) ──
+import { estimateMarketRent, averageVacancyPct } from '../src/engine/immo';
+import { RENT_MODEL, VACANCY_MODEL } from '../src/config/immoRules';
+
+describe('catalogue : loyer calculé à partir du lieu, jamais figé', () => {
+  it('chaque loyer = surface × loyer/m² du quartier × taille × état × énergie', async () => {
+    for (const year of [2010, 2018, 2026]) {
+      for (const l of await src.listListings(year)) {
+        const market = (await src.getMarket(l.cityId, year))!;
+        const nbh = (await src.listNeighborhoods(l.cityId)).find((n) => n.id === l.neighborhoodId)!;
+        const expected = estimateMarketRent(
+          { surfaceSqm: l.surfaceSqm, cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier, condition: l.condition, energyClass: l.energyClass },
+          RENT_MODEL
+        );
+        expect(l.rentPerSqm).toBe(expected.rentPerSqm);
+        expect(l.marketRentMonthly).toBe(Math.round(expected.monthlyRent));
+      }
+    }
+  });
+
+  it('le même bien voit son loyer évoluer avec le marché de sa ville', async () => {
+    const a = (await src.getListing('marvelle-2', 2010))!;
+    const b = (await src.getListing('marvelle-2', 2026))!;
+    expect(a.surfaceSqm).toBe(b.surfaceSqm);
+    expect(b.marketRentMonthly).not.toBe(a.marketRentMonthly);
+    expect(b.rentPerSqm / a.rentPerSqm).toBeCloseTo(
+      (await src.getMarket('marvelle', 2026))!.rentPerSqm / (await src.getMarket('marvelle', 2010))!.rentPerSqm, 2
+    );
+  });
+
+  it('chaque ville a des quartiers ; les annonces pointent vers un quartier existant', async () => {
+    for (const c of await src.listCities()) {
+      const nbhs = await src.listNeighborhoods(c.id);
+      expect(nbhs.length).toBeGreaterThanOrEqual(3);
+    }
+    expect(await src.listNeighborhoods('nope')).toEqual([]);
+    for (const l of await src.listListings(2015)) {
+      const ids = (await src.listNeighborhoods(l.cityId)).map((n) => n.id);
+      expect(ids).toContain(l.neighborhoodId);
+    }
+  });
+
+  it('le centre est plus cher, plus tendu et moins vacant que la périphérie', async () => {
+    const nb = await src.listNeighborhoods('valcourt');
+    const centre = nb.find((n) => n.id.endsWith('centre'))!;
+    const peri = nb.find((n) => n.id.endsWith('peripherie'))!;
+    expect(centre.rentMultiplier).toBeGreaterThan(peri.rentMultiplier);
+    expect(centre.priceMultiplier).toBeGreaterThan(peri.priceMultiplier);
+    expect(centre.tensionOffset).toBeGreaterThan(peri.tensionOffset);
+    const ls = await src.listListings(2018);
+    const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    const c = ls.filter((l) => l.neighborhoodId.endsWith('centre'));
+    const p = ls.filter((l) => l.neighborhoodId.endsWith('peripherie'));
+    expect(c.length).toBeGreaterThan(3);
+    expect(p.length).toBeGreaterThan(3);
+    expect(mean(c.map((l) => l.rentalTension))).toBeGreaterThan(mean(p.map((l) => l.rentalTension)));
+    expect(mean(c.map((l) => l.vacancyPct))).toBeLessThan(mean(p.map((l) => l.vacancyPct)));
+  });
+
+  it('tension et vacance cohérentes : ville tendue = vacance faible', async () => {
+    const tight = (await src.getMarket('marvelle', 2018))!;
+    const loose = (await src.getMarket('brumevalle', 2018))!;
+    expect(tight.rentalTension).toBeGreaterThan(loose.rentalTension);
+    expect(tight.vacancyPct).toBeLessThan(loose.vacancyPct);
+    for (const c of await src.listCities()) {
+      for (const year of YEARS) {
+        const m = (await src.getMarket(c.id, year))!;
+        expect(m.rentalTension).toBeGreaterThanOrEqual(0);
+        expect(m.rentalTension).toBeLessThanOrEqual(1);
+        expect(m.vacancyPct).toBe(averageVacancyPct(m.rentalTension, 36, VACANCY_MODEL));
+      }
+    }
+  });
+
+  it('charges récupérables distinguées des charges non récupérables', async () => {
+    for (const l of await src.listListings(2015)) {
+      expect(l.recoverableChargesMonthly).toBeGreaterThan(0);
+      expect(l.annualCharges).toHaveProperty('condoFees');
+      expect(l.annualCharges).not.toHaveProperty('recoverable');
+    }
+  });
+
+  it('IRL : une valeur plausible pour chaque année, hors plage refusée', async () => {
+    for (const year of YEARS) {
+      const v = await src.getIrlAnnualChangePct(year);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(3.5);
+    }
+    await expect(src.getIrlAnnualChangePct(2009)).rejects.toThrow(RangeError);
+  });
+});

@@ -1,12 +1,12 @@
-import type { PropertyAge } from '../../engine/immo';
+import type { PropertyAge, Condition, EnergyClass, UnitType } from '../../engine/immo';
+
+export type { Condition, EnergyClass };
 
 // Tout ce fichier est INDÉPENDANT de la source des données : le catalogue
 // fictif et, plus tard, les vraies données DVF produisent exactement ces
 // structures. Le reste du jeu ne connaît que ces types.
 
-export type PropertyType = 'studio' | 'apartment' | 'house';
-export type Condition = 'good' | 'to_refresh' | 'to_renovate';
-export type EnergyClass = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+export type PropertyType = UnitType; // 'studio' | 'apartment' | 'house'
 export type CityTier = 'metropolis' | 'large' | 'medium' | 'small';
 
 export interface City {
@@ -18,13 +18,25 @@ export interface City {
   fictive: boolean; // true : ville imaginaire, aucune donnée réelle
 }
 
+// Quartier : nuance le marché de la ville (centre plus cher et plus tendu,
+// périphérie moins chère et plus détendue).
+export interface Neighborhood {
+  id: string;
+  cityId: string;
+  name: string;
+  priceMultiplier: number;   // × prix moyen de la ville
+  rentMultiplier: number;    // × loyer moyen de la ville
+  tensionOffset: number;     // ajouté à la tension de la ville (borné à [0, 1])
+}
+
 // Marché d'une ville pour une année simulée.
 export interface CityMarket {
   cityId: string;
   year: number;
   pricePerSqm: number;      // € / m², prix moyen de la ville
   rentPerSqm: number;       // € / m² / mois, loyer moyen hors charges
-  vacancyPct: number;       // vacance locative moyenne (% du temps non loué)
+  rentalTension: number;    // 0 = marché détendu, 1 = très tendu (varie un peu chaque année)
+  vacancyPct: number;       // vacance moyenne (% du temps non loué), DÉRIVÉE de la tension
   priceChangePct: number;   // variation des prix sur l'année (%)
 }
 
@@ -33,6 +45,8 @@ export interface CityMarket {
 export interface Listing {
   id: string;
   cityId: string;
+  neighborhoodId: string;
+  neighborhoodName: string;
   year: number;
   type: PropertyType;
   title: string;
@@ -43,10 +57,14 @@ export interface Listing {
   condition: Condition;           // état affiché dans l'annonce
   price: number;                  // prix net vendeur (€)
   advertisedWorks: number;        // travaux annoncés (€)
-  marketRentMonthly: number;      // loyer de marché estimé une fois loué (€/mois)
-  vacancyPct: number;
+  rentPerSqm: number;             // loyer au m² retenu (quartier, taille, état, énergie)
+  marketRentMonthly: number;      // = surface × loyer au m² : CALCULÉ, jamais figé par annonce
+  rentalTension: number;          // tension du quartier (0–1)
+  vacancyPct: number;             // vacance moyenne attendue de ce bien (%)
+  tenancyMonths: number;          // durée moyenne d'un bail avant changement de locataire
+  recoverableChargesMonthly: number; // charges récupérables avancées puis refacturées (€/mois)
   annualCharges: {
-    condoFees: number;            // charges de copropriété non récupérables (€/an)
+    condoFees: number;            // copropriété NON récupérable (€/an)
     propertyTax: number;          // taxe foncière (€/an)
     insurance: number;            // assurance propriétaire non occupant (€/an)
     maintenance: number;          // entretien courant (€/an)
@@ -74,9 +92,12 @@ export interface RealEstateDataSource {
   readonly maxYear: number;
   listCities(): Promise<City[]>;
   getCity(cityId: string): Promise<City | null>;
+  listNeighborhoods(cityId: string): Promise<Neighborhood[]>;
   getMarket(cityId: string, year: number): Promise<CityMarket | null>;
   // Taux nominal des crédits (%, hors assurance) proposé cette année-là pour une durée en mois.
   getLoanRatePct(year: number, months: number): Promise<number>;
+  // Variation annuelle (%) de l'indice de référence des loyers (IRL), net de tout plafonnement légal.
+  getIrlAnnualChangePct(year: number): Promise<number>;
   listListings(year: number, filter?: ListingFilter): Promise<Listing[]>;
   getListing(listingId: string, year: number): Promise<Listing | null>;
   getExpertise(listingId: string, year: number): Promise<Expertise | null>;

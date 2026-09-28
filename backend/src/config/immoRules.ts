@@ -1,4 +1,4 @@
-import type { BankRules, NotaryFeeRule, ProfileId } from '../engine/immo';
+import type { BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType } from '../engine/immo';
 
 // Règles bancaires. Ce sont des règles de JEU, ajustables : elles ne prétendent
 // pas refléter une banque précise.
@@ -42,6 +42,30 @@ export const STARTING_PROFILES: Record<ProfileId, StartingProfile> = {
 // le milieu de fourchette. Le taux réel dépend du département (droits de
 // mutation) : simplification assumée. À reconfirmer avant mise en production.
 export const NOTARY_RULE: NotaryFeeRule = { oldRatePct: 7.5, newRatePct: 2.5 };
+
+// ── Modèle de loyers (réglages de JEU, voir engine/immo/rent.ts) ──────────
+export const RENT_MODEL: RentModelParams = {
+  conditionFactors: { good: 1, to_refresh: 0.93, to_renovate: 0.85 },
+  energyFactors: { A: 1.03, B: 1.02, C: 1, D: 1, E: 0.97, F: 0.92, G: 0.88 },
+  smallSurfaceThresholdSqm: 45,
+  smallSurfaceMaxBonusPct: 35,
+};
+
+export const VACANCY_MODEL: VacancyParams = {
+  minMonths: 0.5,
+  maxMonths: 5,
+  maxSampledMonths: 24,
+  askingRentRatioMin: 0.7,
+  askingRentRatioMax: 1.3,
+};
+
+// Durée moyenne d'un bail avant changement de locataire (mois), par type.
+export const TENANCY_MONTHS: Record<UnitType, number> = { studio: 24, apartment: 36, house: 48 };
+
+// Fiscalité simplifiée du socle : taux appliqué aux loyers encaissés, par
+// profil. Valeurs de JEU (pas des taux légaux) ; les régimes réels
+// (micro-foncier, réel, LMNP…) sont des extensions, à vérifier à la source.
+export const RENT_TAX_RATE_BY_PROFILE: Record<ProfileId, number> = { student: 15, employee: 30, executive: 45 };
 
 // Conversion de jeu : 1 🪙 = 20 € en Immobilier (décision produit).
 export const EUROS_PER_COIN = 20;

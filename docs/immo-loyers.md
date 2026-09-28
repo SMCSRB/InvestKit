@@ -1,0 +1,17 @@
+# Modèle de loyers
+
+Code : `backend/src/engine/immo/rent.ts` et `monthly.ts` ; données : `backend/src/data/realEstate/` ; réglages : `backend/src/config/immoRules.ts`. Tests : `rentModel.test.ts`, `realEstateCatalog.test.ts`.
+
+1. **Loyer selon le lieu.** `loyer = surface × loyer/m² de la ville × multiplicateur du quartier × effet de taille (petites surfaces majorées) × état × classe énergie`. Jamais figé par annonce : il évolue avec le marché de la ville d'année en année. 3 quartiers par ville (centre, péricentre, périphérie).
+2. **Tension et vacance.** Chaque ville/quartier a une tension locative (0–1). La vacance moyenne en est **déduite** (jamais tirée à part), donc toujours cohérente. Entre deux locataires : durée moyenne `0,5 + 4,5 × (1 − tension)²` mois, multipliée par un facteur selon le loyer demandé (loyer +10 % → ×1,6 ; +50 % → ×4 ; −10 % → ×0,7). Durée réelle tirée par un générateur déterministe (graine fournie par l'événement).
+3. **Révision annuelle (IRL).** Une fois par an, hausse = variation de l'IRL, jamais choisie par le joueur. Gel des hausses pour les classes énergie F et G (aussi à la relocation). Variation négative traitée comme 0. Série IRL du catalogue : **fictive** (les vraies valeurs Insee se brancheront via la même interface).
+4. **Charges.** Récupérables (avancées puis refacturées ; à ta charge si logement vide ou impayé) distinguées des non récupérables (copropriété non refacturable, taxe foncière, assurance, entretien). Retards (décalage de trésorerie) et impayés (dette enregistrée) : le moteur les traite ; **leur tirage aléatoire sera fait à l'étape 5**.
+5. **Fiscalité simplifiée.** Taux unique sur les loyers encaissés, par profil (`RENT_TAX_RATE_BY_PROFILE`, valeurs de jeu). Régimes réels et encadrement des loyers = extensions.
+6. **Euros → InvestCoins.** Calcul en centimes entiers, reliquat conservé par bien, un déficit débite l'entier inférieur (arrondi contre le joueur). Invariant testé sur 20 000 opérations : pièces × 20 € + reliquat = somme exacte des euros.
+7. **Récapitulatif mensuel.** Chaque ligne (loyers, charges, mensualité, impôt, cash-flow net) et chaque variation vs un mois normal, avec son montant exact ; la somme des impacts expliqués est égale à l'écart exact (testé).
+
+## Règles vérifiées (extraits Insee / Légifrance / ministère de la Transition écologique, 2026-09-28 ; pages officielles inaccessibles depuis l'environnement de développement, à reconfirmer)
+- Révision au plus une fois par an, à la date du bail ou à la date anniversaire ; plafonnée à la variation annuelle de l'IRL ; un an pour la demander.
+- IRL = moyenne sur 12 mois des prix à la consommation hors tabac et hors loyers, publié chaque trimestre par l'Insee.
+- Depuis le 24 août 2022, pas de hausse pour les logements F et G.
+- Non modélisé (choix de jeu) : le délai d'un an pour réclamer, le bouclier de 3,5 % (la série IRL du catalogue est déjà « nette »), le calendrier d'interdiction de location F/G/E (à vérifier et intégrer à l'étape 6).

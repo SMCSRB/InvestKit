@@ -4,3 +4,5 @@ export * from './acquisition';
 export * from './affordability';
 export * from './indicators';
 export * from './capitalGains';
+export * from './rent';
+export * from './monthly';
