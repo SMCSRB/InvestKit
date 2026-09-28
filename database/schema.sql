@@ -234,8 +234,9 @@ CREATE TABLE IF NOT EXISTS virtual_portfolios (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   mode VARCHAR(20) NOT NULL, -- realtime, accelerated
   domain VARCHAR(50) NOT NULL, -- crypto, stocks, real_estate, bonds, global (Pro)
-  cash_balance DECIMAL(15,2) NOT NULL DEFAULT 0,
+  cash_balance DECIMAL(15,2) NOT NULL DEFAULT 0, -- non utilisé : le cash de trading est le solde InvestCoins
   positions JSONB NOT NULL DEFAULT '[]', -- positions ouvertes (actif, quantité, prix d'entrée...)
+  simulated_year INT NOT NULL DEFAULT 2010, -- année courante du mode Accéléré/Historique
   started_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(user_id, mode, domain)
