@@ -51,6 +51,9 @@ export const env = {
   // INVITE_ONLY=false pour ouvrir l'inscription à tous.
   inviteOnly: process.env.INVITE_ONLY !== 'false',
 
+  // Source des données immobilières : 'fictive' (catalogue imaginaire) ; 'dvf' plus tard.
+  realEstateSource: process.env.REAL_ESTATE_SOURCE || 'fictive',
+
   // URL du frontend (redirections Stripe Checkout / Customer Portal)
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };

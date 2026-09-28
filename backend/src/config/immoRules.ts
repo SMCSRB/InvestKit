@@ -1,4 +1,4 @@
-import type { BankRules, ProfileId } from '../engine/immo';
+import type { BankRules, NotaryFeeRule, ProfileId } from '../engine/immo';
 
 // Règles bancaires. Ce sont des règles de JEU, ajustables : elles ne prétendent
 // pas refléter une banque précise.
@@ -35,12 +35,20 @@ export const STARTING_PROFILES: Record<ProfileId, StartingProfile> = {
   executive: { label: 'Cadre', netMonthlyIncome: 4500, livingCharges: 1500 },
 };
 
+// Frais de notaire (jeu). Fourchettes officielles : ancien 7–8 % du prix,
+// neuf 2–3 % (sources : economie.gouv.fr, impots.gouv.fr, notaires.fr,
+// consultées le 2026-09-28 via extraits de recherche ; les pages elles-mêmes
+// étaient inaccessibles depuis l'environnement de développement). On retient
+// le milieu de fourchette. Le taux réel dépend du département (droits de
+// mutation) : simplification assumée. À reconfirmer avant mise en production.
+export const NOTARY_RULE: NotaryFeeRule = { oldRatePct: 7.5, newRatePct: 2.5 };
+
 // Conversion de jeu : 1 🪙 = 20 € en Immobilier (décision produit).
 export const EUROS_PER_COIN = 20;
 
 // ─────────────────────────────────────────────────────────────────────────
 // À VÉRIFIER À LA SOURCE OFFICIELLE avant mise en service (rien n'est écrit
-// de mémoire) : taux des frais de notaire (ancien/neuf), fiscalité de la
+// de mémoire) : fiscalité de la
 // plus-value (taux, abattements, forfaits, surtaxe), calendrier des
 // diagnostics de performance énergétique. Ces valeurs seront ajoutées ici, avec
 // leur source et leur date de vérification, aux étapes 3 et 6.
