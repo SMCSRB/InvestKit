@@ -9,6 +9,24 @@
 -- backend/migrations/ (ALTER TABLE ... IF NOT EXISTS).
 
 -- ============================================
+-- 🎟️ INVITATION CODES (inscription sur invitation)
+-- ============================================
+-- Inscription sur invitation : codes à nombre d'utilisations limité, date
+-- d'expiration optionnelle, révocables. Chaque compte garde le code utilisé.
+CREATE TABLE IF NOT EXISTS invitation_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR(32) UNIQUE NOT NULL,
+  max_uses INT NOT NULL DEFAULT 1 CHECK (max_uses >= 1),
+  uses INT NOT NULL DEFAULT 0 CHECK (uses >= 0),
+  expires_at TIMESTAMP,          -- NULL = n'expire pas
+  revoked_at TIMESTAMP,          -- non NULL = révoqué
+  note VARCHAR(200),             -- ex : "pour Julien"
+  created_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT invitation_codes_uses_le_max CHECK (uses <= max_uses)
+);
+
+
+-- ============================================
 -- 👥 USERS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS users (
@@ -39,6 +57,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_daily_claim_at TIMESTAMP,
   referral_code VARCHAR(20) UNIQUE,
   referred_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  invitation_code_id UUID REFERENCES invitation_codes(id) ON DELETE SET NULL, -- code d'invitation utilisé à l'inscription
   last_login_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()

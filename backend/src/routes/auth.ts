@@ -6,6 +6,7 @@ import { authLimiter } from '../middleware/rateLimiter';
 export const authRoutes = Router();
 
 // Public routes (les routes sensibles au brute-force sont limitées à 5 tentatives/15min)
+authRoutes.get('/signup-config', authController.getSignupConfig);
 authRoutes.post('/register', authLimiter, authController.register);
 authRoutes.post('/login', authLimiter, authController.login);
 authRoutes.post('/verify-email', authLimiter, authController.verifyEmail);

@@ -11,6 +11,8 @@ import { activateAccount } from '../services/verificationService';
 import { DOMAINS } from '../data/marketData';
 import { hasProAccess } from '../utils/entitlements';
 import { generateUniqueReferralCode } from '../utils/referral';
+import { invitationRepository, normalizeInvitationCode } from '../repositories/invitationRepository';
+import { getClient } from '../utils/db';
 import {
   generateTotpSecret,
   generateQrCodeDataUrl,
@@ -26,7 +28,7 @@ const VALID_FREE_DOMAINS = Object.keys(DOMAINS);
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, password, captchaToken, referralCode } = req.body;
+      const { email, password, captchaToken, referralCode, inviteCode } = req.body;
 
       // Validation
       if (!email || !password) {
@@ -41,6 +43,14 @@ export const authController = {
       const captchaValid = await verifyCaptcha(captchaToken);
       if (!captchaValid) {
         res.status(400).json({ error: 'Captcha invalide ou expiré' });
+        return;
+      }
+
+      // Inscription sur invitation : le code est vérifié ici (format), puis
+      // consommé de façon atomique avec la création du compte plus bas.
+      const normalizedInvite = normalizeInvitationCode(inviteCode);
+      if (env.inviteOnly && !normalizedInvite) {
+        res.status(403).json({ error: 'Un code d\'invitation valide est requis pour s\'inscrire' });
         return;
       }
 
@@ -67,17 +77,41 @@ export const authController = {
         if (referrer) referredByUserId = referrer.id;
       }
 
-      // Créer l'utilisateur en BD
-      const newUser = await userRepository.create({
-        email,
-        password_hash: hashedPassword,
-        first_name: 'Unknown',
-        last_name: 'Unknown',
-        verification_code: verificationCode,
-        verification_code_expires_at: verificationCodeExpiresAt,
-        referral_code: newReferralCode,
-        referred_by_user_id: referredByUserId,
-      });
+      // Créer l'utilisateur en BD. Avec un code d'invitation, la consommation
+      // du code et la création du compte sont UNE transaction : si le compte
+      // n'est pas créé, le code n'est pas brûlé ; et un code à usage unique
+      // ne peut servir qu'à un seul compte.
+      let newUser;
+      const client = await getClient();
+      try {
+        await client.query('BEGIN');
+        let invitationId: string | null = null;
+        if (normalizedInvite) {
+          invitationId = await invitationRepository.consume(normalizedInvite, client);
+          if (!invitationId && env.inviteOnly) {
+            await client.query('ROLLBACK');
+            res.status(403).json({ error: 'Code d\'invitation invalide, expiré ou épuisé' });
+            return;
+          }
+        }
+        newUser = await userRepository.create({
+          email,
+          password_hash: hashedPassword,
+          first_name: 'Unknown',
+          last_name: 'Unknown',
+          verification_code: verificationCode,
+          verification_code_expires_at: verificationCodeExpiresAt,
+          referral_code: newReferralCode,
+          referred_by_user_id: referredByUserId,
+          invitation_code_id: invitationId,
+        }, client);
+        await client.query('COMMIT');
+      } catch (txError) {
+        await client.query('ROLLBACK');
+        throw txError;
+      } finally {
+        client.release();
+      }
 
       // Envoyer email de vérification
       try {
@@ -97,6 +131,11 @@ export const authController = {
       console.error('Register error:', error);
       res.status(500).json({ error: 'Erreur lors de l\'inscription' });
     }
+  },
+
+  // Le site est-il en inscription sur invitation ? (pour afficher le champ code)
+  getSignupConfig: async (_req: AuthRequest, res: Response): Promise<void> => {
+    res.json({ inviteOnly: env.inviteOnly });
   },
 
   verifyEmail: async (req: AuthRequest, res: Response): Promise<void> => {

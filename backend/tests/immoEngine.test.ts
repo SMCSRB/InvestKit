@@ -3,12 +3,19 @@ import {
   computeMonthlyPayment, buildSchedule, computeTaegPct, totalCreditCost,
   computeNotaryFees, computeAcquisition, loanNeeded,
   assessLoanApplication, maxPrincipalForPayment,
-  computeIndicators, computeCapitalGain, computeSaleProceeds,
+  livingRemainingFloor, computeIndicators, computeCapitalGain, computeSaleProceeds,
   EngineInputError, BankRules,
 } from '../src/engine/immo';
 
 // Règles FICTIVES de test (pas des règles légales) : le moteur n'a aucun chiffre fiscal.
-const bank: BankRules = { maxDebtRatioPct: 35, minLivingRemaining: 1200, rentalIncomeWeight: 1, projectRentWeight: 0 };
+const bank: BankRules = {
+  maxDebtRatioPct: 35,
+  livingRemainingByProfile: { student: 500, employee: 1200, executive: 1800 },
+  livingRemainingPerExtraAdult: 0,
+  livingRemainingPerChild: 0,
+  rentalIncomeWeight: 1,
+  projectRentWeight: 0,
+};
 
 describe('prêt : mensualité', () => {
   it('200 000 € à 3 % sur 20 ans = 1 109,20 €/mois (valeur de référence connue)', () => {
@@ -127,13 +134,13 @@ describe('acquisition et frais de notaire (taux fournis par l\'appelant)', () =>
 
 describe('décision de la banque (expliquée)', () => {
   it('accordé', () => {
-    const a = assessLoanApplication({ salary: 5000, livingCharges: 800 }, 1200, bank);
+    const a = assessLoanApplication({ profile: 'employee', salary: 5000, livingCharges: 800 }, 1200, bank);
     expect(a.decision).toBe('approved');
     expect(a.debtRatioPct).toBe(24);
     expect(a.livingRemaining).toBe(3000);
   });
   it('refusé : endettement trop élevé, avec la mensualité maximale', () => {
-    const a = assessLoanApplication({ salary: 4000, existingDebtPayments: 500 }, 1000, bank);
+    const a = assessLoanApplication({ profile: 'employee', salary: 4000, existingDebtPayments: 500 }, 1000, bank);
     expect(a.decision).toBe('refused');
     expect(a.debtRatioPct).toBe(37.5);
     expect(a.maxMonthlyPayment).toBe(900);
@@ -141,23 +148,23 @@ describe('décision de la banque (expliquée)', () => {
     expect(a.reasons[0].message).toContain('900');
   });
   it('les crédits existants comptent dans l\'endettement', () => {
-    const a = assessLoanApplication({ salary: 4000, existingDebtPayments: 1000 }, 500, bank);
+    const a = assessLoanApplication({ profile: 'employee', salary: 4000, existingDebtPayments: 1000 }, 500, bank);
     expect(a.debtRatioPct).toBe(37.5);
     expect(a.decision).toBe('refused');
   });
   it('accord sous réserve : reste à vivre faible', () => {
-    const a = assessLoanApplication({ salary: 3000, livingCharges: 1200 }, 900, bank); // ratio 30 %, reste 900
+    const a = assessLoanApplication({ profile: 'employee', salary: 3000, livingCharges: 1200 }, 900, bank); // ratio 30 %, reste 900
     expect(a.decision).toBe('caution');
     expect(a.reasons.some((r) => r.code === 'LIVING_REMAINING_LOW')).toBe(true);
   });
   it('sans revenu : refusé, sans division par zéro', () => {
-    const a = assessLoanApplication({ salary: 0 }, 500, bank);
+    const a = assessLoanApplication({ profile: 'employee', salary: 0 }, 500, bank);
     expect(a.decision).toBe('refused');
     expect(a.debtRatioPct).toBeNull();
   });
   it('pondération des loyers existants et du loyer futur', () => {
     const rules = { ...bank, rentalIncomeWeight: 0.7, projectRentWeight: 0.7 };
-    const a = assessLoanApplication({ salary: 3000, existingRentalIncome: 1000 }, 500, rules, 1000);
+    const a = assessLoanApplication({ profile: 'employee', salary: 3000, existingRentalIncome: 1000 }, 500, rules, 1000);
     expect(a.countedIncome).toBe(4400);
   });
   it('capacité maximale : inverse de la mensualité', () => {
@@ -172,6 +179,27 @@ describe('décision de la banque (expliquée)', () => {
       expect(s2.monthlyPaymentWithInsurance).toBeGreaterThan(pay);
     }
     expect(maxPrincipalForPayment(500, 0, 100)).toBe(50000);
+  });
+});
+
+describe('reste à vivre par profil', () => {
+  const h = { profile: 'employee' as const, salary: 3000, livingCharges: 1200 };
+  it('le seuil dépend du profil', () => {
+    expect(livingRemainingFloor({ ...h, profile: 'student' }, bank)).toBe(500);
+    expect(livingRemainingFloor({ ...h, profile: 'executive' }, bank)).toBe(1800);
+  });
+  it('même dossier, décision différente selon le profil', () => {
+    // ratio 30 %, reste à vivre 900 : ok pour un étudiant (500), sous réserve pour un salarié (1 200)
+    expect(assessLoanApplication({ ...h, profile: 'student' }, 900, bank).decision).toBe('approved');
+    expect(assessLoanApplication(h, 900, bank).decision).toBe('caution');
+  });
+  it('majorations par foyer désactivées à 0, activables par la configuration', () => {
+    const family = { ...h, adults: 2, children: 2 };
+    expect(livingRemainingFloor(family, bank)).toBe(1200);
+    expect(livingRemainingFloor(family, { ...bank, livingRemainingPerExtraAdult: 300, livingRemainingPerChild: 200 })).toBe(1900);
+  });
+  it('profil inconnu : erreur explicite', () => {
+    expect(() => livingRemainingFloor({ ...h, profile: 'retraite' as any }, bank)).toThrow(EngineInputError);
   });
 });
 

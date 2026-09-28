@@ -14,11 +14,19 @@ import { computeMonthlyPayment } from './loan';
 //
 // Décision (règles du simulateur de référence, paramétrables) :
 //   - taux d'endettement > plafond (35 %)     → REFUSÉ
-//   - reste à vivre < seuil (1 200 €)         → ACCORD SOUS RÉSERVE ('caution')
+//   - reste à vivre < seuil du profil          → ACCORD SOUS RÉSERVE ('caution')
 //   - sinon                                   → ACCORDÉ
 // Chaque décision renvoie la liste des RAISONS chiffrées, pour l'expliquer.
 // ─────────────────────────────────────────────────────────────────────────
+// Profil du joueur : fixe son seuil de reste à vivre (voir config/immoRules.ts).
+export type ProfileId = 'student' | 'employee' | 'executive';
+
 export interface Household {
+  profile: ProfileId;
+  // Prévus pour plus tard (calcul par foyer) : pas encore utilisés tant que les
+  // majorations par adulte/enfant valent 0 dans la configuration.
+  adults?: number;   // nombre d'adultes du foyer (défaut 1)
+  children?: number; // nombre d'enfants à charge (défaut 0)
   salary: number;          // revenus d'activité nets mensuels
   otherIncome?: number;
   existingRentalIncome?: number; // loyers déjà perçus (mensuels)
@@ -28,7 +36,11 @@ export interface Household {
 
 export interface BankRules {
   maxDebtRatioPct: number;         // 35 dans le simulateur de référence
-  minLivingRemaining: number;      // 1 200 € dans le simulateur de référence
+  // Seuil de reste à vivre par profil (€/mois).
+  livingRemainingByProfile: Record<ProfileId, number>;
+  // Majorations du seuil pour un foyer plus grand (0 = désactivé pour l'instant).
+  livingRemainingPerExtraAdult: number;
+  livingRemainingPerChild: number;
   rentalIncomeWeight: number;      // part des loyers existants retenue (1 = 100 %)
   projectRentWeight: number;       // part du loyer futur du bien retenue (0 = prudent)
 }
@@ -51,6 +63,17 @@ export interface Assessment {
   reasons: Reason[];
 }
 
+// Seuil de reste à vivre applicable à ce foyer. Aujourd'hui : seul le profil
+// compte. Pour activer le calcul par foyer, il suffit de donner une valeur
+// non nulle aux deux majorations dans la configuration.
+export const livingRemainingFloor = (household: Household, rules: BankRules): number => {
+  const base = rules.livingRemainingByProfile[household.profile];
+  if (base === undefined) throw new EngineInputError(`Profil inconnu : ${household.profile}`);
+  const extraAdults = Math.max(0, (household.adults ?? 1) - 1);
+  const children = Math.max(0, household.children ?? 0);
+  return round2(base + extraAdults * rules.livingRemainingPerExtraAdult + children * rules.livingRemainingPerChild);
+};
+
 export const assessLoanApplication = (
   household: Household,
   newMonthlyPaymentWithInsurance: number,
@@ -62,6 +85,7 @@ export const assessLoanApplication = (
   assertNonNegative(projectMonthlyRent, 'projectMonthlyRent');
   if (rules.maxDebtRatioPct <= 0 || rules.maxDebtRatioPct > 100) throw new EngineInputError('maxDebtRatioPct invalide');
 
+  const minLivingRemaining = livingRemainingFloor(household, rules);
   const existingDebt = household.existingDebtPayments ?? 0;
   const charges = household.livingCharges ?? 0;
   const countedIncome = round2(
@@ -94,13 +118,13 @@ export const assessLoanApplication = (
     });
   }
 
-  if (livingRemaining < rules.minLivingRemaining) {
+  if (livingRemaining < minLivingRemaining) {
     if (decision === 'approved') decision = 'caution';
     reasons.push({
       code: 'LIVING_REMAINING_LOW',
-      message: `Reste à vivre de ${livingRemaining.toFixed(0)} € sous le seuil de ${rules.minLivingRemaining} €.`,
+      message: `Reste à vivre de ${livingRemaining.toFixed(0)} € sous le seuil de ${minLivingRemaining} € (profil ${household.profile}).`,
       value: livingRemaining,
-      limit: rules.minLivingRemaining,
+      limit: minLivingRemaining,
     });
   }
 

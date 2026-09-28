@@ -6,6 +6,8 @@ import { tradingService, TradingError } from '../src/services/tradingService';
 import { claimDailyReward } from '../src/services/dailyRewardService';
 import { activateAccount } from '../src/services/verificationService';
 import { DOMAINS } from '../src/data/marketData';
+import { invitationRepository, normalizeInvitationCode } from '../src/repositories/invitationRepository';
+import { getClient } from '../src/utils/db';
 import { userRepository } from '../src/repositories/userRepository';
 
 const STOCK = DOMAINS.stocks.assets[0].symbol; // cotée dès la première année
@@ -173,6 +175,60 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       expect(await userRepository.setFreeDomainOnce(uid, 'stocks')).toBe(true);
       expect(await userRepository.setFreeDomainOnce(uid, 'crypto')).toBe(false);
       expect((await userRepository.findById(uid))!.free_domain).toBe('stocks');
+    });
+  });
+
+  describe('codes d\'invitation', () => {
+    const consumeOnce = async (code: string) => {
+      const c = await getClient();
+      try {
+        await c.query('BEGIN');
+        const id = await invitationRepository.consume(code, c);
+        await c.query('COMMIT');
+        return id;
+      } finally { c.release(); }
+    };
+
+    it('code à 1 utilisation : 8 inscriptions simultanées, une seule passe', async () => {
+      const inv = await invitationRepository.create({});
+      const results = await Promise.all(Array.from({ length: 8 }, () => consumeOnce(inv.code)));
+      expect(results.filter((r) => r !== null).length).toBe(1);
+    });
+    it('max_uses = 3 : exactement 3 utilisations', async () => {
+      const inv = await invitationRepository.create({ maxUses: 3 });
+      const results = await Promise.all(Array.from({ length: 6 }, () => consumeOnce(inv.code)));
+      expect(results.filter((r) => r !== null).length).toBe(3);
+    });
+    it('expiré, révoqué ou inconnu : refusé', async () => {
+      const expired = await invitationRepository.create({ expiresAt: new Date(Date.now() - 1000) });
+      expect(await consumeOnce(expired.code)).toBeNull();
+      const revoked = await invitationRepository.create({});
+      expect(await invitationRepository.revoke(revoked.code)).toBe(true);
+      expect(await consumeOnce(revoked.code)).toBeNull();
+      expect(await consumeOnce('ZZZZZ-ZZZZZ')).toBeNull();
+    });
+    it('inscription annulée : le code n\'est pas brûlé', async () => {
+      const inv = await invitationRepository.create({});
+      const c = await getClient();
+      await c.query('BEGIN');
+      await invitationRepository.consume(inv.code, c);
+      await c.query('ROLLBACK');
+      c.release();
+      expect(await consumeOnce(inv.code)).not.toBeNull();
+    });
+    it('le compte garde le code utilisé', async () => {
+      const inv = await invitationRepository.create({ note: 'test' });
+      const id = await consumeOnce(inv.code);
+      const uid = await createUser({});
+      await query('UPDATE users SET invitation_code_id = $1 WHERE id = $2', [id, uid]);
+      const list = await invitationRepository.list();
+      expect(list.find((l) => l.code === inv.code)!.users).toHaveLength(1);
+    });
+    it('format des codes', async () => {
+      expect(normalizeInvitationCode(' abcde-fghjk ')).toBe('ABCDE-FGHJK');
+      expect(normalizeInvitationCode('x')).toBeNull();
+      expect(normalizeInvitationCode("'; DROP TABLE users;--")).toBeNull();
+      expect(normalizeInvitationCode(42)).toBeNull();
     });
   });
 });

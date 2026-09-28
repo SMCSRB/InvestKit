@@ -47,6 +47,10 @@ export const env = {
     priceIdYearly: process.env.STRIPE_PRICE_ID_YEARLY, // 79€/an
   },
 
+  // Inscription sur invitation (phase de test) : ACTIVE par défaut. Mettre
+  // INVITE_ONLY=false pour ouvrir l'inscription à tous.
+  inviteOnly: process.env.INVITE_ONLY !== 'false',
+
   // URL du frontend (redirections Stripe Checkout / Customer Portal)
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };

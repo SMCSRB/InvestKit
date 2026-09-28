@@ -116,11 +116,19 @@ export default function SignupPage() {
   const [message, setMessage] = useState('');
   const [captchaToken, setCaptchaToken] = useState(null);
   const [referralCode, setReferralCode] = useState(null);
+  const [inviteOnly, setInviteOnly] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
     if (ref) setReferralCode(ref);
+    const invite = params.get('invite');
+    if (invite) setInviteCode(invite);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup-config`)
+      .then((r) => r.json())
+      .then((c) => setInviteOnly(!!c.inviteOnly))
+      .catch(() => {});
   }, []);
   const [emailAvailable, setEmailAvailable] = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
@@ -277,7 +285,7 @@ export default function SignupPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken, referralCode }),
+        body: JSON.stringify({ email, password, captchaToken, referralCode, inviteCode }),
       });
 
       const data = await response.json();
@@ -628,6 +636,26 @@ export default function SignupPage() {
               fontWeight: '600',
             }}>
               🎁 Invité(e) par un ami — code {referralCode}
+            </div>
+          )}
+
+          {inviteOnly && (
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: '#94a3b8' }}>
+                🎟️ Code d'invitation (site en phase de test)
+              </label>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="XXXXX-XXXXX"
+                autoComplete="off"
+                style={{
+                  width: '100%', padding: '12px 14px', borderRadius: '10px', boxSizing: 'border-box',
+                  border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)',
+                  color: 'white', fontSize: '14px', letterSpacing: '1px',
+                }}
+              />
             </div>
           )}
 

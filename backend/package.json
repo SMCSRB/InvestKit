@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "set-pro": "ts-node scripts/set-pro.ts",
+    "invite": "ts-node scripts/invite.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
   },

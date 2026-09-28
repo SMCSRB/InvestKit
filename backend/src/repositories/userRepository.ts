@@ -20,6 +20,7 @@ export interface User {
   last_daily_claim_at?: Date;
   referral_code?: string;
   referred_by_user_id?: string;
+  invitation_code_id?: string | null;
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
@@ -62,10 +63,11 @@ export const userRepository = {
     verification_code_expires_at?: Date;
     referral_code: string;
     referred_by_user_id?: string;
-  }): Promise<User> {
-    const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, verification_code, verification_code_expires_at, referral_code, referred_by_user_id, verified)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
+    invitation_code_id?: string | null;
+  }, db: Queryable = { query }): Promise<User> {
+    const result = await db.query(
+      `INSERT INTO users (email, password_hash, first_name, last_name, verification_code, verification_code_expires_at, referral_code, referred_by_user_id, invitation_code_id, verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE)
        RETURNING *`,
       [
         data.email,
@@ -76,6 +78,7 @@ export const userRepository = {
         data.verification_code_expires_at,
         data.referral_code,
         data.referred_by_user_id || null,
+        data.invitation_code_id || null,
       ]
     );
     return result.rows[0];
