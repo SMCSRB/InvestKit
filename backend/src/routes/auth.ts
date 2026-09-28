@@ -17,3 +17,4 @@ authRoutes.get('/check-email/:email', authController.checkEmail);
 
 // Protected routes
 authRoutes.get('/me', authMiddleware, authController.getCurrentUser);
+authRoutes.post('/set-free-domain', authMiddleware, authController.setFreeDomain);

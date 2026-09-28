@@ -10,6 +10,7 @@ export interface User {
   role: 'user' | 'admin';
   subscription_tier: 'free' | 'pro';
   free_domain?: string;
+  stripe_customer_id?: string;
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
@@ -175,5 +176,31 @@ export const userRepository = {
 
     const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${values.length}`;
     await query(sql, values);
+  },
+
+  async findByStripeCustomerId(customerId: string): Promise<User | null> {
+    const result = await query('SELECT * FROM users WHERE stripe_customer_id = $1', [customerId]);
+    return result.rows[0] || null;
+  },
+
+  async setStripeCustomerId(id: string, stripeCustomerId: string): Promise<void> {
+    await query(
+      `UPDATE users SET stripe_customer_id = $1, updated_at = NOW() WHERE id = $2`,
+      [stripeCustomerId, id]
+    );
+  },
+
+  async setSubscriptionTier(id: string, tier: 'free' | 'pro'): Promise<void> {
+    await query(
+      `UPDATE users SET subscription_tier = $1, updated_at = NOW() WHERE id = $2`,
+      [tier, id]
+    );
+  },
+
+  async setFreeDomain(id: string, domain: string): Promise<void> {
+    await query(
+      `UPDATE users SET free_domain = $1, updated_at = NOW() WHERE id = $2`,
+      [domain, id]
+    );
   },
 };

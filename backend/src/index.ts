@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth';
+import { billingRoutes } from './routes/billing';
 import { apiLimiter } from './middleware/rateLimiter';
 import { initDatabase, executeSchema, closePool } from './utils/db';
 
@@ -10,6 +11,13 @@ const app = express();
 
 // Middleware
 app.use(helmet());
+
+// Le webhook Stripe a besoin du corps brut (Buffer) pour vérifier la
+// signature - il doit donc être monté AVANT express.json(), qui sinon
+// parserait/consommerait le corps en JSON avant que Stripe puisse le
+// re-vérifier en bytes.
+app.use(['/api/v1/billing/webhook', '/api/billing/webhook'], express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -34,6 +42,8 @@ app.get('/health', (_req: Request, res: Response) => {
 // déjà déployé pointant vers l'ancienne URL le temps de la transition.
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/v1/billing', billingRoutes);
+app.use('/api/billing', billingRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

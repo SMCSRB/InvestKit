@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) NOT NULL DEFAULT 'user', -- user, admin
   subscription_tier VARCHAR(20) NOT NULL DEFAULT 'free', -- free, pro
   free_domain VARCHAR(50), -- domaine débloqué gratuitement (Dashboard Pro limité à 1 domaine en free)
+  stripe_customer_id VARCHAR(255) UNIQUE,
   verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(10),
   verification_code_expires_at TIMESTAMP,
@@ -39,6 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_verification_code ON users(verification_code);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer_id);
 
 -- ============================================
 -- 📊 INVESTOR PROFILES TABLE

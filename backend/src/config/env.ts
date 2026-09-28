@@ -38,6 +38,17 @@ export const env = {
     pass: process.env.SMTP_PASS,
     secure: process.env.SMTP_SECURE === 'true',
   },
+
+  // Stripe (Phase 2A - abonnement Pro)
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    priceIdMonthly: process.env.STRIPE_PRICE_ID_MONTHLY, // 7,99€/mois
+    priceIdYearly: process.env.STRIPE_PRICE_ID_YEARLY, // 79€/an
+  },
+
+  // URL du frontend (redirections Stripe Checkout / Customer Portal)
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };
 
 // Validation

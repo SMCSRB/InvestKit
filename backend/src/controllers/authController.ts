@@ -346,11 +346,38 @@ export const authController = {
           firstName: user.first_name,
           lastName: user.last_name,
           username: user.username,
+          subscriptionTier: user.subscription_tier,
+          freeDomain: user.free_domain,
         },
       });
     } catch (error) {
       console.error('Get current user error:', error);
       res.status(500).json({ error: 'Erreur lors de la récupération' });
+    }
+  },
+
+  // Choix du domaine débloqué gratuitement (tier free) - laissé à
+  // l'utilisateur, pas de domaine imposé par défaut. Modifiable tant que
+  // le questionnaire de profil investisseur (Phase 3B) n'existe pas encore
+  // pour le suggérer automatiquement.
+  setFreeDomain: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const { domain } = req.body;
+      if (!domain || typeof domain !== 'string') {
+        res.status(400).json({ error: 'Domaine requis' });
+        return;
+      }
+
+      await userRepository.setFreeDomain(req.user.userId, domain);
+      res.json({ success: true, freeDomain: domain });
+    } catch (error) {
+      console.error('Set free domain error:', error);
+      res.status(500).json({ error: 'Erreur lors de la sauvegarde du domaine' });
     }
   },
 
