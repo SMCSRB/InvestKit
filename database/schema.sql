@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS users (
   enable_2fa BOOLEAN DEFAULT FALSE,
   totp_secret VARCHAR(255),
   totp_backup_codes JSONB,
+  daily_streak INT NOT NULL DEFAULT 0,
+  last_daily_claim_at TIMESTAMP,
   last_login_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()

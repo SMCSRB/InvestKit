@@ -7,6 +7,7 @@ import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail } from '../utils/email';
 import { verifyCaptcha } from '../utils/captcha';
+import { grantStartingCapital } from './economyController';
 import {
   generateTotpSecret,
   generateQrCodeDataUrl,
@@ -108,6 +109,14 @@ export const authController = {
       }
 
       await userRepository.verifyEmail(user.id);
+
+      // Capital de départ en InvestCoins (Phase 2B) - accordé une seule
+      // fois, à l'instant où le compte devient réellement utilisable.
+      try {
+        await grantStartingCapital(user.id);
+      } catch (grantError) {
+        console.error('Grant starting capital error:', grantError);
+      }
 
       res.json({
         success: true,

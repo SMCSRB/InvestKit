@@ -13,6 +13,8 @@ export interface User {
   stripe_customer_id?: string;
   totp_secret?: string;
   totp_backup_codes?: string[];
+  daily_streak: number;
+  last_daily_claim_at?: Date;
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
@@ -235,6 +237,13 @@ export const userRepository = {
     await query(
       `UPDATE users SET totp_backup_codes = $1, updated_at = NOW() WHERE id = $2`,
       [JSON.stringify(hashedBackupCodes), id]
+    );
+  },
+
+  async setDailyStreak(id: string, streak: number, claimedAt: Date): Promise<void> {
+    await query(
+      `UPDATE users SET daily_streak = $1, last_daily_claim_at = $2, updated_at = NOW() WHERE id = $3`,
+      [streak, claimedAt, id]
     );
   },
 };

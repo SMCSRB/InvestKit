@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { env } from './config/env';
 import { authRoutes } from './routes/auth';
 import { billingRoutes } from './routes/billing';
+import { economyRoutes } from './routes/economy';
 import { apiLimiter } from './middleware/rateLimiter';
 import { initDatabase, executeSchema, closePool } from './utils/db';
 
@@ -44,6 +45,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/v1/economy', economyRoutes);
+app.use('/api/economy', economyRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
