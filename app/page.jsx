@@ -1603,7 +1603,6 @@ export default function HomePage() {
                   { name: 'Académie', href: '/education' },
                   { name: 'Guide de Démarrage', href: '/guides' },
                   { name: 'FAQ', href: '/faq' },
-                  { name: 'Glossaire', href: '/glossaire' },
                 ]
               },
               {

@@ -46,6 +46,8 @@ export default function DashboardPage() {
   const [tradingLoading, setTradingLoading] = useState(false);
   const [tradingError, setTradingError] = useState('');
   const [tradingLoaded, setTradingLoaded] = useState(false);
+  const [tradingBoard, setTradingBoard] = useState(null);
+  const [tradingBoardYear, setTradingBoardYear] = useState(null); // null = mon année simulée
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [fullName, setFullName] = useState('Jean Dupont');
@@ -468,6 +470,7 @@ export default function DashboardPage() {
         );
       }
       if (portfolioRes.ok) setTradingPortfolio(portfolioData);
+      loadTradingBoard(domain);
     } catch (err) {
       console.error('Erreur chargement trading:', err);
     } finally {
@@ -475,10 +478,47 @@ export default function DashboardPage() {
     }
   };
 
+  const loadTradingBoard = async (domain = tradingDomain, year = tradingBoardYear) => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const qs = `domain=${domain}${year ? `&year=${year}` : ''}`;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/leaderboard?${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setTradingBoard(data);
+    } catch (err) {
+      console.error('Erreur chargement classement:', err);
+    }
+  };
+
+  // Choix UNIQUE du domaine gratuit : le serveur refuse tout changement ensuite.
+  const chooseFreeDomain = async (domain) => {
+    setTradingError('');
+    setTradingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/set-free-domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ domain }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUser((prev) => ({ ...prev, freeDomain: domain }));
+      await loadTradingData();
+    } catch (err) {
+      setTradingError(err.message);
+    } finally {
+      setTradingLoading(false);
+    }
+  };
+
   const changeTradingDomain = async (domain) => {
     if (domain === tradingDomain) return;
     setTradingError('');
     setTradingDomain(domain);
+    setTradingBoardYear(null);
     setTradingQuantity(1);
     await loadTradingData(domain);
   };
@@ -3512,6 +3552,29 @@ export default function DashboardPage() {
                   <p style={{ color: '#f43f5e', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
                 )}
 
+                {/* Accès : domaine gratuit / Pro (vérifié côté serveur) */}
+                {tradingPortfolio?.access?.reason === 'FREE_DOMAIN_NOT_CHOSEN' && (
+                  <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 8px 0' }}>Choisis ton domaine gratuit</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: '0 0 14px 0' }}>
+                      Le plan gratuit débloque l'achat dans UN domaine. Ce choix est définitif (le plan Pro débloque tous les domaines). Tu peux vendre partout à tout moment.
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {[...tradingDomains.map((d) => ({ id: d.id, label: d.label })), { id: 'real_estate', label: 'Immobilier' }].map((d) => (
+                        <button key={d.id} onClick={() => chooseFreeDomain(d.id)} disabled={tradingLoading}
+                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {tradingPortfolio?.access?.reason === 'DOMAIN_LOCKED' && (
+                  <div style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: '#fbbf24', fontSize: '13px' }}>
+                    🔒 Ce domaine n'est pas ton domaine gratuit : l'achat nécessite le plan Pro. Tu peux toujours vendre tes positions.
+                  </div>
+                )}
+
                 {/* Achat */}
                 <div style={{
                   background: 'rgba(255,255,255,0.05)',
@@ -3555,10 +3618,11 @@ export default function DashboardPage() {
                     </span>
                     <button
                       onClick={tradingBuy}
-                      disabled={tradingLoading}
+                      disabled={tradingLoading || tradingPortfolio?.access?.canBuy === false}
                       style={{
                         padding: '10px 20px', borderRadius: '8px', border: 'none',
                         background: '#10b981', color: 'white', fontWeight: '700', fontSize: '13px',
+                        opacity: tradingPortfolio?.access?.canBuy === false ? 0.4 : 1,
                         cursor: tradingLoading ? 'wait' : 'pointer',
                       }}
                     >
@@ -3603,6 +3667,49 @@ export default function DashboardPage() {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {/* Classement (comparaison à année simulée égale) */}
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: '0 0 12px 0' }}>
+                  Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} 🪙 pour être classé.
+                </p>
+                <div style={{ marginBottom: '12px' }}>
+                  <select
+                    value={tradingBoard?.year ?? ''}
+                    onChange={(e) => { setTradingBoardYear(e.target.value); loadTradingBoard(tradingDomain, e.target.value); }}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: '13px' }}
+                  >
+                    {tradingPortfolio && Array.from({ length: tradingPortfolio.maxYear - tradingPortfolio.minYear + 1 }, (_, i) => tradingPortfolio.minYear + i).map((y) => (
+                      <option key={y} value={y}>Année {y}</option>
+                    ))}
+                  </select>
+                </div>
+                {!tradingBoard || tradingBoard.entries.length === 0 ? (
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    {tradingBoard.entries.map((e) => (
+                      <div key={e.rank + e.username} style={{
+                        display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderRadius: '10px',
+                        background: e.isMe ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${e.isMe ? 'rgba(96,165,250,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                        color: 'white', fontSize: '13px',
+                      }}>
+                        <span>#{e.rank} {e.username}{e.isMe ? ' (toi)' : ''}</span>
+                        <span style={{ color: e.performancePct >= 0 ? '#10b981' : '#f43f5e', fontWeight: '700' }}>
+                          {e.performancePct >= 0 ? '+' : ''}{e.performancePct.toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {tradingBoard && !tradingBoard.entries.some((e) => e.isMe) && (
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', marginTop: '10px' }}>
+                    {tradingBoard.me
+                      ? `Ton rang : #${tradingBoard.me.rank} sur ${tradingBoard.totalRanked} (${tradingBoard.me.performancePct.toFixed(1)}%)`
+                      : 'Non classé pour cette année (capital engagé insuffisant ou aucun achat).'}
+                  </p>
                 )}
               </>
             )}
