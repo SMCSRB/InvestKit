@@ -25,6 +25,11 @@ export const authMiddleware = (
       return;
     }
 
+    if (payload.pending2fa) {
+      res.status(401).json({ error: 'Vérification 2FA requise' });
+      return;
+    }
+
     req.user = payload;
     next();
   } catch (error) {

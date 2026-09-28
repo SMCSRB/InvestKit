@@ -11,6 +11,8 @@ export interface User {
   subscription_tier: 'free' | 'pro';
   free_domain?: string;
   stripe_customer_id?: string;
+  totp_secret?: string;
+  totp_backup_codes?: string[];
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
@@ -201,6 +203,38 @@ export const userRepository = {
     await query(
       `UPDATE users SET free_domain = $1, updated_at = NOW() WHERE id = $2`,
       [domain, id]
+    );
+  },
+
+  // Stocke un secret TOTP "en attente" (2FA pas encore activée tant que
+  // l'utilisateur n'a pas confirmé un code valide via enableTwoFactor).
+  async setPendingTotpSecret(id: string, secret: string): Promise<void> {
+    await query(
+      `UPDATE users SET totp_secret = $1, updated_at = NOW() WHERE id = $2`,
+      [secret, id]
+    );
+  },
+
+  async enableTwoFactor(id: string, hashedBackupCodes: string[]): Promise<void> {
+    await query(
+      `UPDATE users SET enable_2fa = TRUE, totp_backup_codes = $1, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(hashedBackupCodes), id]
+    );
+  },
+
+  async disableTwoFactor(id: string): Promise<void> {
+    await query(
+      `UPDATE users
+       SET enable_2fa = FALSE, totp_secret = NULL, totp_backup_codes = NULL, updated_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
+  },
+
+  async updateBackupCodes(id: string, hashedBackupCodes: string[]): Promise<void> {
+    await query(
+      `UPDATE users SET totp_backup_codes = $1, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(hashedBackupCodes), id]
     );
   },
 };

@@ -1,12 +1,20 @@
 import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { generateToken } from '../utils/jwt';
+import { generateToken, generatePending2FAToken, verifyToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail } from '../utils/email';
 import { verifyCaptcha } from '../utils/captcha';
+import {
+  generateTotpSecret,
+  generateQrCodeDataUrl,
+  verifyTotpCode,
+  generateBackupCodes,
+  hashBackupCodes,
+  consumeBackupCode,
+} from '../utils/totp';
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -162,7 +170,7 @@ export const authController = {
 
   savePreferences: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, username, accountType, interests, language, enable2FA } = req.body;
+      const { email, username, accountType, interests, language } = req.body;
 
       if (!email || !username || !accountType) {
         res.status(400).json({ error: 'Données manquantes' });
@@ -176,12 +184,13 @@ export const authController = {
       }
 
       // Sauvegarder les préférences et le username
+      // NB: la 2FA ne se règle plus ici - impossible de l'activer sans
+      // avoir prouvé la possession d'un secret TOTP (voir /auth/2fa/*).
       await userRepository.updatePreferences(user.id, {
         username: username.trim(),
         account_type: accountType,
         interests: JSON.stringify(interests || []),
         language: language || 'fr',
-        enable_2fa: enable2FA || false,
       });
 
       // Générer un token JWT
@@ -231,6 +240,14 @@ export const authController = {
 
       if (!user.verified) {
         res.status(403).json({ error: 'Veuillez vérifier votre email d\'abord' });
+        return;
+      }
+
+      // Compte protégé par 2FA : mot de passe correct mais pas de session
+      // complète tant que le code TOTP n'est pas vérifié (voir /2fa/login-verify)
+      if (user.enable_2fa) {
+        const tempToken = generatePending2FAToken(user.id, user.email);
+        res.json({ success: true, requires2FA: true, tempToken });
         return;
       }
 
@@ -398,6 +415,159 @@ export const authController = {
       });
     } catch (error) {
       console.error('Check email error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+  },
+
+  // ============ 2FA (TOTP) ============
+
+  // Étape 1 : génère un secret + QR code. La 2FA n'est PAS encore active -
+  // il faut confirmer avec un code valide via verifyTwoFactorSetup.
+  setupTwoFactor: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const user = await userRepository.findById(req.user.userId);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      if (user.enable_2fa) {
+        res.status(400).json({ error: 'La 2FA est déjà activée sur ce compte' });
+        return;
+      }
+
+      const secret = generateTotpSecret();
+      await userRepository.setPendingTotpSecret(user.id, secret);
+      const qrCode = await generateQrCodeDataUrl(user.email, secret);
+
+      res.json({ qrCode, secret });
+    } catch (error) {
+      console.error('Setup 2FA error:', error);
+      res.status(500).json({ error: 'Erreur lors de la configuration de la 2FA' });
+    }
+  },
+
+  // Étape 2 : confirme le code scanné, active réellement la 2FA et renvoie
+  // les codes de secours en clair (une seule fois - à noter précieusement).
+  verifyTwoFactorSetup: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const { code } = req.body;
+      const user = await userRepository.findById(req.user.userId);
+      if (!user?.totp_secret) {
+        res.status(400).json({ error: 'Aucune configuration 2FA en attente' });
+        return;
+      }
+
+      if (!code || !verifyTotpCode(code, user.totp_secret)) {
+        res.status(400).json({ error: 'Code invalide' });
+        return;
+      }
+
+      const backupCodes = generateBackupCodes();
+      const hashed = await hashBackupCodes(backupCodes);
+      await userRepository.enableTwoFactor(user.id, hashed);
+
+      res.json({ success: true, backupCodes });
+    } catch (error) {
+      console.error('Verify 2FA setup error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+  },
+
+  // Désactive la 2FA - nécessite le mot de passe pour éviter qu'une session
+  // volée suffise à désactiver la protection.
+  disableTwoFactor: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const { password } = req.body;
+      const user = await userRepository.findById(req.user.userId);
+      if (!user) {
+        res.status(404).json({ error: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      const passwordMatch = password && (await bcrypt.compare(password, user.password_hash));
+      if (!passwordMatch) {
+        res.status(401).json({ error: 'Mot de passe incorrect' });
+        return;
+      }
+
+      await userRepository.disableTwoFactor(user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Disable 2FA error:', error);
+      res.status(500).json({ error: 'Erreur lors de la désactivation' });
+    }
+  },
+
+  // Complète une connexion mise en attente par login() quand enable_2fa=true.
+  // Accepte soit un code TOTP à 6 chiffres, soit un code de secours à usage unique.
+  verifyLoginTwoFactor: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { tempToken, code } = req.body;
+      if (!tempToken || !code) {
+        res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      const payload = verifyToken(tempToken);
+      if (!payload || !payload.pending2fa) {
+        res.status(401).json({ error: 'Session de connexion expirée, reconnectez-vous' });
+        return;
+      }
+
+      const user = await userRepository.findById(payload.userId);
+      if (!user || !user.enable_2fa || !user.totp_secret) {
+        res.status(401).json({ error: 'Configuration 2FA invalide' });
+        return;
+      }
+
+      let valid = verifyTotpCode(code, user.totp_secret);
+
+      if (!valid && user.totp_backup_codes?.length) {
+        const remaining = await consumeBackupCode(code, user.totp_backup_codes);
+        if (remaining) {
+          valid = true;
+          await userRepository.updateBackupCodes(user.id, remaining);
+        }
+      }
+
+      if (!valid) {
+        res.status(401).json({ error: 'Code invalide' });
+        return;
+      }
+
+      await userRepository.updateLastLogin(user.id);
+      const token = generateToken(user.id, user.email);
+
+      res.json({
+        success: true,
+        message: 'Connexion réussie',
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          username: user.username,
+        },
+      });
+    } catch (error) {
+      console.error('Verify login 2FA error:', error);
       res.status(500).json({ error: 'Erreur lors de la vérification' });
     }
   },

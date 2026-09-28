@@ -4,6 +4,7 @@ import { env } from '../config/env';
 export interface TokenPayload {
   userId: string;
   email: string;
+  pending2fa?: boolean; // true = jeton intermédiaire, valide UNIQUEMENT pour finaliser la 2FA
   iat?: number;
   exp?: number;
 }
@@ -13,6 +14,18 @@ export const generateToken = (userId: string, email: string): string => {
     { userId, email },
     env.jwtSecret,
     { expiresIn: env.jwtExpiresIn }
+  );
+};
+
+// Jeton de courte durée émis après un mot de passe correct quand le compte a
+// la 2FA active : il ne donne accès à rien tant que /auth/2fa/login-verify
+// n'a pas validé le code TOTP (voir authMiddleware qui le rejette partout
+// ailleurs).
+export const generatePending2FAToken = (userId: string, email: string): string => {
+  return jwt.sign(
+    { userId, email, pending2fa: true },
+    env.jwtSecret,
+    { expiresIn: '5m' }
   );
 };
 

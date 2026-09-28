@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
   interests VARCHAR(500),
   language VARCHAR(10) DEFAULT 'fr',
   enable_2fa BOOLEAN DEFAULT FALSE,
+  totp_secret VARCHAR(255),
+  totp_backup_codes JSONB,
   last_login_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
