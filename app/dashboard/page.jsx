@@ -36,6 +36,14 @@ export default function DashboardPage() {
   const [coinsStreak, setCoinsStreak] = useState(0);
   const [canClaimDaily, setCanClaimDaily] = useState(false);
   const [claimingDaily, setClaimingDaily] = useState(false);
+  // Simulateur Bourse (trading accéléré)
+  const [tradingAssets, setTradingAssets] = useState([]);
+  const [tradingPortfolio, setTradingPortfolio] = useState(null);
+  const [tradingSelectedAsset, setTradingSelectedAsset] = useState('LVMH');
+  const [tradingQuantity, setTradingQuantity] = useState(1);
+  const [tradingLoading, setTradingLoading] = useState(false);
+  const [tradingError, setTradingError] = useState('');
+  const [tradingLoaded, setTradingLoaded] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [fullName, setFullName] = useState('Jean Dupont');
@@ -434,6 +442,92 @@ export default function DashboardPage() {
       setClaimingDaily(false);
     }
   };
+
+  // ============ Simulateur Bourse (trading accéléré) ============
+  const loadTradingData = async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const [assetsRes, portfolioRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/assets`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/portfolio`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      const assetsData = await assetsRes.json();
+      const portfolioData = await portfolioRes.json();
+      if (assetsRes.ok) setTradingAssets(assetsData.assets);
+      if (portfolioRes.ok) setTradingPortfolio(portfolioData);
+    } catch (err) {
+      console.error('Erreur chargement trading:', err);
+    } finally {
+      setTradingLoaded(true);
+    }
+  };
+
+  const tradingBuy = async () => {
+    setTradingError('');
+    setTradingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ symbol: tradingSelectedAsset, quantity: Number(tradingQuantity) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await loadTradingData();
+    } catch (err) {
+      setTradingError(err.message);
+    } finally {
+      setTradingLoading(false);
+    }
+  };
+
+  const tradingSell = async (symbol, quantity) => {
+    setTradingError('');
+    setTradingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/sell`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ symbol, quantity }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await loadTradingData();
+    } catch (err) {
+      setTradingError(err.message);
+    } finally {
+      setTradingLoading(false);
+    }
+  };
+
+  const tradingAdvanceYear = async () => {
+    setTradingError('');
+    setTradingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/advance-year`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await loadTradingData();
+    } catch (err) {
+      setTradingError(err.message);
+    } finally {
+      setTradingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'trading' && !tradingLoaded) {
+      loadTradingData();
+    }
+  }, [activeTab, tradingLoaded]);
 
   // ============ HELPER FUNCTIONS FOR BADGE SYSTEM ============
 
@@ -2394,6 +2488,7 @@ export default function DashboardPage() {
               { id: 'overview', label: '📊 Vue d\'ensemble' },
               { id: 'projects', label: '🎯 Projets' },
               { id: 'market', label: '💹 Marché' },
+              { id: 'trading', label: '📈 Simulateur Bourse' },
               { id: 'education', label: '📚 Académie' },
               { id: 'friends', label: `👥 Amis (${userData.friends.length})` },
               { id: 'notifications', label: `🔔 Notifications ${notifications.filter(n => !n.read).length > 0 ? `(${notifications.filter(n => !n.read).length})` : ''}` },
@@ -3307,6 +3402,161 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* TRADING TAB - Simulateur Bourse (mode accéléré) */}
+        {activeTab === 'trading' && (
+          <div style={{ marginTop: '20px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'white', margin: '0 0 8px 0' }}>
+              📈 Simulateur Bourse — Mode Accéléré
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: '0 0 24px 0' }}>
+              Achète et vends avec tes InvestCoins sur des données historiques simplifiées (2010-2026).
+            </p>
+
+            {!tradingLoaded ? (
+              <p style={{ color: 'rgba(255,255,255,0.6)' }}>Chargement...</p>
+            ) : (
+              <>
+                {/* Portfolio summary */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: '16px',
+                  marginBottom: '20px',
+                }}>
+                  {[
+                    { label: 'Année simulée', value: tradingPortfolio?.simulatedYear },
+                    { label: 'Solde InvestCoins', value: `🪙 ${tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')}` },
+                    { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} €` },
+                    {
+                      label: 'Performance',
+                      value: `${tradingPortfolio?.performancePct >= 0 ? '+' : ''}${tradingPortfolio?.performancePct?.toFixed(1)}%`,
+                      color: tradingPortfolio?.performancePct >= 0 ? '#10b981' : '#f43f5e',
+                    },
+                  ].map((stat, idx) => (
+                    <div key={idx} style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                    }}>
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}</p>
+                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'white', margin: 0 }}>{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={tradingAdvanceYear}
+                  disabled={tradingLoading || tradingPortfolio?.simulatedYear >= tradingPortfolio?.maxYear}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: tradingPortfolio?.simulatedYear >= tradingPortfolio?.maxYear
+                      ? 'rgba(255,255,255,0.1)'
+                      : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                    color: 'white',
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    cursor: tradingLoading ? 'wait' : 'pointer',
+                    marginBottom: '24px',
+                  }}
+                >
+                  ⏩ Avancer d'un an {tradingPortfolio?.simulatedYear < tradingPortfolio?.maxYear ? `(→ ${tradingPortfolio?.simulatedYear + 1})` : '(déjà en 2026)'}
+                </button>
+
+                {tradingError && (
+                  <p style={{ color: '#f43f5e', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
+                )}
+
+                {/* Achat */}
+                <div style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  marginBottom: '24px',
+                }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 16px 0' }}>Acheter</h3>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <select
+                      value={tradingSelectedAsset}
+                      onChange={(e) => setTradingSelectedAsset(e.target.value)}
+                      style={{
+                        padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)',
+                        background: '#1a1a2e', color: 'white', fontSize: '13px',
+                      }}
+                    >
+                      {tradingAssets.map((a) => (
+                        <option key={a.symbol} value={a.symbol}>{a.name} ({a.symbol})</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min="1"
+                      value={tradingQuantity}
+                      onChange={(e) => setTradingQuantity(e.target.value)}
+                      style={{
+                        width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)',
+                        background: '#1a1a2e', color: 'white', fontSize: '13px',
+                      }}
+                    />
+                    <button
+                      onClick={tradingBuy}
+                      disabled={tradingLoading}
+                      style={{
+                        padding: '10px 20px', borderRadius: '8px', border: 'none',
+                        background: '#10b981', color: 'white', fontWeight: '700', fontSize: '13px',
+                        cursor: tradingLoading ? 'wait' : 'pointer',
+                      }}
+                    >
+                      Acheter
+                    </button>
+                  </div>
+                </div>
+
+                {/* Positions */}
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 16px 0' }}>Mes positions</h3>
+                {tradingPortfolio?.positions?.length === 0 ? (
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    {tradingPortfolio?.positions?.map((pos) => (
+                      <div key={pos.symbol} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '10px',
+                        padding: '14px 18px',
+                      }}>
+                        <div>
+                          <p style={{ color: 'white', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}</p>
+                          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: 0 }}>
+                            {pos.quantity} × prix moyen {pos.avgBuyPrice.toFixed(2)}€
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => tradingSell(pos.symbol, pos.quantity)}
+                          disabled={tradingLoading}
+                          style={{
+                            padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(244, 63, 94, 0.4)',
+                            background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontWeight: '700', fontSize: '12px',
+                            cursor: tradingLoading ? 'wait' : 'pointer',
+                          }}
+                        >
+                          Vendre tout
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
