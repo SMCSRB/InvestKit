@@ -7,19 +7,19 @@ const EducationContext = createContext();
 const DEFAULT_PROGRESS = {
   completedChapters: [],
   completedDomains: [],
-  totalXP: 9500,
-  userLevel: 20,
+  totalXP: 0,
+  userLevel: 1,
   streak: 0,
   maxStreak: 0,
-  badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
+  badges: [],
   notes: {},
   attempts: {},
   selectedTheme: 'dark',
   domainsProgress: {
-    crypto: 100,
-    stocks: 100,
-    bonds: 100,
-    realestate: 100,
+    crypto: 0,
+    stocks: 0,
+    bonds: 0,
+    realestate: 0,
   },
 };
 
@@ -28,9 +28,14 @@ export function EducationProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Always use default progress - override any old localStorage data
-    localStorage.setItem('educationProgress', JSON.stringify(DEFAULT_PROGRESS));
-    setProgress(DEFAULT_PROGRESS);
+    try {
+      const saved = localStorage.getItem('educationProgress');
+      if (saved) {
+        setProgress((prev) => ({ ...prev, ...JSON.parse(saved) }));
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de la progression éducation:', error);
+    }
     setIsLoading(false);
   }, []);
 
@@ -164,24 +169,7 @@ export function EducationProvider({ children }) {
   };
 
   const resetProgress = () => {
-    setProgress({
-      completedChapters: [],
-      completedDomains: [],
-      totalXP: 9500,
-      userLevel: 20,
-      streak: 0,
-      maxStreak: 0,
-      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
-      notes: {},
-      attempts: {},
-      selectedTheme: 'dark',
-      domainsProgress: {
-        crypto: 100,
-        stocks: 100,
-        bonds: 100,
-        realestate: 100,
-      },
-    });
+    setProgress(DEFAULT_PROGRESS);
   };
 
   const addNote = (domainId, chapterId, noteText) => {
