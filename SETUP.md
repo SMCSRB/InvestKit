@@ -31,7 +31,7 @@ Télécharge l'installateur : https://www.postgresql.org/download/windows/
 
 ### Option A: Script automatique (Linux/macOS)
 ```bash
-cd /home/user/InvestKit/database
+cd <dossier-du-projet>/database
 bash setup.sh
 ```
 
@@ -73,7 +73,7 @@ investkit=>
 ## 🎯 Étape 4: Lancer le Backend
 
 ```bash
-cd /home/user/InvestKit/backend
+cd <dossier-du-projet>/backend
 
 # Installer les dépendances (une seule fois)
 npm install
@@ -98,7 +98,7 @@ npm run dev
 ## 🌐 Étape 5: Lancer le Frontend (dans un autre terminal)
 
 ```bash
-cd /home/user/InvestKit
+cd <dossier-du-projet>
 
 # Installer les dépendances (une seule fois)
 npm install
@@ -245,7 +245,7 @@ npm run format   # Formater le code
 
 ### Frontend
 ```bash
-cd /home/user/InvestKit
+cd <dossier-du-projet>
 npm run dev      # Lancer en développement
 npm run build    # Builder pour la production
 npm run start    # Lancer la version buildée

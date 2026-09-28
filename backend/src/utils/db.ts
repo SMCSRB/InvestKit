@@ -5,6 +5,12 @@ import path from 'path';
 
 let pool: Pool | null = null;
 
+// Chemins relatifs à ce fichier (et non au dossier de lancement) : le serveur
+// démarre correctement quel que soit l'endroit d'où il est lancé, en ts-node
+// (src/utils) comme compilé (dist/utils).
+const BACKEND_ROOT = path.resolve(__dirname, '..', '..');
+const REPO_ROOT = path.resolve(BACKEND_ROOT, '..');
+
 export const initDatabase = (): Pool => {
   if (pool) return pool;
 
@@ -40,7 +46,7 @@ export const executeSchema = async (): Promise<void> => {
   try {
     console.log('📊 Initializing database schema...');
 
-    const schemaPath = path.join(process.cwd(), '..', 'database', 'schema.sql');
+    const schemaPath = path.join(REPO_ROOT, 'database', 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf-8');
 
     const pool = getPool();
@@ -60,7 +66,7 @@ export const executeMigrations = async (): Promise<void> => {
   try {
     console.log('📝 Running migrations...');
 
-    const migrationsDir = path.join(process.cwd(), 'migrations');
+    const migrationsDir = path.join(BACKEND_ROOT, 'migrations');
 
     // Check if migrations directory exists
     if (!fs.existsSync(migrationsDir)) {

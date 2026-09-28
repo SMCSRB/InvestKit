@@ -23,6 +23,13 @@ echo ""
 POSTGRES_USER="postgres"
 POSTGRES_PASSWORD=""
 
+# Mot de passe du compte applicatif : à fournir, jamais écrit en dur.
+#   INVESTKIT_DB_PASSWORD=... ./setup.sh
+if [ -z "$INVESTKIT_DB_PASSWORD" ]; then
+  echo "❌ Définis INVESTKIT_DB_PASSWORD (ex: INVESTKIT_DB_PASSWORD=un-mot-de-passe-long ./setup.sh)"
+  exit 1
+fi
+
 echo "📝 Creating database and user..."
 echo ""
 
@@ -31,7 +38,7 @@ PSQL="psql -U $POSTGRES_USER"
 
 # Create user if not exists
 $PSQL -tc "SELECT 1 FROM pg_user WHERE usename = 'investkit'" | grep -q 1 || \
-  $PSQL -c "CREATE USER investkit WITH PASSWORD 'password';"
+  $PSQL -c "CREATE USER investkit WITH PASSWORD '$INVESTKIT_DB_PASSWORD';"
 
 # Create database if not exists
 $PSQL -tc "SELECT 1 FROM pg_database WHERE datname = 'investkit'" | grep -q 1 || \

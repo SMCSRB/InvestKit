@@ -1,5 +1,8 @@
 'use client';
 
+import { SITE_INFO } from '../lib/siteInfo';
+import TestPhaseNotice from '../components/TestPhaseNotice';
+
 export default function ConditionsPage() {
   return (
     <div style={{
@@ -52,6 +55,8 @@ export default function ConditionsPage() {
           </p>
         </div>
 
+        <TestPhaseNotice />
+
         {/* Content Sections */}
         {[
           {
@@ -92,7 +97,7 @@ export default function ConditionsPage() {
           {
             title: '8. Contact',
             content: 'Pour toute question concernant ces conditions, veuillez nous contacter à :',
-            email: 'contact@investkit.com',
+            email: SITE_INFO.contactEmail || '[adresse à compléter]',
           },
         ].map((section, idx) => (
           <section key={idx} style={{
@@ -146,7 +151,7 @@ export default function ConditionsPage() {
                 color: '#475569',
                 margin: '12px 0 0 0',
               }}>
-                <a href={`mailto:${section.email}`} style={{
+                <a href={section.email.includes('@') ? `mailto:${section.email}` : undefined} style={{
                   color: '#3b82f6',
                   textDecoration: 'none',
                   fontWeight: '600',

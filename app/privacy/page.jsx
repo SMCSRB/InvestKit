@@ -1,5 +1,8 @@
 'use client';
 
+import { SITE_INFO } from '../lib/siteInfo';
+import TestPhaseNotice from '../components/TestPhaseNotice';
+
 export default function PrivacyPage() {
   return (
     <div style={{
@@ -51,6 +54,8 @@ export default function PrivacyPage() {
             Dernière mise à jour : 2026-09-19
           </p>
         </div>
+
+        <TestPhaseNotice />
 
         {/* Content Sections */}
         {[
@@ -129,7 +134,7 @@ export default function PrivacyPage() {
             title: '10. Contact',
             content: 'Pour toute question concernant cette politique ou vos données, contactez-nous à :',
             list: null,
-            email: 'privacy@investkit.com',
+            email: SITE_INFO.contactEmail || '[adresse à compléter]',
           },
         ].map((section, idx) => (
           <section key={idx} style={{
@@ -200,7 +205,7 @@ export default function PrivacyPage() {
                 color: '#475569',
                 margin: '12px 0 0 0',
               }}>
-                Email: <a href={`mailto:${section.email}`} style={{
+                Email: <a href={section.email.includes('@') ? `mailto:${section.email}` : undefined} style={{
                   color: '#3b82f6',
                   textDecoration: 'none',
                   fontWeight: '600',

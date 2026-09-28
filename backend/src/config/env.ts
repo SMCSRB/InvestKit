@@ -51,6 +51,20 @@ export const env = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };
 
+// Avertissements de configuration en production (non bloquants pour ne pas
+// casser un déploiement existant, mais visibles dans les logs).
+if (env.isProd) {
+  if (env.corsOrigins.includes('*')) {
+    console.warn('⚠️  CORS_ORIGIN non défini : toutes les origines sont acceptées. Définis-le (ex: https://ton-domaine).');
+  }
+  if (!process.env.DATABASE_URL && env.database.password === 'password') {
+    console.warn('⚠️  Mot de passe base de données par défaut ("password") : définis DATABASE_URL ou DB_PASSWORD.');
+  }
+  if (env.jwtSecret === 'dev-secret-key' || env.jwtSecret.length < 32) {
+    console.warn('⚠️  JWT_SECRET trop court ou par défaut (32 caractères minimum recommandés).');
+  }
+}
+
 // Validation
 const requiredEnvVars = ['JWT_SECRET'];
 const missing = requiredEnvVars.filter(
