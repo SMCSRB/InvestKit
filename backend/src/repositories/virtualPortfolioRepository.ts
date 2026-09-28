@@ -1,5 +1,4 @@
 import { query } from '../utils/db';
-import { MIN_YEAR } from '../data/stockPrices';
 
 export interface Position {
   symbol: string;
@@ -19,7 +18,15 @@ export interface VirtualPortfolio {
 }
 
 export const virtualPortfolioRepository = {
-  async getOrCreate(userId: string, mode: string, domain: string): Promise<VirtualPortfolio> {
+  // startYear = première année disponible du domaine (2010 pour la Bourse,
+  // 2013 pour la Crypto) : chaque domaine a son propre portefeuille et sa
+  // propre position sur la frise temporelle.
+  async getOrCreate(
+    userId: string,
+    mode: string,
+    domain: string,
+    startYear: number
+  ): Promise<VirtualPortfolio> {
     const existing = await query(
       'SELECT * FROM virtual_portfolios WHERE user_id = $1 AND mode = $2 AND domain = $3',
       [userId, mode, domain]
@@ -30,7 +37,7 @@ export const virtualPortfolioRepository = {
       `INSERT INTO virtual_portfolios (user_id, mode, domain, positions, simulated_year)
        VALUES ($1, $2, $3, '[]', $4)
        RETURNING *`,
-      [userId, mode, domain, MIN_YEAR]
+      [userId, mode, domain, startYear]
     );
     return created.rows[0];
   },

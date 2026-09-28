@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth';
 
 export const tradingRoutes = Router();
 
+tradingRoutes.get('/domains', authMiddleware, tradingController.getDomains);
 tradingRoutes.get('/assets', authMiddleware, tradingController.getAssets);
 tradingRoutes.get('/portfolio', authMiddleware, tradingController.getPortfolio);
 tradingRoutes.post('/buy', authMiddleware, tradingController.buy);

@@ -10,7 +10,7 @@
 export interface Asset {
   symbol: string;
   name: string;
-  type: 'stock' | 'etf';
+  type: 'stock' | 'etf' | 'crypto';
 }
 
 export const ASSETS: Asset[] = [

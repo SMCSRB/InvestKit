@@ -37,6 +37,8 @@ export default function DashboardPage() {
   const [canClaimDaily, setCanClaimDaily] = useState(false);
   const [claimingDaily, setClaimingDaily] = useState(false);
   // Simulateur Bourse (trading accéléré)
+  const [tradingDomain, setTradingDomain] = useState('stocks');
+  const [tradingDomains, setTradingDomains] = useState([]);
   const [tradingAssets, setTradingAssets] = useState([]);
   const [tradingPortfolio, setTradingPortfolio] = useState(null);
   const [tradingSelectedAsset, setTradingSelectedAsset] = useState('LVMH');
@@ -444,27 +446,41 @@ export default function DashboardPage() {
   };
 
   // ============ Simulateur Bourse (trading accéléré) ============
-  const loadTradingData = async () => {
+  const loadTradingData = async (domain = tradingDomain) => {
     const token = getAuthToken();
     if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    const base = process.env.NEXT_PUBLIC_API_URL;
     try {
-      const [assetsRes, portfolioRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/assets`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/portfolio`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+      const [domainsRes, assetsRes, portfolioRes] = await Promise.all([
+        fetch(`${base}/trading/domains`, { headers }),
+        fetch(`${base}/trading/assets?domain=${domain}`, { headers }),
+        fetch(`${base}/trading/portfolio?domain=${domain}`, { headers }),
       ]);
+      const domainsData = await domainsRes.json();
       const assetsData = await assetsRes.json();
       const portfolioData = await portfolioRes.json();
-      if (assetsRes.ok) setTradingAssets(assetsData.assets);
+      if (domainsRes.ok) setTradingDomains(domainsData.domains);
+      if (assetsRes.ok) {
+        setTradingAssets(assetsData.assets);
+        setTradingSelectedAsset((current) =>
+          assetsData.assets.some((a) => a.symbol === current) ? current : assetsData.assets[0]?.symbol
+        );
+      }
       if (portfolioRes.ok) setTradingPortfolio(portfolioData);
     } catch (err) {
       console.error('Erreur chargement trading:', err);
     } finally {
       setTradingLoaded(true);
     }
+  };
+
+  const changeTradingDomain = async (domain) => {
+    if (domain === tradingDomain) return;
+    setTradingError('');
+    setTradingDomain(domain);
+    setTradingQuantity(1);
+    await loadTradingData(domain);
   };
 
   const tradingBuy = async () => {
@@ -474,7 +490,7 @@ export default function DashboardPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-        body: JSON.stringify({ symbol: tradingSelectedAsset, quantity: Number(tradingQuantity) }),
+        body: JSON.stringify({ domain: tradingDomain, symbol: tradingSelectedAsset, quantity: Number(tradingQuantity) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -493,7 +509,7 @@ export default function DashboardPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/sell`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-        body: JSON.stringify({ symbol, quantity }),
+        body: JSON.stringify({ domain: tradingDomain, symbol, quantity }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -511,7 +527,8 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/advance-year`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ domain: tradingDomain }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -2488,7 +2505,7 @@ export default function DashboardPage() {
               { id: 'overview', label: '📊 Vue d\'ensemble' },
               { id: 'projects', label: '🎯 Projets' },
               { id: 'market', label: '💹 Marché' },
-              { id: 'trading', label: '📈 Simulateur Bourse' },
+              { id: 'trading', label: '📈 Simulateur' },
               { id: 'education', label: '📚 Académie' },
               { id: 'friends', label: `👥 Amis (${userData.friends.length})` },
               { id: 'notifications', label: `🔔 Notifications ${notifications.filter(n => !n.read).length > 0 ? `(${notifications.filter(n => !n.read).length})` : ''}` },
@@ -3409,16 +3426,39 @@ export default function DashboardPage() {
         {activeTab === 'trading' && (
           <div style={{ marginTop: '20px' }}>
             <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'white', margin: '0 0 8px 0' }}>
-              📈 Simulateur Bourse — Mode Accéléré
+              📈 Simulateur — Mode Accéléré
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: '0 0 24px 0' }}>
-              Achète et vends avec tes InvestCoins sur des données historiques simplifiées (2010-2026).
+              Achète et vends avec tes InvestCoins sur des données historiques simplifiées (illustratives, pas de vrais cours).
             </p>
 
             {!tradingLoaded ? (
               <p style={{ color: 'rgba(255,255,255,0.6)' }}>Chargement...</p>
             ) : (
               <>
+                {/* Sélecteur de domaine */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                  {tradingDomains.map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => changeTradingDomain(d.id)}
+                      disabled={tradingLoading}
+                      style={{
+                        padding: '8px 18px',
+                        borderRadius: '20px',
+                        border: `1px solid ${tradingDomain === d.id ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.15)'}`,
+                        background: tradingDomain === d.id ? 'rgba(59,130,246,0.25)' : 'transparent',
+                        color: tradingDomain === d.id ? '#60a5fa' : 'rgba(255,255,255,0.7)',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {d.id === 'crypto' ? '₿ ' : '📊 '}{d.label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Portfolio summary */}
                 <div style={{
                   display: 'grid',
@@ -3465,7 +3505,7 @@ export default function DashboardPage() {
                     marginBottom: '24px',
                   }}
                 >
-                  ⏩ Avancer d'un an {tradingPortfolio?.simulatedYear < tradingPortfolio?.maxYear ? `(→ ${tradingPortfolio?.simulatedYear + 1})` : '(déjà en 2026)'}
+                  ⏩ Avancer d'un an {tradingPortfolio?.simulatedYear < tradingPortfolio?.maxYear ? `(→ ${tradingPortfolio?.simulatedYear + 1})` : `(déjà en ${tradingPortfolio?.maxYear})`}
                 </button>
 
                 {tradingError && (
@@ -3490,13 +3530,19 @@ export default function DashboardPage() {
                         background: '#1a1a2e', color: 'white', fontSize: '13px',
                       }}
                     >
-                      {tradingAssets.map((a) => (
-                        <option key={a.symbol} value={a.symbol}>{a.name} ({a.symbol})</option>
-                      ))}
+                      {tradingAssets.map((a) => {
+                        const price = tradingPortfolio?.prices?.[a.symbol];
+                        return (
+                          <option key={a.symbol} value={a.symbol} disabled={price == null}>
+                            {a.name} ({a.symbol}) — {price == null ? 'pas encore coté' : `${price.toLocaleString('fr-FR')} €`}
+                          </option>
+                        );
+                      })}
                     </select>
                     <input
                       type="number"
-                      min="1"
+                      min={tradingDomain === 'crypto' ? '0.0001' : '1'}
+                      step={tradingDomain === 'crypto' ? 'any' : '1'}
                       value={tradingQuantity}
                       onChange={(e) => setTradingQuantity(e.target.value)}
                       style={{
@@ -3504,6 +3550,9 @@ export default function DashboardPage() {
                         background: '#1a1a2e', color: 'white', fontSize: '13px',
                       }}
                     />
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
+                      ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} 🪙
+                    </span>
                     <button
                       onClick={tradingBuy}
                       disabled={tradingLoading}
@@ -3537,7 +3586,7 @@ export default function DashboardPage() {
                         <div>
                           <p style={{ color: 'white', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}</p>
                           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: 0 }}>
-                            {pos.quantity} × prix moyen {pos.avgBuyPrice.toFixed(2)}€
+                            {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}€
                           </p>
                         </div>
                         <button
