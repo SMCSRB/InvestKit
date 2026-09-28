@@ -5,6 +5,7 @@ import { env } from './config/env';
 import { authRoutes } from './routes/auth';
 import { billingRoutes } from './routes/billing';
 import { economyRoutes } from './routes/economy';
+import { educationRoutes } from './routes/education';
 import { apiLimiter } from './middleware/rateLimiter';
 import { initDatabase, executeSchema, closePool } from './utils/db';
 
@@ -47,6 +48,8 @@ app.use('/api/v1/billing', billingRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/v1/economy', economyRoutes);
 app.use('/api/economy', economyRoutes);
+app.use('/api/v1/education', educationRoutes);
+app.use('/api/education', educationRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

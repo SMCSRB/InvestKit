@@ -45,7 +45,24 @@ export function EducationProvider({ children }) {
     }
   }, [progress, isLoading]);
 
+  const notifyBackendCompletion = (endpoint, body) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/education/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    }).catch((error) => console.error(`Erreur notification ${endpoint}:`, error));
+  };
+
   const completeChapter = (domainId, chapterId, score, xpEarned = 100) => {
+    const alreadyCompletedBefore = progress.completedChapters.some(
+      (c) => c.domainId === domainId && c.chapterId === chapterId
+    );
+    if (!alreadyCompletedBefore) {
+      notifyBackendCompletion('complete-chapter', { domainId, chapterId, score, xpEarned });
+    }
+
     setProgress((prev) => {
       const alreadyCompleted = prev.completedChapters.some(
         (c) => c.domainId === domainId && c.chapterId === chapterId
@@ -107,6 +124,11 @@ export function EducationProvider({ children }) {
   };
 
   const completeDomain = (domainId, finalScore, xpEarned = 500) => {
+    const alreadyCompletedBefore = progress.completedDomains.some((d) => d.domainId === domainId);
+    if (!alreadyCompletedBefore) {
+      notifyBackendCompletion('complete-domain', { domainId, score: finalScore, xpEarned });
+    }
+
     setProgress((prev) => {
       const alreadyCompleted = prev.completedDomains.some((d) => d.domainId === domainId);
 

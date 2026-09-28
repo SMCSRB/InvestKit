@@ -1,0 +1,34 @@
+import { query } from '../utils/db';
+
+const DOMAIN_COMPLETE_MARKER = '__domain_complete__';
+
+export const educationProgressRepository = {
+  async isCompleted(userId: string, domainId: string, chapterId?: string): Promise<boolean> {
+    const result = await query(
+      'SELECT 1 FROM education_progress WHERE user_id = $1 AND domain_id = $2 AND chapter_id = $3',
+      [userId, domainId, chapterId || DOMAIN_COMPLETE_MARKER]
+    );
+    return result.rows.length > 0;
+  },
+
+  // Insère la complétion si elle n'existe pas déjà (idempotent - la
+  // contrainte UNIQUE empêche un double-enregistrement en cas de course).
+  // Renvoie true si c'est une PREMIÈRE complétion (donc à récompenser).
+  async recordCompletion(
+    userId: string,
+    domainId: string,
+    chapterId: string | undefined,
+    score: number | undefined,
+    xpEarned: number,
+    coinsEarned: number
+  ): Promise<boolean> {
+    const result = await query(
+      `INSERT INTO education_progress (user_id, domain_id, chapter_id, score, xp_earned, coins_earned)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_id, domain_id, chapter_id) DO NOTHING
+       RETURNING id`,
+      [userId, domainId, chapterId || DOMAIN_COMPLETE_MARKER, score ?? null, xpEarned, coinsEarned]
+    );
+    return result.rows.length > 0;
+  },
+};

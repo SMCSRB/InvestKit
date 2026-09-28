@@ -287,6 +287,23 @@ CREATE TABLE IF NOT EXISTS feature_flags (
 );
 
 -- ============================================
+-- 🎓 EDUCATION PROGRESS TABLE (suivi réel, récompenses InvestCoins)
+-- ============================================
+CREATE TABLE IF NOT EXISTS education_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  domain_id VARCHAR(50) NOT NULL,
+  chapter_id VARCHAR(50) NOT NULL DEFAULT '__domain_complete__',
+  score INT,
+  xp_earned INT NOT NULL DEFAULT 0,
+  coins_earned INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, domain_id, chapter_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_education_progress_user_id ON education_progress(user_id);
+
+-- ============================================
 -- ✅ INITIALIZE DATA (une seule fois, table vide uniquement)
 -- ============================================
 
