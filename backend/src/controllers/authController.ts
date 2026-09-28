@@ -7,7 +7,9 @@ import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail } from '../utils/email';
 import { verifyCaptcha } from '../utils/captcha';
-import { grantStartingCapital, rewardReferrer } from './economyController';
+import { activateAccount } from '../services/verificationService';
+import { DOMAINS } from '../data/marketData';
+import { hasProAccess } from '../utils/entitlements';
 import { generateUniqueReferralCode } from '../utils/referral';
 import {
   generateTotpSecret,
@@ -17,6 +19,9 @@ import {
   hashBackupCodes,
   consumeBackupCode,
 } from '../utils/totp';
+
+// 'real_estate' est choisissable dès maintenant ; le domaine arrive à l'étape 3.
+const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate'];
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -120,25 +125,12 @@ export const authController = {
         return;
       }
 
-      await userRepository.verifyEmail(user.id);
-
-      // Capital de départ en InvestCoins (Phase 2B) - accordé une seule
-      // fois, à l'instant où le compte devient réellement utilisable.
-      try {
-        await grantStartingCapital(user.id);
-      } catch (grantError) {
-        console.error('Grant starting capital error:', grantError);
-      }
-
-      // Programme de parrainage : le parrain touche son bonus quand son
-      // filleul vérifie réellement son email (pas juste à l'inscription,
-      // pour éviter de récompenser des comptes jamais activés).
-      if (user.referred_by_user_id) {
-        try {
-          await rewardReferrer(user.referred_by_user_id, user.id);
-        } catch (referralError) {
-          console.error('Reward referrer error:', referralError);
-        }
+      // Activation + récompenses atomiques : un double envoi du code ne
+      // verse les InvestCoins qu'une fois.
+      const activated = await activateAccount(user, code);
+      if (!activated) {
+        res.status(400).json({ error: 'Code de vérification invalide ou déjà utilisé' });
+        return;
       }
 
       res.json({
@@ -397,6 +389,7 @@ export const authController = {
           username: user.username,
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
+          hasProAccess: hasProAccess(user),
           enable2FA: user.enable_2fa,
           referralCode: user.referral_code,
         },
@@ -408,9 +401,8 @@ export const authController = {
   },
 
   // Choix du domaine débloqué gratuitement (tier free) - laissé à
-  // l'utilisateur, pas de domaine imposé par défaut. Modifiable tant que
-  // le questionnaire de profil investisseur (Phase 3B) n'existe pas encore
-  // pour le suggérer automatiquement.
+  // l'utilisateur, pas de domaine imposé par défaut. Choix UNIQUE et
+  // définitif (sinon l'abonnement Pro serait contournable).
   setFreeDomain: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user) {
@@ -424,7 +416,16 @@ export const authController = {
         return;
       }
 
-      await userRepository.setFreeDomain(req.user.userId, domain);
+      if (!VALID_FREE_DOMAINS.includes(domain)) {
+        res.status(400).json({ error: 'Domaine inconnu' });
+        return;
+      }
+
+      const saved = await userRepository.setFreeDomainOnce(req.user.userId, domain);
+      if (!saved) {
+        res.status(409).json({ error: 'Domaine gratuit déjà choisi (non modifiable)' });
+        return;
+      }
       res.json({ success: true, freeDomain: domain });
     } catch (error) {
       console.error('Set free domain error:', error);

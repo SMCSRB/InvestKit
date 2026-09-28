@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
   subscription_tier VARCHAR(20) NOT NULL DEFAULT 'free', -- free, pro
   free_domain VARCHAR(50), -- domaine débloqué gratuitement (Dashboard Pro limité à 1 domaine en free)
   stripe_customer_id VARCHAR(255) UNIQUE,
+  pro_override BOOLEAN NOT NULL DEFAULT FALSE, -- passage manuel en Pro (testeurs) : indépendant de Stripe
   verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(10),
   verification_code_expires_at TIMESTAMP,
@@ -212,7 +213,8 @@ CREATE INDEX IF NOT EXISTS idx_quota_transactions_user_id ON quota_transactions(
 CREATE TABLE IF NOT EXISTS investcoins_balance (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   balance INT NOT NULL DEFAULT 0,
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT investcoins_balance_non_negative CHECK (balance >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS investcoins_transactions (
@@ -237,6 +239,8 @@ CREATE TABLE IF NOT EXISTS virtual_portfolios (
   cash_balance DECIMAL(15,2) NOT NULL DEFAULT 0, -- non utilisé : le cash de trading est le solde InvestCoins
   positions JSONB NOT NULL DEFAULT '[]', -- positions ouvertes (actif, quantité, prix d'entrée...)
   simulated_year INT NOT NULL DEFAULT 2010, -- année courante du mode Accéléré/Historique
+  total_bought DECIMAL(15,2) NOT NULL DEFAULT 0, -- cumul des achats (base du classement)
+  total_proceeds DECIMAL(15,2) NOT NULL DEFAULT 0, -- cumul des ventes
   started_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(user_id, mode, domain)
@@ -253,7 +257,8 @@ CREATE TABLE IF NOT EXISTS leaderboard_rankings (
   mode VARCHAR(20) NOT NULL, -- realtime, accelerated
   domain VARCHAR(50) NOT NULL, -- crypto, stocks, real_estate, bonds, global
   period VARCHAR(20) NOT NULL DEFAULT 'all-time', -- week, month, all-time
-  performance_pct DECIMAL(8,4) NOT NULL DEFAULT 0,
+  performance_pct DECIMAL(14,4) NOT NULL DEFAULT 0,
+  capital_committed DECIMAL(15,2) NOT NULL DEFAULT 0, -- capital engagé à l'instantané (seuil de classement)
   rank INT,
   computed_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(user_id, mode, domain, period)

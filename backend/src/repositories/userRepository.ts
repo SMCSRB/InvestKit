@@ -1,4 +1,5 @@
 import { query } from '../utils/db';
+import type { Queryable } from './investcoinsRepository';
 
 export interface User {
   id: string;
@@ -9,7 +10,8 @@ export interface User {
   username?: string;
   role: 'user' | 'admin';
   subscription_tier: 'free' | 'pro';
-  free_domain?: string;
+  free_domain?: string | null;
+  pro_override?: boolean;
   stripe_customer_id?: string;
   totp_secret?: string;
   totp_backup_codes?: string[];
@@ -83,13 +85,18 @@ export const userRepository = {
     return result.rows[0] || null;
   },
 
-  async verifyEmail(id: string): Promise<void> {
-    await query(
+  // Activation ATOMIQUE : la condition (non vérifié + bon code) est évaluée
+  // dans l'UPDATE lui-même. Deux requêtes simultanées avec le même code ne
+  // peuvent donc pas réussir toutes les deux. Renvoie true pour une seule.
+  async verifyEmailAtomic(id: string, code: string, db: Queryable = { query }): Promise<boolean> {
+    const result = await db.query(
       `UPDATE users
        SET verified = TRUE, verification_code = NULL, updated_at = NOW()
-       WHERE id = $1`,
-      [id]
+       WHERE id = $1 AND verified = FALSE AND verification_code = $2
+       RETURNING id`,
+      [id, code]
     );
+    return result.rows.length === 1;
   },
 
   async updateLastLogin(id: string): Promise<void> {
@@ -212,11 +219,17 @@ export const userRepository = {
     );
   },
 
-  async setFreeDomain(id: string, domain: string): Promise<void> {
-    await query(
-      `UPDATE users SET free_domain = $1, updated_at = NOW() WHERE id = $2`,
+  // Choix UNIQUE : ne réussit que si aucun domaine n'a encore été choisi.
+  // Sans ça, on pourrait changer de domaine gratuit à volonté et contourner
+  // l'abonnement Pro. Renvoie false si un domaine était déjà choisi.
+  async setFreeDomainOnce(id: string, domain: string): Promise<boolean> {
+    const result = await query(
+      `UPDATE users SET free_domain = $1, updated_at = NOW()
+       WHERE id = $2 AND free_domain IS NULL
+       RETURNING id`,
       [domain, id]
     );
+    return result.rows.length === 1;
   },
 
   // Stocke un secret TOTP "en attente" (2FA pas encore activée tant que

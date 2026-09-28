@@ -1,0 +1,102 @@
+import { query } from '../utils/db';
+import type { Queryable } from './investcoinsRepository';
+
+export interface BoardEntry {
+  rank: number;
+  username: string;
+  performancePct: number;
+  isMe: boolean;
+}
+
+export interface Board {
+  entries: BoardEntry[];
+  me: BoardEntry | null;
+  totalRanked: number;
+}
+
+// Un classement compare des joueurs À DATE SIMULÉE ÉGALE : sans ça, quelqu'un
+// arrivé en 2026 serait comparé à quelqu'un resté en 2012 et le classement ne
+// voudrait rien dire. Chaque année simulée traversée a donc son propre
+// instantané, stocké dans `period` sous la forme "Y2015". Le classement
+// "arrivés au bout de la frise" est simplement celui de la dernière année.
+export const periodForYear = (year: number): string => `Y${year}`;
+
+export const leaderboardRepository = {
+  // Enregistre (ou met à jour) l'instantané du joueur pour cette année
+  // simulée. Appelé dans la même transaction que l'ordre ou l'avancée qui
+  // le modifie, pour que le classement ne diffère jamais du portefeuille.
+  async upsertSnapshot(
+    db: Queryable,
+    snapshot: {
+      userId: string;
+      mode: string;
+      domain: string;
+      year: number;
+      performancePct: number;
+      capitalCommitted: number;
+    }
+  ): Promise<void> {
+    await db.query(
+      `INSERT INTO leaderboard_rankings
+         (user_id, mode, domain, period, performance_pct, capital_committed, computed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       ON CONFLICT (user_id, mode, domain, period)
+       DO UPDATE SET performance_pct = EXCLUDED.performance_pct,
+                     capital_committed = EXCLUDED.capital_committed,
+                     computed_at = NOW()`,
+      [
+        snapshot.userId,
+        snapshot.mode,
+        snapshot.domain,
+        periodForYear(snapshot.year),
+        snapshot.performancePct,
+        snapshot.capitalCommitted,
+      ]
+    );
+  },
+
+  // Seuls les joueurs ayant engagé au moins `minCapital` sont classés (un %
+  // sur un capital dérisoire n'a aucun sens). Le rang est calculé à la
+  // lecture : il reste ainsi toujours cohérent avec les instantanés.
+  async getBoard(params: {
+    mode: string;
+    domain: string;
+    year: number;
+    minCapital: number;
+    limit: number;
+    callerId: string;
+  }): Promise<Board> {
+    const result = await query(
+      `WITH ranked AS (
+         SELECT lr.user_id,
+                COALESCE(u.username, 'Investisseur anonyme') AS username,
+                lr.performance_pct,
+                RANK() OVER (ORDER BY lr.performance_pct DESC) AS rank
+         FROM leaderboard_rankings lr
+         JOIN users u ON u.id = lr.user_id
+         WHERE lr.mode = $1 AND lr.domain = $2 AND lr.period = $3
+           AND lr.capital_committed >= $4
+       )
+       SELECT user_id, username, performance_pct, rank,
+              (SELECT COUNT(*) FROM ranked) AS total
+       FROM ranked
+       WHERE rank <= $5 OR user_id = $6
+       ORDER BY rank, username`,
+      [params.mode, params.domain, periodForYear(params.year), params.minCapital, params.limit, params.callerId]
+    );
+
+    const toEntry = (row: any): BoardEntry => ({
+      rank: Number(row.rank),
+      username: row.username,
+      performancePct: Number(row.performance_pct),
+      isMe: row.user_id === params.callerId,
+    });
+
+    const all = result.rows.map(toEntry);
+    return {
+      entries: all.filter((e) => e.rank <= params.limit),
+      me: all.find((e) => e.isMe) ?? null,
+      totalRanked: result.rows.length ? Number(result.rows[0].total) : 0,
+    };
+  },
+};
