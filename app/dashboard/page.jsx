@@ -8194,6 +8194,7 @@ export default function DashboardPage() {
                 { id: 'security', label: '🔐 Sécurité', icon: '🔐' },
                 { id: 'alerts', label: '🔔 Alertes', icon: '🔔' },
                 { id: 'privacy', label: '📊 Données', icon: '📊' },
+                { id: 'billing', label: '💳 Abonnement', icon: '💳' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -9094,6 +9095,130 @@ export default function DashboardPage() {
                       Supprimer mon compte
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* ABONNEMENT TAB */}
+              {settingsTab === 'billing' && (
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: currentTheme.text, margin: 0 }}>
+                    💳 Abonnement
+                  </h3>
+
+                  {billingError && (
+                    <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>{billingError}</p>
+                  )}
+
+                  {userData?.subscriptionTier === 'pro' ? (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                    }}>
+                      <div>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                          ✨ Abonnement Pro actif
+                        </p>
+                        <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
+                          Tous les domaines et fonctionnalités débloqués
+                        </p>
+                      </div>
+                      <button
+                        onClick={openBillingPortal}
+                        disabled={billingLoading}
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          background: 'rgba(59, 130, 246, 0.2)',
+                          color: currentTheme.accent,
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: billingLoading ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {billingLoading ? '...' : 'Gérer mon abonnement'}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: '13px', color: currentTheme.textSecondary, margin: 0 }}>
+                        Vous êtes actuellement sur le plan gratuit. Passez Pro pour débloquer tous les domaines et le portefeuille global.
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                        <div style={{
+                          padding: '20px',
+                          borderRadius: '12px',
+                          border: `1px solid ${currentTheme.border}`,
+                          background: currentTheme.bg,
+                          display: 'grid',
+                          gap: '12px',
+                        }}>
+                          <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Mensuel</p>
+                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>7,99€<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/mois</span></p>
+                          <button
+                            onClick={() => startCheckout('monthly')}
+                            disabled={billingLoading}
+                            style={{
+                              padding: '10px',
+                              borderRadius: '8px',
+                              border: `1px solid ${currentTheme.border}`,
+                              background: 'transparent',
+                              color: currentTheme.text,
+                              fontWeight: '600',
+                              cursor: billingLoading ? 'wait' : 'pointer',
+                            }}
+                          >
+                            Choisir
+                          </button>
+                        </div>
+                        <div style={{
+                          padding: '20px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(139, 92, 246, 0.4)',
+                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                          display: 'grid',
+                          gap: '12px',
+                          position: 'relative',
+                        }}>
+                          <span style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '16px',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                            color: '#fff',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                          }}>
+                            2 mois offerts
+                          </span>
+                          <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Annuel</p>
+                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>79€<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/an</span></p>
+                          <button
+                            onClick={() => startCheckout('yearly')}
+                            disabled={billingLoading}
+                            style={{
+                              padding: '10px',
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                              color: '#fff',
+                              fontWeight: '600',
+                              cursor: billingLoading ? 'wait' : 'pointer',
+                            }}
+                          >
+                            Choisir
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
