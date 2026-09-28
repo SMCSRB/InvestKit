@@ -131,6 +131,8 @@ export const tradingService = {
       performancePct,
       totalValue: balance + marketValue,
       prices,
+      freeDomain: user.free_domain ?? null,
+      canChangeFreeDomain: !!user.free_domain && user.free_domain_change_allowed === true,
       access: access.allowed
         ? { canBuy: true, reason: null }
         : { canBuy: false, reason: access.reason },

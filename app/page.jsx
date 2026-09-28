@@ -1601,16 +1601,12 @@ export default function HomePage() {
                 title: 'Ressources',
                 links: [
                   { name: 'Académie', href: '/education' },
-                  { name: 'Guide de Démarrage', href: '/guides' },
-                  { name: 'FAQ', href: '/faq' },
                 ]
               },
               {
                 title: 'Entreprise',
                 links: [
-                  { name: 'À Propos', href: '/about' },
                   { name: 'Support', href: '/support' },
-                  { name: 'Carrières', href: '/careers' },
                   { name: 'Contact', href: '/contact' },
                 ]
               },

@@ -29,6 +29,21 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       expect(await ledgerSum(uid)).toBe(-90);
     });
 
+    it('chaque écriture enregistre sa nature et son domaine', async () => {
+      const uid = await createUser({ balance: 100 });
+      await investcoinsRepository.applyTransaction(uid, 50, 'daily_reward');
+      await investcoinsRepository.applyTransaction(uid, -20, 'trade_buy', { domain: 'crypto' });
+      await investcoinsRepository.applyTransaction(uid, 5, 'trade_sell', { domain: 'crypto' });
+      await investcoinsRepository.applyTransaction(uid, -3, 'immo_fee', { domain: 'real_estate' });
+      const r = await query('SELECT reason, nature, domain FROM investcoins_transactions WHERE user_id = $1 ORDER BY created_at', [uid]);
+      expect(r.rows).toEqual([
+        { reason: 'daily_reward', nature: 'creation', domain: null },
+        { reason: 'trade_buy', nature: 'exchange', domain: 'crypto' },
+        { reason: 'trade_sell', nature: 'exchange', domain: 'crypto' },
+        { reason: 'immo_fee', nature: 'destruction', domain: 'real_estate' },
+      ]);
+    });
+
     it('refuse les montants décimaux ou nuls', async () => {
       const uid = await createUser({ balance: 100 });
       await expect(investcoinsRepository.applyTransaction(uid, -0.4, 't')).rejects.toThrow();
@@ -140,6 +155,17 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       expect(results.filter((r) => r.status === 'fulfilled' && r.value === true).length).toBe(1);
       expect(await balanceOf(uid)).toBe(500);
       expect(await balanceOf(referrer)).toBe(100);
+    });
+
+    it('changement de domaine gratuit : une seule fois, réservé aux comptes existants', async () => {
+      const uid = await createUser({});
+      await userRepository.setFreeDomainOnce(uid, 'stocks');
+      // Compte créé après la migration : pas de droit de changement
+      expect(await userRepository.changeFreeDomainOnce(uid, 'crypto')).toBe(false);
+      await query('UPDATE users SET free_domain_change_allowed = TRUE WHERE id = $1', [uid]);
+      expect(await userRepository.changeFreeDomainOnce(uid, 'crypto')).toBe(true);
+      expect(await userRepository.changeFreeDomainOnce(uid, 'stocks')).toBe(false); // droit consommé
+      expect((await userRepository.findById(uid))!.free_domain).toBe('crypto');
     });
 
     it('domaine gratuit : choix unique', async () => {

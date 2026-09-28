@@ -12,6 +12,7 @@ export interface User {
   subscription_tier: 'free' | 'pro';
   free_domain?: string | null;
   pro_override?: boolean;
+  free_domain_change_allowed?: boolean;
   stripe_customer_id?: string;
   totp_secret?: string;
   totp_backup_codes?: string[];
@@ -226,6 +227,20 @@ export const userRepository = {
     const result = await query(
       `UPDATE users SET free_domain = $1, updated_at = NOW()
        WHERE id = $2 AND free_domain IS NULL
+       RETURNING id`,
+      [domain, id]
+    );
+    return result.rows.length === 1;
+  },
+
+  // Changement UNIQUE, réservé aux comptes qui avaient déjà choisi avant que
+  // le choix devienne définitif. Consomme le droit dans le même UPDATE.
+  async changeFreeDomainOnce(id: string, domain: string): Promise<boolean> {
+    const result = await query(
+      `UPDATE users
+       SET free_domain = $1, free_domain_change_allowed = FALSE, updated_at = NOW()
+       WHERE id = $2 AND free_domain IS NOT NULL AND free_domain <> $1
+         AND free_domain_change_allowed = TRUE
        RETURNING id`,
       [domain, id]
     );

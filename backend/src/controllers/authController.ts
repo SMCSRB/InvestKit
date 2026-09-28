@@ -20,8 +20,8 @@ import {
   consumeBackupCode,
 } from '../utils/totp';
 
-// 'real_estate' est choisissable dès maintenant ; le domaine arrive à l'étape 3.
-const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate'];
+// 'real_estate' sera ajouté quand le domaine Immobilier existera (étape 3).
+const VALID_FREE_DOMAINS = Object.keys(DOMAINS);
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -390,6 +390,7 @@ export const authController = {
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
           hasProAccess: hasProAccess(user),
+          canChangeFreeDomain: !!user.free_domain && user.free_domain_change_allowed === true,
           enable2FA: user.enable_2fa,
           referralCode: user.referral_code,
         },
@@ -421,7 +422,10 @@ export const authController = {
         return;
       }
 
-      const saved = await userRepository.setFreeDomainOnce(req.user.userId, domain);
+      // 1er choix, sinon l'unique changement accordé aux comptes existants.
+      const saved =
+        (await userRepository.setFreeDomainOnce(req.user.userId, domain)) ||
+        (await userRepository.changeFreeDomainOnce(req.user.userId, domain));
       if (!saved) {
         res.status(409).json({ error: 'Domaine gratuit déjà choisi (non modifiable)' });
         return;

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
   subscription_tier VARCHAR(20) NOT NULL DEFAULT 'free', -- free, pro
   free_domain VARCHAR(50), -- domaine débloqué gratuitement (Dashboard Pro limité à 1 domaine en free)
   stripe_customer_id VARCHAR(255) UNIQUE,
+  free_domain_change_allowed BOOLEAN NOT NULL DEFAULT FALSE, -- 1 changement de domaine gratuit accordé aux comptes existants
   pro_override BOOLEAN NOT NULL DEFAULT FALSE, -- passage manuel en Pro (testeurs) : indépendant de Stripe
   verified BOOLEAN DEFAULT FALSE,
   verification_code VARCHAR(10),
@@ -223,6 +224,8 @@ CREATE TABLE IF NOT EXISTS investcoins_transactions (
   amount INT NOT NULL, -- positif = gain, négatif = dépense
   reason VARCHAR(100) NOT NULL, -- quiz, streak, checklist, level_up, referral, first_simulation, daily_reward, trade...
   metadata JSONB,
+  domain VARCHAR(50), -- stocks, crypto, real_estate... ; NULL = hors domaine
+  nature VARCHAR(12) NOT NULL CHECK (nature IN ('creation', 'destruction', 'exchange')), -- création / destruction de pièces, ou simple échange
   created_at TIMESTAMP DEFAULT NOW()
 );
 

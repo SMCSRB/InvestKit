@@ -15,12 +15,28 @@ export class InsufficientFundsError extends Error {
   }
 }
 
+export type LedgerNature = 'creation' | 'destruction' | 'exchange';
+
+// Chaque écriture porte son domaine et sa nature (voir migration 013) :
+// - achat/vente = simple échange entre le solde et un actif ;
+// - tout autre crédit = pièces CRÉÉES par la plateforme ;
+// - tout autre débit = pièces DÉTRUITES (frais, taxes, intérêts...).
+// Le domaine vient de metadata.domain ; absent = hors domaine (NULL).
+const classify = (
+  amount: number,
+  reason: string,
+  metadata?: { domain?: unknown }
+): { domain: string | null; nature: LedgerNature } => ({
+  domain: typeof metadata?.domain === 'string' ? metadata.domain : null,
+  nature: reason.startsWith('trade_') ? 'exchange' : amount > 0 ? 'creation' : 'destruction',
+});
+
 const applyWith = async (
   db: Queryable,
   userId: string,
   amount: number,
   reason: string,
-  metadata?: object
+  metadata?: { domain?: unknown; [key: string]: unknown }
 ): Promise<number> => {
   // Le ledger est en pièces ENTIÈRES. Un montant décimal serait arrondi en
   // silence par la base (un achat à 0,4 🪙 deviendrait gratuit) : on refuse
@@ -56,10 +72,11 @@ const applyWith = async (
     balance = result.rows[0].balance;
   }
 
+  const { domain, nature } = classify(amount, reason, metadata);
   await db.query(
-    `INSERT INTO investcoins_transactions (user_id, amount, reason, metadata)
-     VALUES ($1, $2, $3, $4)`,
-    [userId, amount, reason, metadata ? JSON.stringify(metadata) : null]
+    `INSERT INTO investcoins_transactions (user_id, amount, reason, metadata, domain, nature)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [userId, amount, reason, metadata ? JSON.stringify(metadata) : null, domain, nature]
   );
 
   return balance;
@@ -79,7 +96,7 @@ export const investcoinsRepository = {
     userId: string,
     amount: number,
     reason: string,
-    metadata?: object,
+    metadata?: { domain?: unknown; [key: string]: unknown },
     db?: Queryable
   ): Promise<number> {
     if (db) return applyWith(db, userId, amount, reason, metadata);

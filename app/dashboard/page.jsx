@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const [tradingLoading, setTradingLoading] = useState(false);
   const [tradingError, setTradingError] = useState('');
   const [tradingLoaded, setTradingLoaded] = useState(false);
+  const [showDomainChooser, setShowDomainChooser] = useState(false);
   const [tradingBoard, setTradingBoard] = useState(null);
   const [tradingBoardYear, setTradingBoardYear] = useState(null); // null = mon année simulée
   const [profilePhoto, setProfilePhoto] = useState(null);
@@ -506,6 +507,7 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setUser((prev) => ({ ...prev, freeDomain: domain }));
+      setShowDomainChooser(false);
       await loadTradingData();
     } catch (err) {
       setTradingError(err.message);
@@ -3553,25 +3555,35 @@ export default function DashboardPage() {
                 )}
 
                 {/* Accès : domaine gratuit / Pro (vérifié côté serveur) */}
-                {tradingPortfolio?.access?.reason === 'FREE_DOMAIN_NOT_CHOSEN' && (
+                {(tradingPortfolio?.access?.reason === 'FREE_DOMAIN_NOT_CHOSEN' || showDomainChooser) && (
                   <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 8px 0' }}>Choisis ton domaine gratuit</h3>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 8px 0' }}>{showDomainChooser ? 'Change ton domaine gratuit (une seule fois)' : 'Choisis ton domaine gratuit'}</h3>
                     <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: '0 0 14px 0' }}>
-                      Le plan gratuit débloque l'achat dans UN domaine. Ce choix est définitif (le plan Pro débloque tous les domaines). Tu peux vendre partout à tout moment.
+                      Le plan gratuit débloque l'achat dans UN domaine. {showDomainChooser ? 'Ce changement est le dernier : ensuite le choix sera définitif.' : 'Ce choix est définitif (le plan Pro débloque tous les domaines).'} (Le plan Pro débloque tous les domaines.) Tu peux vendre partout à tout moment.
                     </p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {[...tradingDomains.map((d) => ({ id: d.id, label: d.label })), { id: 'real_estate', label: 'Immobilier' }].map((d) => (
-                        <button key={d.id} onClick={() => chooseFreeDomain(d.id)} disabled={tradingLoading}
-                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-                          {d.label}
+                      {tradingDomains.map((d) => (
+                        <button key={d.id} onClick={() => chooseFreeDomain(d.id)} disabled={tradingLoading || d.id === tradingPortfolio?.freeDomain}
+                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: d.id === tradingPortfolio?.freeDomain ? 0.4 : 1 }}>
+                          {d.label}{d.id === tradingPortfolio?.freeDomain ? ' (actuel)' : ''}
                         </button>
                       ))}
+                      <button disabled title="Bientôt disponible"
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '13px', cursor: 'not-allowed' }}>
+                        🏠 Immobilier — Bientôt disponible
+                      </button>
+                      {showDomainChooser && (
+                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
+                      )}
                     </div>
                   </div>
                 )}
                 {tradingPortfolio?.access?.reason === 'DOMAIN_LOCKED' && (
                   <div style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: '#fbbf24', fontSize: '13px' }}>
                     🔒 Ce domaine n'est pas ton domaine gratuit : l'achat nécessite le plan Pro. Tu peux toujours vendre tes positions.
+                    {tradingPortfolio?.canChangeFreeDomain && (
+                      <button onClick={() => setShowDomainChooser(true)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Changer mon domaine gratuit (1 fois)</button>
+                    )}
                   </div>
                 )}
 
