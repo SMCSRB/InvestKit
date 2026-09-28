@@ -115,6 +115,13 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [referralCode, setReferralCode] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) setReferralCode(ref);
+  }, []);
   const [emailAvailable, setEmailAvailable] = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -270,7 +277,7 @@ export default function SignupPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken }),
+        body: JSON.stringify({ email, password, captchaToken, referralCode }),
       });
 
       const data = await response.json();
@@ -610,6 +617,20 @@ export default function SignupPage() {
 
         {/* Form */}
         <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {referralCode && (
+            <div style={{
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: 'rgba(245, 158, 11, 0.12)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              color: '#f59e0b',
+              fontSize: '13px',
+              fontWeight: '600',
+            }}>
+              🎁 Invité(e) par un ami — code {referralCode}
+            </div>
+          )}
+
           {/* Email Field */}
           <div>
             <label style={{

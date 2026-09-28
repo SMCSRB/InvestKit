@@ -9306,6 +9306,57 @@ export default function DashboardPage() {
                       </div>
                     </>
                   )}
+
+                  {userData?.referralCode && (
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${currentTheme.border}`,
+                      background: currentTheme.bg,
+                    }}>
+                      <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
+                        🎁 Parraine tes amis
+                      </p>
+                      <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: '0 0 12px 0' }}>
+                        Tu reçois 100 InvestCoins pour chaque ami qui s'inscrit avec ton code et vérifie son email.
+                      </p>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <code style={{
+                          flex: 1,
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          background: currentTheme.cardBg,
+                          border: `1px solid ${currentTheme.border}`,
+                          color: currentTheme.accent,
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          letterSpacing: '1px',
+                        }}>
+                          {userData.referralCode}
+                        </code>
+                        <button
+                          onClick={() => {
+                            const link = `${window.location.origin}/signup?ref=${userData.referralCode}`;
+                            navigator.clipboard?.writeText(link).catch(() => {});
+                          }}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                            color: '#fff',
+                            fontWeight: '600',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Copier le lien
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

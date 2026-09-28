@@ -15,6 +15,8 @@ export interface User {
   totp_backup_codes?: string[];
   daily_streak: number;
   last_daily_claim_at?: Date;
+  referral_code?: string;
+  referred_by_user_id?: string;
   verified: boolean;
   verification_code?: string;
   verification_code_expires_at?: Date;
@@ -55,10 +57,12 @@ export const userRepository = {
     last_name: string;
     verification_code: string;
     verification_code_expires_at?: Date;
+    referral_code: string;
+    referred_by_user_id?: string;
   }): Promise<User> {
     const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, verification_code, verification_code_expires_at, verified)
-       VALUES ($1, $2, $3, $4, $5, $6, FALSE)
+      `INSERT INTO users (email, password_hash, first_name, last_name, verification_code, verification_code_expires_at, referral_code, referred_by_user_id, verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
        RETURNING *`,
       [
         data.email,
@@ -67,9 +71,16 @@ export const userRepository = {
         data.last_name,
         data.verification_code,
         data.verification_code_expires_at,
+        data.referral_code,
+        data.referred_by_user_id || null,
       ]
     );
     return result.rows[0];
+  },
+
+  async findByReferralCode(code: string): Promise<User | null> {
+    const result = await query('SELECT * FROM users WHERE referral_code = $1', [code]);
+    return result.rows[0] || null;
   },
 
   async verifyEmail(id: string): Promise<void> {

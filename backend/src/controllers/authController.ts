@@ -7,7 +7,8 @@ import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail } from '../utils/email';
 import { verifyCaptcha } from '../utils/captcha';
-import { grantStartingCapital } from './economyController';
+import { grantStartingCapital, rewardReferrer } from './economyController';
+import { generateUniqueReferralCode } from '../utils/referral';
 import {
   generateTotpSecret,
   generateQrCodeDataUrl,
@@ -20,7 +21,7 @@ import {
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, password, captchaToken } = req.body;
+      const { email, password, captchaToken, referralCode } = req.body;
 
       // Validation
       if (!email || !password) {
@@ -52,6 +53,15 @@ export const authController = {
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
+      // Programme de parrainage : chaque compte reçoit son propre code à
+      // partager, et peut avoir été parrainé par le code d'un autre.
+      const newReferralCode = await generateUniqueReferralCode();
+      let referredByUserId: string | undefined;
+      if (referralCode) {
+        const referrer = await userRepository.findByReferralCode(referralCode);
+        if (referrer) referredByUserId = referrer.id;
+      }
+
       // Créer l'utilisateur en BD
       const newUser = await userRepository.create({
         email,
@@ -60,6 +70,8 @@ export const authController = {
         last_name: 'Unknown',
         verification_code: verificationCode,
         verification_code_expires_at: verificationCodeExpiresAt,
+        referral_code: newReferralCode,
+        referred_by_user_id: referredByUserId,
       });
 
       // Envoyer email de vérification
@@ -116,6 +128,17 @@ export const authController = {
         await grantStartingCapital(user.id);
       } catch (grantError) {
         console.error('Grant starting capital error:', grantError);
+      }
+
+      // Programme de parrainage : le parrain touche son bonus quand son
+      // filleul vérifie réellement son email (pas juste à l'inscription,
+      // pour éviter de récompenser des comptes jamais activés).
+      if (user.referred_by_user_id) {
+        try {
+          await rewardReferrer(user.referred_by_user_id, user.id);
+        } catch (referralError) {
+          console.error('Reward referrer error:', referralError);
+        }
       }
 
       res.json({
@@ -375,6 +398,7 @@ export const authController = {
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
           enable2FA: user.enable_2fa,
+          referralCode: user.referral_code,
         },
       });
     } catch (error) {

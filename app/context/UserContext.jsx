@@ -69,6 +69,7 @@ export function UserProvider({ children }) {
             subscriptionTier: data.user.subscriptionTier,
             freeDomain: data.user.freeDomain,
             enable2FA: data.user.enable2FA,
+            referralCode: data.user.referralCode,
           }));
         }
       })

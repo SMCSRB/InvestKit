@@ -7,6 +7,7 @@ const STARTING_CAPITAL = 500;
 const DAILY_BASE_REWARD = 50;
 const DAILY_STREAK_BONUS = 10; // par jour de streak, plafonné
 const DAILY_STREAK_CAP = 30;
+const REFERRAL_BONUS = 100;
 
 const dayKey = (date: Date): string => date.toISOString().slice(0, 10);
 
@@ -19,6 +20,17 @@ const isYesterday = (last: Date, now: Date): boolean => {
 // vérification de l'email (voir authController.verifyEmail).
 export const grantStartingCapital = async (userId: string): Promise<void> => {
   await investcoinsRepository.applyTransaction(userId, STARTING_CAPITAL, 'starting_capital');
+};
+
+// Récompense le parrain quand son filleul vérifie son email. Note : comme
+// tout programme de parrainage sans vérification d'identité forte, un
+// utilisateur pourrait créer plusieurs comptes avec son propre code pour
+// farmer le bonus - accepté pour l'instant (Phase 2B), à durcir plus tard
+// (Phase 6 sécurité) si l'abus devient réel.
+export const rewardReferrer = async (referrerUserId: string, referredUserId: string): Promise<void> => {
+  await investcoinsRepository.applyTransaction(referrerUserId, REFERRAL_BONUS, 'referral_bonus', {
+    referredUserId,
+  });
 };
 
 export const economyController = {

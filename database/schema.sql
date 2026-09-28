@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS users (
   totp_backup_codes JSONB,
   daily_streak INT NOT NULL DEFAULT 0,
   last_daily_claim_at TIMESTAMP,
+  referral_code VARCHAR(20) UNIQUE,
+  referred_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   last_login_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
@@ -45,6 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_users_verification_code ON users(verification_cod
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_stripe_customer_id ON users(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);
 
 -- ============================================
 -- 📊 INVESTOR PROFILES TABLE
