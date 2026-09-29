@@ -48,6 +48,10 @@ export interface MonthlyInput {
   carryOverIn?: AmountPair;            // retard du mois précédent encaissé ce mois-ci
   arrearsRecovered?: AmountPair;       // impayé récupéré (dépôt de garantie, assurance loyers impayés, procédure)
   vacancyMonthsSoFar?: number;         // pour l'explication : rang du mois vide (1 = premier mois de vacance)
+  // Flux ponctuels (événements) : dépôt de garantie, sortie du locataire, travaux imprévus.
+  oneOff?: { depositReceived?: number; depositRefunded?: number; repairCosts?: number; reletFees?: number; unexpectedWorks?: number };
+  // Événements sans effet direct sur la trésorerie du mois (préavis donné, congé, départ...) : simplement expliqués.
+  notes?: { code: ExplanationCode; message: string }[];
 }
 
 export interface MonthlyLines {
@@ -60,13 +64,20 @@ export interface MonthlyLines {
   loanInterest: number;    // part intérêts de la mensualité
   loanPrincipal: number;   // capital remboursé (enrichissement : il augmente tes fonds propres)
   loanInsurance: number;   // part assurance
+  depositReceived: number;   // dépôt de garantie encaissé (à restituer plus tard)
+  depositRefunded: number;   // dépôt restitué au locataire (après retenues)
+  repairCosts: number;       // réparations après le départ du locataire
+  reletFees: number;         // frais de remise en location (état des lieux, diagnostics, annonce)
+  unexpectedWorks: number;   // travaux imprévus (panne, fuite...)
   rentTax: number;
   netCashFlow: number;
 }
 
 export type ExplanationCode =
   | 'INDEXATION' | 'INDEXATION_FROZEN' | 'VACANCY' | 'LATE_PAYMENT' | 'ARREARS'
-  | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NOT_LISTED' | 'PENDING_WORKS' | 'NORMAL';
+  | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NOT_LISTED' | 'PENDING_WORKS' | 'NORMAL'
+  | 'DEPOSIT_RECEIVED' | 'DEPOSIT_REFUNDED' | 'REPAIRS' | 'RELET_FEES' | 'UNEXPECTED_WORKS'
+  | 'TENANT_NOTICE' | 'TENANT_LEFT' | 'LANDLORD_NOTICE' | 'DEFAULT_ENDED' | 'EVENT';
 
 export interface Explanation {
   code: ExplanationCode;
@@ -94,6 +105,7 @@ interface Scenario {
   status: TenantStatus;
   carry?: AmountPair;
   recovered?: AmountPair;
+  oneOff?: boolean;
 }
 
 const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carryOut: AmountPair; unpaid: AmountPair } => {
@@ -124,12 +136,18 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
     loanInterest: round2(i.loanBreakdown?.interest ?? 0),
     loanPrincipal: round2(i.loanBreakdown?.principal ?? 0),
     loanInsurance: round2(i.loanBreakdown?.insurance ?? 0),
+    depositReceived: s.oneOff ? round2(i.oneOff?.depositReceived ?? 0) : 0,
+    depositRefunded: s.oneOff ? round2(i.oneOff?.depositRefunded ?? 0) : 0,
+    repairCosts: s.oneOff ? round2(i.oneOff?.repairCosts ?? 0) : 0,
+    reletFees: s.oneOff ? round2(i.oneOff?.reletFees ?? 0) : 0,
+    unexpectedWorks: s.oneOff ? round2(i.oneOff?.unexpectedWorks ?? 0) : 0,
     rentTax: tax,
     netCashFlow: 0,
   };
   lines.netCashFlow = round2(
     lines.rentCollected + lines.recoverableChargesCollected - lines.recoverableChargesPaid -
-    lines.nonRecoverableCharges - lines.loanPayment - lines.rentTax
+    lines.nonRecoverableCharges - lines.loanPayment - lines.rentTax +
+    lines.depositReceived - lines.depositRefunded - lines.repairCosts - lines.reletFees - lines.unexpectedWorks
   );
   return { lines, carryOut, unpaid };
 };
@@ -157,6 +175,7 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   const s2 = computeLines(input, { rent: input.rent, status: input.status });
   const s3 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn });
   const s4 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn, recovered: input.arrearsRecovered });
+  const s5 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn, recovered: input.arrearsRecovered, oneOff: true });
 
   const explanations: Explanation[] = [];
   const impact = (a: { lines: MonthlyLines }, b: { lines: MonthlyLines }): number => round2(b.lines.netCashFlow - a.lines.netCashFlow);
@@ -216,6 +235,21 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
       cashFlowImpact: impact(s3, s4),
     });
   }
+  const o = input.oneOff;
+  const pos = (v: number | undefined) => round2(v ?? 0);
+  if (pos(o?.depositReceived) > 0) explanations.push({ code: 'DEPOSIT_RECEIVED', cashFlowImpact: pos(o?.depositReceived),
+    message: `Dépôt de garantie encaissé : ${eur(pos(o?.depositReceived))}. Cet argent n'est pas un revenu : il devra être restitué au départ du locataire (moins les retenues justifiées).` });
+  if (pos(o?.depositRefunded) > 0) explanations.push({ code: 'DEPOSIT_REFUNDED', cashFlowImpact: -pos(o?.depositRefunded),
+    message: `Dépôt de garantie restitué au locataire : ${eur(pos(o?.depositRefunded))}.` });
+  if (pos(o?.repairCosts) > 0) explanations.push({ code: 'REPAIRS', cashFlowImpact: -pos(o?.repairCosts),
+    message: `Réparations après le départ du locataire : ${eur(pos(o?.repairCosts))} (la part couverte par le dépôt de garantie a été retenue sur sa restitution).` });
+  if (pos(o?.reletFees) > 0) explanations.push({ code: 'RELET_FEES', cashFlowImpact: -pos(o?.reletFees),
+    message: `Frais de remise en location (état des lieux, diagnostics, annonce) : ${eur(pos(o?.reletFees))}.` });
+  if (pos(o?.unexpectedWorks) > 0) explanations.push({ code: 'UNEXPECTED_WORKS', cashFlowImpact: -pos(o?.unexpectedWorks),
+    message: `Travaux imprévus : ${eur(pos(o?.unexpectedWorks))}.` });
+  for (const n of input.notes ?? []) explanations.push({ code: n.code, message: n.message, cashFlowImpact: 0 });
+  void s5;
+
   if (explanations.length === 0) {
     explanations.push({ code: 'NORMAL', message: 'Mois normal : loyer et charges encaissés à temps, aucune variation.', cashFlowImpact: 0 });
   }
@@ -223,10 +257,10 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   return {
     year: input.year,
     month: input.month,
-    lines: s4.lines,
+    lines: s5.lines,
     normalMonthCashFlow: s0.lines.netCashFlow,
-    carryOverToNextMonth: s4.carryOut,
-    unpaidAdded: s4.unpaid,
+    carryOverToNextMonth: s5.carryOut,
+    unpaidAdded: s5.unpaid,
     explanations,
   };
 };

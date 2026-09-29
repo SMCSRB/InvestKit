@@ -26,28 +26,28 @@ interface CityProfile extends City {
 }
 
 const CITIES: CityProfile[] = [
-  { id: 'marvelle', name: 'Marvelle', region: 'Grande Couronne', tier: 'metropolis', fictive: true,
+  { id: 'marvelle', tenseZone: true, name: 'Marvelle', region: 'Grande Couronne', tier: 'metropolis', fictive: true,
     description: 'Métropole dynamique, prix élevés, forte demande locative.',
     basePricePerSqm: 4200, baseRentPerSqm: 15.5, trendOffsetPct: 0.8, volatilityPct: 2.0, rentalTension: 0.85, taxPerSqm: 21 },
-  { id: 'valcourt', name: 'Valcourt', region: 'Vallée du Nord', tier: 'large', fictive: true,
+  { id: 'valcourt', tenseZone: true, name: 'Valcourt', region: 'Vallée du Nord', tier: 'large', fictive: true,
     description: 'Grande ville régionale, marché profond et stable.',
     basePricePerSqm: 2600, baseRentPerSqm: 11, trendOffsetPct: 0.3, volatilityPct: 1.8, rentalTension: 0.65, taxPerSqm: 17 },
-  { id: 'portelune', name: 'Portelune', region: 'Côte Ouest', tier: 'large', fictive: true,
+  { id: 'portelune', tenseZone: true, name: 'Portelune', region: 'Côte Ouest', tier: 'large', fictive: true,
     description: 'Port touristique : prix soutenus, vacance plus élevée hors saison.',
     basePricePerSqm: 3000, baseRentPerSqm: 12.5, trendOffsetPct: 0.6, volatilityPct: 3.0, rentalTension: 0.35, taxPerSqm: 16 },
-  { id: 'saint-aubrion', name: 'Saint-Aubrion', region: 'Plateaux du Centre', tier: 'medium', fictive: true,
+  { id: 'saint-aubrion', tenseZone: false, name: 'Saint-Aubrion', region: 'Plateaux du Centre', tier: 'medium', fictive: true,
     description: 'Ville moyenne tranquille, rendements corrects.',
     basePricePerSqm: 1700, baseRentPerSqm: 8.5, trendOffsetPct: 0, volatilityPct: 1.5, rentalTension: 0.45, taxPerSqm: 15 },
-  { id: 'brumevalle', name: 'Brumevalle', region: 'Bassin Minier', tier: 'medium', fictive: true,
+  { id: 'brumevalle', tenseZone: false, name: 'Brumevalle', region: 'Bassin Minier', tier: 'medium', fictive: true,
     description: 'Ancienne ville industrielle : prix bas, rendement brut élevé mais risque de vacance.',
     basePricePerSqm: 1100, baseRentPerSqm: 6.5, trendOffsetPct: -0.7, volatilityPct: 2.0, rentalTension: 0.2, taxPerSqm: 14 },
-  { id: 'roquemont', name: 'Roquemont', region: 'Sud Universitaire', tier: 'medium', fictive: true,
+  { id: 'roquemont', tenseZone: false, name: 'Roquemont', region: 'Sud Universitaire', tier: 'medium', fictive: true,
     description: 'Ville étudiante : petites surfaces très demandées, vacance faible.',
     basePricePerSqm: 2100, baseRentPerSqm: 12, trendOffsetPct: 0.2, volatilityPct: 1.5, rentalTension: 0.8, taxPerSqm: 15 },
-  { id: 'ternelle', name: 'Ternelle', region: 'Campagne Est', tier: 'small', fictive: true,
+  { id: 'ternelle', tenseZone: false, name: 'Ternelle', region: 'Campagne Est', tier: 'small', fictive: true,
     description: 'Bourg rural : tickets d\'entrée très bas, marché étroit.',
     basePricePerSqm: 900, baseRentPerSqm: 5.5, trendOffsetPct: -0.3, volatilityPct: 1.2, rentalTension: 0.25, taxPerSqm: 12 },
-  { id: 'clairval', name: 'Clairval', region: 'Grande Couronne', tier: 'medium', fictive: true,
+  { id: 'clairval', tenseZone: false, name: 'Clairval', region: 'Grande Couronne', tier: 'medium', fictive: true,
     description: 'Périurbain résidentiel : familles, biens plus grands.',
     basePricePerSqm: 2000, baseRentPerSqm: 8.8, trendOffsetPct: 0.4, volatilityPct: 1.4, rentalTension: 0.6, taxPerSqm: 16 },
 ];
@@ -270,12 +270,12 @@ export const fictiveDataSource: RealEstateDataSource = {
   maxYear: MAX_YEAR,
 
   async listCities(): Promise<City[]> {
-    return CITIES.map(({ id, name, region, tier, description, fictive }) => ({ id, name, region, tier: tier as CityTier, description, fictive }));
+    return CITIES.map(({ id, name, region, tier, description, fictive, tenseZone }) => ({ id, name, region, tier: tier as CityTier, description, fictive, tenseZone }));
   },
 
   async getCity(cityId: string): Promise<City | null> {
     const c = CITIES.find((x) => x.id === cityId);
-    return c ? { id: c.id, name: c.name, region: c.region, tier: c.tier, description: c.description, fictive: c.fictive } : null;
+    return c ? { id: c.id, name: c.name, region: c.region, tier: c.tier, description: c.description, fictive: c.fictive, tenseZone: c.tenseZone } : null;
   },
 
   async listNeighborhoods(cityId: string): Promise<Neighborhood[]> {

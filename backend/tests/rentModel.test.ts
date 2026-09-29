@@ -241,7 +241,8 @@ describe('récapitulatif mensuel', () => {
     const s = buildMonthlyStatement(input);
     expect(s.lines).toEqual({
       rentDue: 600, rentCollected: 600, recoverableChargesPaid: 40, recoverableChargesCollected: 40,
-      nonRecoverableCharges: 100, loanPayment: 400, loanInterest: 0, loanPrincipal: 0, loanInsurance: 0, rentTax: 180,
+      nonRecoverableCharges: 100, loanPayment: 400, loanInterest: 0, loanPrincipal: 0, loanInsurance: 0,
+      depositReceived: 0, depositRefunded: 0, repairCosts: 0, reletFees: 0, unexpectedWorks: 0, rentTax: 180,
       netCashFlow: -80, // 600 + 40 − 40 − 100 − 400 − 180
     });
     expect(s.explanations.map((e) => e.code)).toEqual(['NORMAL']);

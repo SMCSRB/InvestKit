@@ -5,6 +5,7 @@ import { realEstateService as svc, RealEstateError } from '../src/services/realE
 import { realEstateLifeService as life } from '../src/services/realEstateLifeService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { buildSchedule, reviseRent } from '../src/engine/immo';
+import { EVENT_PARAMS } from '../src/config/immoRules';
 
 const rejects = async (p: Promise<unknown>) => { try { await p; } catch (e) { return e as RealEstateError; } throw new Error('aurait dû échouer'); };
 const newPlayer = async (balance = 300000, profile = 'executive') => {
@@ -21,7 +22,13 @@ const buy = async (uid: string, l: any, coins = 1500, months = 240) => {
 const stmts = async (propId: string) => (await query('SELECT * FROM re_statements WHERE property_id = $1 ORDER BY year, month', [propId])).rows;
 
 describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, valorisation)', () => {
-  beforeAll(setupDb);
+  // Ces tests vérifient la MÉCANIQUE (loyers, prêt, conversion en pièces…) : on coupe les événements
+  // aléatoires (départs, retards, impayés, travaux imprévus), testés à part dans realEstateEvents.test.ts.
+  beforeAll(async () => {
+    await setupDb();
+    for (const t of Object.values(EVENT_PARAMS.tenants)) { t.lateProbPerMonth = 0; t.defaultProbPerMonth = 0; t.tenureMonths = 1e9; }
+    for (const k of Object.keys(EVENT_PARAMS.unexpectedWorks.probPerMonthByCondition)) (EVENT_PARAMS.unexpectedWorks.probPerMonthByCondition as any)[k] = 0;
+  });
   afterAll(teardownDb);
 
   describe('mise en location', () => {

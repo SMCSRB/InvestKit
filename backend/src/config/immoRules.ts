@@ -1,4 +1,4 @@
-import type { BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType, EnergyClass } from '../engine/immo';
+import type { EventParams, BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType, EnergyClass } from '../engine/immo';
 
 // Règles bancaires. Ce sont des règles de JEU, ajustables : elles ne prétendent
 // pas refléter une banque précise.
@@ -99,3 +99,37 @@ export const EUROS_PER_COIN = 20;
 // diagnostics de performance énergétique. Ces valeurs seront ajoutées ici, avec
 // leur source et leur date de vérification, aux étapes 3 et 6.
 // ─────────────────────────────────────────────────────────────────────────
+
+// ── Événements aléatoires (réglages de JEU, voir engine/immo/events.ts) ────
+// Les DÉLAIS et règles juridiques (préavis 3 mois / 1 mois, dépôt de garantie 1 mois,
+// bail de 3 ans, congé du propriétaire 6 mois avant l'échéance) viennent du droit du
+// bail d'habitation (extraits de presse/courtage, à reconfirmer sur le texte officiel).
+// Les PROBABILITÉS, durées d'occupation, montants de dégradations et de travaux sont
+// des choix de jeu, pas des statistiques.
+export const EVENT_PARAMS: EventParams = {
+  tenants: {
+    student: { tenureMonths: 18, lateProbPerMonth: 0.06, defaultProbPerMonth: 0.010, personalNoticeProb: 0.10 },
+    worker: { tenureMonths: 36, lateProbPerMonth: 0.03, defaultProbPerMonth: 0.005, personalNoticeProb: 0.20 },
+    family: { tenureMonths: 60, lateProbPerMonth: 0.02, defaultProbPerMonth: 0.004, personalNoticeProb: 0.10 },
+  },
+  tenantMixByUnit: {
+    studio: { student: 0.65, worker: 0.3, family: 0.05 },
+    apartment: { student: 0.2, worker: 0.5, family: 0.3 },
+    house: { student: 0.02, worker: 0.13, family: 0.85 },
+  },
+  standardNoticeMonths: 3,
+  reducedNoticeMonths: 1,
+  depositMonths: 1,
+  leaseTermMonths: 36,
+  landlordNoticeMinMonths: 6,
+  defaultEpisode: { resolveProbPerMonth: 0.25, catchUpShare: 0.5, maxMonths: 3 },
+  damage: { prob: 0.3, minRentMultiple: 0.2, maxRentMultiple: 1.5 },
+  reletFee: { fixed: 150, rentShare: 0.5 },
+  unexpectedWorks: {
+    probPerMonthByCondition: { good: 0.006, to_refresh: 0.01, to_renovate: 0.015 },
+    frMultiplier: 1.5,
+    newBuildMultiplier: 0.3,
+    minPerSqm: 25,
+    maxPerSqm: 120,
+  },
+};

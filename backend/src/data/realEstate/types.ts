@@ -16,6 +16,7 @@ export interface City {
   tier: CityTier;
   description: string;
   fictive: boolean; // true : ville imaginaire, aucune donnée réelle
+  tenseZone: boolean; // « zone tendue » au sens de la loi (préavis du locataire réduit à 1 mois) ; liste officielle avec de vraies données
 }
 
 // Quartier : nuance le marché de la ville (centre plus cher et plus tendu,
