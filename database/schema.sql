@@ -546,3 +546,9 @@ CREATE TABLE IF NOT EXISTS re_sales (
   UNIQUE (property_id, kind)
 );
 CREATE INDEX IF NOT EXISTS idx_re_sales_game ON re_sales(game_id, year, month);
+
+-- 021 : assurance loyers impayés (GLI), ajouts uniquement
+ALTER TABLE re_properties ADD COLUMN IF NOT EXISTS gli_active BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE re_properties ADD COLUMN IF NOT EXISTS gli_since_total INT;
+ALTER TABLE re_properties ADD COLUMN IF NOT EXISTS gli_episode_covered BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE re_properties ADD COLUMN IF NOT EXISTS gli_reimbursed_eur NUMERIC(14,2) NOT NULL DEFAULT 0;

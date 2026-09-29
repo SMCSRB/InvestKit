@@ -259,10 +259,42 @@ function RenovationPanel({ property, onDone, notify }) {
   );
 }
 
+// ── Assurance loyers impayés (GLI)
+function GliPanel({ property, onDone, notify }) {
+  const g = property.gli;
+  const [busy, setBusy] = useState(false);
+  if (!g) return null;
+  const toggle = async () => {
+    setBusy(true);
+    try { const r = await call(`/properties/${property.id}/gli`, 'POST', { active: !g.active }); notify(r.message); await onDone(); }
+    catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+  return (
+    <div style={{ ...card, marginTop: 8, background: 'rgba(30,41,59,0.6)' }}>
+      <strong style={{ color: '#fff' }}>Assurance loyers impayés</strong><HelpTip term="gli" />
+      {g.active ? (
+        <p style={{ fontSize: 14, margin: '8px 0' }}>
+          ✅ Assuré. Prime : environ <strong>{eur2(g.premiumMonthly)}</strong>/mois quand le bien est loué ({g.premiumPct} % du loyer charges comprises, déductible de tes impôts).
+          {g.inCarence ? <> ⏳ Délai de carence en cours<HelpTip term="carence" /> : un impayé qui commence avant sa fin ne sera pas remboursé.</> : ' Le délai de carence est passé : tu es couvert.'}
+          {' '}Remboursement dès le {g.triggerAfterUnpaidMonths}<sup>e</sup> mois d&apos;impayé, plafond {eur(g.maxCoverageEur)} (déjà remboursé : {eur(g.reimbursedEur)}).
+          {g.tenantRefused && <> ⚠️ Le locataire actuel est refusé par l&apos;assureur : tu ne paies pas de prime et tu n&apos;es pas couvert pour lui.</>}
+        </p>
+      ) : (
+        <p style={{ fontSize: 14, margin: '8px 0', color: '#cbd5e1' }}>
+          Prime estimée : <strong>{eur2(g.premiumMonthly)}</strong>/mois ({g.premiumPct} % du loyer + charges), seulement les mois où le bien est loué. Délai de carence : {g.carenceMonths} mois<HelpTip term="carence" />.
+          {g.reason && <span style={{ color: '#fbbf24' }}> {g.reason}</span>}
+        </p>
+      )}
+      <button style={btn(!g.active)} disabled={busy || (!g.active && !g.canSubscribe)} onClick={toggle}>{g.active ? 'Résilier l\'assurance' : 'Souscrire l\'assurance'}</button>
+    </div>
+  );
+}
+
 // ── Portefeuille
 function Portfolio({ data, summary, refresh, notify }) {
   const [busy, setBusy] = useState(false);
-  const [panel, setPanel] = useState(null); // { id, kind: 'sale' | 'reno' }
+  const [panel, setPanel] = useState(null); // { id, kind: 'sale' | 'reno' | 'gli' }
   const toggle = (id, kind) => setPanel(panel && panel.id === id && panel.kind === kind ? null : { id, kind });
   const act = async (fn, okMsg) => {
     setBusy(true);
@@ -303,10 +335,12 @@ function Portfolio({ data, summary, refresh, notify }) {
               </>}
               {p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => toggle(p.id, 'sale')}>{p.saleSearch ? 'Modifier le prix de vente' : 'Vendre'}</button>}
               {p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => toggle(p.id, 'reno')}>Rénover (énergie)</button>}
+              {p.status !== 'sold' && p.gli && <button style={btn(false)} disabled={busy} onClick={() => toggle(p.id, 'gli')}>{p.gli.active ? '🛡️ Assuré' : '🛡️ Assurance loyers'}</button>}
               {data.missedMonths >= 3 && <button style={btn(false)} disabled={busy} onClick={() => act(() => call('/distress/sell', 'POST', { propertyId: p.id }), 'Vente à l\'amiable réalisée')}>Vendre à l&apos;amiable (−12 %)</button>}
             </div>
             {p.saleSearch && <div style={{ fontSize: 13, color: '#93c5fd', marginTop: 8 }}>🏷️ En vente à {eur(p.saleSearch.askingPrice)} depuis {p.saleSearch.monthsSoFar} mois (chance de vendre : {p.saleSearch.monthlyBuyerProbabilityPct} % par mois).</div>}
             {panel?.id === p.id && panel.kind === 'sale' && <SalePanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
+            {panel?.id === p.id && panel.kind === 'gli' && <GliPanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
             {panel?.id === p.id && panel.kind === 'reno' && <RenovationPanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
           </div>
         ))}
@@ -330,6 +364,8 @@ function Summary({ summary, events }) {
           {row('Intérêts du crédit', -t.loanInterest, 'interets')}
           {row('Assurance emprunteur', -t.loanInsurance, 'assurance-emprunteur')}
           {row('Capital remboursé (t\'enrichit)', -t.loanPrincipal, 'capital-rembourse')}
+          {t.gliPremium > 0 && row('Prime d\'assurance loyers impayés', -t.gliPremium, 'gli')}
+          {t.gliReimbursed > 0 && row('Remboursement de l\'assurance', t.gliReimbursed, 'gli')}
           {row('Impôt sur les loyers', -t.rentTax, 'impot-loyers')}
           <tr style={{ borderTop: '1px solid rgba(148,163,184,0.3)', fontWeight: 800 }}><td style={{ padding: '6px 8px' }}>Résultat du mois<HelpTip term="cash-flow" /></td><td style={{ padding: '6px 8px', textAlign: 'right' }}>{eur2(t.netCashFlow)}</td></tr>
         </tbody>

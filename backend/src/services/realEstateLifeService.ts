@@ -15,7 +15,7 @@ import {
   rollUnexpectedWorks, settleDeposit, checkLandlordNotice, capRentAtRelet, rentalBannedByEnergy, TenantType, UnitType,
 } from '../engine/immo';
 import { describeSale, processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
-import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS } from '../config/immoRules';
+import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS, GLI_PARAMS, inWinterTruce } from '../config/immoRules';
 
 // ─────────────────────────────────────────────────────────────────────────
 // VIE DU BIEN : mise en location, mois qui passent, relevés, valorisation.
@@ -41,6 +41,29 @@ export { monthlyDraw };
 // Cash-flow d'un mois « normal » = net − somme des impacts des événements expliqués (dépôt, rattrapage, travaux…).
 const normalCashFlowOf = (r: { net_cash_flow: unknown; explanations: { cashFlowImpact?: number }[] | null }): number =>
   round2(Number(r.net_cash_flow) - (r.explanations ?? []).reduce((a, e) => a + Number(e.cashFlowImpact ?? 0), 0));
+
+// Informations sur l'assurance loyers impayés d'un bien (calculées côté serveur).
+const gliInfo = async (p: any, y: number, m: number, marketRent: number) => {
+  const listing = await source().getListing(p.listing_id, y);
+  const charges = listing?.recoverableChargesMonthly ?? 0;
+  const rent = p.status === 'let' ? Number(p.current_rent) : (p.asking_rent !== null ? Number(p.asking_rent) : marketRent);
+  const now = monthTotal(y, m);
+  const tenantRefused = p.status === 'let' && p.tenant_type !== null && GLI_PARAMS.ineligibleTenantTypes.includes(p.tenant_type);
+  return {
+    active: !!p.gli_active,
+    premiumMonthly: round2((rent + charges) * GLI_PARAMS.premiumPctOfRent / 100),
+    premiumPct: GLI_PARAMS.premiumPctOfRent,
+    carenceMonths: GLI_PARAMS.carenceMonths,
+    carenceEndsTotal: p.gli_active && p.gli_since_total !== null ? p.gli_since_total + GLI_PARAMS.carenceMonths : null,
+    inCarence: !!p.gli_active && p.gli_since_total !== null && now - p.gli_since_total < GLI_PARAMS.carenceMonths,
+    triggerAfterUnpaidMonths: GLI_PARAMS.triggerAfterUnpaidMonths,
+    maxCoverageEur: GLI_PARAMS.maxCoverageEur,
+    reimbursedEur: Number(p.gli_reimbursed_eur),
+    tenantRefused,
+    canSubscribe: !p.gli_active && !tenantRefused,
+    reason: tenantRefused ? 'L\'assureur refuse le dossier du locataire actuel (étudiant : revenus insuffisants pour le taux d\'effort exigé).' : null,
+  };
+};
 
 export const realEstateLifeService = {
   // Met un bien vacant en location. Le loyer demandé se règle en % du loyer de marché
@@ -196,7 +219,7 @@ export const realEstateLifeService = {
         };
       }
       items.push({
-        ...p, search, saleSearch: await describeSale(p, y, m), value, remainingLoan: debt, equity: round2(value - debt), marketRent, tension,
+        ...p, search, saleSearch: await describeSale(p, y, m), gli: await gliInfo(p, y, m, marketRent), value, remainingLoan: debt, equity: round2(value - debt), marketRent, tension,
         searching: p.search_elapsed_months !== null,
         hint: p.status === 'vacant' && p.search_elapsed_months === null
           ? (Number(p.pending_works_eur) > 0 ? 'PENDING_WORKS' : 'NOT_LISTED') : null,
@@ -207,6 +230,30 @@ export const realEstateLifeService = {
       totals: { value: round2(totalValue), debt: round2(totalDebt), equity: round2(totalValue - totalDebt), monthlyRent: round2(monthlyRent), monthlyLoanPayments: round2(monthlyLoan) },
       properties: items,
     };
+  },
+
+  // Souscrire ou résilier l'assurance loyers impayés d'un bien. Souscription : refusée si le locataire est refusé par l'assureur ;
+  // le délai de carence repart de zéro à chaque souscription. Résiliation : effective dès le prochain mois réglé.
+  async setGli(userId: string, propertyId: unknown, activeRaw: unknown) {
+    if (!uuidOk(propertyId)) throw new RealEstateError('INVALID_INPUT', 'Identifiant invalide');
+    if (typeof activeRaw !== 'boolean') throw new RealEstateError('INVALID_INPUT', 'active doit être vrai ou faux');
+    return tx(async (c) => {
+      const game = await requireGame(userId, c, true);
+      const p = (await c.query('SELECT * FROM re_properties WHERE id = $1 AND game_id = $2 FOR UPDATE', [propertyId, game.id])).rows[0];
+      if (!p || p.status === 'sold') throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
+      const now = monthTotal(game.simulated_year, game.simulated_month);
+      if (activeRaw) {
+        if (p.gli_active) throw new RealEstateError('INVALID_INPUT', 'Ce bien est déjà assuré');
+        if (p.status === 'let' && p.tenant_type !== null && GLI_PARAMS.ineligibleTenantTypes.includes(p.tenant_type)) {
+          throw new RealEstateError('INVALID_INPUT', 'L\'assureur refuse le dossier du locataire actuel (étudiant : revenus insuffisants pour le taux d\'effort exigé, en général 33 à 35 % maximum).');
+        }
+        await c.query('UPDATE re_properties SET gli_active = TRUE, gli_since_total = $2, gli_episode_covered = FALSE, gli_reimbursed_eur = 0 WHERE id = $1', [p.id, now]);
+        return { propertyId: p.id, active: true, message: `Assurance loyers impayés souscrite : prime d'environ ${GLI_PARAMS.premiumPctOfRent} % du loyer charges comprises, payée chaque mois où le logement est loué. Délai de carence : ${GLI_PARAMS.carenceMonths} mois (un impayé qui commence avant n'est pas couvert).` };
+      }
+      if (!p.gli_active) throw new RealEstateError('INVALID_INPUT', 'Ce bien n\'est pas assuré');
+      await c.query('UPDATE re_properties SET gli_active = FALSE, gli_episode_covered = FALSE WHERE id = $1', [p.id]);
+      return { propertyId: p.id, active: false, message: 'Assurance loyers impayés résiliée : plus de prime, mais plus de remboursement non plus. Une nouvelle souscription recommencera un délai de carence.' };
+    });
   },
 
   // Récapitulatif d'un mois réglé (tous biens) ou historique d'un bien.
@@ -234,7 +281,7 @@ export const realEstateLifeService = {
         principalRepaid: sum('loanPrincipal'),
         rentCollected: sum('rentCollected'), recoverableChargesPaid: sum('recoverableChargesPaid'), recoverableChargesCollected: sum('recoverableChargesCollected'),
         nonRecoverableCharges: sum('nonRecoverableCharges'), loanPayment: sum('loanPayment'),
-        loanInterest: sum('loanInterest'), loanPrincipal: sum('loanPrincipal'), loanInsurance: sum('loanInsurance'), rentTax: sum('rentTax'), netCashFlow: sum('netCashFlow'),
+        loanInterest: sum('loanInterest'), loanPrincipal: sum('loanPrincipal'), loanInsurance: sum('loanInsurance'), rentTax: sum('rentTax'), gliPremium: sum('gliPremium'), gliReimbursed: sum('gliReimbursed'), netCashFlow: sum('netCashFlow'),
       },
     };
   },
@@ -311,6 +358,10 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
     let catchUp: boolean = p.catch_up_pending;
     let llReason: string | null = p.landlord_notice_reason, llEffective: number | null = p.landlord_notice_effective_total;
     let salePlanned: boolean = p.sale_planned;
+    let gliEpisodeCovered: boolean = p.gli_episode_covered;
+    let gliReimbursedTotal = Number(p.gli_reimbursed_eur);
+    let gliPremium = 0;
+    let gliReimbursed: { rent: number; charges: number } | undefined;
     const oneOff: { depositReceived?: number; depositRefunded?: number; repairCosts?: number; reletFees?: number; unexpectedWorks?: number } = {};
     const notes: { code: any; message: string }[] = [];
     const eventLog: { kind: string; message: string; details?: object }[] = [];
@@ -355,6 +406,12 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         note('EVENT', 'tenant_moved_in', `Nouveau locataire (${{ student: 'étudiant', worker: 'actif', family: 'famille' }[tenantType]}) : bail de ${EP.leaseTermMonths / 12} ans à ${fr(currentRent)} € par mois.`, { tenantType });
       }
       const type = (tenantType ?? 'worker') as TenantType;
+      // Assurance loyers impayés : couvre ce locataire seulement si l'assureur l'accepte (VALEUR DE JEU : pas d'étudiant).
+      const gliCovering = p.gli_active && !GLI_PARAMS.ineligibleTenantTypes.includes(type);
+      if (p.gli_active && !gliCovering && leaseStart === total) {
+        note('EVENT', 'gli_not_covering', `Ton assurance loyers impayés ne couvre pas ce locataire (${{ student: 'étudiant', worker: 'actif', family: 'famille' }[type]}) : l'assureur refuse son dossier. Tu ne paies pas de prime tant qu'il occupe le logement.`, { tenantType: type });
+      }
+      if (gliCovering) gliPremium = round2((currentRent + charges) * GLI_PARAMS.premiumPctOfRent / 100);
 
       // Rattrapage d'un impayé décidé le mois précédent.
       if (catchUp) {
@@ -382,10 +439,40 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       if (status === 'defaulting') {
         defaultMonths += 1; defaultInLease += 1;
         arrRent = round2(arrRent + currentRent); arrCharges = round2(arrCharges + charges);
-        if (defaultMonths === 1) note('EVENT', 'default_started', 'Le locataire a cessé de payer. Chaque mois d\'impayé s\'ajoute à sa dette ; le dépôt de garantie couvrira une partie si il part.');
+        if (defaultMonths === 1) {
+          note('EVENT', 'default_started', 'Le locataire a cessé de payer. Chaque mois d\'impayé s\'ajoute à sa dette ; le dépôt de garantie couvrira une partie si il part.');
+          // L'assurance ne couvre un impayé que si le contrat existe depuis plus que le délai de carence.
+          gliEpisodeCovered = gliCovering && p.gli_since_total !== null && total - p.gli_since_total >= GLI_PARAMS.carenceMonths;
+          if (gliCovering && !gliEpisodeCovered) {
+            note('EVENT', 'gli_carence', `Ton assurance loyers impayés ne couvre pas cet impayé : le contrat a moins de ${GLI_PARAMS.carenceMonths} mois (délai de carence). Elle n'aurait rien remboursé.`, { carenceMonths: GLI_PARAMS.carenceMonths });
+          }
+        }
+        // Assurance : à partir du 2e mois d'impayé, remboursement de tous les impayés (loyers + charges), dans la limite du plafond.
+        if (gliEpisodeCovered && defaultMonths >= GLI_PARAMS.triggerAfterUnpaidMonths) {
+          const room = round2(Math.max(0, GLI_PARAMS.maxCoverageEur - gliReimbursedTotal));
+          const owed = round2(arrRent + arrCharges);
+          const pay = round2(Math.min(owed, room));
+          if (pay > 0) {
+            const rentPart = round2(Math.min(arrRent, pay));
+            gliReimbursed = { rent: rentPart, charges: round2(pay - rentPart) };
+            arrRent = round2(arrRent - gliReimbursed.rent); arrCharges = round2(arrCharges - gliReimbursed.charges);
+            gliReimbursedTotal = round2(gliReimbursedTotal + pay);
+            eventLog.push({ kind: 'gli_reimbursed', message: `Assurance loyers impayés : ${fr(pay)} € remboursés.`, details: { amount: pay, totalReimbursed: gliReimbursedTotal } });
+          }
+          if (pay < owed) note('EVENT', 'gli_cap', `Plafond de ton assurance atteint (${fr(GLI_PARAMS.maxCoverageEur)} €) : le reste des impayés n'est plus remboursé.`, { cap: GLI_PARAMS.maxCoverageEur });
+        }
         const out = resolveDefault(defaultMonths, draw('default_resolve'), draw('default_outcome'), EP);
-        if (out === 'catch_up') { catchUp = true; defaultMonths = 0; note('EVENT', 'default_resolving', 'Le locataire annonce régulariser : les impayés seront encaissés le mois prochain.'); }
-        else if (out === 'leaves') exit = 'default';
+        if (out === 'catch_up') { catchUp = true; defaultMonths = 0; gliEpisodeCovered = false; note('EVENT', 'default_resolving', 'Le locataire annonce régulariser : les impayés seront encaissés le mois prochain.'); }
+        else if (out === 'leaves') {
+          exit = 'default';
+          // Trêve hivernale : la procédure est aboutie mais aucune expulsion n'est possible du 1er novembre au 31 mars.
+          if (defaultMonths >= EP.defaultEpisode.maxMonths && inWinterTruce(m)) {
+            exit = null;
+            if (defaultMonths === EP.defaultEpisode.maxMonths) {
+              note('EVENT', 'winter_truce', 'Trêve hivernale (du 1er novembre au 31 mars) : la procédure est aboutie mais le locataire ne peut pas être expulsé avant le 1er avril. Il reste dans le logement sans payer : les loyers impayés continuent de s\'accumuler (sauf si une assurance les rembourse).', { month: m });
+            }
+          }
+        }
       } else if (status === 'late') {
         carryRent = currentRent; carryCharges = charges;
       }
@@ -418,7 +505,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         oneOff.depositRefunded = st.refund;
         oneOff.repairCosts = damages;
         oneOff.reletFees = reletFees(currentRent, inflation, EP);
-        const cause = { tenant_notice: 'a quitté le logement à la fin de son préavis', default: 'a quitté le logement (procédure pour impayés aboutie)', landlord_notice: 'quitte le logement à l\'échéance du bail (congé donné par toi)', dpe_ban: `quitte le logement : le bail arrive à échéance et la loi interdit de le renouveler (classe énergétique ${energy})` }[exit];
+        const cause = { tenant_notice: 'a quitté le logement à la fin de son préavis', default: defaultMonths > EP.defaultEpisode.maxMonths ? 'a quitté le logement (procédure aboutie ; l\'expulsion n\'était possible qu\'après la fin de la trêve hivernale)' : 'a quitté le logement (procédure pour impayés aboutie)', landlord_notice: 'quitte le logement à l\'échéance du bail (congé donné par toi)', dpe_ban: `quitte le logement : le bail arrive à échéance et la loi interdit de le renouveler (classe énergétique ${energy})` }[exit];
         note('TENANT_LEFT', 'tenant_left',
           `Le locataire ${cause}. État des lieux de sortie : ${damages > 0 ? `dégradations chiffrées à ${fr(damages)} €` : 'conforme'}. ` +
           `Dépôt de garantie de ${fr(deposit)} € : ${st.keptForArrears > 0 ? `${fr(st.keptForArrears)} € retenus pour impayés, ` : ''}${st.keptForDamages > 0 ? `${fr(st.keptForDamages)} € retenus pour dégradations, ` : ''}${fr(st.refund)} € restitués.` +
@@ -428,7 +515,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         const wasSale = llReason === 'sale';
         // Le bien se libère : on efface tout ce qui concernait ce locataire.
         nextStatus = 'vacant'; nextRent = 0; leaseStart = null; tenantType = null; deposit = 0;
-        noticeEnd = null; noticeMonths = null; noticeReason = null; defaultMonths = 0; defaultInLease = 0;
+        noticeEnd = null; noticeMonths = null; noticeReason = null; defaultMonths = 0; defaultInLease = 0; gliEpisodeCovered = false;
         arrRent = 0; arrCharges = 0; carryRent = 0; carryCharges = 0; catchUp = false;
         llReason = null; llEffective = null;
         if (wasSale) {
@@ -477,7 +564,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       year: y, month: m, status, rent: displayedRent, recoverableCharges: charges,
       nonRecoverableAnnual: listing.annualCharges, loanPayment, loanBreakdown, revision,
       tax: { ytdBefore: Number(p.tax_base_ytd), ratePct: taxRate, settleThisMonth: m === 12 },
-      vacancyMonthsSoFar: vacancyRank, carryOverIn, arrearsRecovered, oneOff, notes,
+      vacancyMonthsSoFar: vacancyRank, carryOverIn, arrearsRecovered, oneOff, notes, gliPremium, gliReimbursed,
     });
     if (hint === 'PENDING_WORKS') {
       statement.explanations.unshift({ code: 'PENDING_WORKS', cashFlowImpact: 0,
@@ -509,11 +596,12 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
          asking_rent = $6, euro_remainder_cents = $7, tenant_type = $8, deposit_held_eur = $9,
          notice_end_total = $10, notice_months = $11, notice_reason = $12, default_months = $13, default_months_in_lease = $14,
          arrears_rent_eur = $15, arrears_charges_eur = $16, late_carry_rent = $17, late_carry_charges = $18, catch_up_pending = $19,
-         landlord_notice_reason = $20, landlord_notice_effective_total = $21, sale_planned = $22, tax_base_ytd = $23
+         landlord_notice_reason = $20, landlord_notice_effective_total = $21, sale_planned = $22, tax_base_ytd = $23,
+         gli_episode_covered = $24, gli_reimbursed_eur = $25
        WHERE id = $1`,
       [p.id, nextStatus, nextRent, searchElapsed, leaseStart, askingRent, conv.remainderCents, tenantType, deposit,
         noticeEnd, noticeMonths, noticeReason, defaultMonths, defaultInLease, arrRent, arrCharges, carryRent, carryCharges, catchUp,
-        llReason, llEffective, salePlanned, statement.taxableIncomeYtdCarry]);
+        llReason, llEffective, salePlanned, statement.taxableIncomeYtdCarry, gliEpisodeCovered, gliReimbursedTotal]);
     if (loan) await c.query('UPDATE re_loans SET months_paid = $2, status = $3 WHERE id = $1', [loan.id, loan.months_paid, loan.status]);
     await c.query(
       `INSERT INTO re_statements (property_id, game_id, year, month, status, lines, explanations, net_cash_flow, coins_delta, remainder_cents_after)

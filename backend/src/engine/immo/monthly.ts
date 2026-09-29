@@ -47,7 +47,10 @@ export interface MonthlyInput {
   tax: { ytdBefore: number; ratePct: number; settleThisMonth: boolean };
   revision?: RevisionResult;           // indexation intervenue CE mois-ci
   carryOverIn?: AmountPair;            // retard du mois précédent encaissé ce mois-ci
-  arrearsRecovered?: AmountPair;       // impayé récupéré (dépôt de garantie, assurance loyers impayés, procédure)
+  arrearsRecovered?: AmountPair;       // impayé récupéré (dépôt de garantie, procédure)
+  // Assurance loyers impayés (GLI) : prime mensuelle (déductible des revenus fonciers) et remboursement d'impayés (imposable).
+  gliPremium?: number;
+  gliReimbursed?: AmountPair;
   vacancyMonthsSoFar?: number;         // pour l'explication : rang du mois vide (1 = premier mois de vacance)
   // Flux ponctuels (événements) : dépôt de garantie, sortie du locataire, travaux imprévus.
   oneOff?: { depositReceived?: number; depositRefunded?: number; repairCosts?: number; reletFees?: number; unexpectedWorks?: number };
@@ -70,6 +73,8 @@ export interface MonthlyLines {
   repairCosts: number;       // réparations après le départ du locataire
   reletFees: number;         // frais de remise en location (état des lieux, diagnostics, annonce)
   unexpectedWorks: number;   // travaux imprévus (panne, fuite...)
+  gliPremium: number;        // prime de l'assurance loyers impayés (0 sans assurance ou logement vide)
+  gliReimbursed: number;     // impayés remboursés par l'assurance ce mois-ci
   taxableIncome: number;      // base imposable de CE mois (peut être négative)
   taxableIncomeYtd: number;   // base cumulée de l'année, ce mois compris
   rentTax: number;            // impôt de l'année, réglé en décembre
@@ -79,7 +84,7 @@ export interface MonthlyLines {
 export type ExplanationCode =
   | 'INDEXATION' | 'INDEXATION_FROZEN' | 'VACANCY' | 'LATE_PAYMENT' | 'ARREARS'
   | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NOT_LISTED' | 'PENDING_WORKS' | 'NORMAL'
-  | 'DEPOSIT_RECEIVED' | 'DEPOSIT_REFUNDED' | 'REPAIRS' | 'RELET_FEES' | 'UNEXPECTED_WORKS'
+  | 'GLI_REIMBURSED' | 'DEPOSIT_RECEIVED' | 'DEPOSIT_REFUNDED' | 'REPAIRS' | 'RELET_FEES' | 'UNEXPECTED_WORKS'
   | 'TAX_SETTLED' | 'TENANT_NOTICE' | 'TENANT_LEFT' | 'LANDLORD_NOTICE' | 'DEFAULT_ENDED' | 'EVENT';
 
 export interface Explanation {
@@ -109,6 +114,7 @@ interface Scenario {
   status: TenantStatus;
   carry?: AmountPair;
   recovered?: AmountPair;
+  gli?: AmountPair;
   oneOff?: boolean;
 }
 
@@ -116,6 +122,7 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
   const provisions = i.recoverableCharges;
   const carry = s.carry ?? { rent: 0, charges: 0 };
   const rec = s.recovered ?? { rent: 0, charges: 0 };
+  const gli = s.gli ?? { rent: 0, charges: 0 };
   const due = s.status === 'vacant' ? 0 : s.rent;
   const provisionsDue = s.status === 'vacant' ? 0 : provisions;
 
@@ -144,6 +151,8 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
     repairCosts: s.oneOff ? round2(i.oneOff?.repairCosts ?? 0) : 0,
     reletFees: s.oneOff ? round2(i.oneOff?.reletFees ?? 0) : 0,
     unexpectedWorks: s.oneOff ? round2(i.oneOff?.unexpectedWorks ?? 0) : 0,
+    gliPremium: s.status === 'vacant' ? 0 : round2(i.gliPremium ?? 0), // la prime suit le loyer : rien à payer sur un logement vide
+    gliReimbursed: round2(gli.rent + gli.charges),
     taxableIncome: 0,
     taxableIncomeYtd: 0,
     rentTax: 0,
@@ -151,7 +160,7 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
   };
   lines.netCashFlow = round2(
     lines.rentCollected + lines.recoverableChargesCollected - lines.recoverableChargesPaid -
-    lines.nonRecoverableCharges - lines.loanPayment +
+    lines.nonRecoverableCharges - lines.loanPayment - lines.gliPremium + lines.gliReimbursed +
     lines.depositReceived - lines.depositRefunded - lines.repairCosts - lines.reletFees - lines.unexpectedWorks
   );
   return { lines, carryOut, unpaid };
@@ -159,13 +168,14 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
 
 // Base imposable d'un mois (régime réel simplifié) : voir rent.ts.
 export const rentalTaxableIncome = (l: MonthlyLines): number =>
-  round2(l.rentCollected - l.nonRecoverableCharges - l.loanInterest - l.loanInsurance - l.repairCosts - l.reletFees - l.unexpectedWorks);
+  round2(l.rentCollected + l.gliReimbursed - l.gliPremium - l.nonRecoverableCharges - l.loanInterest - l.loanInsurance - l.repairCosts - l.reletFees - l.unexpectedWorks);
 
 export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => {
   if (!Number.isInteger(input.month) || input.month < 1 || input.month > 12) throw new EngineInputError('month doit être entre 1 et 12');
   assertNonNegative(input.rent, 'rent');
   assertNonNegative(input.recoverableCharges, 'recoverableCharges');
   assertNonNegative(input.loanPayment, 'loanPayment');
+  assertNonNegative(input.gliPremium ?? 0, 'gliPremium');
   for (const [k, v] of Object.entries(input.nonRecoverableAnnual)) assertNonNegative(v, `nonRecoverableAnnual.${k}`);
   if (input.loanBreakdown) {
     const b = input.loanBreakdown;
@@ -184,7 +194,8 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   const s2 = computeLines(input, { rent: input.rent, status: input.status });
   const s3 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn });
   const s4 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn, recovered: input.arrearsRecovered });
-  const s5 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn, recovered: input.arrearsRecovered, oneOff: true });
+  const s4b = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn, recovered: input.arrearsRecovered, gli: input.gliReimbursed });
+  const s5 = computeLines(input, { rent: input.rent, status: input.status, carry: input.carryOverIn, recovered: input.arrearsRecovered, gli: input.gliReimbursed, oneOff: true });
 
   const explanations: Explanation[] = [];
   const impact = (a: { lines: MonthlyLines }, b: { lines: MonthlyLines }): number => round2(b.lines.netCashFlow - a.lines.netCashFlow);
@@ -240,8 +251,15 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   if (input.arrearsRecovered && (input.arrearsRecovered.rent > 0 || input.arrearsRecovered.charges > 0)) {
     explanations.push({
       code: 'ARREARS_RECOVERED',
-      message: `Impayé récupéré : ${eur(input.arrearsRecovered.rent + input.arrearsRecovered.charges)} encaissés (dépôt de garantie, assurance ou procédure).`,
+      message: `Impayé récupéré : ${eur(input.arrearsRecovered.rent + input.arrearsRecovered.charges)} encaissés (dépôt de garantie ou procédure).`,
       cashFlowImpact: impact(s3, s4),
+    });
+  }
+  if (input.gliReimbursed && (input.gliReimbursed.rent > 0 || input.gliReimbursed.charges > 0)) {
+    explanations.push({
+      code: 'GLI_REIMBURSED',
+      message: `Assurance loyers impayés : ${eur(input.gliReimbursed.rent + input.gliReimbursed.charges)} remboursés par ton assurance (loyers et charges impayés). Cette somme est imposable comme des loyers ; la prime, elle, est déductible.`,
+      cashFlowImpact: impact(s4, s4b),
     });
   }
   // Les événements (préavis, départ…) d'abord, puis leurs conséquences chiffrées : ordre chronologique.

@@ -288,12 +288,32 @@ describe('récapitulatif mensuel', () => {
     expect(s.lines).toEqual({
       rentDue: 600, rentCollected: 600, recoverableChargesPaid: 40, recoverableChargesCollected: 40,
       nonRecoverableCharges: 100, loanPayment: 400, loanInterest: 0, loanPrincipal: 0, loanInsurance: 0,
-      depositReceived: 0, depositRefunded: 0, repairCosts: 0, reletFees: 0, unexpectedWorks: 0,
+      depositReceived: 0, depositRefunded: 0, repairCosts: 0, reletFees: 0, unexpectedWorks: 0, gliPremium: 0, gliReimbursed: 0,
       taxableIncome: 500, taxableIncomeYtd: 500, rentTax: 0, // 600 − 100 de charges non récupérables ; l'impôt est réglé en décembre
       netCashFlow: 100, // 600 + 40 − 40 − 100 − 400
     });
     expect(s.explanations.map((e) => e.code)).toEqual(['NORMAL']);
     expect(s.normalMonthCashFlow).toBe(100);
+  });
+  it('assurance loyers impayés : la prime réduit le cash-flow ET la base imposable (déductible) ; rien à payer sur un logement vide', () => {
+    const paying = buildMonthlyStatement({ ...input, gliPremium: 19.2 }); // 3 % de (600 + 40)
+    expect(paying.lines.gliPremium).toBe(19.2);
+    expect(paying.lines.netCashFlow).toBeCloseTo(100 - 19.2, 2);
+    expect(paying.lines.taxableIncome).toBeCloseTo(500 - 19.2, 2);
+    expect(paying.normalMonthCashFlow).toBeCloseTo(100 - 19.2, 2); // la prime fait partie du « mois normal »
+    const vacant = buildMonthlyStatement({ ...input, status: 'vacant', gliPremium: 19.2 });
+    expect(vacant.lines.gliPremium).toBe(0);
+  });
+  it('assurance loyers impayés : remboursement expliqué, imposable, et somme des impacts = écart au mois normal', () => {
+    const s = buildMonthlyStatement({ ...input, status: 'defaulting', gliPremium: 19.2, gliReimbursed: { rent: 1200, charges: 80 } });
+    expect(s.lines.gliReimbursed).toBe(1280);
+    expect(s.lines.taxableIncome).toBeCloseTo(0 + 1280 - 19.2 - 100, 2); // rien encaissé du locataire ; assurance imposable, prime et charges déduites
+    const codes = s.explanations.map((e) => e.code);
+    expect(codes).toContain('ARREARS');
+    expect(codes).toContain('GLI_REIMBURSED');
+    const sum = s.explanations.reduce((a, e) => a + e.cashFlowImpact, 0);
+    expect(sum).toBeCloseTo(s.lines.netCashFlow - s.normalMonthCashFlow, 2);
+    expect(() => buildMonthlyStatement({ ...input, gliPremium: -1 })).toThrow(EngineInputError);
   });
   it('charges récupérables et non récupérables distinguées', () => {
     const s = buildMonthlyStatement({ ...input, status: 'vacant', vacancyMonthsSoFar: 2 });

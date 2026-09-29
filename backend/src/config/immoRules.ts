@@ -216,3 +216,24 @@ export const CATALOG_CALIBRATION: {
     'saint-aubrion-1': 0.88, 'saint-aubrion-2': 0.9,
   },
 };
+
+
+// ── Assurance loyers impayés (GLI) et trêve hivernale ─────────────────────
+// GLI : extraits de sites d'assureurs et de courtiers consultés le 2026-09-29 (à reconfirmer sur les contrats réels).
+//  - prime : 2 à 4 % du loyer charges comprises (moyenne retenue : 3 %) ; déductible des revenus fonciers ;
+//  - délai de carence : 3 mois après la souscription (pas de sinistre couvert pendant ce délai) ;
+//  - indemnisation déclenchée après 2 mois d'impayés ; plafond de 70 000 à 120 000 € (70 000 € retenus) ;
+//  - l'assureur exige un taux d'effort du locataire ≤ 33–35 % et une situation stable.
+export const GLI_PARAMS = {
+  premiumPctOfRent: 3,            // % du loyer + charges, payé chaque mois où le logement est loué
+  carenceMonths: 3,
+  triggerAfterUnpaidMonths: 2,    // à partir du 2e mois d'impayé consécutif, les impayés sont remboursés (rétroactivement)
+  maxCoverageEur: 70000,          // plafond cumulé par bien et par contrat
+  // Locataires que l'assureur refuse : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (un étudiant sans garant dépasse presque toujours le taux d'effort).
+  ineligibleTenantTypes: ['student'] as string[],
+};
+
+// Trêve hivernale : du 1er novembre au 31 mars, aucune expulsion (service-public.gouv.fr, ANIL ; consulté le 2026-09-29, à reconfirmer).
+// La procédure et la dette continuent ; le locataire reste dans les lieux jusqu'au 1er avril.
+export const WINTER_TRUCE = { startMonth: 11, endMonth: 3 };
+export const inWinterTruce = (month: number): boolean => month >= WINTER_TRUCE.startMonth || month <= WINTER_TRUCE.endMonth;

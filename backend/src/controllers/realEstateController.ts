@@ -50,6 +50,7 @@ export const realEstateController = {
   properties: handle('Erreur lors de la récupération des biens', (_r, uid) => life.getPortfolio(uid)),
   listForRent: handle('Erreur lors de la mise en location', (r, uid) => life.listForRent(uid, r.params.id, r.body?.askingRentRatio)),
   reprice: handle('Erreur lors de la modification du loyer', (r, uid) => life.repriceListing(uid, r.params.id, r.body?.askingRentRatio)),
+  setGli: handle('Erreur lors de la modification de l\'assurance', (r, uid) => life.setGli(uid, r.params.id, r.body?.active)),
   landlordNotice: handle('Erreur lors du congé', (r, uid) => life.landlordNotice(uid, r.params.id, r.body?.reason)),
   events: handle('Erreur lors de la récupération des événements', (r, uid) => life.listEvents(uid, r.query.limit)),
   sell: handle('Erreur lors de la mise en vente', (r, uid) => sales.sell(uid, r.params.id, r.body?.askingRatio)),
