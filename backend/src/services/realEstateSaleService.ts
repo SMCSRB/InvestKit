@@ -402,5 +402,9 @@ export const getRealEstateLeaderboard = async (userId: string, yearRaw: unknown)
     if (!Number.isInteger(year) || year < source().minYear || year > source().maxYear) throw new RealEstateError('INVALID_INPUT', 'Année invalide');
   }
   const board = await leaderboardRepository.getBoard({ mode: 'accelerated', domain: RE_DOMAIN, year, minCapital: MIN_RANKED_CAPITAL, limit: LEADERBOARD_SIZE, callerId: userId });
-  return { domain: RE_DOMAIN, year, minCapital: MIN_RANKED_CAPITAL, ...board };
+  // Ma performance détaillée (calculée côté serveur) : visible même si je ne suis pas encore classé.
+  const w = await wealthMetrics({ query } as any, game);
+  const investedCoins = round2(w.investedEuros / EUROS_PER_COIN);
+  const mine = { ...w, investedCoins, ranked: investedCoins >= MIN_RANKED_CAPITAL, minCapitalCoins: MIN_RANKED_CAPITAL };
+  return { domain: RE_DOMAIN, year, minCapital: MIN_RANKED_CAPITAL, ...board, mine };
 };

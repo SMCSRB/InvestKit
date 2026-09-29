@@ -347,6 +347,55 @@ function Summary({ summary, events }) {
   );
 }
 
+// ── Classement Immobilier
+function Leaderboard({ game, notify }) {
+  const [year, setYear] = useState(game.year);
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    call(`/leaderboard?year=${year}`).then((d) => { if (alive) setData(d); }).catch((e) => notify(e.message, true));
+    return () => { alive = false; };
+  }, [year, game.month, notify]);
+  const years = [];
+  for (let y = 2010; y <= game.year; y++) years.push(y);
+  if (!data) return <p style={{ color: '#94a3b8' }}>Chargement du classement…</p>;
+  const pct = (n) => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`;
+  return (
+    <div>
+      <h3 style={{ color: '#fff', marginTop: 0 }}>Classement Immobilier<HelpTip term="performance" /></h3>
+      <p style={{ color: '#94a3b8', fontSize: 14, marginTop: 0 }}>
+        Il compare la performance de chaque joueur à la même année de jeu : (fonds propres + argent encaissé − argent investi) ÷ argent investi. Un gain réalisé en vendant reste compté.
+        Pour être classé, il faut avoir investi au moins {data.mine?.minCapitalCoins ?? data.minCapital} 🪙.
+      </p>
+      <label style={{ fontSize: 13 }}>Année de comparaison{' '}
+        <select style={input} value={year} onChange={(e) => setYear(Number(e.target.value))}>{years.map((y) => <option key={y} value={y}>{y}</option>)}</select>
+      </label>
+      {data.mine && (
+        <div style={{ ...card, margin: '14px 0', borderColor: data.mine.ranked ? '#4ade80' : '#fbbf24' }}>
+          <strong style={{ color: '#fff' }}>Ma performance : {pct(data.mine.performancePct)}</strong>
+          <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 4 }}>
+            Investi {eur(data.mine.investedEuros)} ({data.mine.investedCoins} 🪙) · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}
+          </div>
+          {!data.mine.ranked && <div style={{ fontSize: 13, color: '#fbbf24', marginTop: 4 }}>Tu n&apos;es pas encore classé : investis au moins {data.mine.minCapitalCoins} 🪙 (apport, frais et travaux compris).</div>}
+          {data.me && <div style={{ fontSize: 13, marginTop: 4 }}>Ton rang en {year} : n°{data.me.rank} sur {data.totalRanked}.</div>}
+        </div>
+      )}
+      {data.entries.length === 0 ? <p style={{ color: '#94a3b8' }}>Personne n&apos;est encore classé pour {year}.</p> : (
+        <table style={{ width: '100%', maxWidth: 560, borderCollapse: 'collapse', fontSize: 14 }}>
+          <thead><tr style={{ textAlign: 'left', color: '#94a3b8' }}><th style={{ padding: 6 }}>Rang</th><th style={{ padding: 6 }}>Joueur</th><th style={{ padding: 6, textAlign: 'right' }}>Performance</th></tr></thead>
+          <tbody>
+            {data.entries.map((e) => (
+              <tr key={e.rank + e.username} style={{ background: e.isMe ? 'rgba(59,130,246,0.2)' : 'transparent' }}>
+                <td style={{ padding: 6 }}>{e.rank}</td><td style={{ padding: 6 }}>{e.username}{e.isMe ? ' (toi)' : ''}</td><td style={{ padding: 6, textAlign: 'right' }}>{pct(e.performancePct)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 export default function ImmobilierPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -423,13 +472,14 @@ export default function ImmobilierPage() {
               <button style={btn(true)} disabled={busy} onClick={() => advance(1)}>Avancer d&apos;un mois</button>
               <button style={btn(false)} disabled={busy} onClick={() => advance(12)}>Avancer d&apos;un an</button>
               <span style={{ flex: 1 }} />
-              {[['listings', 'Annonces'], ['portfolio', `Mon portefeuille (${portfolio.properties.length})`], ['summary', 'Bilan du mois']].map(([k, label]) => (
+              {[['listings', 'Annonces'], ['portfolio', `Mon portefeuille (${portfolio.properties.length})`], ['summary', 'Bilan du mois'], ['leaderboard', 'Classement']].map(([k, label]) => (
                 <button key={k} style={{ ...btn(tab === k), opacity: tab === k ? 1 : 0.8 }} onClick={() => setTab(k)}>{label}</button>
               ))}
             </div>
             {tab === 'listings' && <Listings game={game} refresh={refresh} notify={notify} />}
             {tab === 'portfolio' && <Portfolio data={portfolio} summary={summary} refresh={refresh} notify={notify} />}
             {tab === 'summary' && <Summary summary={summary} events={events} />}
+            {tab === 'leaderboard' && <Leaderboard game={game} notify={notify} />}
           </>
         )}
       </div>

@@ -455,13 +455,19 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       expect(board.me).not.toBeNull();
       expect(board.me.isMe).toBe(true);
       expect(board.entries.length).toBeGreaterThanOrEqual(1);
+      // « ma performance » détaillée, cohérente avec le classement
+      expect(board.mine.ranked).toBe(true);
+      expect(board.mine.performancePct).toBeCloseTo(board.me.performancePct, 3);
+      expect(board.mine.investedCoins).toBeGreaterThanOrEqual(board.mine.minCapitalCoins);
       const snap = (await query(`SELECT domain, period, capital_committed FROM leaderboard_rankings WHERE user_id = $1`, [a.uid])).rows;
       expect(snap.some((s) => s.domain === 'real_estate' && s.period === 'Y2011')).toBe(true);
       // un joueur sans achat n'est pas classé
       const nobody = await createUser({ balance: 100, freeDomain: 'real_estate' });
       await svc.startGame(nobody, 'student');
       await life.advanceTime(nobody, 1);
-      expect((await getRealEstateLeaderboard(nobody, undefined)).me).toBeNull();
+      const nb: any = await getRealEstateLeaderboard(nobody, undefined);
+      expect(nb.me).toBeNull();
+      expect(nb.mine).toMatchObject({ ranked: false, investedCoins: 0, performancePct: 0 });
       expect((await rejects(getRealEstateLeaderboard(a.uid, 1990))).code).toBe('INVALID_INPUT');
     });
 
