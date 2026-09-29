@@ -80,7 +80,7 @@ sudo systemctl restart <nom-du-service-api>        # (ou : pm2 restart <nom>)
 sleep 5
 sudo journalctl -u <nom-du-service-api> -n 40 --no-pager
 ```
-Dans les lignes affichées, tu dois voir « ✅ All migrations completed » et « Server running ». Les migrations
+Dans les lignes affichées, tu dois voir « ✅ All migrations completed » et le cadre de démarrage (avec la ligne « CORS Origins »). Les migrations
 s'appliquent seules et ne suppriment aucune donnée. Une ligne « ⚠️ … Already exists (skipped) » est normale. Une ligne
 « ⚠️ Schéma non applicable tel quel… mise à niveau par les migrations » est normale sur une ancienne base.
 Une ligne « ❌ Error in … » n'est PAS normale : arrête-toi et envoie-moi les 40 lignes.
@@ -108,7 +108,7 @@ sudo systemctl restart <nom-du-service-site>       # (ou : pm2 restart <nom>)
 | `/immobilier` | L'écran de choix du profil (étudiant, salarié, cadre) ; les annonces ; l'achat exige d'avoir choisi l'Immobilier comme domaine gratuit ou d'être Pro (le bouton du tableau de bord viendra à l'étape 7b) |
 | `/glossaire` | Le glossaire ; tape « cash » dans la recherche |
 | `/legal`, `/privacy`, `/conditions`, `/cookies`, `/contact`, `/support` | Des pages qui s'ouvrent ; `/legal` affiche « [à compléter] » tant que `siteInfo.js` est vide |
-| `/inscription` avec/sans code | Selon ton choix d'invitation |
+| `/signup` avec/sans code | Selon ton choix d'invitation |
 
 ## Retour arrière (si quelque chose ne va pas)
 ```bash
