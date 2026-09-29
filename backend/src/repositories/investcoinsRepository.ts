@@ -15,7 +15,8 @@ export class InsufficientFundsError extends Error {
   }
 }
 
-export type LedgerNature = 'creation' | 'destruction' | 'exchange';
+// 'credit' / 'repayment' : pièces créées à l'emprunt / détruites au remboursement (module Banque, voir config/bankRules.ts).
+export type LedgerNature = 'creation' | 'destruction' | 'exchange' | 'credit' | 'repayment';
 
 // Chaque écriture porte son domaine et sa nature (voir migration 013) :
 // - achat/vente (trade_*) et apport/travaux immobiliers (re_exchange_*) = simple
@@ -29,8 +30,28 @@ const classify = (
   metadata?: { domain?: unknown }
 ): { domain: string | null; nature: LedgerNature } => ({
   domain: typeof metadata?.domain === 'string' ? metadata.domain : null,
-  nature: reason.startsWith('trade_') || reason.startsWith('re_exchange_') ? 'exchange' : amount > 0 ? 'creation' : 'destruction',
+  nature: reason === 'bank_disburse' ? 'credit'
+    : reason.startsWith('bank_') ? 'repayment'
+    : reason.startsWith('trade_') || reason.startsWith('re_exchange_') ? 'exchange'
+    : amount > 0 ? 'creation' : 'destruction',
 });
+
+// Crédit FLÉCHÉ : des pièces empruntées non dépensées (table bank_credit_balances) ne se dépensent que dans le domaine du prêt.
+// Un débit dans le domaine D est refusé s'il entamerait les pièces réservées à un AUTRE domaine ; un débit sans domaine est refusé
+// s'il entamerait n'importe quelle réserve. Les écritures « bank_* » (remboursements) échappent à la règle.
+const isBankReason = (reason: string): boolean => reason.startsWith('bank_');
+
+// Après un remboursement, la somme des réserves ne doit jamais dépasser le solde (les pièces rendues à la banque étaient peut-être réservées).
+const shrinkReservesToBalance = async (db: Queryable, userId: string, balance: number): Promise<void> => {
+  const rows = (await db.query('SELECT domain, coins FROM bank_credit_balances WHERE user_id = $1 AND coins > 0 ORDER BY coins DESC FOR UPDATE', [userId])).rows;
+  let total = rows.reduce((a: number, r: any) => a + Number(r.coins), 0);
+  for (const r of rows) {
+    if (total <= balance) break;
+    const cut = Math.min(Number(r.coins), total - balance);
+    await db.query('UPDATE bank_credit_balances SET coins = coins - $3 WHERE user_id = $1 AND domain = $2', [userId, r.domain, cut]);
+    total -= cut;
+  }
+};
 
 const applyWith = async (
   db: Queryable,
@@ -52,15 +73,23 @@ const applyWith = async (
     // Débit CONDITIONNEL et atomique : la ligne est verrouillée pendant
     // l'UPDATE, et la condition est réévaluée sur la valeur à jour. Deux
     // achats simultanés ne peuvent donc pas dépenser deux fois le même solde.
+    const bank = isBankReason(reason);
+    const spendDomain = typeof metadata?.domain === 'string' ? metadata.domain : '';
     const result = await db.query(
       `UPDATE investcoins_balance
        SET balance = balance + $2, updated_at = NOW()
        WHERE user_id = $1 AND balance + $2 >= 0
+         AND ($4::boolean OR balance + $2 >= COALESCE((SELECT SUM(coins) FROM bank_credit_balances WHERE user_id = $1 AND domain <> $3), 0))
        RETURNING balance`,
-      [userId, amount]
+      [userId, amount, spendDomain, bank]
     );
     if (result.rows.length === 0) throw new InsufficientFundsError();
     balance = result.rows[0].balance;
+    if (bank) await shrinkReservesToBalance(db, userId, balance);
+    else if (spendDomain) {
+      // Les pièces empruntées du domaine sont dépensées en premier.
+      await db.query('UPDATE bank_credit_balances SET coins = GREATEST(0, coins + $3) WHERE user_id = $1 AND domain = $2', [userId, spendDomain, amount]);
+    }
   } else {
     const result = await db.query(
       `INSERT INTO investcoins_balance (user_id, balance, updated_at)
@@ -129,13 +158,15 @@ export const investcoinsRepository = {
               COALESCE(-SUM(amount) FILTER (WHERE amount < 0), 0)::bigint AS debited
        FROM investcoins_transactions GROUP BY 1, 2 ORDER BY 1, 2`
     );
-    const byDomain: Record<string, { created: number; destroyed: number; exchangeNet: number; netInjected: number; entries: number }> = {};
+    const byDomain: Record<string, { created: number; destroyed: number; credited: number; repaid: number; exchangeNet: number; netInjected: number; entries: number }> = {};
     for (const r of result.rows) {
-      const d = (byDomain[r.domain] ??= { created: 0, destroyed: 0, exchangeNet: 0, netInjected: 0, entries: 0 });
+      const d = (byDomain[r.domain] ??= { created: 0, destroyed: 0, credited: 0, repaid: 0, exchangeNet: 0, netInjected: 0, entries: 0 });
       d.entries += r.entries;
       d.netInjected += Number(r.net);
       if (r.nature === 'creation') d.created += Number(r.credited);
       else if (r.nature === 'destruction') d.destroyed += Number(r.debited);
+      else if (r.nature === 'credit') d.credited += Number(r.credited);
+      else if (r.nature === 'repayment') d.repaid += Number(r.debited);
       else d.exchangeNet += Number(r.net);
     }
     return byDomain;

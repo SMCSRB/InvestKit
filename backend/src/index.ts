@@ -8,6 +8,7 @@ import { economyRoutes } from './routes/economy';
 import { educationRoutes } from './routes/education';
 import { tradingRoutes } from './routes/trading';
 import { realEstateRoutes } from './routes/realEstate';
+import { bankRoutes } from './routes/bank';
 import { apiLimiter } from './middleware/rateLimiter';
 import { initDatabase, executeSchema, closePool } from './utils/db';
 
@@ -56,6 +57,8 @@ app.use('/api/v1/trading', tradingRoutes);
 app.use('/api/trading', tradingRoutes);
 app.use('/api/v1/realestate', realEstateRoutes);
 app.use('/api/realestate', realEstateRoutes);
+app.use('/api/v1/bank', bankRoutes);
+app.use('/api/bank', bankRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
