@@ -53,6 +53,28 @@ export const GLOSSARY = [
     short: 'Acheter un bien plus cher que ce que tu possèdes grâce au crédit.',
     long: 'Si le bien prend de la valeur, tu gagnes sur toute sa valeur alors que tu n\'as avancé qu\'une partie. Mais s\'il en perd, ou si les loyers ne suffisent pas, tu perds aussi plus : le levier agit dans les deux sens.' },
 
+  // ── La banque
+  { id: 'pret-personnel', category: 'credit', term: 'Prêt personnel',
+    short: 'Un prêt sans garantie, plafonné selon tes revenus, à un taux plus élevé qu\'un prêt immobilier.',
+    long: 'La banque ne prend pas ton bien en garantie : elle est donc plus prudente (montant limité) et plus chère (taux plus haut). Chaque mensualité compte dans ton taux d\'endettement, ce qui réduit ta capacité à emprunter pour acheter un bien.',
+    inGame: 'Plafond : 6 mois de revenus nets de ton profil. Taux : taux de base de l\'année + 4,5 points (fictif, non sourcé). Réservé à l\'Immobilier. Un seul prêt à la fois.' },
+  { id: 'credit-fleche', category: 'credit', term: 'Crédit fléché (prêt affecté)',
+    short: 'Un prêt dont l\'argent ne peut servir qu\'à un usage précis.',
+    long: 'Comme un prêt « affecté » réel : l\'argent est prévu pour un projet. Ici, les pièces empruntées sont réservées à un domaine (l\'Immobilier pour le prêt personnel) et ne peuvent pas être dépensées ailleurs. Cela évite qu\'un emprunt dans un domaine serve à jouer dans un autre où les pièces n\'ont pas la même valeur.',
+    inGame: 'Les pièces réservées sont dépensées en premier dans leur domaine. Tes propres pièces restent libres partout.' },
+  { id: 'taux-base', category: 'credit', term: 'Taux de base',
+    short: 'Le taux de référence de l\'année, auquel la banque ajoute sa marge selon le risque.',
+    long: 'Un prêt garanti par un bien coûte moins cher qu\'un prêt sans garantie : la banque ajoute une marge plus grande quand elle prend plus de risque.',
+    inGame: 'Taux de base fictif calé sur l\'histoire (valeur de jeu, non sourcée, à reconfirmer) + un écart par produit.' },
+  { id: 'defaut-paiement', category: 'credit', term: 'Défaut de paiement',
+    short: 'Quand tu ne rembourses plus ton prêt : la dette reste due et la banque ne te prête plus rien.',
+    long: 'Une échéance manquée n\'efface pas la dette. Après plusieurs échéances impayées de suite, le prêt est déclaré en défaut : tu dois toujours l\'argent et tu ne peux plus emprunter tant qu\'il n\'est pas soldé.',
+    inGame: '3 échéances impayées de suite = défaut. Le blocage se lève quand le prêt est soldé.' },
+  { id: 'remboursement-anticipe', category: 'credit', term: 'Rembourser un prêt par anticipation',
+    short: 'Solder un prêt avant la fin : tu économises des intérêts, mais la banque te fait payer une indemnité.',
+    long: 'Plus il reste de temps, plus la banque perd d\'intérêts, donc plus l\'indemnité est élevée (dans la réglementation du crédit à la consommation, environ 1 % du capital si plus d\'un an reste, 0,5 % sinon).',
+    inGame: 'Ces repères sont à reconfirmer sur les textes officiels.' },
+
   // ── L'achat
   { id: 'frais-notaire', category: 'achat', term: 'Frais de notaire',
     short: 'Les frais payés à l\'achat, surtout des taxes reversées à l\'État.',

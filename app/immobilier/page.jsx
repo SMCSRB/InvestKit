@@ -8,6 +8,7 @@ import HelpTip from '../components/HelpTip';
 const API = `${process.env.NEXT_PUBLIC_API_URL}/realestate`;
 const clean = (n) => (Math.abs(Number(n ?? 0)) < 0.005 ? 0 : Number(n ?? 0));
 const eur = (n) => `${clean(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
+const num = (n) => Number(n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
 const eur2 = (n) => `${clean(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const TYPE_LABEL = { studio: 'Studio', apartment: 'Appartement', house: 'Maison' };
@@ -414,7 +415,7 @@ function Leaderboard({ game, notify }) {
       <h3 style={{ color: '#fff', marginTop: 0 }}>Classement Immobilier<HelpTip term="performance" /></h3>
       <p style={{ color: '#94a3b8', fontSize: 14, marginTop: 0 }}>
         Il compare la performance de chaque joueur à la même année de jeu : (fonds propres + argent encaissé − argent investi) ÷ argent investi. Un gain réalisé en vendant reste compté.
-        Pour être classé, il faut avoir investi au moins {data.mine?.minCapitalCoins ?? data.minCapital} 🪙.
+        Le classement est net de dettes : les intérêts d&apos;un prêt personnel sont déduits et le gain est rapporté à ton capital propre (le levier utilisé est affiché). Pour être classé, il faut avoir investi au moins {data.mine?.minCapitalCoins ?? data.minCapital} 🪙.
       </p>
       <label style={{ fontSize: 13 }}>Année de comparaison{' '}
         <select style={input} value={year} onChange={(e) => setYear(Number(e.target.value))}>{years.map((y) => <option key={y} value={y}>{y}</option>)}</select>
@@ -423,7 +424,7 @@ function Leaderboard({ game, notify }) {
         <div style={{ ...card, margin: '14px 0', borderColor: data.mine.ranked ? '#4ade80' : '#fbbf24' }}>
           <strong style={{ color: '#fff' }}>Ma performance : {pct(data.mine.performancePct)}</strong>
           <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 4 }}>
-            Investi {eur(data.mine.investedEuros)} ({data.mine.investedCoins} 🪙) · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}
+            Investi {eur(data.mine.investedEuros)} ({data.mine.investedCoins} 🪙) · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}
           </div>
           {!data.mine.ranked && <div style={{ fontSize: 13, color: '#fbbf24', marginTop: 4 }}>Tu n&apos;es pas encore classé : investis au moins {data.mine.minCapitalCoins} 🪙 (apport, frais et travaux compris).</div>}
           {data.me && <div style={{ fontSize: 13, marginTop: 4 }}>Ton rang en {year} : n°{data.me.rank} sur {data.totalRanked}.</div>}
@@ -431,11 +432,11 @@ function Leaderboard({ game, notify }) {
       )}
       {data.entries.length === 0 ? <p style={{ color: '#94a3b8' }}>Personne n&apos;est encore classé pour {year}.</p> : (
         <table style={{ width: '100%', maxWidth: 560, borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead><tr style={{ textAlign: 'left', color: '#94a3b8' }}><th style={{ padding: 6 }}>Rang</th><th style={{ padding: 6 }}>Joueur</th><th style={{ padding: 6, textAlign: 'right' }}>Performance</th></tr></thead>
+          <thead><tr style={{ textAlign: 'left', color: '#94a3b8' }}><th style={{ padding: 6 }}>Rang</th><th style={{ padding: 6 }}>Joueur</th><th style={{ padding: 6, textAlign: 'right' }}>Levier<HelpTip term="levier" /></th><th style={{ padding: 6, textAlign: 'right' }}>Performance</th></tr></thead>
           <tbody>
             {data.entries.map((e) => (
               <tr key={e.rank + e.username} style={{ background: e.isMe ? 'rgba(59,130,246,0.2)' : 'transparent' }}>
-                <td style={{ padding: 6 }}>{e.rank}</td><td style={{ padding: 6 }}>{e.username}{e.isMe ? ' (toi)' : ''}</td><td style={{ padding: 6, textAlign: 'right' }}>{pct(e.performancePct)}</td>
+                <td style={{ padding: 6 }}>{e.rank}</td><td style={{ padding: 6 }}>{e.username}{e.isMe ? ' (toi)' : ''}</td><td style={{ padding: 6, textAlign: 'right' }}>{e.leverage && e.leverage > 1 ? `×${num(e.leverage)}` : '×1'}</td><td style={{ padding: 6, textAlign: 'right' }}>{pct(e.performancePct)}</td>
               </tr>
             ))}
           </tbody>
@@ -499,6 +500,7 @@ export default function ImmobilierPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <Link href="/dashboard" style={{ color: '#60a5fa', fontSize: 14 }}>← Tableau de bord</Link>
+            <Link href="/banque" style={{ color: '#60a5fa', fontSize: 14, marginLeft: 16 }}>🏦 Ma banque</Link>
             <h1 style={{ margin: '6px 0 0', color: '#fff', fontSize: 'clamp(24px, 5vw, 32px)' }}>🏠 Immobilier</h1>
           </div>
           {game && (

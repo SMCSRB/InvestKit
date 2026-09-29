@@ -6,7 +6,7 @@ import { RealEstateError, RE_DOMAIN, GameRow, requireGame, source, tx } from './
 import { uuidOk, fr, monthlyDraw, propertyKey, marketFor, scheduleOf, valueOfProperty } from './realEstateHelpers';
 import {
   computeSaleClosing, energyAuditRequired, rentalBannedByEnergy, SaleClosing, remainingBalance, convertEurosToCoins, toCents, monthTotal, computeRentTax,
-  isTenantFound, monthlyLetProbability, vacancyCapMonths, expectedVacancyMonths, expectedCappedVacancyMonths, round2, computePerformancePctFromEuros,
+  isTenantFound, monthlyLetProbability, vacancyCapMonths, expectedVacancyMonths, expectedCappedVacancyMonths, round2, computeNetPerformance,
   EnergyClass, UnitType,
 } from '../engine/immo';
 import {
@@ -399,15 +399,25 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
   }
   const cash = Number((await q('SELECT COALESCE(SUM(net_cash_flow), 0) AS s FROM re_statements WHERE game_id = $1', [game.id])).rows[0].s);
   const sold = (await q('SELECT COALESCE(SUM(net_proceeds), 0) AS s FROM re_sales WHERE game_id = $1', [game.id])).rows[0].s;
+  // Prêts personnels de la banque (fléchés Immobilier) : classement en richesse NETTE de dettes, avec le levier utilisé.
+  const bank = (await q(
+    `SELECT COALESCE(SUM(balance_h) FILTER (WHERE status IN ('active','defaulted')), 0) AS debt_h, COALESCE(SUM(interest_paid_h), 0) AS interest_h
+     FROM bank_loans WHERE user_id = $1 AND domain = $2`, [game.user_id, RE_DOMAIN])).rows[0];
+  const reserve = Number((await q('SELECT COALESCE(SUM(coins), 0) AS s FROM bank_credit_balances WHERE user_id = $1 AND domain = $2', [game.user_id, RE_DOMAIN])).rows[0].s);
+  const debtEuros = (Number(bank.debt_h) / 100) * EUROS_PER_COIN;
+  const interestEuros = (Number(bank.interest_h) / 100) * EUROS_PER_COIN;
+  const borrowedInvested = Math.min(invested, Math.max(0, debtEuros - reserve * EUROS_PER_COIN));
+  const net = computeNetPerformance({ equity, cumulativeCashFlow: cash + Number(sold), invested, interestPaid: interestEuros, borrowedInvested });
   return { investedEuros: round2(invested), equity: round2(equity), cumulativeCashFlow: round2(cash), saleNetProceeds: round2(Number(sold)),
-    performancePct: computePerformancePctFromEuros({ equity, cumulativeCashFlow: cash + Number(sold), invested }) };
+    bankDebtEuros: round2(debtEuros), bankInterestPaidEuros: round2(interestEuros), leverage: net.leverage, ownCapitalEuros: net.ownCapital,
+    performancePct: net.performancePct };
 }
 
 export async function snapshotLeaderboard(c: PoolClient, game: GameRow, userId: string): Promise<void> {
   const w = await wealthMetrics(c, game);
   await leaderboardRepository.upsertSnapshot(c, {
     userId, mode: 'accelerated', domain: RE_DOMAIN, year: game.simulated_year,
-    performancePct: w.performancePct, capitalCommitted: round2(w.investedEuros / EUROS_PER_COIN),
+    performancePct: w.performancePct, capitalCommitted: round2(w.investedEuros / EUROS_PER_COIN), leverage: w.leverage,
   });
 }
 

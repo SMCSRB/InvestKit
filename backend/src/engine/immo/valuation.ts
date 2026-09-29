@@ -71,3 +71,15 @@ export const computePerformancePctFromEuros = (i: { equity: number; cumulativeCa
   if (i.invested <= 0) return 0;
   return Math.round(((i.equity + i.cumulativeCashFlow - i.invested) / i.invested) * 100 * 1e4) / 1e4;
 };
+
+// Performance NETTE DE DETTES d'un joueur avec prêt personnel. Le gain est celui du bien moins les intérêts payés à la banque
+// (le capital emprunté s'annule avec la dette). Le dénominateur est le capital PROPRE : investi − part financée par emprunt,
+// plancher à 10 % de l'investi (le levier affiché ne dépasse donc jamais ×10). Sans emprunt : identique à la formule d'origine.
+export const computeNetPerformance = (i: {
+  equity: number; cumulativeCashFlow: number; invested: number; interestPaid: number; borrowedInvested: number;
+}): { performancePct: number; leverage: number; ownCapital: number } => {
+  if (i.invested <= 0) return { performancePct: 0, leverage: 1, ownCapital: 0 };
+  const own = Math.max(i.invested - Math.min(i.invested, Math.max(0, i.borrowedInvested)), i.invested * 0.1);
+  const gain = i.equity + i.cumulativeCashFlow - i.invested - i.interestPaid;
+  return { performancePct: Math.round((gain / own) * 100 * 1e4) / 1e4, leverage: Math.round((i.invested / own) * 100) / 100, ownCapital: Math.round(own * 100) / 100 };
+};

@@ -14,6 +14,7 @@ import {
   pickTenantType, departureHazard, noticeFor, isLatePayment, startsDefaulting, resolveDefault, rollDamage, reletFees,
   rollUnexpectedWorks, settleDeposit, checkLandlordNotice, capRentAtRelet, rentalBannedByEnergy, TenantType, UnitType,
 } from '../engine/immo';
+import { settleMonth as settleBankMonth } from './bankService';
 import { describeSale, processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
 import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS, GLI_PARAMS, inWinterTruce } from '../config/immoRules';
 
@@ -620,6 +621,9 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
     }
     results.push({ propertyId: p.id, title: p.title, statement, coinsDelta, hint, events: eventLog.map((e) => e.kind) });
   }
+
+  // Échéances des prêts personnels de la banque (horloge de l'Immobilier), payées après les flux du mois.
+  for (const be of await settleBankMonth(c, userId, RE_DOMAIN, total)) warnings.push({ code: 'BANK', message: be.message });
 
   if (arrears > 0) {
     missed += 1;

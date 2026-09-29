@@ -624,3 +624,7 @@ CREATE TABLE IF NOT EXISTS bank_events (
   created_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_bank_events_user ON bank_events(user_id, id DESC);
+
+-- 023 : levier affiché au classement
+-- Classement : mention du levier utilisé (capital investi / capital propre). Ajout de colonne uniquement.
+ALTER TABLE leaderboard_rankings ADD COLUMN IF NOT EXISTS leverage NUMERIC(6,2);

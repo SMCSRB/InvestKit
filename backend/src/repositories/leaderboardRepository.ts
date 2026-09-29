@@ -5,6 +5,7 @@ export interface BoardEntry {
   rank: number;
   username: string;
   performancePct: number;
+  leverage: number | null; // levier utilisé (capital investi / capital propre) ; null = non applicable
   isMe: boolean;
 }
 
@@ -34,15 +35,17 @@ export const leaderboardRepository = {
       year: number;
       performancePct: number;
       capitalCommitted: number;
+      leverage?: number | null;
     }
   ): Promise<void> {
     await db.query(
       `INSERT INTO leaderboard_rankings
-         (user_id, mode, domain, period, performance_pct, capital_committed, computed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         (user_id, mode, domain, period, performance_pct, capital_committed, leverage, computed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
        ON CONFLICT (user_id, mode, domain, period)
        DO UPDATE SET performance_pct = EXCLUDED.performance_pct,
                      capital_committed = EXCLUDED.capital_committed,
+                     leverage = EXCLUDED.leverage,
                      computed_at = NOW()`,
       [
         snapshot.userId,
@@ -51,6 +54,7 @@ export const leaderboardRepository = {
         periodForYear(snapshot.year),
         snapshot.performancePct,
         snapshot.capitalCommitted,
+        snapshot.leverage ?? null,
       ]
     );
   },
@@ -71,13 +75,14 @@ export const leaderboardRepository = {
          SELECT lr.user_id,
                 COALESCE(u.username, 'Investisseur anonyme') AS username,
                 lr.performance_pct,
+                lr.leverage,
                 RANK() OVER (ORDER BY lr.performance_pct DESC) AS rank
          FROM leaderboard_rankings lr
          JOIN users u ON u.id = lr.user_id
          WHERE lr.mode = $1 AND lr.domain = $2 AND lr.period = $3
            AND lr.capital_committed >= $4
        )
-       SELECT user_id, username, performance_pct, rank,
+       SELECT user_id, username, performance_pct, leverage, rank,
               (SELECT COUNT(*) FROM ranked) AS total
        FROM ranked
        WHERE rank <= $5 OR user_id = $6
@@ -89,6 +94,7 @@ export const leaderboardRepository = {
       rank: Number(row.rank),
       username: row.username,
       performancePct: Number(row.performance_pct),
+      leverage: row.leverage === null || row.leverage === undefined ? null : Number(row.leverage),
       isMe: row.user_id === params.callerId,
     });
 

@@ -9,6 +9,7 @@ import {
   loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
 } from '../config/immoRules';
 import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation } from '../engine/immo';
+import { spendableCoins, monthlyInstalmentCoins } from './bankService';
 
 export const RE_DOMAIN = 'real_estate';
 
@@ -70,7 +71,9 @@ const getListingOrThrow = async (listingId: string, year: number): Promise<Listi
 };
 
 // Situation financière du joueur, lue en base : crédits en cours et loyers perçus.
-const loadHousehold = async (game: GameRow, db: { query: PoolClient['query'] }) => {
+export const loadHousehold = async (game: GameRow, db: { query: PoolClient['query'] }) => {
+  // Les prêts personnels de la banque comptent dans l'endettement, comme les autres crédits.
+  const bankDebtEuros = (await monthlyInstalmentCoins(db, game.user_id, RE_DOMAIN)) * EUROS_PER_COIN;
   const debts = await (db.query as any)(
     `SELECT COALESCE(SUM(monthly_payment), 0) AS s FROM re_loans WHERE game_id = $1 AND status = 'active'`, [game.id]);
   const rents = await (db.query as any)(
@@ -80,7 +83,7 @@ const loadHousehold = async (game: GameRow, db: { query: PoolClient['query'] }) 
     profile: game.profile,
     salary: p.netMonthlyIncome,
     livingCharges: p.livingCharges,
-    existingDebtPayments: Number(debts.rows[0].s),
+    existingDebtPayments: Number(debts.rows[0].s) + bankDebtEuros,
     existingRentalIncome: Number(rents.rows[0].s),
   };
 };
@@ -292,7 +295,7 @@ export const realEstateService = {
     const params = parsePurchaseParams(raw);
     const game = await requireGame(userId);
     const plan = await buildPlan(game, params, { query: query as any });
-    return summarize(plan, await investcoinsRepository.getBalance(userId));
+    return summarize(plan, await spendableCoins({ query } as any, userId, RE_DOMAIN));
   },
 
   async purchase(userId: string, raw: unknown) {
@@ -305,7 +308,7 @@ export const realEstateService = {
         const dup = await c.query(`SELECT 1 FROM re_properties WHERE game_id = $1 AND listing_id = $2 AND status <> 'sold'`, [game.id, params.listingId]);
         if (dup.rows.length > 0) throw new RealEstateError('ALREADY_OWNED', 'Tu possèdes déjà ce bien');
         const plan = await buildPlan(game, params, c);
-        const balance = await investcoinsRepository.getBalance(userId, c);
+        const balance = await spendableCoins(c, userId, RE_DOMAIN);
         const summary = summarize(plan, balance);
 
         if (!plan.evaluation.approved) {

@@ -6,5 +6,7 @@ export const bankRoutes = Router();
 
 bankRoutes.get('/overview', authMiddleware, c.overview);
 bankRoutes.get('/events', authMiddleware, c.events);
+bankRoutes.post('/personal/quote', authMiddleware, c.personalQuote);
+bankRoutes.post('/personal/borrow', authMiddleware, c.personalBorrow);
 bankRoutes.post('/loans/:id/repay', authMiddleware, c.earlyRepay);
 bankRoutes.get('/admin/stats', authMiddleware, c.adminStats);

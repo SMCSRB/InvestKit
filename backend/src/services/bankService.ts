@@ -37,6 +37,21 @@ const uuidOk = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{
 const fr = (n: number): string => n.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const coinsOfH = (h: number | string): number => Math.round(Number(h)) / 100;
 
+// Pièces réellement dépensables dans un domaine : solde moins les pièces empruntées réservées à un AUTRE domaine.
+export const spendableCoins = async (db: Db, userId: string, domain: string): Promise<number> => {
+  const balance = await investcoinsRepository.getBalance(userId, db as any);
+  const r = await q(db, 'SELECT COALESCE(SUM(coins), 0) AS s FROM bank_credit_balances WHERE user_id = $1 AND domain <> $2', [userId, domain]);
+  return Math.max(0, balance - Number(r.rows[0].s));
+};
+
+// Échéances mensuelles des prêts bancaires à annuités d'un domaine (actifs et en défaut), en pièces par mois.
+export const monthlyInstalmentCoins = async (db: Db, userId: string, domain: string): Promise<number> => {
+  const loans = (await q(db, `SELECT principal_coins, annual_rate_pct, months FROM bank_loans WHERE user_id = $1 AND domain = $2 AND status IN ('active','defaulted') AND repayment_type = 'annuity'`, [userId, domain])).rows;
+  let h = 0;
+  for (const l of loans) h += buildCoinSchedule({ principalCoins: l.principal_coins, annualRatePct: Number(l.annual_rate_pct), months: l.months }).rows[0].paymentH;
+  return h / 100;
+};
+
 export const logBankEvent = async (db: Db, userId: string, loanId: string | null, kind: string, message: string, details: object = {}) => {
   await q(db, 'INSERT INTO bank_events (user_id, loan_id, kind, message, details) VALUES ($1,$2,$3,$4,$5)', [userId, loanId, kind, message, JSON.stringify(details)]);
 };

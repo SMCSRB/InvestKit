@@ -53,3 +53,13 @@ export const applyUsuryCap = (ratePct: number, product: BankProduct, year: numbe
 };
 export const bankProductRatePct = (product: BankProduct, year: number): number =>
   Math.round(applyUsuryCap(bankBaseRatePct(year) + BANK_SPREAD_POINTS[product], product, year) * 100) / 100;
+
+// ── Prêt personnel (fléché Immobilier : apport, travaux, rénovation, découvert) ──
+// VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER. Plafond : 6 mois de revenus nets du profil. Un seul prêt personnel actif à la fois.
+export const PERSONAL_LOAN = {
+  incomeMonthsCap: 6,
+  minMonths: 6,
+  maxMonths: 60,
+  minPrincipalCoins: 25,
+  maxActive: 1,
+};
