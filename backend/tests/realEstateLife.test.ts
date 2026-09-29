@@ -352,6 +352,13 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       expect(sum.properties.every((p: any) => p.explanations.length >= 1)).toBe(true);
       const t = sum.totals;
       expect(t.netCashFlow).toBeCloseTo(t.rentCollected + t.recoverableChargesCollected - t.recoverableChargesPaid - t.nonRecoverableCharges - t.loanPayment - t.rentTax, 1);
+      // Deux chiffres distincts : effort d'épargne (mois normal) et capital remboursé.
+      expect(t.principalRepaid).toBe(t.loanPrincipal);
+      expect(t.savingsEffort).toBeCloseTo(Math.max(0, -t.normalCashFlow), 2);
+      for (const p of sum.properties.filter((x: any) => x.status === 'paying')) {
+        const L = p.lines;
+        expect(p.normalCashFlow).toBeCloseTo(L.rentDue - L.nonRecoverableCharges - L.loanPayment - L.rentTax, 1);
+      }
       expect(((await life.getMonthSummary(uid, 2010, 1)) as any).properties).toHaveLength(2);
       expect((await rejects(life.getMonthSummary(uid, 2010, 13))).code).toBe('INVALID_INPUT');
     });

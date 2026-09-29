@@ -38,6 +38,10 @@ const searchInfo = (propertyId: string, marketRent: number, asking: number, rati
 
 export { monthlyDraw };
 
+// Cash-flow d'un mois « normal » = net − somme des impacts des événements expliqués (dépôt, rattrapage, travaux…).
+const normalCashFlowOf = (r: { net_cash_flow: unknown; explanations: { cashFlowImpact?: number }[] | null }): number =>
+  round2(Number(r.net_cash_flow) - (r.explanations ?? []).reduce((a, e) => a + Number(e.cashFlowImpact ?? 0), 0));
+
 export const realEstateLifeService = {
   // Met un bien vacant en location. Le loyer demandé se règle en % du loyer de marché
   // (borné) : trop haut, la vacance s'allonge (voir engine/immo/rent.ts).
@@ -221,8 +225,13 @@ export const realEstateLifeService = {
     const sum = (k: string) => round2(rows.reduce((a, r) => a + Number(r.lines[k] ?? 0), 0));
     return {
       year, month,
-      properties: rows.map((r) => ({ propertyId: r.property_id, title: r.title, status: r.status, lines: r.lines, explanations: r.explanations, netCashFlow: Number(r.net_cash_flow), coinsDelta: r.coins_delta })),
+      properties: rows.map((r) => ({ propertyId: r.property_id, title: r.title, status: r.status, lines: r.lines, explanations: r.explanations, netCashFlow: Number(r.net_cash_flow), normalCashFlow: normalCashFlowOf(r), coinsDelta: r.coins_delta })),
       totals: rows.length === 0 ? null : {
+        // Deux chiffres distincts pour le joueur : l'effort d'épargne (mois « normal », sans événement ponctuel)
+        // et le capital remboursé (qui diminue la dette, donc enrichit le joueur).
+        normalCashFlow: round2(rows.reduce((a, r) => a + normalCashFlowOf(r), 0)),
+        savingsEffort: round2(Math.max(0, -rows.reduce((a, r) => a + normalCashFlowOf(r), 0))),
+        principalRepaid: sum('loanPrincipal'),
         rentCollected: sum('rentCollected'), recoverableChargesPaid: sum('recoverableChargesPaid'), recoverableChargesCollected: sum('recoverableChargesCollected'),
         nonRecoverableCharges: sum('nonRecoverableCharges'), loanPayment: sum('loanPayment'),
         loanInterest: sum('loanInterest'), loanPrincipal: sum('loanPrincipal'), loanInsurance: sum('loanInsurance'), rentTax: sum('rentTax'), netCashFlow: sum('netCashFlow'),
