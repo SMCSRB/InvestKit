@@ -508,7 +508,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       expect(re.created).toBeGreaterThanOrEqual(0);
       expect(re.destroyed).toBeGreaterThan(0);    // frais de notaire, d'expertise…
       expect(re.exchangeNet).not.toBe(0);          // apports, ventes
-      expect(re.netInjected).toBe(re.created - re.destroyed + re.exchangeNet);
+      expect(re.netInjected).toBe(re.created - re.destroyed + re.credited - re.repaid + re.exchangeNet);
       const total = (await query('SELECT COALESCE(SUM(amount), 0)::bigint AS s FROM investcoins_transactions WHERE domain = $1', ['real_estate'])).rows[0].s;
       expect(Number(total)).toBe(re.netInjected);
     });
