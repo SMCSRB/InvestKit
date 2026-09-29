@@ -118,3 +118,6 @@ Refactorisation sans changement visible : l'application Express est maintenant d
 2. `curl http://localhost:5000/health` répond `{"status":"ok",...}`.
 3. Le site fonctionne comme avant (connexion, Immobilier, Banque) : aucune différence attendue.
 4. (Facultatif) `cd backend && npm test` : tous les tests passent, dont `tests/http.test.ts`.
+
+## PR Intégration continue (CI)
+Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub → le workflow « CI » se lance sur chaque PR (tests du backend avec une base PostgreSQL, vérification des types, build du site). Une croix rouge = quelque chose est cassé ; le détail est cliquable. `npm audit` est informatif (n'échoue pas). Si cette PR n'a pas pu inclure le fichier (droits GitHub), l'étape est à faire à la main : voir la description de la PR.
