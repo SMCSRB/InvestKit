@@ -1,5 +1,5 @@
 import { round2, estimateMarketRent, averageVacancyPct } from '../../engine/immo';
-import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION } from '../../config/immoRules';
+import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION, greenValueFactor } from '../../config/immoRules';
 import { createRng, hashString, approxGaussian } from '../../utils/seededRandom';
 import type {
   City, CityMarket, Neighborhood, CityTier, Condition, EnergyClass, Expertise, Listing, ListingFilter,
@@ -248,7 +248,7 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     age: t.age,
     energyClass: t.energyClass,
     condition: t.condition,
-    price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition] * (urgent ?? 1)),
+    price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition] * greenValueFactor(t.type, t.energyClass) * (urgent ?? 1)),
     advertisedWorks: Math.round(t.advertisedWorksPerSqm * t.surfaceSqm * inflation),
     rentPerSqm: rent.rentPerSqm,
     marketRentMonthly: Math.round(rent.monthlyRent),
@@ -335,7 +335,8 @@ export const fictiveDataSource: RealEstateDataSource = {
     if (!city || !nbh) throw new RangeError('Bien inconnu');
     const typeFactor = TYPE_SPECS.find((s) => s.type === input.type)?.priceFactor ?? 1;
     const market = scaledMarket(city, year);
-    return Math.round(input.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * typeFactor * CONDITION_PRICE_FACTOR[input.condition]);
+    const green = input.energyClass ? greenValueFactor(input.type, input.energyClass) : 1;
+    return Math.round(input.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * typeFactor * CONDITION_PRICE_FACTOR[input.condition] * green);
   },
 
   async getListing(listingId: string, year: number): Promise<Listing | null> {

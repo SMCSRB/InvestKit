@@ -14,7 +14,11 @@ const newPlayer = async (balance = 300000, profile = 'executive') => {
   return uid;
 };
 const cheap = (l: any) => l.age === 'old' && l.advertisedWorks === 0 && l.condition !== 'to_renovate' && l.price > 40000 && l.price < 90000;
-const pick = async (pred: (l: any) => boolean = cheap, year = 2010) => (await src.listListings(year)).find(pred)!;
+const pick = async (pred: (l: any) => boolean = cheap, year = 2010, clean = true) => {
+  // Par défaut sans défaut caché (sinon des travaux à payer empêcheraient de louer) : le résultat ne dépend plus de l'ordre des annonces.
+  for (const l of await src.listListings(year)) { if (pred(l) && (!clean || (await src.getExpertise(l.id, year))!.hiddenDefects.length === 0)) return l; }
+  return undefined as any;
+};
 const buy = async (uid: string, l: any, coins = 1500, months = 240) => {
   await svc.purchase(uid, { listingId: l.id, downPaymentCoins: coins, months });
   return (await svc.listProperties(uid)).properties.find((p: any) => p.listing_id === l.id);
@@ -322,7 +326,7 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
 
     it('rénovation : travaux payés → bon état, énergie améliorée, valeur et loyer en hausse', async () => {
       const uid = await newPlayer(600000);
-      const l = await pick((x) => x.age === 'old' && x.price < 100000 && x.condition === 'to_renovate' && ['E', 'F', 'G'].includes(x.energyClass));
+      const l = await pick((x) => x.age === 'old' && x.price < 100000 && x.condition === 'to_renovate' && ['E', 'F', 'G'].includes(x.energyClass), 2010, false);
       expect(l, 'il faut un bien à rénover E/F/G dans le catalogue de test').toBeDefined();
       const prop = await buy(uid, l, 2500);
       const before = await life.getPortfolio(uid);

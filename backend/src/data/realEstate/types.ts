@@ -86,6 +86,7 @@ export interface ValuationInput {
   type: PropertyType;
   surfaceSqm: number;
   condition: Condition;
+  energyClass?: EnergyClass; // valeur verte : si fournie, la valeur en tient compte
 }
 
 export interface ListingFilter {

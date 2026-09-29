@@ -212,8 +212,9 @@ export const CATALOG_CALIBRATION: {
     'marvelle-6': 0.75, 'marvelle-1': 0.72, 'marvelle-7': 0.68,
     'valcourt-4': 0.9, 'valcourt-6': 0.85, 'valcourt-1': 0.82,
     'portelune-4': 0.8, 'portelune-6': 0.8, 'portelune-7': 0.7,
-    'clairval-4': 0.85, 'clairval-6': 0.85, 'clairval-3': 0.75,
+    'clairval-4': 0.85, 'clairval-6': 0.8, 'clairval-3': 0.7,
     'saint-aubrion-1': 0.88, 'saint-aubrion-2': 0.9,
+    'brumevalle-1': 0.93, 'brumevalle-7': 0.9,
   },
 };
 
@@ -237,3 +238,20 @@ export const GLI_PARAMS = {
 // La procédure et la dette continuent ; le locataire reste dans les lieux jusqu'au 1er avril.
 export const WINTER_TRUCE = { startMonth: 11, endMonth: 3 };
 export const inWinterTruce = (month: number): boolean => month >= WINTER_TRUCE.startMonth || month <= WINTER_TRUCE.endMonth;
+
+
+// ── Valeur verte : effet de la classe énergétique (DPE) sur le PRIX d'un bien, par rapport à la classe D ──────────
+// Sources : études des Notaires de France et articles de presse spécialisée (recherche web du 2026-09-29, à reconfirmer) :
+//  - appartement : environ −4 % par classe perdue, classe G ≈ −12 % par rapport à D ;
+//  - maison : environ −8 % par classe perdue, classe G ≈ −25 % par rapport à D, classe A ≈ +17 %.
+// Les valeurs des classes au-dessus de D (appartements) et intermédiaires (maisons A, B, C) sont EXTRAPOLÉES : VALEUR DE JEU, NON SOURCÉE,
+// À RECONFIRMER. Les studios suivent les appartements. Les loyers ont leur propre effet énergie (RENT_MODEL.energyFactors).
+export const GREEN_VALUE_FACTORS: { apartment: Record<EnergyClass, number>; house: Record<EnergyClass, number> } = {
+  apartment: { A: 1.12, B: 1.08, C: 1.04, D: 1, E: 0.96, F: 0.92, G: 0.88 },
+  house: { A: 1.17, B: 1.12, C: 1.06, D: 1, E: 0.92, F: 0.84, G: 0.75 },
+};
+export const greenValueFactor = (type: 'studio' | 'apartment' | 'house', energyClass: EnergyClass): number => {
+  const f = (type === 'house' ? GREEN_VALUE_FACTORS.house : GREEN_VALUE_FACTORS.apartment)[energyClass];
+  if (f === undefined) throw new RangeError(`Classe énergie inconnue : ${energyClass}`);
+  return f;
+};

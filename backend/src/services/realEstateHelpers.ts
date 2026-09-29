@@ -41,8 +41,8 @@ export const scheduleOf = (loan: any): LoanSchedule =>
 // l'état actuel, interpolée mois par mois entre deux années.
 export const valueOfProperty = async (p: any, y: number, m: number): Promise<number> => {
   const at = async (year: number) => {
-    const now = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.condition }, year);
-    const then = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.initial_condition }, p.purchase_year);
+    const now = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.condition, energyClass: String(p.energy_class).trim() as EnergyClass }, year);
+    const then = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.initial_condition, energyClass: String(p.initial_energy_class ?? p.energy_class).trim() as EnergyClass }, p.purchase_year);
     return valueFromMarket(Number(p.purchase_price), now, then);
   };
   const thisYear = await at(y);

@@ -417,17 +417,22 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       expect((await row(prop.id)).energy_class.trim()).toBe('G');
       expect(pv).toMatchObject({ currentClass: 'G', newClass: 'E', canRenovate: true, reason: null, bannedNow: true, bannedAfter: false, currentClassBannedFromYear: 2025, newClassBannedFromYear: 2034, affordable: true });
       expect(pv.rentEffectPct).toBeGreaterThan(0);
-      // gain de loyer chiffré (G → E) ; la valeur ne dépend pas de la classe énergétique dans ce modèle : gain de valeur nul, affiché tel quel
+      // gain de loyer chiffré (G → E) et gain de valeur (valeur verte : +4 % par classe pour un appartement)
       expect(pv.rentAfter).toBeGreaterThan(pv.rentBefore);
       expect(pv.rentGainMonthly).toBeCloseTo(pv.rentAfter - pv.rentBefore, 2);
       expect(pv.rentGainYearly).toBeCloseTo(pv.rentGainMonthly * 12, 2);
-      expect(pv.valueGain).toBe(0);
-      expect(pv.paybackYears).toBeCloseTo(pv.costEuros / pv.rentGainYearly, 1);
-      expect(['profitable', 'profitable_slowly']).toContain(pv.verdict);
-      // D → C : aucun gain direct de loyer (facteurs identiques) : le devis le dit clairement
+      expect(pv.valueGain).toBeGreaterThan(0);
+      expect(pv.valueGain / pv.valueBefore).toBeGreaterThan(0.07);          // G → E : 0,88 → 0,96 = +9 % environ
+      expect(pv.valueGain / pv.valueBefore).toBeLessThan(0.11);
+      // amortissement : coût des travaux moins la valeur gagnée, rapporté au loyer en plus
+      expect(pv.paybackYears).toBeCloseTo(Math.max(0, pv.costEuros - pv.valueGain) / pv.rentGainYearly, 1);
+      expect(['profitable', 'profitable_slowly', 'partly_recovered']).toContain(pv.verdict);
+      // D → C : aucun gain de loyer (facteurs identiques) mais un gain de valeur (+4 %) qui ne couvre pas le coût des travaux
       await query(`UPDATE re_properties SET energy_class = 'D' WHERE id = $1`, [prop.id]);
       const d: any = await sales.renovationPreview(uid, prop.id);
-      expect(d).toMatchObject({ newClass: 'C', rentGainMonthly: 0, valueGain: 0, paybackYears: null, verdict: 'no_direct_gain' });
+      expect(d).toMatchObject({ newClass: 'C', rentGainMonthly: 0, paybackYears: null, verdict: 'partly_recovered' });
+      expect(d.valueGain).toBeGreaterThan(0);
+      expect(d.valueGain).toBeLessThan(d.costEuros);
       await query(`UPDATE re_properties SET energy_class = 'G' WHERE id = $1`, [prop.id]);
       const r: any = await sales.renovate(uid, prop.id);
       expect(pv.coinsCost).toBe(r.coinsCharged);
@@ -437,6 +442,16 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       const other = await setup();
       expect((await rejects(sales.renovationPreview(other.uid, prop.id))).code).toBe('NOT_FOUND');
       expect((await rejects(sales.renovationPreview(uid, 'x'))).code).toBe('INVALID_INPUT');
+    });
+
+    it('valeur verte : après une rénovation, la valeur du bien monte du rapport des facteurs de classe (G → E : 0,96 / 0,88)', async () => {
+      const { uid, prop } = await setup({ startYear: 2025, balance: 900000, pred: (l) => cheap(l) });
+      await query(`UPDATE re_properties SET energy_class = 'G' WHERE id = $1`, [prop.id]);
+      const value = async () => Number(((await life.getPortfolio(uid)) as any).properties[0].value);
+      const before = await value();
+      await sales.renovate(uid, prop.id);
+      const after = await value();
+      expect(after / before).toBeCloseTo(0.96 / 0.88, 2);
     });
 
     it('bail qui arrive à échéance alors que la loi interdit désormais de louer : le locataire part, pas de remise en location', async () => {

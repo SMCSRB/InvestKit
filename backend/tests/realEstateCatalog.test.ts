@@ -293,3 +293,38 @@ describe('catalogue fictif : annonces proches de l\'équilibre', () => {
     expect(l.title).toContain('vente pressée');
   });
 });
+
+describe('valeur verte : la classe énergétique (DPE) influence le prix et la valeur', () => {
+  it('facteurs : classe D = référence, points d\'ancrage des sources (appartement G −12 %, maison G −25 %, maison A +17 %), décroissants de A à G', async () => {
+    const { GREEN_VALUE_FACTORS, greenValueFactor } = await import('../src/config/immoRules');
+    for (const t of ['apartment', 'house'] as const) {
+      expect(GREEN_VALUE_FACTORS[t].D).toBe(1);
+      const order = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
+      for (let i = 1; i < order.length; i++) expect(GREEN_VALUE_FACTORS[t][order[i]]).toBeLessThan(GREEN_VALUE_FACTORS[t][order[i - 1]]);
+    }
+    expect(GREEN_VALUE_FACTORS.apartment.G).toBe(0.88);
+    expect(GREEN_VALUE_FACTORS.house.G).toBe(0.75);
+    expect(GREEN_VALUE_FACTORS.house.A).toBe(1.17);
+    expect(greenValueFactor('studio', 'G')).toBe(0.88);    // les studios suivent les appartements
+    expect(greenValueFactor('house', 'E')).toBe(0.92);
+    expect(() => greenValueFactor('house', 'Z' as any)).toThrow(RangeError);
+  });
+  it('la valeur estimée dépend de la classe ; sans classe fournie, comme avant', async () => {
+    const base = { cityId: 'marvelle', neighborhoodId: 'marvelle:centre', type: 'apartment' as const, surfaceSqm: 40, condition: 'good' as const };
+    const d = await src.estimateValue({ ...base, energyClass: 'D' }, 2020);
+    expect(await src.estimateValue(base, 2020)).toBe(d);
+    expect(await src.estimateValue({ ...base, energyClass: 'G' }, 2020)).toBe(Math.round(d * 0.88));
+    expect(await src.estimateValue({ ...base, energyClass: 'A' }, 2020)).toBe(Math.round(d * 1.12));
+  });
+  it('le prix des annonces en tient compte : il reste cohérent avec la valeur estimée (classe comprise)', async () => {
+    const ls = await src.listListings(2020);
+    const same = ls.filter((l) => l.condition === 'good' && !l.title.includes('vente pressée'));
+    expect(same.length).toBeGreaterThan(5);
+    for (const l of same) {
+      const perSqm = l.price / l.surfaceSqm;
+      const est = await src.estimateValue({ cityId: l.cityId, neighborhoodId: l.neighborhoodId, type: l.type, surfaceSqm: l.surfaceSqm, condition: l.condition, energyClass: l.energyClass }, 2020);
+      expect(Math.abs(l.price - est) / est).toBeLessThan(0.15);   // le prix reste autour de la valeur estimée (bruit propre à chaque annonce, hors ventes pressées)
+      expect(perSqm).toBeGreaterThan(0);
+    }
+  });
+});

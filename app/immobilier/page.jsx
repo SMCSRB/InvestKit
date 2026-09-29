@@ -254,13 +254,14 @@ function RenovationPanel({ property, onDone, notify }) {
           <table style={{ fontSize: 14, borderCollapse: 'collapse', marginBottom: 8 }}>
             <tbody>
               <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Loyer de marché</td><td>{eur2(pv.rentBefore)} → {eur2(pv.rentAfter)} <strong style={{ color: pv.rentGainMonthly > 0 ? '#86efac' : '#cbd5e1' }}>({pv.rentGainMonthly > 0 ? '+' : ''}{eur2(pv.rentGainMonthly)}/mois, {eur(pv.rentGainYearly)}/an)</strong></td></tr>
-              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Valeur du bien</td><td>{eur(pv.valueBefore)} <strong style={{ color: pv.valueGain > 0 ? '#86efac' : '#cbd5e1' }}>({pv.valueGain > 0 ? '+' : ''}{eur(pv.valueGain)})</strong>{pv.valueGain <= 0 && <span style={{ color: '#94a3b8' }}> — dans ce jeu, la valeur ne dépend pas de la classe énergétique</span>}</td></tr>
-              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Amorti en</td><td>{pv.paybackYears ? `${pv.paybackYears} ans de loyers en plus` : 'jamais par les loyers'}</td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Valeur du bien<HelpTip term="valeur-verte" /></td><td>{eur(pv.valueBefore)} → {eur(pv.valueBefore + pv.valueGain)} <strong style={{ color: pv.valueGain > 0 ? '#86efac' : '#cbd5e1' }}>({pv.valueGain > 0 ? '+' : ''}{eur(pv.valueGain)})</strong></td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Amorti en</td><td>{pv.paybackYears === 0 ? 'tout de suite : la valeur gagnée couvre les travaux' : pv.paybackYears ? `${pv.paybackYears} ans de loyers en plus (coût des travaux moins la valeur gagnée)` : 'jamais par les loyers'}</td></tr>
             </tbody>
           </table>
           <p style={{ fontSize: 14, margin: '8px 0', color: pv.verdict === 'profitable' ? '#86efac' : pv.verdict === 'profitable_slowly' ? '#fbbf24' : '#fca5a5' }}>
-            {pv.verdict === 'profitable' && '✅ Opération rentable : le loyer en plus rembourse les travaux en moins de 15 ans.'}
-            {pv.verdict === 'profitable_slowly' && '⚠️ Rentable, mais lentement : plus de 15 ans de loyers en plus pour rembourser les travaux.'}
+            {pv.verdict === 'profitable' && '✅ Opération rentable : la valeur gagnée et le loyer en plus remboursent les travaux en moins de 15 ans.'}
+            {pv.verdict === 'partly_recovered' && `⚠️ La valeur du bien récupère ${Math.round((pv.valueGain / pv.costEuros) * 100)} % du coût des travaux, mais le loyer n'augmente pas : c'est surtout utile pour éviter l'interdiction de louer.`}
+            {pv.verdict === 'profitable_slowly' && '⚠️ Rentable, mais lentement : plus de 15 ans de loyers en plus pour rembourser ce que la valeur gagnée ne couvre pas.'}
             {pv.verdict === 'no_direct_gain' && '⚠️ Aucun gain direct de loyer ni de valeur : cette rénovation ne se justifie que pour éviter l\'interdiction de louer.'}
           </p>
           <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 8px' }}>Le nouveau loyer s&apos;applique à la prochaine mise en location (le loyer d&apos;un bail en cours ne change pas). Seuil de 15 ans : repère du jeu.</p>
