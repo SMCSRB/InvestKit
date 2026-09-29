@@ -252,6 +252,35 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       expect((await rejects(sales.repriceSale(other.uid, other.prop.id, 1))).code).toBe('INVALID_INPUT'); // pas en vente
     });
 
+    it('options de prix : plus cher = plus long à vendre ; le portefeuille montre la vente en cours ; SÉCURITÉ', async () => {
+      let uid = '', prop: any, info: any;
+      for (let i = 0; i < 30; i++) { ({ uid, prop } = await setup({ balance: 300000 })); info = await sales.sell(uid, prop.id, 1.1); if (!info.sold) break; }
+      expect(info.sold).toBe(false);
+      const o: any = await sales.saleOptions(uid, prop.id);
+      expect(o.options.map((x: any) => x.ratio)).toEqual([0.85, 0.9, 0.95, 1, 1.05, 1.1]);
+      for (let i = 1; i < o.options.length; i++) {
+        expect(o.options[i].askingPrice).toBeGreaterThan(o.options[i - 1].askingPrice);
+        expect(o.options[i].monthlyBuyerProbabilityPct).toBeLessThanOrEqual(o.options[i - 1].monthlyBuyerProbabilityPct);
+        expect(o.options[i].expectedMonthsToSell).toBeGreaterThanOrEqual(o.options[i - 1].expectedMonthsToSell);
+      }
+      expect(o.current.askingPrice).toBe(info.askingPrice);
+      // aucun effet de bord : l'état de la vente n'a pas bougé
+      const before = await row(prop.id);
+      await sales.saleOptions(uid, prop.id);
+      expect(Number((await row(prop.id)).sale_asking_price)).toBe(Number(before.sale_asking_price));
+      // le portefeuille expose la vente en cours, avec le nouveau prix après modification
+      await sales.repriceSale(uid, prop.id, 0.9);
+      const pf: any = await life.getPortfolio(uid);
+      const item = pf.properties.find((x: any) => x.id === prop.id);
+      expect(item.saleSearch.askingRatio).toBeCloseTo(0.9, 2);
+      expect(item.saleSearch.monthsSoFar).toBe(0);
+      // bien non mis en vente : pas de saleSearch ; autre joueur : refusé
+      const other = await setup({ balance: 300000 });
+      expect(((await life.getPortfolio(other.uid)) as any).properties[0].saleSearch).toBeNull();
+      expect((await rejects(sales.saleOptions(other.uid, prop.id))).code).toBe('NOT_FOUND');
+      expect((await rejects(sales.saleOptions(uid, 'x'))).code).toBe('INVALID_INPUT');
+    });
+
     it('REPRODUCTIBLE : même graine, mêmes actions = même vente (mois, prix, produit net)', async () => {
       const run = async () => {
         const { uid, prop } = await setup({ balance: 300000, seed: 'vente-rejeu' });

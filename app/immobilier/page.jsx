@@ -171,9 +171,62 @@ function Listings({ game, refresh, notify }) {
   );
 }
 
+
+// ── Vente d'un bien : choix du prix demandé (avec délai attendu) et modification pendant la vente
+function SalePanel({ property, onDone, notify }) {
+  const [options, setOptions] = useState(null);
+  const [ratio, setRatio] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const sale = property.saleSearch;
+
+  useEffect(() => {
+    let alive = true;
+    call(`/properties/${property.id}/sell/options`).then((o) => { if (alive) { setOptions(o); setRatio(sale ? Math.round(sale.askingRatio * 20) / 20 : 1); } }).catch((e) => notify(e.message, true));
+    return () => { alive = false; };
+  }, [property.id, sale?.askingPrice]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const chosen = options?.options.find((o) => Math.abs(o.ratio - ratio) < 0.001);
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const path = sale ? `/properties/${property.id}/sell/reprice` : `/properties/${property.id}/sell`;
+      const r = await call(path, 'POST', { askingRatio: ratio });
+      notify(r.message);
+      await onDone();
+    } catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+
+  if (!options) return <p style={{ color: '#94a3b8', fontSize: 13 }}>Calcul des prix possibles…</p>;
+  return (
+    <div style={{ ...card, marginTop: 8, background: 'rgba(30,41,59,0.6)' }}>
+      <strong style={{ color: '#fff' }}>{sale ? 'Modifier le prix de vente' : 'Vendre ce bien'}</strong>
+      <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 8px' }}>
+        Valeur estimée : {eur(options.estimatedValue)}. Plus le prix demandé est élevé, plus l&apos;acquéreur est long à trouver.
+        {options.occupied && ` Le bien est occupé : le prix final est réduit de ${options.occupiedDiscountPct} %.`}
+      </p>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {options.options.map((o) => (
+          <button key={o.ratio} type="button" onClick={() => setRatio(o.ratio)} style={{ ...btn(Math.abs(o.ratio - ratio) < 0.001), padding: '6px 10px', fontSize: 13 }}>{Math.round(o.ratio * 100)} %</button>
+        ))}
+      </div>
+      {chosen && (
+        <p style={{ fontSize: 14, margin: '10px 0' }}>
+          Prix demandé : <strong>{eur(chosen.askingPrice)}</strong> · chance de vendre chaque mois : {chosen.monthlyBuyerProbabilityPct} % · délai moyen : environ {Number(chosen.expectedMonthsToSell).toFixed(1)} mois (au plus {chosen.maxMonthsToSell}).
+        </p>
+      )}
+      {sale && <p style={{ fontSize: 13, color: '#93c5fd' }}>En vente depuis {sale.monthsSoFar} mois, au prix de {eur(sale.askingPrice)}. Le nouveau prix s&apos;applique dès le mois prochain.</p>}
+      <button style={btn(true)} disabled={busy || (sale && chosen && Math.abs(chosen.askingPrice - sale.askingPrice) < 1)} onClick={submit}>
+        {sale ? 'Appliquer le nouveau prix' : 'Mettre en vente'}
+      </button>
+    </div>
+  );
+}
+
 // ── Portefeuille
 function Portfolio({ data, summary, refresh, notify }) {
   const [busy, setBusy] = useState(false);
+  const [saleOpen, setSaleOpen] = useState(null);
   const act = async (fn, okMsg) => {
     setBusy(true);
     try { const r = await fn(); notify(r?.message || okMsg); await refresh(); } catch (e) { notify(e.message, true); }
@@ -211,9 +264,11 @@ function Portfolio({ data, summary, refresh, notify }) {
               {p.searching && <>
                 <button style={btn(false)} disabled={busy} onClick={() => act(() => call(`/properties/${p.id}/reprice`, 'POST', { askingRentRatio: Math.max(0.7, p.search.askingRatio - 0.05) }), 'Loyer baissé de 5 %')}>Baisser le loyer de 5 %</button>
               </>}
-              {!p.sale_planned && p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => act(() => call(`/properties/${p.id}/sell`, 'POST', { askingRatio: 1 }), 'Bien mis en vente au prix du marché')}>Mettre en vente</button>}
+              {p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => setSaleOpen(saleOpen === p.id ? null : p.id)}>{p.saleSearch ? 'Modifier le prix de vente' : 'Vendre'}</button>}
               {data.missedMonths >= 3 && <button style={btn(false)} disabled={busy} onClick={() => act(() => call('/distress/sell', 'POST', { propertyId: p.id }), 'Vente à l\'amiable réalisée')}>Vendre à l&apos;amiable (−12 %)</button>}
             </div>
+            {p.saleSearch && <div style={{ fontSize: 13, color: '#93c5fd', marginTop: 8 }}>🏷️ En vente à {eur(p.saleSearch.askingPrice)} depuis {p.saleSearch.monthsSoFar} mois (chance de vendre : {p.saleSearch.monthlyBuyerProbabilityPct} % par mois).</div>}
+            {saleOpen === p.id && <SalePanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
           </div>
         ))}
       </div>

@@ -21,6 +21,7 @@ realEstateRoutes.get('/summary', authMiddleware, c.summary);
 realEstateRoutes.post('/properties/:id/landlord-notice', authMiddleware, c.landlordNotice);
 realEstateRoutes.get('/events', authMiddleware, c.events);
 realEstateRoutes.post('/properties/:id/sell', authMiddleware, c.sell);
+realEstateRoutes.get('/properties/:id/sell/options', authMiddleware, c.saleOptions);
 realEstateRoutes.post('/properties/:id/sell/reprice', authMiddleware, c.repriceSale);
 realEstateRoutes.post('/properties/:id/renovate', authMiddleware, c.renovate);
 realEstateRoutes.post('/distress/sell', authMiddleware, c.distressSell);

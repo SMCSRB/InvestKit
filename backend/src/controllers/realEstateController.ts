@@ -53,6 +53,7 @@ export const realEstateController = {
   landlordNotice: handle('Erreur lors du congé', (r, uid) => life.landlordNotice(uid, r.params.id, r.body?.reason)),
   events: handle('Erreur lors de la récupération des événements', (r, uid) => life.listEvents(uid, r.query.limit)),
   sell: handle('Erreur lors de la mise en vente', (r, uid) => sales.sell(uid, r.params.id, r.body?.askingRatio)),
+  saleOptions: handle('Erreur lors du calcul des prix de vente', (r, uid) => sales.saleOptions(uid, r.params.id)),
   repriceSale: handle('Erreur lors de la modification du prix', (r, uid) => sales.repriceSale(uid, r.params.id, r.body?.askingRatio)),
   distressSell: handle('Erreur lors de la vente amiable', (r, uid) => sales.distressSell(uid, r.body?.propertyId)),
   renovate: handle('Erreur lors de la rénovation', (r, uid) => sales.renovate(uid, r.params.id)),

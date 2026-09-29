@@ -14,7 +14,7 @@ import {
   pickTenantType, departureHazard, noticeFor, isLatePayment, startsDefaulting, resolveDefault, rollDamage, reletFees,
   rollUnexpectedWorks, settleDeposit, checkLandlordNotice, capRentAtRelet, rentalBannedByEnergy, TenantType, UnitType,
 } from '../engine/immo';
-import { processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
+import { describeSale, processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
 import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS } from '../config/immoRules';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export const realEstateLifeService = {
         };
       }
       items.push({
-        ...p, search, value, remainingLoan: debt, equity: round2(value - debt), marketRent, tension,
+        ...p, search, saleSearch: await describeSale(p, y, m), value, remainingLoan: debt, equity: round2(value - debt), marketRent, tension,
         searching: p.search_elapsed_months !== null,
         hint: p.status === 'vacant' && p.search_elapsed_months === null
           ? (Number(p.pending_works_eur) > 0 ? 'PENDING_WORKS' : 'NOT_LISTED') : null,

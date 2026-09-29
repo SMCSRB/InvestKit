@@ -147,7 +147,36 @@ const saleInfo = async (p: any, y: number, value: number, asking: number, ratio:
   };
 };
 
+// État de la recherche d'acquéreur d'un bien en vente (calculé côté serveur, sans effet de bord).
+export const describeSale = async (p: any, y: number, m: number) => {
+  if (p.sale_search_elapsed_months === null || p.sale_search_elapsed_months === undefined) return null;
+  const value = await valueOfProperty(p, y, m);
+  const asking = Number(p.sale_asking_price);
+  const ratio = value > 0 ? Math.round((asking / value) * 1000) / 1000 : 1;
+  const info = await saleInfo(p, y, value, asking, ratio, p.sale_search_elapsed_months);
+  return { ...info, monthsSoFar: p.sale_search_elapsed_months, askingPrice: asking, askingRatio: ratio };
+};
+
 export const realEstateSaleService = {
+  // Propositions de prix (85 % à 110 % de la valeur estimée) avec délai attendu : aide à choisir sans rien engager.
+  async saleOptions(userId: string, propertyId: unknown) {
+    if (!uuidOk(propertyId)) throw new RealEstateError('INVALID_INPUT', 'Identifiant invalide');
+    const game = await requireGame(userId);
+    const p = (await query('SELECT * FROM re_properties WHERE id = $1 AND game_id = $2', [propertyId, game.id])).rows[0];
+    if (!p || p.status === 'sold') throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
+    const y = game.simulated_year, m = game.simulated_month;
+    const value = await valueOfProperty(p, y, m);
+    const options = [];
+    for (let r = Math.round(SALE_PARAMS.askingRatioMin * 100); r <= Math.round(SALE_PARAMS.askingRatioMax * 100); r += 5) {
+      const ratio = r / 100;
+      const i = await saleInfo(p, y, value, round2(value * ratio), ratio, 0);
+      options.push({ ratio, askingPrice: i.askingPrice, expectedSalePrice: i.expectedSalePrice, expectedMonthsToSell: i.expectedMonthsToSellWithCap,
+        monthlyBuyerProbabilityPct: i.monthlyBuyerProbabilityPct, maxMonthsToSell: i.maxMonthsToSell });
+    }
+    return { propertyId: p.id, estimatedValue: value, occupied: p.status === 'let', occupiedDiscountPct: p.status === 'let' ? SALE_PARAMS.occupiedDiscountPct : 0,
+      current: await describeSale(p, y, m), options };
+  },
+
   // Met un bien en vente à l'amiable. Prix demandé = % de la valeur estimée (borné) ; acquéreur trouvé mois par mois.
   async sell(userId: string, propertyId: unknown, ratioRaw: unknown) {
     if (!uuidOk(propertyId)) throw new RealEstateError('INVALID_INPUT', 'Identifiant invalide');
