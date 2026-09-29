@@ -18,3 +18,12 @@ export const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de requêtes. Réessayez plus tard.' },
 });
+
+// Export et suppression de compte : opérations lourdes ou irréversibles, très limitées (5 par heure et par IP).
+export const accountLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de demandes. Réessayez dans une heure.' },
+});

@@ -104,11 +104,11 @@ export default function PrivacyPage() {
             title: '6. Vos Droits',
             content: 'Vous avez le droit de :',
             list: [
-              { text: 'Accéder à vos données personnelles' },
+              { text: 'Accéder à vos données personnelles (export JSON depuis la page « Mes données »)' },
               { text: 'Rectifier les informations inexactes' },
-              { text: 'Demander la suppression de vos données' },
+              { text: 'Supprimer votre compte et vos données immédiatement, depuis la page « Mes données » (/mes-donnees)' },
               { text: 'Vous opposer au traitement de vos données' },
-              { text: 'Demander la portabilité de vos données' },
+              { text: 'Récupérer vos données dans un format portable (JSON) depuis /mes-donnees' },
             ],
           },
           {
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
           },
           {
             title: '8. Conservation des Données',
-            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. Après la suppression du compte, nous conservons les données minimum requises par la loi pendant 90 jours, puis nous les supprimons définitivement.',
+            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. La suppression du compte est immédiate et définitive : vos données sont effacées et le journal de sécurité est anonymisé. Les obligations légales de conservation (par exemple la facturation d'un abonnement) restent réservées.',
             list: null,
           },
           {

@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { authController } from '../controllers/authController';
 import { authMiddleware } from '../middleware/auth';
-import { authLimiter } from '../middleware/rateLimiter';
+import { authLimiter, accountLimiter } from '../middleware/rateLimiter';
+import { accountController } from '../controllers/accountController';
 
 export const authRoutes = Router();
 
@@ -23,3 +24,7 @@ authRoutes.post('/set-free-domain', authMiddleware, authController.setFreeDomain
 authRoutes.post('/2fa/setup', authMiddleware, authController.setupTwoFactor);
 authRoutes.post('/2fa/verify-setup', authMiddleware, authController.verifyTwoFactorSetup);
 authRoutes.post('/2fa/disable', authMiddleware, authController.disableTwoFactor);
+
+// Droits RGPD : export de ses données, suppression du compte
+authRoutes.get('/me/export', authMiddleware, accountLimiter, accountController.exportData);
+authRoutes.post('/me/delete', authMiddleware, accountLimiter, accountController.deleteAccount);

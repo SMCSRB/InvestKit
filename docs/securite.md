@@ -11,3 +11,9 @@ Feuille de route v6, phases 1 et 6. Ce lot ne change rien de visible pour un jou
 1. Ajouter `FIELD_ENCRYPTION_KEY=<64 caractères hexadécimaux>` dans `backend/.env.local` (générer avec `openssl rand -hex 32`), puis redémarrer l'API.
 2. `cd backend && npm run encrypt-totp` pour chiffrer les secrets 2FA existants.
 3. Pour donner un accès administrateur : passer le rôle du compte à `admin` en base, puis activer la 2FA depuis le profil.
+
+## RGPD : export et suppression (PR Sécurité 2)
+- `GET /auth/me/export` : JSON de toutes les données de l'utilisateur (sans mot de passe, secrets 2FA ni identifiants Stripe), journalisé (`data_export`).
+- `POST /auth/me/delete` : exige la phrase `SUPPRIMER`, le mot de passe et, si la 2FA est active, un code (ou code de secours). L'abonnement Stripe est résilié d'abord ; en cas d'échec rien n'est supprimé. Puis `DELETE FROM users` (cascade) ; le journal d'audit est conservé et anonymisé (`user_id` → NULL, seule modification permise par le déclencheur append-only).
+- Limité à 5 requêtes par heure (`accountLimiter`).
+- Limite connue : les badges du navigateur (localStorage) ne sont pas effacés par le serveur.

@@ -118,6 +118,7 @@ export default function OptimizedFooter() {
               { href: '/conditions', label: 'Conditions d\'Utilisation' },
               { href: '/legal', label: 'Mentions légales' },
               { href: '/cookies', label: 'Cookies' },
+              { href: '/mes-donnees', label: 'Mes données (RGPD)' },
               { href: '/contact', label: 'Contact' },
               { href: '/support', label: 'Aide' },
             ].map((link) => (

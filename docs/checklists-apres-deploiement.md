@@ -100,3 +100,14 @@ Pour provoquer un défaut sur un compte de test : emprunter en Bourse puis dépe
 4. Inscription : le code reçu par email a bien 6 chiffres.
 5. Compte administrateur **sans** 2FA : `/api/v1/economy/admin/coins-by-domain` répond 403 « Active d'abord la double authentification ». Avec 2FA : OK.
 6. Journal d'audit : `psql … -c "UPDATE audit_logs SET action='x'"` est refusé (« ajout seul »).
+
+## PR Sécurité 2 — RGPD (export et suppression du compte)
+À faire avec un compte de test, jamais un vrai compte de joueur : la suppression est définitive.
+1. Pied de page → **Mes données (RGPD)** (`/mes-donnees`). Connecté, la page s'ouvre.
+2. **Télécharger mes données** : un fichier JSON se télécharge. Ouvre-le : ton profil, tes pièces, tes portefeuilles, ta banque, tes biens… Vérifie qu'il n'y a **ni mot de passe, ni secret 2FA**.
+3. **Supprimer mon compte** : le bouton reste grisé tant que tu n'as pas écrit SUPPRIMER et saisi ton mot de passe. Avec un mauvais mot de passe : refus.
+4. Compte avec 2FA : un champ « code à 6 chiffres » apparaît ; sans code valide : refus.
+5. Si le compte avait un abonnement Pro Stripe, il est résilié avant la suppression (si Stripe échoue, le compte n'est PAS supprimé et un message l'explique).
+6. Après suppression : impossible de se reconnecter ; le classement n'affiche plus le joueur. Le journal d'audit garde les lignes mais sans lien avec un utilisateur.
+7. Plus de 5 essais en une heure : message « trop de demandes ».
+8. `/privacy` : la section « Vos droits » et « Conservation » parlent de `/mes-donnees` et d'une suppression immédiate (texte à faire valider par un juriste).
