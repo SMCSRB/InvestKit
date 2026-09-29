@@ -27,3 +27,13 @@ Audit 800 €, décote logement occupé 10 %, rénovation 450 €/m², échelle 
 ## Calibration du cash-flow
 Les loyers ne sont jamais gonflés. Leviers dans `CATALOG_CALIBRATION` (échelle de prix par ville, échelle des charges non récupérables).
 Résultats de simulation présentés à l'utilisateur ; choix en attente.
+
+## Annonces « ventes pressées » (calage précis du catalogue)
+Pour qu'il existe dans chaque ville au moins 2–3 annonces proches de l'équilibre (cash-flow attendu après impôt ≥ −30 €/mois,
+30 % d'apport, sans aléas), 13 annonces précises sont vendues sous le prix du marché (facteur 0,68 à 0,92, titre « (vente pressée) »)
+— `CATALOG_CALIBRATION.urgentSaleFactor`. Loyers, charges et règles globales inchangés. Valeur de jeu, non sourcée, à reconfirmer.
+Limite connue : à Marvelle (métropole), l'équilibre n'est tenu qu'avec les taux/prix des premières années ; en 2026 (taux élevés) les
+annonces les plus proches restent vers −50 à −130 €/mois.
+
+## Rappel : à reconfirmer
+Coefficients de lissage de la surtaxe (1/20, 1/10, 15/100, 20/100, 25/100) : reconstitués, NON vérifiés sur le texte officiel.

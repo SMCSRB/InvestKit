@@ -268,3 +268,28 @@ describe('catalogue : loyer calculé à partir du lieu, jamais figé', () => {
     await expect(src.getIrlAnnualChangePct(2009)).rejects.toThrow(RangeError);
   });
 });
+
+describe('catalogue fictif : annonces proches de l\'équilibre', () => {
+  // Cash-flow mensuel attendu après impôt (sans aléas), prêt 25 ans, 30 % d'apport, impôt 28,2 %.
+  it('chaque ville propose au moins 2 annonces à ≥ −30 €/mois (année 2010, 30 % d\'apport) ; les loyers ne sont pas modifiés', async () => {
+    const { computeMonthlyPayment } = await import('../src/engine/immo');
+    const year = 2010;
+    const rate = await src.getLoanRatePct(year, 300);
+    const listings = await src.listListings(year);
+    const good: Record<string, number> = {};
+    for (const l of listings) {
+      const b = computeAcquisition({ price: l.price, age: l.age, works: l.advertisedWorks, notaryRule: NOTARY_RULE });
+      const loan = b.totalCost - (b.notaryFees + 0.3 * l.price);
+      const pay = computeMonthlyPayment(loan, rate, 300) + (loan * LOAN_INSURANCE_RATE_PCT) / 100 / 12;
+      const rent = l.marketRentMonthly * (1 - l.vacancyPct / 100);
+      const nonrec = Object.values(l.annualCharges).reduce((a, x) => a + x, 0) / 12;
+      const tax = 0.282 * Math.max(0, rent - nonrec - ((loan * rate) / 100 / 12) * 0.95);
+      if (rent - nonrec - pay - tax >= -30) good[l.cityId] = (good[l.cityId] ?? 0) + 1;
+    }
+    for (const c of await src.listCities()) expect(good[c.id] ?? 0).toBeGreaterThanOrEqual(2);
+  });
+  it('les ventes pressées sont signalées dans le titre', async () => {
+    const l = (await src.listListings(2010)).find((x) => x.id === 'marvelle-6')!;
+    expect(l.title).toContain('vente pressée');
+  });
+});

@@ -232,6 +232,7 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     RENT_MODEL
   );
   const tension = round2(clamp(market.rentalTension + nbh.tensionOffset, 0, 1));
+  const urgent = CATALOG_CALIBRATION.urgentSaleFactor[t.id];
   const tenancyMonths = TENANCY_MONTHS[t.type];
 
   return {
@@ -241,13 +242,13 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     neighborhoodName: nbh.name,
     year,
     type: t.type,
-    title: t.title,
+    title: urgent ? `${t.title} (vente pressée)` : t.title,
     surfaceSqm: t.surfaceSqm,
     rooms: t.rooms,
     age: t.age,
     energyClass: t.energyClass,
     condition: t.condition,
-    price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition]),
+    price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition] * (urgent ?? 1)),
     advertisedWorks: Math.round(t.advertisedWorksPerSqm * t.surfaceSqm * inflation),
     rentPerSqm: rent.rentPerSqm,
     marketRentMonthly: Math.round(rent.monthlyRent),

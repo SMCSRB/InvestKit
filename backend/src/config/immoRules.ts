@@ -172,12 +172,12 @@ export const SALE_PARAMS = {
   agencyFeePct: 5.78,
   // Diagnostics obligatoires (à la charge du vendeur) : ~300 € le dossier complet (extraits de sites de diagnostiqueurs).
   diagnosticsCost: 300,
-  // Audit énergétique (maisons et immeubles en monopropriété, classes E/F/G) : coût de JEU, non sourcé.
+  // Audit énergétique (maisons et immeubles en monopropriété, classes E/F/G) : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
   energyAuditCost: 800,
   // Prix demandé : fourchette autorisée, en % de la valeur estimée du bien.
   askingRatioMin: 0.85,
   askingRatioMax: 1.10,
-  // Bien vendu occupé : décote de JEU (non sourcée) sur le prix demandé.
+  // Bien vendu occupé : décote sur le prix demandé — VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
   occupiedDiscountPct: 10,
   // Délai de vente : même mécanique que la location (probabilité mensuelle, plafond), délais plus longs.
   market: { minMonths: 1.5, maxMonths: 8, capOverMeanFactor: 1.5, askingRentRatioMin: 0.85, askingRentRatioMax: 1.1 },
@@ -187,17 +187,32 @@ export const SALE_PARAMS = {
     graceMonths: 2,                  // délai laissé pour une vente amiable avant la vente forcée
     amicableDiscountPct: 12,         // vente amiable rapide : décote plus faible
     forcedDiscountPct: 25,           // vente forcée : la décote constatée en adjudication va de 10 à 30 % (moyenne ~30 %)
-    // Frais de poursuite : 8 000 à 15 000 € à Paris d'après les extraits ; mis à l'échelle du catalogue.
+    // Frais de poursuite : 8 000 à 15 000 € à Paris d'après les extraits ; la mise à l'échelle du catalogue
+    // (6 %, min/max) est une VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
     proceedingCostsPct: 6, proceedingCostsMin: 4000, proceedingCostsMax: 15000,
   },
-  // Rénovation énergétique à la demande du joueur (JEU) : coût au m², gain de classes.
+  // Rénovation énergétique à la demande du joueur : coût au m² — VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
   renovationCostPerSqm: 450,
 };
 
 // ── Calage du catalogue (rendement brut, charges) ─────────────────────────
 // Réglages de calibration du catalogue fictif : 1 = valeurs d'origine. Les loyers ne sont JAMAIS gonflés ;
 // le rendement brut se règle sur le NIVEAU DES PRIX de chaque ville (rendement = loyer × 12 / prix).
-export const CATALOG_CALIBRATION: { priceScaleByCity: Record<string, number>; nonRecoverableChargeScale: number } = {
+export const CATALOG_CALIBRATION: {
+  priceScaleByCity: Record<string, number>;
+  nonRecoverableChargeScale: number;
+  urgentSaleFactor: Record<string, number>;
+} = {
   priceScaleByCity: {},
   nonRecoverableChargeScale: 1,
+  // « Ventes pressées » (succession, divorce, mutation…) : annonces PRÉCISES vendues sous le prix du marché, pour qu'il
+  // existe dans chaque ville quelques biens proches de l'équilibre (cash-flow après impôt ≥ −30 €/mois avec ~30 %
+  // d'apport). Valeur de jeu, non sourcée, à reconfirmer. Facteur appliqué au prix ; loyer, charges et règles inchangés.
+  urgentSaleFactor: {
+    'marvelle-6': 0.75, 'marvelle-1': 0.72, 'marvelle-7': 0.68,
+    'valcourt-4': 0.9, 'valcourt-6': 0.85, 'valcourt-1': 0.82,
+    'portelune-4': 0.8, 'portelune-6': 0.8, 'portelune-7': 0.7,
+    'clairval-4': 0.85, 'clairval-6': 0.85, 'clairval-3': 0.75,
+    'saint-aubrion-1': 0.88, 'saint-aubrion-2': 0.9,
+  },
 };
