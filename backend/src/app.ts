@@ -9,6 +9,7 @@ import { educationRoutes } from './routes/education';
 import { tradingRoutes } from './routes/trading';
 import { realEstateRoutes } from './routes/realEstate';
 import { bankRoutes } from './routes/bank';
+import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
 const app = express();
@@ -40,6 +41,25 @@ app.use('/api', apiLimiter);
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Documentation de l'API : JSON toujours disponible, page Swagger UI hors production
+// (ou si DOCS_ENABLED=true). La page charge Swagger UI depuis un CDN : on assouplit
+// la CSP uniquement pour cette route.
+app.get('/api/v1/openapi.json', (_req: Request, res: Response) => {
+  res.json(buildOpenApiSpec());
+});
+if (!env.isProd || process.env.DOCS_ENABLED === 'true') {
+  app.get('/api/v1/docs', (_req: Request, res: Response) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self'"
+    );
+    res.type('html').send(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>InvestKit API</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css"></head>
+<body><div id="ui"></div><script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>SwaggerUIBundle({ url: '/api/v1/openapi.json', dom_id: '#ui' });</script></body></html>`);
+  });
+}
 
 // API routes (versionnées dès le départ - /api/v1/...)
 // /api/auth reste disponible en alias pour ne pas casser un frontend

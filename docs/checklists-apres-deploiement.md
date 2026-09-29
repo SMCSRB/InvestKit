@@ -121,3 +121,8 @@ Refactorisation sans changement visible : l'application Express est maintenant d
 
 ## PR Intégration continue (CI)
 Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub → le workflow « CI » se lance sur chaque PR (tests du backend avec une base PostgreSQL, vérification des types, build du site). Une croix rouge = quelque chose est cassé ; le détail est cliquable. `npm audit` est informatif (n'échoue pas). Si cette PR n'a pas pu inclure le fichier (droits GitHub), l'étape est à faire à la main : voir la description de la PR.
+
+## PR Documentation de l'API (OpenAPI)
+1. `https://ton-site/api/v1/openapi.json` (ou `http://localhost:5000/api/v1/openapi.json`) affiche du texte JSON commençant par `"openapi":"3.0.3"`.
+2. `…/api/v1/docs` affiche la page **Swagger UI** avec les routes classées par thème (Compte, Banque, Immobilier…). En production cette page est **désactivée** par défaut ; pour l'activer, ajoute `DOCS_ENABLED=true` dans `backend/.env.local`. (La page charge Swagger depuis un CDN : il faut internet.)
+3. Rappel pour le développeur : ajouter une route sans la décrire dans `backend/src/openapi.ts` fait échouer `npm test`.
