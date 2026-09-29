@@ -63,3 +63,26 @@ export const PERSONAL_LOAN = {
   minPrincipalCoins: 25,
   maxActive: 1,
 };
+
+// ── Prêt sur portefeuille (Lombard) : garanti par les titres du domaine, taux variable ─────────────────
+// Rapport prêt / valeur (LTV) par type d'actif : `max` = plafond à l'ouverture ; `call` = appel de marge ; `liquidation` = vente forcée.
+// Actions 50 % / 65 % / 80 %, obligations 70 %, crypto 30 % (décision produit). Les ETF sont traités comme des actions ; les obligations
+// n'existent pas encore dans les données (ligne prête). Seuils d'appel et de liquidation des obligations et de la crypto : proportionnels
+// (×1,3 et ×1,6 du plafond) = VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER.
+export type CollateralClass = 'stock' | 'etf' | 'bond' | 'crypto';
+export const LOMBARD_LTV_PCT: Record<CollateralClass, { max: number; call: number; liquidation: number }> = {
+  stock: { max: 50, call: 65, liquidation: 80 },
+  etf: { max: 50, call: 65, liquidation: 80 },
+  bond: { max: 70, call: 91, liquidation: 100 },
+  crypto: { max: 30, call: 39, liquidation: 48 },
+};
+export const LOMBARD = {
+  domains: ['stocks', 'crypto'] as string[],
+  minPrincipalCoins: 25,            // VALEUR DE JEU
+  haircutPct: 3,                    // décote d'une vente forcée sur le cours de clôture : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER
+  maxActivePerDomain: 1,            // pas de boucle de levier : un seul prêt à la fois par domaine, calculé à l'ouverture
+};
+// Simplification signalée au joueur : la Bourse n'a qu'un cours de CLÔTURE par an (pas de plus bas de l'année dans les données).
+export const LOMBARD_SIMPLIFICATION =
+  'Simplification : les cours du jeu sont des clôtures annuelles. L\'appel de marge n\'est évalué qu\'au passage d\'une année ; ' +
+  'un krach en cours d\'année n\'est pas vu (dans la réalité, il peut arriver n\'importe quel jour).';

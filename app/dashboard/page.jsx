@@ -575,6 +575,8 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       await loadTradingData();
+      // Prêt sur portefeuille : appel de marge, vente forcée, intérêts impayés… affichés tels que calculés par le serveur.
+      if (data.bankEvents?.length) setTradingError(data.bankEvents.map((e) => e.message).join(' '));
     } catch (err) {
       setTradingError(err.message);
     } finally {
@@ -3558,6 +3560,15 @@ export default function DashboardPage() {
 
                 {tradingError && (
                   <p style={{ color: '#f43f5e', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
+                )}
+
+                {/* Prêt sur portefeuille en cours : rapport prêt/valeur et appel de marge (calculés par le serveur) */}
+                {tradingPortfolio?.bank?.loan && (
+                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(59,130,246,0.12)' : 'rgba(245,158,11,0.15)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'rgba(245,158,11,0.6)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'rgba(255,255,255,0.85)', fontSize: '13px' }}>
+                    🏦 Prêt sur portefeuille : dette {tradingPortfolio.bank.loan.debtCoins} 🪙 · rapport prêt/valeur {tradingPortfolio.bank.loan.ltvPct} %.
+                    {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: '#fbbf24' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
+                    <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
+                  </div>
                 )}
 
                 {/* Accès : domaine gratuit / Pro (vérifié côté serveur) */}

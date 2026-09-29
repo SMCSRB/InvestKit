@@ -6,8 +6,10 @@ import Link from 'next/link';
 import HelpTip from '../components/HelpTip';
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/bank`;
+const TRADING_API = `${process.env.NEXT_PUBLIC_API_URL}/trading`;
 const num = (n, d = 2) => Number(n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: d });
 const DOMAIN_LABEL = { real_estate: 'Immobilier', stocks: 'Bourse', crypto: 'Crypto', bonds: 'Obligations' };
+const LOMBARD_DOMAINS = [['stocks', 'Bourse'], ['crypto', 'Crypto']];
 const PRODUCT_LABEL = { personal: 'Prêt personnel', portfolio: 'Prêt sur portefeuille', mortgage: 'Prêt immobilier' };
 const STATUS_LABEL = { active: 'En cours', repaid: 'Soldé', defaulted: 'En défaut', liquidated: 'Liquidé' };
 const card = { background: 'rgba(15,23,42,0.65)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 14, padding: 16 };
@@ -78,16 +80,101 @@ function PersonalLoan({ onDone, notify }) {
   );
 }
 
+function PortfolioLoan({ onDone, notify }) {
+  const [domain, setDomain] = useState('stocks');
+  const [amount, setAmount] = useState(100);
+  const [quote, setQuote] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const simulate = async () => {
+    setBusy(true);
+    try { setQuote(await call('/portfolio/quote', 'POST', { domain, amountCoins: Number(amount) })); } catch (e) { setQuote({ error: e.message }); }
+    setBusy(false);
+  };
+  const borrow = async () => {
+    setBusy(true);
+    try { const r = await call('/portfolio/borrow', 'POST', { domain, amountCoins: Number(amount) }); notify(r.message); setQuote(null); await onDone(); } catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+  return (
+    <div style={{ ...card, marginTop: 14 }}>
+      <h3 style={{ margin: '0 0 6px', color: '#fff' }}>Prêt sur portefeuille<HelpTip term="pret-portefeuille" /></h3>
+      <p style={{ margin: '0 0 10px', fontSize: 13, color: '#94a3b8' }}>Tes titres (Bourse ou Crypto) servent de garantie. Taux variable, intérêts payés à chaque passage d&apos;année, remboursable à tout moment sans indemnité. Les pièces empruntées ne servent que dans le domaine choisi.</p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <label style={{ fontSize: 13 }}>Domaine
+          <select style={{ ...input, display: 'block' }} value={domain} onChange={(e) => { setDomain(e.target.value); setQuote(null); }}>{LOMBARD_DOMAINS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
+        </label>
+        <label style={{ fontSize: 13 }}>Montant (🪙)
+          <input style={{ ...input, display: 'block', width: 120 }} type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </label>
+        <button style={btn(false)} disabled={busy} onClick={simulate}>Simuler</button>
+      </div>
+      {quote?.error && <p style={{ color: '#fca5a5' }}>{quote.error}</p>}
+      {quote?.loan && (
+        <div style={{ marginTop: 12, fontSize: 14, display: 'grid', gap: 5 }}>
+          <div>Garantie : {num(quote.collateral.valueCoins, 0)} 🪙 de titres · tu peux emprunter au plus <strong>{num(quote.collateral.capacityCoins, 0)} 🪙</strong> (actions 50 %, crypto 30 %)</div>
+          <div>Taux : <strong>{num(quote.loan.annualRatePct)} %</strong> variable → environ {num(quote.loan.yearlyInterestCoins)} 🪙 d&apos;intérêts par an</div>
+          {quote.afterPurchase.leverage && <div>Si tu achètes des titres avec ces pièces : levier <strong>×{num(quote.afterPurchase.leverage)}</strong><HelpTip term="levier" /></div>}
+          <div style={{ color: '#fbbf24' }}>⚠️ {quote.margin}<HelpTip term="appel-de-marge" /></div>
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>{quote.simplification}</div>
+          <div style={{ color: quote.approved ? '#86efac' : '#fca5a5' }}>{quote.approved ? 'Banque : accord' : 'Banque : refus'}{quote.reasons.map((r) => <div key={r.code} style={{ fontSize: 13 }}>• {r.message}</div>)}</div>
+          <div><button style={btn(true)} disabled={busy || !quote.approved} onClick={borrow}>Emprunter</button></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Carte d'un prêt sur portefeuille : rapport prêt/valeur, seuils, appel de marge, remboursement partiel ou total.
+function PortfolioLoanCard({ loan, view, onDone, notify }) {
+  const [coins, setCoins] = useState(10);
+  const [busy, setBusy] = useState(false);
+  const v = view?.bank?.loan;
+  const lim = view?.bank?.limits;
+  const pay = async (amount) => {
+    setBusy(true);
+    try { const r = await call(`/portfolio/loans/${loan.id}/repay`, 'POST', { coins: amount }); notify(r.message); await onDone(); } catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+  const stateColor = v?.state === 'call' ? '#fbbf24' : v?.state === 'liquidation' ? '#f87171' : '#86efac';
+  return (
+    <div style={{ marginTop: 8 }}>
+      {v && lim && (
+        <div style={{ fontSize: 14, color: '#cbd5e1' }}>
+          Valeur des titres en garantie : <strong>{num(lim.value, 0)} 🪙</strong> · dette {num(v.debtCoins)} 🪙 · rapport prêt/valeur <strong style={{ color: stateColor }}>{num(v.ltvPct)} %</strong><HelpTip term="appel-de-marge" />
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>Appel de marge au-delà de {num(lim.callLimit, 0)} 🪙 de dette, vente forcée au-delà de {num(lim.liquidationLimit, 0)} 🪙 (aux cours de clôture de l&apos;année).</div>
+          {v.state === 'call' || v.marginCall ? <div style={{ ...card, borderColor: '#fbbf24', marginTop: 6 }}>⚠️ <strong>Appel de marge.</strong> Rembourse une partie du prêt ou achète des titres avant le prochain passage d&apos;année, sinon tes titres seront vendus de force.</div> : null}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+        <input style={{ ...input, width: 100 }} type="number" min="1" value={coins} onChange={(e) => setCoins(e.target.value)} aria-label="Pièces à rembourser" />
+        <button style={btn(false)} disabled={busy} onClick={() => pay(Number(coins))}>Rembourser une partie</button>
+        <button style={btn(false)} disabled={busy} onClick={() => pay(Math.ceil(loan.balanceCoins + loan.overdueCoins))}>Solder (sans indemnité)</button>
+      </div>
+    </div>
+  );
+}
+
 export default function BanquePage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [data, setData] = useState(null);
   const [events, setEvents] = useState([]);
+  const [views, setViews] = useState({});
   const [toast, setToast] = useState(null);
   const notify = useCallback((msg, isError) => { setToast({ msg, isError }); setTimeout(() => setToast(null), 8000); }, []);
 
   const refresh = useCallback(async () => {
-    try { const [o, e] = await Promise.all([call('/overview'), call('/events?limit=30')]); setData(o); setEvents(e.events || []); }
+    try {
+      const [o, e] = await Promise.all([call('/overview'), call('/events?limit=30')]); setData(o); setEvents(e.events || []);
+      // Rapport prêt/valeur des prêts sur portefeuille : calculé par le serveur (vue du portefeuille du domaine).
+      const doms = [...new Set(o.loans.filter((l) => l.product === 'portfolio' && (l.status === 'active' || l.status === 'defaulted')).map((l) => l.domain))];
+      const out = {};
+      for (const d of doms) {
+        const res = await fetch(`${TRADING_API}/portfolio?domain=${d}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+        if (res.ok) out[d] = await res.json();
+      }
+      setViews(out);
+    }
     catch (e) { notify(e.message, true); }
   }, [notify]);
 
@@ -119,6 +206,7 @@ export default function BanquePage() {
                 {data.reservedCredit.length === 0 ? <div style={{ fontSize: 18, color: '#cbd5e1', marginTop: 4 }}>—</div> : data.reservedCredit.map((r) => <div key={r.domain} style={{ fontSize: 18, fontWeight: 700, color: '#fbbf24' }}>{num(r.coins, 0)} 🪙 <span style={{ fontSize: 13, color: '#94a3b8' }}>utilisables en {DOMAIN_LABEL[r.domain] || r.domain} seulement</span></div>)}</div>
             </div>
             <PersonalLoan onDone={refresh} notify={notify} />
+            <PortfolioLoan onDone={refresh} notify={notify} />
             <h3 style={{ color: '#fff', margin: '20px 0 8px' }}>Mes prêts</h3>
             {data.loans.length === 0 && <p style={{ color: '#94a3b8' }}>Aucun prêt pour l&apos;instant.</p>}
             <div style={{ display: 'grid', gap: 10 }}>
@@ -129,12 +217,13 @@ export default function BanquePage() {
                     <span style={{ color: l.status === 'active' ? '#86efac' : l.status === 'defaulted' ? '#fca5a5' : '#94a3b8' }}>{STATUS_LABEL[l.status] || l.status}</span>
                   </div>
                   <div style={{ fontSize: 14, color: '#cbd5e1', margin: '6px 0' }}>
-                    Emprunté {num(l.principalCoins, 0)} 🪙 à {num(l.annualRatePct)} % sur {l.months} mois · reste à rembourser <strong>{num(l.balanceCoins)} 🪙</strong> · mois écoulés {l.monthsElapsed}/{l.months}
+                    Emprunté {num(l.principalCoins, 0)} 🪙 à {num(l.annualRatePct)} %{l.repaymentType === 'interest_only' ? ' variable, durée indéterminée (intérêts à chaque passage d\'année)' : ` sur ${l.months} mois`} · reste à rembourser <strong>{num(l.balanceCoins)} 🪙</strong>{l.repaymentType === 'annuity' && <> · mois écoulés {l.monthsElapsed}/{l.months}</>}
                     {l.nextInstalmentCoins !== null && <> · prochaine mensualité ≈ {num(l.nextInstalmentCoins)} 🪙</>}
                     {l.overdueCoins > 0 && <span style={{ color: '#fca5a5' }}> · impayé : {num(l.overdueCoins)} 🪙 ({l.missedInstalments} échéance(s))</span>}
                   </div>
                   <div style={{ fontSize: 13, color: '#94a3b8' }}>Déjà rendu : capital {num(l.principalPaidCoins)} 🪙 + intérêts {num(l.interestPaidCoins)} 🪙</div>
-                  {(l.status === 'active' || l.status === 'defaulted') && <div style={{ marginTop: 8 }}><button style={btn(false)} onClick={() => repay(l)}>Solder ce prêt<HelpTip term="remboursement-anticipe" /></button></div>}
+                  {(l.status === 'active' || l.status === 'defaulted') && l.repaymentType === 'annuity' && <div style={{ marginTop: 8 }}><button style={btn(false)} onClick={() => repay(l)}>Solder ce prêt<HelpTip term="remboursement-anticipe" /></button></div>}
+                  {(l.status === 'active' || l.status === 'defaulted') && l.repaymentType === 'interest_only' && <PortfolioLoanCard loan={l} view={views[l.domain]} onDone={refresh} notify={notify} />}
                 </div>
               ))}
             </div>

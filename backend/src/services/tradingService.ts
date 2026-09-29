@@ -9,6 +9,9 @@ import { userRepository } from '../repositories/userRepository';
 import { DomainConfig, getDomain } from '../data/marketData';
 import { getBuyAccess, BuyAccess } from '../utils/entitlements';
 import { computePerformancePct, chargeForBuy, creditForSell } from '../utils/performance';
+import { query } from '../utils/db';
+import { computeNetPerformance } from '../engine/immo';
+import { bankPortfolioService, portfolioLoanView, portfolioDebtInfo } from './bankPortfolioService';
 import {
   MAX_TRADE_QUANTITY,
   MAX_QUANTITY_DECIMALS,
@@ -79,13 +82,20 @@ const snapshot = async (
   year: number
 ): Promise<void> => {
   const { marketValue } = valuePositions(domain, positions, year);
+  // Classement net de dettes : un prêt sur portefeuille déduit ses intérêts, le gain est rapporté au capital propre, et le levier est affiché.
+  const debt = await portfolioDebtInfo(tx, userId, domain.id);
+  const borrowed = debt.debt > 0 || debt.interestPaid > 0;
+  const net = borrowed
+    ? computeNetPerformance({ equity: marketValue, cumulativeCashFlow: totals.totalProceeds, invested: totals.totalBought, interestPaid: debt.interestPaid, borrowedInvested: Math.min(totals.totalBought, Math.max(0, debt.debt - debt.reserve)) })
+    : null;
   await leaderboardRepository.upsertSnapshot(tx, {
     userId,
     mode: MODE,
     domain: domain.id,
     year,
-    performancePct: computePerformancePct({ marketValue, ...totals }),
+    performancePct: net ? net.performancePct : computePerformancePct({ marketValue, ...totals }),
     capitalCommitted: totals.totalBought,
+    leverage: net ? net.leverage : null,
   });
 };
 
@@ -119,7 +129,9 @@ export const tradingService = {
     }
 
     const access = accessFor(user, domain.id);
+    const bank = ['stocks', 'crypto'].includes(domain.id) ? await portfolioLoanView({ query } as any, userId, domain, portfolio.positions, portfolio.simulated_year) : null;
     return {
+      bank,
       domain: domain.id,
       positions: portfolio.positions,
       simulatedYear: portfolio.simulated_year,
@@ -236,6 +248,9 @@ export const tradingService = {
           }, tx);
         }
 
+        // Titres en garantie d'un prêt : ce qui manque à la garantie est remboursé sur le produit de la vente, sinon la vente est refusée.
+        const release = await bankPortfolioService.releaseCollateral(tx as any, userId, domain, remaining, year, proceeds);
+
         const totals = {
           totalBought: portfolio.total_bought,
           totalProceeds: portfolio.total_proceeds + proceeds,
@@ -243,7 +258,7 @@ export const tradingService = {
         await virtualPortfolioRepository.save(tx, portfolio.id, { positions: remaining, ...totals });
         await snapshot(tx, userId, domain, remaining, totals, year);
 
-        return { success: true, proceeds, price, positions: remaining };
+        return { success: true, proceeds, price, positions: remaining, loanAutoRepaid: release.autoRepaid, loanMessage: release.message };
       }
     );
   },
@@ -261,18 +276,23 @@ export const tradingService = {
         const newYear = portfolio.simulated_year + 1;
         await virtualPortfolioRepository.setYear(tx, portfolio.id, newYear);
 
+        // Prêt sur portefeuille : intérêts, nouveau taux, appel de marge ou vente forcée aux cours de la nouvelle année.
+        const bank = await bankPortfolioService.processYearStep(tx as any, userId, domain, portfolio, newYear);
+        const positions = bank.positions;
         const totals = {
           totalBought: portfolio.total_bought,
-          totalProceeds: portfolio.total_proceeds,
+          totalProceeds: portfolio.total_proceeds + bank.proceedsCoins,
         };
-        await snapshot(tx, userId, domain, portfolio.positions, totals, newYear);
+        if (bank.changed) await virtualPortfolioRepository.save(tx, portfolio.id, { positions, ...totals });
+        await snapshot(tx, userId, domain, positions, totals, newYear);
 
-        const { marketValue } = valuePositions(domain, portfolio.positions, newYear);
+        const { marketValue } = valuePositions(domain, positions, newYear);
         return {
           success: true,
           simulatedYear: newYear,
           marketValue,
           performancePct: computePerformancePct({ marketValue, ...totals }),
+          bankEvents: bank.events,
         };
       }
     );

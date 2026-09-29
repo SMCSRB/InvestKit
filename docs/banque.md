@@ -37,3 +37,19 @@ Pas de pénalités de retard ; le paiement est « tout ou rien » chaque mois ; 
 - **Échéances** : une par mois de jeu de l'Immobilier ; un impayé est signalé dans le mois, 3 de suite = défaut et blocage.
 - **Classement net de dettes** : gain du bien moins les intérêts payés, rapporté au capital propre (investi − part financée par emprunt, plancher 10 % de l'investi) ; le **levier** (investi / capital propre) est affiché au classement (colonne « Levier », migration 023). Sans emprunt : formule inchangée, levier ×1.
 - **Page `/banque`** : vue d'ensemble (dette, crédit fléché non dépensé), simulation et emprunt, liste des prêts, remboursement anticipé, journal.
+
+## Lot 3 — prêt sur portefeuille (Lombard) : Bourse et Crypto
+- **Garantie** : les titres du domaine. Prêt maximum à l'ouverture : actions et ETF 50 %, obligations 70 % (ligne prête, pas encore de données), crypto 30 % de la valeur. **Appel de marge** à 65 % (crypto 39 %), **vente forcée** à 80 % (crypto 48 %). Seuils par classe dans `config/bankRules.ts` (`LOMBARD_LTV_PCT`).
+- **Taux variable** : taux de base de l'année + 2 points (valeur de jeu, non sourcée) ; intérêts de l'année écoulée payés à chaque passage d'année, le taux est ensuite remis à jour.
+- **Fléché** : les pièces empruntées ne servent que dans le domaine du prêt. Un seul prêt à la fois par domaine et un par année de jeu, calculé à l'ouverture : pas de boucle de levier (levier maximum ×1,5 pour les actions, ×1,3 pour la crypto).
+- **Horloge** : celle du domaine (l'année de jeu du portefeuille). Intérêts impayés : ils s'accumulent ; 3 années de suite = défaut et blocage.
+- **Cours de clôture (simplification signalée au joueur)** : les données n'ont qu'un cours de clôture par an, pas de « plus bas de l'année ». L'appel de marge n'est donc évalué qu'au passage d'une année ; un krach en cours d'année n'est pas vu. Le message est affiché dans la simulation et dans chaque appel de marge ou vente forcée.
+- **Appel de marge** : au passage d'année, si la dette dépasse le seuil d'appel, le joueur est prévenu et a jusqu'au passage suivant pour rembourser une partie ou acheter des titres ; sinon vente forcée.
+- **Vente forcée** : vente proportionnelle des titres, avec une décote de 3 % (valeur de jeu), jusqu'à ramener la dette sous le plafond d'ouverture ; le produit rembourse le prêt. Si tout est vendu et qu'il reste une dette : défaut, compte bloqué, la dette reste due.
+- **Vente de titres en garantie** : ce qui manque à la garantie est remboursé automatiquement sur le produit de la vente ; si le produit ne suffit pas, la vente est refusée (on ne peut pas vider la garantie).
+- **Remboursement** partiel ou total à tout moment, sans indemnité.
+- **Classement net de dettes** (Bourse et Crypto) : intérêts déduits, gain rapporté au capital propre, levier affiché ; sans prêt, formule inchangée.
+- **Écrans** : carte du prêt dans `/banque` (rapport prêt/valeur, seuils, appel de marge, remboursement), bandeau dans le Simulateur (tableau de bord) et affichage des messages au passage d'année.
+
+## Reste à faire (validé, pas encore codé)
+Procédure de rétablissement après défaut (perte du rang et des badges du domaine, redémarrage avec un capital de base) ; « valeur verte » de l'immobilier (juste après la Banque) ; unification 1 🪙 = 20 € (plus tard) ; horloge unique (plus tard) ; taux d'usure (structure prête).

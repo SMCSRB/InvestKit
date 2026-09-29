@@ -8,5 +8,8 @@ bankRoutes.get('/overview', authMiddleware, c.overview);
 bankRoutes.get('/events', authMiddleware, c.events);
 bankRoutes.post('/personal/quote', authMiddleware, c.personalQuote);
 bankRoutes.post('/personal/borrow', authMiddleware, c.personalBorrow);
+bankRoutes.post('/portfolio/quote', authMiddleware, c.portfolioQuote);
+bankRoutes.post('/portfolio/borrow', authMiddleware, c.portfolioBorrow);
+bankRoutes.post('/portfolio/loans/:id/repay', authMiddleware, c.portfolioRepay);
 bankRoutes.post('/loans/:id/repay', authMiddleware, c.earlyRepay);
 bankRoutes.get('/admin/stats', authMiddleware, c.adminStats);

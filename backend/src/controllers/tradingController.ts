@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { DOMAINS } from '../data/marketData';
+import { BankError } from '../services/bankService';
 import { tradingService, TradingError, resolveDomainOrThrow } from '../services/tradingService';
 
 // Le domaine vient de ?domain= (GET) ou du corps (POST). Absent = 'stocks',
@@ -28,6 +29,10 @@ const handle = (fallback: string, fn: (req: AuthRequest, userId: string) => Prom
     try {
       res.json(await fn(req, req.user.userId));
     } catch (error) {
+      if (error instanceof BankError) {
+        res.status(400).json({ error: error.message, code: error.code, details: error.details });
+        return;
+      }
       if (error instanceof TradingError) {
         res.status(STATUS[error.code] ?? 400).json({ error: error.message, code: error.code });
         return;

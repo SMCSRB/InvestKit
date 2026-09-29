@@ -175,6 +175,7 @@ export const bankService = {
       const loan = (await q(c, `SELECT * FROM bank_loans WHERE id = $1 AND user_id = $2 FOR UPDATE`, [loanIdRaw, userId])).rows[0];
       if (!loan) throw new BankError('NOT_FOUND', 'Prêt introuvable');
       if (loan.status !== 'active' && loan.status !== 'defaulted') throw new BankError('INVALID_INPUT', 'Ce prêt est déjà clos');
+      if (loan.repayment_type === 'interest_only') throw new BankError('INVALID_INPUT', 'Un prêt sur portefeuille se rembourse depuis la carte du prêt (remboursement partiel ou total, sans indemnité).');
       const remainingMonths = Math.max(0, loan.months - loan.accrued_instalments);
       const balanceH = Number(loan.balance_h), dueI = Number(loan.due_interest_h);
       const penaltyH = earlyRepaymentPenaltyH(balanceH, remainingMonths, EARLY_REPAYMENT);
