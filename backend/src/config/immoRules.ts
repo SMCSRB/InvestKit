@@ -84,10 +84,24 @@ export const TENANCY_MONTHS: Record<UnitType, number> = { studio: 24, apartment:
 // payés passe en bon état et gagne 2 classes énergétiques, sans dépasser C.
 export const RENOVATION_RULES: { levels: number; bestClass: EnergyClass } = { levels: 2, bestClass: 'C' };
 
-// Fiscalité simplifiée du socle : taux appliqué aux loyers encaissés, par
-// profil. Valeurs de JEU (pas des taux légaux) ; les régimes réels
-// (micro-foncier, réel, LMNP…) sont des extensions, à vérifier à la source.
-export const RENT_TAX_RATE_BY_PROFILE: Record<ProfileId, number> = { student: 15, employee: 30, executive: 45 };
+// ── Fiscalité des loyers (voir engine/immo/rent.ts pour la base de calcul) ──
+// Taux = tranche marginale de l'impôt sur le revenu du profil + prélèvements sociaux.
+// Barème de l'impôt sur le revenu 2026 (revenus 2025), part unique : 0 % jusqu'à 11 600 €,
+// 11 % jusqu'à 29 579 €, 30 % jusqu'à 84 577 €, 41 % jusqu'à 181 917 €, 45 % au-delà
+// (service-public.gouv.fr, extrait de recherche consulté le 2026-09-29 ; loi de finances 2026).
+// Tranche retenue selon le revenu net du profil (× 12, abattement forfaitaire de 10 % non
+// modélisé) : étudiant ~10,8 k€ (0 % puis 11 % dès que les loyers dépassent le seuil → 11 %),
+// salarié ~28,8 k€ (11 %), cadre ~54 k€ (30 %). Foyer d'une seule personne, sans quotient familial.
+// Prélèvements sociaux sur revenus fonciers : 17,2 % en 2026 (CSG 9,2 + CRDS 0,5 + prélèvement de
+// solidarité 7,5) ; la hausse de la CSG à 10,6 % (total 18,6 %) ne concerne pas les revenus fonciers
+// (sources de presse et de conseil, à reconfirmer sur un texte officiel : URSSAF / impots.gouv.fr).
+export const INCOME_TAX_MARGINAL_PCT_BY_PROFILE: Record<ProfileId, number> = { student: 11, employee: 11, executive: 30 };
+export const SOCIAL_CHARGES_ON_RENT_PCT = 17.2;
+export const RENT_TAX_RATE_BY_PROFILE: Record<ProfileId, number> = {
+  student: INCOME_TAX_MARGINAL_PCT_BY_PROFILE.student + SOCIAL_CHARGES_ON_RENT_PCT,
+  employee: INCOME_TAX_MARGINAL_PCT_BY_PROFILE.employee + SOCIAL_CHARGES_ON_RENT_PCT,
+  executive: INCOME_TAX_MARGINAL_PCT_BY_PROFILE.executive + SOCIAL_CHARGES_ON_RENT_PCT,
+};
 
 // Conversion de jeu : 1 🪙 = 20 € en Immobilier (décision produit).
 export const EUROS_PER_COIN = 20;

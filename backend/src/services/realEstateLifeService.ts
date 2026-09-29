@@ -93,8 +93,8 @@ export const realEstateLifeService = {
       }
       return searchInfo(p.id, marketRent, asking, ratio, tension, found,
         found
-          ? `Locataire trouvé tout de suite : loyer de ${asking.toFixed(2)} € par mois dès ce mois-ci.`
-          : `Annonce publiée à ${asking.toFixed(2)} € (${Math.round(ratio * 100)} % du marché de ${marketRent.toFixed(0)} €).`);
+          ? `Locataire trouvé tout de suite : loyer de ${fr(asking)} € par mois dès ce mois-ci.`
+          : `Annonce publiée à ${fr(asking)} € (${Math.round(ratio * 100)} % du marché de ${marketRent.toFixed(0)} €).`);
     });
   },
 
@@ -116,7 +116,7 @@ export const realEstateLifeService = {
       const asking = round2(marketRent * ratioRaw);
       await c.query('UPDATE re_properties SET asking_rent = $2, last_asking_ratio = $3 WHERE id = $1', [p.id, asking, ratioRaw]);
       return searchInfo(p.id, marketRent, asking, ratioRaw, tension, false,
-        `Loyer demandé ramené à ${asking.toFixed(2)} € (${Math.round(ratioRaw * 100)} % du marché). Effet dès le mois prochain.`,
+        `Loyer demandé ramené à ${fr(asking)} € (${Math.round(ratioRaw * 100)} % du marché). Effet dès le mois prochain.`,
         p.search_elapsed_months);
     });
   },
@@ -176,7 +176,7 @@ export const realEstateLifeService = {
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new RealEstateError('INVALID_INPUT', 'limit invalide');
     const rows = (await query(
       `SELECT e.*, p.title FROM re_events e JOIN re_properties p ON p.id = e.property_id
-       WHERE e.game_id = $1 ORDER BY e.year DESC, e.month DESC, e.created_at DESC LIMIT $2`, [game.id, limit])).rows;
+       WHERE e.game_id = $1 ORDER BY e.year DESC, e.month DESC, e.seq DESC LIMIT $2`, [game.id, limit])).rows;
     return { events: rows.map((r) => ({ propertyId: r.property_id, title: r.title, year: r.year, month: r.month, kind: r.kind, message: r.message, details: r.details })) };
   },
 
@@ -270,6 +270,7 @@ export const realEstateLifeService = {
 
 
 // ── Règlement d'UN mois pour toute la partie (dans la transaction déjà ouverte) ──
+const fr = (x: number): string => x.toFixed(2).replace('.', ',');
 const monthLabel = (total: number): string => `${((total - 1) % 12) + 1}/${Math.floor((total - 1) / 12)}`;
 
 async function processMonth(c: PoolClient, game: GameRow, userId: string) {
@@ -369,7 +370,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         tenantType = pickTenantType(createRng(hashString(`${game.seed}:${key}:tenant:${leaseStart}`))(), unit, EP);
         deposit = round2(currentRent * EP.depositMonths);
         oneOff.depositReceived = deposit;
-        note('EVENT', 'tenant_moved_in', `Nouveau locataire (${{ student: 'étudiant', worker: 'actif', family: 'famille' }[tenantType]}) : bail de ${EP.leaseTermMonths / 12} ans à ${currentRent.toFixed(2)} € par mois.`, { tenantType });
+        note('EVENT', 'tenant_moved_in', `Nouveau locataire (${{ student: 'étudiant', worker: 'actif', family: 'famille' }[tenantType]}) : bail de ${EP.leaseTermMonths / 12} ans à ${fr(currentRent)} € par mois.`, { tenantType });
       }
       const type = (tenantType ?? 'worker') as TenantType;
 
@@ -432,10 +433,10 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         oneOff.reletFees = reletFees(currentRent, inflation, EP);
         const cause = { tenant_notice: 'a quitté le logement à la fin de son préavis', default: 'a quitté le logement (procédure pour impayés aboutie)', landlord_notice: 'quitte le logement à l\'échéance du bail (congé donné par toi)' }[exit];
         note('TENANT_LEFT', 'tenant_left',
-          `Le locataire ${cause}. État des lieux de sortie : ${damages > 0 ? `dégradations chiffrées à ${damages.toFixed(2)} €` : 'conforme'}. ` +
-          `Dépôt de garantie de ${deposit.toFixed(2)} € : ${st.keptForArrears > 0 ? `${st.keptForArrears.toFixed(2)} € retenus pour impayés, ` : ''}${st.keptForDamages > 0 ? `${st.keptForDamages.toFixed(2)} € retenus pour dégradations, ` : ''}${st.refund.toFixed(2)} € restitués.` +
-          (st.arrearsLost > 0 ? ` Impayés perdus : ${st.arrearsLost.toFixed(2)} €.` : '') +
-          (st.damagesBeyondDeposit > 0 ? ` Réparations au-delà du dépôt : ${st.damagesBeyondDeposit.toFixed(2)} € à ta charge.` : ''),
+          `Le locataire ${cause}. État des lieux de sortie : ${damages > 0 ? `dégradations chiffrées à ${fr(damages)} €` : 'conforme'}. ` +
+          `Dépôt de garantie de ${fr(deposit)} € : ${st.keptForArrears > 0 ? `${fr(st.keptForArrears)} € retenus pour impayés, ` : ''}${st.keptForDamages > 0 ? `${fr(st.keptForDamages)} € retenus pour dégradations, ` : ''}${fr(st.refund)} € restitués.` +
+          (st.arrearsLost > 0 ? ` Impayés perdus : ${fr(st.arrearsLost)} €.` : '') +
+          (st.damagesBeyondDeposit > 0 ? ` Réparations au-delà du dépôt : ${fr(st.damagesBeyondDeposit)} € à ta charge.` : ''),
           { exit, damages, ...st });
         const wasSale = llReason === 'sale';
         // Le bien se libère : on efface tout ce qui concernait ce locataire.
@@ -462,7 +463,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       { condition: p.condition as Condition, energyClass: energy, age: p.age as 'old' | 'new', surfaceSqm: Number(p.surface_sqm), inflation }, EP);
     if (works > 0) {
       oneOff.unexpectedWorks = works;
-      eventLog.push({ kind: 'unexpected_works', message: `Travaux imprévus : ${works.toFixed(2)} €.`, details: { amount: works } });
+      eventLog.push({ kind: 'unexpected_works', message: `Travaux imprévus : ${fr(works)} €.`, details: { amount: works } });
     }
     if (status === 'late') eventLog.push({ kind: 'late_payment', message: 'Loyer payé avec un mois de retard.' });
 
@@ -482,7 +483,8 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
     const displayedRent = status === 'vacant' ? (askingForDisplay ?? (await marketFor(p, y)).marketRent) : currentRent;
     const statement = buildMonthlyStatement({
       year: y, month: m, status, rent: displayedRent, recoverableCharges: charges,
-      nonRecoverableAnnual: listing.annualCharges, loanPayment, loanBreakdown, taxRatePct: taxRate, revision,
+      nonRecoverableAnnual: listing.annualCharges, loanPayment, loanBreakdown, revision,
+      tax: { ytdBefore: Number(p.tax_base_ytd), ratePct: taxRate, settleThisMonth: m === 12 },
       vacancyMonthsSoFar: vacancyRank, carryOverIn, arrearsRecovered, oneOff, notes,
     });
     if (hint === 'PENDING_WORKS') {
@@ -515,11 +517,11 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
          asking_rent = $6, euro_remainder_cents = $7, tenant_type = $8, deposit_held_eur = $9,
          notice_end_total = $10, notice_months = $11, notice_reason = $12, default_months = $13, default_months_in_lease = $14,
          arrears_rent_eur = $15, arrears_charges_eur = $16, late_carry_rent = $17, late_carry_charges = $18, catch_up_pending = $19,
-         landlord_notice_reason = $20, landlord_notice_effective_total = $21, sale_planned = $22
+         landlord_notice_reason = $20, landlord_notice_effective_total = $21, sale_planned = $22, tax_base_ytd = $23
        WHERE id = $1`,
       [p.id, nextStatus, nextRent, searchElapsed, leaseStart, askingRent, conv.remainderCents, tenantType, deposit,
         noticeEnd, noticeMonths, noticeReason, defaultMonths, defaultInLease, arrRent, arrCharges, carryRent, carryCharges, catchUp,
-        llReason, llEffective, salePlanned]);
+        llReason, llEffective, salePlanned, statement.taxableIncomeYtdCarry]);
     if (loan) await c.query('UPDATE re_loans SET months_paid = $2, status = $3 WHERE id = $1', [loan.id, loan.months_paid, loan.status]);
     await c.query(
       `INSERT INTO re_statements (property_id, game_id, year, month, status, lines, explanations, net_cash_flow, coins_delta, remainder_cents_after)

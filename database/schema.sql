@@ -509,3 +509,8 @@ CREATE TABLE IF NOT EXISTS re_events (
   created_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_re_events_game ON re_events(game_id, year DESC, month DESC);
+
+-- 🏠 IMMOBILIER : base imposable cumulée
+-- déductibles − taxe foncière − intérêts d'emprunt…), réglé chaque décembre, jamais négatif.
+ALTER TABLE re_properties ADD COLUMN IF NOT EXISTS tax_base_ytd NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE re_events ADD COLUMN IF NOT EXISTS seq BIGSERIAL;

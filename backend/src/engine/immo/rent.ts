@@ -204,15 +204,27 @@ export const capRentAtRelet = (askingRent: number, previousRent: number, energyC
 };
 
 // ─────────────────────────────────────────────────────────────────────────
-// FISCALITÉ SIMPLIFIÉE (socle) : taux unique sur les loyers encaissés, réglé
-// par profil. Les régimes réels et l'encadrement des loyers sont des
-// extensions.
+// FISCALITÉ DES LOYERS (version simplifiée, équivalente au régime réel)
+//
+//   base imposable de l'année = loyers encaissés
+//                               − charges déductibles (copropriété non récupérable, assurance
+//                                 du bien, entretien et réparations, frais de remise en location)
+//                               − taxe foncière
+//                               − intérêts d'emprunt et assurance emprunteur
+//   impôt = taux × max(0, base de l'année)          → jamais négatif
+//
+// Le taux = tranche marginale de l'impôt sur le revenu du profil + prélèvements
+// sociaux (config/immoRules.ts). Réglé UNE fois par an (décembre) sur la base
+// cumulée de l'année : un mois déficitaire compense un mois excédentaire.
+// Non modélisé (extensions) : micro-foncier, déficit foncier reportable ou imputable
+// sur le revenu global, foyer fiscal multiple, amortissement (LMNP), travaux
+// d'amélioration (non déductibles ici), quotient familial.
 // ─────────────────────────────────────────────────────────────────────────
-export const computeRentTax = (rentCollected: number, ratePct: number): number => {
-  assertNonNegative(rentCollected, 'rentCollected');
+export const computeRentTax = (taxableIncome: number, ratePct: number): number => {
+  assertFinite(taxableIncome, 'taxableIncome');
   assertNonNegative(ratePct, 'ratePct');
   if (ratePct > 100) throw new EngineInputError('Taux d\'imposition > 100 %');
-  return round2((rentCollected * ratePct) / 100);
+  return round2((Math.max(0, taxableIncome) * ratePct) / 100);
 };
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import {
 import { RENT_MODEL, VACANCY_MODEL, EUROS_PER_COIN, RENT_TAX_RATE_BY_PROFILE, STARTING_PROFILES } from '../src/config/immoRules';
 import { createRng } from '../src/utils/seededRandom';
 
+const NO_TAX = { ytdBefore: 0, ratePct: 0, settleThisMonth: false };
 const base = { surfaceSqm: 60, cityRentPerSqm: 10, neighborhoodRentMultiplier: 1.1, condition: 'good' as const, energyClass: 'C' as const };
 
 describe('loyer calculé (jamais figé)', () => {
@@ -148,15 +149,60 @@ describe('révision annuelle (IRL) : le joueur ne fixe pas la hausse', () => {
   });
 });
 
-describe('fiscalité simplifiée par profil', () => {
+describe('fiscalité des loyers (base réelle simplifiée)', () => {
   it('taux sur les loyers encaissés', () => {
     expect(computeRentTax(1000, 30)).toBe(300);
     expect(computeRentTax(0, 30)).toBe(0);
+    expect(computeRentTax(-500, 30)).toBe(0); // jamais négatif
     expect(computeRentTax(1000, 0)).toBe(0);
     expect(() => computeRentTax(1000, 120)).toThrow(EngineInputError);
   });
   it('chaque profil a un taux configuré', () => {
     for (const p of Object.keys(STARTING_PROFILES)) expect(RENT_TAX_RATE_BY_PROFILE[p as keyof typeof RENT_TAX_RATE_BY_PROFILE]).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('impôt annuel sur les loyers : base réelle simplifiée, réglé en décembre', () => {
+  const inp: MonthlyInput = {
+    year: 2015, month: 12, status: 'paying', rent: 600, recoverableCharges: 40,
+    nonRecoverableAnnual: { condoFees: 300, propertyTax: 500, insurance: 120, maintenance: 280 }, // 100 €/mois
+    loanPayment: 400, loanBreakdown: { interest: 150, principal: 230, insurance: 20 }, tax: NO_TAX,
+  };
+  it('base = loyers − charges non récupérables − intérêts − assurance emprunteur (taxe foncière comprise dans les charges)', () => {
+    const s = buildMonthlyStatement(inp);
+    expect(s.lines.taxableIncome).toBe(330); // 600 − 100 − 150 − 20 ; le capital remboursé n'est PAS déductible
+  });
+  it('pas d\'impôt les mois ordinaires ; règlement en décembre sur le cumul de l\'année', () => {
+    const ordinary = buildMonthlyStatement({ ...inp, month: 5, tax: { ytdBefore: 2000, ratePct: 30, settleThisMonth: false } });
+    expect(ordinary.lines.rentTax).toBe(0);
+    expect(ordinary.lines.taxableIncomeYtd).toBe(2330);
+    expect(ordinary.taxableIncomeYtdCarry).toBe(2330);
+    const dec = buildMonthlyStatement({ ...inp, tax: { ytdBefore: 2000, ratePct: 30, settleThisMonth: true } });
+    expect(dec.lines.rentTax).toBe(699); // 30 % × 2 330
+    expect(dec.taxableIncomeYtdCarry).toBe(0); // remise à zéro pour l'année suivante
+    const e = dec.explanations.find((x) => x.code === 'TAX_SETTLED')!;
+    expect(e.cashFlowImpact).toBe(-699);
+    expect(e.message).toContain('2330,00 €');
+    expect(e.message).toContain('30,0 %');
+  });
+  it('JAMAIS NÉGATIF : une année déficitaire ne donne aucun impôt (et pas de remboursement)', () => {
+    const dec = buildMonthlyStatement({ ...inp, tax: { ytdBefore: -3000, ratePct: 47.2, settleThisMonth: true } });
+    expect(dec.lines.rentTax).toBe(0);
+    expect(dec.explanations.find((x) => x.code === 'TAX_SETTLED')!.message).toContain('Aucun impôt');
+    expect(dec.lines.netCashFlow).toBe(dec.normalMonthCashFlow + 0);
+  });
+  it('un mois déficitaire compense un mois excédentaire dans la même année', () => {
+    const bad = buildMonthlyStatement({ ...inp, month: 3, status: 'vacant', tax: NO_TAX });
+    expect(bad.lines.taxableIncome).toBe(-270); // pas de loyer, mais charges, intérêts et assurance restent déductibles
+    // un seul mois vide : 330 − 270 = 60 € imposables
+    expect(buildMonthlyStatement({ ...inp, tax: { ytdBefore: -270, ratePct: 30, settleThisMonth: true } }).lines.rentTax).toBe(18);
+    // trois mois vides : −810 + 330 < 0 → aucun impôt
+    expect(buildMonthlyStatement({ ...inp, tax: { ytdBefore: -810, ratePct: 30, settleThisMonth: true } }).lines.rentTax).toBe(0);
+  });
+  it('l\'impôt réduit le cash-flow du mois de règlement, et la somme des impacts reste exacte', () => {
+    const s = buildMonthlyStatement({ ...inp, tax: { ytdBefore: 1000, ratePct: 47.2, settleThisMonth: true } });
+    expect(s.lines.netCashFlow).toBeCloseTo(s.normalMonthCashFlow - s.lines.rentTax, 2);
+    expect(s.explanations.reduce((a, e) => a + e.cashFlowImpact, 0)).toBeCloseTo(s.lines.netCashFlow - s.normalMonthCashFlow, 1);
   });
 });
 
@@ -213,7 +259,7 @@ describe('ventilation de la mensualité : capital, intérêts, assurance', () =>
   const inp: MonthlyInput = {
     year: 2015, month: 3, status: 'paying', rent: 600, recoverableCharges: 40,
     nonRecoverableAnnual: { condoFees: 300, propertyTax: 500, insurance: 120, maintenance: 280 },
-    loanPayment: 554.6 + 12.5, taxRatePct: 30,
+    loanPayment: 554.6 + 12.5, tax: NO_TAX,
     loanBreakdown: { interest: 250, principal: 304.6, insurance: 12.5 },
   };
   it('les trois parts sont dans le récapitulatif et leur somme est la mensualité', () => {
@@ -235,18 +281,19 @@ describe('récapitulatif mensuel', () => {
   const input: MonthlyInput = {
     year: 2015, month: 3, status: 'paying', rent: 600, recoverableCharges: 40,
     nonRecoverableAnnual: { condoFees: 300, propertyTax: 500, insurance: 120, maintenance: 280 }, // 1 200 €/an = 100 €/mois
-    loanPayment: 400, taxRatePct: 30,
+    loanPayment: 400, tax: { ytdBefore: 0, ratePct: 30, settleThisMonth: false },
   };
   it('mois normal : chaque ligne et le cash-flow net', () => {
     const s = buildMonthlyStatement(input);
     expect(s.lines).toEqual({
       rentDue: 600, rentCollected: 600, recoverableChargesPaid: 40, recoverableChargesCollected: 40,
       nonRecoverableCharges: 100, loanPayment: 400, loanInterest: 0, loanPrincipal: 0, loanInsurance: 0,
-      depositReceived: 0, depositRefunded: 0, repairCosts: 0, reletFees: 0, unexpectedWorks: 0, rentTax: 180,
-      netCashFlow: -80, // 600 + 40 − 40 − 100 − 400 − 180
+      depositReceived: 0, depositRefunded: 0, repairCosts: 0, reletFees: 0, unexpectedWorks: 0,
+      taxableIncome: 500, taxableIncomeYtd: 500, rentTax: 0, // 600 − 100 de charges non récupérables ; l'impôt est réglé en décembre
+      netCashFlow: 100, // 600 + 40 − 40 − 100 − 400
     });
     expect(s.explanations.map((e) => e.code)).toEqual(['NORMAL']);
-    expect(s.normalMonthCashFlow).toBe(-80);
+    expect(s.normalMonthCashFlow).toBe(100);
   });
   it('charges récupérables et non récupérables distinguées', () => {
     const s = buildMonthlyStatement({ ...input, status: 'vacant', vacancyMonthsSoFar: 2 });
@@ -260,7 +307,7 @@ describe('récapitulatif mensuel', () => {
     expect(s.lines.rentTax).toBe(0);
     expect(s.lines.netCashFlow).toBe(-540); // −40 − 100 − 400
     const e = s.explanations.find((x) => x.code === 'VACANCY')!;
-    expect(e.cashFlowImpact).toBe(-460); // −(600 − 180 d'impôt évité) − 40
+    expect(e.cashFlowImpact).toBe(-640); // −600 de loyer − 40 de charges avancées
     expect(e.message).toContain('mois n°2');
   });
   it('retard : simple décalage de trésorerie, rattrapé le mois suivant', () => {
@@ -272,7 +319,7 @@ describe('récapitulatif mensuel', () => {
     expect(next.lines.recoverableChargesCollected).toBe(80);
     expect(next.explanations.map((e) => e.code)).toContain('CATCH_UP');
     // Sur les deux mois, le total encaissé est celui de deux mois normaux
-    expect(late.lines.netCashFlow + next.lines.netCashFlow).toBe(-80 * 2);
+    expect(late.lines.netCashFlow + next.lines.netCashFlow).toBe(100 * 2);
   });
   it('impayé : dette enregistrée, rien encaissé', () => {
     const s = buildMonthlyStatement({ ...input, status: 'defaulting' });
@@ -286,10 +333,10 @@ describe('récapitulatif mensuel', () => {
     const revision = reviseRent(600, 2, 'C');
     const s = buildMonthlyStatement({ ...input, rent: revision.newRent, revision });
     const e = s.explanations.find((x) => x.code === 'INDEXATION')!;
-    expect(e.cashFlowImpact).toBe(8.4); // 12 € × (1 − 30 %)
+    expect(e.cashFlowImpact).toBe(12); // l'impôt est réglé séparément, en décembre
     expect(e.message).toContain('IRL');
     expect(e.message).toContain('tu ne la fixes pas');
-    expect(s.lines.netCashFlow).toBeCloseTo(-80 + 8.4, 2);
+    expect(s.lines.netCashFlow).toBeCloseTo(100 + 12, 2);
   });
   it('gel F/G : expliqué', () => {
     const revision = reviseRent(600, 2, 'F');
@@ -310,7 +357,7 @@ describe('récapitulatif mensuel', () => {
       const inp: MonthlyInput = {
         ...input, status, rent: revision ? revision.newRent : rent, revision,
         recoverableCharges: Math.round(rng() * 80), loanPayment: Math.round(rng() * 900),
-        taxRatePct: Math.round(rng() * 45),
+        tax: { ytdBefore: Math.round((rng() - 0.3) * 4000), ratePct: Math.round(rng() * 47), settleThisMonth: rng() < 0.3 },
         carryOverIn: rng() < 0.3 ? { rent: Math.round(rng() * 900), charges: 30 } : undefined,
         arrearsRecovered: rng() < 0.2 ? { rent: Math.round(rng() * 900), charges: 10 } : undefined,
       };

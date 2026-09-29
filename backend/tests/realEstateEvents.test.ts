@@ -142,7 +142,7 @@ describe('événements : règles pures', () => {
       const rent = Math.round(300 + rng() * 1200);
       const inp: MonthlyInput = {
         year: 2015, month: 4, status: (['paying', 'late', 'defaulting'] as const)[Math.floor(rng() * 3)], rent, recoverableCharges: 40,
-        nonRecoverableAnnual: { condoFees: 300, propertyTax: 500, insurance: 120, maintenance: 280 }, loanPayment: Math.round(rng() * 700), taxRatePct: 30,
+        nonRecoverableAnnual: { condoFees: 300, propertyTax: 500, insurance: 120, maintenance: 280 }, loanPayment: Math.round(rng() * 700), tax: { ytdBefore: 0, ratePct: 30, settleThisMonth: false },
         revision: rng() < 0.3 ? reviseRent(rent, 1.5, 'C') : undefined,
         oneOff: { depositReceived: rng() < 0.3 ? rent : 0, depositRefunded: rng() < 0.3 ? Math.round(rng() * rent) : 0, repairCosts: rng() < 0.3 ? Math.round(rng() * 400) : 0, reletFees: rng() < 0.3 ? 250 : 0, unexpectedWorks: rng() < 0.3 ? Math.round(rng() * 2000) : 0 },
         notes: rng() < 0.5 ? [{ code: 'TENANT_NOTICE', message: 'préavis' }] : [],
@@ -178,7 +178,7 @@ describe.skipIf(!hasDb)('événements dans la partie', () => {
     return { uid, prop, l };
   };
   const rows = async (propId: string) => (await query('SELECT * FROM re_statements WHERE property_id = $1 ORDER BY year, month', [propId])).rows;
-  const events = async (propId: string) => (await query('SELECT * FROM re_events WHERE property_id = $1 ORDER BY year, month, created_at', [propId])).rows;
+  const events = async (propId: string) => (await query('SELECT * FROM re_events WHERE property_id = $1 ORDER BY year, month, seq', [propId])).rows;
   const prop = async (id: string) => (await query('SELECT * FROM re_properties WHERE id = $1', [id])).rows[0];
   const advance = async (uid: string, n: number) => { let left = n; while (left > 0) { const k = Math.min(12, left); await life.advanceTime(uid, k); left -= k; } };
   const untilEvent = async (uid: string, propId: string, kind: string, max = 60) => {
@@ -423,7 +423,12 @@ describe.skipIf(!hasDb)('événements dans la partie', () => {
       return { ev, st, balance: await balanceOf(uid) };
     };
     const a = await run('rejeu-5-ans'), b = await run('rejeu-5-ans');
-    expect(b).toEqual(a);
+    // En cas d'écart, on veut savoir OÙ (premier événement / relevé qui diffère), pas juste « différent ».
+    const firstDiff = (x: unknown[], y: unknown[]) => { for (let i = 0; i < Math.max(x.length, y.length); i++) if (JSON.stringify(x[i]) !== JSON.stringify(y[i])) return `#${i}: ${JSON.stringify(x[i])?.slice(0, 300)} ≠ ${JSON.stringify(y[i])?.slice(0, 300)}`; return null; };
+    const brief = (x: any[]) => x.slice(0, 8).map((e) => `${e[0]}/${e[1]} ${e[2]}`).join(' | ');
+    expect(firstDiff(a.ev, b.ev), `événements — A: ${brief(a.ev)} — B: ${brief(b.ev)}`).toBeNull();
+    expect(firstDiff(a.st, b.st), 'relevés').toBeNull();
+    expect(b.balance).toBe(a.balance);
     expect(a.ev.length).toBeGreaterThan(0);
     const seen = new Set<string>();
     for (const sd of ['x1', 'x2', 'x3', 'x4']) seen.add(JSON.stringify((await run(sd)).ev.map((e) => e[2])));

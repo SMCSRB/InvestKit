@@ -43,7 +43,8 @@ export interface MonthlyInput {
   loanPayment: number;                 // mensualité assurance comprise
   // Ventilation de la mensualité : intérêts + capital remboursé + assurance = loanPayment.
   loanBreakdown?: { interest: number; principal: number; insurance: number };
-  taxRatePct: number;                  // fiscalité simplifiée (par profil)
+  // Impôt sur les loyers : base cumulée de l'année avant ce mois, taux du profil, règlement en décembre.
+  tax: { ytdBefore: number; ratePct: number; settleThisMonth: boolean };
   revision?: RevisionResult;           // indexation intervenue CE mois-ci
   carryOverIn?: AmountPair;            // retard du mois précédent encaissé ce mois-ci
   arrearsRecovered?: AmountPair;       // impayé récupéré (dépôt de garantie, assurance loyers impayés, procédure)
@@ -69,7 +70,9 @@ export interface MonthlyLines {
   repairCosts: number;       // réparations après le départ du locataire
   reletFees: number;         // frais de remise en location (état des lieux, diagnostics, annonce)
   unexpectedWorks: number;   // travaux imprévus (panne, fuite...)
-  rentTax: number;
+  taxableIncome: number;      // base imposable de CE mois (peut être négative)
+  taxableIncomeYtd: number;   // base cumulée de l'année, ce mois compris
+  rentTax: number;            // impôt de l'année, réglé en décembre
   netCashFlow: number;
 }
 
@@ -77,7 +80,7 @@ export type ExplanationCode =
   | 'INDEXATION' | 'INDEXATION_FROZEN' | 'VACANCY' | 'LATE_PAYMENT' | 'ARREARS'
   | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NOT_LISTED' | 'PENDING_WORKS' | 'NORMAL'
   | 'DEPOSIT_RECEIVED' | 'DEPOSIT_REFUNDED' | 'REPAIRS' | 'RELET_FEES' | 'UNEXPECTED_WORKS'
-  | 'TENANT_NOTICE' | 'TENANT_LEFT' | 'LANDLORD_NOTICE' | 'DEFAULT_ENDED' | 'EVENT';
+  | 'TAX_SETTLED' | 'TENANT_NOTICE' | 'TENANT_LEFT' | 'LANDLORD_NOTICE' | 'DEFAULT_ENDED' | 'EVENT';
 
 export interface Explanation {
   code: ExplanationCode;
@@ -90,6 +93,7 @@ export interface MonthlyStatement {
   month: number;
   lines: MonthlyLines;
   normalMonthCashFlow: number;          // cash-flow d'un mois « normal » de référence
+  taxableIncomeYtdCarry: number;        // base imposable à reporter au mois suivant (0 après règlement)
   carryOverToNextMonth: AmountPair;     // retard à encaisser le mois suivant
   unpaidAdded: AmountPair;              // impayé ajouté à la dette du locataire
   explanations: Explanation[];
@@ -125,7 +129,6 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
 
   const rentCollected = round2(rentPaid + carry.rent + rec.rent);
   const chargesCollected = round2(chargesPaid + carry.charges + rec.charges);
-  const tax = computeRentTax(rentCollected, i.taxRatePct);
   const lines: MonthlyLines = {
     rentDue: round2(due),
     rentCollected,
@@ -141,16 +144,22 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
     repairCosts: s.oneOff ? round2(i.oneOff?.repairCosts ?? 0) : 0,
     reletFees: s.oneOff ? round2(i.oneOff?.reletFees ?? 0) : 0,
     unexpectedWorks: s.oneOff ? round2(i.oneOff?.unexpectedWorks ?? 0) : 0,
-    rentTax: tax,
+    taxableIncome: 0,
+    taxableIncomeYtd: 0,
+    rentTax: 0,
     netCashFlow: 0,
   };
   lines.netCashFlow = round2(
     lines.rentCollected + lines.recoverableChargesCollected - lines.recoverableChargesPaid -
-    lines.nonRecoverableCharges - lines.loanPayment - lines.rentTax +
+    lines.nonRecoverableCharges - lines.loanPayment +
     lines.depositReceived - lines.depositRefunded - lines.repairCosts - lines.reletFees - lines.unexpectedWorks
   );
   return { lines, carryOut, unpaid };
 };
+
+// Base imposable d'un mois (régime réel simplifié) : voir rent.ts.
+export const rentalTaxableIncome = (l: MonthlyLines): number =>
+  round2(l.rentCollected - l.nonRecoverableCharges - l.loanInterest - l.loanInsurance - l.repairCosts - l.reletFees - l.unexpectedWorks);
 
 export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => {
   if (!Number.isInteger(input.month) || input.month < 1 || input.month > 12) throw new EngineInputError('month doit être entre 1 et 12');
@@ -235,6 +244,8 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
       cashFlowImpact: impact(s3, s4),
     });
   }
+  // Les événements (préavis, départ…) d'abord, puis leurs conséquences chiffrées : ordre chronologique.
+  for (const n of input.notes ?? []) explanations.push({ code: n.code, message: n.message, cashFlowImpact: 0 });
   const o = input.oneOff;
   const pos = (v: number | undefined) => round2(v ?? 0);
   if (pos(o?.depositReceived) > 0) explanations.push({ code: 'DEPOSIT_RECEIVED', cashFlowImpact: pos(o?.depositReceived),
@@ -247,8 +258,20 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
     message: `Frais de remise en location (état des lieux, diagnostics, annonce) : ${eur(pos(o?.reletFees))}.` });
   if (pos(o?.unexpectedWorks) > 0) explanations.push({ code: 'UNEXPECTED_WORKS', cashFlowImpact: -pos(o?.unexpectedWorks),
     message: `Travaux imprévus : ${eur(pos(o?.unexpectedWorks))}.` });
-  for (const n of input.notes ?? []) explanations.push({ code: n.code, message: n.message, cashFlowImpact: 0 });
   void s5;
+
+  // Impôt : base du mois, cumul de l'année, règlement en décembre.
+  const taxable = rentalTaxableIncome(s5.lines);
+  const ytd = round2(input.tax.ytdBefore + taxable);
+  const taxDue = input.tax.settleThisMonth ? computeRentTax(ytd, input.tax.ratePct) : 0;
+  if (input.tax.settleThisMonth) {
+    explanations.push({
+      code: 'TAX_SETTLED', cashFlowImpact: -taxDue,
+      message: ytd > 0
+        ? `Impôt de l'année sur les loyers : base imposable ${eur(ytd)} (loyers encaissés − charges déductibles − taxe foncière − intérêts d'emprunt) × ${input.tax.ratePct.toFixed(1).replace('.', ',')} % = ${eur(taxDue)}.`
+        : `Aucun impôt sur les loyers cette année : la base imposable est négative ou nulle (${eur(ytd)}), l'impôt n'est jamais négatif.`,
+    });
+  }
 
   if (explanations.length === 0) {
     explanations.push({ code: 'NORMAL', message: 'Mois normal : loyer et charges encaissés à temps, aucune variation.', cashFlowImpact: 0 });
@@ -257,7 +280,8 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   return {
     year: input.year,
     month: input.month,
-    lines: s5.lines,
+    lines: { ...s5.lines, taxableIncome: taxable, taxableIncomeYtd: ytd, rentTax: taxDue, netCashFlow: round2(s5.lines.netCashFlow - taxDue) },
+    taxableIncomeYtdCarry: input.tax.settleThisMonth ? 0 : ytd,
     normalMonthCashFlow: s0.lines.netCashFlow,
     carryOverToNextMonth: s5.carryOut,
     unpaidAdded: s5.unpaid,
