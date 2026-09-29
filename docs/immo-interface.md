@@ -7,5 +7,8 @@
   **capital remboursé** (qui diminue la dette et enrichit le joueur). Calculés par le serveur (`getMonthSummary`).
 - `/glossaire` : 45 entrées rédigées de zéro, recherche, ancres ; composant `HelpTip` (icône « ? » réutilisable : `<HelpTip term="cash-flow" />`).
 - Pied de page : liens morts retirés (`/pricing`, `#blog`, faux réseaux sociaux) ; Discord n'apparaît que si `SITE_INFO.discordUrl` est renseigné.
-- Reste pour 7b : ventes en cours (changer le prix), rénovation énergétique, classement Immobilier, activation du bouton du domaine
-  gratuit Immobilier dans le tableau de bord.
+- **7b (fait, en petites PR)** : changement du prix d'une vente en cours (options 85–110 % avec délai attendu), rénovation énergétique avec devis,
+  onglet Classement (avec « ma performance » détaillée), bouton du domaine gratuit Immobilier activé dans le tableau de bord.
+- **Extension 1 (faite)** : assurance loyers impayés et trêve hivernale, voir `docs/immo-gli-treve.md`.
+- Vérifications faites dans un navigateur : parcours complet (profil, achat, location, vente, baisse de prix, rénovation, classement, assurance, bilan),
+  aucun débordement horizontal à 390 px de large sur Annonces, Portefeuille, Classement et Glossaire.

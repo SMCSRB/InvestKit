@@ -58,7 +58,7 @@ git fetch origin
 git checkout main
 git pull origin main
 git log -1 --format='%h %s'          # doit mentionner le merge de la pull request 3
-ls backend/migrations | tail -3      # doit finir par 020_real_estate_sales.sql
+ls backend/migrations | tail -3      # doit finir par 020_real_estate_sales.sql (021_real_estate_gli.sql si la PR « GLI » est aussi fusionnée)
 ```
 
 ## Étape 6 — Préparer et compiler l'API
