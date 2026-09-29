@@ -86,3 +86,16 @@ export const LOMBARD = {
 export const LOMBARD_SIMPLIFICATION =
   'Simplification : les cours du jeu sont des clôtures annuelles. L\'appel de marge n\'est évalué qu\'au passage d\'une année ; ' +
   'un krach en cours d\'année n\'est pas vu (dans la réalité, il peut arriver n\'importe quel jour).';
+
+// ── Procédure de rétablissement après défaut ────────────────────────────────
+// Évite un compte bloqué à vie sans offrir de remise à zéro gratuite : dette du domaine effacée, MAIS le domaine est remis à zéro
+// (titres ou biens perdus, rang perdu), un nouveau crédit est interdit un mois, et la procédure est limitée.
+// Toutes ces valeurs sont des VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER. Les délais sont en temps RÉEL (jours), pas en temps de jeu :
+// c'est un garde-fou contre l'enchaînement « emprunter, perdre, recommencer », indépendant des horloges accélérées.
+export const RECOVERY = {
+  baseCapitalCoins: 500,          // capital de base (= capital de départ) : complété seulement si le joueur a moins
+  creditBanDays: 30,              // interdiction de nouveau crédit après la procédure
+  cooldownDays: 30,               // délai minimum entre deux procédures
+  maxLifetime: 3,                 // nombre maximum de procédures par compte
+  confirmPhrase: 'RETABLISSEMENT',
+};

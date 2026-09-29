@@ -53,3 +53,11 @@ Pas de pénalités de retard ; le paiement est « tout ou rien » chaque mois ; 
 
 ## Reste à faire (validé, pas encore codé)
 Procédure de rétablissement après défaut (perte du rang et des badges du domaine, redémarrage avec un capital de base) ; « valeur verte » de l'immobilier (juste après la Banque) ; unification 1 🪙 = 20 € (plus tard) ; horloge unique (plus tard) ; taux d'usure (structure prête).
+
+## Lot 4 — procédure de rétablissement après défaut
+Décision produit : un compte ne doit pas rester bloqué à vie, mais il n'y a **pas de remise à zéro gratuite**.
+- **Conditions** : un prêt du domaine est en défaut ; au plus 3 procédures par compte, espacées de 30 jours (temps réel : garde-fou indépendant des horloges accélérées) ; confirmation écrite `RETABLISSEMENT`.
+- **Effets** (une seule transaction) : la dette du domaine est effacée (statut `written_off`, suivi dans `written_off_h` et `bank_accounts.written_off_coins` pour l'administrateur) ; les pièces empruntées non dépensées du domaine sont reprises ; le domaine est remis à zéro (Bourse/Crypto : titres et totaux, année de départ ; Immobilier : toute la partie) ; le **rang du domaine est perdu** ; le capital de base (500 🪙) est complété seulement si le joueur a moins (pièces créées, journalisées `bank_recovery_grant`) ; aucun nouveau crédit pendant 30 jours ; journal `bank_recoveries`.
+- **Invariant conservé** : capital créé = capital remboursé + capital restant dû + capital effacé.
+- **Badges** : aujourd'hui les badges sont enregistrés dans le navigateur du joueur (pas sur le serveur), ils ne peuvent donc pas être retirés depuis le serveur. L'écran et la doc le disent ; la procédure est journalisée pour le faire quand les badges seront rattachés au serveur.
+- Valeurs de jeu, non sourcées, à reconfirmer : 500 🪙, 30 jours, 30 jours, 3 procédures.

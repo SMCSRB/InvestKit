@@ -31,6 +31,7 @@ const classify = (
 ): { domain: string | null; nature: LedgerNature } => ({
   domain: typeof metadata?.domain === 'string' ? metadata.domain : null,
   nature: reason === 'bank_disburse' ? 'credit'
+    : reason === 'bank_recovery_grant' ? 'creation'   // capital de base offert après une procédure de rétablissement
     : reason.startsWith('bank_') ? 'repayment'
     : reason.startsWith('trade_') || reason.startsWith('re_exchange_') ? 'exchange'
     : amount > 0 ? 'creation' : 'destruction',

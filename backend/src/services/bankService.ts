@@ -70,7 +70,13 @@ export const outstandingCoins = async (db: Db, userId: string): Promise<number> 
 // Verrou de sécurité avant tout emprunt : compte bloqué, nombre de prêts, dette totale.
 export const assertCanBorrow = async (db: Db, userId: string, principalCoins: number): Promise<void> => {
   if (!Number.isInteger(principalCoins) || principalCoins <= 0) throw new BankError('INVALID_INPUT', 'Le montant emprunté doit être un nombre entier de pièces supérieur à zéro');
-  const acc = await ensureAccount(db, userId);
+  let acc = await ensureAccount(db, userId);
+  // Interdiction de crédit après une procédure de rétablissement : elle expire d'elle-même.
+  if (acc.credit_blocked && acc.blocked_reason === 'recovery' && acc.blocked_until && new Date(acc.blocked_until).getTime() <= Date.now()) {
+    const stillDefaulted = Number((await q(db, `SELECT COUNT(*) AS n FROM bank_loans WHERE user_id = $1 AND status = 'defaulted'`, [userId])).rows[0].n);
+    await q(db, `UPDATE bank_accounts SET credit_blocked = $2, blocked_reason = $3, blocked_until = NULL WHERE user_id = $1`, [userId, stillDefaulted > 0, stillDefaulted > 0 ? 'default' : null]);
+    acc = await ensureAccount(db, userId);
+  }
   if (acc.credit_blocked) {
     throw new BankError('CREDIT_BLOCKED', 'Tu ne peux plus emprunter : un de tes prêts est en défaut. Rembourse-le, ou engage la procédure de rétablissement.', { reason: acc.blocked_reason });
   }
@@ -216,7 +222,7 @@ export const bankService = {
     });
     const debt = items.filter((i: any) => i.status === 'active' || i.status === 'defaulted').reduce((a: number, i: any) => a + i.balanceCoins, 0);
     return {
-      account: { creditBlocked: !!acc?.credit_blocked, blockedReason: acc?.blocked_reason ?? null, defaults: acc?.defaults ?? 0, recoveries: acc?.recoveries ?? 0 },
+      account: { creditBlocked: !!acc?.credit_blocked, blockedReason: acc?.blocked_reason ?? null, blockedUntil: acc?.blocked_until ?? null, defaults: acc?.defaults ?? 0, recoveries: acc?.recoveries ?? 0, writtenOffCoins: Number(acc?.written_off_coins ?? 0) },
       totals: { outstandingCoins: Math.round(debt * 100) / 100, activeLoans: items.filter((i: any) => i.status === 'active').length,
         maxActiveLoans: BANK_LIMITS.maxActiveLoansPerUser, maxOutstandingCoins: BANK_LIMITS.maxOutstandingPrincipalCoins },
       reservedCredit: reserved.map((r: any) => ({ domain: r.domain, coins: r.coins })),
@@ -238,9 +244,11 @@ export const bankService = {
        FROM bank_loans WHERE status IN ('active', 'defaulted') GROUP BY 1, 2 ORDER BY 1, 2`)).rows;
     const defaulted = Number((await query(`SELECT COUNT(*) AS n FROM bank_loans WHERE status = 'defaulted'`)).rows[0].n);
     const blocked = Number((await query(`SELECT COUNT(*) AS n FROM bank_accounts WHERE credit_blocked`)).rows[0].n);
+    const wo = (await query(`SELECT COALESCE(SUM(written_off_coins), 0) AS w, COALESCE(SUM(recoveries), 0) AS r FROM bank_accounts`)).rows[0];
+    const writtenOff = Number(wo.w), recoveries = Number(wo.r);
     return {
       outstanding: outstanding.map((r: any) => ({ product: r.product as string, domain: r.domain as string, loans: r.loans as number, outstandingCoins: Number(r.coins) })),
-      defaultedLoans: defaulted, blockedAccounts: blocked,
+      defaultedLoans: defaulted, blockedAccounts: blocked, writtenOffCoins: writtenOff, recoveries,
     };
   },
 };

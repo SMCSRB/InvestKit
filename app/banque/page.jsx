@@ -11,7 +11,7 @@ const num = (n, d = 2) => Number(n ?? 0).toLocaleString('fr-FR', { maximumFracti
 const DOMAIN_LABEL = { real_estate: 'Immobilier', stocks: 'Bourse', crypto: 'Crypto', bonds: 'Obligations' };
 const LOMBARD_DOMAINS = [['stocks', 'Bourse'], ['crypto', 'Crypto']];
 const PRODUCT_LABEL = { personal: 'Prêt personnel', portfolio: 'Prêt sur portefeuille', mortgage: 'Prêt immobilier' };
-const STATUS_LABEL = { active: 'En cours', repaid: 'Soldé', defaulted: 'En défaut', liquidated: 'Liquidé' };
+const STATUS_LABEL = { active: 'En cours', repaid: 'Soldé', defaulted: 'En défaut', liquidated: 'Liquidé', written_off: 'Dette effacée' };
 const card = { background: 'rgba(15,23,42,0.65)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 14, padding: 16 };
 const btn = (primary) => ({ padding: '10px 16px', borderRadius: 10, border: primary ? 'none' : '1px solid rgba(96,165,250,0.6)', background: primary ? '#2563eb' : 'rgba(59,130,246,0.15)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
 const input = { padding: '9px 10px', borderRadius: 8, border: '1px solid rgba(148,163,184,0.4)', background: 'rgba(15,23,42,0.8)', color: '#fff', fontSize: 14 };
@@ -25,6 +25,54 @@ async function call(path, method = 'GET', body) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { const e = new Error(data.error || 'Erreur'); e.code = data.code; e.details = data.details; throw e; }
   return data;
+}
+
+// ── Procédure de rétablissement après un défaut (dette effacée, mais le domaine repart de zéro)
+function Recovery({ domains, onDone, notify }) {
+  const [domain, setDomain] = useState(domains[0]);
+  const [pv, setPv] = useState(null);
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const preview = async () => {
+    setBusy(true);
+    try { setPv(await call('/recovery/preview', 'POST', { domain })); } catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+  const start = async () => {
+    setBusy(true);
+    try { const r = await call('/recovery/start', 'POST', { domain, confirm }); notify(r.message); setPv(null); setConfirm(''); await onDone(); } catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+  return (
+    <div style={{ ...card, borderColor: '#f87171', marginBottom: 14 }}>
+      <h3 style={{ margin: '0 0 6px', color: '#fff' }}>Procédure de rétablissement<HelpTip term="retablissement" /></h3>
+      <p style={{ margin: '0 0 10px', fontSize: 13, color: '#cbd5e1' }}>Si tu ne peux pas rembourser un prêt en défaut, cette procédure efface la dette de ce domaine, <strong>mais le domaine repart de zéro</strong> (titres ou biens perdus, rang perdu). Ce n&apos;est pas gratuit, et elle est limitée : à utiliser en dernier recours.</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select style={input} value={domain} onChange={(e) => { setDomain(e.target.value); setPv(null); }} aria-label="Domaine">
+          {domains.map((d) => <option key={d} value={d}>{DOMAIN_LABEL[d] || d}</option>)}
+        </select>
+        <button style={btn(false)} disabled={busy} onClick={preview}>Voir ce qui se passerait</button>
+      </div>
+      {pv && (
+        <div style={{ marginTop: 12, fontSize: 14, display: 'grid', gap: 5 }}>
+          {!pv.eligible && pv.reasons.map((r) => <div key={r} style={{ color: '#fca5a5' }}>• {r}</div>)}
+          {pv.eligible && (
+            <>
+              <div><strong>Tu perds :</strong> {pv.willLose.assets}{pv.willLose.rank ? ', ainsi que ton rang' : ''}.</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>{pv.willLose.badges}</div>
+              <div><strong>Effacé :</strong> {num(pv.willHappen.debtWrittenOffCoins)} 🪙 de dette.{pv.willHappen.borrowedCoinsSeized > 0 && <> Les {num(pv.willHappen.borrowedCoinsSeized, 0)} 🪙 empruntés non dépensés te sont repris.</>}</div>
+              <div>Capital de base : {pv.willHappen.baseCapitalTopUpCoins > 0 ? `complété de ${num(pv.willHappen.baseCapitalTopUpCoins, 0)} 🪙 (pour atteindre ${pv.willHappen.baseCapitalCoins} 🪙)` : `tu as déjà plus de ${pv.willHappen.baseCapitalCoins} 🪙 : rien ne t'est ajouté`}.</div>
+              <div style={{ color: '#fbbf24' }}>Aucun nouveau crédit pendant {pv.willHappen.creditBanDays} jours. Procédure {pv.limits.usedProcedures + 1} sur {pv.limits.maxProcedures} possibles, espacées de {pv.limits.cooldownDays} jours.</div>
+              <label style={{ fontSize: 13 }}>Pour confirmer, écris <strong>{pv.confirmPhrase}</strong> :
+                <input style={{ ...input, display: 'block', marginTop: 4 }} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              </label>
+              <div><button style={{ ...btn(true), background: '#dc2626' }} disabled={busy || confirm !== pv.confirmPhrase} onClick={start}>Lancer la procédure</button></div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function PersonalLoan({ onDone, notify }) {
@@ -199,7 +247,8 @@ export default function BanquePage() {
 
         {data && (
           <>
-            {data.account.creditBlocked && <div style={{ ...card, borderColor: '#f87171', marginBottom: 14 }}>⛔ <strong>Crédit bloqué :</strong> un de tes prêts est en défaut. Tu ne peux plus emprunter tant qu&apos;il n&apos;est pas soldé.<HelpTip term="defaut-paiement" /></div>}
+            {data.account.creditBlocked && <div style={{ ...card, borderColor: '#f87171', marginBottom: 14 }}>⛔ <strong>Crédit bloqué :</strong> {data.account.blockedReason === 'recovery' ? `suite à une procédure de rétablissement, aucun nouveau crédit avant le ${new Date(data.account.blockedUntil).toLocaleDateString('fr-FR')}.` : 'un de tes prêts est en défaut. Tu ne peux plus emprunter tant qu\'il n\'est pas soldé.'}<HelpTip term="defaut-paiement" /></div>}
+            {(() => { const ds = [...new Set(data.loans.filter((l) => l.status === 'defaulted').map((l) => l.domain))]; return ds.length > 0 ? <Recovery domains={ds} onDone={refresh} notify={notify} /> : null; })()}
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
               <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase' }}>Dette en cours</div><div style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>{num(data.totals.outstandingCoins)} 🪙</div><div style={{ fontSize: 12, color: '#94a3b8' }}>{data.totals.activeLoans} prêt(s) sur {data.totals.maxActiveLoans} possibles</div></div>
               <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase' }}>Crédit fléché non dépensé<HelpTip term="credit-fleche" /></div>

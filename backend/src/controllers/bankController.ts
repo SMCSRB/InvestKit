@@ -4,6 +4,7 @@ import { userRepository } from '../repositories/userRepository';
 import { bankService, BankError } from '../services/bankService';
 import { bankPersonalService } from '../services/bankPersonalService';
 import { bankPortfolioService } from '../services/bankPortfolioService';
+import { bankRecoveryService } from '../services/bankRecoveryService';
 import { RealEstateError } from '../services/realEstateService';
 
 const STATUS: Record<string, number> = {
@@ -32,6 +33,8 @@ export const bankController = {
   portfolioQuote: handleBank('Erreur lors de la simulation du prêt', (r, uid) => bankPortfolioService.quote(uid, r.body)),
   portfolioBorrow: handleBank('Erreur lors de l\'emprunt', (r, uid) => bankPortfolioService.borrow(uid, r.body)),
   portfolioRepay: handleBank('Erreur lors du remboursement', (r, uid) => bankPortfolioService.repay(uid, r.params.id, r.body?.coins)),
+  recoveryPreview: handleBank('Erreur lors de l\'aperçu du rétablissement', (r, uid) => bankRecoveryService.preview(uid, r.body)),
+  recoveryStart: handleBank('Erreur lors du rétablissement', (r, uid) => bankRecoveryService.start(uid, r.body)),
   earlyRepay: handleBank('Erreur lors du remboursement', (r, uid) => bankService.earlyRepay(uid, r.params.id)),
 
   // Réservé aux administrateurs (rôle lu en base, jamais dans le jeton).

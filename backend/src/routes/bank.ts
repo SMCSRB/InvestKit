@@ -11,5 +11,7 @@ bankRoutes.post('/personal/borrow', authMiddleware, c.personalBorrow);
 bankRoutes.post('/portfolio/quote', authMiddleware, c.portfolioQuote);
 bankRoutes.post('/portfolio/borrow', authMiddleware, c.portfolioBorrow);
 bankRoutes.post('/portfolio/loans/:id/repay', authMiddleware, c.portfolioRepay);
+bankRoutes.post('/recovery/preview', authMiddleware, c.recoveryPreview);
+bankRoutes.post('/recovery/start', authMiddleware, c.recoveryStart);
 bankRoutes.post('/loans/:id/repay', authMiddleware, c.earlyRepay);
 bankRoutes.get('/admin/stats', authMiddleware, c.adminStats);
