@@ -73,6 +73,8 @@ export default function OptimizedFooter() {
               { href: '/education', label: 'Éducation' },
               { href: '/immobilier', label: 'Immobilier' },
               { href: '/glossaire', label: 'Glossaire' },
+              { href: '/demo', label: 'Essayer les simulateurs' },
+              { href: '/changelog', label: 'Nouveautés' },
             ].map((link) => (
               <Link
                 key={link.href}

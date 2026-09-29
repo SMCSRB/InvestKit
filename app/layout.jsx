@@ -1,6 +1,15 @@
 import './globals.css';
 import ClientLayoutWrapper from '@/app/components/ClientLayoutWrapper';
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'InvestKit',
+  description: 'Plateforme éducative et outils de simulation financière',
+  inLanguage: 'fr',
+  ...(process.env.NEXT_PUBLIC_SITE_URL ? { url: process.env.NEXT_PUBLIC_SITE_URL } : {}),
+};
+
 export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
   description: 'Plateforme éducative et outils de simulation financière pour investir intelligemment',
@@ -40,6 +49,7 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="/css/performance-optimizations.css" />
       </head>
       <body>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <noscript>
           <div style={{
             display: 'flex',

@@ -126,3 +126,11 @@ Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub �
 1. `https://ton-site/api/v1/openapi.json` (ou `http://localhost:5000/api/v1/openapi.json`) affiche du texte JSON commençant par `"openapi":"3.0.3"`.
 2. `…/api/v1/docs` affiche la page **Swagger UI** avec les routes classées par thème (Compte, Banque, Immobilier…). En production cette page est **désactivée** par défaut ; pour l'activer, ajoute `DOCS_ENABLED=true` dans `backend/.env.local`. (La page charge Swagger depuis un CDN : il faut internet.)
 3. Rappel pour le développeur : ajouter une route sans la décrire dans `backend/src/openapi.ts` fait échouer `npm test`.
+
+## PR Pages publiques (démo, nouveautés, référencement)
+1. Sans être connecté (navigation privée) : `/demo` s'ouvre, trois onglets (PEA, Immobilier, Prêt bancaire) affichent chacun un simulateur qui fonctionne.
+2. `/changelog` : liste des nouveautés, la plus récente en premier (à mettre à jour dans `app/lib/changelog.js`).
+3. Pied de page : liens « Essayer les simulateurs » et « Nouveautés ».
+4. `/robots.txt` affiche `Disallow: /` : **le site demande aux moteurs de ne rien indexer**. C'est voulu pendant la phase d'invitation.
+5. Pour ouvrir au référencement (plus tard, une fois les pages légales validées par un juriste) : dans `.env.local` du site, mettre `NEXT_PUBLIC_SEO_ENABLED=true` et `NEXT_PUBLIC_SITE_URL=https://ton-domaine`, puis reconstruire (`npm run build`). `/robots.txt` autorise alors les pages publiques et indique `/sitemap.xml`.
+6. `/sitemap.xml` liste les pages publiques (avec `NEXT_PUBLIC_SITE_URL` renseigné, les adresses sont les bonnes).
