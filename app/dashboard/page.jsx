@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import HelpTip from '@/app/components/HelpTip';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 import { educationDomains } from '@/data/education';
@@ -3517,11 +3518,12 @@ export default function DashboardPage() {
                   marginBottom: '20px',
                 }}>
                   {[
-                    { label: 'Année simulée', value: tradingPortfolio?.simulatedYear },
+                    { label: 'Année simulée', value: tradingPortfolio?.simulatedYear, tip: 'annee-simulee' },
                     { label: 'Solde InvestCoins', value: `🪙 ${tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')}` },
-                    { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} €` },
+                    { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} €`, tip: 'valeur-positions' },
                     {
                       label: 'Performance',
+                      tip: 'performance-portefeuille',
                       value: `${tradingPortfolio?.performancePct >= 0 ? '+' : ''}${tradingPortfolio?.performancePct?.toFixed(1)}%`,
                       color: tradingPortfolio?.performancePct >= 0 ? '#10b981' : '#f43f5e',
                     },
@@ -3532,7 +3534,7 @@ export default function DashboardPage() {
                       borderRadius: '12px',
                       padding: '16px',
                     }}>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}</p>
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
                       <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'white', margin: 0 }}>{stat.value}</p>
                     </div>
                   ))}
