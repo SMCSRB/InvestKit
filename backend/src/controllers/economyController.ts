@@ -6,7 +6,25 @@ import { claimDailyReward, canClaimDailyReward } from '../services/dailyRewardSe
 
 
 
+// Réservé aux administrateurs (rôle lu en base, jamais dans le jeton).
+const requireAdmin = async (req: AuthRequest, res: Response): Promise<boolean> => {
+  if (!req.user) { res.status(401).json({ error: 'Non authentifié' }); return false; }
+  const user = await userRepository.findById(req.user.userId);
+  if (!user || user.role !== 'admin') { res.status(403).json({ error: 'Réservé aux administrateurs' }); return false; }
+  return true;
+};
+
 export const economyController = {
+  getCoinsByDomain: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!(await requireAdmin(req, res))) return;
+      res.json({ domains: await investcoinsRepository.ledgerStatsByDomain() });
+    } catch (error) {
+      console.error('Coins by domain error:', error);
+      res.status(500).json({ error: 'Erreur lors du calcul de la statistique' });
+    }
+  },
+
   getBalance: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user) {

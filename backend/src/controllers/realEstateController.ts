@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { realEstateService, RealEstateError } from '../services/realEstateService';
 import { realEstateLifeService as life } from '../services/realEstateLifeService';
+import { realEstateSaleService as sales, getRealEstateLeaderboard } from '../services/realEstateSaleService';
 
 const STATUS: Record<string, number> = {
   INVALID_INPUT: 400,
@@ -51,6 +52,12 @@ export const realEstateController = {
   reprice: handle('Erreur lors de la modification du loyer', (r, uid) => life.repriceListing(uid, r.params.id, r.body?.askingRentRatio)),
   landlordNotice: handle('Erreur lors du congé', (r, uid) => life.landlordNotice(uid, r.params.id, r.body?.reason)),
   events: handle('Erreur lors de la récupération des événements', (r, uid) => life.listEvents(uid, r.query.limit)),
+  sell: handle('Erreur lors de la mise en vente', (r, uid) => sales.sell(uid, r.params.id, r.body?.askingRatio)),
+  repriceSale: handle('Erreur lors de la modification du prix', (r, uid) => sales.repriceSale(uid, r.params.id, r.body?.askingRatio)),
+  distressSell: handle('Erreur lors de la vente amiable', (r, uid) => sales.distressSell(uid, r.body?.propertyId)),
+  renovate: handle('Erreur lors de la rénovation', (r, uid) => sales.renovate(uid, r.params.id)),
+  listSales: handle('Erreur lors de la récupération des ventes', (_r, uid) => sales.listSales(uid)),
+  leaderboard: handle('Erreur lors de la récupération du classement', (r, uid) => getRealEstateLeaderboard(uid, r.query.year)),
   advance: handle('Erreur lors de l\'avancée du temps', (r, uid) => life.advanceTime(uid, r.body?.months)),
   summary: handle('Erreur lors de la récupération du récapitulatif', (r, uid) => life.getMonthSummary(uid, r.query.year, r.query.month)),
   statements: handle('Erreur lors de la récupération des relevés', (r, uid) => life.getStatements(uid, r.params.id, r.query.limit)),

@@ -1,4 +1,5 @@
-import type { EventParams, BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType, EnergyClass } from '../engine/immo';
+import { incomeTaxAllowancePct, socialChargesAllowancePct, highGainSurtax } from '../engine/immo/sale';
+import type { CapitalGainRules, EventParams, BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType, EnergyClass } from '../engine/immo';
 
 // Règles bancaires. Ce sont des règles de JEU, ajustables : elles ne prétendent
 // pas refléter une banque précise.
@@ -146,4 +147,57 @@ export const EVENT_PARAMS: EventParams = {
     minPerSqm: 25,
     maxPerSqm: 120,
   },
+};
+
+// ── Revente (étape 6) ─────────────────────────────────────────────────────
+// Plus-value immobilière (impots.gouv.fr, extraits consultés le 2026-09-29) : impôt sur le revenu 19 %
+// + prélèvements sociaux 17,2 % (la hausse de la CSG à 10,6 % en 2026 ne concerne pas les plus-values
+// immobilières : service-public.gouv.fr / notaires.fr, loi n° 2025-1403 du 30 décembre 2025, art. 12) ;
+// abattements pour durée de détention : voir engine/immo/sale.ts (barème exact) ; forfait de 7,5 % pour
+// les frais d'acquisition, de 15 % pour les travaux au-delà de 5 ans de détention ; surtaxe > 50 000 €.
+export const CAPITAL_GAIN_RULES: CapitalGainRules = {
+  incomeTaxRatePct: 19,
+  socialChargesRatePct: 17.2,
+  incomeTaxAllowancePct,
+  socialChargesAllowancePct,
+  acquisitionFeesForfaitPct: 7.5,
+  worksForfaitPct: 15,
+  worksForfaitMinYears: 5,
+  surtax: highGainSurtax,
+};
+
+export const SALE_PARAMS = {
+  // Frais d'agence à la charge du vendeur : moyenne de 5,78 % TTC estimée par l'Autorité de la concurrence
+  // (extrait de presse consulté le 2026-09-29) ; non réglementés, très variables (3 à 8 %).
+  agencyFeePct: 5.78,
+  // Diagnostics obligatoires (à la charge du vendeur) : ~300 € le dossier complet (extraits de sites de diagnostiqueurs).
+  diagnosticsCost: 300,
+  // Audit énergétique (maisons et immeubles en monopropriété, classes E/F/G) : coût de JEU, non sourcé.
+  energyAuditCost: 800,
+  // Prix demandé : fourchette autorisée, en % de la valeur estimée du bien.
+  askingRatioMin: 0.85,
+  askingRatioMax: 1.10,
+  // Bien vendu occupé : décote de JEU (non sourcée) sur le prix demandé.
+  occupiedDiscountPct: 10,
+  // Délai de vente : même mécanique que la location (probabilité mensuelle, plafond), délais plus longs.
+  market: { minMonths: 1.5, maxMonths: 8, capOverMeanFactor: 1.5, askingRentRatioMin: 0.85, askingRentRatioMax: 1.1 },
+  // Difficultés de paiement du joueur : vente amiable (décote faible) puis vente forcée (décote de 25 %).
+  distress: {
+    warningAfterMissedMonths: 3,     // 3 mois d'impayés de suite
+    graceMonths: 2,                  // délai laissé pour une vente amiable avant la vente forcée
+    amicableDiscountPct: 12,         // vente amiable rapide : décote plus faible
+    forcedDiscountPct: 25,           // vente forcée : la décote constatée en adjudication va de 10 à 30 % (moyenne ~30 %)
+    // Frais de poursuite : 8 000 à 15 000 € à Paris d'après les extraits ; mis à l'échelle du catalogue.
+    proceedingCostsPct: 6, proceedingCostsMin: 4000, proceedingCostsMax: 15000,
+  },
+  // Rénovation énergétique à la demande du joueur (JEU) : coût au m², gain de classes.
+  renovationCostPerSqm: 450,
+};
+
+// ── Calage du catalogue (rendement brut, charges) ─────────────────────────
+// Réglages de calibration du catalogue fictif : 1 = valeurs d'origine. Les loyers ne sont JAMAIS gonflés ;
+// le rendement brut se règle sur le NIVEAU DES PRIX de chaque ville (rendement = loyer × 12 / prix).
+export const CATALOG_CALIBRATION: { priceScaleByCity: Record<string, number>; nonRecoverableChargeScale: number } = {
+  priceScaleByCity: {},
+  nonRecoverableChargeScale: 1,
 };

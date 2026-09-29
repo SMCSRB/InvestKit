@@ -7,3 +7,4 @@ export const economyRoutes = Router();
 economyRoutes.get('/balance', authMiddleware, economyController.getBalance);
 economyRoutes.get('/history', authMiddleware, economyController.getHistory);
 economyRoutes.post('/daily-reward', authMiddleware, economyController.claimDailyReward);
+economyRoutes.get('/admin/coins-by-domain', authMiddleware, economyController.getCoinsByDomain);

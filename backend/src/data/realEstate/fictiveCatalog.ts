@@ -1,5 +1,5 @@
 import { round2, estimateMarketRent, averageVacancyPct } from '../../engine/immo';
-import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS } from '../../config/immoRules';
+import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION } from '../../config/immoRules';
 import { createRng, hashString, approxGaussian } from '../../utils/seededRandom';
 import type {
   City, CityMarket, Neighborhood, CityTier, Condition, EnergyClass, Expertise, Listing, ListingFilter,
@@ -120,6 +120,14 @@ const computeMarket = (city: CityProfile, year: number): CityMarket => {
   return market;
 };
 
+// Marché avec le calage de prix de la ville appliqué (config/immoRules.ts CATALOG_CALIBRATION) : le prix
+// moyen au m² est mis à l'échelle, jamais le loyer.
+const scaledMarket = (city: CityProfile, year: number): CityMarket => {
+  const m = computeMarket(city, year);
+  const scale = CATALOG_CALIBRATION.priceScaleByCity[city.id] ?? 1;
+  return scale === 1 ? m : { ...m, pricePerSqm: Math.round(m.pricePerSqm * scale) };
+};
+
 // ── Biens : générés UNE fois, de façon déterministe, indépendamment de l'année.
 interface PropertyTemplate {
   id: string;
@@ -213,7 +221,7 @@ const roundPrice = (p: number): number => Math.round(p / 500) * 500;
 const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
   const city = CITIES.find((c) => c.id === t.cityId)!;
   const nbh = neighborhoodsOf(city.id).find((n) => n.id === t.neighborhoodId)!;
-  const market = computeMarket(city, year);
+  const market = scaledMarket(city, year);
   const condoSpec = TYPE_SPECS.find((s) => s.label === t.title.split(' — ')[0]);
   const condoPerSqm = condoSpec?.condoPerSqm ?? 20;
   const inflation = Math.pow(1.015, year - MIN_YEAR);
@@ -248,10 +256,10 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     tenancyMonths,
     recoverableChargesMonthly: Math.round(t.surfaceSqm * 1.2 * inflation),
     annualCharges: {
-      condoFees: Math.round(t.surfaceSqm * condoPerSqm * 0.35 * inflation), // part non récupérable
-      propertyTax: Math.round(t.surfaceSqm * city.taxPerSqm * inflation),
-      insurance: Math.round(120 * inflation),
-      maintenance: Math.round(t.surfaceSqm * 6 * inflation),
+      condoFees: Math.round(t.surfaceSqm * condoPerSqm * 0.35 * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale), // part non récupérable
+      propertyTax: Math.round(t.surfaceSqm * city.taxPerSqm * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale),
+      insurance: Math.round(120 * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale),
+      maintenance: Math.round(t.surfaceSqm * 6 * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale),
     },
   };
 };
@@ -290,7 +298,7 @@ export const fictiveDataSource: RealEstateDataSource = {
   async getMarket(cityId: string, year: number): Promise<CityMarket | null> {
     assertYear(year);
     const c = CITIES.find((x) => x.id === cityId);
-    return c ? computeMarket(c, year) : null;
+    return c ? scaledMarket(c, year) : null;
   },
 
   async getLoanRatePct(year: number, months: number): Promise<number> {
@@ -325,7 +333,7 @@ export const fictiveDataSource: RealEstateDataSource = {
     const nbh = neighborhoodsOf(input.cityId).find((n) => n.id === input.neighborhoodId);
     if (!city || !nbh) throw new RangeError('Bien inconnu');
     const typeFactor = TYPE_SPECS.find((s) => s.type === input.type)?.priceFactor ?? 1;
-    const market = computeMarket(city, year);
+    const market = scaledMarket(city, year);
     return Math.round(input.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * typeFactor * CONDITION_PRICE_FACTOR[input.condition]);
   },
 

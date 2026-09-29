@@ -56,3 +56,18 @@ export const remainingBalance = (rows: { balanceAfter: number }[], principal: nu
   if (monthsPaid >= rows.length) return 0;
   return rows[monthsPaid - 1].balanceAfter;
 };
+
+// Gain de classes énergétiques d'une rénovation (règle de jeu) : `levels` classes, sans dépasser `bestClass`.
+// Une classe déjà égale ou meilleure n'est jamais dégradée.
+export const applyEnergyRenovation = (energyClass: EnergyClass, rules: { levels: number; bestClass: EnergyClass }): EnergyClass => {
+  const current = ENERGY_ORDER.indexOf(energyClass);
+  const target = ENERGY_ORDER.indexOf(rules.bestClass);
+  return ENERGY_ORDER[Math.min(current, Math.max(current - rules.levels, target))];
+};
+
+// Performance d'un joueur en Immobilier : (fonds propres actuels + flux encaissés (loyers nets, reventes) − argent investi)
+// / argent investi. Ne retombe pas à zéro après une vente : un gain encaissé reste un gain.
+export const computePerformancePctFromEuros = (i: { equity: number; cumulativeCashFlow: number; invested: number }): number => {
+  if (i.invested <= 0) return 0;
+  return Math.round(((i.equity + i.cumulativeCashFlow - i.invested) / i.invested) * 100 * 1e4) / 1e4;
+};

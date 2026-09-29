@@ -10,6 +10,7 @@
     "test": "vitest run",
     "set-pro": "ts-node scripts/set-pro.ts",
     "invite": "ts-node scripts/invite.ts",
+    "coins-stats": "ts-node scripts/coins-stats.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
   },

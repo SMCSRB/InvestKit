@@ -18,11 +18,6 @@ import { round2, assertNonNegative, EngineInputError } from './money';
 //   impôt = base IR × taux IR + base PS × taux PS + surtaxe éventuelle
 //   (une moins-value ne génère aucun impôt, et n'est pas reportable ici)
 // ─────────────────────────────────────────────────────────────────────────
-export interface SurtaxBracket {
-  fromTaxableGain: number; // seuil (base IR) à partir duquel le taux s'applique
-  ratePct: number;         // taux MARGINAL sur la tranche
-}
-
 export interface CapitalGainRules {
   incomeTaxRatePct: number;
   socialChargesRatePct: number;
@@ -31,7 +26,8 @@ export interface CapitalGainRules {
   acquisitionFeesForfaitPct?: number; // % du prix d'achat
   worksForfaitPct?: number;           // % du prix d'achat
   worksForfaitMinYears?: number;      // durée minimale de détention pour le forfait travaux
-  surtax?: SurtaxBracket[];
+  // Surtaxe sur les plus-values élevées : fonction de la plus-value imposable (après abattement IR).
+  surtax?: (taxableGain: number) => number;
 }
 
 export interface CapitalGainInput {
@@ -87,14 +83,7 @@ export const computeCapitalGain = (input: CapitalGainInput, rules: CapitalGainRu
   const incomeTax = round2((incomeTaxBase * rules.incomeTaxRatePct) / 100);
   const socialCharges = round2((socialChargesBase * rules.socialChargesRatePct) / 100);
 
-  let surtax = 0;
-  const brackets = [...(rules.surtax ?? [])].sort((a, b) => a.fromTaxableGain - b.fromTaxableGain);
-  brackets.forEach((b, idx) => {
-    const upper = idx + 1 < brackets.length ? brackets[idx + 1].fromTaxableGain : Infinity;
-    const slice = Math.max(0, Math.min(incomeTaxBase, upper) - b.fromTaxableGain);
-    surtax += (slice * b.ratePct) / 100;
-  });
-  surtax = round2(surtax);
+  const surtax = rules.surtax ? round2(Math.max(0, rules.surtax(incomeTaxBase))) : 0;
 
   const totalTax = round2(incomeTax + socialCharges + surtax);
   return { costBasis, grossGain, incomeTaxBase, socialChargesBase, incomeTax, socialCharges, surtax, totalTax, netGain: round2(grossGain - totalTax) };

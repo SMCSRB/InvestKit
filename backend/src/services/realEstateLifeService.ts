@@ -2,53 +2,27 @@ import type { PoolClient } from 'pg';
 import { query } from '../utils/db';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { createRng, hashString } from '../utils/seededRandom';
+import { uuidOk, fr, propertyKey, monthlyDraw, marketFor, scheduleOf, valueOfProperty } from './realEstateHelpers';
 
-// Un tirage par (partie, bien, mois) : reproductible, indépendant de l'historique des appels.
-// La clé du bien est STABLE (annonce d'origine + date d'achat), pas l'identifiant technique : deux parties
-// de même graine qui font les mêmes choses obtiennent exactement les mêmes résultats.
-const propertyKey = (p: { listing_id: string; purchase_year: number; purchase_month: number }): string =>
-  `${p.listing_id}:${p.purchase_year}:${p.purchase_month}`;
-export const monthlyDraw = (seed: string, key: string, monthTotalValue: number): number =>
-  createRng(hashString(`${seed}:${key}:search:${monthTotalValue}`))();
 import {
   RealEstateError, RE_DOMAIN, GameRow, requireGame, source, tx,
 } from './realEstateService';
 import {
-  estimateMarketRent, expectedVacancyMonths, expectedCappedVacancyMonths, monthlyLetProbability, vacancyCapMonths, isTenantFound, clampAskingRentRatio, reviseRent, buildMonthlyStatement,
-  buildSchedule, toCents, convertEurosToCoins, nextMonth, monthTotal, valueFromMarket, interpolateByMonth,
-  remainingBalance, round2, MonthlyStatement, LoanSchedule, TenantStatus, Condition, EnergyClass,
+  expectedVacancyMonths, expectedCappedVacancyMonths, monthlyLetProbability, vacancyCapMonths, isTenantFound, clampAskingRentRatio, reviseRent, buildMonthlyStatement,
+  toCents, convertEurosToCoins, nextMonth, monthTotal,
+  remainingBalance, round2, MonthlyStatement, TenantStatus, Condition, EnergyClass,
   pickTenantType, departureHazard, noticeFor, isLatePayment, startsDefaulting, resolveDefault, rollDamage, reletFees,
-  rollUnexpectedWorks, settleDeposit, checkLandlordNotice, capRentAtRelet, TenantType, UnitType,
+  rollUnexpectedWorks, settleDeposit, checkLandlordNotice, capRentAtRelet, rentalBannedByEnergy, TenantType, UnitType,
 } from '../engine/immo';
-import { RENT_MODEL, VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS } from '../config/immoRules';
+import { processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
+import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS } from '../config/immoRules';
 
 // ─────────────────────────────────────────────────────────────────────────
 // VIE DU BIEN : mise en location, mois qui passent, relevés, valorisation.
 // Le temps de jeu appartient au SERVEUR : le client demande « avance de N
 // mois », jamais « nous sommes en telle date ».
 // ─────────────────────────────────────────────────────────────────────────
-const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
 const MAX_MONTHS_PER_CALL = 12;
-
-const uuidOk = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
-
-const marketFor = async (p: any, year: number) => {
-  const [market, nbhs] = await Promise.all([source().getMarket(p.city_id, year), source().listNeighborhoods(p.city_id)]);
-  const nbh = nbhs.find((n) => n.id === p.neighborhood_id);
-  if (!market || !nbh) throw new RealEstateError('NOT_FOUND', 'Marché introuvable pour ce bien');
-  const rent = estimateMarketRent(
-    { surfaceSqm: Number(p.surface_sqm), cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier,
-      condition: p.condition as Condition, energyClass: String(p.energy_class).trim() as EnergyClass },
-    RENT_MODEL
-  );
-  return { marketRent: rent.monthlyRent, tension: round2(clamp(market.rentalTension + nbh.tensionOffset, 0, 1)) };
-};
-
-const scheduleOf = (loan: any): LoanSchedule =>
-  buildSchedule({
-    principal: Number(loan.principal), annualRatePct: Number(loan.annual_rate_pct), months: Number(loan.months),
-    insurance: { annualRatePct: Number(loan.insurance_rate_pct), basis: 'initial' },
-  });
 
 // Informations de recherche renvoyées au joueur (probabilités calculées côté serveur).
 const searchInfo = (propertyId: string, marketRent: number, asking: number, ratio: number, tension: number, found: boolean, message: string, elapsed = 0) => ({
@@ -61,6 +35,8 @@ const searchInfo = (propertyId: string, marketRent: number, asking: number, rati
   tenantFoundImmediately: found,
   message,
 });
+
+export { monthlyDraw };
 
 export const realEstateLifeService = {
   // Met un bien vacant en location. Le loyer demandé se règle en % du loyer de marché
@@ -81,6 +57,10 @@ export const realEstateLifeService = {
       if (p.search_elapsed_months !== null) throw new RealEstateError('INVALID_INPUT', 'Ce bien est déjà proposé à la location : utilise « baisser le loyer » pour le modifier');
       if (Number(p.pending_works_eur) > 0) throw new RealEstateError('INVALID_INPUT', `Travaux à payer avant de pouvoir louer : ${Number(p.pending_works_eur).toFixed(0)} €`);
 
+      const energyNow = String(p.energy_class).trim() as EnergyClass;
+      if (rentalBannedByEnergy(energyNow, game.simulated_year)) {
+        throw new RealEstateError('INVALID_INPUT', `Ce logement est classé ${energyNow} au diagnostic de performance énergétique : la loi interdit de le louer (contrats signés, renouvelés ou reconduits) depuis le 1er janvier ${energyNow === 'G' ? 2025 : energyNow === 'F' ? 2028 : 2034}. Rénove-le pour gagner des classes énergétiques.`, { code: 'DPE_BAN' });
+      }
       const { marketRent, tension } = await marketFor(p, game.simulated_year);
       const asking = round2(marketRent * ratio);
       // Premier tirage : ce mois-ci (0 mois vide écoulé).
@@ -141,6 +121,7 @@ export const realEstateLifeService = {
       }
       await c.query('UPDATE re_games SET simulated_year = $2, simulated_month = $3, updated_at = NOW() WHERE id = $1',
         [game.id, game.simulated_year, game.simulated_month]);
+      await snapshotLeaderboard(c, game, userId); // classement à année simulée égale
       return { year: game.simulated_year, month: game.simulated_month, settled };
     });
   },
@@ -193,14 +174,7 @@ export const realEstateLifeService = {
     const items = [];
     let totalValue = 0, totalDebt = 0, monthlyRent = 0, monthlyLoan = 0;
     for (const p of props) {
-      const val = async (year: number) => {
-        const now = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.condition }, year);
-        const then = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.initial_condition }, p.purchase_year);
-        return valueFromMarket(Number(p.purchase_price), now, then);
-      };
-      const thisYear = await val(y);
-      const nextYear = y + 1 <= source().maxYear ? await val(y + 1) : null;
-      const value = interpolateByMonth(thisYear, nextYear, m);
+      const value = await valueOfProperty(p, y, m);
       const debt = p.loan_id && p.l_status === 'active'
         ? remainingBalance(scheduleOf({ principal: p.l_principal, annual_rate_pct: p.l_rate, months: p.l_months, insurance_rate_pct: p.l_ins }).rows, Number(p.l_principal), Number(p.l_paid))
         : 0;
@@ -270,7 +244,6 @@ export const realEstateLifeService = {
 
 
 // ── Règlement d'UN mois pour toute la partie (dans la transaction déjà ouverte) ──
-const fr = (x: number): string => x.toFixed(2).replace('.', ',');
 const monthLabel = (total: number): string => `${((total - 1) % 12) + 1}/${Math.floor((total - 1) / 12)}`;
 
 async function processMonth(c: PoolClient, game: GameRow, userId: string) {
@@ -351,7 +324,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       return true;
     };
 
-    let exit: null | 'tenant_notice' | 'default' | 'landlord_notice' = null;
+    let exit: null | 'tenant_notice' | 'default' | 'landlord_notice' | 'dpe_ban' = null;
     let carryOverIn = { rent: 0, charges: 0 };
     let arrearsRecovered: { rent: number; charges: number } | undefined;
     let revision;
@@ -419,6 +392,11 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       }
       if (exit === null && noticeEnd !== null && noticeEnd === total) exit = 'tenant_notice';
       if (exit === null && llEffective !== null && llEffective === total) exit = 'landlord_notice';
+      // Fin d'un terme de bail : si la loi interdit désormais de louer ce logement (DPE), le bail ne peut pas être renouvelé.
+      if (exit === null && leaseStart !== null && (total - leaseStart + 1) % EP.leaseTermMonths === 0) {
+        const nx = nextMonth(y, m, source().maxYear);
+        if (nx && rentalBannedByEnergy(energy, nx.year)) exit = 'dpe_ban';
+      }
 
       // ── Sortie du locataire à la fin de ce mois ──────────────────────
       if (exit !== null) {
@@ -431,7 +409,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         oneOff.depositRefunded = st.refund;
         oneOff.repairCosts = damages;
         oneOff.reletFees = reletFees(currentRent, inflation, EP);
-        const cause = { tenant_notice: 'a quitté le logement à la fin de son préavis', default: 'a quitté le logement (procédure pour impayés aboutie)', landlord_notice: 'quitte le logement à l\'échéance du bail (congé donné par toi)' }[exit];
+        const cause = { tenant_notice: 'a quitté le logement à la fin de son préavis', default: 'a quitté le logement (procédure pour impayés aboutie)', landlord_notice: 'quitte le logement à l\'échéance du bail (congé donné par toi)', dpe_ban: `quitte le logement : le bail arrive à échéance et la loi interdit de le renouveler (classe énergétique ${energy})` }[exit];
         note('TENANT_LEFT', 'tenant_left',
           `Le locataire ${cause}. État des lieux de sortie : ${damages > 0 ? `dégradations chiffrées à ${fr(damages)} €` : 'conforme'}. ` +
           `Dépôt de garantie de ${fr(deposit)} € : ${st.keptForArrears > 0 ? `${fr(st.keptForArrears)} € retenus pour impayés, ` : ''}${st.keptForDamages > 0 ? `${fr(st.keptForDamages)} € retenus pour dégradations, ` : ''}${fr(st.refund)} € restitués.` +
@@ -450,10 +428,15 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
         } else {
           // Remise en location automatique au loyer habituel (gel F/G : jamais au-dessus de l'ancien loyer).
           const nxtYear = nextMonth(y, m, source().maxYear)?.year ?? y;
-          const { marketRent } = await marketFor(p, nxtYear);
-          askingRent = capRentAtRelet(round2(marketRent * Number(p.last_asking_ratio)), currentRent, energy);
-          searchElapsed = 0;
-          await tryRelet(0);
+          if (rentalBannedByEnergy(energy, nxtYear)) {
+            searchElapsed = null; askingRent = null;
+            note('EVENT', 'dpe_ban', `Ce logement (classe ${energy}) ne peut plus être loué : la loi interdit de louer les logements de cette classe énergétique. Rénove-le pour gagner des classes avant de le remettre en location.`, { energy });
+          } else {
+            const { marketRent } = await marketFor(p, nxtYear);
+            askingRent = capRentAtRelet(round2(marketRent * Number(p.last_asking_ratio)), currentRent, energy);
+            searchElapsed = 0;
+            await tryRelet(0);
+          }
         }
       }
     }
@@ -532,17 +515,27 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       await c.query(`INSERT INTO re_events (game_id, property_id, year, month, kind, message, details) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [game.id, p.id, y, m, ev.kind, ev.message, JSON.stringify(ev.details ?? {})]);
     }
+    // Bien en vente à l'amiable : un acquéreur se présente-t-il ce mois-ci ?
+    if (p.sale_search_elapsed_months !== null) {
+      const r = await processSaleSearch(c, game, userId, p.id, arrears, y, m);
+      arrears = round2(arrears + r.arrearsDelta);
+      if (r.sold) eventLog.push({ kind: 'property_sold', message: 'Bien vendu.' });
+    }
     results.push({ propertyId: p.id, title: p.title, statement, coinsDelta, hint, events: eventLog.map((e) => e.kind) });
   }
 
   if (arrears > 0) {
     missed += 1;
     warnings.push({
-      code: missed >= 3 ? 'SEIZURE_RISK' : 'ARREARS',
-      message: `Impayés : ${arrears.toFixed(0)} € dus faute de pièces suffisantes (${missed} mois de suite).` +
-        (missed >= 3 ? ' Risque de vente forcée par la banque (mécanisme prévu à l\'étape 6).' : ' Réponds vite : la banque ne financera plus rien tant que ce n\'est pas réglé.'),
+      code: 'ARREARS',
+      message: `Impayés : ${arrears.toFixed(0)} € dus faute de pièces suffisantes (${missed} mois de suite). Réponds vite : la banque ne financera plus rien tant que ce n'est pas réglé, et après 3 mois elle te proposera de vendre un bien.`,
     });
   } else missed = 0;
+  // Vente amiable proposée, puis vente forcée si rien n'est réglé.
+  const distress = await processDistress(c, game, userId, arrears, missed, y, m);
+  arrears = round2(Math.max(0, arrears + distress.arrearsDelta));
+  if (arrears <= 0) missed = 0;
+  warnings.push(...distress.warnings);
   await c.query('UPDATE re_games SET arrears_eur = $2, missed_months = $3 WHERE id = $1', [game.id, arrears, missed]);
   game.arrears_eur = arrears; game.missed_months = missed;
 

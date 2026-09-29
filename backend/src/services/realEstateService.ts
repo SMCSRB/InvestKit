@@ -387,7 +387,7 @@ export const realEstateService = {
         const coins = coinsFor(pending);
         await investcoinsRepository.applyTransaction(userId, -coins, 're_exchange_pay_works', { domain: RE_DOMAIN, propertyId: propertyIdRaw, euros: pending }, c);
         const renovated = applyRenovation(res.rows[0].condition, res.rows[0].energy_class.trim(), RENOVATION_RULES);
-        await c.query('UPDATE re_properties SET pending_works_eur = 0, condition = $2, energy_class = $3 WHERE id = $1', [propertyIdRaw, renovated.condition, renovated.energyClass]);
+        await c.query('UPDATE re_properties SET pending_works_eur = 0, works_financed = works_financed + $4, extra_invested_eur = extra_invested_eur + $4, condition = $2, energy_class = $3 WHERE id = $1', [propertyIdRaw, renovated.condition, renovated.energyClass, pending]);
         return { charged: coins, pendingWorks: 0 };
       });
     } catch (e) {

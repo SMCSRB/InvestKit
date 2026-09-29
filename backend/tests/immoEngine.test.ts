@@ -278,10 +278,11 @@ describe('plus-value (règles FICTIVES de test : le moteur ne contient aucun chi
     const short = computeCapitalGain({ ...sale, acquisitionFees: 5000, yearsHeld: 3 }, f);
     expect(short.costBasis).toBe(200000 + 15000);
   });
-  it('surtaxe marginale par tranche', () => {
-    const r = computeCapitalGain({ ...sale, yearsHeld: 0, salePrice: 400000 }, { ...rules, surtax: [{ fromTaxableGain: 50000, ratePct: 2 }, { fromTaxableGain: 100000, ratePct: 3 }] });
-    // gain 180 000, aucun abattement : (100 000−50 000)×2 % + (180 000−100 000)×3 %
-    expect(r.surtax).toBe(1000 + 2400);
+  it('surtaxe : fonction de la plus-value imposable (après abattement)', () => {
+    const r = computeCapitalGain({ ...sale, yearsHeld: 0, salePrice: 400000 }, { ...rules, surtax: (g) => (g > 100000 ? g * 0.03 : 0) });
+    // gain 180 000 sans abattement → 3 % de la base imposable
+    expect(r.surtax).toBe(5400);
+    expect(r.totalTax).toBeCloseTo(r.incomeTax + r.socialCharges + 5400, 2);
   });
   it('abattement hors bornes : erreur explicite', () => {
     expect(() => computeCapitalGain(sale, { ...rules, incomeTaxAllowancePct: () => 150 })).toThrow(EngineInputError);

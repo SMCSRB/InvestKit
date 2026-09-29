@@ -116,6 +116,31 @@ export const investcoinsRepository = {
     }
   },
 
+  // Statistique d'administration : pièces créées, détruites et échangées PAR DOMAINE (colonnes domain et
+  // nature du ledger). `netInjected` = somme de toutes les écritures du domaine = pièces que le domaine a
+  // fait entrer dans (+) ou sortir de (−) l'économie des joueurs ; `created` / `destroyed` isolent les
+  // créations et destructions « pures », `exchangeNet` les allers-retours achat/vente.
+  async ledgerStatsByDomain() {
+    const result = await query(
+      `SELECT COALESCE(domain, '(hors domaine)') AS domain, nature,
+              COUNT(*)::int AS entries,
+              COALESCE(SUM(amount), 0)::bigint AS net,
+              COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0)::bigint AS credited,
+              COALESCE(-SUM(amount) FILTER (WHERE amount < 0), 0)::bigint AS debited
+       FROM investcoins_transactions GROUP BY 1, 2 ORDER BY 1, 2`
+    );
+    const byDomain: Record<string, { created: number; destroyed: number; exchangeNet: number; netInjected: number; entries: number }> = {};
+    for (const r of result.rows) {
+      const d = (byDomain[r.domain] ??= { created: 0, destroyed: 0, exchangeNet: 0, netInjected: 0, entries: 0 });
+      d.entries += r.entries;
+      d.netInjected += Number(r.net);
+      if (r.nature === 'creation') d.created += Number(r.credited);
+      else if (r.nature === 'destruction') d.destroyed += Number(r.debited);
+      else d.exchangeNet += Number(r.net);
+    }
+    return byDomain;
+  },
+
   async getRecentTransactions(userId: string, limit = 20) {
     const result = await query(
       `SELECT amount, reason, metadata, created_at FROM investcoins_transactions
