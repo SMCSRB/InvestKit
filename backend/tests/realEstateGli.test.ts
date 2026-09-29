@@ -115,7 +115,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
 
   it('IMPAYÉ COUVERT (hors trêve) : remboursé dès le 2e mois, rétroactif, le locataire part, plus aucune perte', async () => {
     quiet(); allWorkers(); alwaysDefault();
-    const { uid, prop } = await player({ month: 4 });      // avril : l'impayé se termine avant novembre
+    const { uid, prop } = await player({ month: 1, seed: 'gli-couvert' });      // janvier + carence : l'impayé se termine bien avant novembre
     await life.setGli(uid, prop.id, true);
     await step(uid, GLI_PARAMS.carenceMonths + 1);         // carence écoulée, bien vide
     await life.listForRent(uid, prop.id, 0.7);
@@ -141,7 +141,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
 
   it('DÉLAI DE CARENCE : impayé qui commence trop tôt après la souscription = rien remboursé, expliqué', async () => {
     quiet(); allWorkers(); alwaysDefault();
-    const { uid, prop } = await player({ month: 4 });
+    const { uid, prop } = await player({ month: 4, seed: 'gli-carence' });
     await life.setGli(uid, prop.id, true);
     await life.listForRent(uid, prop.id, 0.7);            // tenant dès le mois suivant : contrat trop récent
     await untilEvent(uid, prop.id, 'tenant_left');
@@ -153,7 +153,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
 
   it('PLAFOND : remboursement limité au plafond restant, expliqué', async () => {
     quiet(); allWorkers(); alwaysDefault();
-    const { uid, prop } = await player({ month: 4 });
+    const { uid, prop } = await player({ month: 4, seed: 'gli-plafond' });
     await life.setGli(uid, prop.id, true);
     await step(uid, GLI_PARAMS.carenceMonths + 1);
     await query('UPDATE re_properties SET gli_reimbursed_eur = $2 WHERE id = $1', [prop.id, GLI_PARAMS.maxCoverageEur - 300]);
@@ -168,7 +168,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
 
   it('TRÊVE HIVERNALE : la procédure aboutit en hiver mais le locataire reste jusqu\'au 1er avril, l\'impayé s\'allonge', async () => {
     quiet(); allWorkers(); alwaysDefault();
-    const { uid, prop } = await player({ month: 10 });     // le locataire arrive en novembre : 3 mois d'impayés = janvier
+    const { uid, prop } = await player({ month: 10, seed: 'gli-treve' });     // le locataire arrive en novembre : 3 mois d'impayés = janvier
     await life.listForRent(uid, prop.id, 0.7);
     await untilEvent(uid, prop.id, 'tenant_left');
     const ev = await events(prop.id);
@@ -190,7 +190,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
 
   it('TRÊVE HIVERNALE avec assurance : tout l\'impayé de l\'hiver est remboursé', async () => {
     quiet(); allWorkers(); alwaysDefault();
-    const { uid, prop } = await player({ month: 3 });      // contrat souscrit en mars, carence écoulée fin juin
+    const { uid, prop } = await player({ month: 3, seed: 'gli-treve-assure' });      // contrat souscrit en mars, carence écoulée fin juin
     await life.setGli(uid, prop.id, true);
     await step(uid, 7);                                    // avril → octobre, carence largement écoulée ; nous voici en octobre
     await life.listForRent(uid, prop.id, 0.7);
