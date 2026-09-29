@@ -3,7 +3,7 @@ import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS } from '../../config/immoRule
 import { createRng, hashString, approxGaussian } from '../../utils/seededRandom';
 import type {
   City, CityMarket, Neighborhood, CityTier, Condition, EnergyClass, Expertise, Listing, ListingFilter,
-  PropertyType, RealEstateDataSource,
+  PropertyType, RealEstateDataSource, ValuationInput,
 } from './types';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -317,6 +317,16 @@ export const fictiveDataSource: RealEstateDataSource = {
       .map((t) => priceTemplate(t, year))
       .filter((l) => filter.maxPrice === undefined || l.price <= filter.maxPrice)
       .sort((a, b) => a.price - b.price);
+  },
+
+  async estimateValue(input: ValuationInput, year: number): Promise<number> {
+    assertYear(year);
+    const city = CITIES.find((c) => c.id === input.cityId);
+    const nbh = neighborhoodsOf(input.cityId).find((n) => n.id === input.neighborhoodId);
+    if (!city || !nbh) throw new RangeError('Bien inconnu');
+    const typeFactor = TYPE_SPECS.find((s) => s.type === input.type)?.priceFactor ?? 1;
+    const market = computeMarket(city, year);
+    return Math.round(input.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * typeFactor * CONDITION_PRICE_FACTOR[input.condition]);
   },
 
   async getListing(listingId: string, year: number): Promise<Listing | null> {

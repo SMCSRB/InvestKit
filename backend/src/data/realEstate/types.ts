@@ -78,6 +78,15 @@ export interface Expertise {
   hiddenDefects: string[];        // vide si rien à signaler
 }
 
+// Bien à valoriser (état actuel, pas nécessairement celui de l'annonce d'origine).
+export interface ValuationInput {
+  cityId: string;
+  neighborhoodId: string;
+  type: PropertyType;
+  surfaceSqm: number;
+  condition: Condition;
+}
+
 export interface ListingFilter {
   cityId?: string;
   type?: PropertyType;
@@ -98,6 +107,8 @@ export interface RealEstateDataSource {
   getLoanRatePct(year: number, months: number): Promise<number>;
   // Variation annuelle (%) de l'indice de référence des loyers (IRL), net de tout plafonnement légal.
   getIrlAnnualChangePct(year: number): Promise<number>;
+  // Estimation de la valeur d'un bien (€) selon le marché de l'année ; sans bruit propre à une annonce.
+  estimateValue(input: ValuationInput, year: number): Promise<number>;
   listListings(year: number, filter?: ListingFilter): Promise<Listing[]>;
   getListing(listingId: string, year: number): Promise<Listing | null>;
   getExpertise(listingId: string, year: number): Promise<Expertise | null>;

@@ -7,3 +7,4 @@ export * from './capitalGains';
 export * from './rent';
 export * from './monthly';
 export * from './purchase';
+export * from './valuation';

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { realEstateService, RealEstateError } from '../services/realEstateService';
+import { realEstateLifeService as life } from '../services/realEstateLifeService';
 
 const STATUS: Record<string, number> = {
   INVALID_INPUT: 400,
@@ -45,6 +46,10 @@ export const realEstateController = {
   expertise: handle('Erreur lors de l\'expertise', (r, uid) => realEstateService.buyExpertise(uid, r.params.id)),
   preview: handle('Erreur lors de la simulation d\'achat', (r, uid) => realEstateService.previewPurchase(uid, r.body)),
   purchase: handle('Erreur lors de l\'achat', (r, uid) => realEstateService.purchase(uid, r.body)),
-  properties: handle('Erreur lors de la récupération des biens', (_r, uid) => realEstateService.listProperties(uid)),
+  properties: handle('Erreur lors de la récupération des biens', (_r, uid) => life.getPortfolio(uid)),
+  listForRent: handle('Erreur lors de la mise en location', (r, uid) => life.listForRent(uid, r.params.id, r.body?.askingRentRatio)),
+  advance: handle('Erreur lors de l\'avancée du temps', (r, uid) => life.advanceTime(uid, r.body?.months)),
+  summary: handle('Erreur lors de la récupération du récapitulatif', (r, uid) => life.getMonthSummary(uid, r.query.year, r.query.month)),
+  statements: handle('Erreur lors de la récupération des relevés', (r, uid) => life.getStatements(uid, r.params.id, r.query.limit)),
   payWorks: handle('Erreur lors du paiement des travaux', (r, uid) => realEstateService.payPendingWorks(uid, r.params.id)),
 };

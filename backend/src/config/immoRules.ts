@@ -1,4 +1,4 @@
-import type { BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType } from '../engine/immo';
+import type { BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParams, UnitType, EnergyClass } from '../engine/immo';
 
 // Règles bancaires. Ce sont des règles de JEU, ajustables : elles ne prétendent
 // pas refléter une banque précise.
@@ -79,6 +79,10 @@ export const VACANCY_MODEL: VacancyParams = {
 
 // Durée moyenne d'un bail avant changement de locataire (mois), par type.
 export const TENANCY_MONTHS: Record<UnitType, number> = { studio: 24, apartment: 36, house: 48 };
+
+// Rénovation lourde (règle de JEU) : un bien « à rénover » dont les travaux sont
+// payés passe en bon état et gagne 2 classes énergétiques, sans dépasser C.
+export const RENOVATION_RULES: { levels: number; bestClass: EnergyClass } = { levels: 2, bestClass: 'C' };
 
 // Fiscalité simplifiée du socle : taux appliqué aux loyers encaissés, par
 // profil. Valeurs de JEU (pas des taux légaux) ; les régimes réels

@@ -6,9 +6,9 @@ import { getBuyAccess } from '../utils/entitlements';
 import { getRealEstateDataSource, Listing, ListingFilter, PropertyType } from '../data/realEstate';
 import {
   BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT,
-  loanApplicationFee, expertiseCostEuros,
+  loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
 } from '../config/immoRules';
-import { evaluatePurchase, PurchaseEvaluation, ProfileId } from '../engine/immo';
+import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation } from '../engine/immo';
 
 export const RE_DOMAIN = 'real_estate';
 
@@ -26,13 +26,13 @@ export class RealEstateError extends Error {
 
 const PROFILES = Object.keys(STARTING_PROFILES) as ProfileId[];
 const centsPerCoin = EUROS_PER_COIN;
-const coinsFor = (euros: number): number => Math.ceil(Math.round(euros * 100) / (centsPerCoin * 100)); // arrondi contre le joueur
+export const coinsFor = (euros: number): number => Math.ceil(Math.round(euros * 100) / (centsPerCoin * 100)); // arrondi contre le joueur
 
-interface GameRow { id: string; user_id: string; profile: ProfileId; simulated_year: number; simulated_month: number }
+export interface GameRow { id: string; user_id: string; profile: ProfileId; simulated_year: number; simulated_month: number; arrears_eur?: string | number; missed_months?: number }
 
-const source = () => getRealEstateDataSource();
+export const source = () => getRealEstateDataSource();
 
-const requireGame = async (userId: string, db: { query: PoolClient['query'] } | null = null, lock = false): Promise<GameRow> => {
+export const requireGame = async (userId: string, db: { query: PoolClient['query'] } | null = null, lock = false): Promise<GameRow> => {
   const sql = `SELECT * FROM re_games WHERE user_id = $1${lock ? ' FOR UPDATE' : ''}`;
   const res = db ? await (db.query as any)(sql, [userId]) : await query(sql, [userId]);
   if (res.rows.length === 0) throw new RealEstateError('NO_GAME', 'Aucune partie immobilière : choisis d\'abord ton profil');
@@ -134,6 +134,17 @@ const buildPlan = async (game: GameRow, params: PurchaseParams, db: { query: Poo
     throw new RealEstateError('INVALID_INPUT', e.message);
   }
 
+  // Des impayés en cours : la banque ne prête plus.
+  if (Number(game.arrears_eur ?? 0) > 0) {
+    evaluation.assessment.decision = 'refused';
+    evaluation.assessment.reasons.unshift({
+      code: 'LOAN_ARREARS' as any,
+      message: `Tu as ${Number(game.arrears_eur).toFixed(0)} € d'impayés en cours : la banque ne finance aucun nouvel achat tant qu'ils ne sont pas réglés.`,
+      value: Number(game.arrears_eur),
+    });
+    evaluation.approved = false;
+  }
+
   const notaryCoins = Math.min(params.downPaymentCoins, coinsFor(evaluation.budget.notaryFees));
   const feeCoins = evaluation.upfrontFees > 0 ? coinsFor(evaluation.upfrontFees) : 0;
   return {
@@ -165,7 +176,7 @@ const summarize = (plan: Plan, balance: number) => {
   };
 };
 
-const tx = async <T>(fn: (c: PoolClient) => Promise<T>): Promise<T> => {
+export const tx = async <T>(fn: (c: PoolClient) => Promise<T>): Promise<T> => {
   const client = await getClient();
   try {
     await client.query('BEGIN');
@@ -320,12 +331,18 @@ export const realEstateService = {
         const pendingWorks = plan.expertised ? 0 : Math.max(0, truth.realWorks - plan.listing.advertisedWorks);
 
         const l = plan.listing;
+        // Travaux entièrement payés à l'achat : la rénovation est faite tout de suite.
+        const renovated = pendingWorks === 0 && plan.worksFinanced > 0
+          ? applyRenovation(l.condition, l.energyClass, RENOVATION_RULES)
+          : { condition: l.condition, energyClass: l.energyClass };
         const prop = await c.query(
           `INSERT INTO re_properties (game_id, listing_id, city_id, neighborhood_id, title, property_type, surface_sqm, age, energy_class, condition,
-             purchase_year, purchase_month, purchase_price, notary_fees, works_financed, down_payment, loan_id, pending_works_eur, hidden_defects)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING id`,
-          [game.id, l.id, l.cityId, l.neighborhoodId, l.title, l.type, l.surfaceSqm, l.age, l.energyClass, l.condition,
-            game.simulated_year, game.simulated_month, l.price, e.budget.notaryFees, plan.worksFinanced, e.downPayment, loanId, pendingWorks, JSON.stringify(truth.hiddenDefects)]
+             purchase_year, purchase_month, purchase_price, notary_fees, works_financed, down_payment, loan_id, pending_works_eur, hidden_defects,
+             initial_condition, initial_energy_class)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING id`,
+          [game.id, l.id, l.cityId, l.neighborhoodId, l.title, l.type, l.surfaceSqm, l.age, renovated.energyClass, renovated.condition,
+            game.simulated_year, game.simulated_month, l.price, e.budget.notaryFees, plan.worksFinanced, e.downPayment, loanId, pendingWorks, JSON.stringify(truth.hiddenDefects),
+            l.condition, l.energyClass]
         );
 
         return {
@@ -363,13 +380,14 @@ export const realEstateService = {
     try {
       return await tx(async (c) => {
         const game = await requireGame(userId, c, true);
-        const res = await c.query('SELECT id, pending_works_eur FROM re_properties WHERE id = $1 AND game_id = $2 FOR UPDATE', [propertyIdRaw, game.id]);
+        const res = await c.query('SELECT id, pending_works_eur, condition, energy_class FROM re_properties WHERE id = $1 AND game_id = $2 FOR UPDATE', [propertyIdRaw, game.id]);
         if (res.rows.length === 0) throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
         const pending = Number(res.rows[0].pending_works_eur);
         if (pending <= 0) return { charged: 0, pendingWorks: 0 };
         const coins = coinsFor(pending);
         await investcoinsRepository.applyTransaction(userId, -coins, 're_exchange_pay_works', { domain: RE_DOMAIN, propertyId: propertyIdRaw, euros: pending }, c);
-        await c.query('UPDATE re_properties SET pending_works_eur = 0 WHERE id = $1', [propertyIdRaw]);
+        const renovated = applyRenovation(res.rows[0].condition, res.rows[0].energy_class.trim(), RENOVATION_RULES);
+        await c.query('UPDATE re_properties SET pending_works_eur = 0, condition = $2, energy_class = $3 WHERE id = $1', [propertyIdRaw, renovated.condition, renovated.energyClass]);
         return { charged: coins, pendingWorks: 0 };
       });
     } catch (e) {

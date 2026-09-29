@@ -61,7 +61,7 @@ export interface MonthlyLines {
 
 export type ExplanationCode =
   | 'INDEXATION' | 'INDEXATION_FROZEN' | 'VACANCY' | 'LATE_PAYMENT' | 'ARREARS'
-  | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NORMAL';
+  | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NOT_LISTED' | 'PENDING_WORKS' | 'NORMAL';
 
 export interface Explanation {
   code: ExplanationCode;
