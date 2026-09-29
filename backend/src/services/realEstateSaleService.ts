@@ -261,8 +261,25 @@ export const realEstateSaleService = {
     else if (improved === energy) reason = `Ce logement est déjà en classe ${energy} : rien à gagner.`;
     let bannedFromYear: number | null = null;
     for (let yr = game.simulated_year; yr <= game.simulated_year + 30; yr++) { if (rentalBannedByEnergy(energy, yr)) { bannedFromYear = yr; break; } }
+    // Gain attendu : loyer de marché avant/après (même modèle que la mise en location) et valeur du bien avant/après.
+    // Dans le modèle actuel la valeur d'un bien ne dépend pas de sa classe énergétique : le gain de valeur est donc nul (affiché tel quel).
+    const y = game.simulated_year, m = game.simulated_month;
+    const rentBefore = (await marketFor(p, y)).marketRent;
+    const rentAfter = (await marketFor({ ...p, energy_class: improved }, y)).marketRent;
+    const rentGainMonthly = round2(rentAfter - rentBefore);
+    const valueBefore = await valueOfProperty(p, y, m);
+    const valueGain = round2((await valueOfProperty({ ...p, energy_class: improved }, y, m)) - valueBefore);
+    const rentGainYearly = round2(rentGainMonthly * 12);
+    const paybackYears = rentGainYearly > 0 ? Math.round((costEuros / rentGainYearly) * 10) / 10 : null;
+    let verdict: 'no_change' | 'no_direct_gain' | 'profitable_slowly' | 'profitable';
+    if (improved === energy) verdict = 'no_change';
+    else if (rentGainYearly <= 0 && valueGain <= 0) verdict = 'no_direct_gain';
+    else if ((paybackYears ?? Infinity) > 15) verdict = 'profitable_slowly';
+    else verdict = 'profitable';
     const factors = RENT_MODEL.energyFactors;
     return {
+      rentBefore: round2(rentBefore), rentAfter: round2(rentAfter), rentGainMonthly, rentGainYearly,
+      valueBefore, valueGain, paybackYears, verdict,
       propertyId: p.id, currentClass: energy, newClass: improved === energy ? null : improved, canRenovate: reason === null, reason,
       costEuros, coinsCost, balance, affordable: balance >= coinsCost,
       rentEffectPct: Math.round(((factors[improved] / factors[energy]) - 1) * 1000) / 10,

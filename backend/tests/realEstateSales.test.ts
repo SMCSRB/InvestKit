@@ -417,6 +417,18 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       expect((await row(prop.id)).energy_class.trim()).toBe('G');
       expect(pv).toMatchObject({ currentClass: 'G', newClass: 'E', canRenovate: true, reason: null, bannedNow: true, bannedAfter: false, currentClassBannedFromYear: 2025, newClassBannedFromYear: 2034, affordable: true });
       expect(pv.rentEffectPct).toBeGreaterThan(0);
+      // gain de loyer chiffré (G → E) ; la valeur ne dépend pas de la classe énergétique dans ce modèle : gain de valeur nul, affiché tel quel
+      expect(pv.rentAfter).toBeGreaterThan(pv.rentBefore);
+      expect(pv.rentGainMonthly).toBeCloseTo(pv.rentAfter - pv.rentBefore, 2);
+      expect(pv.rentGainYearly).toBeCloseTo(pv.rentGainMonthly * 12, 2);
+      expect(pv.valueGain).toBe(0);
+      expect(pv.paybackYears).toBeCloseTo(pv.costEuros / pv.rentGainYearly, 1);
+      expect(['profitable', 'profitable_slowly']).toContain(pv.verdict);
+      // D → C : aucun gain direct de loyer (facteurs identiques) : le devis le dit clairement
+      await query(`UPDATE re_properties SET energy_class = 'D' WHERE id = $1`, [prop.id]);
+      const d: any = await sales.renovationPreview(uid, prop.id);
+      expect(d).toMatchObject({ newClass: 'C', rentGainMonthly: 0, valueGain: 0, paybackYears: null, verdict: 'no_direct_gain' });
+      await query(`UPDATE re_properties SET energy_class = 'G' WHERE id = $1`, [prop.id]);
       const r: any = await sales.renovate(uid, prop.id);
       expect(pv.coinsCost).toBe(r.coinsCharged);
       expect(pv.costEuros).toBe(r.costEuros);

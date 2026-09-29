@@ -248,8 +248,21 @@ function RenovationPanel({ property, onDone, notify }) {
       {pv.canRenovate ? (
         <>
           <p style={{ fontSize: 14, margin: '8px 0' }}>
-            Classe <strong>{pv.currentClass}</strong> → <strong>{pv.newClass}</strong> · coût {eur(pv.costEuros)} ({pv.coinsCost} 🪙). Effet sur le loyer de marché : {pv.rentEffectPct > 0 ? '+' : ''}{pv.rentEffectPct} % (visible à la prochaine mise en location).
+            Classe <strong>{pv.currentClass}</strong> → <strong>{pv.newClass}</strong> · coût <strong>{eur(pv.costEuros)}</strong> ({pv.coinsCost} 🪙).
           </p>
+          <table style={{ fontSize: 14, borderCollapse: 'collapse', marginBottom: 8 }}>
+            <tbody>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Loyer de marché</td><td>{eur2(pv.rentBefore)} → {eur2(pv.rentAfter)} <strong style={{ color: pv.rentGainMonthly > 0 ? '#86efac' : '#cbd5e1' }}>({pv.rentGainMonthly > 0 ? '+' : ''}{eur2(pv.rentGainMonthly)}/mois, {eur(pv.rentGainYearly)}/an)</strong></td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Valeur du bien</td><td>{eur(pv.valueBefore)} <strong style={{ color: pv.valueGain > 0 ? '#86efac' : '#cbd5e1' }}>({pv.valueGain > 0 ? '+' : ''}{eur(pv.valueGain)})</strong>{pv.valueGain <= 0 && <span style={{ color: '#94a3b8' }}> — dans ce jeu, la valeur ne dépend pas de la classe énergétique</span>}</td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Amorti en</td><td>{pv.paybackYears ? `${pv.paybackYears} ans de loyers en plus` : 'jamais par les loyers'}</td></tr>
+            </tbody>
+          </table>
+          <p style={{ fontSize: 14, margin: '8px 0', color: pv.verdict === 'profitable' ? '#86efac' : pv.verdict === 'profitable_slowly' ? '#fbbf24' : '#fca5a5' }}>
+            {pv.verdict === 'profitable' && '✅ Opération rentable : le loyer en plus rembourse les travaux en moins de 15 ans.'}
+            {pv.verdict === 'profitable_slowly' && '⚠️ Rentable, mais lentement : plus de 15 ans de loyers en plus pour rembourser les travaux.'}
+            {pv.verdict === 'no_direct_gain' && '⚠️ Aucun gain direct de loyer ni de valeur : cette rénovation ne se justifie que pour éviter l\'interdiction de louer.'}
+          </p>
+          <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 8px' }}>Le nouveau loyer s&apos;applique à la prochaine mise en location (le loyer d&apos;un bail en cours ne change pas). Seuil de 15 ans : repère du jeu.</p>
           {pv.currentClassBannedFromYear && <p style={{ fontSize: 13, color: '#fbbf24' }}>Classe {pv.currentClass} : location interdite {pv.bannedNow ? 'depuis' : 'à partir de'} {pv.currentClassBannedFromYear}.{!pv.bannedAfter && pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : interdite à partir de ${pv.newClassBannedFromYear}.` : ''}{!pv.bannedAfter && !pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : aucune interdiction prévue.` : ''}</p>}
           {!pv.affordable && <p style={{ color: '#fca5a5', fontSize: 13 }}>Solde InvestCoins insuffisant.</p>}
           <button style={btn(true)} disabled={busy || !pv.affordable} onClick={go}>Lancer les travaux</button>
@@ -278,12 +291,12 @@ function GliPanel({ property, onDone, notify }) {
           ✅ Assuré. Prime : environ <strong>{eur2(g.premiumMonthly)}</strong>/mois quand le bien est loué ({g.premiumPct} % du loyer charges comprises, déductible de tes impôts).
           {g.inCarence ? <> ⏳ Délai de carence en cours<HelpTip term="carence" /> : un impayé qui commence avant sa fin ne sera pas remboursé.</> : ' Le délai de carence est passé : tu es couvert.'}
           {' '}Remboursement dès le {g.triggerAfterUnpaidMonths}<sup>e</sup> mois d&apos;impayé, plafond {eur(g.maxCoverageEur)} (déjà remboursé : {eur(g.reimbursedEur)}).
-          {g.tenantRefused && <> ⚠️ Le locataire actuel est refusé par l&apos;assureur : tu ne paies pas de prime et tu n&apos;es pas couvert pour lui.</>}
+          {g.tenantRefused && <> ⚠️ Le locataire actuel est refusé par l&apos;assureur : tu ne paies pas de prime et tu n&apos;es pas couvert pour lui.<HelpTip term="gli-etudiants" /></>}
         </p>
       ) : (
         <p style={{ fontSize: 14, margin: '8px 0', color: '#cbd5e1' }}>
           Prime estimée : <strong>{eur2(g.premiumMonthly)}</strong>/mois ({g.premiumPct} % du loyer + charges), seulement les mois où le bien est loué. Délai de carence : {g.carenceMonths} mois<HelpTip term="carence" />.
-          {g.reason && <span style={{ color: '#fbbf24' }}> {g.reason}</span>}
+          {g.reason && <span style={{ color: '#fbbf24' }}> {g.reason}<HelpTip term="gli-etudiants" /></span>}
         </p>
       )}
       <button style={btn(!g.active)} disabled={busy || (!g.active && !g.canSubscribe)} onClick={toggle}>{g.active ? 'Résilier l\'assurance' : 'Souscrire l\'assurance'}</button>
