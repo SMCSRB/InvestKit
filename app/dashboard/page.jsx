@@ -3499,6 +3499,12 @@ export default function DashboardPage() {
                       {d.id === 'crypto' ? '₿ ' : '📊 '}{d.label}
                     </button>
                   ))}
+                  <button
+                    onClick={() => router.push('/immobilier')}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    🏠 Immobilier →
+                  </button>
                 </div>
 
                 {/* Portfolio summary */}
@@ -3568,9 +3574,15 @@ export default function DashboardPage() {
                           {d.label}{d.id === tradingPortfolio?.freeDomain ? ' (actuel)' : ''}
                         </button>
                       ))}
-                      <button disabled title="Bientôt disponible"
-                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', fontWeight: '700', fontSize: '13px', cursor: 'not-allowed' }}>
-                        🏠 Immobilier — Bientôt disponible
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm(showDomainChooser ? "Passer ton domaine gratuit à l'Immobilier ? C'est ton dernier changement." : "Choisir l'Immobilier comme domaine gratuit ? Ce choix est définitif (le plan Pro débloque tous les domaines).")) return;
+                          await chooseFreeDomain('real_estate');
+                          router.push('/immobilier');
+                        }}
+                        disabled={tradingLoading || tradingPortfolio?.freeDomain === 'real_estate'}
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}>
+                        🏠 Immobilier{tradingPortfolio?.freeDomain === 'real_estate' ? ' (actuel)' : ''}
                       </button>
                       {showDomainChooser && (
                         <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>

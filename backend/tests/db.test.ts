@@ -1,3 +1,4 @@
+import { getBuyAccess } from '../src/utils/entitlements';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum } from './helpers';
 import { query } from '../src/utils/db';
@@ -168,6 +169,15 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       expect(await userRepository.changeFreeDomainOnce(uid, 'crypto')).toBe(true);
       expect(await userRepository.changeFreeDomainOnce(uid, 'stocks')).toBe(false); // droit consommé
       expect((await userRepository.findById(uid))!.free_domain).toBe('crypto');
+    });
+
+    it('domaine gratuit « Immobilier » : choix accepté une seule fois, l\'achat Immobilier devient possible', async () => {
+      const uid = await createUser({});
+      expect(await userRepository.setFreeDomainOnce(uid, 'real_estate')).toBe(true);
+      expect(await userRepository.setFreeDomainOnce(uid, 'stocks')).toBe(false);
+      const u = (await userRepository.findById(uid))!;
+      expect(u.free_domain).toBe('real_estate');
+      expect(getBuyAccess(u, 'real_estate')).toEqual({ allowed: true });
     });
 
     it('domaine gratuit : choix unique', async () => {

@@ -53,4 +53,11 @@ describe('droits d\'achat (abonnements)', () => {
     expect(getBuyAccess(u, 'stocks')).toEqual({ allowed: true });
     expect(getBuyAccess(u, 'crypto')).toEqual({ allowed: false, reason: 'DOMAIN_LOCKED' });
   });
+  it('Immobilier comme domaine gratuit : ouvre l\'Immobilier seulement, et inversement', () => {
+    const re = { subscription_tier: 'free', free_domain: 'real_estate' };
+    expect(getBuyAccess(re, 'real_estate')).toEqual({ allowed: true });
+    expect(getBuyAccess(re, 'stocks')).toEqual({ allowed: false, reason: 'DOMAIN_LOCKED' });
+    expect(getBuyAccess({ subscription_tier: 'free', free_domain: 'stocks' }, 'real_estate')).toEqual({ allowed: false, reason: 'DOMAIN_LOCKED' });
+    expect(getBuyAccess({ subscription_tier: 'pro' }, 'real_estate')).toEqual({ allowed: true });
+  });
 });
