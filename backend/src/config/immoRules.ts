@@ -72,7 +72,7 @@ export const RENT_MODEL: RentModelParams = {
 export const VACANCY_MODEL: VacancyParams = {
   minMonths: 0.5,
   maxMonths: 5,
-  maxSampledMonths: 24,
+  capOverMeanFactor: 1.5, // vacance plafonnée à 1,5 × la durée moyenne attendue (au loyer demandé courant)
   askingRentRatioMin: 0.7,
   askingRentRatioMax: 1.3,
 };

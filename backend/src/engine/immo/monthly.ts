@@ -41,11 +41,13 @@ export interface MonthlyInput {
     maintenance: number;
   };
   loanPayment: number;                 // mensualité assurance comprise
+  // Ventilation de la mensualité : intérêts + capital remboursé + assurance = loanPayment.
+  loanBreakdown?: { interest: number; principal: number; insurance: number };
   taxRatePct: number;                  // fiscalité simplifiée (par profil)
   revision?: RevisionResult;           // indexation intervenue CE mois-ci
   carryOverIn?: AmountPair;            // retard du mois précédent encaissé ce mois-ci
   arrearsRecovered?: AmountPair;       // impayé récupéré (dépôt de garantie, assurance loyers impayés, procédure)
-  vacancyMonthsLeft?: number;          // pour l'explication (mois vides restants, ce mois compris)
+  vacancyMonthsSoFar?: number;         // pour l'explication : rang du mois vide (1 = premier mois de vacance)
 }
 
 export interface MonthlyLines {
@@ -55,6 +57,9 @@ export interface MonthlyLines {
   recoverableChargesCollected: number;
   nonRecoverableCharges: number;
   loanPayment: number;
+  loanInterest: number;    // part intérêts de la mensualité
+  loanPrincipal: number;   // capital remboursé (enrichissement : il augmente tes fonds propres)
+  loanInsurance: number;   // part assurance
   rentTax: number;
   netCashFlow: number;
 }
@@ -116,6 +121,9 @@ const computeLines = (i: MonthlyInput, s: Scenario): { lines: MonthlyLines; carr
     recoverableChargesCollected: chargesCollected,
     nonRecoverableCharges: nonRecoverableMonthly(i),
     loanPayment: round2(i.loanPayment),
+    loanInterest: round2(i.loanBreakdown?.interest ?? 0),
+    loanPrincipal: round2(i.loanBreakdown?.principal ?? 0),
+    loanInsurance: round2(i.loanBreakdown?.insurance ?? 0),
     rentTax: tax,
     netCashFlow: 0,
   };
@@ -132,6 +140,13 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   assertNonNegative(input.recoverableCharges, 'recoverableCharges');
   assertNonNegative(input.loanPayment, 'loanPayment');
   for (const [k, v] of Object.entries(input.nonRecoverableAnnual)) assertNonNegative(v, `nonRecoverableAnnual.${k}`);
+  if (input.loanBreakdown) {
+    const b = input.loanBreakdown;
+    assertNonNegative(b.interest, 'loanBreakdown.interest'); assertNonNegative(b.principal, 'loanBreakdown.principal'); assertNonNegative(b.insurance, 'loanBreakdown.insurance');
+    if (Math.abs(round2(b.interest + b.principal + b.insurance) - round2(input.loanPayment)) > 0.005) {
+      throw new EngineInputError('La ventilation du prêt ne correspond pas à la mensualité');
+    }
+  }
   if (input.revision && input.status === 'vacant') throw new EngineInputError('Pas de révision de loyer sur un logement vide');
 
   const previousRent = input.revision ? input.revision.previousRent : input.rent;
@@ -165,12 +180,12 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
 
   const statusImpact = impact(s1, s2);
   if (input.status === 'vacant') {
-    const left = input.vacancyMonthsLeft;
+    const rank = input.vacancyMonthsSoFar;
     explanations.push({
       code: 'VACANCY',
       message: `Logement vide : ${eur(input.rent)} de loyer non perçu` +
         (input.recoverableCharges > 0 ? ` et ${eur(input.recoverableCharges)} de charges récupérables qui restent à ta charge` : '') +
-        (left !== undefined ? ` (encore ${left} mois de vacance, ce mois compris).` : '.'),
+        (rank !== undefined ? ` (mois n°${rank} de vacance).` : '.'),
       cashFlowImpact: statusImpact,
     });
   } else if (input.status === 'late') {

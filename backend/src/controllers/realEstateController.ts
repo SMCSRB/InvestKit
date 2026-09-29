@@ -48,6 +48,7 @@ export const realEstateController = {
   purchase: handle('Erreur lors de l\'achat', (r, uid) => realEstateService.purchase(uid, r.body)),
   properties: handle('Erreur lors de la récupération des biens', (_r, uid) => life.getPortfolio(uid)),
   listForRent: handle('Erreur lors de la mise en location', (r, uid) => life.listForRent(uid, r.params.id, r.body?.askingRentRatio)),
+  reprice: handle('Erreur lors de la modification du loyer', (r, uid) => life.repriceListing(uid, r.params.id, r.body?.askingRentRatio)),
   advance: handle('Erreur lors de l\'avancée du temps', (r, uid) => life.advanceTime(uid, r.body?.months)),
   summary: handle('Erreur lors de la récupération du récapitulatif', (r, uid) => life.getMonthSummary(uid, r.query.year, r.query.month)),
   statements: handle('Erreur lors de la récupération des relevés', (r, uid) => life.getStatements(uid, r.params.id, r.query.limit)),

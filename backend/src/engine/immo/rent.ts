@@ -69,7 +69,7 @@ export const estimateMarketRent = (input: MarketRentInput, params: RentModelPara
 export interface VacancyParams {
   minMonths: number;   // durée moyenne à tension 1 (ex. 0,5)
   maxMonths: number;   // durée moyenne à tension 0 (ex. 5)
-  maxSampledMonths: number; // plafond d'un tirage (ex. 24)
+  capOverMeanFactor: number;  // plafond de vacance = ceil(facteur × durée moyenne attendue) (ex. 1,5)
   askingRentRatioMin: number; // ex. 0,7
   askingRentRatioMax: number; // ex. 1,3
 }
@@ -103,11 +103,48 @@ export const clampAskingRentRatio = (ratio: number, p: VacancyParams): number =>
   return Math.min(p.askingRentRatioMax, Math.max(p.askingRentRatioMin, ratio));
 };
 
-export const sampleVacancyMonths = (rng: () => number, expectedMonths: number, p: VacancyParams): number => {
-  assertNonNegative(expectedMonths, 'expectedMonths');
-  const u = rng();
-  const months = Math.round(-expectedMonths * Math.log(1 - u));
-  return Math.min(p.maxSampledMonths, Math.max(0, months));
+// Vacance MOIS PAR MOIS. Chaque mois vide, une probabilité de trouver un locataire :
+//     p = 1 / (1 + E)        avec E la durée moyenne attendue (ci-dessus)
+// (loi géométrique : la durée moyenne de vacance retombe exactement sur E). E
+// dépend du loyer demandé ET de la tension : le joueur peut donc baisser son
+// loyer en cours de vacance, et la probabilité du mois suivant augmente.
+// Plafond : jamais plus de ceil(capOverMeanFactor × E) mois vides, E étant
+// calculée au loyer demandé COURANT (baisser le loyer resserre le plafond).
+export const monthlyLetProbability = (tension: number, rentRatio: number, p: VacancyParams): number =>
+  1 / (1 + expectedVacancyMonths(tension, rentRatio, p));
+
+export const vacancyCapMonths = (tension: number, rentRatio: number, p: VacancyParams): number =>
+  Math.max(1, Math.ceil(p.capOverMeanFactor * expectedVacancyMonths(tension, rentRatio, p)));
+
+// Durée moyenne RÉELLE de vacance, plafond compris : Σ_{k=1..cap} (1 − p)^k.
+// Plus basse que la durée « nominale » E, car le plafond coupe les longues queues.
+export const expectedCappedVacancyMonths = (tension: number, rentRatio: number, p: VacancyParams): number => {
+  const prob = monthlyLetProbability(tension, rentRatio, p);
+  const cap = vacancyCapMonths(tension, rentRatio, p);
+  let sum = 0;
+  for (let k = 1; k <= cap; k++) sum += Math.pow(1 - prob, k);
+  return round2(sum);
+};
+
+// Décision d'un mois. `u` ∈ [0, 1[ vient d'un générateur à graine (fourni par
+// l'appelant, un tirage par bien et par mois : reproductible). `elapsedVacantMonths`
+// = mois vides déjà écoulés.
+export const isTenantFound = (
+  u: number, tension: number, rentRatio: number, elapsedVacantMonths: number, p: VacancyParams
+): boolean => {
+  if (!Number.isInteger(elapsedVacantMonths) || elapsedVacantMonths < 0) throw new EngineInputError('elapsedVacantMonths invalide');
+  if (elapsedVacantMonths >= vacancyCapMonths(tension, rentRatio, p)) return true;
+  return u < monthlyLetProbability(tension, rentRatio, p);
+};
+
+// Simule une vacance complète à loyer constant (statistiques, tests).
+// `nextU` fournit un tirage par mois.
+export const simulateVacancyMonths = (
+  nextU: () => number, tension: number, rentRatio: number, p: VacancyParams
+): number => {
+  let elapsed = 0;
+  while (!isTenantFound(nextU(), tension, rentRatio, elapsed, p)) elapsed += 1;
+  return elapsed;
 };
 
 // ─────────────────────────────────────────────────────────────────────────

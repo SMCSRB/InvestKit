@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  estimateMarketRent, rentLevelFactor, expectedVacancyMonths, averageVacancyPct, sampleVacancyMonths,
+  estimateMarketRent, rentLevelFactor, expectedVacancyMonths, averageVacancyPct, monthlyLetProbability, vacancyCapMonths, expectedCappedVacancyMonths, isTenantFound, simulateVacancyMonths,
   clampAskingRentRatio, reviseRent, capRentAtRelet, computeRentTax, toCents, convertEurosToCoins,
   buildMonthlyStatement, EngineInputError, MonthlyInput,
 } from '../src/engine/immo';
@@ -73,17 +73,50 @@ describe('vacance entre deux locataires', () => {
     expect(clampAskingRentRatio(0.2, VACANCY_MODEL)).toBe(0.7);
     expect(clampAskingRentRatio(1.05, VACANCY_MODEL)).toBe(1.05);
   });
-  it('durée tirée : déterministe, bornée, moyenne ≈ durée attendue', () => {
-    const draw = (seed: number, e: number, n: number) => { const rng = createRng(seed); return Array.from({ length: n }, () => sampleVacancyMonths(rng, e, VACANCY_MODEL)); };
-    expect(draw(7, 2, 20)).toEqual(draw(7, 2, 20));
-    expect(draw(7, 2, 20)).not.toEqual(draw(8, 2, 20));
-    const samples = draw(123, 3, 20000);
-    expect(samples.every((m) => Number.isInteger(m) && m >= 0 && m <= 24)).toBe(true);
-    const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
-    expect(mean).toBeGreaterThan(2.8);
-    expect(mean).toBeLessThan(3.2);
-    const tight = draw(5, 0.5, 5000), loose = draw(5, 5, 5000);
-    expect(tight.reduce((a, b) => a + b, 0)).toBeLessThan(loose.reduce((a, b) => a + b, 0));
+  it('probabilité mensuelle de trouver un locataire : 1 / (1 + durée moyenne)', () => {
+    const e = expectedVacancyMonths(0.5, 1, VACANCY_MODEL);
+    expect(monthlyLetProbability(0.5, 1, VACANCY_MODEL)).toBeCloseTo(1 / (1 + e), 10);
+    // marché tendu > détendu ; loyer bas > loyer haut
+    expect(monthlyLetProbability(0.9, 1, VACANCY_MODEL)).toBeGreaterThan(monthlyLetProbability(0.2, 1, VACANCY_MODEL));
+    expect(monthlyLetProbability(0.5, 0.9, VACANCY_MODEL)).toBeGreaterThan(monthlyLetProbability(0.5, 1.15, VACANCY_MODEL));
+  });
+  it('plafond = 1,5 × la durée moyenne, recalculé au loyer demandé courant', () => {
+    expect(vacancyCapMonths(0.2, 1.15, VACANCY_MODEL)).toBe(Math.ceil(1.5 * expectedVacancyMonths(0.2, 1.15, VACANCY_MODEL)));
+    expect(vacancyCapMonths(0.2, 1.15, VACANCY_MODEL)).toBeLessThan(12); // le cas de la démo (12 mois) est désormais impossible
+    expect(vacancyCapMonths(0.2, 1.0, VACANCY_MODEL)).toBeLessThan(vacancyCapMonths(0.2, 1.15, VACANCY_MODEL)); // baisser le loyer resserre le plafond
+    expect(vacancyCapMonths(1, 0.7, VACANCY_MODEL)).toBe(1); // jamais moins d'un mois
+  });
+  it('moyenne réelle plafond compris = formule exacte, confirmée par simulation', () => {
+    for (const [t, r] of [[0.2, 1.15], [0.85, 1], [0.5, 0.9]] as const) {
+      const rng = createRng(4242 + Math.round(t * 100));
+      const xs = Array.from({ length: 100000 }, () => simulateVacancyMonths(rng, t, r, VACANCY_MODEL));
+      const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+      expect(Math.abs(mean - expectedCappedVacancyMonths(t, r, VACANCY_MODEL))).toBeLessThan(0.05);
+      expect(expectedCappedVacancyMonths(t, r, VACANCY_MODEL)).toBeLessThan(expectedVacancyMonths(t, r, VACANCY_MODEL));
+    }
+  });
+  it('décision mensuelle : tirage sous la probabilité = locataire ; au plafond = locataire à coup sûr', () => {
+    const p = monthlyLetProbability(0.5, 1, VACANCY_MODEL);
+    expect(isTenantFound(p - 1e-9, 0.5, 1, 0, VACANCY_MODEL)).toBe(true);
+    expect(isTenantFound(p + 1e-9, 0.5, 1, 0, VACANCY_MODEL)).toBe(false);
+    const cap = vacancyCapMonths(0.5, 1, VACANCY_MODEL);
+    expect(isTenantFound(0.999999, 0.5, 1, cap, VACANCY_MODEL)).toBe(true);
+    expect(isTenantFound(0.999999, 0.5, 1, cap - 1, VACANCY_MODEL)).toBe(false);
+  });
+  it('simulation : déterministe par graine, bornée par le plafond, plus courte quand le loyer baisse', () => {
+    const run = (seed: number, tension: number, ratio: number, n: number) => {
+      const rng = createRng(seed);
+      return Array.from({ length: n }, () => simulateVacancyMonths(rng, tension, ratio, VACANCY_MODEL));
+    };
+    expect(run(7, 0.3, 1, 50)).toEqual(run(7, 0.3, 1, 50));
+    expect(run(7, 0.3, 1, 50)).not.toEqual(run(8, 0.3, 1, 50));
+    const samples = run(1, 0.2, 1.15, 20000);
+    expect(Math.max(...samples)).toBeLessThanOrEqual(vacancyCapMonths(0.2, 1.15, VACANCY_MODEL));
+    expect(Math.min(...samples)).toBe(0);
+    const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    expect(mean(run(2, 0.2, 0.9, 20000))).toBeLessThan(mean(run(2, 0.2, 1, 20000)));
+    expect(mean(run(2, 0.2, 1, 20000))).toBeLessThan(mean(run(2, 0.2, 1.15, 20000)));
+    expect(mean(run(3, 0.9, 1, 20000))).toBeLessThan(mean(run(3, 0.2, 1, 20000)));
   });
 });
 
@@ -176,6 +209,28 @@ describe('conversion euros → InvestCoins : ni perte ni création', () => {
   });
 });
 
+describe('ventilation de la mensualité : capital, intérêts, assurance', () => {
+  const inp: MonthlyInput = {
+    year: 2015, month: 3, status: 'paying', rent: 600, recoverableCharges: 40,
+    nonRecoverableAnnual: { condoFees: 300, propertyTax: 500, insurance: 120, maintenance: 280 },
+    loanPayment: 554.6 + 12.5, taxRatePct: 30,
+    loanBreakdown: { interest: 250, principal: 304.6, insurance: 12.5 },
+  };
+  it('les trois parts sont dans le récapitulatif et leur somme est la mensualité', () => {
+    const s = buildMonthlyStatement(inp);
+    expect(s.lines.loanInterest).toBe(250);
+    expect(s.lines.loanPrincipal).toBe(304.6);
+    expect(s.lines.loanInsurance).toBe(12.5);
+    expect(s.lines.loanInterest + s.lines.loanPrincipal + s.lines.loanInsurance).toBeCloseTo(s.lines.loanPayment, 2);
+  });
+  it('le cash-flow ne change pas : seule la mensualité totale compte', () => {
+    expect(buildMonthlyStatement(inp).lines.netCashFlow).toBe(buildMonthlyStatement({ ...inp, loanBreakdown: undefined }).lines.netCashFlow);
+  });
+  it('ventilation incohérente : erreur', () => {
+    expect(() => buildMonthlyStatement({ ...inp, loanBreakdown: { interest: 1, principal: 1, insurance: 1 } })).toThrow(EngineInputError);
+  });
+});
+
 describe('récapitulatif mensuel', () => {
   const input: MonthlyInput = {
     year: 2015, month: 3, status: 'paying', rent: 600, recoverableCharges: 40,
@@ -186,26 +241,26 @@ describe('récapitulatif mensuel', () => {
     const s = buildMonthlyStatement(input);
     expect(s.lines).toEqual({
       rentDue: 600, rentCollected: 600, recoverableChargesPaid: 40, recoverableChargesCollected: 40,
-      nonRecoverableCharges: 100, loanPayment: 400, rentTax: 180,
+      nonRecoverableCharges: 100, loanPayment: 400, loanInterest: 0, loanPrincipal: 0, loanInsurance: 0, rentTax: 180,
       netCashFlow: -80, // 600 + 40 − 40 − 100 − 400 − 180
     });
     expect(s.explanations.map((e) => e.code)).toEqual(['NORMAL']);
     expect(s.normalMonthCashFlow).toBe(-80);
   });
   it('charges récupérables et non récupérables distinguées', () => {
-    const s = buildMonthlyStatement({ ...input, status: 'vacant', vacancyMonthsLeft: 2 });
+    const s = buildMonthlyStatement({ ...input, status: 'vacant', vacancyMonthsSoFar: 2 });
     expect(s.lines.recoverableChargesPaid).toBe(40);     // avancées par le propriétaire
     expect(s.lines.recoverableChargesCollected).toBe(0); // rien à refacturer
     expect(s.lines.nonRecoverableCharges).toBe(100);
   });
   it('vacance : loyer non perçu, charges à ta charge, impôt nul, explication chiffrée', () => {
-    const s = buildMonthlyStatement({ ...input, status: 'vacant', vacancyMonthsLeft: 2 });
+    const s = buildMonthlyStatement({ ...input, status: 'vacant', vacancyMonthsSoFar: 2 });
     expect(s.lines.rentCollected).toBe(0);
     expect(s.lines.rentTax).toBe(0);
     expect(s.lines.netCashFlow).toBe(-540); // −40 − 100 − 400
     const e = s.explanations.find((x) => x.code === 'VACANCY')!;
     expect(e.cashFlowImpact).toBe(-460); // −(600 − 180 d'impôt évité) − 40
-    expect(e.message).toContain('encore 2 mois');
+    expect(e.message).toContain('mois n°2');
   });
   it('retard : simple décalage de trésorerie, rattrapé le mois suivant', () => {
     const late = buildMonthlyStatement({ ...input, status: 'late' });

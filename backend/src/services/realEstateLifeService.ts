@@ -2,11 +2,19 @@ import type { PoolClient } from 'pg';
 import { query } from '../utils/db';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { createRng, hashString } from '../utils/seededRandom';
+
+// Un tirage par (partie, bien, mois) : reproductible, indépendant de l'historique des appels.
+// La clé du bien est STABLE (annonce d'origine + date d'achat), pas l'identifiant technique : deux parties
+// de même graine qui font les mêmes choses obtiennent exactement les mêmes résultats.
+const propertyKey = (p: { listing_id: string; purchase_year: number; purchase_month: number }): string =>
+  `${p.listing_id}:${p.purchase_year}:${p.purchase_month}`;
+export const monthlyDraw = (seed: string, key: string, monthTotalValue: number): number =>
+  createRng(hashString(`${seed}:${key}:search:${monthTotalValue}`))();
 import {
   RealEstateError, RE_DOMAIN, GameRow, requireGame, source, tx,
 } from './realEstateService';
 import {
-  estimateMarketRent, expectedVacancyMonths, clampAskingRentRatio, reviseRent, buildMonthlyStatement,
+  estimateMarketRent, expectedVacancyMonths, expectedCappedVacancyMonths, monthlyLetProbability, vacancyCapMonths, isTenantFound, clampAskingRentRatio, reviseRent, buildMonthlyStatement,
   buildSchedule, toCents, convertEurosToCoins, nextMonth, monthTotal, valueFromMarket, interpolateByMonth,
   remainingBalance, round2, MonthlyStatement, LoanSchedule, TenantStatus, Condition, EnergyClass,
 } from '../engine/immo';
@@ -40,6 +48,18 @@ const scheduleOf = (loan: any): LoanSchedule =>
     insurance: { annualRatePct: Number(loan.insurance_rate_pct), basis: 'initial' },
   });
 
+// Informations de recherche renvoyées au joueur (probabilités calculées côté serveur).
+const searchInfo = (propertyId: string, marketRent: number, asking: number, ratio: number, tension: number, found: boolean, message: string, elapsed = 0) => ({
+  propertyId, marketRent, askingRent: asking, askingRentRatio: ratio, tension,
+  expectedVacancyMonths: expectedVacancyMonths(tension, ratio, VACANCY_MODEL),
+  expectedVacancyMonthsWithCap: expectedCappedVacancyMonths(tension, ratio, VACANCY_MODEL), // moyenne réelle, plafond compris
+  monthlyLetProbabilityPct: Math.round(monthlyLetProbability(tension, ratio, VACANCY_MODEL) * 1000) / 10,
+  maxVacantMonths: vacancyCapMonths(tension, ratio, VACANCY_MODEL),
+  vacantMonthsSoFar: elapsed,
+  tenantFoundImmediately: found,
+  message,
+});
+
 export const realEstateLifeService = {
   // Met un bien vacant en location. Le loyer demandé se règle en % du loyer de marché
   // (borné) : trop haut, la vacance s'allonge (voir engine/immo/rent.ts).
@@ -56,31 +76,46 @@ export const realEstateLifeService = {
       const p = res.rows[0];
       if (!p || p.status === 'sold') throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
       if (p.status === 'let') throw new RealEstateError('INVALID_INPUT', 'Ce bien est déjà loué');
-      if (p.rent_search_months_left !== null) throw new RealEstateError('INVALID_INPUT', 'Ce bien est déjà proposé à la location');
+      if (p.search_elapsed_months !== null) throw new RealEstateError('INVALID_INPUT', 'Ce bien est déjà proposé à la location : utilise « baisser le loyer » pour le modifier');
       if (Number(p.pending_works_eur) > 0) throw new RealEstateError('INVALID_INPUT', `Travaux à payer avant de pouvoir louer : ${Number(p.pending_works_eur).toFixed(0)} €`);
 
       const { marketRent, tension } = await marketFor(p, game.simulated_year);
       const asking = round2(marketRent * ratio);
-      const expected = expectedVacancyMonths(tension, ratio, VACANCY_MODEL);
-      // Tirage DÉTERMINISTE (graine = partie, bien, date) : rappeler l'endpoint ne relance pas le dé.
-      // Un loyer plus élevé donne toujours une durée ≥ pour le même tirage : pas de gain à « rejouer ».
-      const u = createRng(hashString(`${game.id}:${p.id}:list:${game.simulated_year}:${game.simulated_month}`))();
-      const months = Math.min(VACANCY_MODEL.maxSampledMonths, Math.max(0, Math.round(-expected * Math.log(1 - u))));
-
-      if (months === 0) {
-        await c.query(`UPDATE re_properties SET status = 'let', current_rent = $2, lease_start_total = $3, asking_rent = NULL, rent_search_months_left = NULL WHERE id = $1`,
+      // Premier tirage : ce mois-ci (0 mois vide écoulé).
+      const found = isTenantFound(monthlyDraw(game.seed, propertyKey(p), monthTotal(game.simulated_year, game.simulated_month)), tension, ratio, 0, VACANCY_MODEL);
+      if (found) {
+        await c.query(`UPDATE re_properties SET status = 'let', current_rent = $2, lease_start_total = $3, asking_rent = NULL, search_elapsed_months = NULL WHERE id = $1`,
           [p.id, asking, monthTotal(game.simulated_year, game.simulated_month)]);
       } else {
-        await c.query(`UPDATE re_properties SET asking_rent = $2, rent_search_months_left = $3 WHERE id = $1`, [p.id, asking, months]);
+        await c.query(`UPDATE re_properties SET asking_rent = $2, search_elapsed_months = 0 WHERE id = $1`, [p.id, asking]);
       }
-      return {
-        propertyId: p.id, marketRent, askingRent: asking, askingRentRatio: ratio, tension,
-        expectedVacancyMonths: expected,
-        tenantFoundImmediately: months === 0,
-        message: months === 0
+      return searchInfo(p.id, marketRent, asking, ratio, tension, found,
+        found
           ? `Locataire trouvé tout de suite : loyer de ${asking.toFixed(2)} € par mois dès ce mois-ci.`
-          : `Annonce publiée à ${asking.toFixed(2)} € (${Math.round(ratio * 100)} % du marché de ${marketRent.toFixed(0)} €). Durée moyenne attendue pour trouver un locataire : ${expected.toFixed(1)} mois.`,
-      };
+          : `Annonce publiée à ${asking.toFixed(2)} € (${Math.round(ratio * 100)} % du marché de ${marketRent.toFixed(0)} €).`);
+    });
+  },
+
+  // Baisser (ou remonter) le loyer demandé PENDANT la vacance. Effet dès le prochain mois : la
+  // probabilité de trouver un locataire est recalculée. Le tirage du mois en cours est déjà fait :
+  // changer de prix ne permet pas de « rejouer » un mois.
+  async repriceListing(userId: string, propertyId: unknown, ratioRaw: unknown) {
+    if (!uuidOk(propertyId)) throw new RealEstateError('INVALID_INPUT', 'Identifiant invalide');
+    if (typeof ratioRaw !== 'number' || !Number.isFinite(ratioRaw) || ratioRaw < VACANCY_MODEL.askingRentRatioMin || ratioRaw > VACANCY_MODEL.askingRentRatioMax) {
+      throw new RealEstateError('INVALID_INPUT', `Le loyer demandé doit rester entre ${VACANCY_MODEL.askingRentRatioMin * 100} % et ${VACANCY_MODEL.askingRentRatioMax * 100} % du loyer de marché`);
+    }
+    return tx(async (c) => {
+      const game = await requireGame(userId, c, true);
+      const res = await c.query('SELECT * FROM re_properties WHERE id = $1 AND game_id = $2 FOR UPDATE', [propertyId, game.id]);
+      const p = res.rows[0];
+      if (!p || p.status === 'sold') throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
+      if (p.search_elapsed_months === null) throw new RealEstateError('INVALID_INPUT', 'Ce bien n\'est pas en recherche de locataire');
+      const { marketRent, tension } = await marketFor(p, game.simulated_year);
+      const asking = round2(marketRent * ratioRaw);
+      await c.query('UPDATE re_properties SET asking_rent = $2 WHERE id = $1', [p.id, asking]);
+      return searchInfo(p.id, marketRent, asking, ratioRaw, tension, false,
+        `Loyer demandé ramené à ${asking.toFixed(2)} € (${Math.round(ratioRaw * 100)} % du marché). Effet dès le mois prochain.`,
+        p.search_elapsed_months);
     });
   },
 
@@ -136,10 +171,19 @@ export const realEstateLifeService = {
       totalValue += value; totalDebt += debt;
       if (p.status === 'let') monthlyRent += Number(p.current_rent);
       if (p.loan_id && p.l_status === 'active') monthlyLoan += Number(p.l_payment);
+      let search = null;
+      if (p.search_elapsed_months !== null && p.asking_rent !== null) {
+        const ratio = Number(p.asking_rent) / marketRent;
+        search = {
+          vacantMonthsSoFar: p.search_elapsed_months, askingRatio: Math.round(ratio * 1000) / 1000,
+          monthlyLetProbabilityPct: Math.round(monthlyLetProbability(tension, ratio, VACANCY_MODEL) * 1000) / 10,
+          maxVacantMonths: vacancyCapMonths(tension, ratio, VACANCY_MODEL),
+        };
+      }
       items.push({
-        ...p, value, remainingLoan: debt, equity: round2(value - debt), marketRent, tension,
-        searching: p.rent_search_months_left !== null,
-        hint: p.status === 'vacant' && p.rent_search_months_left === null
+        ...p, search, value, remainingLoan: debt, equity: round2(value - debt), marketRent, tension,
+        searching: p.search_elapsed_months !== null,
+        hint: p.status === 'vacant' && p.search_elapsed_months === null
           ? (Number(p.pending_works_eur) > 0 ? 'PENDING_WORKS' : 'NOT_LISTED') : null,
       });
     }
@@ -169,7 +213,8 @@ export const realEstateLifeService = {
       properties: rows.map((r) => ({ propertyId: r.property_id, title: r.title, status: r.status, lines: r.lines, explanations: r.explanations, netCashFlow: Number(r.net_cash_flow), coinsDelta: r.coins_delta })),
       totals: rows.length === 0 ? null : {
         rentCollected: sum('rentCollected'), recoverableChargesPaid: sum('recoverableChargesPaid'), recoverableChargesCollected: sum('recoverableChargesCollected'),
-        nonRecoverableCharges: sum('nonRecoverableCharges'), loanPayment: sum('loanPayment'), rentTax: sum('rentTax'), netCashFlow: sum('netCashFlow'),
+        nonRecoverableCharges: sum('nonRecoverableCharges'), loanPayment: sum('loanPayment'),
+        loanInterest: sum('loanInterest'), loanPrincipal: sum('loanPrincipal'), loanInsurance: sum('loanInsurance'), rentTax: sum('rentTax'), netCashFlow: sum('netCashFlow'),
       },
     };
   },
@@ -215,22 +260,29 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
 
   for (const p of props) {
     let status: TenantStatus = p.status === 'let' ? 'paying' : 'vacant';
-    let vacancyLeft: number | undefined;
+    let vacancyRank: number | undefined;
     let hint: string | null = null;
     let currentRent = Number(p.current_rent);
     let nextStatus = p.status as string;
     let nextRent = currentRent;
-    let searchLeft: number | null = p.rent_search_months_left;
+    let searchElapsed: number | null = p.search_elapsed_months;
     let leaseStart: number | null = p.lease_start_total;
     let askingRent: number | null = p.asking_rent === null ? null : Number(p.asking_rent);
-
     const askingForDisplay = askingRent; // loyer affiché ce mois-ci, avant l'arrivée éventuelle du locataire
+
     if (status === 'vacant') {
-      if (searchLeft !== null) {
-        vacancyLeft = searchLeft;
-        searchLeft -= 1;
-        if (searchLeft <= 0) { // le locataire arrive le mois suivant
-          nextStatus = 'let'; nextRent = askingRent ?? 0; leaseStart = monthTotal(y, m) + 1; searchLeft = null; askingRent = null;
+      if (searchElapsed !== null) {
+        vacancyRank = searchElapsed + 1; // ce mois est le (n+1)ᵉ mois vide
+        searchElapsed += 1;
+        // Tirage du mois SUIVANT, avec le loyer demandé courant : trouvé → loyer dès le mois suivant.
+        const nxt = nextMonth(y, m, source().maxYear);
+        if (nxt && askingRent !== null) {
+          const { marketRent, tension } = await marketFor(p, nxt.year);
+          const ratio = askingRent / marketRent;
+          if (isTenantFound(monthlyDraw(game.seed, propertyKey(p), monthTotal(nxt.year, nxt.month)), tension, ratio, searchElapsed, VACANCY_MODEL)) {
+            nextStatus = 'let'; nextRent = askingRent; leaseStart = monthTotal(nxt.year, nxt.month);
+            searchElapsed = null; askingRent = null;
+          }
         }
       } else hint = Number(p.pending_works_eur) > 0 ? 'PENDING_WORKS' : 'NOT_LISTED';
     }
@@ -248,10 +300,13 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
 
     // Mensualité du prêt (échéance exacte du tableau d'amortissement).
     let loanPayment = 0;
+    let loanBreakdown: { interest: number; principal: number; insurance: number } | undefined;
     const loan = p.loan_id ? loans.get(p.loan_id) : null;
     if (loan && loan.status === 'active') {
       const rows = scheduleOf(loan).rows;
-      loanPayment = rows[loan.months_paid].totalPayment;
+      const row = rows[loan.months_paid];
+      loanPayment = row.totalPayment;
+      loanBreakdown = { interest: row.interest, principal: row.principal, insurance: row.insurance };
       loan.months_paid += 1;
       if (loan.months_paid >= rows.length) loan.status = 'repaid';
     }
@@ -262,7 +317,8 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
 
     const statement = buildMonthlyStatement({
       year: y, month: m, status, rent: displayedRent, recoverableCharges: listing.recoverableChargesMonthly,
-      nonRecoverableAnnual: listing.annualCharges, loanPayment, taxRatePct: taxRate, revision, vacancyMonthsLeft: vacancyLeft,
+      nonRecoverableAnnual: listing.annualCharges, loanPayment, taxRatePct: taxRate, revision, vacancyMonthsSoFar: vacancyRank,
+      loanBreakdown,
     });
 
     // Conseils : pourquoi un bien vide ne rapporte rien (information seule, sans effet sur le cash-flow).
@@ -290,9 +346,9 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
     }
 
     await c.query(
-      `UPDATE re_properties SET status = $2, current_rent = $3, rent_search_months_left = $4, lease_start_total = $5,
+      `UPDATE re_properties SET status = $2, current_rent = $3, search_elapsed_months = $4, lease_start_total = $5,
          asking_rent = $6, euro_remainder_cents = $7 WHERE id = $1`,
-      [p.id, nextStatus, nextRent, searchLeft, leaseStart, askingRent, conv.remainderCents]);
+      [p.id, nextStatus, nextRent, searchElapsed, leaseStart, askingRent, conv.remainderCents]);
     if (loan) await c.query('UPDATE re_loans SET months_paid = $2, status = $3 WHERE id = $1', [loan.id, loan.months_paid, loan.status]);
     await c.query(
       `INSERT INTO re_statements (property_id, game_id, year, month, status, lines, explanations, net_cash_flow, coins_delta, remainder_cents_after)

@@ -28,7 +28,7 @@ const PROFILES = Object.keys(STARTING_PROFILES) as ProfileId[];
 const centsPerCoin = EUROS_PER_COIN;
 export const coinsFor = (euros: number): number => Math.ceil(Math.round(euros * 100) / (centsPerCoin * 100)); // arrondi contre le joueur
 
-export interface GameRow { id: string; user_id: string; profile: ProfileId; simulated_year: number; simulated_month: number; arrears_eur?: string | number; missed_months?: number }
+export interface GameRow { id: string; user_id: string; profile: ProfileId; simulated_year: number; simulated_month: number; arrears_eur?: string | number; missed_months?: number; seed: string }
 
 export const source = () => getRealEstateDataSource();
 

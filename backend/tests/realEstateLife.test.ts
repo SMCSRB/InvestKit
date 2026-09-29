@@ -59,30 +59,54 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       expect((await life.listForRent(uid, prop.id, 1)).propertyId).toBe(prop.id);
     });
 
-    it('tirage déterministe : mêmes conditions = même vacance ; loyer plus haut = vacance jamais plus courte', async () => {
-      const vac = async (ratio: number) => {
-        const uid = await newPlayer(); // graine dépend de la partie : on compare donc au sein d'une même partie
-        const prop = await buy(uid, await pick());
-        await life.listForRent(uid, prop.id, ratio);
-        return Number((await query('SELECT rent_search_months_left AS n FROM re_properties WHERE id = $1', [prop.id])).rows[0].n ?? 0);
-      };
-      expect(typeof (await vac(1))).toBe('number');
+    it('mise en location : probabilités et plafond calculés côté serveur', async () => {
       const uid = await newPlayer();
       const prop = await buy(uid, await pick());
-      const a = await life.listForRent(uid, prop.id, 1.0);
-      const row = async () => (await query('SELECT rent_search_months_left AS n, status FROM re_properties WHERE id = $1', [prop.id])).rows[0];
-      const first = await row();
-      // annule la mise en location (état SQL) puis relance dans la MÊME date : identique
-      await query(`UPDATE re_properties SET status = 'vacant', rent_search_months_left = NULL, asking_rent = NULL, current_rent = 0, lease_start_total = NULL WHERE id = $1`, [prop.id]);
-      await life.listForRent(uid, prop.id, 1.0);
-      expect(await row()).toEqual(first);
-      await query(`UPDATE re_properties SET status = 'vacant', rent_search_months_left = NULL, asking_rent = NULL, current_rent = 0, lease_start_total = NULL WHERE id = $1`, [prop.id]);
-      const b = await life.listForRent(uid, prop.id, 1.3);
-      expect(b.expectedVacancyMonths).toBeGreaterThan(a.expectedVacancyMonths);
-      const high = (await row());
-      const highMonths = high.status === 'let' ? 0 : Number(high.n);
-      const firstMonths = first.status === 'let' ? 0 : Number(first.n);
-      expect(highMonths).toBeGreaterThanOrEqual(firstMonths);
+      const r = await life.listForRent(uid, prop.id, 1.15);
+      expect(r.monthlyLetProbabilityPct).toBeGreaterThan(0);
+      expect(r.monthlyLetProbabilityPct).toBeLessThan(100);
+      expect(r.maxVacantMonths).toBeGreaterThanOrEqual(1);
+      expect(r.expectedVacancyMonths).toBeGreaterThan(0);
+    });
+
+    it('RÉAGIR : baisser le loyer pendant la vacance augmente la probabilité et resserre le plafond', async () => {
+      // On cherche un bien dont la première recherche échoue (tirage du mois) pour pouvoir le repricer.
+      let uid = '', prop: any, listed: any;
+      for (let tries = 0; tries < 30; tries++) {
+        uid = await newPlayer();
+        prop = await buy(uid, await pick());
+        listed = await life.listForRent(uid, prop.id, 1.3);
+        if (!listed.tenantFoundImmediately) break;
+      }
+      expect(listed.tenantFoundImmediately).toBe(false);
+      const r = await life.repriceListing(uid, prop.id, 0.8);
+      expect(r.askingRent).toBeLessThan(listed.askingRent);
+      expect(r.monthlyLetProbabilityPct).toBeGreaterThan(listed.monthlyLetProbabilityPct);
+      expect(r.maxVacantMonths).toBeLessThan(listed.maxVacantMonths);
+      const row = (await query('SELECT asking_rent FROM re_properties WHERE id = $1', [prop.id])).rows[0];
+      expect(Number(row.asking_rent)).toBeCloseTo(r.askingRent, 2);
+      // bornes et état
+      expect((await rejects(life.repriceListing(uid, prop.id, 0.3))).code).toBe('INVALID_INPUT');
+      expect((await rejects(life.repriceListing(uid, prop.id, 2))).code).toBe('INVALID_INPUT');
+    });
+
+    it('repricer sans recherche en cours, ou le bien d\'un autre : refusé', async () => {
+      const owner = await newPlayer(); const other = await newPlayer();
+      const prop = await buy(owner, await pick());
+      expect((await rejects(life.repriceListing(owner, prop.id, 1))).code).toBe('INVALID_INPUT'); // pas en recherche
+      await life.listForRent(owner, prop.id, 1.3);
+      expect((await rejects(life.repriceListing(other, prop.id, 1))).code).toBe('NOT_FOUND');
+    });
+
+    it('pas de « reroll » : le tirage d\'un mois ne dépend que de (graine, bien, mois)', async () => {
+      const { monthlyDraw } = await import('../src/services/realEstateLifeService');
+      expect(monthlyDraw('g', 'k', 24121)).toBe(monthlyDraw('g', 'k', 24121));
+      expect(monthlyDraw('g', 'k', 24121)).not.toBe(monthlyDraw('g', 'k', 24122));
+      expect(monthlyDraw('g', 'k', 24121)).not.toBe(monthlyDraw('h', 'k', 24121));
+      const draws = Array.from({ length: 2000 }, (_, i) => monthlyDraw('g', 'k', i));
+      expect(draws.every((u) => u >= 0 && u < 1)).toBe(true);
+      const mean = draws.reduce((a, b) => a + b, 0) / draws.length;
+      expect(mean).toBeGreaterThan(0.47); expect(mean).toBeLessThan(0.53);
     });
   });
 
@@ -119,29 +143,43 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       expect(totalCoins * 2000 + remainder).toBe(totalCents);
       expect(remainder).toBeGreaterThanOrEqual(0);
       expect(remainder).toBeLessThan(2000);
+      // ventilation : intérêts + capital + assurance = mensualité, chaque mois
+      for (const r of rows) {
+        const l = r.lines;
+        expect(l.loanInterest + l.loanPrincipal + l.loanInsurance).toBeCloseTo(l.loanPayment, 2);
+      }
+      const principalPaid = rows.reduce((a: number, r: any) => a + r.lines.loanPrincipal, 0);
+      const loanRow = (await query('SELECT principal, months_paid FROM re_loans WHERE id = $1', [prop.loan_id])).rows[0];
+      expect(principalPaid).toBeGreaterThan(0);
+      expect(principalPaid).toBeLessThan(Number(loanRow.principal));
       // le ledger contient exactement ces pièces (hors achat)
       const ledger = (await query(`SELECT COALESCE(SUM(amount),0)::int AS s FROM investcoins_transactions WHERE user_id = $1 AND reason LIKE 're_cashflow%'`, [uid])).rows[0].s;
       expect(ledger).toBe(totalCoins);
     });
 
-    it('vacance puis locataire : loyer encaissé à partir du bon mois, bail et statuts cohérents', async () => {
+    it('vacance puis locataire : mois vides consécutifs, loyer encaissé ensuite, bail et statuts cohérents', async () => {
       const uid = await newPlayer(400000);
       const prop = await buy(uid, await pick());
-      const r = await life.listForRent(uid, prop.id, 1.3); // loyer haut : vacance probable
-      const months = r.tenantFoundImmediately ? 0 : Number((await query('SELECT rent_search_months_left AS n FROM re_properties WHERE id = $1', [prop.id])).rows[0].n);
+      const r = await life.listForRent(uid, prop.id, 1.3);
       await life.advanceTime(uid, 12);
       const rows = await stmts(prop.id);
-      expect(rows.filter((x: any) => x.status === 'vacant')).toHaveLength(months);
-      expect(rows.slice(0, months).every((x: any) => x.status === 'vacant')).toBe(true);
-      const paying = rows.slice(months);
-      // le loyer « non perçu » affiché pendant la vacance est le loyer demandé, jusqu'au dernier mois inclus
-      expect(rows.slice(0, months).every((x: any) => Math.abs(Number(x.lines.rentDue) - 0) < 0.01)).toBe(true);
-      expect(rows.slice(0, months).every((x: any) => x.explanations.some((e: any) => e.message.includes(r.askingRent.toFixed(2).replace('.', ',')) ))).toBe(true);
-      expect(paying.every((x: any) => x.status === 'paying')).toBe(true);
-      expect(paying.every((x: any) => Math.abs(Number(x.lines.rentCollected) - r.askingRent) < 0.01)).toBe(true);
-      const p = (await query('SELECT status, current_rent FROM re_properties WHERE id = $1', [prop.id])).rows[0];
-      expect(p.status).toBe('let');
-      expect(Number(p.current_rent)).toBeCloseTo(r.askingRent, 2);
+      const firstPaying = rows.findIndex((x: any) => x.status === 'paying');
+      const vacantCount = firstPaying === -1 ? rows.length : firstPaying;
+      expect(vacantCount).toBeLessThanOrEqual(r.maxVacantMonths);
+      expect(rows.slice(0, vacantCount).every((x: any) => x.status === 'vacant')).toBe(true);
+      // rang du mois vide expliqué
+      rows.slice(0, vacantCount).forEach((x: any, i: number) => {
+        expect(x.explanations.find((e: any) => e.code === 'VACANCY').message).toContain(`mois n°${i + 1}`);
+        expect(x.explanations.find((e: any) => e.code === 'VACANCY').message).toContain(r.askingRent.toFixed(2).replace('.', ','));
+      });
+      if (firstPaying !== -1) {
+        const paying = rows.slice(firstPaying);
+        expect(paying.every((x: any) => x.status === 'paying')).toBe(true);
+        expect(paying.every((x: any) => Math.abs(Number(x.lines.rentCollected) - r.askingRent) < 0.01)).toBe(true);
+        const p = (await query('SELECT status, current_rent FROM re_properties WHERE id = $1', [prop.id])).rows[0];
+        expect(p.status).toBe('let');
+        expect(Number(p.current_rent)).toBeCloseTo(r.askingRent, 2);
+      }
     });
 
     it('indexation IRL à la date anniversaire, montant exact, expliquée ; gel pour classe F/G', async () => {
@@ -149,12 +187,13 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const l = await pick((x) => cheap(x) && !['F', 'G'].includes(x.energyClass));
       const prop = await buy(uid, l);
       const listed = await life.listForRent(uid, prop.id, 0.7); // loyer bas : location rapide
-      let start = 0;
-      if (!listed.tenantFoundImmediately) start = Number((await query('SELECT rent_search_months_left AS n FROM re_properties WHERE id = $1', [prop.id])).rows[0].n);
       await life.advanceTime(uid, 12); await life.advanceTime(uid, 12);
       const rows = await stmts(prop.id);
+      const start = rows.findIndex((x: any) => x.status === 'paying'); // le bail commence au 1er mois payé
+      expect(start).toBeGreaterThanOrEqual(0);
       const revIdx = rows.findIndex((x: any) => x.explanations.some((e: any) => e.code === 'INDEXATION'));
       expect(revIdx).toBe(start + 12); // 12 mois après le début du bail
+      expect(listed.askingRent).toBeGreaterThan(0);
       const irl = await src.getIrlAnnualChangePct(rows[revIdx].year);
       const expected = reviseRent(listed.askingRent, irl, l.energyClass).newRent;
       expect(Number(rows[revIdx].lines.rentDue)).toBeCloseTo(expected, 2);
@@ -203,6 +242,23 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       expect((await stmts(prop.id))).toHaveLength(6);
       const g = (await query('SELECT simulated_year AS y, simulated_month AS m FROM re_games WHERE user_id = $1', [uid])).rows[0];
       expect(g.y * 12 + g.m).toBe(2010 * 12 + 1 + 6);
+    });
+
+    it('MÊME GRAINE, mêmes actions = mêmes résultats exacts ; graines différentes = parcours différents', async () => {
+      const run = async (seed: string) => {
+        const uid = await newPlayer(400000);
+        await query('UPDATE re_games SET seed = $2 WHERE user_id = $1', [uid, seed]);
+        const prop = await buy(uid, await pick((x) => cheap(x) && x.cityId === 'brumevalle'));
+        await life.listForRent(uid, prop.id, 1.2);
+        await life.advanceTime(uid, 12); await life.advanceTime(uid, 12);
+        const rows = await stmts(prop.id);
+        return { rows: rows.map((r: any) => [r.year, r.month, r.status, r.net_cash_flow, r.coins_delta, r.remainder_cents_after]), balance: await balanceOf(uid), ledger: await ledgerSum(uid) };
+      };
+      const a = await run('graine-A'); const b = await run('graine-A');
+      expect(b).toEqual(a);
+      const outcomes = new Set<string>();
+      for (const sd of ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8']) outcomes.add(JSON.stringify((await run(sd)).rows.map((r) => r[2])));
+      expect(outcomes.size).toBeGreaterThan(1);
     });
 
     it('validation du temps et date maximale', async () => {

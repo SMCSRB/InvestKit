@@ -14,6 +14,7 @@ realEstateRoutes.post('/purchase', authMiddleware, c.purchase);
 realEstateRoutes.get('/properties', authMiddleware, c.properties);
 realEstateRoutes.post('/properties/:id/pay-works', authMiddleware, c.payWorks);
 realEstateRoutes.post('/properties/:id/list', authMiddleware, c.listForRent);
+realEstateRoutes.post('/properties/:id/reprice', authMiddleware, c.reprice);
 realEstateRoutes.get('/properties/:id/statements', authMiddleware, c.statements);
 realEstateRoutes.post('/time/advance', authMiddleware, c.advance);
 realEstateRoutes.get('/summary', authMiddleware, c.summary);
