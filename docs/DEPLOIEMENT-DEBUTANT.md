@@ -110,6 +110,11 @@ sudo systemctl restart <nom-du-service-site>       # (ou : pm2 restart <nom>)
 | `/legal`, `/privacy`, `/conditions`, `/cookies`, `/contact`, `/support` | Des pages qui s'ouvrent ; `/legal` affiche « [à compléter] » tant que `siteInfo.js` est vide |
 | `/signup` avec/sans code | Selon ton choix d'invitation |
 
+## Avant l'ouverture au public (pas avant)
+Lance `npm run check:site-info` à la racine du projet : il liste ce qui reste provisoire dans `app/lib/siteInfo.js`
+(e-mail « example.com », hébergeur vide). Le même rappel s'affiche à chaque `npm run build` et dans les tests du backend.
+Il ne bloque rien pendant la phase sur invitation. Fais aussi valider les pages légales par un juriste.
+
 ## Retour arrière (si quelque chose ne va pas)
 ```bash
 cd <dossier-du-projet>

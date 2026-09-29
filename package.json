@@ -5,11 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "node server.js",
+    "prebuild": "node scripts/check-site-info.mjs --warn",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "check:site-info": "node scripts/check-site-info.mjs"
   },
   "repository": {
     "type": "git",
