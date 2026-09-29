@@ -408,6 +408,25 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       expect((await rejects(sales.renovate(other.uid, prop.id))).code).toBe('NOT_FOUND');
     });
 
+    it('aperçu de rénovation : même coût que la rénovation réelle, aucun effet, raisons du refus, interdiction de location, IDOR', async () => {
+      const { uid, prop } = await setup({ startYear: 2025, balance: 900000, pred: (l) => cheap(l) });
+      await query(`UPDATE re_properties SET energy_class = 'G' WHERE id = $1`, [prop.id]);
+      const before = await balanceOf(uid);
+      const pv: any = await sales.renovationPreview(uid, prop.id);
+      expect(await balanceOf(uid)).toBe(before);                 // aucun effet
+      expect((await row(prop.id)).energy_class.trim()).toBe('G');
+      expect(pv).toMatchObject({ currentClass: 'G', newClass: 'E', canRenovate: true, reason: null, bannedNow: true, bannedAfter: false, currentClassBannedFromYear: 2025, newClassBannedFromYear: 2034, affordable: true });
+      expect(pv.rentEffectPct).toBeGreaterThan(0);
+      const r: any = await sales.renovate(uid, prop.id);
+      expect(pv.coinsCost).toBe(r.coinsCharged);
+      expect(pv.costEuros).toBe(r.costEuros);
+      await query(`UPDATE re_properties SET energy_class = 'C' WHERE id = $1`, [prop.id]);
+      expect(await sales.renovationPreview(uid, prop.id)).toMatchObject({ canRenovate: false, newClass: null });
+      const other = await setup();
+      expect((await rejects(sales.renovationPreview(other.uid, prop.id))).code).toBe('NOT_FOUND');
+      expect((await rejects(sales.renovationPreview(uid, 'x'))).code).toBe('INVALID_INPUT');
+    });
+
     it('bail qui arrive à échéance alors que la loi interdit désormais de louer : le locataire part, pas de remise en location', async () => {
       const { uid, prop } = await setup({ startYear: 2022, balance: 900000 });
       await query(`UPDATE re_properties SET energy_class = 'G' WHERE id = $1`, [prop.id]); // G : encore louable en 2022

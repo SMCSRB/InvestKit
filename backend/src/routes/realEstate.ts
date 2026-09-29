@@ -23,6 +23,7 @@ realEstateRoutes.get('/events', authMiddleware, c.events);
 realEstateRoutes.post('/properties/:id/sell', authMiddleware, c.sell);
 realEstateRoutes.get('/properties/:id/sell/options', authMiddleware, c.saleOptions);
 realEstateRoutes.post('/properties/:id/sell/reprice', authMiddleware, c.repriceSale);
+realEstateRoutes.get('/properties/:id/renovate/preview', authMiddleware, c.renovationPreview);
 realEstateRoutes.post('/properties/:id/renovate', authMiddleware, c.renovate);
 realEstateRoutes.post('/distress/sell', authMiddleware, c.distressSell);
 realEstateRoutes.get('/sales', authMiddleware, c.listSales);

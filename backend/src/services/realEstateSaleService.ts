@@ -5,12 +5,12 @@ import { leaderboardRepository } from '../repositories/leaderboardRepository';
 import { RealEstateError, RE_DOMAIN, GameRow, requireGame, source, tx } from './realEstateService';
 import { uuidOk, fr, monthlyDraw, propertyKey, marketFor, scheduleOf, valueOfProperty } from './realEstateHelpers';
 import {
-  computeSaleClosing, energyAuditRequired, SaleClosing, remainingBalance, convertEurosToCoins, toCents, monthTotal, computeRentTax,
+  computeSaleClosing, energyAuditRequired, rentalBannedByEnergy, SaleClosing, remainingBalance, convertEurosToCoins, toCents, monthTotal, computeRentTax,
   isTenantFound, monthlyLetProbability, vacancyCapMonths, expectedVacancyMonths, expectedCappedVacancyMonths, round2, computePerformancePctFromEuros,
   EnergyClass, UnitType,
 } from '../engine/immo';
 import {
-  CAPITAL_GAIN_RULES, SALE_PARAMS, EUROS_PER_COIN, RENT_TAX_RATE_BY_PROFILE, RENOVATION_RULES,
+  CAPITAL_GAIN_RULES, SALE_PARAMS, EUROS_PER_COIN, RENT_TAX_RATE_BY_PROFILE, RENOVATION_RULES, RENT_MODEL,
 } from '../config/immoRules';
 import { MIN_RANKED_CAPITAL, LEADERBOARD_SIZE } from '../config/game';
 import { applyEnergyRenovation } from '../engine/immo';
@@ -244,6 +244,34 @@ export const realEstateSaleService = {
   },
 
   // Rénovation énergétique à la demande : coût au m², gagne des classes (règle de JEU).
+  // Aperçu d'une rénovation énergétique, sans effet : coût, classes avant/après, effet sur le loyer, interdiction de location.
+  async renovationPreview(userId: string, propertyId: unknown) {
+    if (!uuidOk(propertyId)) throw new RealEstateError('INVALID_INPUT', 'Identifiant invalide');
+    const game = await requireGame(userId);
+    const p = (await query('SELECT * FROM re_properties WHERE id = $1 AND game_id = $2', [propertyId, game.id])).rows[0];
+    if (!p || p.status === 'sold') throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
+    const energy = String(p.energy_class).trim() as EnergyClass;
+    const improved = applyEnergyRenovation(energy, RENOVATION_RULES);
+    const costEuros = round2(Number(p.surface_sqm) * SALE_PARAMS.renovationCostPerSqm);
+    const coinsCost = Math.ceil(Math.round(costEuros * 100) / (EUROS_PER_COIN * 100));
+    const balance = await investcoinsRepository.getBalance(userId);
+    let reason: string | null = null;
+    if (p.status === 'let') reason = 'Impossible de rénover un logement occupé : attends le départ du locataire.';
+    else if (Number(p.pending_works_eur) > 0) reason = 'Paie d\'abord les travaux en attente.';
+    else if (improved === energy) reason = `Ce logement est déjà en classe ${energy} : rien à gagner.`;
+    let bannedFromYear: number | null = null;
+    for (let yr = game.simulated_year; yr <= game.simulated_year + 30; yr++) { if (rentalBannedByEnergy(energy, yr)) { bannedFromYear = yr; break; } }
+    const factors = RENT_MODEL.energyFactors;
+    return {
+      propertyId: p.id, currentClass: energy, newClass: improved === energy ? null : improved, canRenovate: reason === null, reason,
+      costEuros, coinsCost, balance, affordable: balance >= coinsCost,
+      rentEffectPct: Math.round(((factors[improved] / factors[energy]) - 1) * 1000) / 10,
+      bannedNow: rentalBannedByEnergy(energy, game.simulated_year), bannedAfter: rentalBannedByEnergy(improved, game.simulated_year),
+      currentClassBannedFromYear: bannedFromYear,
+      newClassBannedFromYear: (() => { for (let yr = game.simulated_year; yr <= game.simulated_year + 30; yr++) { if (rentalBannedByEnergy(improved, yr)) return yr; } return null; })(),
+    };
+  },
+
   async renovate(userId: string, propertyId: unknown) {
     if (!uuidOk(propertyId)) throw new RealEstateError('INVALID_INPUT', 'Identifiant invalide');
     return tx(async (c) => {

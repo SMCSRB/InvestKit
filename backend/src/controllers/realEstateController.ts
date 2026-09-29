@@ -56,6 +56,7 @@ export const realEstateController = {
   saleOptions: handle('Erreur lors du calcul des prix de vente', (r, uid) => sales.saleOptions(uid, r.params.id)),
   repriceSale: handle('Erreur lors de la modification du prix', (r, uid) => sales.repriceSale(uid, r.params.id, r.body?.askingRatio)),
   distressSell: handle('Erreur lors de la vente amiable', (r, uid) => sales.distressSell(uid, r.body?.propertyId)),
+  renovationPreview: handle('Erreur lors de l\'aperçu de la rénovation', (r, uid) => sales.renovationPreview(uid, r.params.id)),
   renovate: handle('Erreur lors de la rénovation', (r, uid) => sales.renovate(uid, r.params.id)),
   listSales: handle('Erreur lors de la récupération des ventes', (_r, uid) => sales.listSales(uid)),
   leaderboard: handle('Erreur lors de la récupération du classement', (r, uid) => getRealEstateLeaderboard(uid, r.query.year)),

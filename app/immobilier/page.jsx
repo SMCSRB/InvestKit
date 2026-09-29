@@ -223,10 +223,47 @@ function SalePanel({ property, onDone, notify }) {
   );
 }
 
+// ── Rénovation énergétique : aperçu (coût, classes, loyer, interdiction de location) puis confirmation
+function RenovationPanel({ property, onDone, notify }) {
+  const [pv, setPv] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    call(`/properties/${property.id}/renovate/preview`).then((o) => { if (alive) setPv(o); }).catch((e) => notify(e.message, true));
+    return () => { alive = false; };
+  }, [property.id, property.energy_class]); // eslint-disable-line react-hooks/exhaustive-deps
+  const go = async () => {
+    setBusy(true);
+    try {
+      const r = await call(`/properties/${property.id}/renovate`, 'POST');
+      notify(`Rénovation terminée : classe ${r.previousClass} → ${r.newClass} pour ${eur(r.costEuros)} (${r.coinsCharged} 🪙).`);
+      await onDone();
+    } catch (e) { notify(e.message, true); }
+    setBusy(false);
+  };
+  if (!pv) return <p style={{ color: '#94a3b8', fontSize: 13 }}>Calcul du devis…</p>;
+  return (
+    <div style={{ ...card, marginTop: 8, background: 'rgba(30,41,59,0.6)' }}>
+      <strong style={{ color: '#fff' }}>Rénovation énergétique</strong><HelpTip term="dpe" />
+      {pv.canRenovate ? (
+        <>
+          <p style={{ fontSize: 14, margin: '8px 0' }}>
+            Classe <strong>{pv.currentClass}</strong> → <strong>{pv.newClass}</strong> · coût {eur(pv.costEuros)} ({pv.coinsCost} 🪙). Effet sur le loyer de marché : {pv.rentEffectPct > 0 ? '+' : ''}{pv.rentEffectPct} % (visible à la prochaine mise en location).
+          </p>
+          {pv.currentClassBannedFromYear && <p style={{ fontSize: 13, color: '#fbbf24' }}>Classe {pv.currentClass} : location interdite {pv.bannedNow ? 'depuis' : 'à partir de'} {pv.currentClassBannedFromYear}.{!pv.bannedAfter && pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : interdite à partir de ${pv.newClassBannedFromYear}.` : ''}{!pv.bannedAfter && !pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : aucune interdiction prévue.` : ''}</p>}
+          {!pv.affordable && <p style={{ color: '#fca5a5', fontSize: 13 }}>Solde InvestCoins insuffisant.</p>}
+          <button style={btn(true)} disabled={busy || !pv.affordable} onClick={go}>Lancer les travaux</button>
+        </>
+      ) : <p style={{ fontSize: 14, color: '#cbd5e1' }}>{pv.reason}</p>}
+    </div>
+  );
+}
+
 // ── Portefeuille
 function Portfolio({ data, summary, refresh, notify }) {
   const [busy, setBusy] = useState(false);
-  const [saleOpen, setSaleOpen] = useState(null);
+  const [panel, setPanel] = useState(null); // { id, kind: 'sale' | 'reno' }
+  const toggle = (id, kind) => setPanel(panel && panel.id === id && panel.kind === kind ? null : { id, kind });
   const act = async (fn, okMsg) => {
     setBusy(true);
     try { const r = await fn(); notify(r?.message || okMsg); await refresh(); } catch (e) { notify(e.message, true); }
@@ -264,11 +301,13 @@ function Portfolio({ data, summary, refresh, notify }) {
               {p.searching && <>
                 <button style={btn(false)} disabled={busy} onClick={() => act(() => call(`/properties/${p.id}/reprice`, 'POST', { askingRentRatio: Math.max(0.7, p.search.askingRatio - 0.05) }), 'Loyer baissé de 5 %')}>Baisser le loyer de 5 %</button>
               </>}
-              {p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => setSaleOpen(saleOpen === p.id ? null : p.id)}>{p.saleSearch ? 'Modifier le prix de vente' : 'Vendre'}</button>}
+              {p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => toggle(p.id, 'sale')}>{p.saleSearch ? 'Modifier le prix de vente' : 'Vendre'}</button>}
+              {p.status !== 'sold' && <button style={btn(false)} disabled={busy} onClick={() => toggle(p.id, 'reno')}>Rénover (énergie)</button>}
               {data.missedMonths >= 3 && <button style={btn(false)} disabled={busy} onClick={() => act(() => call('/distress/sell', 'POST', { propertyId: p.id }), 'Vente à l\'amiable réalisée')}>Vendre à l&apos;amiable (−12 %)</button>}
             </div>
             {p.saleSearch && <div style={{ fontSize: 13, color: '#93c5fd', marginTop: 8 }}>🏷️ En vente à {eur(p.saleSearch.askingPrice)} depuis {p.saleSearch.monthsSoFar} mois (chance de vendre : {p.saleSearch.monthlyBuyerProbabilityPct} % par mois).</div>}
-            {saleOpen === p.id && <SalePanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
+            {panel?.id === p.id && panel.kind === 'sale' && <SalePanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
+            {panel?.id === p.id && panel.kind === 'reno' && <RenovationPanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
           </div>
         ))}
       </div>
