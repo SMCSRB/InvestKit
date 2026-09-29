@@ -122,7 +122,7 @@ export default function PrivacyPage() {
           },
           {
             title: '8. Conservation des Données',
-            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. La suppression du compte est immédiate et définitive : vos données sont effacées et le journal de sécurité est anonymisé. Les obligations légales de conservation (par exemple la facturation d'un abonnement) restent réservées.',
+            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. La suppression du compte est immédiate et définitive : vos données sont effacées et le journal de sécurité est anonymisé. Les obligations légales de conservation (par exemple la facturation d’un abonnement) restent réservées.',
             list: null,
           },
           {
