@@ -4,6 +4,7 @@ import { virtualPortfolioRepository } from '../repositories/virtualPortfolioRepo
 import { getDomain } from '../data/marketData';
 import { RECOVERY } from '../config/bankRules';
 import { BankError, withTx, ensureAccount, logBankEvent } from './bankService';
+import { auditLog } from './auditService';
 
 // ─────────────────────────────────────────────────────────────────────────
 // PROCÉDURE DE RÉTABLISSEMENT (après un défaut sur un prêt d'un domaine). Ce n'est PAS une remise à zéro gratuite :
@@ -99,6 +100,7 @@ export const bankRecoveryService = {
                     recoveries = recoveries + 1, last_recovery_at = NOW(), written_off_coins = written_off_coins + $3 WHERE user_id = $1`, [userId, String(RECOVERY.creditBanDays), a.writtenOffCoins]);
       await q(c, 'INSERT INTO bank_recoveries (user_id, domain, written_off_coins, seized_coins, grant_coins) VALUES ($1,$2,$3,$4,$5)', [userId, domain, a.writtenOffCoins, a.seized, a.grant]);
       const message = `Procédure de rétablissement terminée pour ${DOMAIN_LABEL[domain]} : dette de ${a.writtenOffCoins.toLocaleString('fr-FR')} 🪙 effacée, ${DOMAIN_LABEL[domain]} remis à zéro et rang perdu${a.grant > 0 ? `, capital de base complété de ${a.grant} 🪙` : ''}. Aucun nouveau crédit pendant ${RECOVERY.creditBanDays} jours.`;
+      await auditLog({ userId, action: 'bank_recovery', entityType: 'user', entityId: userId, metadata: { domain, writtenOffCoins: a.writtenOffCoins, grant: a.grant } }, c);
       await logBankEvent(c, userId, null, 'recovery', message, { domain, writtenOffCoins: a.writtenOffCoins, seized: a.seized, grant: a.grant });
       return { domain, message, writtenOffCoins: a.writtenOffCoins, borrowedCoinsSeized: a.seized, baseCapitalTopUpCoins: a.grant, creditBanDays: RECOVERY.creditBanDays,
         badgesNote: 'Les badges de ce domaine seront retirés quand ils seront rattachés au serveur.' };

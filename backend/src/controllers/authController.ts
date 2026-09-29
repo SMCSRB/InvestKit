@@ -21,6 +21,9 @@ import {
   hashBackupCodes,
   consumeBackupCode,
 } from '../utils/totp';
+import { generateVerificationCode } from '../utils/verificationCode';
+import { decryptField } from '../utils/fieldCrypto';
+import { auditLog } from '../services/auditService';
 
 // Domaines pouvant être choisis comme domaine gratuit. L'interface garde
 // Immobilier grisé tant que ses écrans (étape 7) n'existent pas, pour ne pas
@@ -67,7 +70,7 @@ export const authController = {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Générer un code de vérification à 6 chiffres
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCode = generateVerificationCode();
       const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Programme de parrainage : chaque compte reçoit son propre code à
@@ -210,7 +213,7 @@ export const authController = {
       }
 
       // Générer un nouveau code
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const newCode = generateVerificationCode();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
       await userRepository.updateVerificationCode(user.id, newCode, expiresAt);
@@ -318,6 +321,7 @@ export const authController = {
 
       // Mettre à jour last_login_at
       await userRepository.updateLastLogin(user.id);
+      await auditLog({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, metadata: { twoFactor: false }, ip: req.ip });
 
       const token = generateToken(user.id, user.email);
 
@@ -397,6 +401,7 @@ export const authController = {
 
       // Mettre à jour le mot de passe
       await userRepository.updatePassword(user.id, hashedPassword);
+      await auditLog({ userId: user.id, action: 'password_reset', entityType: 'user', entityId: user.id, ip: req.ip });
 
       res.json({
         success: true,
@@ -548,7 +553,7 @@ export const authController = {
         return;
       }
 
-      if (!code || !verifyTotpCode(code, user.totp_secret)) {
+      if (!code || !verifyTotpCode(code, decryptField(user.totp_secret))) {
         res.status(400).json({ error: 'Code invalide' });
         return;
       }
@@ -556,6 +561,7 @@ export const authController = {
       const backupCodes = generateBackupCodes();
       const hashed = await hashBackupCodes(backupCodes);
       await userRepository.enableTwoFactor(user.id, hashed);
+      await auditLog({ userId: user.id, action: '2fa_enabled', entityType: 'user', entityId: user.id, ip: req.ip });
 
       res.json({ success: true, backupCodes });
     } catch (error) {
@@ -587,6 +593,7 @@ export const authController = {
       }
 
       await userRepository.disableTwoFactor(user.id);
+      await auditLog({ userId: user.id, action: '2fa_disabled', entityType: 'user', entityId: user.id, ip: req.ip });
       res.json({ success: true });
     } catch (error) {
       console.error('Disable 2FA error:', error);
@@ -616,7 +623,7 @@ export const authController = {
         return;
       }
 
-      let valid = verifyTotpCode(code, user.totp_secret);
+      let valid = verifyTotpCode(code, decryptField(user.totp_secret));
 
       if (!valid && user.totp_backup_codes?.length) {
         const remaining = await consumeBackupCode(code, user.totp_backup_codes);
@@ -632,6 +639,7 @@ export const authController = {
       }
 
       await userRepository.updateLastLogin(user.id);
+      await auditLog({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, metadata: { twoFactor: true }, ip: req.ip });
       const token = generateToken(user.id, user.email);
 
       res.json({

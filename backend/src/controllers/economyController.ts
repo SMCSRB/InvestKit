@@ -1,18 +1,11 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
+import { requireAdmin } from '../middleware/admin';
 import { userRepository } from '../repositories/userRepository';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { claimDailyReward, canClaimDailyReward } from '../services/dailyRewardService';
 
 
-
-// Réservé aux administrateurs (rôle lu en base, jamais dans le jeton).
-const requireAdmin = async (req: AuthRequest, res: Response): Promise<boolean> => {
-  if (!req.user) { res.status(401).json({ error: 'Non authentifié' }); return false; }
-  const user = await userRepository.findById(req.user.userId);
-  if (!user || user.role !== 'admin') { res.status(403).json({ error: 'Réservé aux administrateurs' }); return false; }
-  return true;
-};
 
 export const economyController = {
   getCoinsByDomain: async (req: AuthRequest, res: Response): Promise<void> => {

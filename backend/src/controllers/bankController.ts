@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { userRepository } from '../repositories/userRepository';
+import { requireAdmin } from '../middleware/admin';
 import { bankService, BankError } from '../services/bankService';
 import { bankPersonalService } from '../services/bankPersonalService';
 import { bankPortfolioService } from '../services/bankPortfolioService';
@@ -37,12 +37,10 @@ export const bankController = {
   recoveryStart: handleBank('Erreur lors du rétablissement', (r, uid) => bankRecoveryService.start(uid, r.body)),
   earlyRepay: handleBank('Erreur lors du remboursement', (r, uid) => bankService.earlyRepay(uid, r.params.id)),
 
-  // Réservé aux administrateurs (rôle lu en base, jamais dans le jeton).
+  // Réservé aux administrateurs avec la 2FA activée (middleware/admin.ts).
   adminStats: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      if (!req.user) { res.status(401).json({ error: 'Non authentifié' }); return; }
-      const user = await userRepository.findById(req.user.userId);
-      if (!user || user.role !== 'admin') { res.status(403).json({ error: 'Réservé aux administrateurs' }); return; }
+      if (!(await requireAdmin(req, res))) return;
       res.json(await bankService.adminStats());
     } catch (error) {
       console.error('Bank admin stats error:', error);

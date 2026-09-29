@@ -1,5 +1,6 @@
 import { query } from '../utils/db';
 import type { Queryable } from './investcoinsRepository';
+import { encryptField } from '../utils/fieldCrypto';
 
 export interface User {
   id: string;
@@ -255,7 +256,7 @@ export const userRepository = {
   async setPendingTotpSecret(id: string, secret: string): Promise<void> {
     await query(
       `UPDATE users SET totp_secret = $1, updated_at = NOW() WHERE id = $2`,
-      [secret, id]
+      [encryptField(secret), id] // secret 2FA chiffré au repos (AES-256-GCM)
     );
   },
 
