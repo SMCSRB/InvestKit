@@ -50,7 +50,16 @@ export const executeSchema = async (): Promise<void> => {
     const schema = fs.readFileSync(schemaPath, 'utf-8');
 
     const pool = getPool();
-    await pool.query(schema);
+    try {
+      await pool.query(schema);
+    } catch (firstError: any) {
+      // Base existante plus ancienne que schema.sql (ex. un index sur une colonne que seule une migration
+      // ajoute encore) : le schéma est annulé en bloc (une seule transaction), on applique alors les
+      // migrations (idempotentes) pour mettre les tables existantes à niveau, puis on rejoue le schéma.
+      console.warn('⚠️  Schéma non applicable tel quel sur cette base (' + firstError.message + ') : mise à niveau par les migrations puis nouvel essai');
+      await executeMigrations();
+      await pool.query(schema);
+    }
 
     console.log('✅ Database schema initialized successfully');
 

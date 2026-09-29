@@ -61,6 +61,7 @@ function StartScreen({ profiles, onStart, busy }) {
 // ── Annonces, simulation et achat
 function Listings({ game, refresh, notify }) {
   const [listings, setListings] = useState([]);
+  const [cities, setCities] = useState([]);
   const [filters, setFilters] = useState({ cityId: '', type: '', maxPrice: '' });
   const [selected, setSelected] = useState(null);
   const [plan, setPlan] = useState({ downPaymentCoins: '', months: 300 });
@@ -69,11 +70,13 @@ function Listings({ game, refresh, notify }) {
 
   const load = useCallback(async () => {
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString();
-    try { setListings((await call(`/listings?${qs}`)).listings); } catch (e) { notify(e.message, true); }
+    try { const r = await call(`/listings?${qs}`); setListings(r.listings); setCities(r.cities || []); } catch (e) { notify(e.message, true); }
   }, [filters, notify, game.year]);
   useEffect(() => { load(); }, [load]);
 
-  const cities = useMemo(() => [...new Set(listings.map((l) => l.cityId))], [listings]);
+  const cityById = useMemo(() => Object.fromEntries(cities.map((c) => [c.id, c])), [cities]);
+  const cityFiche = cityById[filters.cityId];
+  const lowYield = (id) => ['metropolis', 'large'].includes(cityById[id]?.tier);
 
   const simulate = async (listing, p = plan) => {
     setBusy(true);
@@ -107,13 +110,20 @@ function Listings({ game, refresh, notify }) {
     <div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
         <select style={input} value={filters.cityId} onChange={(e) => setFilters({ ...filters, cityId: e.target.value })} aria-label="Ville">
-          <option value="">Toutes les villes</option>{cities.map((c) => <option key={c} value={c}>{c}</option>)}
+          <option value="">Toutes les villes</option>{cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select style={input} value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} aria-label="Type de bien">
           <option value="">Tous les types</option>{Object.entries(TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
         <input style={input} type="number" min="0" placeholder="Prix max (€)" value={filters.maxPrice} onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })} aria-label="Prix maximum" />
       </div>
+      {cityFiche && (
+        <div style={{ ...card, marginBottom: 14 }}>
+          <strong style={{ color: '#fff' }}>{cityFiche.name}</strong> <span style={{ color: '#94a3b8' }}>· {cityFiche.region}{cityFiche.tenseZone ? ' · zone tendue' : ''}</span><HelpTip term="zone-tendue" />
+          <div style={{ fontSize: 14, color: '#cbd5e1', marginTop: 4 }}>{cityFiche.description}</div>
+          {lowYield(cityFiche.id) && <div style={{ fontSize: 14, color: '#93c5fd', marginTop: 6 }}>Les métropoles et grandes villes chères ont des rendements plus faibles.<HelpTip term="rendement-metropole" /></div>}
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
         {listings.map((l) => (
           <button key={l.id} onClick={() => open(l)} style={{ ...card, textAlign: 'left', cursor: 'pointer', color: '#e2e8f0', outline: selected?.id === l.id ? '2px solid #3b82f6' : 'none' }}>

@@ -242,7 +242,8 @@ export const realEstateService = {
     const listings = await source().listListings(game.simulated_year, f);
     const owned = await query(`SELECT listing_id FROM re_properties WHERE game_id = $1 AND status <> 'sold'`, [game.id]);
     const ownedSet = new Set(owned.rows.map((r: any) => r.listing_id));
-    return { year: game.simulated_year, listings: listings.filter((l) => !ownedSet.has(l.id)) };
+    const cities = (await source().listCities()).map((c) => ({ id: c.id, name: c.name, region: c.region, tier: c.tier, description: c.description, tenseZone: c.tenseZone }));
+    return { year: game.simulated_year, cities, listings: listings.filter((l) => !ownedSet.has(l.id)) };
   },
 
   async getListingDetail(userId: string, listingId: unknown) {
