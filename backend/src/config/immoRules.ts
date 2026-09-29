@@ -5,11 +5,10 @@ import type { BankRules, NotaryFeeRule, ProfileId, RentModelParams, VacancyParam
 //
 // - Plafond d'endettement 35 % (assurance comprise) : plafond fixé par le HCSF,
 //   également repris du simulateur de référence.
-// - Loyers existants retenus à 70 % : pratique bancaire courante (décote pour
+// - Loyers (existants ET prévisionnel du bien) retenus à 70 % : pratique bancaire courante (décote pour
 //   vacance, charges et fiscalité), pas une règle légale. Vérifié le 2026-09-28
 //   sur des sources de presse/courtage, PAS sur un texte officiel : à
 //   reconfirmer auprès d'un courtier avant de considérer le chiffre figé.
-// - Loyer futur du bien : non retenu (prudent, à discuter).
 // - Reste à vivre : seuil PAR PROFIL. Valeurs provisoires (student/executive :
 //   à valider ; employee = 1 200 €, valeur du simulateur de référence).
 //   Le calcul par foyer (adultes, enfants) est prêt : mettre des majorations
@@ -19,9 +18,28 @@ export const BANK_RULES: BankRules = {
   livingRemainingByProfile: { student: 500, employee: 1200, executive: 1800 },
   livingRemainingPerExtraAdult: 0,
   livingRemainingPerChild: 0,
-  rentalIncomeWeight: 0.7,
-  projectRentWeight: 0,
+  rentalIncomeWeight: 0.7,   // loyers déjà perçus : 70 % retenus
+  projectRentWeight: 0.7,    // loyer prévisionnel du bien acheté : 70 % retenus
+  // Apport minimum : au moins les frais de notaire (décision produit). Modifiable.
+  minDownPaymentPctOfNotaryFees: 100,
+  // Durée : 25 ans, 27 ans pour un achat avec travaux importants (règle du HCSF,
+  // vérifiée sur des sources de presse/courtage le 2026-09-29, pas sur le texte
+  // officiel : à reconfirmer). Le HCSF cite aussi les VEFA (neuf) et la
+  // construction de maison, absentes du catalogue actuel (différé d'amortissement
+  // non modélisé : on plafonne la durée totale à 27 ans dans ce cas).
+  maxLoanMonths: 300,
+  maxLoanMonthsWithWorks: 324,
+  majorWorksMinPctOfLoan: 10,
 };
+
+// Assurance emprunteur (% par an du capital emprunté) et frais de dossier :
+// valeurs de JEU. Frais de dossier repris du simulateur de référence
+// (max(200 €, 0,2 % du capital)). Pas de frais de garantie pour l'instant.
+export const LOAN_INSURANCE_RATE_PCT = 0.36;
+export const loanApplicationFee = (principal: number): number => Math.max(200, Math.round(principal * 0.002 * 100) / 100);
+
+// Expertise avant achat : coût en euros (converti en pièces, arrondi au-dessus).
+export const expertiseCostEuros = (price: number): number => Math.round(300 + price * 0.0015);
 
 // Profils de départ (situation fictive du joueur). Valeurs provisoires de JEU.
 export interface StartingProfile {

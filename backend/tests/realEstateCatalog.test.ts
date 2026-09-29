@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { getRealEstateDataSource } from '../src/data/realEstate';
-import {
-  computeAcquisition, loanNeeded, buildSchedule, assessLoanApplication, ProfileId,
-} from '../src/engine/immo';
-import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN } from '../src/config/immoRules';
+import { computeAcquisition, evaluatePurchase, ProfileId } from '../src/engine/immo';
+import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
 import { hashString, createRng } from '../src/utils/seededRandom';
 
 const YEARS = Array.from({ length: src.maxYear - src.minYear + 1 }, (_, i) => src.minYear + i);
@@ -128,29 +126,32 @@ describe('graine déterministe', () => {
 });
 
 // Exigence produit : « chaque profil doit pouvoir acheter au moins un bien du
-// catalogue de départ ». Achat avec l'apport de départ (500 🪙 × 20 €), prêt
-// sur 25 ans, assurance 0,36 %, frais de notaire, travaux annoncés financés.
-describe('chaque profil peut acheter au moins un bien, chaque année', () => {
+// catalogue de départ, chaque année », AVEC les règles de la banque : apport
+// minimum = frais de notaire, durée ≤ 25 ans, loyer prévisionnel retenu à 70 %.
+// Apport de départ : 500 🪙 × 20 €. Prêt sur 25 ans. Travaux annoncés financés.
+describe('chaque profil peut acheter au moins un bien, chaque année (règles complètes)', () => {
   const DOWN_PAYMENT = 500 * EUROS_PER_COIN;
   const profiles = Object.keys(STARTING_PROFILES) as ProfileId[];
 
+  const evaluate = async (profile: ProfileId, l: Awaited<ReturnType<typeof src.listListings>>[number], year: number) => {
+    const p = STARTING_PROFILES[profile];
+    return evaluatePurchase({
+      household: { profile, salary: p.netMonthlyIncome, livingCharges: p.livingCharges },
+      price: l.price, age: l.age, works: l.advertisedWorks, projectedMonthlyRent: l.marketRentMonthly,
+      downPayment: Math.min(DOWN_PAYMENT, computeAcquisition({ price: l.price, age: l.age, works: l.advertisedWorks, notaryRule: NOTARY_RULE }).totalCost),
+      loanMonths: 300, annualRatePct: await src.getLoanRatePct(year, 300),
+      insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES, loanFees: loanApplicationFee,
+    });
+  };
+
   for (const profile of profiles) {
     it(`profil ${profile}`, async () => {
-      const p = STARTING_PROFILES[profile];
       for (const year of YEARS) {
-        const rate = await src.getLoanRatePct(year, 300);
-        const buyable = [];
+        let buyable = 0;
         for (const l of await src.listListings(year)) {
-          const budget = computeAcquisition({ price: l.price, age: l.age, works: l.advertisedWorks, notaryRule: NOTARY_RULE });
-          const principal = loanNeeded(budget.totalCost, DOWN_PAYMENT);
-          const s = buildSchedule({ principal, annualRatePct: rate, months: 300, insurance: { annualRatePct: 0.36, basis: 'initial' } });
-          const a = assessLoanApplication(
-            { profile, salary: p.netMonthlyIncome, livingCharges: p.livingCharges },
-            s.monthlyPaymentWithInsurance, BANK_RULES
-          );
-          if (a.decision !== 'refused') buyable.push({ id: l.id, decision: a.decision });
+          if ((await evaluate(profile, l, year)).approved) buyable++;
         }
-        expect(buyable.length, `${profile} en ${year}`).toBeGreaterThan(0);
+        expect(buyable, `${profile} en ${year}`).toBeGreaterThan(0);
       }
     });
   }
@@ -158,17 +159,21 @@ describe('chaque profil peut acheter au moins un bien, chaque année', () => {
   it('les profils ont un pouvoir d\'achat croissant (étudiant ≤ salarié ≤ cadre)', async () => {
     const counts: number[] = [];
     for (const profile of profiles) {
-      const p = STARTING_PROFILES[profile];
       let n = 0;
-      for (const l of await src.listListings(2018)) {
-        const budget = computeAcquisition({ price: l.price, age: l.age, works: l.advertisedWorks, notaryRule: NOTARY_RULE });
-        const s = buildSchedule({ principal: loanNeeded(budget.totalCost, DOWN_PAYMENT), annualRatePct: await src.getLoanRatePct(2018, 300), months: 300, insurance: { annualRatePct: 0.36, basis: 'initial' } });
-        if (assessLoanApplication({ profile, salary: p.netMonthlyIncome, livingCharges: p.livingCharges }, s.monthlyPaymentWithInsurance, BANK_RULES).decision !== 'refused') n++;
-      }
+      for (const l of await src.listListings(2018)) if ((await evaluate(profile, l, 2018)).approved) n++;
       counts.push(n);
     }
     expect(counts[0]).toBeLessThanOrEqual(counts[1]);
     expect(counts[1]).toBeLessThanOrEqual(counts[2]);
+  });
+
+  it('la règle d\'apport minimum rejette bien des achats (ce n\'est pas un test vide)', async () => {
+    let refusedForDownPayment = 0;
+    for (const l of await src.listListings(2018)) {
+      const e = await evaluate('executive', l, 2018);
+      if (e.assessment.reasons.some((r) => r.code === 'DOWN_PAYMENT_TOO_LOW')) refusedForDownPayment++;
+    }
+    expect(refusedForDownPayment).toBeGreaterThan(5);
   });
 });
 

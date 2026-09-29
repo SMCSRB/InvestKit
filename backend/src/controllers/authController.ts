@@ -22,8 +22,10 @@ import {
   consumeBackupCode,
 } from '../utils/totp';
 
-// 'real_estate' sera ajouté quand le domaine Immobilier existera (étape 3).
-const VALID_FREE_DOMAINS = Object.keys(DOMAINS);
+// Domaines pouvant être choisis comme domaine gratuit. L'interface garde
+// Immobilier grisé tant que ses écrans (étape 7) n'existent pas, pour ne pas
+// faire gaspiller au joueur son choix unique ; l'API, elle, est prête.
+const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate'];
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {

@@ -15,6 +15,10 @@ const bank: BankRules = {
   livingRemainingPerChild: 0,
   rentalIncomeWeight: 1,
   projectRentWeight: 0,
+  minDownPaymentPctOfNotaryFees: 100,
+  maxLoanMonths: 300,
+  maxLoanMonthsWithWorks: 324,
+  majorWorksMinPctOfLoan: 10,
 };
 
 describe('prêt : mensualité', () => {
@@ -284,5 +288,41 @@ describe('plus-value (règles FICTIVES de test : le moteur ne contient aucun chi
   });
   it('produit net de la vente', () => {
     expect(computeSaleProceeds({ salePrice: 300000, saleFees: 5000, remainingLoanBalance: 120000, earlyRepaymentPenalty: 2000, totalTax: 12000 })).toBe(161000);
+  });
+});
+
+describe('règles d\'achat de la banque : apport minimum et durée', () => {
+  const h = { profile: 'executive' as const, salary: 6000, livingCharges: 1000 };
+  const ctx = { downPayment: 10000, notaryFees: 15000, loanMonths: 240, loanPrincipal: 150000, works: 0 };
+  it('apport inférieur aux frais de notaire : refus expliqué avec le montant manquant', () => {
+    const a = assessLoanApplication(h, 700, bank, 0, ctx);
+    expect(a.decision).toBe('refused');
+    const r = a.reasons.find((x) => x.code === 'DOWN_PAYMENT_TOO_LOW')!;
+    expect(r.message).toContain('15000');
+    expect(r.message).toContain('5000'); // il manque 5 000 €
+  });
+  it('apport égal aux frais de notaire : accepté', () => {
+    expect(assessLoanApplication(h, 700, bank, 0, { ...ctx, downPayment: 15000 }).decision).toBe('approved');
+  });
+  it('le seuil est configurable', () => {
+    expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 50 }, 0, ctx).decision).toBe('approved');
+    expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 0 }, 0, { ...ctx, downPayment: 0 }).decision).toBe('approved');
+  });
+  it('durée > 25 ans refusée, sauf travaux importants (27 ans)', () => {
+    const long = { ...ctx, downPayment: 15000, loanMonths: 312 };
+    const refused = assessLoanApplication(h, 700, bank, 0, long);
+    expect(refused.decision).toBe('refused');
+    expect(refused.reasons.some((r) => r.code === 'LOAN_TERM_TOO_LONG')).toBe(true);
+    // travaux ≥ 10 % du montant emprunté : exception
+    expect(assessLoanApplication(h, 700, bank, 0, { ...long, works: 20000 }).decision).toBe('approved');
+    // ... mais pas au-delà de 27 ans
+    expect(assessLoanApplication(h, 700, bank, 0, { ...long, works: 20000, loanMonths: 336 }).decision).toBe('refused');
+  });
+  it('plusieurs motifs de refus cumulés dans la même réponse', () => {
+    const a = assessLoanApplication({ profile: 'student', salary: 900 }, 900, bank, 0, { ...ctx, loanMonths: 360 });
+    const codes = a.reasons.map((r) => r.code);
+    expect(codes).toContain('DEBT_RATIO_TOO_HIGH');
+    expect(codes).toContain('DOWN_PAYMENT_TOO_LOW');
+    expect(codes).toContain('LOAN_TERM_TOO_LONG');
   });
 });

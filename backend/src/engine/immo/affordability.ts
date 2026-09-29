@@ -41,14 +41,22 @@ export interface BankRules {
   // Majorations du seuil pour un foyer plus grand (0 = désactivé pour l'instant).
   livingRemainingPerExtraAdult: number;
   livingRemainingPerChild: number;
-  rentalIncomeWeight: number;      // part des loyers existants retenue (1 = 100 %)
+  rentalIncomeWeight: number;      // part des loyers existants retenue (0,7 = 70 %)
+  // Apport minimum exigé, en % des frais de notaire (100 = l'apport doit couvrir au moins les frais de notaire).
+  minDownPaymentPctOfNotaryFees: number;
+  // Durée maximale d'un prêt, en mois (25 ans = 300). Exceptions éventuelles : voir maxLoanMonthsWithWorks.
+  maxLoanMonths: number;
+  // Durée maximale pour un achat avec travaux importants (0 = pas d'exception).
+  maxLoanMonthsWithWorks: number;
+  // Travaux "importants" : part minimale des travaux dans le montant emprunté (%).
+  majorWorksMinPctOfLoan: number;
   projectRentWeight: number;       // part du loyer futur du bien retenue (0 = prudent)
 }
 
 export type Decision = 'approved' | 'caution' | 'refused';
 
 export interface Reason {
-  code: 'DEBT_RATIO_TOO_HIGH' | 'LIVING_REMAINING_LOW' | 'NO_INCOME' | 'OK';
+  code: 'DEBT_RATIO_TOO_HIGH' | 'LIVING_REMAINING_LOW' | 'NO_INCOME' | 'DOWN_PAYMENT_TOO_LOW' | 'LOAN_TERM_TOO_LONG' | 'OK';
   message: string;
   value?: number;
   limit?: number;
@@ -74,11 +82,21 @@ export const livingRemainingFloor = (household: Household, rules: BankRules): nu
   return round2(base + extraAdults * rules.livingRemainingPerExtraAdult + children * rules.livingRemainingPerChild);
 };
 
+// Éléments propres à l'achat : apport, frais de notaire, durée, travaux, prêt.
+export interface PurchaseContext {
+  downPayment: number;    // apport (€)
+  notaryFees: number;     // frais de notaire (€)
+  loanMonths: number;     // durée demandée
+  loanPrincipal: number;  // montant emprunté (€)
+  works: number;          // travaux financés (€)
+}
+
 export const assessLoanApplication = (
   household: Household,
   newMonthlyPaymentWithInsurance: number,
   rules: BankRules,
-  projectMonthlyRent = 0
+  projectMonthlyRent = 0,
+  purchase?: PurchaseContext
 ): Assessment => {
   assertNonNegative(household.salary, 'salary');
   assertNonNegative(newMonthlyPaymentWithInsurance, 'newMonthlyPaymentWithInsurance');
@@ -126,6 +144,33 @@ export const assessLoanApplication = (
       value: livingRemaining,
       limit: minLivingRemaining,
     });
+  }
+
+  if (purchase) {
+    const requiredDownPayment = round2((purchase.notaryFees * rules.minDownPaymentPctOfNotaryFees) / 100);
+    if (purchase.downPayment < requiredDownPayment) {
+      decision = 'refused';
+      reasons.push({
+        code: 'DOWN_PAYMENT_TOO_LOW',
+        message: `Apport insuffisant : ${purchase.downPayment.toFixed(0)} € proposés, la banque exige au moins ${requiredDownPayment.toFixed(0)} € ` +
+          `(les frais de notaire). Il te manque ${(requiredDownPayment - purchase.downPayment).toFixed(0)} €.`,
+        value: purchase.downPayment,
+        limit: requiredDownPayment,
+      });
+    }
+    const majorWorks = rules.maxLoanMonthsWithWorks > 0 && purchase.loanPrincipal > 0 &&
+      (purchase.works / purchase.loanPrincipal) * 100 >= rules.majorWorksMinPctOfLoan;
+    const maxMonths = majorWorks ? rules.maxLoanMonthsWithWorks : rules.maxLoanMonths;
+    if (purchase.loanMonths > maxMonths) {
+      decision = 'refused';
+      reasons.push({
+        code: 'LOAN_TERM_TOO_LONG',
+        message: `Durée de ${purchase.loanMonths / 12} ans trop longue : la banque plafonne à ${maxMonths / 12} ans` +
+          (majorWorks ? ' (exception travaux importants).' : '.'),
+        value: purchase.loanMonths,
+        limit: maxMonths,
+      });
+    }
   }
 
   if (reasons.length === 0) {

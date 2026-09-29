@@ -6,3 +6,4 @@ export * from './indicators';
 export * from './capitalGains';
 export * from './rent';
 export * from './monthly';
+export * from './purchase';

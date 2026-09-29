@@ -18,7 +18,8 @@ export class InsufficientFundsError extends Error {
 export type LedgerNature = 'creation' | 'destruction' | 'exchange';
 
 // Chaque écriture porte son domaine et sa nature (voir migration 013) :
-// - achat/vente = simple échange entre le solde et un actif ;
+// - achat/vente (trade_*) et apport/travaux immobiliers (re_exchange_*) = simple
+//   échange entre le solde et un actif ;
 // - tout autre crédit = pièces CRÉÉES par la plateforme ;
 // - tout autre débit = pièces DÉTRUITES (frais, taxes, intérêts...).
 // Le domaine vient de metadata.domain ; absent = hors domaine (NULL).
@@ -28,7 +29,7 @@ const classify = (
   metadata?: { domain?: unknown }
 ): { domain: string | null; nature: LedgerNature } => ({
   domain: typeof metadata?.domain === 'string' ? metadata.domain : null,
-  nature: reason.startsWith('trade_') ? 'exchange' : amount > 0 ? 'creation' : 'destruction',
+  nature: reason.startsWith('trade_') || reason.startsWith('re_exchange_') ? 'exchange' : amount > 0 ? 'creation' : 'destruction',
 });
 
 const applyWith = async (

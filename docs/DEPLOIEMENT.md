@@ -88,3 +88,38 @@ pg_restore --no-owner --no-privileges --dbname=postgresql://…/investkit_neuve 
 Un serveur à domicile a une IP qui peut changer, une connexion qui peut tomber
 et une adresse exposée : garder le système à jour, ne mettre en ligne que le
 reverse proxy HTTPS (pas PostgreSQL), et ne pas ouvrir d'autres ports.
+
+## 8. Mettre à jour un site déjà en ligne avec la branche de travail
+État au 2026-09-29 : tout le travail des étapes 0 à 3 est sur la branche
+`claude/sync-project-context-df9fzi` (pull request n°3, **ouverte, non fusionnée**).
+La branche `main` ne contient rien de tout cela. Ce que ton serveur exécute
+dépend de ce que tu y as tiré : vérifie-le d'abord.
+
+**Savoir ce qui tourne sur ton serveur**
+```bash
+cd /chemin/vers/investkit
+git branch --show-current && git log -1 --format='%h %ad %s'   # branche et dernier commit en place
+ls backend/migrations | tail -3                                  # 015_… présent = étapes récentes présentes
+curl -s https://ton-domaine/api/v1/auth/signup-config             # répond {"inviteOnly":…} = étape invitations en ligne
+curl -s -o /dev/null -w '%{http_code}\n' https://ton-domaine/legal # 200 = pages légales en ligne
+```
+
+**Mise en ligne, dans l'ordre**
+1. **Sauvegarde** : `./ops/backup-db.sh` puis `./ops/restore-test.sh` (le test doit finir par ✅).
+2. Fusionner la pull request n°3 dans `main` (ou déployer la branche telle quelle).
+3. Sur le serveur : `git pull`, puis `cd backend && npm ci && npm run build`.
+4. **Créer des codes d'invitation AVANT de redémarrer** (l'inscription sur invitation est active par défaut) : `npm run invite -- create --uses 1 --note "pour X"`. Pour ne pas restreindre : `INVITE_ONLY=false` dans `backend/.env.local`.
+5. Vérifier `backend/.env.local` (voir `backend/.env.example`) : `JWT_SECRET`, `CORS_ORIGIN`, `FRONTEND_URL`, base de données.
+6. Redémarrer l'API : le schéma et les migrations 012 à 015 s'appliquent seuls (idempotents ; aucune donnée n'est supprimée).
+7. Reconstruire et redémarrer le site : `NEXT_PUBLIC_API_URL=https://ton-domaine/api/v1 npm ci && npm run build && npm start`.
+8. Installer les deux tâches `cron` de la section 5 (sauvegardes).
+9. Compléter `app/lib/siteInfo.js` (éditeur, contact, Discord, hébergeur) : tant que c'est vide, les pages légales affichent « [à compléter] ».
+10. Vérifier : connexion, inscription avec un code, Simulateur Bourse, `/legal`, `/contact`.
+
+**Ce qui change pour les utilisateurs au moment de la mise en ligne**
+- Inscription : code d'invitation obligatoire (les comptes existants ne sont pas touchés).
+- Domaine gratuit : un compte gratuit ne peut acheter que dans son domaine ; les comptes qui en avaient déjà choisi un peuvent en changer UNE fois.
+- Récompense quotidienne et vérification d'email : versements uniques (corrections de doubles versements).
+- Immobilier : l'API est en ligne mais l'écran n'existe pas encore (étape 7) ; le bouton reste grisé.
+
+**Retour arrière** : restaurer la sauvegarde (section 5) et revenir au commit précédent (`git checkout <ancien-commit>`), puis reconstruire.
