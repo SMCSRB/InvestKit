@@ -111,3 +111,10 @@ Pour provoquer un défaut sur un compte de test : emprunter en Bourse puis dépe
 6. Après suppression : impossible de se reconnecter ; le classement n'affiche plus le joueur. Le journal d'audit garde les lignes mais sans lien avec un utilisateur.
 7. Plus de 5 essais en une heure : message « trop de demandes ».
 8. `/privacy` : la section « Vos droits » et « Conservation » parlent de `/mes-donnees` et d'une suppression immédiate (texte à faire valider par un juriste).
+
+## PR Tests HTTP (supertest)
+Refactorisation sans changement visible : l'application Express est maintenant dans `backend/src/app.ts`, `index.ts` la démarre.
+1. Redémarre l'API : le démarrage affiche les mêmes messages qu'avant (connexion PostgreSQL, schéma, encadré « InvestKit Backend »).
+2. `curl http://localhost:5000/health` répond `{"status":"ok",...}`.
+3. Le site fonctionne comme avant (connexion, Immobilier, Banque) : aucune différence attendue.
+4. (Facultatif) `cd backend && npm test` : tous les tests passent, dont `tests/http.test.ts`.
