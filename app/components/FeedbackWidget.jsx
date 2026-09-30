@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { isLoggedIn } from '@/app/lib/session';
+import Icon from '@/app/components/ui/Icon';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-// Bouton flottant « Un retour ? » pour les joueurs connectés : 👍/👎 rapide, ou signalement d'un bug / d'une idée (texte libre).
+// Bouton flottant « Un retour ? » pour les joueurs connectés : avis rapide, ou signalement d'un bug / d'une idée (texte libre).
 export default function FeedbackWidget() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
@@ -32,40 +33,37 @@ export default function FeedbackWidget() {
     }
   };
 
-  const tab = (id, label) => (
-    <button type="button" onClick={() => setMode(id)} aria-pressed={mode === id}
-      style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: mode === id ? '#3b82f6' : 'transparent', color: 'white', fontSize: 12, cursor: 'pointer' }}>{label}</button>
-  );
-
   return (
-    <div style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 9000, fontFamily: 'inherit' }}>
+    <div className="ik-fb">
       {open && (
-        <div role="dialog" aria-label="Envoyer un retour" style={{ width: 300, maxWidth: 'calc(100vw - 32px)', marginBottom: 10, padding: 14, borderRadius: 14, background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', color: 'white', boxShadow: '0 12px 40px rgba(0,0,0,0.4)' }}>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>{tab('thumb', '👍 👎 Avis')}{tab('bug', '🐞 Bug')}{tab('idea', '💡 Idée')}</div>
+        <div role="dialog" aria-label="Envoyer un retour" className="ik-fb__panel">
+          <div className="ik-seg" role="group" aria-label="Type de retour" style={{ marginBottom: 12 }}>
+            {[['thumb', 'Avis'], ['bug', 'Bug'], ['idea', 'Idée']].map(([id, label]) => (
+              <button key={id} type="button" className="ik-seg__item" aria-pressed={mode === id} onClick={() => setMode(id)}>{label}</button>
+            ))}
+          </div>
           {state.done ? (
-            <p role="status" style={{ margin: 0, fontSize: 13, color: '#6ee7b7' }}>✅ {state.done}</p>
+            <p role="status" className="ik-up" style={{ margin: 0, fontSize: 'var(--ik-fs-sm)', display: 'flex', gap: 8, alignItems: 'center' }}><Icon name="check" size={16} />{state.done}</p>
           ) : mode === 'thumb' ? (
             <div>
-              <p style={{ margin: '0 0 10px', fontSize: 13 }}>Cette page t'a-t-elle été utile ?</p>
+              <p style={{ margin: '0 0 10px', fontSize: 'var(--ik-fs-sm)', color: 'var(--ik-text-2)' }}>Cette page t&apos;a-t-elle été utile ?</p>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button type="button" disabled={state.busy} onClick={() => send({ kind: 'thumb', rating: 1 })} style={{ flex: 1, padding: 10, fontSize: 22, borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(16,185,129,0.15)', cursor: 'pointer' }} aria-label="Utile">👍</button>
-                <button type="button" disabled={state.busy} onClick={() => send({ kind: 'thumb', rating: -1 })} style={{ flex: 1, padding: 10, fontSize: 22, borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(244,63,94,0.15)', cursor: 'pointer' }} aria-label="Pas utile">👎</button>
+                <button type="button" className="ik-btn ik-btn--sm" style={{ flex: 1, color: 'var(--ik-positive)' }} disabled={state.busy} onClick={() => send({ kind: 'thumb', rating: 1 })}><Icon name="check" size={16} />Utile</button>
+                <button type="button" className="ik-btn ik-btn--sm" style={{ flex: 1, color: 'var(--ik-negative)' }} disabled={state.busy} onClick={() => send({ kind: 'thumb', rating: -1 })}><Icon name="x" size={16} />Pas utile</button>
               </div>
             </div>
           ) : (
             <form onSubmit={(e) => { e.preventDefault(); send({ kind: mode, message }); }}>
-              <textarea value={message} onChange={(e) => setMessage(e.target.value)} required minLength={5} maxLength={2000} rows={4}
-                placeholder={mode === 'bug' ? 'Que s\'est-il passé ? Sur quelle page ?' : 'Quelle amélioration proposes-tu ?'}
-                aria-label="Ton message" style={{ width: '100%', boxSizing: 'border-box', padding: 8, borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: 13 }} />
-              <button type="submit" disabled={state.busy || message.trim().length < 5} style={{ marginTop: 8, width: '100%', padding: 9, borderRadius: 8, border: 'none', background: '#3b82f6', color: 'white', fontWeight: 700, cursor: 'pointer' }}>{state.busy ? 'Envoi…' : 'Envoyer'}</button>
+              <textarea className="ik-textarea" value={message} onChange={(e) => setMessage(e.target.value)} required minLength={5} maxLength={2000} rows={4}
+                placeholder={mode === 'bug' ? 'Que s\'est-il passé ? Sur quelle page ?' : 'Quelle amélioration proposes-tu ?'} aria-label="Ton message" />
+              <button type="submit" className="ik-btn ik-btn--primary ik-btn--block" style={{ marginTop: 10 }} disabled={state.busy || message.trim().length < 5}>{state.busy ? 'Envoi…' : 'Envoyer'}</button>
             </form>
           )}
-          {state.error && <p role="alert" style={{ margin: '8px 0 0', fontSize: 12, color: '#fda4af' }}>❌ {state.error}</p>}
+          {state.error && <p role="alert" className="ik-error" style={{ margin: '8px 0 0' }}>{state.error}</p>}
         </div>
       )}
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
-        style={{ padding: '10px 14px', borderRadius: 24, border: '1px solid rgba(255,255,255,0.25)', background: '#1e293b', color: 'white', fontWeight: 600, fontSize: 13, cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,0.35)' }}>
-        💬 Un retour ?
+      <button type="button" className="ik-btn ik-btn--sm ik-fb__btn" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <Icon name="mail" size={16} />Un retour ?
       </button>
     </div>
   );

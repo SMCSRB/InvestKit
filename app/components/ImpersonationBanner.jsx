@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { isLoggedIn } from '@/app/lib/session';
+import Icon from '@/app/components/ui/Icon';
 
 // Bandeau affiché tant qu'un administrateur « voit comme » un utilisateur (lecture seule, 15 min). Interroge /auth/me une fois par chargement.
 export default function ImpersonationBanner() {
@@ -28,9 +29,10 @@ export default function ImpersonationBanner() {
   };
 
   return (
-    <div role="status" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10000, background: '#b91c1c', color: 'white', padding: '8px 16px', display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', fontSize: 14, fontWeight: 600 }}>
-      <span>👁️ Lecture seule : tu vois le site comme <strong>{info.email}</strong> (15 minutes maximum). Rien ne peut être modifié.</span>
-      <button onClick={stop} disabled={busy} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid white', background: 'transparent', color: 'white', cursor: 'pointer', fontWeight: 700 }}>Quitter</button>
+    <div role="status" className="ik-banner ik-banner--danger">
+      <Icon name="lock" size={18} />
+      <span>Lecture seule : tu vois le site comme <strong>{info.email}</strong> (15 minutes maximum). Rien ne peut être modifié.</span>
+      <button type="button" className="ik-banner__close" onClick={stop} disabled={busy}>Quitter</button>
     </div>
   );
 }

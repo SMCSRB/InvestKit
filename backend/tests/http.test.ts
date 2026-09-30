@@ -59,6 +59,7 @@ describe.skipIf(!hasDb)('HTTP - avec base de données', () => {
     const r = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`);
     expect(r.status).toBe(200);
     expect(JSON.stringify(r.body)).not.toMatch(/password_hash|totp_secret/);
+    expect(r.body.user.isAdmin).toBe(false);
   });
 
   it("l'ancien préfixe /api/auth reste un alias de /api/v1/auth", async () => {

@@ -2,6 +2,7 @@
 
 import { useNotification } from '@/app/context/NotificationContext';
 import { useEffect, useState } from 'react';
+import Icon from '@/app/components/ui/Icon';
 
 export default function Toast() {
   const { notifications } = useNotification();
@@ -13,102 +14,25 @@ export default function Toast() {
 
   if (!mounted) return null;
 
-  const getIcon = (type) => {
+  const kind = (type) => {
     switch (type) {
-      case 'success':
-        return '✅';
-      case 'error':
-        return '❌';
-      case 'warning':
-        return '⚠️';
-      case 'info':
-        return 'ℹ️';
-      case 'xp':
-        return '⭐';
-      case 'badge':
-        return '🏆';
-      default:
-        return '📢';
-    }
-  };
-
-  const getColors = (type) => {
-    switch (type) {
-      case 'success':
-        return { bg: '#10b981', border: '#059669' };
-      case 'error':
-        return { bg: '#ef4444', border: '#dc2626' };
-      case 'warning':
-        return { bg: '#f59e0b', border: '#d97706' };
-      case 'xp':
-        return { bg: '#f59e0b', border: '#d97706' };
-      case 'badge':
-        return { bg: '#a78bfa', border: '#9333ea' };
-      default:
-        return { bg: '#3b82f6', border: '#2563eb' };
+      case 'success': return { icon: 'check', cls: 'success' };
+      case 'error': return { icon: 'x', cls: 'error' };
+      case 'warning': return { icon: 'alert', cls: 'warning' };
+      case 'xp': return { icon: 'star', cls: 'warning' };
+      case 'badge': return { icon: 'trophy', cls: 'badge' };
+      default: return { icon: 'info', cls: 'info' };
     }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        maxWidth: '400px',
-      }}
-    >
+    <div className="ik-toasts" aria-live="polite">
       {notifications.map((notification) => {
-        const colors = getColors(notification.type);
-        const icon = getIcon(notification.type);
-
+        const k = kind(notification.type);
         return (
-          <div
-            key={notification.id}
-            style={{
-              background: `linear-gradient(135deg, ${colors.bg}dd, ${colors.bg}bb)`,
-              border: `2px solid ${colors.border}`,
-              borderRadius: '12px',
-              padding: '16px 20px',
-              color: 'white',
-              fontWeight: '500',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              boxShadow: `0 8px 24px rgba(0, 0, 0, 0.3)`,
-              animation: 'slideIn 0.3s ease-out',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <span style={{ fontSize: '20px' }}>{icon}</span>
+          <div key={notification.id} className={`ik-toast ik-toast--${k.cls}`} role={notification.type === 'error' ? 'alert' : 'status'}>
+            <span className="ik-toast__icon"><Icon name={k.icon} size={18} /></span>
             <span style={{ flex: 1 }}>{notification.message}</span>
-            <style>{`
-              @keyframes slideIn {
-                from {
-                  transform: translateX(400px);
-                  opacity: 0;
-                }
-                to {
-                  transform: translateX(0);
-                  opacity: 1;
-                }
-              }
-              @keyframes slideOut {
-                from {
-                  transform: translateX(0);
-                  opacity: 1;
-                }
-                to {
-                  transform: translateX(400px);
-                  opacity: 0;
-                }
-              }
-            `}</style>
           </div>
         );
       })}
