@@ -75,7 +75,7 @@ export default function PEASimulatorPage() {
         </div>
 
         <iframe
-          src="/simulateur-pea.html"
+          src={`/simulateur-pea.html?api=${encodeURIComponent(process.env.NEXT_PUBLIC_API_URL || '')}`}
           style={{
             width: '100%',
             height: 'calc(100vh - 120px)',

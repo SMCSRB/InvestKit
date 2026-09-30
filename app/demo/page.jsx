@@ -40,7 +40,7 @@ export default function DemoPage() {
         </div>
         <iframe
           key={active.key}
-          src={active.src}
+          src={`${active.src}?api=${encodeURIComponent(process.env.NEXT_PUBLIC_API_URL || '')}`}
           title={`Simulateur ${active.label}`}
           style={{ width: '100%', height: 'calc(100vh - 260px)', minHeight: 500, border: 'none', borderRadius: 16 }}
         />

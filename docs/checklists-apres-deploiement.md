@@ -246,3 +246,11 @@ Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
 3. `POST /tools/risk-score` avec `{"allocation":{"crypto":60,"equity_world":40},"horizonYears":2}` : score élevé, six facteurs expliqués.
 4. `GET /tools/correlation?domain=all` : matrice des actifs.
 5. Connecté : `GET /risk/portfolio?domain=stocks` après avoir acheté quelques titres : répartition, score, crises de ton portefeuille.
+
+## PR Interface Monte Carlo & Risque (simulateur PEA)
+1. `/demo` (sans compte) ou `/simulateurs/pea` → onglet **🎲 Monte Carlo & Risque**.
+2. Règle capital 5 000 €, versement 200 €/mois (onglet Simulateur), reviens, **Lancer la simulation** : six cartes (défavorable, médian, favorable, total versé, risque de perte, pouvoir d'achat) et un graphique en éventail.
+3. Augmente la volatilité à 30 % et relance : l'éventail s'élargit, le risque de perte monte.
+4. **Résiste-t-il aux grandes crises ?** : choisis « 100 % crypto » puis **Tester** : le tableau montre −84 % pour l'hiver crypto 2018 ; le score de risque est « Élevé » avec ses six facteurs expliqués. Choisis « Prudent » : score bas.
+5. Onglet **Scénarios Crise** : plus aucune phrase promettant un gain garanti.
+6. Si le calcul indique « indisponible » : l'API n'est pas joignable (`NEXT_PUBLIC_API_URL` au build, CORS).
