@@ -254,3 +254,10 @@ Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
 4. **Résiste-t-il aux grandes crises ?** : choisis « 100 % crypto » puis **Tester** : le tableau montre −84 % pour l'hiver crypto 2018 ; le score de risque est « Élevé » avec ses six facteurs expliqués. Choisis « Prudent » : score bas.
 5. Onglet **Scénarios Crise** : plus aucune phrase promettant un gain garanti.
 6. Si le calcul indique « indisponible » : l'API n'est pas joignable (`NEXT_PUBLIC_API_URL` au build, CORS).
+
+## PR Carte « Risque de ton portefeuille » (tableau de bord)
+1. Dashboard → **Simulateur** (Bourse ou Crypto) : sans position, la carte invite à acheter un premier titre.
+2. Achète une action : la carte affiche un score sur 100, la pire crise (en % et en 🪙), la répartition (actions françaises / liquidités…).
+3. **Voir le détail** : six facteurs avec barres et explications, cinq crises historiques.
+4. Achète beaucoup d'une seule action : « Concentration » monte ; en Crypto, « Exposition aux cryptomonnaies » et le score montent nettement.
+5. Emprunte sur ton portefeuille (Banque) : le facteur « Endettement » apparaît.

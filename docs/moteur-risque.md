@@ -30,3 +30,6 @@ Pearson sur les rendements annuels des séries du jeu, sur les années communes 
 - « Résiste-t-il aux grandes crises ? » : choix d'une répartition (actions, CAC 40, 60/40, prudent, actions + crypto, crypto) → tableau des 5 crises (baisse, montant, durée de retour au sommet, ≈ = valeur estimée) + **score de risque décomposé** avec barres et conseils.
 - Les pages qui affichent le simulateur (`/simulateurs/pea`, `/demo`) lui transmettent l'adresse de l'API (`?api=`) ; ouvert directement, l'onglet explique que le calcul est indisponible. La CSP limite de toute façon les connexions au site et à son API.
 - Textes trompeurs corrigés dans l'onglet « Scénarios Crise » : « GAIN garanti à long terme », « les marchés rebondissent toujours », « tu gagnes 50-80 % » sont remplacés par des formulations prudentes (pas de promesse de rendement).
+
+## Interface : tableau de bord (Simulateur Bourse / Crypto)
+Carte « 🎯 Risque de ton portefeuille » sous « Mes positions » : score sur 100 avec étiquette, pire crise historique en % et en pièces, répartition par classe, et un détail dépliable (six facteurs expliqués avec conseils, cinq crises). Se met à jour à chaque achat, vente ou passage d'année. Vide : message invitant à acheter un premier titre.

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import HelpTip from '@/app/components/HelpTip';
+import PortfolioRisk from '@/app/components/PortfolioRisk';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 import { educationDomains } from '@/data/education';
@@ -3775,6 +3776,8 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+
+                <PortfolioRisk domain={tradingDomain} refreshKey={`${tradingPortfolio?.simulatedYear}-${tradingPortfolio?.positions?.length}-${tradingPortfolio?.cashBalance}-${tradingPortfolio?.marketValue}`} />
 
                 {/* Classement (comparaison à année simulée égale) */}
                 <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
