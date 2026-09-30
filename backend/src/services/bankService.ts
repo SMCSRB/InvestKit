@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import { query, getClient } from '../utils/db';
+import { notify } from './notificationService';
 import { investcoinsRepository, InsufficientFundsError } from '../repositories/investcoinsRepository';
 import { buildCoinSchedule, earlyRepaymentPenaltyH, BankInputError } from '../engine/bank';
 import { convertEurosToCoins } from '../engine/immo/rent';
@@ -52,8 +53,15 @@ export const monthlyInstalmentCoins = async (db: Db, userId: string, domain: str
   return h / 100;
 };
 
+// Événements bancaires qui méritent une notification (les autres restent visibles dans le journal de la banque).
+const BANK_NOTIFY: Record<string, string> = {
+  margin_call: 'Appel de marge', liquidation: 'Vente forcée de ton portefeuille', loan_defaulted: 'Prêt en défaut de paiement',
+  instalment_missed: 'Mensualité impayée', loan_written_off: 'Dette effacée', recovery: 'Procédure de rétablissement', loan_repaid: 'Prêt remboursé',
+};
+
 export const logBankEvent = async (db: Db, userId: string, loanId: string | null, kind: string, message: string, details: object = {}) => {
   await q(db, 'INSERT INTO bank_events (user_id, loan_id, kind, message, details) VALUES ($1,$2,$3,$4,$5)', [userId, loanId, kind, message, JSON.stringify(details)]);
+  if (BANK_NOTIFY[kind]) await notify(db as any, userId, { kind: `bank_${kind}`, title: BANK_NOTIFY[kind], body: message, link: '/banque' });
 };
 
 export const ensureAccount = async (db: Db, userId: string) => {

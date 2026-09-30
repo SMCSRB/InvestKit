@@ -1,3 +1,4 @@
+import { notifyRealEstateEvent } from './notificationService';
 import type { PoolClient } from 'pg';
 import { query } from '../utils/db';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
@@ -612,6 +613,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
     for (const ev of eventLog) {
       await c.query(`INSERT INTO re_events (game_id, property_id, year, month, kind, message, details) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [game.id, p.id, y, m, ev.kind, ev.message, JSON.stringify(ev.details ?? {})]);
+      await notifyRealEstateEvent(c, userId, ev.kind, ev.message);
     }
     // Bien en vente à l'amiable : un acquéreur se présente-t-il ce mois-ci ?
     if (p.sale_search_elapsed_months !== null) {

@@ -1,3 +1,4 @@
+import { notifyRealEstateEvent } from './notificationService';
 import type { PoolClient } from 'pg';
 import { query } from '../utils/db';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
@@ -122,6 +123,7 @@ export async function closeSale(
   const eventKind = kind === 'forced' ? 'forced_sale' : 'property_sold';
   await c.query(`INSERT INTO re_events (game_id, property_id, year, month, kind, message, details) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
     [game.id, p.id, y, m, eventKind, message, JSON.stringify({ kind, salePrice, netProceeds: closing.netProceeds, coins: conv.coins })]);
+  await notifyRealEstateEvent(c, game.user_id, eventKind, message);
   return { closing, arrearsCovered, shortfall, coins: conv.coins, message, eventKind };
 }
 
@@ -359,6 +361,7 @@ export async function processDistress(c: PoolClient, game: GameRow, userId: stri
     const msg = `Ta banque te signale ${fr(arrearsEur)} € d'impayés depuis ${missed} mois. Elle te propose une VENTE AMIABLE RAPIDE d'un de tes biens (décote de ${D.amicableDiscountPct} % seulement). Sans règlement dans les ${D.graceMonths} mois, elle engagera une VENTE FORCÉE (décote de ${D.forcedDiscountPct} % plus frais de procédure) sur le bien qui porte le plus de dette.`;
     await c.query(`INSERT INTO re_events (game_id, property_id, year, month, kind, message, details)
                    SELECT $1, id, $2, $3, 'distress_warning', $4, '{}' FROM re_properties WHERE game_id = $1 AND status <> 'sold' ORDER BY created_at LIMIT 1`, [game.id, y, m, msg]);
+    await notifyRealEstateEvent(c, game.user_id, 'distress_warning', msg);
     warnings.push({ code: 'DISTRESS_WARNING', message: msg });
     return { arrearsDelta: 0, warnings };
   }

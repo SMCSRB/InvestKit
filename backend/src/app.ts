@@ -13,6 +13,7 @@ import { adminRoutes } from './routes/admin';
 import { flagsRoutes } from './routes/flags';
 import { contentRoutes } from './routes/content';
 import { toolsRoutes, riskRoutes } from './routes/risk';
+import { notificationRoutes } from './routes/notifications';
 import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -88,6 +89,7 @@ app.use('/api/v1/flags', flagsRoutes);
 app.use('/api/v1', contentRoutes);
 app.use('/api/v1/tools', toolsRoutes);
 app.use('/api/v1/risk', riskRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

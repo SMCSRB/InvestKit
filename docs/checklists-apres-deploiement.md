@@ -267,3 +267,9 @@ Aucun changement visible pour un usage normal.
 1. Formulaire de connexion avec des données normales : inchangé. Erreurs : un mauvais mot de passe affiche toujours le même message.
 2. (Facultatif) `cd backend && npm test` : le test `fuzz.test.ts` (environ 20 secondes) passe.
 3. Si le paiement Stripe n'est pas encore configuré, le bouton d'abonnement affiche « Le paiement n'est pas disponible pour le moment » (avant : une erreur technique).
+
+## PR Notifications réelles
+1. Dashboard → **🔔 Notifications** : plus aucune fausse notification (« Alice Dupont a commencé à vous suivre »…). Liste vide = « Aucune notification pour le moment ».
+2. Provoque un événement : change ton mot de passe (Oublié ?) → « Mot de passe modifié » ; active/désactive la 2FA ; emprunte puis laisse passer des années sans payer (Banque) → « Mensualité impayée » / « Appel de marge » ; en Immobilier laisse un locataire ne plus payer → « Loyers impayés ». Un administrateur qui ajuste tes pièces → notification avec le motif.
+3. Le nombre de non lues apparaît à côté de « Notifications » ; une pastille s'affiche quelques secondes pour une nouvelle notification (au plus 1 minute après).
+4. Cliquer sur une notification la marque comme lue (elle le reste après rechargement) et ouvre la page concernée.

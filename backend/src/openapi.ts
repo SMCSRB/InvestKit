@@ -92,6 +92,8 @@ export const ROUTES: Row[] = [
   ['post', '/tools/risk-score', 'Outils de risque', 'Score de risque décomposé par facteur, sans compte', 'public'],
   ['get', '/tools/correlation', 'Outils de risque', 'Corrélations entre les actifs du jeu, sans compte', 'public'],
   ['get', '/risk/portfolio', 'Outils de risque', 'Risque de mon portefeuille simulé (score, répartition, crises)'],
+  ['get', '/notifications', 'Notifications', 'Mes notifications (événements du jeu et de la sécurité)'],
+  ['post', '/notifications/read', 'Notifications', 'Marquer des notifications comme lues (ids ou all)'],
   ['get', '/admin/users', 'Administration', 'Liste des utilisateurs (recherche, filtres, pagination)', 'admin'],
   ['get', '/admin/users/{id}', 'Administration', 'Fiche d\'un utilisateur (consultation tracée)', 'admin'],
   ['post', '/admin/users/{id}/pro', 'Administration', 'Activer/retirer le statut Pro manuel', 'admin'],

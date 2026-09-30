@@ -146,12 +146,8 @@ export default function DashboardPage() {
 
   // Notifications & Activity Feed
   const [activeSection, setActiveSection] = useState('dashboard'); // dashboard, notifications, activity
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'follow', user: 'Alice Dupont', avatar: '👩‍💼', message: 'a commencé à vous suivre', timestamp: new Date(Date.now() - 3600000), read: false },
-    { id: 2, type: 'friend_request', user: 'Bob Martin', avatar: '👨‍💻', message: 'vous a envoyé une demande d\'ami', timestamp: new Date(Date.now() - 7200000), read: false },
-    { id: 3, type: 'guild_join', user: 'Crypto Masters', avatar: '🏆', message: 'Alice Dupont a rejoint votre guilde', timestamp: new Date(Date.now() - 10800000), read: true },
-    { id: 4, type: 'achievement', user: 'Charlie Dubois', avatar: '🎯', message: 'a déverrouillé Achievement "Millionnaire"', timestamp: new Date(Date.now() - 14400000), read: true },
-  ]);
+  // Notifications RÉELLES du serveur (événements de la banque, de l'immobilier, de la sécurité du compte…) ; voir loadNotifications.
+  const [notifications, setNotifications] = useState([]);
   const [activityFeed, setActivityFeed] = useState([
     { id: 1, type: 'level_up', user: 'Alice Dupont', avatar: '👩‍💼', detail: 'a atteint le niveau 8', timestamp: new Date(Date.now() - 1800000) },
     { id: 2, type: 'achievement', user: 'Bob Martin', avatar: '👨‍💻', detail: 'a déverrouillé "Investisseur Crypto"', timestamp: new Date(Date.now() - 3600000) },
@@ -801,10 +797,6 @@ export default function DashboardPage() {
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
     try {
-      const savedNotifications = localStorage.getItem('investkit_notifications');
-      if (savedNotifications) {
-        setNotifications(JSON.parse(savedNotifications));
-      }
       const savedActivity = localStorage.getItem('investkit_activity');
       if (savedActivity) {
         setActivityFeed(JSON.parse(savedActivity));
@@ -869,7 +861,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('investkit_notifications', JSON.stringify(notifications));
       localStorage.setItem('investkit_activity', JSON.stringify(activityFeed));
       localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
       localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
@@ -978,54 +969,39 @@ export default function DashboardPage() {
     }
   }, [userBadges, unlockBadge]);
 
-  // Real-time notification simulation
+  // Notifications réelles : chargées au démarrage puis toutes les 60 s. Une nouvelle notification non lue déclenche une pastille (pop-up) de quelques secondes.
+  const NOTIF_ICONS = { bank: '🏦', re: '🏠', security: '🔐', admin: '🎁', pro: '⭐' };
+  const knownNotifIds = useRef(null);
+  const loadNotifications = useCallback(async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications?limit=50`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      const mapped = data.notifications.map((n) => ({
+        id: n.id, type: 'system', user: n.title, avatar: NOTIF_ICONS[n.kind.split('_')[0]] || '🔔', message: n.body, timestamp: new Date(n.createdAt), read: n.read, link: n.link,
+      }));
+      if (knownNotifIds.current) {
+        const fresh = mapped.filter((n) => !n.read && !knownNotifIds.current.has(n.id));
+        fresh.slice(0, 3).forEach((n) => {
+          const pid = `n${n.id}`;
+          setPushNotifications((prev) => [{ id: pid, title: n.user, message: n.message, type: 'system', timestamp: Date.now() }, ...prev.slice(0, 4)]);
+          setTimeout(() => setPushNotifications((prev) => prev.filter((p) => p.id !== pid)), 6000);
+        });
+      }
+      knownNotifIds.current = new Set(mapped.map((n) => n.id));
+      setNotifications(mapped);
+    } catch { /* hors ligne : on réessaie au prochain passage */ }
+  }, []);
   useEffect(() => {
-    notificationIntervalRef.current = setInterval(() => {
-      const notificationMessages = [
-        { type: 'follow', user: 'Eve Martin', avatar: '📈', message: 'a commencé à vous suivre' },
-        { type: 'friend_request', user: 'Frank Leclerc', avatar: '🎸', message: 'vous a envoyé une demande d\'ami' },
-        { type: 'achievement', user: 'Grace Chen', avatar: '🌟', message: 'a déverrouillé "Expert Crypto"' },
-        { type: 'guild_join', user: 'Crypto Masters', avatar: '🏆', message: 'Henry Wilson a rejoint votre guilde' },
-      ];
-
-      // 30% chance d'une nouvelle notification toutes les 30 secondes
-      if (Math.random() > 0.7) {
-        const randomNotif = notificationMessages[Math.floor(Math.random() * notificationMessages.length)];
-        const newNotif = {
-          id: Math.max(...notifications.map(n => n.id), 0) + 1,
-          type: randomNotif.type,
-          user: randomNotif.user,
-          avatar: randomNotif.avatar,
-          message: randomNotif.message,
-          timestamp: new Date(),
-          read: false,
-        };
-
-        setNotifications(prev => [newNotif, ...prev]);
-
-        // Ajouter une push notification
-        const pushNotifId = Math.max(...pushNotifications.map(p => p.id), 0) + 1;
-        setPushNotifications(prev => [{
-          id: pushNotifId,
-          title: newNotif.user,
-          message: newNotif.message,
-          type: newNotif.type,
-          timestamp: Date.now(),
-        }, ...prev.slice(0, 4)]);
-
-        // Auto-dismiss push notification after 5 seconds
-        setTimeout(() => {
-          setPushNotifications(prev => prev.filter(p => p.id !== pushNotifId));
-        }, 5000);
-      }
-    }, 30000); // Vérifier toutes les 30 secondes
-
-    return () => {
-      if (notificationIntervalRef.current) {
-        clearInterval(notificationIntervalRef.current);
-      }
-    };
-  }, [notifications, pushNotifications]);
+    loadNotifications();
+    const t = setInterval(loadNotifications, 60000);
+    return () => clearInterval(t);
+  }, [loadNotifications]);
+  const markNotificationsRead = async (body) => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/read`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` }, body: JSON.stringify(body) });
+    } catch { /* l'état local reste à jour ; la synchronisation se fera au prochain chargement */ }
+  };
 
   // Mock users database with detailed profiles
   const [availableUsers] = useState([
@@ -9896,6 +9872,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => {
                     setNotifications(notifications.map(n => ({ ...n, read: true })));
+                    markNotificationsRead({ all: true });
                   }}
                   style={{
                     padding: '8px 16px',
@@ -9942,6 +9919,8 @@ export default function DashboardPage() {
                       setNotifications(notifications.map(n =>
                         n.id === notif.id ? { ...n, read: true } : n
                       ));
+                      if (!notif.read) markNotificationsRead({ ids: [String(notif.id)] });
+                      if (notif.link) router.push(notif.link);
                     }}
                     style={{
                       padding: '16px',

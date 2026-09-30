@@ -8,6 +8,8 @@ import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email';
 import { verifyCaptcha } from '../utils/captcha';
+import { notify } from '../services/notificationService';
+import { query } from '../utils/db';
 import { checkLock, recordFailure, recordSuccess } from '../services/loginThrottle';
 import { checkPassword } from '../utils/passwordPolicy';
 import { LOGIN_THROTTLE } from '../config/securityRules';
@@ -434,6 +436,7 @@ export const authController = {
       await userRepository.updatePassword(user.id, hashedPassword);
       await recordSuccess(user.email); // un verrouillage en cours n'a plus lieu d'être après une réinitialisation
       await auditLog({ userId: user.id, action: 'password_reset', entityType: 'user', entityId: user.id, ip: req.ip });
+      await notify({ query }, user.id, { kind: 'security_password_changed', title: 'Mot de passe modifié', body: 'Ton mot de passe vient d\'être changé. Si ce n\'est pas toi, réinitialise-le tout de suite et contacte le support.' });
 
       res.json({
         success: true,
@@ -595,6 +598,7 @@ export const authController = {
       const hashed = await hashBackupCodes(backupCodes);
       await userRepository.enableTwoFactor(user.id, hashed);
       await auditLog({ userId: user.id, action: '2fa_enabled', entityType: 'user', entityId: user.id, ip: req.ip });
+      await notify({ query }, user.id, { kind: 'security_2fa_enabled', title: 'Double authentification activée', body: 'Ton compte est désormais protégé par un code à chaque connexion.' });
 
       res.json({ success: true, backupCodes });
     } catch (error) {
@@ -627,6 +631,7 @@ export const authController = {
 
       await userRepository.disableTwoFactor(user.id);
       await auditLog({ userId: user.id, action: '2fa_disabled', entityType: 'user', entityId: user.id, ip: req.ip });
+      await notify({ query }, user.id, { kind: 'security_2fa_disabled', title: 'Double authentification désactivée', body: 'Si ce n\'est pas toi, change ton mot de passe immédiatement.' });
       res.json({ success: true });
     } catch (error) {
       console.error('Disable 2FA error:', error);

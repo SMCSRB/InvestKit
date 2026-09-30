@@ -1,5 +1,6 @@
 import { getClient } from '../utils/db';
 import { userRepository, User } from '../repositories/userRepository';
+import { notify } from './notificationService';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
 
 import { Queryable } from '../repositories/investcoinsRepository';
@@ -19,6 +20,7 @@ export const grantProStartingCapital = async (userId: string, db: Queryable): Pr
   );
   if (marked.rows.length === 0) return 0;
   await investcoinsRepository.applyTransaction(userId, bonus, 'pro_starting_bonus', undefined, db);
+  await notify(db, userId, { kind: 'pro_bonus', title: 'Bienvenue dans Pro', body: `${bonus} 🪙 de capital de départ supplémentaire t'ont été versés.` });
   return bonus;
 };
 
