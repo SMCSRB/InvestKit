@@ -162,3 +162,8 @@ Avant : lis `docs/sessions-cookies.md` (réglages `CORS_ORIGIN`, `COOKIE_SECURE`
 4. Bouton **Déconnexion** : tu es renvoyé à l'accueil, le cookie `ik_session` disparaît.
 5. Compte avec double authentification : après le mot de passe, une case « Code de double authentification » apparaît ; un mauvais code est refusé, le bon connecte.
 6. Si la connexion semble réussir mais que tu es aussitôt renvoyé à la page de connexion : le cookie n'est pas enregistré (voir « Piège n°1 » : `COOKIE_SECURE=false` en HTTP, ou `CORS_ORIGIN` incorrect).
+
+## PR Sécurité — contrôle d'accès (anti-IDOR)
+Aucun changement visible, sauf un point :
+1. Page d'inscription : saisir plusieurs adresses e-mail valides de suite fonctionne ; au-delà de 20 vérifications en 15 minutes, l'indicateur « e-mail disponible » ne s'affiche plus (limite anti-espionnage), l'inscription reste possible.
+2. (Facultatif) `cd backend && npm test` : `tests/idor.test.ts` passe.

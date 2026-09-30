@@ -17,3 +17,9 @@ Feuille de route v6, phases 1 et 6. Ce lot ne change rien de visible pour un jou
 - `POST /auth/me/delete` : exige la phrase `SUPPRIMER`, le mot de passe et, si la 2FA est active, un code (ou code de secours). L'abonnement Stripe est résilié d'abord ; en cas d'échec rien n'est supprimé. Puis `DELETE FROM users` (cascade) ; le journal d'audit est conservé et anonymisé (`user_id` → NULL, seule modification permise par le déclencheur append-only).
 - Limité à 5 requêtes par heure (`accountLimiter`).
 - Limite connue : les badges du navigateur (localStorage) ne sont pas effacés par le serveur.
+
+## Contrôle d'accès (feuille de route 6A)
+- Audit : chaque route qui reçoit un identifiant (`/realestate/properties/:id/*`, `/bank/loans/:id/repay`, `/bank/portfolio/loans/:id/repay`) filtre la requête SQL par `user_id` de l'appelant ; un identifiant étranger répond 404 (ou 400 s'il n'est pas un UUID), sans rien révéler ni modifier.
+- `tests/idor.test.ts` le vérifie au niveau HTTP avec deux joueurs (le premier possède un bien, un prêt personnel et un prêt sur portefeuille) : toutes les routes à identifiant, les listes, des identifiants piégés (injection SQL, `../`, 500 caractères), les routes admin (403 même avec 2FA, le rôle vient de la base, pas du jeton).
+- Anti-énumération : `GET /auth/check-email/:email` est limité à 20 requêtes par 15 minutes et par IP (il servait d'oracle pour lister les comptes).
+- Principe de moindre privilège : le rôle administrateur n'est jamais lu dans le jeton.

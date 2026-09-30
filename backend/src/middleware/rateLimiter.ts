@@ -27,3 +27,12 @@ export const accountLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de demandes. Réessayez dans une heure.' },
 });
+
+// Vérification d'e-mail à l'inscription : évite de servir d'« oracle » pour lister les comptes existants (20 par 15 min et par IP).
+export const checkEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de vérifications. Réessayez dans 15 minutes.' },
+});
