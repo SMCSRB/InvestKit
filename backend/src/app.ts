@@ -9,6 +9,8 @@ import { educationRoutes } from './routes/education';
 import { tradingRoutes } from './routes/trading';
 import { realEstateRoutes } from './routes/realEstate';
 import { bankRoutes } from './routes/bank';
+import { adminRoutes } from './routes/admin';
+import { flagsRoutes } from './routes/flags';
 import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -79,6 +81,8 @@ app.use('/api/v1/realestate', realEstateRoutes);
 app.use('/api/realestate', realEstateRoutes);
 app.use('/api/v1/bank', bankRoutes);
 app.use('/api/bank', bankRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/flags', flagsRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

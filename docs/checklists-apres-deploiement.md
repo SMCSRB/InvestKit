@@ -206,3 +206,12 @@ Sur le serveur, dans le dossier du projet :
 2. `./ops/restore-test.sh` : finit par « ✓ TEST DE RESTAURATION RÉUSSI ». S'il refuse de créer la base, donne le droit : voir `docs/sauvegardes.md`.
 3. Installe les deux lignes `crontab` de `docs/sauvegardes.md`, vérifie le lendemain que `~/investkit-backups/backup.log` montre « Terminé ».
 4. Organise la copie hors du serveur (et note la phrase de chiffrement).
+
+## PR Administration — API, drapeaux de fonctionnalité, suspension de comptes
+(L'interface visuelle `/admin` arrive dans la PR suivante ; ici on teste l'API avec un outil comme l'interface Swagger `/api/v1/docs`.)
+1. `cd backend && npm run set-admin -- ton@email.fr on`, puis active la 2FA sur ce compte (Paramètres → Sécurité).
+2. Dans Swagger (`/api/v1/docs`, cliquer « Authorize » avec ton jeton), essaie `GET /admin/system` : la base est « ok » et la liste de contrôles montre ce qui reste à configurer.
+3. `GET /admin/alerts` : lis les alertes (les « soldes différents du registre » peuvent concerner d'anciens comptes créés avant le registre : à examiner).
+4. Avec un compte de test : `POST /admin/users/{id}/disable` avec un motif → le compte ne peut plus se connecter ; `enable` le rétablit. `POST /admin/users/{id}/coins` (+10 puis −10, avec motif) → le registre du joueur montre deux lignes « admin_adjustment ».
+5. Un compte non-admin, ou admin sans 2FA, reçoit 403 sur toutes les routes `/admin/…`.
+6. `GET /admin/audit` montre tes actions (consultations de fiches, ajustements…).

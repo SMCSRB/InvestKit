@@ -3,7 +3,7 @@
 // routes réellement montées dans l'application : ajouter une route sans la
 // décrire ici fait échouer les tests.
 
-type Row = [method: 'get' | 'post', path: string, tag: string, summary: string, access?: 'public' | 'admin'];
+type Row = [method: 'get' | 'post' | 'put' | 'delete', path: string, tag: string, summary: string, access?: 'public' | 'admin'];
 
 export const ROUTES: Row[] = [
   ['get', '/auth/signup-config', 'Compte', 'Configuration de l\'inscription (invitation ou non)', 'public'],
@@ -77,6 +77,21 @@ export const ROUTES: Row[] = [
   ['post', '/bank/recovery/preview', 'Banque', 'Aperçu de la procédure de rétablissement'],
   ['post', '/bank/recovery/start', 'Banque', 'Lancer la procédure de rétablissement (RETABLISSEMENT)'],
   ['post', '/bank/loans/{id}/repay', 'Banque', 'Rembourser un prêt'],
+  ['get', '/flags', 'Drapeaux', 'Drapeaux de fonctionnalité évalués pour moi'],
+  ['get', '/admin/users', 'Administration', 'Liste des utilisateurs (recherche, filtres, pagination)', 'admin'],
+  ['get', '/admin/users/{id}', 'Administration', 'Fiche d\'un utilisateur (consultation tracée)', 'admin'],
+  ['post', '/admin/users/{id}/pro', 'Administration', 'Activer/retirer le statut Pro manuel', 'admin'],
+  ['post', '/admin/users/{id}/disable', 'Administration', 'Suspendre un compte (motif obligatoire)', 'admin'],
+  ['post', '/admin/users/{id}/enable', 'Administration', 'Réactiver un compte', 'admin'],
+  ['post', '/admin/users/{id}/coins', 'Administration', 'Ajuster les pièces (motif obligatoire, plafonné)', 'admin'],
+  ['get', '/admin/audit', 'Administration', 'Journal d\'audit (filtres, pagination)', 'admin'],
+  ['get', '/admin/stats', 'Administration', 'Statistiques globales', 'admin'],
+  ['get', '/admin/billing', 'Administration', 'Abonnements et paiements', 'admin'],
+  ['get', '/admin/alerts', 'Administration', 'Alertes proactives', 'admin'],
+  ['get', '/admin/system', 'Administration', 'Santé du serveur et contrôles de configuration', 'admin'],
+  ['get', '/admin/flags', 'Administration', 'Liste des drapeaux de fonctionnalité', 'admin'],
+  ['put', '/admin/flags/{key}', 'Administration', 'Créer ou modifier un drapeau', 'admin'],
+  ['delete', '/admin/flags/{key}', 'Administration', 'Supprimer un drapeau', 'admin'],
   ['get', '/bank/admin/stats', 'Banque', 'Statistiques admin de la banque', 'admin'],
 ];
 

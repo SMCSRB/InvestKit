@@ -329,6 +329,11 @@ export const authController = {
       }
       await recordSuccess(String(email));
 
+      if ((user as any).disabled_at) {
+        res.status(403).json({ error: 'Ce compte est suspendu. Contactez le support.', code: 'ACCOUNT_DISABLED' });
+        return;
+      }
+
       if (!user.verified) {
         res.status(403).json({ error: 'Veuillez vérifier votre email d\'abord' });
         return;
@@ -675,6 +680,10 @@ export const authController = {
         return;
       }
       await recordSuccess(twoFaKey);
+      if ((user as any).disabled_at) {
+        res.status(403).json({ error: 'Ce compte est suspendu. Contactez le support.', code: 'ACCOUNT_DISABLED' });
+        return;
+      }
 
       await userRepository.updateLastLogin(user.id);
       await auditLog({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, metadata: { twoFactor: true }, ip: req.ip });

@@ -7,7 +7,7 @@ export const listRoutes = (app: Express): string[] => {
   const walk = (stack: any[], prefix: string) => {
     for (const layer of stack) {
       if (layer.route) {
-        for (const m of Object.keys(layer.route.methods)) out.push(`${m.toUpperCase()} ${prefix}${layer.route.path}`);
+        for (const m of Object.keys(layer.route.methods)) out.push(`${m.toUpperCase()} ${(prefix + layer.route.path).replace(/(.)\/$/, '$1')}`);
       } else if (layer.name === 'router' && layer.handle?.stack) {
         const src = String(layer.regexp.source)
           .replace('^\\/', '/')
