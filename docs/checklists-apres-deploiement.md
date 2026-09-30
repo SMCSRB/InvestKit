@@ -175,3 +175,9 @@ Aucun changement visible, sauf un point :
 4. Le lien ouvre `/reset-password` : les règles s'affichent (8 caractères, majuscule, minuscule, chiffre) ; un mot de passe conforme est accepté, redirection vers la connexion, connexion avec le nouveau mot de passe OK. Le même lien réutilisé est refusé.
 5. Inscription : un mot de passe trop faible est refusé avec un message clair.
 6. Si aucun e-mail n'arrive : l'envoi d'e-mails n'est pas configuré (voir `EMAIL_PROVIDER` dans `.env.local` : Resend ou SMTP).
+
+## PR Sécurité — en-têtes du site (CSP) et scripts hébergés
+1. Ouvre le site et parcours : accueil, inscription (le captcha s'affiche), connexion, dashboard, Immobilier, Banque, glossaire, démo. Tout fonctionne comme avant. Si un écran est cassé, ouvre la console du navigateur (F12) : un message « Content Security Policy » indique ce qui est bloqué — envoie-le moi.
+2. `/simulateurs/pea`, `/simulateurs/loan1`, `/simulateurs/loan2`, `/demo` : les graphiques s'affichent (ils fonctionnent même sans accès au CDN) ; l'export PDF marche. Le graphique « Patrimoine » du simulateur immobilier apparaît désormais.
+3. Après déploiement, l'API doit être joignable depuis le site : si des données ne chargent plus, vérifie que `NEXT_PUBLIC_API_URL` est bien défini **au moment du build** (la CSP en reprend l'adresse).
+4. Facultatif, quand le HTTPS est stable : ajouter `ENABLE_HSTS=true` dans l'environnement du site puis reconstruire.

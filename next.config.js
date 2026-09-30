@@ -1,3 +1,25 @@
+// Politique de sécurité du contenu (anti-XSS, anti-clickjacking). Les scripts et styles « inline » restent autorisés (Next.js
+// injecte des scripts en ligne, et les simulateurs HTML ont des gestionnaires onclick) ; les ORIGINES sont en revanche limitées :
+// plus aucun script d'un CDN tiers (Chart.js et html2pdf sont hébergés dans /public/vendor), seulement hCaptcha pour l'inscription.
+const isDev = process.env.NODE_ENV !== 'production';
+const apiOrigin = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').origin; } catch { return ''; }
+})();
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.hcaptcha.com https://*.hcaptcha.com`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  `connect-src 'self' ${apiOrigin} https://*.hcaptcha.com${isDev ? ' ws:' : ''}`,
+  "frame-src 'self' https://*.hcaptcha.com",
+  "worker-src 'self' blob:",
+  "frame-ancestors 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -43,9 +65,21 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'geolocation=(), microphone=(), camera=()',
+            value: 'geolocation=(), microphone=(), camera=(), payment=(), usb=()',
           },
+          { key: 'Content-Security-Policy', value: csp },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
+          // HSTS : à activer (ENABLE_HSTS=true) seulement quand le site est servi en HTTPS de façon stable : le navigateur
+          // refusera ensuite toute connexion non chiffrée pendant un an.
+          ...(process.env.ENABLE_HSTS === 'true'
+            ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]
+            : []),
         ],
+      },
+      {
+        source: '/vendor/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
         source: '/fonts/:path*',
