@@ -1,5 +1,11 @@
 'use client';
 
+import AppShell, { PageHeader } from '@/app/components/shell/AppShell';
+import { Button, EmptyState, Tabs } from '@/app/components/ui/primitives';
+import { useTheme } from '@/app/context/ThemeContext';
+import OverviewTab from './OverviewTab';
+import MarketTab from './MarketTab';
+
 import { PRICES, formatEuro } from '@/app/lib/plans';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,22 +17,32 @@ import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 import { educationDomains } from '@/data/education';
 
+// Transparence d'une couleur quelconque (hexadécimale ou variable de design).
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
   const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTabState] = useState('overview');
+  const setActiveTab = useCallback((t) => {
+    setActiveTabState(t);
+    try { window.history.replaceState(null, '', t === 'overview' ? '/dashboard' : `/dashboard?tab=${t}`); } catch { /* ignore */ }
+  }, []);
   // Les liens du menu latéral (?tab=trading, ?tab=settings…) ouvrent directement l'onglet demandé.
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get('tab');
-    if (t && ['overview', 'projects', 'market', 'trading', 'education', 'friends', 'notifications', 'activity', 'risk', 'settings'].includes(t)) setActiveTab(t);
+    // « risk » (ancien onglet vide) mène à l'analyse de risque réelle, qui vit dans le simulateur.
+    const target = t === 'risk' ? 'trading' : t;
+    if (target && ['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'activity', 'settings'].includes(target)) setActiveTab(target);
   }, []);
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
   const [newsModalTab, setNewsModalTab] = useState('news');
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { theme: globalTheme, toggleTheme: toggleGlobalTheme } = useTheme();
+  const isDarkMode = globalTheme === 'dark';
   const [settingsTab, setSettingsTab] = useState('general');
   // 2FA - configuration réelle (backend TOTP)
   const [twoFAModal, setTwoFAModal] = useState(null); // null | 'setup' | 'verify' | 'backup-codes' | 'disable'
@@ -155,13 +171,9 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState('dashboard'); // dashboard, notifications, activity
   // Notifications RÉELLES du serveur (événements de la banque, de l'immobilier, de la sécurité du compte…) ; voir loadNotifications.
   const [notifications, setNotifications] = useState([]);
-  const [activityFeed, setActivityFeed] = useState([
-    { id: 1, type: 'level_up', user: 'Alice Dupont', avatar: '👩‍💼', detail: 'a atteint le niveau 8', timestamp: new Date(Date.now() - 1800000) },
-    { id: 2, type: 'achievement', user: 'Bob Martin', avatar: '👨‍💻', detail: 'a déverrouillé "Investisseur Crypto"', timestamp: new Date(Date.now() - 3600000) },
-    { id: 3, type: 'guild_join', user: 'Charlie Dubois', avatar: '🎯', detail: 'a rejoint "Immobilier Pro"', timestamp: new Date(Date.now() - 5400000) },
-    { id: 4, type: 'leaderboard', user: 'Diana Laurent', avatar: '💪', detail: 'a atteint le top 10 du classement', timestamp: new Date(Date.now() - 7200000) },
-    { id: 5, type: 'investment', user: 'Eve Martin', avatar: '📈', detail: 'a acheté 0.5 BTC', timestamp: new Date(Date.now() - 9000000) },
-  ]);
+  // Fil d'activité : aucune donnée fictive. Il se remplira quand les amis auront des événements réels côté serveur.
+  const [activityFeed, setActivityFeed] = useState([]);
+
   const [activityFilter, setActivityFilter] = useState('all'); // all, level_up, achievement, guild, leaderboard, investment
 
   // Guild Events & Announcements
@@ -268,7 +280,7 @@ export default function DashboardPage() {
   const [userBadges, setUserBadges] = useState([]);
   const [isPremium, setIsPremium] = useState(true);
   const [selectedDisplayBadges, setSelectedDisplayBadges] = useState(['first_step', 'crypto_novice']); // Max 3 badges to display
-  const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)');
+  const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)');
   const [userBio, setUserBio] = useState('Investisseur passionné en crypto et finance');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
@@ -655,7 +667,7 @@ export default function DashboardPage() {
       left: Math.random() * 100,
       delay: Math.random() * 0.3,
       duration: 2 + Math.random() * 1,
-      color: ['#fbbf24', '#f59e0b', '#d97706', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)],
+      color: ['var(--ik-warning)', 'var(--ik-warning)', 'var(--ik-warning)', '#ec4899', 'var(--ik-orchid)'][Math.floor(Math.random() * 5)],
     }));
     setBadgeConfetti(prev => [...prev, ...confettiPieces]);
     setTimeout(() => {
@@ -743,9 +755,9 @@ export default function DashboardPage() {
   const getBadgeRarityColor = (rarity) => {
     const colors = {
       common: 'rgba(156, 163, 175, 0.2)',
-      rare: 'rgba(59, 130, 246, 0.2)',
-      very_rare: 'rgba(168, 85, 247, 0.2)',
-      unique: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%)',
+      rare: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+      very_rare: 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
+      unique: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)',
     };
     return colors[rarity] || colors.common;
   };
@@ -754,9 +766,9 @@ export default function DashboardPage() {
   const getBadgeRarityBorder = (rarity) => {
     const borders = {
       common: '1px solid rgba(156, 163, 175, 0.3)',
-      rare: '1px solid rgba(59, 130, 246, 0.5)',
-      very_rare: '2px solid rgba(168, 85, 247, 0.6)',
-      unique: '2px solid rgba(251, 191, 36, 0.8)',
+      rare: '1px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
+      very_rare: '2px solid color-mix(in srgb, var(--ik-orchid) 60%, transparent)',
+      unique: '2px solid color-mix(in srgb, var(--ik-warning) 80%, transparent)',
     };
     return borders[rarity] || borders.common;
   };
@@ -804,10 +816,8 @@ export default function DashboardPage() {
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
     try {
-      const savedActivity = localStorage.getItem('investkit_activity');
-      if (savedActivity) {
-        setActivityFeed(JSON.parse(savedActivity));
-      }
+      // L'ancien fil « d'exemple » enregistré par les versions précédentes est ignoré et supprimé.
+      localStorage.removeItem('investkit_activity');
       const savedLeaderboards = localStorage.getItem('investkit_leaderboards');
       if (savedLeaderboards) {
         setGuildLeaderboards(JSON.parse(savedLeaderboards));
@@ -868,7 +878,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('investkit_activity', JSON.stringify(activityFeed));
       localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
       localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
       localStorage.setItem('investkit_badges', JSON.stringify(userBadges));
@@ -1250,26 +1259,18 @@ export default function DashboardPage() {
     }
   };
 
-  const theme = {
-    dark: {
-      bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      cardBg: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-      text: '#ffffff',
-      textSecondary: 'rgba(255, 255, 255, 0.6)',
-      textTertiary: 'rgba(255, 255, 255, 0.5)',
-      border: 'rgba(255, 255, 255, 0.1)',
-      accent: '#3b82f6',
-    },
-    light: {
-      bg: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f0f4f8 100%)',
-      cardBg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)',
-      text: '#1e293b',
-      textSecondary: 'rgba(30, 41, 59, 0.6)',
-      textTertiary: 'rgba(30, 41, 59, 0.5)',
-      border: 'rgba(30, 41, 59, 0.1)',
-      accent: '#2563eb',
-    },
+  // La palette vient des variables de design communes (app/styles/tokens.css) : clair et sombre suivent le thème du site.
+  const tokens = {
+    bg: 'var(--ik-surface-1)',
+    cardBg: 'var(--ik-surface-card)',
+    text: 'var(--ik-text)',
+    textSecondary: 'var(--ik-text-2)',
+    textTertiary: 'var(--ik-text-3)',
+    border: 'var(--ik-border-strong)',
+    accent: 'var(--ik-accent)',
+    sidebar: 'var(--ik-surface-1)',
   };
+  const theme = { dark: tokens, light: tokens };
 
   const currentTheme = isDarkMode ? theme.dark : theme.light;
 
@@ -1329,25 +1330,12 @@ export default function DashboardPage() {
   // Projets : fonctionnalité pas encore branchée au serveur. Les anciens projets de démonstration (valeurs inventées) ne sont plus affichés.
   const [projects] = useState([]);
 
-  const [marketData] = useState([
-    { name: 'CAC 40', value: 7425.38, change: 0.75 },
-    { name: 'BTC/EUR', value: 68450.50, change: 3.53 },
-    { name: 'ETH/EUR', value: 2850.75, change: 5.36 },
-    { name: 'Or ($/oz)', value: 2095.30, change: 1.72 },
-  ]);
-
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
-    }
-
-    // Load theme preference
-    const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
-    if (savedTheme === 'light') {
-      setIsDarkMode(false);
     }
 
     // Load profile photo
@@ -1427,32 +1415,16 @@ export default function DashboardPage() {
     alert('Profil mis à jour avec succès!');
   };
 
-  // Save theme preference
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-    }
-  };
+  // Le thème est désormais commun à tout le site (bascule dans le menu latéral, le profil et ici).
+  const toggleTheme = () => toggleGlobalTheme();
 
   if (!isAuthenticated) {
     return null;
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: currentTheme.bg,
-      color: currentTheme.text,
-      display: 'grid',
-      gridTemplateColumns: sidebarOpen ? '280px 1fr' : '1fr',
-      gap: '24px',
-      padding: '24px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      position: 'relative',
-      transition: 'background 0.3s ease, color 0.3s ease',
-    }}>
+    <AppShell>
+    <div className="dash-layout">
       <style>{`
         @keyframes slideInUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -1467,13 +1439,13 @@ export default function DashboardPage() {
           to { opacity: 1; }
         }
         @keyframes badgePulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 8px 16px rgba(245, 158, 11, 0.4); }
-          50% { transform: scale(1.05); box-shadow: 0 12px 24px rgba(245, 158, 11, 0.6); }
+          0%, 100% { transform: scale(1); box-shadow: 0 8px 16px color-mix(in srgb, var(--ik-warning) 40%, transparent); }
+          50% { transform: scale(1.05); box-shadow: 0 12px 24px color-mix(in srgb, var(--ik-warning) 60%, transparent); }
         }
         @keyframes badgeGlow {
-          0% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
-          50% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.8)); }
-          100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+          0% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ik-warning) 60%, transparent)); }
+          50% { filter: drop-shadow(0 0 16px color-mix(in srgb, var(--ik-warning) 80%, transparent)); }
+          100% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ik-warning) 60%, transparent)); }
         }
         @keyframes levelUpBurst {
           0% { transform: scale(0.8); opacity: 1; }
@@ -1579,7 +1551,7 @@ export default function DashboardPage() {
           animation: badgeFlip 0.6s ease-in-out;
         }
         .badge-shimmer {
-          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+          background: linear-gradient(90deg, color-mix(in srgb, var(--ik-text) 0%, transparent) 0%, color-mix(in srgb, var(--ik-text) 30%, transparent) 50%, color-mix(in srgb, var(--ik-text) 0%, transparent) 100%);
           background-size: 1000px 100%;
           animation: shimmer 2s infinite;
         }
@@ -1599,7 +1571,7 @@ export default function DashboardPage() {
         .badge-very-rare { filter: drop-shadow(0 0 12px rgba(218, 165, 32, 0.8)); }
         .badge-unique { filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1)); animation: rainbowShift 3s linear infinite; }
         .profile-section {
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: 1px solid color-mix(in srgb, var(--ik-text) 10%, transparent);
           padding-top: 16px;
           margin-top: 16px;
         }
@@ -1610,123 +1582,15 @@ export default function DashboardPage() {
         }
       `}</style>
 
-      {/* SIDEBAR TOGGLE BUTTON */}
-      {!sidebarOpen && (
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
-          position: 'fixed',
-          top: '24px',
-          left: '24px',
-          zIndex: 40,
-          background: 'rgba(59, 130, 246, 0.2)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          borderRadius: '10px',
-          padding: '10px 14px',
-          color: '#60a5fa',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-          e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-          e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-        }}
-        >
-          ☰
-        </button>
-      )}
-
-      {/* LEFT SIDEBAR */}
-      {sidebarOpen && <div style={{
-        borderRight: `1px solid ${currentTheme.border}`,
-        paddingRight: '24px',
-        maxHeight: 'calc(100vh - 60px)',
-        overflowY: 'auto',
-        paddingTop: '24px',
-        paddingBottom: '24px',
-      }}>
-        {/* InvestKit Branding */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '32px',
-          paddingLeft: '8px',
-          cursor: 'pointer',
-          transition: 'opacity 0.3s ease',
-        }}
-        onClick={() => router.push('/')}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.opacity = '0.8';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.opacity = '1';
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            borderRadius: '8px',
-            flexShrink: 0,
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
-          }}>
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Upward arrow representing growth */}
-              <path d="M14 22V6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M8 12L14 6L20 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-
-              {/* Chart bars */}
-              <rect x="4" y="16" width="2.5" height="6" fill="white" opacity="0.8" rx="1" />
-              <rect x="8.5" y="14" width="2.5" height="8" fill="white" opacity="0.9" rx="1" />
-              <rect x="13" y="12" width="2.5" height="10" fill="white" rx="1" />
-              <rect x="17.5" y="14" width="2.5" height="8" fill="white" opacity="0.9" rx="1" />
-              <rect x="22" y="16" width="2.5" height="6" fill="white" opacity="0.8" rx="1" />
-            </svg>
-          </div>
-          <div>
-            <h2 style={{
-              margin: '0',
-              fontSize: '18px',
-              fontWeight: '900',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-0.5px',
-            }}>
-              InvestKit
-            </h2>
-            <p style={{
-              margin: '2px 0 0 0',
-              fontSize: '10px',
-              color: 'rgba(255, 255, 255, 0.5)',
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              Investissez Intelligemment
-            </p>
-          </div>
-        </div>
-
+      {/* RAIL PROFIL : profil de joueur, badges, niveau (l'ancien menu latéral, sans sa navigation) */}
+      <aside className="dash-rail" aria-label="Mon profil de joueur">
         {/* User Profile - PREMIUM */}
         <div style={{
           marginBottom: '40px',
           padding: '24px',
-          background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)`,
+          background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 8%, transparent) 100%)`,
           borderRadius: '16px',
-          border: '1.5px solid rgba(59, 130, 246, 0.2)',
+          border: '1.5px solid color-mix(in srgb, var(--ik-primary) 20%, transparent)',
           backdropFilter: 'blur(10px)',
           position: 'relative',
           overflow: 'hidden',
@@ -1736,12 +1600,12 @@ export default function DashboardPage() {
         onClick={() => setActiveTab('settings')}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-4px)';
-          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
-          e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)';
+          e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 40%, transparent)';
+          e.currentTarget.style.boxShadow = '0 12px 32px color-mix(in srgb, var(--ik-primary) 15%, transparent)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+          e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
           e.currentTarget.style.boxShadow = 'none';
         }}>
           {/* Decorative gradient background */}
@@ -1751,7 +1615,7 @@ export default function DashboardPage() {
             right: '-50%',
             width: '200px',
             height: '200px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, color-mix(in srgb, var(--ik-primary) 15%, transparent) 0%, transparent 70%)',
             borderRadius: '50%',
             pointerEvents: 'none',
           }} />
@@ -1776,17 +1640,17 @@ export default function DashboardPage() {
               <div style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                 borderRadius: '16px',
                 padding: '3px',
-                boxShadow: '0 12px 32px rgba(59, 130, 246, 0.3)',
+                boxShadow: '0 12px 32px color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                 transition: 'all 0.3s ease',
               }}>
                 {/* Inner avatar container */}
                 <div style={{
                   width: '100%',
                   height: '100%',
-                  background: photoPreview ? 'transparent' : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  background: photoPreview ? 'transparent' : 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                   borderRadius: '14px',
                   display: 'flex',
                   alignItems: 'center',
@@ -1813,11 +1677,11 @@ export default function DashboardPage() {
                   position: 'absolute',
                   top: '-50px',
                   right: '0',
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
-                  border: '2px solid rgba(251, 191, 36, 0.3)',
+                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)',
+                  border: '2px solid color-mix(in srgb, var(--ik-warning) 30%, transparent)',
                   borderRadius: '12px',
                   padding: '8px 12px',
-                  color: '#f59e0b',
+                  color: 'var(--ik-warning)',
                   fontSize: '12px',
                   fontWeight: '700',
                   cursor: 'pointer',
@@ -1828,13 +1692,13 @@ export default function DashboardPage() {
                   whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(251, 191, 36, 0.2)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 20%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 60%, transparent)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px color-mix(in srgb, var(--ik-warning) 20%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 30%, transparent)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
@@ -1844,8 +1708,8 @@ export default function DashboardPage() {
               {/* Badge Showcase - Display Pinned Badges */}
               {pinnedBadges.length > 0 && (
                 <div className="profile-section" style={{
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(236, 72, 153, 0.1) 100%)',
-                  border: '2px solid rgba(251, 191, 36, 0.3)',
+                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 12%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)',
+                  border: '2px solid color-mix(in srgb, var(--ik-warning) 30%, transparent)',
                   borderRadius: '14px',
                   padding: '14px',
                   marginBottom: '12px',
@@ -1860,7 +1724,7 @@ export default function DashboardPage() {
                     <div style={{
                       fontSize: '12px',
                       fontWeight: '800',
-                      color: '#fbbf24',
+                      color: 'var(--ik-warning)',
                       marginBottom: '10px',
                       textTransform: 'uppercase',
                       letterSpacing: '1px',
@@ -1872,7 +1736,7 @@ export default function DashboardPage() {
                       <span>Mes Favoris</span>
                       <span style={{
                         marginLeft: 'auto',
-                        background: 'rgba(251, 191, 36, 0.2)',
+                        background: 'color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         padding: '2px 8px',
                         borderRadius: '6px',
                         fontSize: '10px',
@@ -1889,10 +1753,10 @@ export default function DashboardPage() {
                       {pinnedBadges.map((badgeId, idx) => {
                         const badge = badgeDefinitions[badgeId];
                         const rarityGlow = {
-                          common: '#64748b',
-                          rare: '#3b82f6',
-                          very_rare: '#a855f7',
-                          unique: '#fbbf24',
+                          common: 'var(--ik-text-3)',
+                          rare: 'var(--ik-primary)',
+                          very_rare: 'var(--ik-orchid)',
+                          unique: 'var(--ik-warning)',
                         };
                         return (
                           <div key={badgeId} style={{
@@ -1905,11 +1769,11 @@ export default function DashboardPage() {
                             gap: '8px',
                             fontSize: '12px',
                             fontWeight: '700',
-                            color: '#fff',
+                            color: 'var(--ik-text)',
                             cursor: 'pointer',
                             transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                             position: 'relative',
-                            boxShadow: `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${rarityGlow[badge.rarity]}66`,
+                            boxShadow: `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${alpha(rarityGlow[badge.rarity], 40)}`,
                             flex: idx === 0 ? '1' : 'auto',
                           }}
                           onMouseEnter={(e) => {
@@ -1918,7 +1782,7 @@ export default function DashboardPage() {
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                            e.currentTarget.style.boxShadow = `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${rarityGlow[badge.rarity]}66`;
+                            e.currentTarget.style.boxShadow = `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${alpha(rarityGlow[badge.rarity], 40)}`;
                           }}
                           title={`${badge.name}\n${badge.description}\nClique pour débloquer`}
                           onClick={() => togglePinnedBadge(badgeId)}
@@ -1939,7 +1803,7 @@ export default function DashboardPage() {
                               </span>
                               <span style={{
                                 fontSize: '9px',
-                                color: 'rgba(255, 255, 255, 0.7)',
+                                color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                                 fontWeight: '600',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.5px',
@@ -1961,10 +1825,10 @@ export default function DashboardPage() {
                 const badge = badgeDefinitions[badgeId];
                 if (!badge) return null;
                 const rarityColors = {
-                  common: { bg: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', glow: '#64748b', shadow: 'rgba(100, 112, 139, 0.5)' },
-                  rare: { bg: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', glow: '#3b82f6', shadow: 'rgba(59, 130, 246, 0.6)' },
-                  very_rare: { bg: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', glow: '#a855f7', shadow: 'rgba(168, 85, 247, 0.6)' },
-                  unique: { bg: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', glow: '#fbbf24', shadow: 'rgba(251, 191, 36, 0.7)' },
+                  common: { bg: 'linear-gradient(135deg, var(--ik-text-3) 0%, #475569 100%)', glow: 'var(--ik-text-3)', shadow: 'rgba(100, 112, 139, 0.5)' },
+                  rare: { bg: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-primary) 100%)', glow: 'var(--ik-primary)', shadow: 'color-mix(in srgb, var(--ik-primary) 60%, transparent)' },
+                  very_rare: { bg: 'linear-gradient(135deg, var(--ik-orchid) 0%, var(--ik-orchid) 100%)', glow: 'var(--ik-orchid)', shadow: 'color-mix(in srgb, var(--ik-orchid) 60%, transparent)' },
+                  unique: { bg: 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)', glow: 'var(--ik-warning)', shadow: 'color-mix(in srgb, var(--ik-warning) 70%, transparent)' },
                 };
                 const rarity = rarityColors[badge.rarity];
                 const isFirstBadge = index === 0;
@@ -2048,7 +1912,7 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.8)',
+                        color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)',
                         marginBottom: '8px',
                       }}>
                         {badge.description}
@@ -2058,23 +1922,23 @@ export default function DashboardPage() {
                         gridTemplateColumns: '1fr 1fr',
                         gap: '8px',
                         fontSize: '10px',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderTop: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                         paddingTop: '8px',
                       }}>
                         <div>
-                          <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Rareté</div>
+                          <div style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)' }}>Rareté</div>
                           <div style={{ color: rarity.glow, fontWeight: '600' }}>
                             {badge.rarity.replace('_', ' ').toUpperCase()} ({badge.rarity_percent}%)
                           </div>
                         </div>
                         <div>
-                          <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>XP</div>
-                          <div style={{ color: '#fbbf24', fontWeight: '600' }}>+{badge.xp} XP</div>
+                          <div style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)' }}>XP</div>
+                          <div style={{ color: 'var(--ik-warning)', fontWeight: '600' }}>+{badge.xp} XP</div>
                         </div>
                         {badgeDateObtained[badgeId] && (
                           <div style={{ gridColumn: '1 / -1' }}>
-                            <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Obtenu</div>
-                            <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                            <div style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)' }}>Obtenu</div>
+                            <div style={{ color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)' }}>
                               {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
                             </div>
                           </div>
@@ -2111,8 +1975,8 @@ export default function DashboardPage() {
               progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
             ).length > 0 && (
               <div className="profile-section" style={{
-                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%)',
-                border: '2px solid rgba(168, 85, 247, 0.3)',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 8%, transparent) 100%)',
+                border: '2px solid color-mix(in srgb, var(--ik-orchid) 30%, transparent)',
                 borderRadius: '14px',
                 padding: '14px',
                 marginTop: '12px',
@@ -2126,7 +1990,7 @@ export default function DashboardPage() {
                   <div style={{
                     fontSize: '12px',
                     fontWeight: '800',
-                    color: '#a855f7',
+                    color: 'var(--ik-accent)',
                     marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
@@ -2138,7 +2002,7 @@ export default function DashboardPage() {
                     <span>Presque Débloqués</span>
                     <span style={{
                       marginLeft: 'auto',
-                      background: 'rgba(168, 85, 247, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-orchid) 30%, transparent)',
                       padding: '2px 8px',
                       borderRadius: '6px',
                       fontSize: '10px',
@@ -2163,30 +2027,30 @@ export default function DashboardPage() {
                           gap: '10px',
                           fontSize: '12px',
                           padding: '8px',
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: 'color-mix(in srgb, var(--ik-text) 3%, transparent)',
                           borderRadius: '10px',
-                          border: '1px solid rgba(168, 85, 247, 0.15)',
+                          border: '1px solid color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
                           transition: 'all 0.3s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(168, 85, 247, 0.08)';
-                          e.currentTarget.style.border = '1px solid rgba(168, 85, 247, 0.3)';
+                          e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-orchid) 8%, transparent)';
+                          e.currentTarget.style.border = '1px solid color-mix(in srgb, var(--ik-orchid) 30%, transparent)';
                           e.currentTarget.style.transform = 'translateX(4px)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                          e.currentTarget.style.border = '1px solid rgba(168, 85, 247, 0.15)';
+                          e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 3%, transparent)';
+                          e.currentTarget.style.border = '1px solid color-mix(in srgb, var(--ik-orchid) 15%, transparent)';
                           e.currentTarget.style.transform = 'translateX(0)';
                         }}>
                           <span style={{
                             fontSize: '18px',
-                            filter: `drop-shadow(0 0 4px rgba(168, 85, 247, 0.6))`,
+                            filter: `drop-shadow(0 0 4px color-mix(in srgb, var(--ik-orchid) 60%, transparent))`,
                           }}>
                             {badge.emoji}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{
-                              color: '#fff',
+                              color: 'var(--ik-text)',
                               fontSize: '12px',
                               fontWeight: '600',
                               marginBottom: '4px',
@@ -2194,7 +2058,7 @@ export default function DashboardPage() {
                               {badge.name}
                             </div>
                             <div style={{
-                              background: 'rgba(255, 255, 255, 0.08)',
+                              background: 'color-mix(in srgb, var(--ik-text) 8%, transparent)',
                               borderRadius: '6px',
                               height: '6px',
                               overflow: 'hidden',
@@ -2202,12 +2066,12 @@ export default function DashboardPage() {
                               boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
                             }}>
                               <div style={{
-                                background: `linear-gradient(90deg, #a855f7 0%, #ec4899 ${progress.percent}%, rgba(168, 85, 247, 0.2) ${progress.percent}%, rgba(168, 85, 247, 0.2) 100%)`,
+                                background: `linear-gradient(90deg, var(--ik-orchid) 0%, #ec4899 ${progress.percent}%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) ${progress.percent}%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)`,
                                 height: '100%',
                                 width: '100%',
                                 transition: 'background 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
                                 borderRadius: '6px',
-                                boxShadow: `0 0 8px rgba(236, 72, 153, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)`,
+                                boxShadow: `0 0 8px color-mix(in srgb, var(--ik-orchid) 50%, transparent), inset 0 1px 2px color-mix(in srgb, var(--ik-text) 20%, transparent)`,
                               }} />
                             </div>
                           </div>
@@ -2219,14 +2083,14 @@ export default function DashboardPage() {
                           }}>
                             <span style={{
                               fontSize: '11px',
-                              color: '#a855f7',
+                              color: 'var(--ik-accent)',
                               fontWeight: '700',
                             }}>
                               {progress.percent}%
                             </span>
                             <span style={{
                               fontSize: '8px',
-                              color: 'rgba(255, 255, 255, 0.4)',
+                              color: 'color-mix(in srgb, var(--ik-text) 40%, transparent)',
                               fontWeight: '600',
                             }}>
                               {progress.current}/{progress.required}
@@ -2266,11 +2130,11 @@ export default function DashboardPage() {
                   <code style={{
                     fontSize: '13px',
                     fontWeight: '700',
-                    color: '#60a5fa',
-                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: 'var(--ik-accent)',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
                     padding: '4px 8px',
                     borderRadius: '6px',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     userSelect: 'none',
@@ -2305,12 +2169,12 @@ export default function DashboardPage() {
                     }
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 25%, transparent)';
+                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
+                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                   }}
                   title="Cliquez pour copier">
                     #{userData.friendCode}
@@ -2318,7 +2182,7 @@ export default function DashboardPage() {
                   {copied && (
                     <span style={{
                       fontSize: '12px',
-                      color: '#10b981',
+                      color: 'var(--ik-positive)',
                       fontWeight: '600',
                       animation: 'fadeInUp 0.3s ease-out',
                     }}>
@@ -2329,7 +2193,7 @@ export default function DashboardPage() {
               </div>
               <p style={{
                 fontSize: '12px',
-                color: '#f59e0b',
+                color: 'var(--ik-warning)',
                 margin: '0 0 8px 0',
                 fontWeight: '600',
                 textTransform: 'uppercase',
@@ -2354,7 +2218,7 @@ export default function DashboardPage() {
                 }}>
                   {/* Outer ring - background */}
                   <svg width="44" height="44" style={{ position: 'absolute' }}>
-                    <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="2" />
+                    <circle cx="22" cy="22" r="18" fill="none" stroke="color-mix(in srgb, var(--ik-text) 10%, transparent)" strokeWidth="2" />
                   </svg>
 
                   {/* Progress ring */}
@@ -2364,13 +2228,13 @@ export default function DashboardPage() {
                       cy="22"
                       r="18"
                       fill="none"
-                      stroke={isMilestone ? '#fbbf24' : '#f59e0b'}
+                      stroke={isMilestone ? 'var(--ik-warning)' : 'var(--ik-warning)'}
                       strokeWidth="2"
                       strokeDasharray={`${(((userLevel || 1) % 10) / 10) * 113.1} 113.1`}
                       strokeLinecap="round"
                       style={{
                         transition: 'stroke-dasharray 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        filter: isMilestone ? 'drop-shadow(0 0 4px #fbbf24)' : 'none',
+                        filter: isMilestone ? 'drop-shadow(0 0 4px var(--ik-warning))' : 'none',
                       }}
                     />
                   </svg>
@@ -2384,14 +2248,14 @@ export default function DashboardPage() {
                     <div style={{
                       fontSize: '18px',
                       fontWeight: '900',
-                      color: isMilestone ? '#fbbf24' : '#f59e0b',
+                      color: isMilestone ? 'var(--ik-warning)' : 'var(--ik-warning)',
                       lineHeight: '1',
                     }}>
                       {userLevel || 1}
                     </div>
                     <div style={{
                       fontSize: '8px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                       fontWeight: '600',
                       marginTop: '2px',
                     }}>
@@ -2404,19 +2268,19 @@ export default function DashboardPage() {
                 <div style={{ flex: 1 }}>
                   <div style={{
                     height: '18px',
-                    background: 'rgba(255, 255, 255, 0.08)',
+                    background: 'color-mix(in srgb, var(--ik-text) 8%, transparent)',
                     borderRadius: '9px',
                     overflow: 'hidden',
                     position: 'relative',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                   }}>
                     {/* Fill */}
                     <div style={{
                       height: '100%',
                       width: `${((userLevel || 1) % 10) * 10}%`,
-                      background: isMilestone ? 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                      background: isMilestone ? 'linear-gradient(90deg, var(--ik-warning) 0%, var(--ik-warning) 100%)' : 'linear-gradient(90deg, var(--ik-warning) 0%, var(--ik-warning) 100%)',
                       transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      boxShadow: isMilestone ? 'inset 0 0 8px rgba(251, 191, 36, 0.4)' : 'inset 0 0 8px rgba(245, 158, 11, 0.3)',
+                      boxShadow: isMilestone ? 'inset 0 0 8px color-mix(in srgb, var(--ik-warning) 40%, transparent)' : 'inset 0 0 8px color-mix(in srgb, var(--ik-warning) 30%, transparent)',
                       position: 'relative',
                     }}>
                       {/* Animated shimmer */}
@@ -2426,7 +2290,7 @@ export default function DashboardPage() {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                        background: 'linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 20%, transparent), transparent)',
                         animation: 'slideInUp 2s ease-in-out infinite',
                       }} />
                     </div>
@@ -2441,14 +2305,14 @@ export default function DashboardPage() {
                   }}>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                       fontWeight: '600',
                     }}>
                       Tier {Math.floor((userLevel || 1) / 10) + 1}
                     </span>
                     <span style={{
                       fontSize: '11px',
-                      color: isMilestone ? '#fbbf24' : 'rgba(255, 255, 255, 0.6)',
+                      color: isMilestone ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
                       fontWeight: isMilestone ? '700' : '600',
                       animation: isMilestone ? 'milestoneCelebrate 0.6s ease-in-out' : 'none',
                     }}>
@@ -2466,7 +2330,7 @@ export default function DashboardPage() {
           <p style={{
             fontSize: '11px',
             fontWeight: '700',
-            color: 'rgba(255, 255, 255, 0.5)',
+            color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
             margin: '0 0 12px 0',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -2474,9 +2338,9 @@ export default function DashboardPage() {
             Aperçu
           </p>
           {[
-            { label: 'Pièces + titres', value: ovTot ? '🪙 ' + n0(ovTot.coinsAndTrading) : '…', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-            { label: 'Perf. Bourse / Crypto', value: ovTot ? (ovTot.invested > 0 ? signed(ovTot.performancePct) + ' %' : '—') : '…', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-            { label: 'Biens immobiliers', value: overview ? overview.realEstate.properties ?? 0 : '…', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+            { label: 'Pièces + titres', value: ovTot ? '🪙 ' + n0(ovTot.coinsAndTrading) : '…', color: 'var(--ik-accent)', bg: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)' },
+            { label: 'Perf. Bourse / Crypto', value: ovTot ? (ovTot.invested > 0 ? signed(ovTot.performancePct) + ' %' : '—') : '…', color: 'var(--ik-positive)', bg: 'color-mix(in srgb, var(--ik-positive) 10%, transparent)' },
+            { label: 'Biens immobiliers', value: overview ? overview.realEstate.properties ?? 0 : '…', color: 'var(--ik-accent)', bg: 'color-mix(in srgb, var(--ik-orchid) 10%, transparent)' },
           ].map((stat, idx) => (
             <div key={idx} style={{
               padding: '16px',
@@ -2487,7 +2351,7 @@ export default function DashboardPage() {
             }}>
               <p style={{
                 fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.6)',
+                color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
                 margin: '0 0 4px 0',
                 fontWeight: '600',
               }}>
@@ -2505,91 +2369,10 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Navigation */}
-        <div style={{ marginBottom: '40px' }}>
-          <p style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            color: 'rgba(255, 255, 255, 0.5)',
-            margin: '0 0 12px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            Menu
-          </p>
-          <div style={{ display: 'grid', gap: '8px' }}>
-            {[
-              { id: 'overview', label: '📊 Vue d\'ensemble' },
-              { id: 'projects', label: '🎯 Projets' },
-              { id: 'market', label: '💹 Marché' },
-              { id: 'trading', label: '📈 Simulateur' },
-              { id: 'education', label: '📚 Académie' },
-              { id: 'friends', label: `👥 Amis (${userData.friends.length})` },
-              { id: 'notifications', label: `🔔 Notifications ${notifications.filter(n => !n.read).length > 0 ? `(${notifications.filter(n => !n.read).length})` : ''}` },
-              { id: 'activity', label: '📈 Activité' },
-              { id: 'risk', label: '⚠️ Risques' },
-              { id: 'settings', label: '⚙️ Paramètres' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  background: activeTab === item.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  color: activeTab === item.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '14px',
-                  fontWeight: activeTab === item.id ? '700' : '500',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== item.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.8)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== item.id) {
-                    e.target.style.background = 'transparent';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.6)';
-                  }
-                }}
-              >
-                <span>{item.label}</span>
-                {item.id === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
-                  <span style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '20px',
-                    height: '20px',
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    borderRadius: '50%',
-                    fontSize: '10px',
-                    fontWeight: '700',
-                    color: '#fff',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
-                  }}>
-                    {notifications.filter(n => !n.read).length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* User Info */}
         <div style={{
           padding: '16px',
-          background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(30, 41, 59, 0.05)',
+          background: isDarkMode ? 'color-mix(in srgb, var(--ik-text) 5%, transparent)' : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
           borderRadius: '12px',
           borderTop: `1px solid ${currentTheme.border}`,
         }}>
@@ -2611,13 +2394,13 @@ export default function DashboardPage() {
           </p>
           <div style={{
             padding: '8px 12px',
-            background: 'rgba(16, 185, 129, 0.15)',
+            background: 'color-mix(in srgb, var(--ik-positive) 15%, transparent)',
             borderRadius: '8px',
-            borderLeft: '2px solid #10b981',
+            borderLeft: '2px solid var(--ik-positive)',
           }}>
             <p style={{
               fontSize: '11px',
-              color: '#10b981',
+              color: 'var(--ik-positive)',
               margin: 0,
               fontWeight: '700',
             }}>
@@ -2626,825 +2409,50 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Close Sidebar Button */}
-        <div style={{
-          marginTop: '24px',
-          paddingTop: '16px',
-          borderTop: `1px solid ${currentTheme.border}`,
-        }}>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: `1px solid rgba(59, 130, 246, 0.2)`,
-              borderRadius: '10px',
-              color: '#60a5fa',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
-            }}
-          >
-            ✕ Fermer
-          </button>
-        </div>
-      </div>}
+      </aside>
 
       {/* MAIN CONTENT - CENTER COLUMN */}
-      <div className="dashboard-content" style={{}}>
-        {/* HEADER */}
-        <div style={{
-          marginBottom: '40px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: '900',
-              color: currentTheme.text,
-              margin: '0 0 8px 0',
-              letterSpacing: '-0.5px',
-            }}>
-              Votre Portefeuille
-            </h1>
-            <p style={{
-              color: currentTheme.textSecondary,
-              margin: 0,
-              fontSize: '14px',
-            }}>
-              Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* InvestCoins Wallet */}
-            {coinsBalance !== null && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 16px',
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: '12px',
-              }}>
-                <span style={{ fontSize: '14px', fontWeight: '700', color: '#f59e0b', whiteSpace: 'nowrap' }}>
-                  🪙 {coinsBalance.toLocaleString('fr-FR')}
-                </span>
-                {coinsStreak > 0 && (
-                  <span style={{ fontSize: '11px', color: currentTheme.textSecondary, whiteSpace: 'nowrap' }}>
-                    🔥 {coinsStreak}j
-                  </span>
-                )}
-                {canClaimDaily && (
-                  <button
-                    onClick={claimDailyCoins}
-                    disabled={claimingDaily}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: '#f59e0b',
-                      color: '#1a1a2e',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      cursor: claimingDaily ? 'wait' : 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {claimingDaily ? '...' : '+ Réclamer'}
-                  </button>
-                )}
-              </div>
-            )}
-
-          {/* News Modal Button */}
-          <button onClick={() => setNewsModalOpen(true)} style={{
-            padding: '12px 20px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
-            borderRadius: '12px',
-            color: '#60a5fa',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
-            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)';
-            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-          }}
-          >
-            📰 Actualités
-          </button>
-          </div>
+      <div className="dash-main">
+        <PageHeader
+          title="Tableau de bord"
+          subtitle="Ton patrimoine et tes domaines, en un coup d'œil."
+          actions={<Button icon="file" onClick={() => setNewsModalOpen(true)}>Actualités</Button>}
+        />
+        <div className="dash-tabs">
+          <Tabs
+            ariaLabel="Sections du tableau de bord"
+            value={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { value: 'overview', label: 'Vue d\'ensemble' },
+              { value: 'market', label: 'Marché' },
+              { value: 'trading', label: 'Simulateur' },
+              { value: 'education', label: 'Académie' },
+              { value: 'friends', label: `Amis (${userData.friends.length})` },
+              { value: 'notifications', label: `Notifications${notifications.filter((n) => !n.read).length > 0 ? ` (${notifications.filter((n) => !n.read).length})` : ''}` },
+              { value: 'activity', label: 'Activité' },
+              { value: 'settings', label: 'Paramètres' },
+            ]}
+          />
         </div>
 
-        {/* MAIN PORTFOLIO CARD - BANK CARD STYLE */}
-        {activeTab === 'overview' && (
-          <>
-            <OnboardingChecklist />
-            <div className="metric-card" style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-              borderRadius: '24px',
-              padding: '0',
-              marginBottom: '32px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 20px 60px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-              position: 'relative',
-              overflow: 'hidden',
-              height: '320px',
-              display: 'flex',
-              flexDirection: 'column',
-              maxWidth: '500px',
-              aspectRatio: '1.7',
-            }}>
-              {/* Card Background Effects */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
-                pointerEvents: 'none',
-              }} />
+        {activeTab === 'overview' && <OverviewTab overview={overview} onOpenTab={setActiveTab} />}
 
-              {/* Decorative Elements */}
-              <div style={{
-                position: 'absolute',
-                top: '-50px',
-                right: '-50px',
-                width: '200px',
-                height: '200px',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
-                borderRadius: '50%',
-                pointerEvents: 'none',
-              }} />
-
-              {/* Card Content */}
-              <div style={{
-                position: 'relative',
-                zIndex: 1,
-                padding: '32px 28px',
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                justifyContent: 'space-between',
-              }}>
-                {/* Top Section - Card Type & Logo */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'start',
-                  marginBottom: '20px',
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      margin: 0,
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                    }}>
-                      {overview?.tier === 'pro' ? 'INVESTKIT PRO' : 'INVESTKIT'}
-                    </p>
-                  </div>
-                  <div style={{
-                    fontSize: '28px',
-                    fontWeight: '900',
-                  }}>
-                    💳
-                  </div>
-                </div>
-
-                {/* Middle Section - Card Number Placeholder */}
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  margin: '20px 0',
-                  fontSize: '18px',
-                  fontWeight: '700',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  letterSpacing: '3px',
-                  fontFamily: 'monospace',
-                }}>
-                  <span>••••</span>
-                  <span>••••</span>
-                  <span>••••</span>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>2024</span>
-                </div>
-
-                {/* Bottom Section - Holder & Date */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-end',
-                  marginTop: 'auto',
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '9px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      margin: '0 0 4px 0',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      CARDHOLDER
-                    </p>
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'white',
-                      margin: 0,
-                      fontWeight: '700',
-                      letterSpacing: '0.5px',
-                    }}>
-                      {fullName.toUpperCase()}
-                    </p>
-                  </div>
-                  <div style={{
-                    textAlign: 'right',
-                  }}>
-                    <p style={{
-                      fontSize: '9px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      margin: '0 0 4px 0',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      Valid Thru
-                    </p>
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'white',
-                      margin: 0,
-                      fontWeight: '700',
-                      fontFamily: 'monospace',
-                    }}>
-                      12/26
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PORTFOLIO STATS BELOW CARD */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px',
-              marginBottom: '32px',
-            }}>
-              {/* Total Balance */}
-              <div className="metric-card" style={{
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                backdropFilter: 'blur(20px)',
-              }}>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  Solde Total
-                </p>
-                <p style={{
-                  fontSize: '32px',
-                  fontWeight: '900',
-                  color: '#60a5fa',
-                  margin: '0 0 12px 0',
-                }}>
-                  🪙 {ovTot ? n0(ovTot.coinsAndTrading) : '…'}
-                </p>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}>
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                  }}>
-                    dont 🪙 {n0(overview?.coins)} de liquidités et 🪙 {n0(ovTot?.tradingValue)} de titres (Bourse + Crypto)
-                  </span>
-                </div>
-              </div>
-
-              {/* Available Balance */}
-              <div className="metric-card" style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                backdropFilter: 'blur(20px)',
-              }}>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  Performance (Bourse + Crypto)
-                </p>
-                <p style={{
-                  fontSize: '32px',
-                  fontWeight: '900',
-                  color: '#86efac',
-                  margin: '0 0 12px 0',
-                }}>
-                  {ovTot && ovTot.invested > 0 ? `${signed(ovTot.performancePct)} %` : '—'}
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: 0,
-                }}>
-                  {ovTot && ovTot.invested > 0 ? `🪙 ${signed(ovTot.gain)} de gain ou perte (latent + réalisé)` : 'Achète un premier titre dans le Simulateur'}
-                </p>
-              </div>
-
-              {/* Performance */}
-              <div className="metric-card" style={{
-                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
-                backdropFilter: 'blur(20px)',
-              }}>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  Performance
-                </p>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '16px',
-                  marginTop: '12px',
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      margin: 0,
-                      fontWeight: '600',
-                    }}>
-                      Positions ouvertes
-                    </p>
-                    <p style={{
-                      fontSize: '18px',
-                      fontWeight: '900',
-                      color: '#a78bfa',
-                      margin: '4px 0 0 0',
-                    }}>
-                      {overview ? (overview.trading.stocks.positions + overview.trading.crypto.positions) : '…'}
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      margin: 0,
-                      fontWeight: '600',
-                    }}>
-                      Capital
-                    </p>
-                    <p style={{
-                      fontSize: '18px',
-                      fontWeight: '900',
-                      color: '#c4b5fd',
-                      margin: '4px 0 0 0',
-                    }}>
-                      🪙 {n0(ovTot?.invested)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PROJECTS SECTION (masquée tant qu'aucun vrai projet n'existe) */}
-            <div style={{ marginBottom: '32px', display: projects.length ? 'block' : 'none' }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 16px 0',
-              }}>
-                🎯 Vos Projets
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '16px',
-              }}>
-                {projects.map((project) => (
-                  <div key={project.id} className="metric-card" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(20px)',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)';
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  >
-                    <div style={{ marginBottom: '16px' }}>
-                      <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        color: 'white',
-                        margin: '0 0 4px 0',
-                      }}>
-                        {project.name}
-                      </h3>
-                      <p style={{
-                        fontSize: '12px',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        margin: 0,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.3px',
-                        fontWeight: '600',
-                      }}>
-                        {project.type} • {project.allocation} allocation
-                      </p>
-                    </div>
-
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '16px',
-                      marginBottom: '16px',
-                      paddingBottom: '16px',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: '0 0 4px 0',
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Valeur
-                        </p>
-                        <p style={{
-                          fontSize: '18px',
-                          fontWeight: '800',
-                          color: '#60a5fa',
-                          margin: 0,
-                        }}>
-                          €{(project.currentValue / 1000).toFixed(0)}k
-                        </p>
-                      </div>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: '0 0 4px 0',
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Gain Annuel
-                        </p>
-                        <p style={{
-                          fontSize: '18px',
-                          fontWeight: '800',
-                          color: '#86efac',
-                          margin: 0,
-                        }}>
-                          +€{(project.yearGain / 1000).toFixed(1)}k
-                        </p>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: 0,
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Risque
-                        </p>
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          color: project.riskLevel === 'élevé' ? '#f43f5e' : project.riskLevel === 'modéré' ? '#f59e0b' : '#10b981',
-                          margin: '2px 0 0 0',
-                        }}>
-                          {project.riskLevel}
-                        </p>
-                      </div>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: 0,
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Retour
-                        </p>
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          color: '#a78bfa',
-                          margin: '2px 0 0 0',
-                        }}>
-                          {project.projectedReturn}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ANALYSIS SECTION */}
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 16px 0',
-              }}>
-                📊 Analyse Détaillée
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '16px',
-              }}>
-                {/* Risk Metrics */}
-                <div className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <h4 style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    margin: '0 0 16px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    ⚖️ Risque
-                  </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { label: 'Score de risque', value: overview?.risk ? `${overview.risk.score} / 100 · ${overview.risk.label}` : '—', color: '#10b981' },
-                      { label: 'Volatilité estimée', value: overview?.risk ? overview.risk.volatilityPct + ' %' : '—', color: '#f59e0b' },
-                      { label: 'Pire crise historique', value: overview?.risk ? overview.risk.worstCrisis.lossPct + ' %' : '—', color: '#f43f5e' },
-                    ].map((m, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingBottom: idx < 2 ? '12px' : 0,
-                        borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontWeight: '600',
-                        }}>
-                          {m.label}
-                        </span>
-                        <span style={{
-                          fontSize: '16px',
-                          fontWeight: '900',
-                          color: m.color,
-                        }}>
-                          {m.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Advanced Metrics */}
-                <div className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <h4 style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    margin: '0 0 16px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    🏦 Dettes & immobilier
-                  </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { label: 'Dette bancaire', value: overview ? '🪙 ' + n0(overview.bank.debtCoins) : '…', color: '#3b82f6' },
-                      { label: 'Biens immobiliers', value: overview?.realEstate?.started ? overview.realEstate.properties : '—', color: '#8b5cf6' },
-                      { label: 'Patrimoine immo net', value: overview?.realEstate?.started ? '€ ' + n0(overview.realEstate.equityEuros) : '—', color: '#a78bfa' },
-                    ].map((m, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingBottom: idx < 2 ? '12px' : 0,
-                        borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontWeight: '600',
-                        }}>
-                          {m.label}
-                        </span>
-                        <span style={{
-                          fontSize: '16px',
-                          fontWeight: '900',
-                          color: m.color,
-                        }}>
-                          {m.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Financial Summary */}
-                <div className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <h4 style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    margin: '0 0 16px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    💰 Synthèse
-                  </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { label: 'Capital investi', value: ovTot ? '🪙 ' + n0(ovTot.invested) : '…', color: '#3b82f6' },
-                      { label: 'Gain / perte (latent + réalisé)', value: ovTot ? '🪙 ' + signed(ovTot.gain) : '…', color: '#10b981' },
-                      { label: 'Frais et impôts payés', value: ovTot ? '🪙 ' + n0(ovTot.feesPaid + ovTot.taxPaid) : '…', color: '#a78bfa' },
-                    ].map((m, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingBottom: idx < 2 ? '12px' : 0,
-                        borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontWeight: '600',
-                        }}>
-                          {m.label}
-                        </span>
-                        <span style={{
-                          fontSize: '16px',
-                          fontWeight: '900',
-                          color: m.color,
-                        }}>
-                          {m.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* MARKET TAB */}
-        {activeTab === 'market' && (
-          <div style={{ marginTop: '20px' }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '800',
-              color: 'white',
-              margin: '0 0 24px 0',
-            }}>
-              💹 Marché
-            </h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px',
-            }}>
-              {marketData.map((item, idx) => (
-                <div key={idx} className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <p style={{
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: 'white',
-                    margin: '0 0 12px 0',
-                  }}>
-                    {item.name}
-                  </p>
-                  <p style={{
-                    fontSize: '28px',
-                    fontWeight: '900',
-                    color: '#60a5fa',
-                    margin: '0 0 8px 0',
-                  }}>
-                    {item.value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                  </p>
-                  <p style={{
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: item.change > 0 ? '#10b981' : '#f43f5e',
-                    margin: 0,
-                  }}>
-                    {item.change > 0 ? '↑' : '↓'} {Math.abs(item.change)}%
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* MARKET TAB : cours réels du marché simulé, aucune valeur en dur */}
+        {activeTab === 'market' && <MarketTab />}
 
         {/* TRADING TAB - Simulateur Bourse (mode accéléré) */}
         {activeTab === 'trading' && (
           <div style={{ marginTop: '20px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'white', margin: '0 0 8px 0' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>
               📈 Simulateur — Mode Accéléré
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: '0 0 24px 0' }}>
+            <p style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px', margin: '0 0 24px 0' }}>
               Achète et vends avec tes InvestCoins sur des données historiques simplifiées (illustratives, pas de vrais cours).
             </p>
 
             {!tradingLoaded ? (
-              <p style={{ color: 'rgba(255,255,255,0.6)' }}>Chargement...</p>
+              <p style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>Chargement...</p>
             ) : (
               <>
                 {/* Sélecteur de domaine */}
@@ -3457,9 +2465,9 @@ export default function DashboardPage() {
                       style={{
                         padding: '8px 18px',
                         borderRadius: '20px',
-                        border: `1px solid ${tradingDomain === d.id ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.15)'}`,
-                        background: tradingDomain === d.id ? 'rgba(59,130,246,0.25)' : 'transparent',
-                        color: tradingDomain === d.id ? '#60a5fa' : 'rgba(255,255,255,0.7)',
+                        border: `1px solid ${tradingDomain === d.id ? 'rgba(96,165,250,0.6)' : 'color-mix(in srgb, var(--ik-text) 15%, transparent)'}`,
+                        background: tradingDomain === d.id ? 'color-mix(in srgb, var(--ik-primary) 25%, transparent)' : 'transparent',
+                        color: tradingDomain === d.id ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                         fontWeight: '700',
                         fontSize: '13px',
                         cursor: 'pointer',
@@ -3470,13 +2478,13 @@ export default function DashboardPage() {
                   ))}
                   <button
                     onClick={() => router.push('/immobilier')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                   >
                     🏠 Immobilier →
                   </button>
                   <button
                     onClick={() => router.push('/crypto')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                   >
                     ₿ Marché Crypto →
                   </button>
@@ -3497,16 +2505,16 @@ export default function DashboardPage() {
                       label: 'Performance',
                       tip: 'performance-portefeuille',
                       value: `${tradingPortfolio?.performancePct >= 0 ? '+' : ''}${tradingPortfolio?.performancePct?.toFixed(1)}%`,
-                      color: tradingPortfolio?.performancePct >= 0 ? '#10b981' : '#f43f5e',
+                      color: tradingPortfolio?.performancePct >= 0 ? 'var(--ik-positive)' : 'var(--ik-negative)',
                     },
                   ].map((stat, idx) => (
                     <div key={idx} style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                       borderRadius: '12px',
                       padding: '16px',
                     }}>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
+                      <p style={{ fontSize: '11px', color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
                       <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'white', margin: 0 }}>{stat.value}</p>
                     </div>
                   ))}
@@ -3520,9 +2528,9 @@ export default function DashboardPage() {
                     borderRadius: '10px',
                     border: 'none',
                     background: tradingPortfolio?.simulatedYear >= tradingPortfolio?.maxYear
-                      ? 'rgba(255,255,255,0.1)'
-                      : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                    color: 'white',
+                      ? 'color-mix(in srgb, var(--ik-text) 10%, transparent)'
+                      : 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
+                    color: 'var(--ik-text)',
                     fontWeight: '700',
                     fontSize: '13px',
                     cursor: tradingLoading ? 'wait' : 'pointer',
@@ -3533,29 +2541,29 @@ export default function DashboardPage() {
                 </button>
 
                 {tradingError && (
-                  <p style={{ color: '#f43f5e', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
+                  <p style={{ color: 'var(--ik-negative)', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
                 )}
 
                 {/* Prêt sur portefeuille en cours : rapport prêt/valeur et appel de marge (calculés par le serveur) */}
                 {tradingPortfolio?.bank?.loan && (
-                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(59,130,246,0.12)' : 'rgba(245,158,11,0.15)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'rgba(245,158,11,0.6)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'rgba(255,255,255,0.85)', fontSize: '13px' }}>
+                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'color-mix(in srgb, var(--ik-primary) 12%, transparent)' : 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'color-mix(in srgb, var(--ik-warning) 60%, transparent)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'color-mix(in srgb, var(--ik-text) 85%, transparent)', fontSize: '13px' }}>
                     🏦 Prêt sur portefeuille : dette {tradingPortfolio.bank.loan.debtCoins} 🪙 · rapport prêt/valeur {tradingPortfolio.bank.loan.ltvPct} %.
-                    {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: '#fbbf24' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
-                    <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
+                    {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: 'var(--ik-warning)' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
+                    <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
                   </div>
                 )}
 
                 {/* Accès : domaine gratuit / Pro (vérifié côté serveur) */}
                 {(tradingPortfolio?.access?.reason === 'FREE_DOMAIN_NOT_CHOSEN' || showDomainChooser) && (
-                  <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 8px 0' }}>{showDomainChooser ? 'Change ton domaine gratuit (une seule fois)' : 'Choisis ton domaine gratuit'}</h3>
-                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: '0 0 14px 0' }}>
-                      Le plan gratuit débloque l'achat dans UN domaine. {showDomainChooser ? 'Ce changement est le dernier : ensuite le choix sera définitif.' : 'Ce choix est définitif (le plan Pro débloque tous les domaines).'} (Le plan Pro débloque tous les domaines.) Tu peux vendre partout à tout moment.
+                  <div style={{ background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>{showDomainChooser ? 'Change ton domaine gratuit (une seule fois)' : 'Choisis ton domaine gratuit'}</h3>
+                    <p style={{ color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', fontSize: '13px', margin: '0 0 14px 0' }}>
+                      Le plan gratuit débloque l'achat dans UN domaine. {showDomainChooser ? 'Ce changement est le dernier : ensuite le choix sera définitif.' : 'Ce choix est définitif (le plan Pro débloque tous les domaines).'} Tu peux vendre partout à tout moment.
                     </p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       {tradingDomains.map((d) => (
                         <button key={d.id} onClick={() => chooseFreeDomain(d.id)} disabled={tradingLoading || d.id === tradingPortfolio?.freeDomain}
-                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: d.id === tradingPortfolio?.freeDomain ? 0.4 : 1 }}>
+                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'color-mix(in srgb, var(--ik-primary) 25%, transparent)', color: 'var(--ik-accent)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: d.id === tradingPortfolio?.freeDomain ? 0.4 : 1 }}>
                           {d.label}{d.id === tradingPortfolio?.freeDomain ? ' (actuel)' : ''}
                         </button>
                       ))}
@@ -3566,40 +2574,40 @@ export default function DashboardPage() {
                           router.push('/immobilier');
                         }}
                         disabled={tradingLoading || tradingPortfolio?.freeDomain === 'real_estate'}
-                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}>
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'color-mix(in srgb, var(--ik-primary) 25%, transparent)', color: 'var(--ik-accent)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}>
                         🏠 Immobilier{tradingPortfolio?.freeDomain === 'real_estate' ? ' (actuel)' : ''}
                       </button>
                       {showDomainChooser && (
-                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
+                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
                       )}
                     </div>
                   </div>
                 )}
                 {tradingPortfolio?.access?.reason === 'DOMAIN_LOCKED' && (
-                  <div style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: '#fbbf24', fontSize: '13px' }}>
+                  <div style={{ background: 'color-mix(in srgb, var(--ik-warning) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-warning) 40%, transparent)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: 'var(--ik-warning)', fontSize: '13px' }}>
                     🔒 Ce domaine n'est pas ton domaine gratuit : l'achat nécessite le plan Pro. Tu peux toujours vendre tes positions.
                     {tradingPortfolio?.canChangeFreeDomain && (
-                      <button onClick={() => setShowDomainChooser(true)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Changer mon domaine gratuit (1 fois)</button>
+                      <button onClick={() => setShowDomainChooser(true)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Changer mon domaine gratuit (1 fois)</button>
                     )}
                   </div>
                 )}
 
                 {/* Achat */}
                 <div style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                   borderRadius: '16px',
                   padding: '20px',
                   marginBottom: '24px',
                 }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 16px 0' }}>Acheter</h3>
+                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 16px 0' }}>Acheter</h3>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <select
                       value={tradingSelectedAsset}
                       onChange={(e) => setTradingSelectedAsset(e.target.value)}
                       style={{
-                        padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)',
-                        background: '#1a1a2e', color: 'white', fontSize: '13px',
+                        padding: '10px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                        background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px',
                       }}
                     >
                       {tradingAssets.map((a) => {
@@ -3618,8 +2626,8 @@ export default function DashboardPage() {
                       value={tradingQuantity}
                       onChange={(e) => setTradingQuantity(e.target.value)}
                       style={{
-                        width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)',
-                        background: '#1a1a2e', color: 'white', fontSize: '13px',
+                        width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                        background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px',
                       }}
                     />
                     {tradingDomain !== 'crypto' && (
@@ -3627,13 +2635,13 @@ export default function DashboardPage() {
                         value={tradingAccount}
                         onChange={(e) => setTradingAccount(e.target.value)}
                         aria-label="Enveloppe"
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: '13px' }}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px' }}
                       >
                         <option value="pea">PEA</option>
                         <option value="cto">Compte-titres</option>
                       </select>
                     )}
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
+                    <span style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px' }}>
                       ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} 🪙
                       {' '}+ courtage (~{tradingPortfolio?.costs?.brokeragePct?.[tradingAssets.find((a) => a.symbol === tradingSelectedAsset)?.type ?? 'stock'] ?? 0} %)
                       <HelpTip term="courtage" />
@@ -3643,7 +2651,7 @@ export default function DashboardPage() {
                       disabled={tradingLoading || tradingPortfolio?.access?.canBuy === false}
                       style={{
                         padding: '10px 20px', borderRadius: '8px', border: 'none',
-                        background: '#10b981', color: 'white', fontWeight: '700', fontSize: '13px',
+                        background: 'var(--ik-positive)', color: 'white', fontWeight: '700', fontSize: '13px',
                         opacity: tradingPortfolio?.access?.canBuy === false ? 0.4 : 1,
                         cursor: tradingLoading ? 'wait' : 'pointer',
                       }}
@@ -3652,7 +2660,7 @@ export default function DashboardPage() {
                     </button>
                   </div>
                   {tradingDomain === 'stocks' && tradingPortfolio?.costs?.pea && (
-                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>
                       {tradingAccount === 'pea'
                         ? (tradingPortfolio.costs.pea.openedYear
                           ? `PEA ouvert en ${tradingPortfolio.costs.pea.openedYear} : exonéré d'impôt sur le revenu à partir de ${tradingPortfolio.costs.pea.exemptFromYear}. Versé : ${tradingPortfolio.costs.pea.deposits.toLocaleString('fr-FR')} / ${tradingPortfolio.costs.pea.depositCeiling.toLocaleString('fr-FR')} 🪙.`
@@ -3662,22 +2670,22 @@ export default function DashboardPage() {
                     </p>
                   )}
                   {tradingDomain === 'crypto' && tradingPortfolio?.costs && (
-                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>
                       Crypto : impôt uniquement à la vente contre euros. Cessions de l'année : {(tradingPortfolio.costs.cryptoDisposalsThisYear ?? 0).toLocaleString('fr-FR')} 🪙 (aucun impôt tant que le total reste sous {tradingPortfolio.costs.cryptoThreshold} 🪙).
                       <HelpTip term="impot-crypto" />
                     </p>
                   )}
                   {tradingPortfolio?.costs && (tradingPortfolio.costs.feesPaid > 0 || tradingPortfolio.costs.taxPaid > 0) && (
-                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)' }}>
                       Payé depuis le début : {tradingPortfolio.costs.feesPaid.toLocaleString('fr-FR')} 🪙 de courtage, {tradingPortfolio.costs.taxPaid.toLocaleString('fr-FR')} 🪙 d'impôts.
                     </p>
                   )}
                 </div>
 
                 {/* Positions */}
-                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 16px 0' }}>Mes positions</h3>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 16px 0' }}>Mes positions</h3>
                 {tradingPortfolio?.positions?.length === 0 ? (
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
+                  <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '10px' }}>
                     {tradingPortfolio?.positions?.map((pos) => (
@@ -3685,14 +2693,14 @@ export default function DashboardPage() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                         borderRadius: '10px',
                         padding: '14px 18px',
                       }}>
                         <div>
-                          <p style={{ color: 'white', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
-                          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: 0 }}>
+                          <p style={{ color: 'var(--ik-text)', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
+                          <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '12px', margin: 0 }}>
                             {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}€
                           </p>
                         </div>
@@ -3700,8 +2708,8 @@ export default function DashboardPage() {
                           onClick={() => tradingPreviewSell(pos)}
                           disabled={tradingLoading}
                           style={{
-                            padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(244, 63, 94, 0.4)',
-                            background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontWeight: '700', fontSize: '12px',
+                            padding: '8px 16px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-negative) 40%, transparent)',
+                            background: 'color-mix(in srgb, var(--ik-negative) 15%, transparent)', color: 'var(--ik-negative)', fontWeight: '700', fontSize: '12px',
                             cursor: tradingLoading ? 'wait' : 'pointer',
                           }}
                         >
@@ -3713,14 +2721,14 @@ export default function DashboardPage() {
                 )}
 
                 {tradingQuote && (
-                  <div style={{ marginTop: 14, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
+                  <div style={{ marginTop: 14, background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'color-mix(in srgb, var(--ik-text) 85%, transparent)', fontSize: 13 }}>
                     <strong>Vente de {Number(tradingQuote.quantity.toFixed(6))} {tradingQuote.symbol}</strong> : produit {tradingQuote.amount.toLocaleString('fr-FR')} 🪙,
                     courtage {tradingQuote.fee.toLocaleString('fr-FR')} 🪙, impôt sur la plus-value {tradingQuote.tax.toLocaleString('fr-FR')} 🪙
                     {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} 🪙</strong>.
-                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.65)' }}>{tradingQuote.note}</div>}
+                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'color-mix(in srgb, var(--ik-text) 65%, transparent)' }}>{tradingQuote.note}</div>}
                     <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#f43f5e', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
-                      <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'white', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
+                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-negative)', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
+                      <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'transparent', color: 'var(--ik-text)', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
                     </div>
                   </div>
                 )}
@@ -3728,15 +2736,15 @@ export default function DashboardPage() {
                 <PortfolioRisk domain={tradingDomain} refreshKey={`${tradingPortfolio?.simulatedYear}-${tradingPortfolio?.positions?.length}-${tradingPortfolio?.cashBalance}-${tradingPortfolio?.marketValue}`} />
 
                 {/* Classement (comparaison à année simulée égale) */}
-                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: '0 0 12px 0' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
+                <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '12px', margin: '0 0 12px 0' }}>
                   Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} 🪙 pour être classé.
                 </p>
                 <div style={{ marginBottom: '12px' }}>
                   <select
                     value={tradingBoard?.year ?? ''}
                     onChange={(e) => { setTradingBoardYear(e.target.value); loadTradingBoard(tradingDomain, e.target.value); }}
-                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: '13px' }}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px' }}
                   >
                     {tradingPortfolio && Array.from({ length: tradingPortfolio.maxYear - tradingPortfolio.minYear + 1 }, (_, i) => tradingPortfolio.minYear + i).map((y) => (
                       <option key={y} value={y}>Année {y}</option>
@@ -3744,18 +2752,18 @@ export default function DashboardPage() {
                   </select>
                 </div>
                 {!tradingBoard || tradingBoard.entries.length === 0 ? (
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
+                  <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '6px' }}>
-                    {tradingBoard.entries.map((e) => (
-                      <div key={e.rank + e.username} style={{
+                    {tradingBoard.entries.map((e, i) => (
+                      <div key={`${e.rank}-${e.username}-${i}`} style={{
                         display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderRadius: '10px',
-                        background: e.isMe ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${e.isMe ? 'rgba(96,165,250,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                        color: 'white', fontSize: '13px',
+                        background: e.isMe ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                        border: `1px solid ${e.isMe ? 'rgba(96,165,250,0.5)' : 'color-mix(in srgb, var(--ik-text) 10%, transparent)'}`,
+                        color: 'var(--ik-text)', fontSize: '13px',
                       }}>
                         <span>#{e.rank} {e.username}{e.isMe ? ' (toi)' : ''}</span>
-                        <span style={{ color: e.performancePct >= 0 ? '#10b981' : '#f43f5e', fontWeight: '700' }}>
+                        <span style={{ color: e.performancePct >= 0 ? 'var(--ik-positive)' : 'var(--ik-negative)', fontWeight: '700' }}>
                           {e.performancePct >= 0 ? '+' : ''}{e.performancePct.toFixed(1)}%
                         </span>
                       </div>
@@ -3763,7 +2771,7 @@ export default function DashboardPage() {
                   </div>
                 )}
                 {tradingBoard && !tradingBoard.entries.some((e) => e.isMe) && (
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', marginTop: '10px' }}>
+                  <p style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px', marginTop: '10px' }}>
                     {tradingBoard.me
                       ? `Ton rang : #${tradingBoard.me.rank} sur ${tradingBoard.totalRanked} (${tradingBoard.me.performancePct.toFixed(1)}%)`
                       : 'Non classé pour cette année (capital engagé insuffisant ou aucun achat).'}
@@ -3805,12 +2813,12 @@ export default function DashboardPage() {
                     ⭐ {progress.totalXP} XP
                   </span>
                   {progress.streak > 0 && (
-                    <span style={{ color: '#f59e0b' }}>
+                    <span style={{ color: 'var(--ik-warning)' }}>
                       🔥 Racha: {progress.streak}
                     </span>
                   )}
                   {progress.badges && progress.badges.length > 0 && (
-                    <span style={{ color: '#a78bfa' }}>
+                    <span style={{ color: 'var(--ik-accent)' }}>
                       ✨ {progress.badges.length} Badges
                     </span>
                   )}
@@ -3821,8 +2829,8 @@ export default function DashboardPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 20px',
-                background: 'rgba(59, 130, 246, 0.2)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                 borderRadius: '10px',
                 color: currentTheme.accent,
                 textDecoration: 'none',
@@ -3920,7 +2928,7 @@ export default function DashboardPage() {
                         <div style={{
                           width: `${progressPercent}%`,
                           height: '100%',
-                          background: `linear-gradient(90deg, ${domain.color}, ${domain.color}80)`,
+                          background: `linear-gradient(90deg, ${domain.color}, ${alpha(domain.color, 50)})`,
                           transition: 'width 0.3s ease',
                         }} />
                       </div>
@@ -3933,7 +2941,7 @@ export default function DashboardPage() {
                         color: currentTheme.textTertiary,
                       }}>
                         {isCompleted ? (
-                          <span style={{ color: '#10b981', fontWeight: '600' }}>✓ Maîtrisé</span>
+                          <span style={{ color: 'var(--ik-positive)', fontWeight: '600' }}>✓ Maîtrisé</span>
                         ) : progressPercent > 0 ? (
                           <span style={{ color: currentTheme.accent }}>En cours...</span>
                         ) : (
@@ -3970,7 +2978,7 @@ export default function DashboardPage() {
                           padding: '12px',
                           background: currentTheme.cardBg,
                           borderRadius: '12px',
-                          border: `2px solid ${domain.color}40`,
+                          border: `2px solid ${alpha(domain.color, 25)}`,
                           textAlign: 'center',
                           transition: 'all 0.3s ease',
                           cursor: 'pointer',
@@ -3981,7 +2989,7 @@ export default function DashboardPage() {
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.borderColor = `${domain.color}40`;
+                          e.currentTarget.style.borderColor = `${alpha(domain.color, 25)}`;
                         }}
                       >
                         <div style={{
@@ -4009,6 +3017,10 @@ export default function DashboardPage() {
         {/* FRIENDS TAB */}
         {activeTab === 'friends' && (
           <div style={{ marginTop: '20px' }}>
+            <p role="note" className="dash-demo-note">
+              <span className="ik-chip ik-chip--example">Exemple</span>
+              Les amis, guildes et messages affichés ici sont des profils d&apos;exemple : le réseau social réel n&apos;est pas encore connecté. Le classement du simulateur (onglet Simulateur), lui, est réel.
+            </p>
             {/* Friends Header */}
             <div style={{ marginBottom: '32px' }}>
               <h2 style={{
@@ -4041,7 +3053,7 @@ export default function DashboardPage() {
                     }}
                     style={{
                       padding: '8px 16px',
-                      background: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? 'rgba(59, 130, 246, 0.1)' : friendsTab === tab.id ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                      background: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? 'color-mix(in srgb, var(--ik-primary) 10%, transparent)' : friendsTab === tab.id ? 'color-mix(in srgb, var(--ik-primary) 10%, transparent)' : 'transparent',
                       border: 'none',
                       borderBottom: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? `2px solid ${currentTheme.accent}` : friendsTab === tab.id ? `2px solid ${currentTheme.accent}` : 'none',
                       color: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? currentTheme.accent : friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
@@ -4065,10 +3077,10 @@ export default function DashboardPage() {
                   flexWrap: 'wrap',
                 }}>
                   {[
-                    { id: 'friends', label: '👫 Liste d\'amis', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.2)' },
-                    { id: 'pending', label: `📬 Demandes (${userData.friendRequests.received.length})`, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.2)' },
-                    { id: 'search', label: '🔍 Chercher', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.2)' },
-                    { id: 'messages', label: '💬 Messages', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.2)' },
+                    { id: 'friends', label: '👫 Liste d\'amis', color: 'var(--ik-accent)', bgColor: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' },
+                    { id: 'pending', label: `📬 Demandes (${userData.friendRequests.received.length})`, color: 'var(--ik-warning)', bgColor: 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-warning) 20%, transparent)' },
+                    { id: 'search', label: '🔍 Chercher', color: 'var(--ik-accent)', bgColor: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)' },
+                    { id: 'messages', label: '💬 Messages', color: 'var(--ik-positive)', bgColor: 'color-mix(in srgb, var(--ik-positive) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-positive) 20%, transparent)' },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -4145,10 +3157,10 @@ export default function DashboardPage() {
                       style={{
                         padding: '16px',
                         background: leaderboardTab === tab.id
-                          ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`
+                          ? `linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)`
                           : currentTheme.cardBg,
                         border: leaderboardTab === tab.id
-                          ? '2px solid rgba(255, 255, 255, 0.4)'
+                          ? '2px solid color-mix(in srgb, var(--ik-text) 40%, transparent)'
                           : `1.5px solid ${currentTheme.border}`,
                         borderRadius: '14px',
                         color: leaderboardTab === tab.id ? '#fff' : currentTheme.text,
@@ -4157,7 +3169,7 @@ export default function DashboardPage() {
                         fontSize: '13px',
                         transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                         boxShadow: leaderboardTab === tab.id
-                          ? '0 12px 32px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                          ? '0 12px 32px color-mix(in srgb, var(--ik-warning) 40%, transparent), inset 0 1px 0 color-mix(in srgb, var(--ik-text) 20%, transparent)'
                           : '0 4px 12px rgba(0, 0, 0, 0.15)',
                         transform: leaderboardTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
                         backdropFilter: 'blur(12px)',
@@ -4168,9 +3180,9 @@ export default function DashboardPage() {
                       }}
                       onMouseEnter={(e) => {
                         if (leaderboardTab !== tab.id) {
-                          e.currentTarget.style.background = `rgba(245, 158, 11, 0.15)`;
+                          e.currentTarget.style.background = `color-mix(in srgb, var(--ik-warning) 15%, transparent)`;
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.borderColor = '#f59e0b';
+                          e.currentTarget.style.borderColor = 'var(--ik-warning)';
                         }
                       }}
                       onMouseLeave={(e) => {
@@ -4214,10 +3226,10 @@ export default function DashboardPage() {
                             style={{
                               padding: '8px 14px',
                               background: leaderboardPeriod === period.id
-                                ? '#f59e0b'
+                                ? 'var(--ik-warning)'
                                 : currentTheme.cardBg,
                               border: leaderboardPeriod === period.id
-                                ? '2px solid #d97706'
+                                ? '2px solid var(--ik-warning)'
                                 : `1.5px solid ${currentTheme.border}`,
                               borderRadius: '8px',
                               color: leaderboardPeriod === period.id ? '#fff' : currentTheme.text,
@@ -4259,10 +3271,10 @@ export default function DashboardPage() {
                             style={{
                               padding: '8px 14px',
                               background: leaderboardDomain === domain.id
-                                ? '#f59e0b'
+                                ? 'var(--ik-warning)'
                                 : currentTheme.cardBg,
                               border: leaderboardDomain === domain.id
-                                ? '2px solid #d97706'
+                                ? '2px solid var(--ik-warning)'
                                 : `1.5px solid ${currentTheme.border}`,
                               borderRadius: '8px',
                               color: leaderboardDomain === domain.id ? '#fff' : currentTheme.text,
@@ -4304,10 +3316,10 @@ export default function DashboardPage() {
                             style={{
                               padding: '8px 14px',
                               background: leaderboardLevel === level.id
-                                ? '#f59e0b'
+                                ? 'var(--ik-warning)'
                                 : currentTheme.cardBg,
                               border: leaderboardLevel === level.id
-                                ? '2px solid #d97706'
+                                ? '2px solid var(--ik-warning)'
                                 : `1.5px solid ${currentTheme.border}`,
                               borderRadius: '8px',
                               color: leaderboardLevel === level.id ? '#fff' : currentTheme.text,
@@ -4359,7 +3371,7 @@ export default function DashboardPage() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 12px 28px rgba(245, 158, 11, 0.2)`;
+                          e.currentTarget.style.boxShadow = `0 12px 28px color-mix(in srgb, var(--ik-warning) 20%, transparent)`;
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateX(0) translateY(0)';
@@ -4400,7 +3412,7 @@ export default function DashboardPage() {
                           <p style={{
                             fontSize: '18px',
                             fontWeight: '900',
-                            color: '#f59e0b',
+                            color: 'var(--ik-warning)',
                             margin: 0,
                             letterSpacing: '-0.5px',
                           }}>
@@ -4509,7 +3521,7 @@ export default function DashboardPage() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 12px 28px rgba(59, 130, 246, 0.2)`;
+                          e.currentTarget.style.boxShadow = `0 12px 28px color-mix(in srgb, var(--ik-primary) 20%, transparent)`;
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateX(0) translateY(0)';
@@ -4541,12 +3553,12 @@ export default function DashboardPage() {
                               {idx === 0 && (
                                 <span style={{
                                   padding: '2px 8px',
-                                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                  background: 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)',
                                   borderRadius: '12px',
                                   fontSize: '10px',
                                   fontWeight: '700',
                                   color: '#000',
-                                  border: '1px solid #f59e0b',
+                                  border: '1px solid var(--ik-warning)',
                                 }}>
                                   🏆 Champion
                                 </span>
@@ -4606,7 +3618,7 @@ export default function DashboardPage() {
                             <p style={{
                               fontSize: '18px',
                               fontWeight: '900',
-                              color: '#3b82f6',
+                              color: 'var(--ik-accent)',
                               margin: 0,
                               letterSpacing: '-0.5px',
                             }}>
@@ -4614,7 +3626,7 @@ export default function DashboardPage() {
                             </p>
                             <p style={{
                               fontSize: '11px',
-                              color: user.vs.includes('-') ? '#ef4444' : '#10b981',
+                              color: user.vs.includes('-') ? 'var(--ik-negative)' : 'var(--ik-positive)',
                               margin: '4px 0 0 0',
                               fontWeight: '600',
                             }}>
@@ -4632,20 +3644,20 @@ export default function DashboardPage() {
                                 }}
                                 style={{
                                   padding: '4px 8px',
-                                  background: 'rgba(59, 130, 246, 0.2)',
-                                  border: '1px solid #3b82f6',
+                                  background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                                  border: '1px solid var(--ik-primary)',
                                   borderRadius: '6px',
-                                  color: '#3b82f6',
+                                  color: 'var(--ik-accent)',
                                   fontSize: '10px',
                                   fontWeight: '600',
                                   cursor: 'pointer',
                                   transition: 'all 0.2s ease',
                                 }}
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                                 }}
                               >
                                 📤 Partager
@@ -4658,20 +3670,20 @@ export default function DashboardPage() {
                                 }}
                                 style={{
                                   padding: '4px 8px',
-                                  background: 'rgba(245, 158, 11, 0.2)',
-                                  border: '1px solid #f59e0b',
+                                  background: 'color-mix(in srgb, var(--ik-warning) 20%, transparent)',
+                                  border: '1px solid var(--ik-warning)',
                                   borderRadius: '6px',
-                                  color: '#f59e0b',
+                                  color: 'var(--ik-warning)',
                                   fontSize: '10px',
                                   fontWeight: '600',
                                   cursor: 'pointer',
                                   transition: 'all 0.2s ease',
                                 }}
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'rgba(245, 158, 11, 0.3)';
+                                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-warning) 30%, transparent)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(245, 158, 11, 0.2)';
+                                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-warning) 20%, transparent)';
                                 }}
                               >
                                 🎖️ Certificat
@@ -4756,7 +3768,7 @@ export default function DashboardPage() {
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
-                                e.currentTarget.style.boxShadow = `0 12px 28px rgba(139, 92, 246, 0.2)`;
+                                e.currentTarget.style.boxShadow = `0 12px 28px color-mix(in srgb, var(--ik-orchid) 20%, transparent)`;
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = 'translateX(0) translateY(0)';
@@ -4798,7 +3810,7 @@ export default function DashboardPage() {
                                   <p style={{
                                     fontSize: '18px',
                                     fontWeight: '900',
-                                    color: '#8b5cf6',
+                                    color: 'var(--ik-accent)',
                                     margin: 0,
                                     letterSpacing: '-0.5px',
                                   }}>
@@ -4806,7 +3818,7 @@ export default function DashboardPage() {
                                   </p>
                                   <p style={{
                                     fontSize: '11px',
-                                    color: diff > 0 ? '#f59e0b' : diff < 0 ? '#10b981' : currentTheme.textSecondary,
+                                    color: diff > 0 ? 'var(--ik-warning)' : diff < 0 ? 'var(--ik-positive)' : currentTheme.textSecondary,
                                     margin: '4px 0 0 0',
                                     fontWeight: '600',
                                   }}>
@@ -4824,20 +3836,20 @@ export default function DashboardPage() {
                                     }}
                                     style={{
                                       padding: '4px 8px',
-                                      background: 'rgba(139, 92, 246, 0.2)',
-                                      border: '1px solid #8b5cf6',
+                                      background: 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
+                                      border: '1px solid var(--ik-orchid)',
                                       borderRadius: '6px',
-                                      color: '#8b5cf6',
+                                      color: 'var(--ik-accent)',
                                       fontSize: '10px',
                                       fontWeight: '600',
                                       cursor: 'pointer',
                                       transition: 'all 0.2s ease',
                                     }}
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
+                                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-orchid) 30%, transparent)';
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)';
                                     }}
                                   >
                                     📤 Partager
@@ -4861,7 +3873,7 @@ export default function DashboardPage() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, color-mix(in srgb, var(--ik-text) 90%, transparent) 100%)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -4874,22 +3886,22 @@ export default function DashboardPage() {
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{
-                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
+                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, color-mix(in srgb, var(--ik-text) 90%, transparent) 100%)`,
                     borderRadius: '28px',
                     padding: '0',
                     maxWidth: '520px',
                     width: '100%',
                     maxHeight: '90vh',
                     overflowY: 'auto',
-                    border: `1.5px solid rgba(255, 255, 255, 0.1)`,
-                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(59, 130, 246, 0.15)',
+                    border: `1.5px solid color-mix(in srgb, var(--ik-text) 10%, transparent)`,
+                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px color-mix(in srgb, var(--ik-primary) 15%, transparent)',
                     position: 'relative',
                   }}
                 >
                   {/* Header Background Gradient */}
                   <div style={{
                     height: '120px',
-                    background: `linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)`,
+                    background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)`,
                     position: 'relative',
                   }}>
                     <button
@@ -4898,8 +3910,8 @@ export default function DashboardPage() {
                         position: 'absolute',
                         top: '16px',
                         right: '16px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                        background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                         borderRadius: '50%',
                         width: '40px',
                         height: '40px',
@@ -4913,11 +3925,11 @@ export default function DashboardPage() {
                         justifyContent: 'center',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 20%, transparent)';
                         e.currentTarget.style.transform = 'scale(1.1)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
                         e.currentTarget.style.transform = 'scale(1)';
                       }}
                     >
@@ -4933,13 +3945,13 @@ export default function DashboardPage() {
                         width: '100px',
                         height: '100px',
                         borderRadius: '24px',
-                        background: `linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)`,
-                        border: '3px solid rgba(255, 255, 255, 0.2)',
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)`,
+                        border: '3px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '54px',
-                        boxShadow: '0 12px 40px rgba(59, 130, 246, 0.2)',
+                        boxShadow: '0 12px 40px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       }}>
                         {selectedLeaderboardUser.avatar}
                       </div>
@@ -4947,12 +3959,12 @@ export default function DashboardPage() {
                         <div style={{
                           fontSize: '48px',
                           marginBottom: '4px',
-                          textShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                          textShadow: '0 4px 12px color-mix(in srgb, var(--ik-warning) 40%, transparent)',
                         }}>
                           {selectedLeaderboardUser.medal}
                         </div>
                         <div style={{
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          background: 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)',
                           color: '#fff',
                           padding: '6px 12px',
                           borderRadius: '12px',
@@ -4960,7 +3972,7 @@ export default function DashboardPage() {
                           fontWeight: '800',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                         }}>
                           Rang #{selectedLeaderboardUser.rank}
                         </div>
@@ -4992,7 +4004,7 @@ export default function DashboardPage() {
                     {/* Divider */}
                     <div style={{
                       height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      background: `linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 10%, transparent), transparent)`,
                       marginBottom: '24px',
                     }} />
 
@@ -5005,14 +4017,14 @@ export default function DashboardPage() {
                     }}>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 15%, transparent) 0%, color-mix(in srgb, var(--ik-primary) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(59, 130, 246, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                         transition: 'all 0.3s ease',
                       }}>
                         <p style={{
-                          color: '#3b82f6',
+                          color: 'var(--ik-accent)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5032,14 +4044,14 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 15%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                         transition: 'all 0.3s ease',
                       }}>
                         <p style={{
-                          color: '#f59e0b',
+                          color: 'var(--ik-warning)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5049,7 +4061,7 @@ export default function DashboardPage() {
                           ⚡ XP Total
                         </p>
                         <p style={{
-                          color: '#f59e0b',
+                          color: 'var(--ik-warning)',
                           fontSize: '26px',
                           fontWeight: '900',
                           margin: 0,
@@ -5059,14 +4071,14 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(139, 92, 246, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                         transition: 'all 0.3s ease',
                       }}>
                         <p style={{
-                          color: '#8b5cf6',
+                          color: 'var(--ik-accent)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5086,14 +4098,14 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 15%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(16, 185, 129, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-positive) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                         transition: 'all 0.3s ease',
                       }}>
                         <p style={{
-                          color: '#10b981',
+                          color: 'var(--ik-positive)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5103,7 +4115,7 @@ export default function DashboardPage() {
                           💰 Portefeuille
                         </p>
                         <p style={{
-                          color: '#10b981',
+                          color: 'var(--ik-positive)',
                           fontSize: '26px',
                           fontWeight: '900',
                           margin: 0,
@@ -5118,7 +4130,7 @@ export default function DashboardPage() {
                       <>
                         <div style={{
                           height: '1px',
-                          background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                          background: `linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 10%, transparent), transparent)`,
                           marginBottom: '20px',
                         }} />
                         <div style={{ marginBottom: '24px' }}>
@@ -5139,13 +4151,13 @@ export default function DashboardPage() {
                           }}>
                             {selectedLeaderboardUser.badges.map((badge) => {
                               const badgeData = {
-                                first_blood: { emoji: '🩸', label: 'Premier Sang', color: '#ef4444' },
+                                first_blood: { emoji: '🩸', label: 'Premier Sang', color: 'var(--ik-negative)' },
                                 perfect: { emoji: '💯', label: 'Parfait', color: '#ec4899' },
-                                no_mistakes: { emoji: '✅', label: 'Sans Erreur', color: '#10b981' },
-                                crypto_master: { emoji: '₿', label: 'Maître Crypto', color: '#f59e0b' },
-                                stocks_master: { emoji: '📈', label: 'Maître Bourse', color: '#3b82f6' },
+                                no_mistakes: { emoji: '✅', label: 'Sans Erreur', color: 'var(--ik-positive)' },
+                                crypto_master: { emoji: '₿', label: 'Maître Crypto', color: 'var(--ik-warning)' },
+                                stocks_master: { emoji: '📈', label: 'Maître Bourse', color: 'var(--ik-accent)' },
                               };
-                              const data = badgeData[badge] || { emoji: '⭐', label: badge, color: '#8b5cf6' };
+                              const data = badgeData[badge] || { emoji: '⭐', label: badge, color: 'var(--ik-accent)' };
                               return (
                                 <div
                                   key={badge}
@@ -5185,7 +4197,7 @@ export default function DashboardPage() {
                     {/* Domains */}
                     <div style={{
                       height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      background: `linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 10%, transparent), transparent)`,
                       marginBottom: '20px',
                     }} />
                     <div style={{ marginBottom: '28px' }}>
@@ -5206,12 +4218,12 @@ export default function DashboardPage() {
                       }}>
                         {selectedLeaderboardUser.completedDomains.map((domain) => {
                           const domainInfo = {
-                            crypto: { emoji: '₿', label: 'Crypto', color: '#f59e0b' },
-                            stocks: { emoji: '📈', label: 'Bourse', color: '#3b82f6' },
+                            crypto: { emoji: '₿', label: 'Crypto', color: 'var(--ik-warning)' },
+                            stocks: { emoji: '📈', label: 'Bourse', color: 'var(--ik-accent)' },
                             realestate: { emoji: '🏠', label: 'Immobilier', color: '#ec4899' },
-                            bonds: { emoji: '💼', label: 'Obligations', color: '#10b981' },
+                            bonds: { emoji: '💼', label: 'Obligations', color: 'var(--ik-positive)' },
                           };
-                          const info = domainInfo[domain] || { emoji: '📚', label: domain, color: '#8b5cf6' };
+                          const info = domainInfo[domain] || { emoji: '📚', label: domain, color: 'var(--ik-accent)' };
                           return (
                             <div
                               key={domain}
@@ -5247,7 +4259,7 @@ export default function DashboardPage() {
                     {/* Action Buttons */}
                     <div style={{
                       height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      background: `linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 10%, transparent), transparent)`,
                       marginBottom: '20px',
                     }} />
                     <div style={{
@@ -5263,8 +4275,8 @@ export default function DashboardPage() {
                         }}
                         style={{
                           padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          border: '2px solid rgba(59, 130, 246, 0.5)',
+                          background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-primary) 100%)',
+                          border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
                           borderRadius: '12px',
                           color: '#fff',
                           fontWeight: '800',
@@ -5273,15 +4285,15 @@ export default function DashboardPage() {
                           transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(59, 130, 246, 0.2)',
+                          boxShadow: '0 8px 20px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px color-mix(in srgb, var(--ik-primary) 40%, transparent)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                         }}
                       >
                         💬 Message
@@ -5304,8 +4316,8 @@ export default function DashboardPage() {
                         }}
                         style={{
                           padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          border: '2px solid rgba(245, 158, 11, 0.5)',
+                          background: 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)',
+                          border: '2px solid color-mix(in srgb, var(--ik-warning) 50%, transparent)',
                           borderRadius: '12px',
                           color: '#fff',
                           fontWeight: '800',
@@ -5314,15 +4326,15 @@ export default function DashboardPage() {
                           transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(245, 158, 11, 0.2)',
+                          boxShadow: '0 8px 20px color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.4)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px color-mix(in srgb, var(--ik-warning) 40%, transparent)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.2)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px color-mix(in srgb, var(--ik-warning) 20%, transparent)';
                         }}
                       >
                         👥 Ajouter Ami
@@ -5341,7 +4353,7 @@ export default function DashboardPage() {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, color-mix(in srgb, var(--ik-text) 90%, transparent) 100%)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -5354,22 +4366,22 @@ export default function DashboardPage() {
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{
-                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
+                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, color-mix(in srgb, var(--ik-text) 90%, transparent) 100%)`,
                     borderRadius: '28px',
                     padding: '0',
                     maxWidth: '520px',
                     width: '100%',
                     maxHeight: '90vh',
                     overflowY: 'auto',
-                    border: `1.5px solid rgba(255, 255, 255, 0.1)`,
-                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(245, 158, 11, 0.15)',
+                    border: `1.5px solid color-mix(in srgb, var(--ik-text) 10%, transparent)`,
+                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px color-mix(in srgb, var(--ik-warning) 15%, transparent)',
                     position: 'relative',
                   }}
                 >
                   {/* Header Background */}
                   <div style={{
                     height: '120px',
-                    background: `linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%)`,
+                    background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 30%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 20%, transparent) 100%)`,
                     position: 'relative',
                   }}>
                     <button
@@ -5378,8 +4390,8 @@ export default function DashboardPage() {
                         position: 'absolute',
                         top: '16px',
                         right: '16px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                        background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                         borderRadius: '50%',
                         width: '40px',
                         height: '40px',
@@ -5393,11 +4405,11 @@ export default function DashboardPage() {
                         justifyContent: 'center',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 20%, transparent)';
                         e.currentTarget.style.transform = 'scale(1.1)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
                         e.currentTarget.style.transform = 'scale(1)';
                       }}
                     >
@@ -5413,13 +4425,13 @@ export default function DashboardPage() {
                         width: '100px',
                         height: '100px',
                         borderRadius: '24px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%)`,
-                        border: '3px solid rgba(255, 255, 255, 0.2)',
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 30%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 20%, transparent) 100%)`,
+                        border: '3px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '54px',
-                        boxShadow: '0 12px 40px rgba(245, 158, 11, 0.2)',
+                        boxShadow: '0 12px 40px color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                       }}>
                         {selectedLeaderboardGuild.emoji}
                       </div>
@@ -5427,12 +4439,12 @@ export default function DashboardPage() {
                         <div style={{
                           fontSize: '48px',
                           marginBottom: '4px',
-                          textShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                          textShadow: '0 4px 12px color-mix(in srgb, var(--ik-warning) 40%, transparent)',
                         }}>
                           {selectedLeaderboardGuild.medal}
                         </div>
                         <div style={{
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          background: 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)',
                           color: '#fff',
                           padding: '6px 12px',
                           borderRadius: '12px',
@@ -5440,7 +4452,7 @@ export default function DashboardPage() {
                           fontWeight: '800',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                         }}>
                           Rang #{selectedLeaderboardGuild.rank}
                         </div>
@@ -5472,7 +4484,7 @@ export default function DashboardPage() {
                     {/* Divider */}
                     <div style={{
                       height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      background: `linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 10%, transparent), transparent)`,
                       marginBottom: '24px',
                     }} />
 
@@ -5485,13 +4497,13 @@ export default function DashboardPage() {
                     }}>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 15%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                       }}>
                         <p style={{
-                          color: '#f59e0b',
+                          color: 'var(--ik-warning)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5511,13 +4523,13 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 15%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                       }}>
                         <p style={{
-                          color: '#f59e0b',
+                          color: 'var(--ik-warning)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5537,13 +4549,13 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 15%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                       }}>
                         <p style={{
-                          color: '#f59e0b',
+                          color: 'var(--ik-warning)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5553,7 +4565,7 @@ export default function DashboardPage() {
                           ⚡ XP Total
                         </p>
                         <p style={{
-                          color: '#f59e0b',
+                          color: 'var(--ik-warning)',
                           fontSize: '26px',
                           fontWeight: '900',
                           margin: 0,
@@ -5563,13 +4575,13 @@ export default function DashboardPage() {
                       </div>
                       <div style={{
                         padding: '18px',
-                        background: `linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)`,
+                        background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 15%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 5%, transparent) 100%)`,
                         borderRadius: '16px',
-                        border: '1.5px solid rgba(16, 185, 129, 0.2)',
+                        border: '1.5px solid color-mix(in srgb, var(--ik-positive) 20%, transparent)',
                         backdropFilter: 'blur(10px)',
                       }}>
                         <p style={{
-                          color: '#10b981',
+                          color: 'var(--ik-positive)',
                           fontSize: '11px',
                           fontWeight: '700',
                           margin: '0 0 8px 0',
@@ -5579,7 +4591,7 @@ export default function DashboardPage() {
                           ✨ Vos Amis
                         </p>
                         <p style={{
-                          color: '#10b981',
+                          color: 'var(--ik-positive)',
                           fontSize: '26px',
                           fontWeight: '900',
                           margin: 0,
@@ -5592,7 +4604,7 @@ export default function DashboardPage() {
                     {/* Action Buttons */}
                     <div style={{
                       height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
+                      background: `linear-gradient(90deg, transparent, color-mix(in srgb, var(--ik-text) 10%, transparent), transparent)`,
                       marginBottom: '20px',
                     }} />
                     <div style={{
@@ -5607,8 +4619,8 @@ export default function DashboardPage() {
                         }}
                         style={{
                           padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          border: '2px solid rgba(245, 158, 11, 0.5)',
+                          background: 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)',
+                          border: '2px solid color-mix(in srgb, var(--ik-warning) 50%, transparent)',
                           borderRadius: '12px',
                           color: '#fff',
                           fontWeight: '800',
@@ -5617,15 +4629,15 @@ export default function DashboardPage() {
                           transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(245, 158, 11, 0.2)',
+                          boxShadow: '0 8px 20px color-mix(in srgb, var(--ik-warning) 20%, transparent)',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.4)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px color-mix(in srgb, var(--ik-warning) 40%, transparent)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.2)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px color-mix(in srgb, var(--ik-warning) 20%, transparent)';
                         }}
                       >
                         🏛️ Rejoindre
@@ -5637,8 +4649,8 @@ export default function DashboardPage() {
                         }}
                         style={{
                           padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          border: '2px solid rgba(59, 130, 246, 0.5)',
+                          background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-primary) 100%)',
+                          border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
                           borderRadius: '12px',
                           color: '#fff',
                           fontWeight: '800',
@@ -5647,15 +4659,15 @@ export default function DashboardPage() {
                           transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(59, 130, 246, 0.2)',
+                          boxShadow: '0 8px 20px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
+                          e.currentTarget.style.boxShadow = '0 12px 30px color-mix(in srgb, var(--ik-primary) 40%, transparent)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                         }}
                       >
                         💬 Leader
@@ -5716,7 +4728,7 @@ export default function DashboardPage() {
                                 transition: 'all 0.2s ease',
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                                e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                                 e.currentTarget.style.borderColor = currentTheme.accent;
                               }}
                               onMouseLeave={(e) => {
@@ -5729,7 +4741,7 @@ export default function DashboardPage() {
                                   width: '40px',
                                   height: '40px',
                                   borderRadius: '50%',
-                                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
@@ -5757,7 +4769,7 @@ export default function DashboardPage() {
                               </div>
                               {unreadCount > 0 && (
                                 <div style={{
-                                  background: '#ef4444',
+                                  background: 'var(--ik-negative)',
                                   color: '#fff',
                                   borderRadius: '50%',
                                   width: '24px',
@@ -5786,17 +4798,17 @@ export default function DashboardPage() {
                       justifyContent: 'space-between',
                       marginBottom: '16px',
                       padding: '16px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)`,
+                      background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 8%, transparent) 100%)`,
                       borderRadius: '14px',
-                      border: '1.5px solid rgba(59, 130, 246, 0.2)',
+                      border: '1.5px solid color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       backdropFilter: 'blur(10px)',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <button
                           onClick={() => setSelectedChatFriend(null)}
                           style={{
-                            background: 'rgba(59, 130, 246, 0.2)',
-                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                            border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                             borderRadius: '8px',
                             color: currentTheme.text,
                             fontSize: '18px',
@@ -5805,10 +4817,10 @@ export default function DashboardPage() {
                             transition: 'all 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                            e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                            e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                           }}
                         >
                           ←
@@ -5817,12 +4829,12 @@ export default function DashboardPage() {
                           width: '44px',
                           height: '44px',
                           borderRadius: '50%',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '20px',
-                          boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
+                          boxShadow: '0 8px 16px color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                         }}>
                           {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
                         </div>
@@ -5836,7 +4848,7 @@ export default function DashboardPage() {
                             {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.name}
                           </p>
                           <p style={{
-                            color: '#10b981',
+                            color: 'var(--ik-positive)',
                             fontSize: '11px',
                             margin: 0,
                             fontWeight: '600',
@@ -5846,8 +4858,8 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <button style={{
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                         borderRadius: '8px',
                         color: currentTheme.text,
                         fontSize: '18px',
@@ -5861,7 +4873,7 @@ export default function DashboardPage() {
 
                     {/* Chat Messages - Premium */}
                     <div style={{
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%)`,
+                      background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 5%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 3%, transparent) 100%)`,
                       borderRadius: '14px',
                       padding: '16px',
                       height: '350px',
@@ -5870,7 +4882,7 @@ export default function DashboardPage() {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
-                      border: '1.5px solid rgba(59, 130, 246, 0.15)',
+                      border: '1.5px solid color-mix(in srgb, var(--ik-primary) 15%, transparent)',
                     }}>
                       {/* Message du friend */}
                       <div style={{
@@ -5882,7 +4894,7 @@ export default function DashboardPage() {
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -5927,7 +4939,7 @@ export default function DashboardPage() {
                             borderTopRightRadius: '4px',
                             color: '#fff',
                           }}>
-                            <p style={{ color: '#fff', margin: 0, fontSize: '14px' }}>
+                            <p style={{ color: 'var(--ik-text)', margin: 0, fontSize: '14px' }}>
                               Bien ! On travaille sur InvestKit 🚀
                             </p>
                           </div>
@@ -5947,7 +4959,7 @@ export default function DashboardPage() {
                           width: '32px',
                           height: '32px',
                           borderRadius: '50%',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -5999,14 +5011,14 @@ export default function DashboardPage() {
                       gap: '10px',
                       alignItems: 'center',
                       padding: '12px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 8%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                       borderRadius: '14px',
-                      border: '1.5px solid rgba(59, 130, 246, 0.15)',
+                      border: '1.5px solid color-mix(in srgb, var(--ik-primary) 15%, transparent)',
                       backdropFilter: 'blur(10px)',
                     }}>
                       <button style={{
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                         borderRadius: '8px',
                         color: currentTheme.text,
                         fontSize: '16px',
@@ -6034,7 +5046,7 @@ export default function DashboardPage() {
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = currentTheme.accent;
-                          e.currentTarget.style.boxShadow = `0 0 10px rgba(59, 130, 246, 0.2)`;
+                          e.currentTarget.style.boxShadow = `0 0 10px color-mix(in srgb, var(--ik-primary) 20%, transparent)`;
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor = currentTheme.border;
@@ -6099,7 +5111,7 @@ export default function DashboardPage() {
                         background: currentTheme.accent,
                         border: 'none',
                         borderRadius: '8px',
-                        color: '#fff',
+                        color: 'var(--ik-text)',
                         fontWeight: '600',
                         cursor: 'pointer',
                         fontSize: '13px',
@@ -6110,8 +5122,8 @@ export default function DashboardPage() {
                   ) : (
                     <div style={{
                       padding: '8px 16px',
-                      background: 'rgba(239, 68, 68, 0.2)',
-                      border: '1px solid rgba(239, 68, 68, 0.5)',
+                      background: 'color-mix(in srgb, var(--ik-negative) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-negative) 50%, transparent)',
                       borderRadius: '8px',
                       color: '#fca5a5',
                       fontWeight: '600',
@@ -6211,19 +5223,19 @@ export default function DashboardPage() {
                         onClick={() => setSelectedGuilde(myGuilde)}
                         style={{
                           padding: '16px',
-                          background: `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)`,
+                          background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)`,
                           borderRadius: '12px',
                           border: `2px solid ${currentTheme.accent}`,
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = `linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%)`;
+                          e.currentTarget.style.background = `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 25%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)`;
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${alpha(currentTheme.accent, 25)}`;
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)`;
+                          e.currentTarget.style.background = `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)`;
                           e.currentTarget.style.transform = 'translateY(0)';
                           e.currentTarget.style.boxShadow = 'none';
                         }}
@@ -6239,7 +5251,7 @@ export default function DashboardPage() {
                               width: '48px',
                               height: '48px',
                               borderRadius: '10px',
-                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -6272,7 +5284,7 @@ export default function DashboardPage() {
                               background: currentTheme.accent,
                               border: 'none',
                               borderRadius: '6px',
-                              color: '#fff',
+                              color: 'var(--ik-text)',
                               fontWeight: '600',
                               cursor: 'pointer',
                               fontSize: '12px',
@@ -6339,9 +5351,9 @@ export default function DashboardPage() {
                     {/* Section 1: Basic Info */}
                     <div style={{
                       padding: '16px',
-                      background: 'rgba(59, 130, 246, 0.08)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 8%, transparent)',
                       borderRadius: '10px',
-                      border: `1px solid rgba(59, 130, 246, 0.2)`,
+                      border: `1px solid color-mix(in srgb, var(--ik-primary) 20%, transparent)`,
                     }}>
                       <h3 style={{
                         fontSize: '13px',
@@ -6432,14 +5444,14 @@ export default function DashboardPage() {
                     {/* Section 2: Restrictions */}
                     <div style={{
                       padding: '16px',
-                      background: 'rgba(168, 85, 247, 0.08)',
+                      background: 'color-mix(in srgb, var(--ik-orchid) 8%, transparent)',
                       borderRadius: '10px',
-                      border: `1px solid rgba(168, 85, 247, 0.2)`,
+                      border: `1px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)`,
                     }}>
                       <h3 style={{
                         fontSize: '13px',
                         fontWeight: '700',
-                        color: '#a855f7',
+                        color: 'var(--ik-accent)',
                         margin: '0 0 4px 0',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
@@ -6468,7 +5480,7 @@ export default function DashboardPage() {
                             fontSize: '12px',
                             fontWeight: '700',
                             color: currentTheme.accent,
-                            background: 'rgba(59, 130, 246, 0.2)',
+                            background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                             padding: '2px 8px',
                             borderRadius: '4px',
                           }}>
@@ -6639,30 +5651,30 @@ export default function DashboardPage() {
                         width: '100%',
                         padding: '14px',
                         background: !newGuildeName.trim()
-                          ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4))'
-                          : `linear-gradient(135deg, ${currentTheme.accent}, #8b5cf6)`,
+                          ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), color-mix(in srgb, var(--ik-orchid) 40%, transparent))'
+                          : `linear-gradient(135deg, ${currentTheme.accent}, var(--ik-orchid))`,
                         border: 'none',
                         borderRadius: '10px',
-                        color: !newGuildeName.trim() ? 'rgba(255, 255, 255, 0.5)' : '#fff',
+                        color: !newGuildeName.trim() ? 'color-mix(in srgb, var(--ik-text) 50%, transparent)' : '#fff',
                         fontWeight: '700',
                         cursor: !newGuildeName.trim() ? 'not-allowed' : 'pointer',
                         fontSize: '14px',
                         transition: 'all 0.3s ease',
                         boxShadow: !newGuildeName.trim()
                           ? 'none'
-                          : `0 4px 12px ${currentTheme.accent}40`,
+                          : `0 4px 12px ${alpha(currentTheme.accent, 25)}`,
                         opacity: !newGuildeName.trim() ? 0.6 : 1,
                       }}
                       onMouseEnter={(e) => {
                         if (newGuildeName.trim()) {
                           e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = `0 6px 16px ${currentTheme.accent}60`;
+                          e.target.style.boxShadow = `0 6px 16px ${alpha(currentTheme.accent, 38)}`;
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (newGuildeName.trim()) {
                           e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
+                          e.target.style.boxShadow = `0 4px 12px ${alpha(currentTheme.accent, 25)}`;
                         }
                       }}
                     >
@@ -6701,7 +5713,7 @@ export default function DashboardPage() {
                       }}
                       onClick={() => setSelectedGuilde(guilde)}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                        e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                         e.currentTarget.style.borderColor = currentTheme.accent;
                       }}
                       onMouseLeave={(e) => {
@@ -6720,7 +5732,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '40px',
                             borderRadius: '8px',
-                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -6789,9 +5801,9 @@ export default function DashboardPage() {
                       {guilde.restrictions && (
                         <div style={{
                           padding: '10px',
-                          background: 'rgba(59, 130, 246, 0.1)',
+                          background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)',
                           borderRadius: '6px',
-                          border: `1px solid rgba(59, 130, 246, 0.2)`,
+                          border: `1px solid color-mix(in srgb, var(--ik-primary) 20%, transparent)`,
                           marginBottom: '10px',
                         }}>
                           <p style={{
@@ -6877,7 +5889,7 @@ export default function DashboardPage() {
                     }}
                     onFocus={(e) => {
                       e.target.style.borderColor = currentTheme.accent;
-                      e.target.style.boxShadow = `0 0 0 3px ${currentTheme.accent}22`;
+                      e.target.style.boxShadow = `0 0 0 3px ${alpha(currentTheme.accent, 13)}`;
                     }}
                     onBlur={(e) => {
                       e.target.style.borderColor = currentTheme.border;
@@ -6944,7 +5956,7 @@ export default function DashboardPage() {
                               width: '44px',
                               height: '44px',
                               borderRadius: '50%',
-                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -6973,7 +5985,7 @@ export default function DashboardPage() {
                           </div>
                           {isFriend ? (
                             <span style={{
-                              color: '#10b981',
+                              color: 'var(--ik-positive)',
                               fontWeight: '600',
                               fontSize: '13px',
                             }}>
@@ -6995,14 +6007,14 @@ export default function DashboardPage() {
                                 background: currentTheme.accent,
                                 border: 'none',
                                 borderRadius: '8px',
-                                color: '#fff',
+                                color: 'var(--ik-text)',
                                 fontWeight: '600',
                                 fontSize: '13px',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease',
                               }}
                               onMouseEnter={(e) => {
-                                e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                                e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 80%, transparent)';
                               }}
                               onMouseLeave={(e) => {
                                 e.target.style.background = currentTheme.accent;
@@ -7029,10 +6041,10 @@ export default function DashboardPage() {
               marginBottom: '32px',
             }}>
               {[
-                { label: 'Amis', value: userData.friends.length, icon: '👫', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.2)' },
-                { label: 'Demandes reçues', value: userData.friendRequests.received.length, icon: '📬', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.2)' },
-                { label: 'Demandes envoyées', value: userData.friendRequests.sent.length, icon: '📤', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.2)' },
-                { label: 'Bloqués', value: userData.blockedUsers.length, icon: '🚫', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.2)' },
+                { label: 'Amis', value: userData.friends.length, icon: '👫', color: 'var(--ik-accent)', bgColor: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' },
+                { label: 'Demandes reçues', value: userData.friendRequests.received.length, icon: '📬', color: 'var(--ik-warning)', bgColor: 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-warning) 20%, transparent)' },
+                { label: 'Demandes envoyées', value: userData.friendRequests.sent.length, icon: '📤', color: 'var(--ik-accent)', bgColor: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)' },
+                { label: 'Bloqués', value: userData.blockedUsers.length, icon: '🚫', color: 'var(--ik-negative)', bgColor: 'color-mix(in srgb, var(--ik-negative) 15%, transparent)', borderColor: 'color-mix(in srgb, var(--ik-negative) 20%, transparent)' },
               ].map((stat, idx) => (
                 <div key={idx} style={{
                   padding: '24px',
@@ -7048,7 +6060,7 @@ export default function DashboardPage() {
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
                   e.currentTarget.style.borderColor = stat.color;
-                  e.currentTarget.style.boxShadow = `0 20px 40px ${stat.color}30`;
+                  e.currentTarget.style.boxShadow = `0 20px 40px ${alpha(stat.color, 19)}`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
@@ -7100,9 +6112,9 @@ export default function DashboardPage() {
                 <div style={{
                   padding: '48px 32px',
                   textAlign: 'center',
-                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                  background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                   borderRadius: '16px',
-                  border: `1.5px solid rgba(139, 92, 246, 0.2)`,
+                  border: `1.5px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)`,
                   backdropFilter: 'blur(10px)',
                   animation: 'fadeInUp 0.5s ease-out',
                 }}>
@@ -7128,15 +6140,15 @@ export default function DashboardPage() {
                     Partage ton code ami unique
                   </p>
                   <div style={{
-                    background: `rgba(139, 92, 246, 0.2)`,
-                    border: `1.5px solid rgba(139, 92, 246, 0.4)`,
+                    background: `color-mix(in srgb, var(--ik-orchid) 20%, transparent)`,
+                    border: `1.5px solid color-mix(in srgb, var(--ik-orchid) 40%, transparent)`,
                     borderRadius: '12px',
                     padding: '12px 16px',
                     display: 'inline-block',
                     fontFamily: 'monospace',
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#8b5cf6',
+                    color: 'var(--ik-accent)',
                     letterSpacing: '1px',
                   }}>
                     #{userData.friendCode}
@@ -7150,9 +6162,9 @@ export default function DashboardPage() {
                   {userData.friends.map((friend, idx) => (
                     <div key={friend.userId} style={{
                       padding: '18px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 8%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                       borderRadius: '14px',
-                      border: `1.5px solid rgba(59, 130, 246, 0.15)`,
+                      border: `1.5px solid color-mix(in srgb, var(--ik-primary) 15%, transparent)`,
                       backdropFilter: 'blur(10px)',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -7163,12 +6175,12 @@ export default function DashboardPage() {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateX(8px)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
+                      e.currentTarget.style.boxShadow = '0 12px 32px color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateX(0)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.15)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                       e.currentTarget.style.boxShadow = 'none';
                     }}>
                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flex: 1 }}>
@@ -7176,7 +6188,7 @@ export default function DashboardPage() {
                           width: '44px',
                           height: '44px',
                           borderRadius: '12px',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                          background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -7184,7 +6196,7 @@ export default function DashboardPage() {
                           fontWeight: '700',
                           fontSize: '18px',
                           flexShrink: 0,
-                          boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
+                          boxShadow: '0 8px 24px color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                         }}>
                           #{idx + 1}
                         </div>
@@ -7280,7 +6292,7 @@ export default function DashboardPage() {
                               onClick={() => acceptFriendRequest(req.friendCode, req.name)}
                               style={{
                                 padding: '6px 12px',
-                                background: '#10b981',
+                                background: 'var(--ik-positive)',
                                 border: 'none',
                                 borderRadius: '8px',
                                 color: '#fff',
@@ -7295,7 +6307,7 @@ export default function DashboardPage() {
                               onClick={() => rejectFriendRequest(req.friendCode)}
                               style={{
                                 padding: '6px 12px',
-                                background: '#ef4444',
+                                background: 'var(--ik-negative)',
                                 border: 'none',
                                 borderRadius: '8px',
                                 color: '#fff',
@@ -7385,7 +6397,7 @@ export default function DashboardPage() {
                   width: '80px',
                   height: '80px',
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -7421,7 +6433,7 @@ export default function DashboardPage() {
               }}>
                 <div style={{
                   padding: '16px',
-                  background: 'rgba(59, 130, 246, 0.1)',
+                  background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)',
                   borderRadius: '12px',
                   border: `1px solid ${currentTheme.border}`,
                   textAlign: 'center',
@@ -7446,7 +6458,7 @@ export default function DashboardPage() {
                 </div>
                 <div style={{
                   padding: '16px',
-                  background: 'rgba(139, 92, 246, 0.1)',
+                  background: 'color-mix(in srgb, var(--ik-orchid) 10%, transparent)',
                   borderRadius: '12px',
                   border: `1px solid ${currentTheme.border}`,
                   textAlign: 'center',
@@ -7454,7 +6466,7 @@ export default function DashboardPage() {
                   <p style={{
                     fontSize: '28px',
                     fontWeight: '900',
-                    color: '#8b5cf6',
+                    color: 'var(--ik-accent)',
                     margin: '0 0 4px 0',
                   }}>
                     {selectedFriendProfile.xp}
@@ -7507,14 +6519,14 @@ export default function DashboardPage() {
                     <div style={{
                       width: '100%',
                       height: '6px',
-                      background: 'rgba(255, 255, 255, 0.1)',
+                      background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
                       borderRadius: '3px',
                       overflow: 'hidden',
                     }}>
                       <div style={{
                         width: `${progress}%`,
                         height: '100%',
-                        background: `linear-gradient(90deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                        background: `linear-gradient(90deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                         transition: 'width 0.3s ease',
                       }} />
                     </div>
@@ -7553,9 +6565,9 @@ export default function DashboardPage() {
                           key={idx}
                           style={{
                             padding: '12px',
-                            background: 'rgba(245, 158, 11, 0.1)',
+                            background: 'color-mix(in srgb, var(--ik-warning) 10%, transparent)',
                             borderRadius: '8px',
-                            border: `1px solid rgba(245, 158, 11, 0.3)`,
+                            border: `1px solid color-mix(in srgb, var(--ik-warning) 30%, transparent)`,
                             textAlign: 'center',
                             fontSize: '24px',
                           }}
@@ -7577,13 +6589,13 @@ export default function DashboardPage() {
                     background: currentTheme.accent,
                     border: 'none',
                     borderRadius: '10px',
-                    color: '#fff',
+                    color: 'var(--ik-text)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                    e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 80%, transparent)';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.background = currentTheme.accent;
@@ -7594,7 +6606,7 @@ export default function DashboardPage() {
                 <button
                   style={{
                     padding: '12px 16px',
-                    background: 'rgba(59, 130, 246, 0.2)',
+                    background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                     border: `1px solid ${currentTheme.accent}`,
                     borderRadius: '10px',
                     color: currentTheme.accent,
@@ -7603,10 +6615,10 @@ export default function DashboardPage() {
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                    e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                    e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                   }}
                 >
                   🎯 Défi
@@ -7665,7 +6677,7 @@ export default function DashboardPage() {
                   width: '80px',
                   height: '80px',
                   borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
+                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, var(--ik-orchid) 100%)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -7705,7 +6717,7 @@ export default function DashboardPage() {
                     onClick={() => setSelectedGuildeTab(tab)}
                     style={{
                       padding: '10px 14px',
-                      background: selectedGuildeTab === tab ? `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)` : 'transparent',
+                      background: selectedGuildeTab === tab ? `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)` : 'transparent',
                       border: 'none',
                       color: selectedGuildeTab === tab ? currentTheme.accent : currentTheme.textSecondary,
                       fontWeight: selectedGuildeTab === tab ? '700' : '500',
@@ -7756,9 +6768,9 @@ export default function DashboardPage() {
               {selectedGuilde.restrictions && (
                 <div style={{
                   padding: '12px',
-                  background: 'rgba(59, 130, 246, 0.1)',
+                  background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)',
                   borderRadius: '10px',
-                  border: `1px solid rgba(59, 130, 246, 0.3)`,
+                  border: `1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)`,
                   marginBottom: '24px',
                 }}>
                   <p style={{
@@ -7809,9 +6821,9 @@ export default function DashboardPage() {
                 </p>
                 <div style={{
                   padding: '12px',
-                  background: 'rgba(59, 130, 246, 0.1)',
+                  background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)',
                   borderRadius: '8px',
-                  border: `1px solid rgba(59, 130, 246, 0.3)`,
+                  border: `1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)`,
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ color: currentTheme.text, fontWeight: '600' }}>Niveau {selectedGuilde.level}</span>
@@ -7827,7 +6839,7 @@ export default function DashboardPage() {
                     <div style={{
                       width: `${(selectedGuilde.level / 20) * 100}%`,
                       height: '100%',
-                      background: `linear-gradient(90deg, ${currentTheme.accent}, #8b5cf6)`,
+                      background: `linear-gradient(90deg, ${currentTheme.accent}, var(--ik-orchid))`,
                       transition: 'width 0.3s ease',
                     }} />
                   </div>
@@ -7847,22 +6859,22 @@ export default function DashboardPage() {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  background: 'color-mix(in srgb, var(--ik-negative) 20%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-negative) 40%, transparent)',
                   borderRadius: '8px',
-                  color: '#ef4444',
+                  color: 'var(--ik-negative)',
                   fontWeight: '600',
                   fontSize: '13px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.3)';
-                  e.target.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+                  e.target.style.background = 'color-mix(in srgb, var(--ik-negative) 30%, transparent)';
+                  e.target.style.borderColor = 'color-mix(in srgb, var(--ik-negative) 60%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                  e.target.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                  e.target.style.background = 'color-mix(in srgb, var(--ik-negative) 20%, transparent)';
+                  e.target.style.borderColor = 'color-mix(in srgb, var(--ik-negative) 40%, transparent)';
                 }}
               >
                 👋 Quitter la Guilde
@@ -7889,16 +6901,16 @@ export default function DashboardPage() {
                         key={member.rank}
                         style={{
                           padding: '12px',
-                          background: member.rank === 1 ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%)' :
+                          background: member.rank === 1 ? 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 15%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 5%, transparent) 100%)' :
                                       member.rank === 2 ? 'linear-gradient(135deg, rgba(107, 114, 128, 0.15) 0%, rgba(75, 85, 99, 0.05) 100%)' :
-                                      member.rank === 3 ? 'linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(161, 98, 7, 0.05) 100%)' :
-                                      'rgba(59, 130, 246, 0.08)',
+                                      member.rank === 3 ? 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 15%, transparent) 0%, rgba(161, 98, 7, 0.05) 100%)' :
+                                      'color-mix(in srgb, var(--ik-primary) 8%, transparent)',
                           borderRadius: '10px',
                           border: `1.5px solid ${
-                            member.rank === 1 ? 'rgba(245, 158, 11, 0.3)' :
+                            member.rank === 1 ? 'color-mix(in srgb, var(--ik-warning) 30%, transparent)' :
                             member.rank === 2 ? 'rgba(107, 114, 128, 0.3)' :
-                            member.rank === 3 ? 'rgba(217, 119, 6, 0.3)' :
-                            'rgba(59, 130, 246, 0.2)'
+                            member.rank === 3 ? 'color-mix(in srgb, var(--ik-warning) 30%, transparent)' :
+                            'color-mix(in srgb, var(--ik-primary) 20%, transparent)'
                           }`,
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -7910,10 +6922,10 @@ export default function DashboardPage() {
                             width: '36px',
                             height: '36px',
                             borderRadius: '50%',
-                            background: member.rank === 1 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+                            background: member.rank === 1 ? 'linear-gradient(135deg, var(--ik-warning) 0%, var(--ik-warning) 100%)' :
                                         member.rank === 2 ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)' :
-                                        member.rank === 3 ? 'linear-gradient(135deg, #d97706 0%, #a16207 100%)' :
-                                        'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                                        member.rank === 3 ? 'linear-gradient(135deg, var(--ik-warning) 0%, #a16207 100%)' :
+                                        'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -7949,7 +6961,7 @@ export default function DashboardPage() {
                             margin: '0 0 2px 0',
                             fontSize: '13px',
                             fontWeight: '700',
-                            color: '#3b82f6',
+                            color: 'var(--ik-accent)',
                           }}>
                             {member.contribution}%
                           </p>
@@ -8011,7 +7023,7 @@ export default function DashboardPage() {
                           <div style={{
                             height: '100%',
                             width: `${(guildTreasures[selectedGuilde.id].totalPoints / guildTreasures[selectedGuilde.id].nextLevel) * 100}%`,
-                            background: 'linear-gradient(90deg, #22c55e 0%, #10b981 100%)',
+                            background: 'linear-gradient(90deg, #22c55e 0%, var(--ik-positive) 100%)',
                             transition: 'width 0.5s ease',
                           }} />
                         </div>
@@ -8032,9 +7044,9 @@ export default function DashboardPage() {
                       }}>
                         <div style={{
                           padding: '12px',
-                          background: 'rgba(59, 130, 246, 0.1)',
+                          background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)',
                           borderRadius: '8px',
-                          border: '1px solid rgba(59, 130, 246, 0.2)',
+                          border: '1px solid color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                           textAlign: 'center',
                         }}>
                           <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: currentTheme.textSecondary }}>Membres</p>
@@ -8044,13 +7056,13 @@ export default function DashboardPage() {
                         </div>
                         <div style={{
                           padding: '12px',
-                          background: 'rgba(139, 92, 246, 0.1)',
+                          background: 'color-mix(in srgb, var(--ik-orchid) 10%, transparent)',
                           borderRadius: '8px',
-                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          border: '1px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
                           textAlign: 'center',
                         }}>
                           <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: currentTheme.textSecondary }}>Moy. par membre</p>
-                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#8b5cf6' }}>
+                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: 'var(--ik-accent)' }}>
                             {Math.round(guildTreasures[selectedGuilde.id].totalPoints / guildTreasures[selectedGuilde.id].members)}
                           </p>
                         </div>
@@ -8074,9 +7086,9 @@ export default function DashboardPage() {
                               key={idx}
                               style={{
                                 padding: '10px',
-                                background: 'rgba(245, 158, 11, 0.08)',
+                                background: 'color-mix(in srgb, var(--ik-warning) 8%, transparent)',
                                 borderRadius: '8px',
-                                border: '1px solid rgba(245, 158, 11, 0.15)',
+                                border: '1px solid color-mix(in srgb, var(--ik-warning) 15%, transparent)',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
@@ -8090,7 +7102,7 @@ export default function DashboardPage() {
                                   {contrib.action}
                                 </p>
                               </div>
-                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#f59e0b' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ik-warning)' }}>
                                 +{contrib.points}
                               </span>
                             </div>
@@ -8126,17 +7138,17 @@ export default function DashboardPage() {
                           key={event.id}
                           style={{
                             padding: '12px',
-                            background: `linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%)`,
+                            background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 10%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 5%, transparent) 100%)`,
                             borderRadius: '10px',
-                            border: `1.5px solid rgba(245, 158, 11, 0.2)`,
+                            border: `1.5px solid color-mix(in srgb, var(--ik-warning) 20%, transparent)`,
                             transition: 'all 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+                            e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 40%, transparent)';
                             e.currentTarget.style.transform = 'translateX(4px)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+                            e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 20%, transparent)';
                             e.currentTarget.style.transform = 'translateX(0)';
                           }}
                         >
@@ -8144,7 +7156,7 @@ export default function DashboardPage() {
                             <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: currentTheme.text }}>
                               {event.title}
                             </h4>
-                            <span style={{ fontSize: '11px', background: 'rgba(245, 158, 11, 0.2)', padding: '2px 8px', borderRadius: '4px', color: '#f59e0b', fontWeight: '600' }}>
+                            <span style={{ fontSize: '11px', background: 'color-mix(in srgb, var(--ik-warning) 20%, transparent)', padding: '2px 8px', borderRadius: '4px', color: 'var(--ik-warning)', fontWeight: '600' }}>
                               {event.reward}
                             </span>
                           </div>
@@ -8186,16 +7198,16 @@ export default function DashboardPage() {
                           key={ann.id}
                           style={{
                             padding: '12px',
-                            background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)`,
+                            background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                             borderRadius: '10px',
-                            border: `1.5px solid rgba(139, 92, 246, 0.2)`,
+                            border: `1.5px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)`,
                             transition: 'all 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                            e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-orchid) 40%, transparent)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
+                            e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)';
                           }}
                         >
                           <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
@@ -8203,7 +7215,7 @@ export default function DashboardPage() {
                               width: '32px',
                               height: '32px',
                               borderRadius: '50%',
-                              background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                              background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -8257,7 +7269,7 @@ export default function DashboardPage() {
                           <div
                             style={{
                               padding: '10px',
-                              background: 'rgba(59, 130, 246, 0.05)',
+                              background: 'color-mix(in srgb, var(--ik-primary) 5%, transparent)',
                               borderRadius: '8px',
                               border: `1px solid ${currentTheme.border}`,
                               display: 'flex',
@@ -8286,11 +7298,11 @@ export default function DashboardPage() {
                               <span style={{
                                 fontSize: '10px',
                                 fontWeight: '700',
-                                color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
+                                color: member.role === 'Leader' ? 'var(--ik-warning)' : member.role === 'Co-leader' ? 'var(--ik-accent)' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.5px',
                                 padding: '4px 8px',
-                                background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
+                                background: member.role === 'Leader' ? 'color-mix(in srgb, var(--ik-warning) 10%, transparent)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
                                 borderRadius: '4px',
                               }}>
                                 {member.role}
@@ -8300,7 +7312,7 @@ export default function DashboardPage() {
                                   onClick={() => setMemberActionMenu(isShowingActions ? null : { guildId: selectedGuilde.id, memberId: member.id })}
                                   style={{
                                     padding: '4px 8px',
-                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                                     border: 'none',
                                     borderRadius: '4px',
                                     color: currentTheme.accent,
@@ -8409,7 +7421,7 @@ export default function DashboardPage() {
                                   padding: '10px 12px',
                                   background: 'none',
                                   border: 'none',
-                                  color: '#ef4444',
+                                  color: 'var(--ik-negative)',
                                   textAlign: 'left',
                                   cursor: 'pointer',
                                   fontSize: '12px',
@@ -8443,7 +7455,7 @@ export default function DashboardPage() {
                                   style={{
                                     width: '100%',
                                     padding: '8px 12px',
-                                    background: member.role === role ? 'rgba(59, 130, 246, 0.2)' : 'none',
+                                    background: member.role === role ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'none',
                                     border: 'none',
                                     borderBottom: role !== 'Leader' ? `1px solid ${currentTheme.border}` : 'none',
                                     color: member.role === role ? currentTheme.accent : currentTheme.text,
@@ -8481,7 +7493,7 @@ export default function DashboardPage() {
                         key={msg.id}
                         style={{
                           padding: '8px 10px',
-                          background: 'rgba(59, 130, 246, 0.05)',
+                          background: 'color-mix(in srgb, var(--ik-primary) 5%, transparent)',
                           borderRadius: '8px',
                           border: `1px solid ${currentTheme.border}`,
                         }}
@@ -8562,7 +7574,7 @@ export default function DashboardPage() {
                           background: currentTheme.accent,
                           border: 'none',
                           borderRadius: '6px',
-                          color: '#fff',
+                          color: 'var(--ik-text)',
                           fontWeight: '600',
                           cursor: 'pointer',
                           fontSize: '12px',
@@ -8597,7 +7609,7 @@ export default function DashboardPage() {
                     const userProgress = progress.domainsProgress?.[domain] || 0;
                     return userProgress >= requirement;
                   });
-                  return levelOk && domainsOk ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                  return levelOk && domainsOk ? 'rgba(34, 197, 94, 0.1)' : 'color-mix(in srgb, var(--ik-negative) 10%, transparent)';
                 })(),
                 borderRadius: '10px',
                 border: (() => {
@@ -8607,7 +7619,7 @@ export default function DashboardPage() {
                     const userProgress = progress.domainsProgress?.[domain] || 0;
                     return userProgress >= requirement;
                   });
-                  return levelOk && domainsOk ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)';
+                  return levelOk && domainsOk ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid color-mix(in srgb, var(--ik-negative) 30%, transparent)';
                 })(),
                 marginBottom: '20px',
                 textAlign: 'center',
@@ -8624,7 +7636,7 @@ export default function DashboardPage() {
                   return canJoin ? (
                     <span style={{ color: '#22c55e', fontWeight: '600', fontSize: '13px' }}>✓ Tu peux rejoindre cette guilde!</span>
                   ) : (
-                    <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '13px' }}>✗ Tu ne remplis pas les conditions</span>
+                    <span style={{ color: 'var(--ik-negative)', fontWeight: '600', fontSize: '13px' }}>✗ Tu ne remplis pas les conditions</span>
                   );
                 })()}
               </div>
@@ -8633,9 +7645,9 @@ export default function DashboardPage() {
               {guildMessage && (
                 <div style={{
                   padding: '12px',
-                  background: guildMessage.type === 'success' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  background: guildMessage.type === 'success' ? 'rgba(34, 197, 94, 0.15)' : 'color-mix(in srgb, var(--ik-negative) 15%, transparent)',
                   borderRadius: '10px',
-                  border: guildMessage.type === 'success' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                  border: guildMessage.type === 'success' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid color-mix(in srgb, var(--ik-negative) 40%, transparent)',
                   marginBottom: '20px',
                   whiteSpace: 'pre-wrap',
                   fontSize: '12px',
@@ -8678,7 +7690,7 @@ export default function DashboardPage() {
                       }}
                       onMouseEnter={(e) => {
                         if (canJoin && !alreadyMember) {
-                          e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+                          e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 80%, transparent)';
                         }
                       }}
                       onMouseLeave={(e) => {
@@ -8698,7 +7710,7 @@ export default function DashboardPage() {
                   onClick={() => setSelectedGuilde(null)}
                   style={{
                     padding: '12px 16px',
-                    background: 'rgba(59, 130, 246, 0.2)',
+                    background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                     border: `1px solid ${currentTheme.accent}`,
                     borderRadius: '10px',
                     color: currentTheme.accent,
@@ -8707,10 +7719,10 @@ export default function DashboardPage() {
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
+                    e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                    e.target.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                   }}
                 >
                   Fermer
@@ -8753,10 +7765,10 @@ export default function DashboardPage() {
                   style={{
                     padding: '12px 16px',
                     background: settingsTab === tab.id
-                      ? 'rgba(59, 130, 246, 0.2)'
+                      ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'
                       : currentTheme.cardBg,
                     border: `1px solid ${settingsTab === tab.id
-                      ? 'rgba(59, 130, 246, 0.4)'
+                      ? 'color-mix(in srgb, var(--ik-primary) 40%, transparent)'
                       : currentTheme.border}`,
                     borderRadius: '10px',
                     color: settingsTab === tab.id ? currentTheme.accent : currentTheme.text,
@@ -8767,7 +7779,7 @@ export default function DashboardPage() {
                   }}
                   onMouseEnter={(e) => {
                     if (settingsTab !== tab.id) {
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 10%, transparent)';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -8819,8 +7831,8 @@ export default function DashboardPage() {
                     </div>
                     <button onClick={toggleTheme} style={{
                       padding: '8px 16px',
-                      background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                      border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
+                      background: isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                      border: `1px solid ${isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 25%, transparent)'}`,
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -8828,8 +7840,8 @@ export default function DashboardPage() {
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)'; }}
                     >
                       {isDarkMode ? '🌙 Sombre' : '☀️ Clair'}
                     </button>
@@ -8914,8 +7926,8 @@ export default function DashboardPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       textDecoration: 'none',
@@ -9084,15 +8096,15 @@ export default function DashboardPage() {
                   <button
                     onClick={saveProfileChanges}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                     }}
                     style={{
                       padding: '10px 20px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9127,7 +8139,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Niveau</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#3b82f6', margin: 0 }}>Lvl {progress.userLevel}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-accent)', margin: 0 }}>Lvl {progress.userLevel}</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -9135,7 +8147,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>XP Total</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b', margin: 0 }}>{progress.totalXP} XP</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}>{progress.totalXP} XP</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -9143,7 +8155,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Racha</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b', margin: 0 }}>🔥 {progress.streak}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}>🔥 {progress.streak}</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -9151,7 +8163,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Badges</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#a78bfa', margin: 0 }}>{progress.badges?.length || 0}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-accent)', margin: 0 }}>{progress.badges?.length || 0}</p>
                       </div>
                     </div>
                   </div>
@@ -9228,7 +8240,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '24px',
                             borderRadius: '12px',
-                            background: hideStats ? '#3b82f6' : '#6b7280',
+                            background: hideStats ? 'var(--ik-primary)' : '#6b7280',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -9272,7 +8284,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '24px',
                             borderRadius: '12px',
-                            background: shareProgress ? '#3b82f6' : '#6b7280',
+                            background: shareProgress ? 'var(--ik-primary)' : '#6b7280',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -9396,7 +8408,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '24px',
                             borderRadius: '12px',
-                            background: academyNotifications ? '#3b82f6' : '#6b7280',
+                            background: academyNotifications ? 'var(--ik-primary)' : '#6b7280',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -9449,8 +8461,8 @@ export default function DashboardPage() {
                     </div>
                     <button style={{
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9481,10 +8493,10 @@ export default function DashboardPage() {
                       disabled={twoFALoading}
                       style={{
                         padding: '8px 16px',
-                        background: userData?.enable2FA ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.2)',
-                        border: `1px solid ${userData?.enable2FA ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+                        background: userData?.enable2FA ? 'color-mix(in srgb, var(--ik-negative) 15%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                        border: `1px solid ${userData?.enable2FA ? 'color-mix(in srgb, var(--ik-negative) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 30%, transparent)'}`,
                         borderRadius: '8px',
-                        color: userData?.enable2FA ? '#ef4444' : currentTheme.accent,
+                        color: userData?.enable2FA ? 'var(--ik-negative)' : currentTheme.accent,
                         fontSize: '13px',
                         fontWeight: '600',
                         cursor: twoFALoading ? 'wait' : 'pointer',
@@ -9528,8 +8540,8 @@ export default function DashboardPage() {
 
                   <button style={{
                     padding: '12px 20px',
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 20%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)',
+                    border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                     borderRadius: '8px',
                     color: currentTheme.accent,
                     fontSize: '13px',
@@ -9538,10 +8550,10 @@ export default function DashboardPage() {
                     transition: 'all 0.3s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)';
+                    e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 20%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)';
                   }}
                   >
                     + Créer une alerte
@@ -9588,8 +8600,8 @@ export default function DashboardPage() {
                     </div>
                     <button style={{
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9617,8 +8629,8 @@ export default function DashboardPage() {
                     </div>
                     <button style={{
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9630,15 +8642,15 @@ export default function DashboardPage() {
                   </div>
 
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#f43f5e', margin: '0 0 8px 0' }}>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ik-negative)', margin: '0 0 8px 0' }}>
                       ⚠️ Zone Danger
                     </p>
                     <button style={{
                       padding: '10px 20px',
-                      background: 'rgba(244, 63, 94, 0.15)',
-                      border: '1px solid rgba(244, 63, 94, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-negative) 15%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-negative) 30%, transparent)',
                       borderRadius: '8px',
-                      color: '#f43f5e',
+                      color: 'var(--ik-negative)',
                       fontSize: '13px',
                       fontWeight: '600',
                       cursor: 'pointer',
@@ -9657,7 +8669,7 @@ export default function DashboardPage() {
                   </h3>
 
                   {billingError && (
-                    <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>{billingError}</p>
+                    <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: 0 }}>{billingError}</p>
                   )}
 
                   {userData?.subscriptionTier === 'pro' ? (
@@ -9667,8 +8679,8 @@ export default function DashboardPage() {
                       alignItems: 'center',
                       padding: '16px',
                       borderRadius: '12px',
-                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)',
+                      border: '1px solid color-mix(in srgb, var(--ik-orchid) 30%, transparent)',
                     }}>
                       <div>
                         <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
@@ -9684,8 +8696,8 @@ export default function DashboardPage() {
                         style={{
                           padding: '10px 18px',
                           borderRadius: '8px',
-                          border: '1px solid rgba(59, 130, 246, 0.3)',
-                          background: 'rgba(59, 130, 246, 0.2)',
+                          border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
+                          background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                           color: currentTheme.accent,
                           fontSize: '13px',
                           fontWeight: '600',
@@ -9730,8 +8742,8 @@ export default function DashboardPage() {
                         <div style={{
                           padding: '20px',
                           borderRadius: '12px',
-                          border: '1px solid rgba(139, 92, 246, 0.4)',
-                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                          border: '1px solid color-mix(in srgb, var(--ik-orchid) 40%, transparent)',
+                          background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 8%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 8%, transparent) 100%)',
                           display: 'grid',
                           gap: '12px',
                           position: 'relative',
@@ -9740,7 +8752,7 @@ export default function DashboardPage() {
                             position: 'absolute',
                             top: '-10px',
                             right: '16px',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                            background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                             color: '#fff',
                             fontSize: '11px',
                             fontWeight: '700',
@@ -9758,7 +8770,7 @@ export default function DashboardPage() {
                               padding: '10px',
                               borderRadius: '8px',
                               border: 'none',
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                              background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                               color: '#fff',
                               fontWeight: '600',
                               cursor: billingLoading ? 'wait' : 'pointer',
@@ -9808,7 +8820,7 @@ export default function DashboardPage() {
                             padding: '10px 16px',
                             borderRadius: '8px',
                             border: 'none',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                            background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                             color: '#fff',
                             fontWeight: '600',
                             fontSize: '13px',
@@ -9848,20 +8860,20 @@ export default function DashboardPage() {
                   }}
                   style={{
                     padding: '8px 16px',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                    border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                     borderRadius: '8px',
-                    color: '#3b82f6',
+                    color: 'var(--ik-accent)',
                     fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 25%, transparent)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                   }}
                 >
                   ✓ Marquer tout comme lu
@@ -9896,9 +8908,9 @@ export default function DashboardPage() {
                     }}
                     style={{
                       padding: '16px',
-                      background: notif.read ? 'transparent' : `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      background: notif.read ? 'transparent' : `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                       borderRadius: '14px',
-                      border: `1.5px solid ${notif.read ? currentTheme.border : 'rgba(59, 130, 246, 0.2)'}`,
+                      border: `1.5px solid ${notif.read ? currentTheme.border : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'}`,
                       backdropFilter: notif.read ? 'none' : 'blur(10px)',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -9910,13 +8922,13 @@ export default function DashboardPage() {
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateX(8px)';
                       if (!notif.read) {
-                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                        e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 40%, transparent)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateX(0)';
                       if (!notif.read) {
-                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                        e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                       }
                     }}
                   >
@@ -9925,13 +8937,13 @@ export default function DashboardPage() {
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                        background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '20px',
                         flexShrink: 0,
-                        boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)',
+                        boxShadow: '0 8px 16px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       }}>
                         {notif.avatar}
                       </div>
@@ -9966,7 +8978,7 @@ export default function DashboardPage() {
                           width: '10px',
                           height: '10px',
                           borderRadius: '50%',
-                          background: '#3b82f6',
+                          background: 'var(--ik-primary)',
                           flexShrink: 0,
                         }} />
                       )}
@@ -9993,6 +9005,11 @@ export default function DashboardPage() {
               </h2>
             </div>
 
+            {activityFeed.length === 0 ? (
+              <EmptyState icon="users" title="Pas encore d'activité à afficher" action={<Button onClick={() => setActiveTab('friends')}>Voir mes amis</Button>}>
+                Les niveaux, badges et investissements de tes amis apparaîtront ici dès qu&apos;ils existeront. Rien n&apos;est simulé.
+              </EmptyState>
+            ) : (<>
             {/* Filter Buttons */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
               {[
@@ -10008,9 +9025,9 @@ export default function DashboardPage() {
                   style={{
                     padding: '10px 16px',
                     background: activityFilter === filter.id
-                      ? `linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)`
+                      ? `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 20%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)`
                       : 'transparent',
-                    border: `1.5px solid ${activityFilter === filter.id ? 'rgba(59, 130, 246, 0.3)' : currentTheme.border}`,
+                    border: `1.5px solid ${activityFilter === filter.id ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : currentTheme.border}`,
                     borderRadius: '10px',
                     color: activityFilter === filter.id ? currentTheme.accent : currentTheme.textSecondary,
                     fontWeight: activityFilter === filter.id ? '600' : '500',
@@ -10044,9 +9061,9 @@ export default function DashboardPage() {
                     key={activity.id}
                     style={{
                       padding: '16px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 8%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                       borderRadius: '14px',
-                      border: `1.5px solid rgba(59, 130, 246, 0.15)`,
+                      border: `1.5px solid color-mix(in srgb, var(--ik-primary) 15%, transparent)`,
                       backdropFilter: 'blur(10px)',
                       display: 'flex',
                       gap: '14px',
@@ -10055,24 +9072,24 @@ export default function DashboardPage() {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateX(8px)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateX(0)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.15)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                     }}
                   >
                     <div style={{
                       width: '44px',
                       height: '44px',
                       borderRadius: '50%',
-                      background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                      background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '20px',
                       flexShrink: 0,
-                      boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)',
+                      boxShadow: '0 8px 16px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                     }}>
                       {activity.avatar}
                     </div>
@@ -10104,43 +9121,7 @@ export default function DashboardPage() {
                 )
               ))}
             </div>
-          </div>
-        )}
-
-        {/* PLACEHOLDERS FOR OTHER TABS */}
-        {(['projects', 'risk'].includes(activeTab)) && (
-          <div style={{
-            background: currentTheme.cardBg,
-            borderRadius: '16px',
-            padding: '60px 40px',
-            border: `1px solid ${currentTheme.border}`,
-            textAlign: 'center',
-            marginTop: '20px',
-            backdropFilter: 'blur(20px)',
-          }}>
-            <p style={{
-              fontSize: '36px',
-              margin: '0 0 16px 0',
-            }}>
-              {activeTab === 'projects' && '🎯'}
-              {activeTab === 'risk' && '⚠️'}
-            </p>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '800',
-              color: currentTheme.text,
-              margin: '0 0 12px 0',
-            }}>
-              {activeTab === 'projects' && 'Gestion des Projets'}
-              {activeTab === 'risk' && 'Analyse des Risques'}
-            </h3>
-            <p style={{
-              fontSize: '14px',
-              color: currentTheme.textSecondary,
-              margin: 0,
-            }}>
-              Section en développement
-            </p>
+          </>)}
           </div>
         )}
       </div>
@@ -10164,10 +9145,10 @@ export default function DashboardPage() {
         >
           <div style={{
             position: 'relative',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-text) 8%, transparent) 0%, color-mix(in srgb, var(--ik-text) 3%, transparent) 100%)',
             borderRadius: '48px',
             padding: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
             backdropFilter: 'blur(20px)',
             width: '100%',
             maxWidth: '600px',
@@ -10184,24 +9165,24 @@ export default function DashboardPage() {
               top: '20px',
               right: '20px',
               zIndex: 10,
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
               borderRadius: '10px',
               width: '40px',
               height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
+              color: 'var(--ik-text)',
               cursor: 'pointer',
               fontSize: '20px',
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
             }}
             >
               ✕
@@ -10209,14 +9190,14 @@ export default function DashboardPage() {
 
             {/* Tablet Bezel Top */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               borderRadius: '36px 36px 0 0',
               padding: '20px 24px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               fontSize: '13px',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)',
             }}>
               <span>9:41</span>
               <span style={{ fontWeight: '700' }}>InvestKit</span>
@@ -10225,21 +9206,21 @@ export default function DashboardPage() {
 
             {/* Modal Tabs */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               padding: '12px 20px',
               display: 'flex',
               gap: '12px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
             }}>
               <button
                 onClick={() => setNewsModalTab('news')}
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  background: newsModalTab === 'news' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: `1px solid ${newsModalTab === 'news' ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  background: newsModalTab === 'news' ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
+                  border: `1px solid ${newsModalTab === 'news' ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'transparent'}`,
                   borderRadius: '8px',
-                  color: newsModalTab === 'news' ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                  color: newsModalTab === 'news' ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -10253,10 +9234,10 @@ export default function DashboardPage() {
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  background: newsModalTab === 'tips' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: `1px solid ${newsModalTab === 'tips' ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  background: newsModalTab === 'tips' ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
+                  border: `1px solid ${newsModalTab === 'tips' ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'transparent'}`,
                   borderRadius: '8px',
-                  color: newsModalTab === 'tips' ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                  color: newsModalTab === 'tips' ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -10269,7 +9250,7 @@ export default function DashboardPage() {
 
             {/* Scrollable Content */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               flex: 1,
               overflowY: 'auto',
               padding: '20px',
@@ -10282,8 +9263,8 @@ export default function DashboardPage() {
                 <>
                   {/* News Item 1 */}
                   <div style={{
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    borderLeft: '4px solid #3b82f6',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-primary)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10299,14 +9280,14 @@ export default function DashboardPage() {
                         <p style={{
                           fontSize: '15px',
                           fontWeight: '700',
-                          color: '#60a5fa',
+                          color: 'var(--ik-accent)',
                           margin: '0 0 4px 0',
                         }}>
                           CAC 40 en hausse
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10316,7 +9297,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     }}>
                       À l'instant
                     </span>
@@ -10324,8 +9305,8 @@ export default function DashboardPage() {
 
                   {/* News Item 2 */}
                   <div style={{
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    borderLeft: '4px solid #10b981',
+                    background: 'color-mix(in srgb, var(--ik-positive) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-positive)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10348,7 +9329,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10358,7 +9339,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     }}>
                       Il y a 2h
                     </span>
@@ -10366,8 +9347,8 @@ export default function DashboardPage() {
 
                   {/* News Item 3 */}
                   <div style={{
-                    background: 'rgba(168, 85, 247, 0.15)',
-                    borderLeft: '4px solid #a855f7',
+                    background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-orchid)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10390,7 +9371,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10400,7 +9381,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     }}>
                       Il y a 5h
                     </span>
@@ -10408,8 +9389,8 @@ export default function DashboardPage() {
 
                   {/* News Item 4 */}
                   <div style={{
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    borderLeft: '4px solid #f59e0b',
+                    background: 'color-mix(in srgb, var(--ik-warning) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-warning)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10432,7 +9413,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10442,7 +9423,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     }}>
                       Il y a 1h
                     </span>
@@ -10450,8 +9431,8 @@ export default function DashboardPage() {
 
                   {/* News Item 5 */}
                   <div style={{
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    borderLeft: '4px solid #3b82f6',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-primary)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10467,14 +9448,14 @@ export default function DashboardPage() {
                         <p style={{
                           fontSize: '15px',
                           fontWeight: '700',
-                          color: '#60a5fa',
+                          color: 'var(--ik-accent)',
                           margin: '0 0 4px 0',
                         }}>
                           Objectif atteint!
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10484,7 +9465,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     }}>
                       Il y a 3h
                     </span>
@@ -10498,8 +9479,8 @@ export default function DashboardPage() {
                     <div
                       key={tip.id}
                       style={{
-                        background: 'rgba(168, 85, 247, 0.15)',
-                        borderLeft: '4px solid #a855f7',
+                        background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
+                        borderLeft: '4px solid var(--ik-orchid)',
                         borderRadius: '16px',
                         padding: '18px',
                         flex: '0 0 auto',
@@ -10525,7 +9506,7 @@ export default function DashboardPage() {
                           </p>
                           <p style={{
                             fontSize: '13px',
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                             margin: 0,
                             lineHeight: '1.4',
                           }}>
@@ -10535,7 +9516,7 @@ export default function DashboardPage() {
                       </div>
                       <span style={{
                         fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.5)',
+                        color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                       }}>
                         Conseil quotidien
                       </span>
@@ -10547,7 +9528,7 @@ export default function DashboardPage() {
 
             {/* Tablet Bezel Bottom */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               borderRadius: '0 0 36px 36px',
               padding: '12px',
               textAlign: 'center',
@@ -10555,7 +9536,7 @@ export default function DashboardPage() {
               <div style={{
                 width: '180px',
                 height: '5px',
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: 'color-mix(in srgb, var(--ik-text) 20%, transparent)',
                 borderRadius: '2px',
                 margin: '0 auto',
               }} />
@@ -10582,10 +9563,10 @@ export default function DashboardPage() {
         onClick={() => setShowProfileMenu(false)}
         >
           <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 52, 96, 0.95) 100%)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-text) 95%, transparent) 0%, rgba(15, 52, 96, 0.95) 100%)',
             borderRadius: '20px',
             padding: '0',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
+            border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
             backdropFilter: 'blur(20px)',
             maxWidth: '600px',
             width: '90%',
@@ -10598,7 +9579,7 @@ export default function DashboardPage() {
             {/* Header */}
             <div style={{
               padding: '24px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -10606,7 +9587,7 @@ export default function DashboardPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: '900',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 margin: 0,
               }}>
                 Mon Profil
@@ -10614,24 +9595,24 @@ export default function DashboardPage() {
               <button
                 onClick={() => setShowProfileMenu(false)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                   borderRadius: '8px',
                   width: '36px',
                   height: '36px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#fff',
+                  color: 'var(--ik-text)',
                   cursor: 'pointer',
                   fontSize: '20px',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
                 }}
               >
                 ✕
@@ -10643,7 +9624,7 @@ export default function DashboardPage() {
               display: 'flex',
               gap: '0',
               padding: '0 24px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
               background: 'rgba(0, 0, 0, 0.2)',
             }}>
               {[
@@ -10656,10 +9637,10 @@ export default function DashboardPage() {
                   style={{
                     flex: 1,
                     padding: '16px',
-                    background: profileMenuTab === tab.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    background: profileMenuTab === tab.id ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
                     border: 'none',
-                    borderBottom: profileMenuTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
-                    color: profileMenuTab === tab.id ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                    borderBottom: profileMenuTab === tab.id ? '2px solid var(--ik-primary)' : '2px solid transparent',
+                    color: profileMenuTab === tab.id ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
@@ -10667,12 +9648,12 @@ export default function DashboardPage() {
                   }}
                   onMouseEnter={(e) => {
                     if (profileMenuTab !== tab.id) {
-                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                      e.currentTarget.style.color = 'color-mix(in srgb, var(--ik-text) 70%, transparent)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (profileMenuTab !== tab.id) {
-                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)';
+                      e.currentTarget.style.color = 'color-mix(in srgb, var(--ik-text) 50%, transparent)';
                     }
                   }}
                 >
@@ -10690,7 +9671,7 @@ export default function DashboardPage() {
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -10704,12 +9685,12 @@ export default function DashboardPage() {
                       marginBottom: '16px',
                     }}>
                       {[
-                        { id: 'blue', name: 'Bleu', value: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)' },
-                        { id: 'purple', name: 'Violet', value: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)' },
-                        { id: 'gold', name: 'Or', value: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)' },
-                        { id: 'green', name: 'Vert', value: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)' },
-                        { id: 'pink', name: 'Rose', value: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(190, 24, 93, 0.1) 100%)' },
-                        { id: 'red', name: 'Rouge', value: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(190, 24, 93, 0.1) 100%)' },
+                        { id: 'blue', name: 'Bleu', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)' },
+                        { id: 'purple', name: 'Violet', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)' },
+                        { id: 'gold', name: 'Or', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 10%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 10%, transparent) 100%)' },
+                        { id: 'green', name: 'Vert', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 10%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 10%, transparent) 100%)' },
+                        { id: 'pink', name: 'Rose', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, rgba(190, 24, 93, 0.1) 100%)' },
+                        { id: 'red', name: 'Rouge', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-negative) 10%, transparent) 0%, rgba(190, 24, 93, 0.1) 100%)' },
                       ].map((color) => (
                         <button
                           key={color.id}
@@ -10717,9 +9698,9 @@ export default function DashboardPage() {
                           style={{
                             padding: '12px',
                             background: color.value,
-                            border: badgeBackgroundColor === color.value ? '2px solid #60a5fa' : '2px solid rgba(255, 255, 255, 0.2)',
+                            border: badgeBackgroundColor === color.value ? '2px solid var(--ik-accent)' : '2px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                             borderRadius: '12px',
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                             fontSize: '12px',
                             fontWeight: '600',
                             cursor: 'pointer',
@@ -10737,7 +9718,7 @@ export default function DashboardPage() {
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -10754,10 +9735,10 @@ export default function DashboardPage() {
                         if (!badge) return null;
                         const isSelected = selectedDisplayBadges.includes(badgeId);
                         const rarityColors = {
-                          common: '#64748b',
-                          rare: '#3b82f6',
-                          very_rare: '#a855f7',
-                          unique: '#fbbf24',
+                          common: 'var(--ik-text-3)',
+                          rare: 'var(--ik-primary)',
+                          very_rare: 'var(--ik-orchid)',
+                          unique: 'var(--ik-warning)',
                         };
                         return (
                           <button
@@ -10771,8 +9752,8 @@ export default function DashboardPage() {
                             }}
                             style={{
                               padding: '12px',
-                              background: isSelected ? `${rarityColors[badge.rarity]}30` : 'rgba(255, 255, 255, 0.05)',
-                              border: `2px solid ${isSelected ? rarityColors[badge.rarity] : 'rgba(255, 255, 255, 0.1)'}`,
+                              background: isSelected ? `${alpha(rarityColors[badge.rarity], 19)}` : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                              border: `2px solid ${isSelected ? rarityColors[badge.rarity] : 'color-mix(in srgb, var(--ik-text) 10%, transparent)'}`,
                               borderRadius: '12px',
                               textAlign: 'center',
                               cursor: selectedDisplayBadges.length >= 3 && !isSelected ? 'not-allowed' : 'pointer',
@@ -10803,7 +9784,7 @@ export default function DashboardPage() {
                     display: 'block',
                     fontSize: '12px',
                     fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                     marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -10816,10 +9797,10 @@ export default function DashboardPage() {
                     style={{
                       width: '100%',
                       padding: '12px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                       borderRadius: '12px',
-                      color: '#fff',
+                      color: 'var(--ik-text)',
                       fontSize: '14px',
                       fontFamily: 'inherit',
                       minHeight: '100px',
@@ -10829,18 +9810,18 @@ export default function DashboardPage() {
                       transition: 'all 0.2s ease',
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 5%, transparent)';
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 5%, transparent)';
                     }}
                     placeholder="Parlez-nous de vous..."
                   />
                   <p style={{
                     fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.5)',
+                    color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     margin: '6px 0 0 0',
                   }}>
                     {bioEditInput.length}/150 caractères
@@ -10852,7 +9833,7 @@ export default function DashboardPage() {
             {/* Footer - Save Button */}
             <div style={{
               padding: '24px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              borderTop: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
               background: 'rgba(0, 0, 0, 0.2)',
               display: 'flex',
               gap: '12px',
@@ -10862,20 +9843,20 @@ export default function DashboardPage() {
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                   borderRadius: '10px',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 5%, transparent)';
                 }}
               >
                 Annuler
@@ -10888,22 +9869,22 @@ export default function DashboardPage() {
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)',
-                  border: '2px solid rgba(59, 130, 246, 0.5)',
+                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)',
+                  border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
                   borderRadius: '10px',
-                  color: '#60a5fa',
+                  color: 'var(--ik-accent)',
                   fontSize: '14px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.4) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.7)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 40%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 40%, transparent) 100%)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 70%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
                 }}
               >
                 ✓ Sauvegarder & Synchroniser
@@ -10925,7 +9906,7 @@ export default function DashboardPage() {
                 top: '-10px',
                 width: '10px',
                 height: '10px',
-                background: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 5)],
+                background: ['var(--ik-primary)', 'var(--ik-orchid)', '#ec4899', 'var(--ik-warning)', 'var(--ik-positive)'][Math.floor(Math.random() * 5)],
                 borderRadius: '50%',
                 animation: `fall 3s linear forwards`,
                 pointerEvents: 'none',
@@ -10957,11 +9938,11 @@ export default function DashboardPage() {
         >
           <div style={{
             padding: '20px 32px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 95%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 95%, transparent) 100%)',
             borderRadius: '12px',
-            border: '2px solid rgba(255, 255, 255, 0.3)',
+            border: '2px solid color-mix(in srgb, var(--ik-text) 30%, transparent)',
             backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
+            boxShadow: '0 8px 32px color-mix(in srgb, var(--ik-primary) 40%, transparent)',
             textAlign: 'center',
           }}>
             <div style={{
@@ -10974,7 +9955,7 @@ export default function DashboardPage() {
             <div style={{
               fontSize: '18px',
               fontWeight: '800',
-              color: '#fff',
+              color: 'var(--ik-text)',
               marginBottom: '4px',
               textTransform: 'uppercase',
               letterSpacing: '1px',
@@ -10983,7 +9964,7 @@ export default function DashboardPage() {
             </div>
             <div style={{
               fontSize: '13px',
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'color-mix(in srgb, var(--ik-text) 90%, transparent)',
               marginBottom: '8px',
             }}>
               {newAchievement.description}
@@ -10991,7 +9972,7 @@ export default function DashboardPage() {
             <div style={{
               fontSize: '14px',
               fontWeight: '700',
-              color: '#fbbf24',
+              color: 'var(--ik-warning)',
             }}>
               {newAchievement.reward}
             </div>
@@ -11045,24 +10026,24 @@ export default function DashboardPage() {
             style={{
               padding: '16px',
               background: `linear-gradient(135deg, ${
-                notif.type === 'success' ? 'rgba(16, 185, 129, 0.15)' :
-                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.15)' :
-                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.15)' :
-                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.15)' :
-                'rgba(59, 130, 246, 0.15)'
+                notif.type === 'success' ? 'color-mix(in srgb, var(--ik-positive) 15%, transparent)' :
+                notif.type === 'follow' ? 'color-mix(in srgb, var(--ik-primary) 15%, transparent)' :
+                notif.type === 'achievement' ? 'color-mix(in srgb, var(--ik-warning) 15%, transparent)' :
+                notif.type === 'guild_join' ? 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)' :
+                'color-mix(in srgb, var(--ik-primary) 15%, transparent)'
               } 0%, ${
-                notif.type === 'success' ? 'rgba(16, 185, 129, 0.05)' :
-                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.05)' :
-                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.05)' :
-                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.05)' :
-                'rgba(59, 130, 246, 0.05)'
+                notif.type === 'success' ? 'color-mix(in srgb, var(--ik-positive) 5%, transparent)' :
+                notif.type === 'follow' ? 'color-mix(in srgb, var(--ik-primary) 5%, transparent)' :
+                notif.type === 'achievement' ? 'color-mix(in srgb, var(--ik-warning) 5%, transparent)' :
+                notif.type === 'guild_join' ? 'color-mix(in srgb, var(--ik-orchid) 5%, transparent)' :
+                'color-mix(in srgb, var(--ik-primary) 5%, transparent)'
               } 100%)`,
               border: `1.5px solid ${
-                notif.type === 'success' ? 'rgba(16, 185, 129, 0.3)' :
-                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.3)' :
-                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.3)' :
-                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.3)' :
-                'rgba(59, 130, 246, 0.3)'
+                notif.type === 'success' ? 'color-mix(in srgb, var(--ik-positive) 30%, transparent)' :
+                notif.type === 'follow' ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' :
+                notif.type === 'achievement' ? 'color-mix(in srgb, var(--ik-warning) 30%, transparent)' :
+                notif.type === 'guild_join' ? 'color-mix(in srgb, var(--ik-orchid) 30%, transparent)' :
+                'color-mix(in srgb, var(--ik-primary) 30%, transparent)'
               }`,
               borderRadius: '14px',
               backdropFilter: 'blur(10px)',
@@ -11144,8 +10125,8 @@ export default function DashboardPage() {
       {/* NEW: Badge Unlock Toast Notifications */}
       <div style={{
         position: 'fixed',
-        bottom: '30px',
-        right: '30px',
+        bottom: '84px',
+        right: '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
@@ -11154,8 +10135,8 @@ export default function DashboardPage() {
       }}>
         {badgeUnlockToasts.map(toast => (
           <div key={toast.id} style={{
-            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(236, 72, 153, 0.95) 100%)',
-            border: '2px solid rgba(255, 255, 255, 0.3)',
+            background: 'var(--ik-surface-card)',
+            border: '1px solid var(--ik-primary)',
             borderRadius: '16px',
             padding: '16px 20px',
             display: 'flex',
@@ -11171,17 +10152,17 @@ export default function DashboardPage() {
               <div style={{
                 fontSize: '14px',
                 fontWeight: '700',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 marginBottom: '4px',
               }}>🎉 Nouveau Badge!</div>
               <div style={{
                 fontSize: '13px',
-                color: 'rgba(255, 255, 255, 0.9)',
+                color: 'color-mix(in srgb, var(--ik-text) 90%, transparent)',
                 marginBottom: '2px',
               }}>{toast.badgeName}</div>
               <div style={{
                 fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
               }}>+{toast.xp} XP • {toast.rarity.replace('_', ' ').toUpperCase()}</div>
             </div>
             <div style={{
@@ -11223,8 +10204,8 @@ export default function DashboardPage() {
           backdropFilter: 'blur(4px)',
         }} onClick={() => setShowBadgeAlbum(false)}>
           <div style={{
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            border: '2px solid rgba(255, 255, 255, 0.1)',
+            background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
+            border: '2px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
             borderRadius: '20px',
             padding: '30px',
             maxWidth: '800px',
@@ -11240,7 +10221,7 @@ export default function DashboardPage() {
             }}>
               <h2 style={{
                 margin: 0,
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontSize: '24px',
                 fontWeight: '700',
               }}>
@@ -11249,7 +10230,7 @@ export default function DashboardPage() {
               <button onClick={() => setShowBadgeAlbum(false)} style={{
                 background: 'none',
                 border: 'none',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontSize: '24px',
                 cursor: 'pointer',
                 padding: 0,
@@ -11258,27 +10239,27 @@ export default function DashboardPage() {
 
             {/* Stats */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
               borderRadius: '12px',
               padding: '12px 16px',
               marginBottom: '20px',
               fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)',
             }}>
               <strong>{userBadges.length} / {Object.keys(badgeDefinitions).length}</strong> badges collectés ({Math.round((userBadges.length / Object.keys(badgeDefinitions).length) * 100)}%)
             </div>
 
             {/* Detailed Statistics Section */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%)',
-              border: '1px solid rgba(168, 85, 247, 0.2)',
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 10%, transparent) 100%)',
+              border: '1px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
               borderRadius: '12px',
               padding: '16px',
               marginBottom: '20px',
             }}>
               <h3 style={{
                 margin: '0 0 12px 0',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontSize: '13px',
                 fontWeight: '700',
                 textTransform: 'uppercase',
@@ -11291,13 +10272,13 @@ export default function DashboardPage() {
                 gap: '12px',
               }}>
                 {[
-                  { label: 'Unique', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'unique').length, color: '#fbbf24' },
-                  { label: 'Très Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'very_rare').length, color: '#a855f7' },
-                  { label: 'Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'rare').length, color: '#3b82f6' },
-                  { label: 'Commun', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'common').length, color: '#64748b' },
+                  { label: 'Unique', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'unique').length, color: 'var(--ik-warning)' },
+                  { label: 'Très Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'very_rare').length, color: 'var(--ik-accent)' },
+                  { label: 'Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'rare').length, color: 'var(--ik-accent)' },
+                  { label: 'Commun', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'common').length, color: 'var(--ik-text-3)' },
                 ].map(stat => (
                   <div key={stat.label} style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
                     borderRadius: '8px',
                     padding: '10px',
                     textAlign: 'center',
@@ -11306,7 +10287,7 @@ export default function DashboardPage() {
                     <div style={{ fontSize: '18px', fontWeight: '700', color: stat.color }}>
                       {stat.count}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                    <div style={{ fontSize: '11px', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>
                       {stat.label}
                     </div>
                   </div>
@@ -11325,9 +10306,9 @@ export default function DashboardPage() {
                 <button key={filter} onClick={() => setBadgeAlbumFilter(filter)} style={{
                   padding: '8px 14px',
                   borderRadius: '8px',
-                  border: badgeAlbumFilter === filter ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
-                  background: badgeAlbumFilter === filter ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  color: badgeAlbumFilter === filter ? '#f59e0b' : 'rgba(255, 255, 255, 0.6)',
+                  border: badgeAlbumFilter === filter ? '2px solid var(--ik-warning)' : '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                  background: badgeAlbumFilter === filter ? 'color-mix(in srgb, var(--ik-warning) 20%, transparent)' : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                  color: badgeAlbumFilter === filter ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -11370,7 +10351,7 @@ export default function DashboardPage() {
                       opacity: isObtained ? 1 : 0.5,
                       transform: hoveredBadge === badgeId ? 'scale(1.08)' : 'scale(1)',
                       position: 'relative',
-                      boxShadow: isPinned ? `0 0 12px ${badgeDefinitions[badgeId]?.rarity === 'unique' ? '#fbbf24' : '#a855f7'}` : 'none',
+                      boxShadow: isPinned ? `0 0 12px ${badgeDefinitions[badgeId]?.rarity === 'unique' ? 'var(--ik-warning)' : 'var(--ik-orchid)'}` : 'none',
                     }}
                     onMouseEnter={() => setHoveredBadge(badgeId)}
                     onMouseLeave={() => setHoveredBadge(null)}>
@@ -11380,7 +10361,7 @@ export default function DashboardPage() {
                       <div style={{
                         fontSize: '11px',
                         fontWeight: '700',
-                        color: '#fff',
+                        color: 'var(--ik-text)',
                         marginBottom: '4px',
                       }}>
                         {badge.name}
@@ -11388,7 +10369,7 @@ export default function DashboardPage() {
                       <div style={{
                         fontSize: '8px',
                         fontWeight: '600',
-                        color: badge.rarity === 'unique' ? '#fbbf24' : badge.rarity === 'very_rare' ? '#a855f7' : badge.rarity === 'rare' ? '#3b82f6' : '#64748b',
+                        color: badge.rarity === 'unique' ? 'var(--ik-warning)' : badge.rarity === 'very_rare' ? 'var(--ik-orchid)' : badge.rarity === 'rare' ? 'var(--ik-primary)' : 'var(--ik-text-3)',
                         textTransform: 'uppercase',
                         marginBottom: '4px',
                       }}>
@@ -11397,7 +10378,7 @@ export default function DashboardPage() {
                       {!isObtained && badgeUnlockProgress[badgeId] && badgeUnlockProgress[badgeId].percent > 0 && (
                         <div style={{
                           fontSize: '9px',
-                          color: 'rgba(255, 255, 255, 0.6)',
+                          color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
                           marginTop: '4px',
                         }}>
                           {badgeUnlockProgress[badgeId].percent}% progressé
@@ -11406,7 +10387,7 @@ export default function DashboardPage() {
                       {isObtained && badgeDateObtained[badgeId] && (
                         <div style={{
                           fontSize: '8px',
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                           marginTop: '4px',
                         }}>
                           {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
@@ -11425,8 +10406,8 @@ export default function DashboardPage() {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          background: isPinned ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
-                          border: `2px solid ${isPinned ? '#f59e0b' : 'rgba(255, 255, 255, 0.4)'}`,
+                          background: isPinned ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                          border: `2px solid ${isPinned ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 40%, transparent)'}`,
                           color: isPinned ? '#000' : '#fff',
                           fontSize: '14px',
                           cursor: 'pointer',
@@ -11520,7 +10501,7 @@ export default function DashboardPage() {
                     boxSizing: 'border-box',
                   }}
                 />
-                {twoFAError && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
+                {twoFAError && <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={closeTwoFAModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${currentTheme.border}`, background: 'transparent', color: currentTheme.text, cursor: 'pointer' }}>
                     Annuler
@@ -11533,7 +10514,7 @@ export default function DashboardPage() {
                       padding: '10px',
                       borderRadius: '8px',
                       border: 'none',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                      background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
                       color: '#fff',
                       fontWeight: 600,
                       cursor: twoFACodeInput.length === 6 ? 'pointer' : 'not-allowed',
@@ -11569,7 +10550,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={closeTwoFAModal}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
                 >
                   J'ai noté mes codes
                 </button>
@@ -11601,7 +10582,7 @@ export default function DashboardPage() {
                     boxSizing: 'border-box',
                   }}
                 />
-                {twoFAError && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
+                {twoFAError && <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={closeTwoFAModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${currentTheme.border}`, background: 'transparent', color: currentTheme.text, cursor: 'pointer' }}>
                     Annuler
@@ -11614,7 +10595,7 @@ export default function DashboardPage() {
                       padding: '10px',
                       borderRadius: '8px',
                       border: 'none',
-                      background: '#ef4444',
+                      background: 'var(--ik-negative)',
                       color: '#fff',
                       fontWeight: 600,
                       cursor: twoFADisablePassword ? 'pointer' : 'not-allowed',
@@ -11630,5 +10611,6 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+    </AppShell>
   );
 }

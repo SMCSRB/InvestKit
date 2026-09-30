@@ -349,6 +349,7 @@
   overflow-x: auto;
 }
 .ik-tab {
+  flex: none;
   position: relative;
   padding: 12px 2px;
   border: 0;

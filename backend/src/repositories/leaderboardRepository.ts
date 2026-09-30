@@ -102,7 +102,8 @@ export const leaderboardRepository = {
 
     const all = result.rows.map(toEntry);
     return {
-      entries: all.filter((e) => e.rank <= params.limit),
+      // RANK() donne le même rang aux ex æquo : sans plafond, des centaines de joueurs à égalité (ex. 0 %) remplissaient la liste.
+      entries: all.filter((e) => e.rank <= params.limit).slice(0, params.limit),
       me: all.find((e) => e.isMe) ?? null,
       totalRanked: result.rows.length ? Number(result.rows[0].total) : 0,
     };

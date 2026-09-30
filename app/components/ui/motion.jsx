@@ -69,7 +69,7 @@ export function AnimatedNumber({ value, format = fmtInt, duration = 900, classNa
       setShown(value);
       return undefined;
     }
-    const from = fromRef.current;
+    const from = Number.isFinite(fromRef.current) ? fromRef.current : value;
     const start = performance.now();
     let raf;
     const tick = (now) => {

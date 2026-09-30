@@ -1,0 +1,193 @@
+/* Tableau de bord : disposition (rail profil + contenu), vue d'ensemble. Préfixe dash-. */
+
+.dash-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--ik-space-5);
+  align-items: start;
+}
+.dash-rail {
+  position: sticky;
+  top: calc(var(--ik-banner-h, 0px) + var(--ik-topbar-h) + var(--ik-ticker-h) + 16px);
+  max-height: calc(100vh - var(--ik-topbar-h) - var(--ik-ticker-h) - 40px);
+  overflow-y: auto;
+  padding: 18px 16px;
+  border-radius: var(--ik-radius-lg);
+  background: var(--ik-surface-card);
+  border: 1px solid var(--ik-border);
+  box-shadow: var(--ik-shadow-card);
+  color: var(--ik-text);
+}
+.dash-main {
+  min-width: 0;
+}
+.dash-tabs {
+  margin-bottom: var(--ik-space-5);
+}
+.dash-tabs .ik-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dash-overview {
+  display: grid;
+  gap: var(--ik-space-4);
+}
+.dash-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.dash-dist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+.dash-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ik-border);
+  font-size: var(--ik-fs-sm);
+  color: var(--ik-text-2);
+}
+.dash-line:last-child {
+  border-bottom: 0;
+}
+.dash-line strong {
+  color: var(--ik-text);
+  font-weight: 800;
+  text-align: right;
+}
+.dash-domains {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ik-space-4);
+}
+.dash-domain {
+  display: grid;
+  gap: 14px;
+  height: 100%;
+  align-content: start;
+}
+.dash-domain__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dash-domain__head h3 {
+  margin: 0;
+  font-size: var(--ik-fs-md);
+  flex: 1;
+}
+.dash-blur {
+  filter: blur(6px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+.dash-domain .ik-btn {
+  justify-self: start;
+}
+@media (max-width: 1200px) {
+  .dash-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dash-rail {
+    position: static;
+    max-height: none;
+    order: 2;
+  }
+  .dash-main {
+    order: 1;
+  }
+  .dash-domains {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .dash-two,
+  .dash-domains {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Onglet Marché */
+.dash-market {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.dash-market__item {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--ik-radius);
+  background: var(--ik-surface-2);
+  border: 1px solid var(--ik-border);
+  color: var(--ik-text);
+  text-decoration: none;
+  transition: transform var(--ik-dur-fast) var(--ik-ease), border-color var(--ik-dur-fast) var(--ik-ease);
+}
+.dash-market__item:hover {
+  transform: translateY(-2px);
+  border-color: var(--ik-border-strong);
+}
+.dash-market__head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: var(--ik-fs-sm);
+}
+.dash-market__price {
+  font-size: var(--ik-fs-xl, 1.4rem);
+  font-weight: 800;
+}
+.dash-market__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Barre d'onglets : on passe à la ligne au lieu de déborder */
+.dash-tabs .ik-tabs {
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  overflow: visible;
+}
+
+@media (max-width: 760px) {
+  .dash-tabs .ik-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+}
+
+/* Mention honnête sur les contenus d'exemple (aucune donnée fictive présentée comme réelle) */
+.dash-demo-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: var(--ik-radius);
+  background: var(--ik-primary-soft);
+  border: 1px dashed var(--ik-border-strong);
+  color: var(--ik-text-2);
+  font-size: var(--ik-fs-sm);
+}
+
+/* Emplacement de la checklist pendant son chargement (hauteur mesurée de la carte chargée) */
+.dash-onb-skel {
+  height: 504px;
+  margin-bottom: 24px;
+  border-radius: 16px;
+}
+@media (max-width: 760px) {
+  .dash-onb-skel {
+    height: 637px;
+  }
+}

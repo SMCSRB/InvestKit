@@ -59,7 +59,7 @@ function ProfileMenu({ user, theme, onToggleTheme }) {
   return (
     <Popover
       trigger={({ toggle, open }) => (
-        <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="true">
+        <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="true" aria-label={`Menu du compte : ${name}`}>
           <span className="ik-avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
           <span className="ik-profile__name">{name}</span>
           <Icon name="chevronDown" size={16} />
@@ -132,7 +132,7 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
         <span className="ik-chip ik-quick" title="Série de jours consécutifs" style={{ gap: 4 }}><Icon name="flame" size={14} />{wallet.dailyStreak}</span>
       )}
       <span className="ik-topbar__spacer" />
-      <button type="button" className="ik-search" onClick={onOpenSearch} aria-label="Rechercher (Ctrl ou Commande + K)">
+      <button type="button" className="ik-search" onClick={onOpenSearch} aria-label="Rechercher… Ctrl K">
         <Icon name="search" size={18} />
         <span className="ik-search__text">Rechercher…</span>
         <kbd className="ik-kbd">Ctrl K</kbd>
