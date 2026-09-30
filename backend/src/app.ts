@@ -13,6 +13,7 @@ import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
 const app = express();
+app.set('trust proxy', env.trustProxy);
 
 // Middleware
 app.use(helmet());

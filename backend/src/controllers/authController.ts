@@ -1,13 +1,16 @@
 import { Response } from 'express';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import { generateToken, generatePending2FAToken, verifyToken } from '../utils/jwt';
 import { setSessionCookies, clearSessionCookies, tokenInBody } from '../utils/session';
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
-import { sendVerificationEmail } from '../utils/email';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email';
 import { verifyCaptcha } from '../utils/captcha';
+import { checkLock, recordFailure, recordSuccess } from '../services/loginThrottle';
+import { checkPassword } from '../utils/passwordPolicy';
+import { LOGIN_THROTTLE } from '../config/securityRules';
 import { activateAccount } from '../services/verificationService';
 import { DOMAINS } from '../data/marketData';
 import { hasProAccess } from '../utils/entitlements';
@@ -31,6 +34,9 @@ import { auditLog } from '../services/auditService';
 // faire gaspiller au joueur son choix unique ; l'API, elle, est prête.
 const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate'];
 
+// Faux hash bcrypt (coût 10) pour égaliser le temps de réponse quand le compte n'existe pas.
+const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);
+
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -39,6 +45,12 @@ export const authController = {
       // Validation
       if (!email || !password) {
         res.status(400).json({ error: 'Données manquantes' });
+        return;
+      }
+
+      const passwordError = checkPassword(password, email);
+      if (passwordError) {
+        res.status(400).json({ error: passwordError });
         return;
       }
 
@@ -296,17 +308,26 @@ export const authController = {
         return;
       }
 
-      const user = await userRepository.findByEmail(email);
-      if (!user) {
-        res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+      // Verrouillage temporaire par compte (même réponse pour un e-mail inconnu : aucun compte n'est révélé).
+      const lock = await checkLock(String(email));
+      if (lock.locked) {
+        res.setHeader('Retry-After', String(lock.retryAfterSeconds));
+        res.status(429).json({ error: `Trop d'échecs de connexion : compte temporairement verrouillé. Réessayez dans ${Math.ceil(lock.retryAfterSeconds / 60)} minute(s).`, code: 'LOGIN_LOCKED' });
         return;
       }
 
-      const passwordMatch = await bcrypt.compare(password, user.password_hash);
-      if (!passwordMatch) {
+      const user = await userRepository.findByEmail(email);
+      // Comparaison bcrypt TOUJOURS effectuée (contre un faux hash si le compte n'existe pas) : le temps de réponse ne révèle pas l'existence du compte.
+      const passwordMatch = await bcrypt.compare(String(password), user?.password_hash ?? DUMMY_HASH);
+      if (!user || !passwordMatch) {
+        const justLocked = await recordFailure(String(email));
+        if (user) {
+          await auditLog({ userId: user.id, action: justLocked ? 'login_locked' : 'login_failed', entityType: 'user', entityId: user.id, metadata: { reason: 'bad_credentials' }, ip: req.ip });
+        }
         res.status(401).json({ error: 'Email ou mot de passe incorrect' });
         return;
       }
+      await recordSuccess(String(email));
 
       if (!user.verified) {
         res.status(403).json({ error: 'Veuillez vérifier votre email d\'abord' });
@@ -355,29 +376,25 @@ export const authController = {
         return;
       }
 
+      // Réponse IDENTIQUE que le compte existe ou non (aucune énumération de comptes).
+      const uniform = { success: true, message: 'Si cet email correspond à un compte, un lien de réinitialisation vient d\'être envoyé.' };
       const user = await userRepository.findByEmail(email);
       if (!user) {
-        // Pour des raisons de sécurité, ne pas révéler si l'email existe
-        res.json({
-          success: true,
-          message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
-        });
+        res.json(uniform);
         return;
       }
 
-      // Générer un token de réinitialisation
-      const resetToken = uuidv4();
-      const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 heure
-
+      // Jeton aléatoire de 256 bits, valable 1 heure, à usage unique ; seule son empreinte est stockée.
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
       await userRepository.updateResetToken(user.id, resetToken, expiresAt);
+      await auditLog({ userId: user.id, action: 'password_reset_requested', entityType: 'user', entityId: user.id, ip: req.ip });
 
-      // TODO: Envoyer email avec lien de réinitialisation
+      const link = `${env.frontendUrl.replace(/\/$/, '')}/reset-password?token=${resetToken}`;
+      await sendPasswordResetEmail(user.email, link);
 
-      res.json({
-        success: true,
-        message: 'Lien de réinitialisation envoyé à votre email',
-        resetToken: env.isDev ? resetToken : undefined, // Afficher en dev uniquement
-      });
+      // Jamais en production : uniquement pour les tests automatisés (variable explicite).
+      res.json(process.env.EXPOSE_RESET_TOKEN_FOR_TESTS === 'true' ? { ...uniform, resetToken } : uniform);
     } catch (error) {
       console.error('Forgot password error:', error);
       res.status(500).json({ error: 'Erreur lors de la demande' });
@@ -399,11 +416,18 @@ export const authController = {
         return;
       }
 
+      const pwError = checkPassword(newPassword, user.email);
+      if (pwError) {
+        res.status(400).json({ error: pwError });
+        return;
+      }
+
       // Hasher le nouveau mot de passe
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Mettre à jour le mot de passe
       await userRepository.updatePassword(user.id, hashedPassword);
+      await recordSuccess(user.email); // un verrouillage en cours n'a plus lieu d'être après une réinitialisation
       await auditLog({ userId: user.id, action: 'password_reset', entityType: 'user', entityId: user.id, ip: req.ip });
 
       res.json({
@@ -626,6 +650,14 @@ export const authController = {
         return;
       }
 
+      const twoFaKey = `2fa:${user.id}`;
+      const lock2fa = await checkLock(twoFaKey);
+      if (lock2fa.locked) {
+        res.setHeader('Retry-After', String(lock2fa.retryAfterSeconds));
+        res.status(429).json({ error: `Trop de codes erronés : réessayez dans ${Math.ceil(lock2fa.retryAfterSeconds / 60)} minute(s).`, code: 'LOGIN_LOCKED' });
+        return;
+      }
+
       let valid = verifyTotpCode(code, decryptField(user.totp_secret));
 
       if (!valid && user.totp_backup_codes?.length) {
@@ -637,9 +669,12 @@ export const authController = {
       }
 
       if (!valid) {
+        const justLocked = await recordFailure(twoFaKey, LOGIN_THROTTLE.totpMaxFailures);
+        await auditLog({ userId: user.id, action: justLocked ? 'login_locked' : 'login_failed', entityType: 'user', entityId: user.id, metadata: { reason: 'bad_2fa_code' }, ip: req.ip });
         res.status(401).json({ error: 'Code invalide' });
         return;
       }
+      await recordSuccess(twoFaKey);
 
       await userRepository.updateLastLogin(user.id);
       await auditLog({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, metadata: { twoFactor: true }, ip: req.ip });

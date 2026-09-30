@@ -120,28 +120,18 @@ const generateVerificationEmailHTML = (firstName: string, verificationCode: stri
   </html>
 `;
 
-export const sendVerificationEmail = async (
-  email: string,
-  firstName: string,
-  verificationCode: string
-) => {
+// Envoi générique (Resend, SMTP ou Ethereal selon la configuration). Ne lève jamais : l'échec est journalisé et renvoyé.
+export const deliverEmail = async (to: string, subject: string, html: string) => {
   try {
     await initEmailTransporter(); // Initialize first
     const provider = getEmailProvider();
-    const htmlContent = generateVerificationEmailHTML(firstName, verificationCode);
 
     // Send via Resend
     if (provider === 'resend' && resendClient) {
-      console.log(`📨 Sending verification email via Resend to ${email}...`);
+      console.log(`📨 Sending email via Resend to ${to}...`);
       try {
-        const result = await resendClient.emails.send({
-          from: 'onboarding@resend.dev',
-          to: email,
-          subject: 'Vérifiez votre adresse email - InvestKit',
-          html: htmlContent,
-        });
-
-        console.log(`✅ Email sent successfully to ${email}`);
+        const result = await resendClient.emails.send({ from: 'onboarding@resend.dev', to, subject, html });
+        console.log(`✅ Email sent successfully to ${to}`);
         return result;
       } catch (resendError: any) {
         throw new Error(`Resend error: ${resendError.message}`);
@@ -150,24 +140,15 @@ export const sendVerificationEmail = async (
 
     // Send via Nodemailer (Ethereal or SMTP)
     const transporter = await initEmailTransporter();
-    const mailOptions = {
-      from: '"InvestKit" <noreply@investkit.com>',
-      to: email,
-      subject: 'Vérifiez votre adresse email - InvestKit',
-      html: htmlContent,
-    };
-
-    console.log(`📨 Sending verification email to ${email}...`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent successfully to ${email}`);
+    console.log(`📨 Sending email to ${to}...`);
+    const info = await transporter.sendMail({ from: '"InvestKit" <noreply@investkit.com>', to, subject, html });
+    console.log(`✅ Email sent successfully to ${to}`);
 
     // For testing with Ethereal, log the preview URL if available
     if (etherealAccount && info.response && info.response.includes('250')) {
       try {
         const previewUrl = nodemailer.getTestMessageUrl(info);
-        if (previewUrl) {
-          console.log(`🔗 Preview URL: ${previewUrl}`);
-        }
+        if (previewUrl) console.log(`🔗 Preview URL: ${previewUrl}`);
       } catch (e) {
         // Ethereal preview not available in this mode
       }
@@ -176,7 +157,36 @@ export const sendVerificationEmail = async (
     return info;
   } catch (error: any) {
     console.error('❌ Error sending email:', error.message);
-    // Don't throw - let the registration continue
+    // Don't throw - let the caller continue
     return { error: error.message };
   }
 };
+
+export const sendVerificationEmail = async (
+  email: string,
+  firstName: string,
+  verificationCode: string
+) => deliverEmail(email, 'Vérifiez votre adresse email - InvestKit', generateVerificationEmailHTML(firstName, verificationCode));
+
+const generatePasswordResetEmailHTML = (link: string) => `
+  <!DOCTYPE html>
+  <html>
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f8fafc; margin:0; padding:20px;">
+      <div style="max-width:600px; margin:0 auto;">
+        <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color:white; padding:24px; border-radius:8px; text-align:center;">
+          <h1 style="margin:0; font-size:26px;">💎 InvestKit</h1>
+        </div>
+        <div style="background:white; padding:28px; border-radius:8px; margin-top:16px;">
+          <h2 style="color:#0f172a; margin-top:0;">Réinitialisation du mot de passe</h2>
+          <p style="color:#475569; font-size:16px;">Vous avez demandé à changer votre mot de passe. Ce lien est valable <strong>1 heure</strong> et ne peut servir qu'une fois :</p>
+          <p style="text-align:center; margin:28px 0;"><a href="${link}" style="background:#3b82f6; color:white; padding:14px 26px; border-radius:8px; text-decoration:none; font-weight:700;">Choisir un nouveau mot de passe</a></p>
+          <p style="color:#64748b; font-size:14px;">Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe ne change pas.</p>
+        </div>
+      </div>
+    </body>
+  </html>
+`;
+
+export const sendPasswordResetEmail = async (email: string, link: string) =>
+  deliverEmail(email, 'Réinitialisation de votre mot de passe - InvestKit', generatePasswordResetEmailHTML(link));

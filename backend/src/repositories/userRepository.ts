@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { query } from '../utils/db';
 import type { Queryable } from './investcoinsRepository';
 import { encryptField } from '../utils/fieldCrypto';
@@ -35,6 +36,8 @@ export interface User {
   created_at: Date;
   updated_at: Date;
 }
+
+export const hashResetToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
 export const userRepository = {
   async findByEmail(email: string): Promise<User | null> {
@@ -122,16 +125,17 @@ export const userRepository = {
       `UPDATE users
        SET reset_token = $1, reset_token_expires_at = $2, updated_at = NOW()
        WHERE id = $3`,
-      [resetToken, expiresAt, id]
+      [hashResetToken(resetToken), expiresAt, id]
     );
   },
 
+  // Le jeton n'est jamais stocké en clair : seule son empreinte SHA-256 l'est (une fuite de la base ne permet pas de réinitialiser un compte).
   async findByResetToken(token: string): Promise<User | null> {
     const result = await query(
       `SELECT * FROM users
        WHERE reset_token = $1
        AND reset_token_expires_at > NOW()`,
-      [token]
+      [hashResetToken(token)]
     );
     return result.rows[0] || null;
   },

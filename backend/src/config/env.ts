@@ -8,6 +8,15 @@ export const env = {
   isDev: process.env.NODE_ENV === 'development',
   isProd: process.env.NODE_ENV === 'production',
 
+  // Reverse proxy : nombre de proxys de confiance devant l'API (nginx/Caddy = 1). Sans cela, derrière un proxy, TOUS les visiteurs
+  // partageraient la même adresse IP pour la limitation de débit et le journal d'audit. « false » = aucun proxy (accès direct).
+  trustProxy: ((): number | false => {
+    const raw = process.env.TRUST_PROXY;
+    if (raw === 'false' || raw === '0') return false;
+    if (raw && /^\d+$/.test(raw)) return parseInt(raw, 10);
+    return process.env.NODE_ENV === 'production' ? 1 : false;
+  })(),
+
   // JWT
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-key',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',

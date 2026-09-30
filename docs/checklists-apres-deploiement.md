@@ -167,3 +167,11 @@ Avant : lis `docs/sessions-cookies.md` (réglages `CORS_ORIGIN`, `COOKIE_SECURE`
 Aucun changement visible, sauf un point :
 1. Page d'inscription : saisir plusieurs adresses e-mail valides de suite fonctionne ; au-delà de 20 vérifications en 15 minutes, l'indicateur « e-mail disponible » ne s'affiche plus (limite anti-espionnage), l'inscription reste possible.
 2. (Facultatif) `cd backend && npm test` : `tests/idor.test.ts` passe.
+
+## PR Sécurité — connexion, mots de passe, réinitialisation
+1. `backend/.env.local` : vérifie `FRONTEND_URL=https://ton-site` (utilisé dans le lien du mail) et, derrière nginx/Caddy, `TRUST_PROXY=1` (défaut en production).
+2. Connexion avec un mauvais mot de passe 8 fois de suite (même depuis plusieurs appareils) : message « compte temporairement verrouillé », même avec le bon mot de passe. Attends la durée indiquée (ou utilise « Mot de passe oublié » : ça débloque).
+3. Page de connexion → **Oublié ?** : `/forgot-password` s'ouvre. Entre ton e-mail : message neutre (identique pour une adresse inconnue). Tu reçois un e-mail avec un bouton « Choisir un nouveau mot de passe ».
+4. Le lien ouvre `/reset-password` : les règles s'affichent (8 caractères, majuscule, minuscule, chiffre) ; un mot de passe conforme est accepté, redirection vers la connexion, connexion avec le nouveau mot de passe OK. Le même lien réutilisé est refusé.
+5. Inscription : un mot de passe trop faible est refusé avec un message clair.
+6. Si aucun e-mail n'arrive : l'envoi d'e-mails n'est pas configuré (voir `EMAIL_PROVIDER` dans `.env.local` : Resend ou SMTP).

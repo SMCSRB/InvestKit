@@ -6,7 +6,7 @@ n'est écrit dans le code** : tout passe par des variables d'environnement.
 
 ## 1. Prérequis sur le serveur
 - Node.js 20+, PostgreSQL 14+ (16 testé), `git`, `rsync` (pour les copies de sauvegarde)
-- Un reverse proxy HTTPS (nginx ou Caddy) devant le site (HTTPS obligatoire)
+- Un reverse proxy HTTPS (nginx ou Caddy) devant le site (HTTPS obligatoire). Derrière un proxy, l'API doit connaître le nombre de proxys de confiance : `TRUST_PROXY=1` (défaut en production ; `false` pour un accès direct). Le proxy doit transmettre `X-Forwarded-For`.
 
 ## 2. Installation
 ```bash
