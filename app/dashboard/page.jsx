@@ -3468,6 +3468,12 @@ export default function DashboardPage() {
                   >
                     🏠 Immobilier →
                   </button>
+                  <button
+                    onClick={() => router.push('/crypto')}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    ₿ Marché Crypto →
+                  </button>
                 </div>
 
                 {/* Portfolio summary */}
