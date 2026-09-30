@@ -193,3 +193,9 @@ Après fusion : `npm ci` à la racine du site, puis `npm run build` et redémarr
 1. Parcours complet du site (accueil, inscription, connexion, dashboard et ses onglets, Bourse : acheter/vendre, Crypto, Immobilier, Banque, glossaire, démo, pages légales, profil) : tout doit fonctionner comme avant, sans écran blanc.
 2. Regarde la console du navigateur (F12) : pas de texte rouge sur les pages principales.
 3. Si une page est cassée, note laquelle et le message : c'est probablement une particularité de React 19, à corriger en une ligne.
+
+## PR Sécurité — gouvernance (signalement, plan d'incident, scans automatiques)
+1. Sur GitHub : onglet **Security** → la politique (`SECURITY.md`) apparaît. Onglet **Actions** : le workflow « Sécurité » (CodeQL + gitleaks) se lance sur la PR. S'il signale un secret, révoque-le immédiatement.
+2. Onglet **Pull requests** : Dependabot ouvrira des PR de mise à jour le lundi (à regarder, pas à fusionner sans lire).
+3. Lis `docs/plan-incident.md`, complète le tableau « Contacts » (responsable, hébergeur) et garde une copie hors du serveur.
+4. Réglages du dépôt (à activer toi-même) : Settings → Code security → activer **Secret scanning** et **Push protection**, et protéger la branche `main` (PR obligatoire).

@@ -50,3 +50,9 @@ Feuille de route v6, phases 1 et 6. Ce lot ne change rien de visible pour un jou
 - Adaptations : retrait des options supprimées de `next.config.js` (`swcMinify`, `optimizeFonts`). Aucune autre modification du code n'a été nécessaire.
 - Vérifié en production dans un vrai navigateur : 15 pages sans erreur ni violation de CSP, connexion/déconnexion par cookie, migration de session, achat/vente avec aperçu des frais et de l'impôt, CSRF.
 - À savoir : la route `/api/auth/[...nextauth]` (connexion Google/GitHub via next-auth) existe mais n'est reliée à aucun écran et n'a pas de clés configurées ; elle reste compilée. À supprimer si l'option n'est pas prévue.
+
+## Gouvernance (feuille de route 6G)
+- `SECURITY.md` : comment signaler une faille. `docs/plan-incident.md` : contenir, analyser, corriger, informer (CNIL sous 72 h), retour d'expérience.
+- `.github/dependabot.yml` : mises à jour de dépendances hebdomadaires (site, backend, actions).
+- `.github/workflows/security.yml` : analyse statique CodeQL et recherche de secrets (gitleaks) à chaque PR et chaque lundi.
+- RGPD : export et suppression immédiate du compte (`/mes-donnees`), journal d'audit anonymisé à la suppression, registre des violations à tenir (voir le plan d'incident).
