@@ -289,3 +289,9 @@ Aucun changement visible pour un usage normal.
 
 ## PR Test de charge
 Facultatif, hors heures d'usage : `./ops/load-test.sh https://ton-site-api 10 30` depuis le serveur. Lis « Req/Sec » et « Latency » ; des 429 sont normaux (limite de débit). Si la latence dépasse 1 s avec 30 connexions, préviens-moi.
+
+## PR Crypto (simulation) — données, catalogue et horloge serveur
+Voir `docs/crypto-donnees.md` (section « À tester chez moi » et commandes d'import à lancer depuis ton serveur).
+- [ ] Migrations 033 et 034 appliquées au démarrage (tables `crypto_assets`, `crypto_candles`, `crypto_import_runs`, `crypto_accounts`).
+- [ ] Import réel lancé (journalier d'abord) ; vérifier dans `crypto_import_runs` qu'aucune ligne n'est en erreur.
+- [ ] Aucun actif « DEMO* » en production (jeu fictif réservé aux essais).
