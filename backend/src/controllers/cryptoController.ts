@@ -3,7 +3,9 @@ import { AuthRequest } from '../middleware/auth';
 import { cryptoDataService, CryptoDataError } from '../services/crypto/dataService';
 import { clockService, availableStarts, dataEnd } from '../services/crypto/clockService';
 import { cryptoTradingService } from '../services/crypto/tradingService';
+import { eventsService } from '../services/crypto/eventsService';
 import { compareAssets } from '../services/crypto/compare';
+import { REALTIME_STATUS } from '../services/crypto/realtime';
 import { ATTRIBUTION, DISCLAIMER, TIMEFRAMES, TF_LABELS, Timeframe, CRYPTO_DOMAIN } from '../config/cryptoMarketRules';
 import { CATEGORY_LABELS, RISK_LABELS } from '../data/crypto/catalog';
 
@@ -52,6 +54,7 @@ export const cryptoController = {
       account: acc ? { startAt: acc.startAt, simulatedAt: acc.simulatedAt, canAdvance: end !== null && acc.simulatedAt < end, dataEnd: end } : null,
       starts: acc ? null : await availableStarts(),
       timeframes: TIMEFRAMES.map((t) => ({ id: t, label: TF_LABELS[t] })),
+      modes: [{ id: 'accelerated', label: 'Accéléré / Historique', available: true }, { id: 'realtime', label: 'Temps réel', ...REALTIME_STATUS }],
       categories: CATEGORY_LABELS, riskLabels: RISK_LABELS, attribution: ATTRIBUTION, disclaimer: DISCLAIMER,
     };
   }),
@@ -64,7 +67,7 @@ export const cryptoController = {
   advance: wrap('Erreur lors de l\'avance du temps', async (req) => {
     const before = await requireAccount(req);
     const r = await cryptoTradingService.advance(req.user!.userId, req.body?.step);
-    return { success: true, from: before.simulatedAt, simulatedAt: r.simulatedAt, events: r.events };
+    return { success: true, from: before.simulatedAt, simulatedAt: r.simulatedAt, events: r.events, marketEvents: r.marketEvents };
   }),
 
   assets: wrap('Erreur lors de la lecture des actifs', async (req) => {
@@ -97,6 +100,18 @@ export const cryptoController = {
       res.status(500).json({ error: 'Erreur lors de l\'envoi de l\'ordre' });
     }
   },
+
+  swap: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const r = await cryptoTradingService.swap(req.user!.userId, { ...(req.body ?? {}) }, req.ip);
+      res.status(r.idempotent ? 200 : 201).json({ success: true, ...r });
+    } catch (error) {
+      if (error instanceof CryptoDataError) { res.status(STATUS[error.code] ?? 400).json({ error: error.message, code: error.code }); return; }
+      console.error('Erreur échange Crypto', error);
+      res.status(500).json({ error: 'Erreur lors de l\'échange' });
+    }
+  },
+  events: wrap('Erreur lors de la lecture du journal du marché', async (req) => ({ events: await eventsService.list(req.user!.userId) })),
 
   cancelOrder: wrap('Erreur lors de l\'annulation', async (req) => ({ success: true, order: await cryptoTradingService.cancelOrder(req.user!.userId, String(req.params.id), req.ip) })),
   orders: wrap('Erreur lors de la lecture des ordres', async (req) => ({ orders: await cryptoTradingService.listOrders(req.user!.userId, req.query.status) })),

@@ -20,15 +20,16 @@ export const slippageFraction = (notionalUsd: number, avgDailyVolumeUsd: number)
   return Math.min(E.slippage.maxFraction, E.slippage.k * Math.sqrt(notionalUsd / avgDailyVolumeUsd));
 };
 
-export interface ExecInput { side: Side; refPrice: number; quantity: number; tier: number; avgDailyVolumeUsd: number; maker: boolean }
+export interface ExecInput { side: Side; refPrice: number; quantity: number; tier: number; avgDailyVolumeUsd: number; maker: boolean; stressMultiplier?: number }
 export interface Execution { price: number; spreadPct: number; slippagePct: number; notionalCoins: number; feeCoins: number }
 
 // Prix effectif : un achat paie plus cher, une vente reçoit moins (demi-écart + glissement). Un ordre maker s'exécute à son prix, sans écart ni glissement.
 // Montant en pièces entières, arrondi CONTRE le joueur (achat : supérieur ; vente : inférieur), comme le reste du registre.
 export const executeAt = (i: ExecInput): Execution => {
-  const spreadPct = i.maker ? 0 : (E.spreadPct[i.tier] ?? E.spreadPct[4]);
+  const mult = i.stressMultiplier && i.stressMultiplier > 1 ? i.stressMultiplier : 1;   // épisode de volatilité extrême : écart et glissement multipliés
+  const spreadPct = i.maker ? 0 : (E.spreadPct[i.tier] ?? E.spreadPct[4]) * mult;
   const notionalUsdRef = i.refPrice * i.quantity;
-  const slip = i.maker ? 0 : slippageFraction(notionalUsdRef, i.avgDailyVolumeUsd);
+  const slip = i.maker ? 0 : Math.min(E.slippage.maxFraction * mult, slippageFraction(notionalUsdRef, i.avgDailyVolumeUsd) * mult);
   const factor = 1 + (i.side === 'buy' ? 1 : -1) * (spreadPct / 200 + slip);
   const price = Math.max(0, i.refPrice * factor);
   const raw = (price * i.quantity) / E.usdPerCoin;

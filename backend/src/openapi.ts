@@ -109,6 +109,8 @@ export const ROUTES: Row[] = [
   ['get', '/crypto/orders', 'Crypto', 'Mes ordres (statut optionnel)'],
   ['post', '/crypto/orders', 'Crypto', 'Passer un ordre (market, limit, stop_loss, take_profit) ; idempotent via clientOrderId'],
   ['delete', '/crypto/orders/{id}', 'Crypto', 'Annuler un de mes ordres en attente'],
+  ['post', '/crypto/swap', 'Crypto', 'Échanger une crypto contre une autre (sans impôt, frais seulement)'],
+  ['get', '/crypto/events', 'Crypto', 'Journal du marché : événements franchis par ma date simulée, avec leçon'],
   ['post', '/crypto/time/advance', 'Crypto', 'Avancer ma date simulée d\'un jour, d\'une semaine ou d\'un mois (le serveur décide, jamais en arrière)'],
   ['get', '/admin/users', 'Administration', 'Liste des utilisateurs (recherche, filtres, pagination)', 'admin'],
   ['get', '/admin/users/{id}', 'Administration', 'Fiche d\'un utilisateur (consultation tracée)', 'admin'],
