@@ -37,7 +37,7 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
 
   it('plus d\'onglet « Section en développement » accessible', () => {
     expect(page).not.toContain('Section en développement');
-    expect(page).toMatch(/t === 'risk' \? 'trading'/); // les anciens liens ?tab=risk mènent à l'analyse réelle
+    expect(page).toMatch(/tabParam === 'risk' \? 'trading'/); // les anciens liens ?tab=risk mènent à l'analyse réelle
   });
 
   it('le texte sur surface utilise les jetons de thème (lisible en clair comme en sombre)', () => {

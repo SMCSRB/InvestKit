@@ -7,8 +7,8 @@ import OverviewTab from './OverviewTab';
 import MarketTab from './MarketTab';
 
 import { PRICES, formatEuro } from '@/app/lib/plans';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import HelpTip from '@/app/components/HelpTip';
 import PortfolioRisk from '@/app/components/PortfolioRisk';
@@ -20,7 +20,16 @@ import { educationDomains } from '@/data/education';
 // Transparence d'une couleur quelconque (hexadécimale ou variable de design).
 const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
+// useSearchParams exige une limite Suspense (lecture de ?tab=…).
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
   const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
@@ -30,13 +39,14 @@ export default function DashboardPage() {
     setActiveTabState(t);
     try { window.history.replaceState(null, '', t === 'overview' ? '/dashboard' : `/dashboard?tab=${t}`); } catch { /* ignore */ }
   }, []);
-  // Les liens du menu latéral (?tab=trading, ?tab=settings…) ouvrent directement l'onglet demandé.
+  // Les liens du menu latéral (?tab=trading, ?tab=settings…) ouvrent l'onglet demandé, y compris quand le tableau de bord est déjà ouvert.
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
   useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get('tab');
     // « risk » (ancien onglet vide) mène à l'analyse de risque réelle, qui vit dans le simulateur.
-    const target = t === 'risk' ? 'trading' : t;
-    if (target && ['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'activity', 'settings'].includes(target)) setActiveTab(target);
-  }, []);
+    const target = tabParam === 'risk' ? 'trading' : (tabParam || 'overview');
+    if (['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'activity', 'settings'].includes(target)) setActiveTabState(target);
+  }, [tabParam]);
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
@@ -1276,11 +1286,12 @@ export default function DashboardPage() {
 
   // Vue d'ensemble RÉELLE (serveur) : pièces, Bourse, Crypto, Immobilier, dette, risque. Aucune valeur de démonstration.
   const [overview, setOverview] = useState(null);
+  const [overviewFailed, setOverviewFailed] = useState(false);
   const loadOverview = useCallback(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/overview`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setOverview(d); })
-      .catch(() => {});
+      .then((d) => { if (d) { setOverview(d); setOverviewFailed(false); } else setOverviewFailed(true); })
+      .catch(() => setOverviewFailed(true));
   }, []);
   const n0 = (v) => Number(v ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
   const signed = (v) => `${Number(v) > 0 ? '+' : ''}${n0(v)}`;
@@ -2436,7 +2447,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        {activeTab === 'overview' && <OverviewTab overview={overview} onOpenTab={setActiveTab} />}
+        {activeTab === 'overview' && <OverviewTab overview={overview} failed={overviewFailed} onRetry={() => { setOverviewFailed(false); loadOverview(); }} onOpenTab={setActiveTab} />}
 
         {/* MARKET TAB : cours réels du marché simulé, aucune valeur en dur */}
         {activeTab === 'market' && <MarketTab />}

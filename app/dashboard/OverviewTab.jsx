@@ -1,19 +1,19 @@
 'use client';
 
-import Link from 'next/link';
 import Icon from '@/app/components/ui/Icon';
-import { Button, Card, CardHead, Coin, Delta, EmptyState, StatCard } from '@/app/components/ui/primitives';
+import { Button, Card, CardHead, Coin, EmptyState, StatCard } from '@/app/components/ui/primitives';
 import { Reveal } from '@/app/components/ui/motion';
 import { Donut, SegmentedBar } from '@/app/components/ui/charts';
 import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import HelpTip from '@/app/components/HelpTip';
+import { tone as riskTone } from '@/app/components/PortfolioRisk';
 import { fmtInt } from '@/app/lib/format';
 
 const signed = (v) => `${Number(v) > 0 ? '+' : ''}${fmtInt(v)}`;
 const eur = (v) => `${fmtInt(v)} €`;
 
 // Droit d'accès au domaine côté affichage (la règle réelle reste côté serveur : backend/src/utils/entitlements.ts).
-const isLocked = (ov, domainIds) => ov.tier !== 'pro' && !!ov.freeDomain && !domainIds.includes(ov.freeDomain);
+const isLocked = (ov, domainIds) => ov.tier !== 'pro' && !domainIds.includes(ov.freeDomain);
 
 function DomainCard({ icon, name, locked, free, children, action, index }) {
   return (
@@ -41,8 +41,8 @@ function Line({ label, value, tone }) {
 }
 
 // Vue d'ensemble : uniquement des données réelles du serveur (/overview). Aucune valeur de démonstration.
-export default function OverviewTab({ overview: ov, onOpenTab }) {
-  const loading = !ov;
+export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }) {
+  const loading = !ov && !failed;
   const t = ov?.totals;
   const coins = ov?.coins ?? 0;
   const stocks = ov?.trading?.stocks;
@@ -56,10 +56,18 @@ export default function OverviewTab({ overview: ov, onOpenTab }) {
     { label: 'Crypto', value: crypto?.marketValue ?? 0, color: 'var(--ik-series-3)' },
   ];
   const distTotal = dist.reduce((a, d) => a + d.value, 0);
-  const lockedStocks = !loading && isLocked(ov, ['stocks']);
-  const lockedCrypto = !loading && isLocked(ov, ['crypto', 'crypto_market']);
-  const lockedRe = !loading && isLocked(ov, ['real_estate']);
+  const lockedStocks = !!ov && isLocked(ov, ['stocks']);
+  const lockedCrypto = !!ov && isLocked(ov, ['crypto', 'crypto_market']);
+  const lockedRe = !!ov && isLocked(ov, ['real_estate']);
 
+  if (failed && !ov) {
+    return (
+      <div className="dash-overview">
+        <OnboardingChecklist />
+        <Card><EmptyState icon="alert" title="Vue d'ensemble indisponible" action={<Button onClick={onRetry}>Réessayer</Button>}>Le serveur n&apos;a pas répondu (ou trop de requêtes). Tes données ne sont pas perdues.</EmptyState></Card>
+      </div>
+    );
+  }
   return (
     <div className="dash-overview">
       <OnboardingChecklist />
@@ -112,7 +120,7 @@ export default function OverviewTab({ overview: ov, onOpenTab }) {
               <EmptyState icon="shield" title="Pas encore de risque à mesurer">Achète un premier titre dans le simulateur : le score de risque apparaît ici.</EmptyState>
             ) : (
               <div className="dash-dist">
-                <Donut size={132} thickness={16} segments={[{ label: 'Score', value: risk.score, color: risk.score >= 70 ? 'var(--ik-negative)' : risk.score >= 40 ? 'var(--ik-series-3)' : 'var(--ik-positive)' }, { label: 'Reste', value: Math.max(0, 100 - risk.score), color: 'var(--ik-surface-3)' }]} ariaLabel={`Score de risque : ${risk.score} sur 100, ${risk.label}`}>
+                <Donut size={132} thickness={16} segments={[{ label: 'Score', value: risk.score, color: riskTone(risk.score) }, { label: 'Reste', value: Math.max(0, 100 - risk.score), color: 'var(--ik-surface-3)' }]} ariaLabel={`Score de risque : ${risk.score} sur 100, ${risk.label}`}>
                   <div><div className="ik-num" style={{ fontWeight: 800, fontSize: 24 }}>{risk.score}</div><div className="ik-muted">/ 100</div></div>
                 </Donut>
                 <div style={{ flex: 1, minWidth: 170, display: 'grid', gap: 10 }}>

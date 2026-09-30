@@ -23,11 +23,11 @@ export default function OnboardingChecklist() {
   const [showProfile, setShowProfile] = useState(false);
   const [suggestion, setSuggestion] = useState(null);
   const [msg, setMsg] = useState('');
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHidden] = useState(() => { try { return typeof window !== 'undefined' && localStorage.getItem('onboardingHidden') === '1'; } catch { return false; } });
   const [failed, setFailed] = useState(false);
 
-  const load = useCallback(() => fetch(`${API}/onboarding`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setData(d); if (d.profile) setForm(d.profile); } else setFailed(true); }).catch(() => setFailed(true)), []);
-  useEffect(() => { try { setHidden(localStorage.getItem('onboardingHidden') === '1'); } catch { /* ignore */ } load(); }, [load]);
+  const load = useCallback((initial) => fetch(`${API}/onboarding`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setData(d); if (d.profile) setForm(d.profile); } else if (initial) setFailed(true); }).catch(() => { if (initial) setFailed(true); }), []);
+  useEffect(() => { if (!hidden) load(true); }, [load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (hidden || failed) return null;
   // Emplacement réservé pendant le chargement : évite que tout le tableau de bord saute quand la carte apparaît.

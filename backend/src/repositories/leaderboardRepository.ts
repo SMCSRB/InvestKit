@@ -78,7 +78,8 @@ export const leaderboardRepository = {
                 COALESCE(u.username, 'Investisseur anonyme') AS username,
                 lr.performance_pct,
                 lr.leverage,
-                RANK() OVER (ORDER BY lr.performance_pct DESC) AS rank
+                RANK() OVER (ORDER BY lr.performance_pct DESC) AS rank,
+                ROW_NUMBER() OVER (ORDER BY lr.performance_pct DESC, u.username, lr.user_id) AS rn
          FROM leaderboard_rankings lr
          JOIN users u ON u.id = lr.user_id
          WHERE lr.mode = $1 AND lr.domain = $2 AND lr.period = $3
@@ -87,7 +88,7 @@ export const leaderboardRepository = {
        SELECT user_id, username, performance_pct, leverage, rank,
               (SELECT COUNT(*) FROM ranked) AS total
        FROM ranked
-       WHERE rank <= $5 OR user_id = $6
+       WHERE (rank <= $5 AND rn <= $5) OR user_id = $6
        ORDER BY rank, username`,
       [params.mode, params.domain, params.period ?? periodForYear(params.year), params.minCapital, params.limit, params.callerId]
     );

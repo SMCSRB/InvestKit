@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Card, CardHead, Delta, EmptyState, Button, Skeleton } from '@/app/components/ui/primitives';
 import { Sparkline } from '@/app/components/ui/charts';
@@ -59,7 +60,7 @@ export default function MarketTab() {
         {state.status === 'ok' && (
           <div className="dash-market">
             {state.items.map((t) => (
-              <a key={t.symbol} className="dash-market__item" href="/crypto">
+              <Link key={t.symbol} className="dash-market__item" href="/crypto">
                 <span className="dash-market__head">
                   <strong>{t.symbol}</strong>
                   <span className="ik-muted">{t.name}</span>
@@ -69,7 +70,7 @@ export default function MarketTab() {
                   <Delta value={t.change} />
                   <Sparkline values={t.series} width={84} height={26} />
                 </span>
-              </a>
+              </Link>
             ))}
           </div>
         )}
