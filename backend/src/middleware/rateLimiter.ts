@@ -36,3 +36,13 @@ export const checkEmailLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de vérifications. Réessayez dans 15 minutes.' },
 });
+
+// Retours utilisateurs : 10 par heure et par IP (anti-spam).
+export const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  skipFailedRequests: true, // une saisie refusée (400) ne consomme pas le quota
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de retours envoyés. Réessayez plus tard.' },
+});

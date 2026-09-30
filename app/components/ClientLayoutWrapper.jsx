@@ -6,16 +6,20 @@ import { UserProvider } from '@/app/context/UserContext';
 import Toast from '@/app/components/Toast';
 import SessionBootstrap from '@/app/components/SessionBootstrap';
 import ImpersonationBanner from '@/app/components/ImpersonationBanner';
+import AnnouncementsBanner from '@/app/components/AnnouncementsBanner';
+import FeedbackWidget from '@/app/components/FeedbackWidget';
 
 export default function ClientLayoutWrapper({ children }) {
   return (
     <NotificationProvider>
       <SessionBootstrap />
       <ImpersonationBanner />
+      <AnnouncementsBanner />
       <EducationProvider>
         <UserProvider>
           {children}
           <Toast />
+          <FeedbackWidget />
         </UserProvider>
       </EducationProvider>
     </NotificationProvider>

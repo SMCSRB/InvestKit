@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CHANGELOG } from '../lib/changelog';
+import LiveEntries from './LiveEntries';
 
 export const metadata = {
   title: 'Nouveautés - InvestKit',
@@ -12,10 +13,11 @@ export default function ChangelogPage() {
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <Link href="/" style={{ color: '#93c5fd', textDecoration: 'none' }}>← Accueil</Link>
         <h1 style={{ fontSize: 'clamp(24px, 6vw, 32px)', margin: '16px 0 24px' }}>🆕 Nouveautés</h1>
+        <LiveEntries />
         {CHANGELOG.map((entry) => (
           <section key={entry.title} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 13, color: '#94a3b8' }}>{entry.date}</div>
-            <h2 style={{ fontSize: 20, margin: '4px 0 12px' }}>{entry.title}</h2>
+            <h2 style={{ fontSize: 20, margin: '4px 0 12px', color: '#fff' }}>{entry.title}</h2>
             <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.6 }}>
               {entry.items.map((it) => <li key={it}>{it}</li>)}
             </ul>

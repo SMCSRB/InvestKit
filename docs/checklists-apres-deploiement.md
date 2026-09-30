@@ -231,3 +231,10 @@ Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
 2. Essaie d'acheter une action ou de réclamer la récompense quotidienne : refus (« lecture seule »). Les pages (Bourse, Immobilier, Banque) s'affichent avec les données du joueur.
 3. **Quitter** : retour sur `/admin`, tu es de nouveau administrateur.
 4. `/admin` → Journal : `admin_impersonate_start` et `admin_impersonate_stop` sont présents.
+
+## PR Retours utilisateurs et annonces (mini-CMS)
+1. Connecté, une bulle **« 💬 Un retour ? »** apparaît en bas à droite de chaque page. Essaie 👍, puis un **Bug** avec une phrase : message « Merci ».
+2. `/admin` → **Retours** : ton retour est là, avec la page d'origine. Marque-le « Traité » : il quitte la liste « Nouveau ».
+3. `/admin` → **Annonces** : crée une annonce de type *maintenance* publiée : un bandeau orange apparaît en haut du site (teste dans une fenêtre privée, même sans connexion). « Fermer » le masque ; « Dépublier » le retire pour tous.
+4. Crée une annonce de type *nouveauté* : elle apparaît en haut de `/changelog`.
+5. Le texte est affiché tel quel : écris `<b>gras</b>` dans une annonce, tu dois voir les balises, pas du gras.

@@ -298,6 +298,86 @@ function Flags() {
   );
 }
 
+
+const FB_STATUS = { new: 'Nouveau', seen: 'Vu', done: 'Traité', wontfix: 'Refusé' };
+
+function Feedback() {
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState('new');
+  const [kind, setKind] = useState('');
+  const [err, setErr] = useState('');
+  const load = useCallback(() => {
+    const p = new URLSearchParams({ pageSize: '50' }); if (status) p.set('status', status); if (kind) p.set('kind', kind);
+    api(`/feedback?${p}`).then(setData).catch((e) => setErr(e.message));
+  }, [status, kind]);
+  useEffect(() => { load(); }, [load]);
+  const setSt = async (id, st) => { try { await api(`/feedback/${id}`, { method: 'POST', body: { status: st } }); load(); } catch (e) { setErr(e.message); } };
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      {data && <div style={{ ...card, fontSize: 13 }}>👍 {data.thumbs.up} · 👎 {data.thumbs.down} · {data.summary.filter((s) => s.kind !== 'thumb').map((s) => `${s.kind === 'bug' ? 'bugs' : 'idées'} ${FB_STATUS[s.status].toLowerCase()} : ${s.n}`).join(' · ') || 'aucun bug ni idée'}</div>}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <select aria-label="Statut" value={status} onChange={(e) => setStatus(e.target.value)} style={input}><option value="">Tous les statuts</option>{Object.entries(FB_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} style={input}><option value="">Tous les types</option><option value="bug">Bugs</option><option value="idea">Idées</option><option value="thumb">👍 / 👎</option></select>
+      </div>
+      {err && <p role="alert" style={{ color: C.bad }}>{err}</p>}
+      {data?.feedback.map((f) => (
+        <div key={f.id} style={card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', fontSize: 12, color: C.muted }}>
+            <span>{f.kind === 'bug' ? '🐞 Bug' : f.kind === 'idea' ? '💡 Idée' : f.rating === 1 ? '👍' : '👎'} · {f.user_email || 'compte supprimé'} · {f.page || ''} · {date(f.created_at)}</span>
+            <span>{FB_STATUS[f.status]}</span>
+          </div>
+          {f.message && <p style={{ margin: '8px 0', fontSize: 14, whiteSpace: 'pre-wrap' }}>{f.message}</p>}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{Object.entries(FB_STATUS).filter(([k]) => k !== f.status).map(([k, v]) => <button key={k} style={btn()} onClick={() => setSt(f.id, k)}>Marquer « {v} »</button>)}</div>
+        </div>
+      ))}
+      {data && data.feedback.length === 0 && <div style={{ ...card, color: C.muted }}>Aucun retour pour ce filtre.</div>}
+    </div>
+  );
+}
+
+const KINDS = { info: 'ℹ️ Information', new: '🆕 Nouveauté (page des nouveautés)', maintenance: '🔧 Maintenance' };
+
+function Announcements() {
+  const [list, setList] = useState([]);
+  const [err, setErr] = useState('');
+  const [f, setF] = useState({ kind: 'info', title: '', body: '', published: true });
+  const load = useCallback(() => api('/announcements').then((d) => setList(d.announcements)).catch((e) => setErr(e.message)), []);
+  useEffect(() => { load(); }, [load]);
+  const save = async (a, patch) => { setErr(''); try { await api(`/announcements/${a.id}`, { method: 'PUT', body: { kind: a.kind, title: a.title, body: a.body, published: a.published, ...patch } }); await load(); } catch (e) { setErr(e.message); } };
+  const remove = async (a) => { if (!confirm(`Supprimer « ${a.title} » ?`)) return; try { await api(`/announcements/${a.id}`, { method: 'DELETE' }); await load(); } catch (e) { setErr(e.message); } };
+  const create = async (e) => { e.preventDefault(); setErr(''); try { await api('/announcements', { method: 'POST', body: f }); setF({ kind: 'info', title: '', body: '', published: true }); await load(); } catch (e2) { setErr(e2.message); } };
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Les annonces « info » et « maintenance » publiées s'affichent en bandeau en haut du site (fermable). Les « nouveautés » apparaissent dans la page /changelog. Texte brut uniquement.</p>
+      {err && <p role="alert" style={{ color: C.bad }}>{err}</p>}
+      <form onSubmit={create} style={{ ...card, display: 'grid', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <select aria-label="Type" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} style={input}>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          <input aria-label="Titre" placeholder="Titre" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} style={{ ...input, flex: '1 1 240px' }} required minLength={3} maxLength={120} />
+        </div>
+        <textarea aria-label="Texte" placeholder="Texte (facultatif)" value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} rows={3} maxLength={2000} style={{ ...input, width: '100%', boxSizing: 'border-box' }} />
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <label style={{ fontSize: 13 }}><input type="checkbox" checked={f.published} onChange={(e) => setF({ ...f, published: e.target.checked })} /> Publier tout de suite</label>
+          <button type="submit" style={btn('primary')}>Créer l'annonce</button>
+        </div>
+      </form>
+      {list.map((a) => (
+        <div key={a.id} style={{ ...card, display: 'flex', gap: 12, justifyContent: 'space-between', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <strong>{KINDS[a.kind]?.split(' ')[0]} {a.title}</strong> <span style={{ fontSize: 12, color: a.published ? C.good : C.muted }}>{a.published ? '● publiée' : '○ brouillon'}</span>
+            {a.body && <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 4, whiteSpace: 'pre-wrap' }}>{a.body}</div>}
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button style={btn()} onClick={() => save(a, { published: !a.published })}>{a.published ? 'Dépublier' : 'Publier'}</button>
+            <button style={btn('danger')} onClick={() => remove(a)}>Supprimer</button>
+          </div>
+        </div>
+      ))}
+      {list.length === 0 && <div style={{ ...card, color: C.muted }}>Aucune annonce.</div>}
+    </div>
+  );
+}
+
 function Billing() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState('');
@@ -353,6 +433,8 @@ const TABS = [
   { id: 'overview', label: '📊 Vue d\'ensemble', C: Overview },
   { id: 'users', label: '👥 Utilisateurs', C: Users },
   { id: 'audit', label: '🧾 Journal', C: Audit },
+  { id: 'feedback', label: '💬 Retours', C: Feedback },
+  { id: 'announcements', label: '📣 Annonces', C: Announcements },
   { id: 'flags', label: '🚩 Drapeaux', C: Flags },
   { id: 'billing', label: '💳 Facturation', C: Billing },
   { id: 'system', label: '🖥️ Système', C: System },

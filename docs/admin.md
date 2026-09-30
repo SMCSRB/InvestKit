@@ -39,3 +39,8 @@ Depuis la fiche d'un utilisateur (`👁️ Voir comme cet utilisateur`) : l'admi
 - Impossible sur un autre administrateur ou sur soi-même ; exige le rôle admin + 2FA.
 - **Tracé** : `admin_impersonate_start` et `admin_impersonate_stop` dans le journal d'audit.
 - Bandeau rouge permanent avec le bouton **Quitter** ; la session de l'administrateur est gardée de côté dans un cookie httpOnly et rétablie à la sortie (après revérification que le compte est toujours administrateur).
+
+## Retours utilisateurs et annonces (mini-CMS)
+- **Retours** : bouton flottant « 💬 Un retour ? » pour les joueurs connectés (👍/👎 sur la page, signalement de bug, idée). `POST /api/v1/feedback` (10 par heure, texte 5 à 2 000 caractères, la page d'origine est enregistrée). Côté admin, onglet **Retours** : filtre par statut/type, compteurs 👍/👎, statuts Nouveau → Vu → Traité / Refusé (tracés).
+- **Annonces** : onglet **Annonces** (texte brut, jamais du HTML). Type *information* ou *maintenance* → bandeau en haut du site (fermable, mémorisé par annonce) ; type *nouveauté* → affichée en tête de `/changelog` (la liste historique reste dans `app/lib/changelog.js`). Brouillon invisible tant qu'on ne publie pas. `GET /api/v1/announcements` est public (cache 60 s).
+- Migration 030 (`feedback`, `announcements`).
