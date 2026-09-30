@@ -22,7 +22,7 @@ export default function GlossairePage() {
         <Link href="/dashboard" style={{ color: '#60a5fa', fontSize: 14 }}>← Retour</Link>
         <h1 style={{ fontSize: 'clamp(26px, 5vw, 36px)', margin: '12px 0 6px', color: '#fff' }}>Glossaire</h1>
         <p style={{ color: '#94a3b8', marginTop: 0 }}>
-          Les mots de l&apos;investissement immobilier, expliqués simplement. Les chiffres « Dans le jeu » sont des simplifications pédagogiques.
+          Les mots de l&apos;immobilier, de la Bourse et de la crypto, expliqués simplement. Les chiffres « Dans le jeu » sont des simplifications pédagogiques.
         </p>
         <input
           type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un mot (ex. cash-flow, notaire…)"
@@ -39,6 +39,7 @@ export default function GlossairePage() {
                 <p style={{ margin: '0 0 6px', fontWeight: 600 }}>{it.short}</p>
                 <p style={{ margin: 0, color: '#cbd5e1', lineHeight: 1.6 }}>{it.long}</p>
                 {it.inGame && <p style={{ margin: '8px 0 0', color: '#93c5fd', fontSize: 14 }}>🎮 Dans le jeu : {it.inGame}</p>}
+                {it.quiz && <p style={{ margin: '8px 0 0', fontSize: 14 }}><Link href={`/education/${it.quiz.domain}/${it.quiz.chapter}`} style={{ color: '#60a5fa' }}>📝 Teste-toi : chapitre et quiz liés →</Link></p>}
               </article>
             ))}
           </section>

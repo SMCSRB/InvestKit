@@ -22,7 +22,7 @@ export default function FinalQuizPage() {
   const [badgeUnlocked, setBadgeUnlocked] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     if (!token) {
       router.push('/login');
     }

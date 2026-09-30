@@ -1,4 +1,6 @@
-export const educationDomains = [
+import { cryptoMarketDomain } from './educationCryptoMarket.js';
+
+const baseEducationDomains = [
   {
     id: 'crypto',
     name: 'Cryptomonnaies',
@@ -2418,3 +2420,5 @@ Bonne chance dans votre voyage !
     },
   },
 ];
+
+export const educationDomains = [...baseEducationDomains, cryptoMarketDomain];
