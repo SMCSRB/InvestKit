@@ -683,3 +683,7 @@ CREATE TRIGGER trg_audit_logs_guard BEFORE UPDATE OR DELETE ON audit_logs FOR EA
 -- 026
 -- Fiscalité et frais Bourse/Crypto : état fiscal du portefeuille (ouverture du PEA, versements, cessions crypto de l'année, frais et impôts payés).
 ALTER TABLE virtual_portfolios ADD COLUMN IF NOT EXISTS tax_state JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+-- 027
+-- Complément de capital de départ Pro : versé une seule fois par compte.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS pro_capital_granted_at TIMESTAMPTZ;

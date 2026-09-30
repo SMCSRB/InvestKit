@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { AuthRequest } from '../middleware/auth';
 import { getStripeClient } from '../utils/stripe';
 import { env } from '../config/env';
+import { grantProStartingCapitalTx } from '../services/verificationService';
 import { userRepository } from '../repositories/userRepository';
 import { subscriptionRepository } from '../repositories/subscriptionRepository';
 
@@ -53,6 +54,8 @@ const syncSubscriptionFromStripe = async (subscription: Stripe.Subscription) => 
   });
 
   await userRepository.setSubscriptionTier(user.id, tier);
+  // Complément de capital de départ : une seule fois par compte (voir grantProStartingCapital).
+  if (tier === 'pro') await grantProStartingCapitalTx(user.id);
 };
 
 export const billingController = {

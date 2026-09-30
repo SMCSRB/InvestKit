@@ -148,3 +148,8 @@ Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub �
 5. Crypto : vends une petite quantité (total de l'année sous 305 🪙) : aucun impôt ; au-dessus : impôt.
 6. La ligne « Payé depuis le début » cumule courtage et impôts. Glossaire : courtage, PEA, compte-titres, flat tax, impôt sur les cryptos.
 7. Admin : `/api/v1/economy/admin/coins-by-domain` contient `sinks` (frais et impôts par domaine).
+
+## PR Capital de départ Pro
+1. Compte gratuit neuf : après validation de l'e-mail, solde 500 🪙.
+2. Compte gratuit qui passe Pro (paiement test Stripe) : le solde augmente de **500 🪙** (une seule fois). Historique : ligne « pro_starting_bonus ».
+3. Résilie puis reprends l'abonnement Pro : aucun nouveau bonus.
