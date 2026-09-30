@@ -43,3 +43,5 @@ yarn-error.log*
 # OS
 Thumbs.db
 backups/
+__pycache__/
+*.pyc

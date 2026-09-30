@@ -47,7 +47,7 @@ backend/        API Express + TypeScript (npm séparé)
   config (règles et paramètres de jeu *Rules.ts, env.ts), data, middleware (auth, admin, rateLimiter), utils
   migrations/   NNN_nom.sql numérotées, rejouées au démarrage de l'API
   scripts/      invite, set-admin, set-pro, crypto-import, coins-stats…
-  tests/        Vitest (43 fichiers)
+  tests/        Vitest (un fichier *.test.ts par domaine)
 docs/           une fiche par fonctionnalité + guides de déploiement et d'exploitation
 ops/            sauvegardes, restauration testée, test de charge
 discord-bot/    bot Discord de la communauté (indépendant)
@@ -88,4 +88,5 @@ Déploiement, sauvegardes, plan d'incident : `docs/DEPLOIEMENT.md`, `docs/DEPLOI
 
 ## Outils (MCP) du projet
 
-Déclarés dans `.mcp.json` (portée projet, versions fixées, jamais `@latest`) : Context7 (documentation à jour), Playwright (parcours et captures dans un navigateur, limité à localhost), shadcn (catalogue de composants), Chrome DevTools (performance, Lighthouse, fluidité des animations ; statistiques d'usage et envoi à CrUX désactivés). L'outil Playwright `browser_run_code_unsafe` est bloqué dans `.claude/settings.json`. Les serveurs `filesystem` et Figma ne sont volontairement **pas** activés. Aucun secret de production ne doit leur être fourni.
+Déclarés dans `.mcp.json` (portée projet, versions fixées, jamais `@latest` ; seules les versions des paquets de premier niveau sont fixées, pas leurs dépendances) : Context7 (documentation à jour), Playwright (parcours et captures dans un navigateur ; sites limités à localhost par `--allowed-origins`, ce qui n'est pas une barrière de sécurité absolue), shadcn (catalogue de composants), Chrome DevTools (performance, Lighthouse, fluidité des animations ; **aucune restriction de sites**, statistiques d'usage et envoi à CrUX désactivés).
+Dans `.claude/settings.json` sont refusés : l'outil Playwright `browser_run_code_unsafe` et tous les outils `mcp__filesystem__*`. Les outils qui évaluent du JavaScript dans une page (`browser_evaluate`, `evaluate_script`) restent autorisés : ne les utiliser que sur les pages du site en local. Les serveurs `filesystem` et Figma ne sont pas activés. Aucun secret de production ne doit être fourni à ces outils.
