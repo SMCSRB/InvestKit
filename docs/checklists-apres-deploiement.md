@@ -199,3 +199,10 @@ Après fusion : `npm ci` à la racine du site, puis `npm run build` et redémarr
 2. Onglet **Pull requests** : Dependabot ouvrira des PR de mise à jour le lundi (à regarder, pas à fusionner sans lire).
 3. Lis `docs/plan-incident.md`, complète le tableau « Contacts » (responsable, hébergeur) et garde une copie hors du serveur.
 4. Réglages du dépôt (à activer toi-même) : Settings → Code security → activer **Secret scanning** et **Push protection**, et protéger la branche `main` (PR obligatoire).
+
+## PR Sauvegardes automatiques et test de restauration
+Sur le serveur, dans le dossier du projet :
+1. `./ops/backup.sh` : finit par « ✓ Terminé » ; un fichier `investkit-….dump` et son `.sha256` apparaissent dans `~/investkit-backups/`.
+2. `./ops/restore-test.sh` : finit par « ✓ TEST DE RESTAURATION RÉUSSI ». S'il refuse de créer la base, donne le droit : voir `docs/sauvegardes.md`.
+3. Installe les deux lignes `crontab` de `docs/sauvegardes.md`, vérifie le lendemain que `~/investkit-backups/backup.log` montre « Terminé ».
+4. Organise la copie hors du serveur (et note la phrase de chiffrement).
