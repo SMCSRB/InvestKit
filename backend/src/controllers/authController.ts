@@ -34,7 +34,7 @@ import { auditLog } from '../services/auditService';
 // Domaines pouvant être choisis comme domaine gratuit. L'interface garde
 // Immobilier grisé tant que ses écrans (étape 7) n'existent pas, pour ne pas
 // faire gaspiller au joueur son choix unique ; l'API, elle, est prête.
-const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate'];
+const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate', 'crypto_market'];
 
 // Faux hash bcrypt (coût 10) pour égaliser le temps de réponse quand le compte n'existe pas.
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);

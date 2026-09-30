@@ -3,6 +3,8 @@ import { AuthRequest } from '../middleware/auth';
 import { cryptoDataService, CryptoDataError } from '../services/crypto/dataService';
 import { clockService, availableStarts, dataEnd } from '../services/crypto/clockService';
 import { cryptoTradingService } from '../services/crypto/tradingService';
+import { cryptoLoanService } from '../services/crypto/loanService';
+import { rankingService } from '../services/crypto/rankingService';
 import { eventsService } from '../services/crypto/eventsService';
 import { compareAssets } from '../services/crypto/compare';
 import { REALTIME_STATUS } from '../services/crypto/realtime';
@@ -112,6 +114,12 @@ export const cryptoController = {
     }
   },
   events: wrap('Erreur lors de la lecture du journal du marché', async (req) => ({ events: await eventsService.list(req.user!.userId) })),
+
+  loan: wrap('Erreur lors de la lecture du prêt', async (req) => cryptoLoanService.view(req.user!.userId)),
+  loanQuote: wrap('Erreur lors de la simulation du prêt', async (req) => cryptoLoanService.quote(req.user!.userId, req.body?.amountCoins)),
+  loanBorrow: wrap('Erreur lors de l\'emprunt', async (req) => ({ success: true, ...(await cryptoLoanService.borrow(req.user!.userId, req.body?.amountCoins)) })),
+  loanRepay: wrap('Erreur lors du remboursement', async (req) => ({ success: true, ...(await cryptoLoanService.repay(req.user!.userId, req.body?.loanId, req.body?.coins)) })),
+  leaderboard: wrap('Erreur lors de la lecture du classement', async (req) => rankingService.board(req.user!.userId, req.query.period)),
 
   cancelOrder: wrap('Erreur lors de l\'annulation', async (req) => ({ success: true, order: await cryptoTradingService.cancelOrder(req.user!.userId, String(req.params.id), req.ip) })),
   orders: wrap('Erreur lors de la lecture des ordres', async (req) => ({ orders: await cryptoTradingService.listOrders(req.user!.userId, req.query.status) })),
