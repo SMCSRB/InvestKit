@@ -215,3 +215,13 @@ Sur le serveur, dans le dossier du projet :
 4. Avec un compte de test : `POST /admin/users/{id}/disable` avec un motif → le compte ne peut plus se connecter ; `enable` le rétablit. `POST /admin/users/{id}/coins` (+10 puis −10, avec motif) → le registre du joueur montre deux lignes « admin_adjustment ».
 5. Un compte non-admin, ou admin sans 2FA, reçoit 403 sur toutes les routes `/admin/…`.
 6. `GET /admin/audit` montre tes actions (consultations de fiches, ajustements…).
+
+## PR Administration — interface `/admin`
+Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
+1. Va sur `https://ton-site/admin` : vue d'ensemble avec tes chiffres réels et les alertes (lis-les une par une).
+2. Utilisateurs : cherche un compte de test, ouvre sa fiche, **suspends-le avec un motif** : le joueur ne peut plus se connecter (essaie dans une fenêtre privée) ; **réactive-le**.
+3. Ajuste de +10 pièces avec un motif : le solde du joueur monte de 10 et la ligne apparaît dans ses mouvements.
+4. Journal : tes actions y sont (consultations, suspension…).
+5. Drapeaux : crée `test_flag` activé à 100 %, vérifie qu'il apparaît, supprime-le.
+6. Système : base de données « OK » et liste des contrôles : complète ce qui est marqué ⚠️ (voir `docs/securite.md`).
+7. Avec un compte **non administrateur** : `/admin` affiche « Accès refusé ».

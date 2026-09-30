@@ -26,3 +26,8 @@ Toute action d'écriture est inscrite dans le journal d'audit avec l'administrat
 
 ## Drapeaux de fonctionnalité
 Activer/désactiver une fonction sans redéployer, ou la déployer à un pourcentage d'utilisateurs : `enabled` (interrupteur) + `rollout_percentage` (0-100, réparti de façon stable par utilisateur : le même joueur a toujours le même résultat, et un joueur inclus à 25 % l'est encore à 50 %). Côté site : `GET /api/v1/flags` renvoie `{ clé: vrai/faux }` pour le joueur connecté. Dans le code serveur : `featureFlagService.isEnabled('ma_cle', userId)`. Un drapeau inconnu vaut « faux ».
+
+## Interface `/admin`
+Six sections : **Vue d'ensemble** (alertes, utilisateurs actifs, abonnés Pro, pièces en circulation, graphique des inscriptions avec tableau alternatif, joueurs par domaine, puits d'InvestCoins), **Utilisateurs** (recherche, filtres, fiche avec Pro manuel, suspension avec motif, ajustement de pièces avec confirmation), **Journal** (filtrable, paginé), **Drapeaux** (créer, activer, pourcentage, supprimer), **Facturation**, **Système** (santé + contrôles de configuration, rafraîchi toutes les 15 s). Un non-admin voit « Accès refusé » ; un admin sans 2FA est invité à l'activer. Migration de session : la page fonctionne aussi juste après le passage aux cookies (ancien jeton envoyé tant que l'échange n'est pas terminé).
+
+Testé de bout en bout dans un vrai navigateur : refus non-admin, refus sans 2FA, statistiques, recherche, fiche, suspension (le jeton du joueur est aussitôt refusé) puis réactivation, journal, drapeaux, système.

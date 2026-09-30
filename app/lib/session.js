@@ -48,6 +48,14 @@ export const installApiFetch = () => {
     const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';
     if (auth && isFakeToken(bearer)) headers.delete('Authorization');
 
+    // Session ouverte avant la migration (vrai jeton encore dans localStorage) : tant que l'échange contre un cookie n'est pas terminé,
+    // toute requête sans en-tête d'autorisation le reçoit, pour ne jamais échouer pendant ces quelques centaines de millisecondes.
+    if (!headers.get('Authorization')) {
+      let stored = null;
+      try { stored = localStorage.getItem('token'); } catch { /* ignore */ }
+      if (!isFakeToken(stored)) headers.set('Authorization', `Bearer ${stored}`);
+    }
+
     const method = (init.method || (typeof input !== 'string' ? input.method : 'GET') || 'GET').toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && !headers.get('Authorization')) {
       const csrf = readCsrfCookie();
