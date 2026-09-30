@@ -286,3 +286,6 @@ Aucun changement visible pour un usage normal.
 2. Achète des titres dans le Simulateur, reviens : « Pièces + titres », « Performance », « Positions ouvertes », « Score de risque » ont changé en conséquence.
 3. Démarre l'Immobilier et emprunte : « Dette bancaire » et « Biens immobiliers » se mettent à jour.
 4. La carte affiche ton vrai pseudo et « INVESTKIT » (ou « INVESTKIT PRO » si tu es Pro) ; la barre latérale affiche ta vraie date d'inscription.
+
+## PR Test de charge
+Facultatif, hors heures d'usage : `./ops/load-test.sh https://ton-site-api 10 30` depuis le serveur. Lis « Req/Sec » et « Latency » ; des 429 sont normaux (limite de débit). Si la latence dépasse 1 s avec 30 connexions, préviens-moi.
