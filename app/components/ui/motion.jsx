@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
+import { fmtInt } from '@/app/lib/format';
 
 // Apparition au défilement. Sans IntersectionObserver ou avec animations coupées : visible tout de suite.
 export function Reveal({ children, index = 0, as: Tag = 'div', className = '', style, ...rest }) {
   const ref = useRef(null);
   const { motionEnabled } = useTheme();
   const [visible, setVisible] = useState(false);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -32,7 +34,8 @@ export function Reveal({ children, index = 0, as: Tag = 'div', className = '', s
   return (
     <Tag
       ref={ref}
-      className={`ik-reveal ${visible ? 'is-visible' : ''} ${className}`.trim()}
+      className={`ik-reveal ${visible ? 'is-visible' : ''} ${settled ? 'is-settled' : ''} ${className}`.trim()}
+      onTransitionEnd={(e) => { if (visible && e.target === e.currentTarget && e.propertyName === 'transform') setSettled(true); }}
       style={{ '--ik-i': index, ...style }}
       {...rest}
     >
@@ -44,7 +47,7 @@ export function Reveal({ children, index = 0, as: Tag = 'div', className = '', s
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
 // Chiffre qui s'anime vers sa valeur (solde, patrimoine...). Formatage par `format`.
-export function AnimatedNumber({ value, format = (v) => Math.round(v).toLocaleString('fr-FR'), duration = 900, className = '' }) {
+export function AnimatedNumber({ value, format = fmtInt, duration = 900, className = '' }) {
   const { motionEnabled } = useTheme();
   const [shown, setShown] = useState(value);
   const fromRef = useRef(value);

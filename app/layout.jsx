@@ -1,4 +1,4 @@
-import '@fontsource-variable/plus-jakarta-sans';
+import localFont from 'next/font/local';
 import './globals.css';
 import { themeInitScript } from '@/app/lib/designRoutes';
 import ClientLayoutWrapper from '@/app/components/ClientLayoutWrapper';
@@ -11,6 +11,15 @@ const jsonLd = {
   inLanguage: 'fr',
   ...(process.env.NEXT_PUBLIC_SITE_URL ? { url: process.env.NEXT_PUBLIC_SITE_URL } : {}),
 };
+
+// Police auto-hébergée (licence OFL) : préchargée, affichage immédiat avec une police de secours ajustée (pas de saut de mise en page).
+const jakarta = localFont({
+  src: '../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2',
+  variable: '--font-jakarta',
+  weight: '200 800',
+  display: 'swap',
+  adjustFontFallback: 'Arial',
+});
 
 export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
@@ -29,7 +38,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" data-theme="dark" suppressHydrationWarning>
+    <html lang="fr" data-theme="dark" className={jakarta.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <meta charSet="UTF-8" />

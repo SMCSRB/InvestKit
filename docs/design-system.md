@@ -44,6 +44,14 @@ Le bandeau de cours n'affiche que les actifs du marché simulé du joueur (Crypt
 
 Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les icônes sont des SVG (pas d'emoji comme icône) ; un bouton sans action réelle n'existe pas (ou porte « Bientôt » honnêtement).
 
+## Pages publiques et 3D (lot 2)
+
+- Habillage des pages publiques : `app/components/landing/PublicShell.jsx` (en-tête, pied de page) ; écrans de compte : `AuthLayout.jsx`. Styles : `app/styles/landing.css` (préfixe `lp-`).
+- Offres et prix : `app/lib/plans.js` (source unique) ; le paiement reste « Bientôt disponible » tant que `NEXT_PUBLIC_BILLING_ENABLED` n'est pas « true ».
+- **3D en CSS pur** (aucune bibliothèque) : scène inclinable avec couches en profondeur (`Stage3D.jsx`, `--z` par couche), pièce InvestKit (`Coin3D`), inclinaison des cartes au survol par délégation d'événements (`TiltScope.jsx`, attribut `data-tilt`). Uniquement `transform` et `opacity`. Coupée par « Animations : Non » et « réduire les animations » ; sur écran tactile, balancement automatique lent au lieu du suivi de la souris.
+- Les valeurs du graphique de l'accroche sont des exemples générés (jamais de vrais cours) et sont étiquetées comme telles.
+- Formats : `app/lib/format.js` (espace insécable classique pour les milliers).
+
 ## Voir les composants
 
 En développement uniquement : `/design-system` (renvoie 404 en production).

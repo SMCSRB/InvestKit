@@ -9,7 +9,9 @@ import { AnimatedNumber, burstCoins } from '@/app/components/ui/motion';
 import { endSession } from '@/app/lib/session';
 import { useTheme } from '@/app/context/ThemeContext';
 
-const fmtCoins = (v) => Math.round(v).toLocaleString('fr-FR');
+import { fmtInt } from '@/app/lib/format';
+
+const fmtCoins = fmtInt;
 
 function Notifications({ notif, onRead }) {
   return (

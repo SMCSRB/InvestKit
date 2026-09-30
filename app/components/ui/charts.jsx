@@ -7,7 +7,9 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 // Règles : couleurs = variables --ik-series-N (ordre fixe), légende dès 2 séries, jamais de double axe,
 // valeurs aussi disponibles en tableau pour les lecteurs d'écran.
 
-const fmtDefault = (v) => Math.round(v).toLocaleString('fr-FR');
+import { fmtInt } from '@/app/lib/format';
+
+const fmtDefault = fmtInt;
 
 function useWidth() {
   const ref = useRef(null);
@@ -89,12 +91,12 @@ function DataTable({ caption, columns, rows }) {
  * Courbe(s) lissée(s) avec infobulle et réticule vertical.
  * series: [{ label, color, data: number[] }] ; labels: string[] (une étiquette par point).
  */
-export function LineChart({ series, labels, height = 280, format = fmtDefault, yFormat, xEvery = 1, area = true, ariaLabel }) {
+export function LineChart({ series, labels, height = 280, format = fmtDefault, yFormat, xEvery = 1, area = true, minimal = false, ariaLabel }) {
   const [ref, width] = useWidth();
   const [hover, setHover] = useState(null);
   const uid = useId().replace(/:/g, '');
-  const pad = { l: 52, r: 14, t: 14, b: 28 };
-  const w = Math.max(width, 240);
+  const pad = minimal ? { l: 6, r: 6, t: 8, b: 24 } : { l: 52, r: 14, t: 14, b: 28 };
+  const w = Math.max(width, 160);
   const iw = w - pad.l - pad.r;
   const ih = height - pad.t - pad.b;
   const n = labels.length;
@@ -109,7 +111,7 @@ export function LineChart({ series, labels, height = 280, format = fmtDefault, y
 
   const x = (i) => pad.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
   const y = (v) => pad.t + ih - ((v - min) / (max - min || 1)) * ih;
-  const ticks = [0, 1, 2, 3, 4].map((k) => min + ((max - min) * k) / 4);
+  const ticks = minimal ? [0] : [0, 1, 2, 3, 4].map((k) => min + ((max - min) * k) / 4);
 
   const onMove = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -144,9 +146,11 @@ export function LineChart({ series, labels, height = 280, format = fmtDefault, y
           {ticks.map((t, k) => (
             <g key={k}>
               <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} stroke="var(--ik-grid)" strokeDasharray={k === 0 ? undefined : '3 5'} />
-              <text x={pad.l - 10} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--ik-text-3)">
-                {(yFormat || format)(t)}
-              </text>
+              {!minimal && (
+                <text x={pad.l - 10} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--ik-text-3)">
+                  {(yFormat || format)(t)}
+                </text>
+              )}
             </g>
           ))}
           {labels.map((l, i) =>

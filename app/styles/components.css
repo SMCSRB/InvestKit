@@ -785,3 +785,62 @@
 .ik-table th {
   white-space: nowrap;
 }
+
+/* ---------- Avis (succès, erreur, information) ---------- */
+.ik-notice--success {
+  background: var(--ik-positive-soft);
+  border-color: var(--ik-positive);
+  color: var(--ik-text);
+}
+.ik-notice--success .ik-icon {
+  color: var(--ik-positive);
+  flex: none;
+}
+.ik-notice--danger {
+  background: var(--ik-negative-soft);
+  border-color: var(--ik-negative);
+  color: var(--ik-text);
+}
+.ik-notice--danger .ik-icon {
+  color: var(--ik-negative);
+  flex: none;
+}
+.ik-notice--info {
+  background: var(--ik-primary-soft);
+  border-color: var(--ik-primary);
+  color: var(--ik-text);
+}
+.ik-notice--info .ik-icon {
+  color: var(--ik-accent);
+  flex: none;
+}
+.ik-input-wrap {
+  position: relative;
+}
+.ik-input-wrap .ik-input {
+  padding-right: 48px;
+}
+.ik-input-wrap__btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  translate: 0 -50%;
+}
+
+/* Confettis de bienvenue (coupés si les animations le sont) */
+.ik-confetti {
+  position: fixed;
+  top: -14px;
+  width: 10px;
+  height: 14px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: var(--ik-z-modal);
+  animation: ik-confetti 2s var(--ik-ease) forwards;
+}
+@keyframes ik-confetti {
+  to {
+    transform: translate3d(var(--dx, 0px), 105vh, 0) rotate(540deg);
+    opacity: 0;
+  }
+}

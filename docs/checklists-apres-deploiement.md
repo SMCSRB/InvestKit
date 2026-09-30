@@ -326,3 +326,31 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 7. Un compte **administrateur** : `GET /api/v1/auth/me` contient maintenant `isAdmin: true` ; pour un joueur normal, `false`.
 8. `/design-system` : **404 en production** (la page de démonstration n'existe qu'en développement). Normal.
 9. Aucune erreur rouge dans la console du navigateur (touche F12) sur les pages ci-dessus.
+
+## PR Design 2 — Nouvelle page d'accueil, connexion et inscription (lot 2/6)
+
+À fusionner **après** la PR « Design 1 ». Ouvre le site en navigation privée (tu n'es pas connecté).
+
+**Accueil (`/`)**
+1. L'accroche montre « Apprends à investir, sans risquer un centime », trois pastilles **Immobilier / Crypto / Bourse et PEA** avec un point vert « disponible », et une pastille « Bientôt ».
+2. Bouge la souris sur l'aperçu : il s'incline en 3D, la pièce tourne, les pastilles flottent. Sur téléphone, il se balance doucement tout seul.
+3. Descends : la bande « 3 domaines disponibles aujourd'hui · d'autres arrivent », puis les étapes, les domaines (badge « Disponible »), les fonctionnalités, l'éducation, la sécurité, les tarifs, la FAQ. Les cartes arrivent en profondeur et s'inclinent vers le curseur.
+4. **Quiz d'exemple** (section Éducation) : clique une mauvaise réponse, puis « Recommencer », puis la bonne : l'explication s'affiche.
+5. **Tarifs** : bascule Mensuel / Annuel ; le prix passe de 7,99 € / mois à 79 € / an. Le bouton Pro affiche « Bientôt disponible » tant que le paiement n'est pas branché (aucun faux paiement).
+6. **Bouton principal** : « Rejoindre avec un code d'invitation » tant que l'inscription est sur invitation ; « Créer mon compte » si tu ouvres l'inscription (`INVITE_ONLY=false`). Connecté, il devient « Reprendre là où j'en étais ».
+7. Menu : Domaines, Fonctionnalités, Éducation, Tarifs, FAQ font défiler jusqu'à la bonne section ; le bouton soleil/lune bascule sombre/clair ; sur téléphone, le menu (burger) s'ouvre et se ferme.
+8. Il n'y a **aucun faux chiffre** (plus de « 10K+ investisseurs » ni de « 99,9 % ») ; les chiffres affichés sont réels (110 actifs, 110 termes du glossaire). Le graphique est étiqueté « données d'exemple ».
+9. Pied de page : liens légaux, contact, glossaire ; le lien Discord n'apparaît que si `siteInfo.js` le renseigne.
+10. Menu « Animations : Non » (dans `/design-system` en développement, ou `localStorage.ik-motion = off`) : tout reste immobile et à plat.
+
+**Connexion (`/login`)**
+11. Connecte-toi avec ton compte : tu arrives sur le tableau de bord. Un mauvais mot de passe affiche un message d'erreur rouge. Le bouton œil affiche/masque le mot de passe. Un compte avec 2FA demande le code à 6 chiffres.
+12. « Mot de passe oublié ? » mène à la demande de lien ; le lien reçu mène à « Nouveau mot de passe ».
+
+**Inscription (`/signup`)**
+13. Avec un code d'invitation valide : e-mail (vérifié automatiquement : « Email disponible »), mot de passe (les exigences se cochent, la force s'affiche), confirmation, case RGPD, captcha, puis « S'inscrire » : un code arrive par e-mail et la page « Vérifie ton email » s'ouvre (6 cases, saisie chiffre par chiffre, « Renvoyer le code » avec compte à rebours).
+14. Les boutons FR / EN / ES changent la langue ; « Voir les détails RGPD » ouvre une fenêtre qui se ferme avec Échap.
+15. Le texte ne parle plus de « milliers d'investisseurs » (c'était faux).
+
+**Partout**
+16. Mobile (390 px) : pas de défilement horizontal sur l'accueil, la connexion et l'inscription. Mode clair : tout reste lisible.
