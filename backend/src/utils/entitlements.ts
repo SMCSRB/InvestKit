@@ -25,6 +25,8 @@ export const hasProAccess = (user: EntitlementUser): boolean =>
 export const getBuyAccess = (user: EntitlementUser, domainId: string): BuyAccess => {
   if (hasProAccess(user)) return { allowed: true };
   if (!user.free_domain) return { allowed: false, reason: 'FREE_DOMAIN_NOT_CHOSEN' };
+  // Le nouveau domaine « crypto_market » (marché simulé) est débloqué par le domaine gratuit « crypto » : un joueur qui a choisi Crypto n'a pas à rechoisir.
+  if (domainId === 'crypto_market' && user.free_domain === 'crypto') return { allowed: true };
   if (user.free_domain !== domainId) return { allowed: false, reason: 'DOMAIN_LOCKED' };
   return { allowed: true };
 };

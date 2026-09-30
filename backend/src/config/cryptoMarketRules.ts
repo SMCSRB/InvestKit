@@ -39,3 +39,19 @@ export type AdvanceStep = (typeof ADVANCE_STEPS)[number];
 
 export const ATTRIBUTION = 'Graphiques : TradingView Lightweight Charts™ (licence Apache 2.0) — https://www.tradingview.com/';
 export const DISCLAIMER = 'Simulation à but éducatif, pas un conseil en investissement. Les InvestCoins ne valent rien en dehors du jeu : aucun retrait, aucun achat avec de l\'argent réel, aucun échange entre joueurs.';
+
+// ── Économie du domaine Crypto ───────────────────────────────────────────────────────────────────────────────────
+// ⚠️ TOUTES ces valeurs sont des VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER (inspirées des ordres de grandeur des
+// plateformes d'échange grand public, pas de leurs barèmes exacts).
+export const CRYPTO_ECONOMY = {
+  usdPerCoin: 1,                 // conversion propre au domaine Crypto : 1 🪙 = 1 $ de jeu (l'unification 1 🪙 = 20 € est reportée)
+  minNotionalCoins: 10,          // montant minimal d'un ordre (hors sortie complète d'une position)
+  quantityDecimals: 8,
+  maxOpenOrders: 20,
+  staleDays: 7,                  // sans cotation depuis 7 jours : achat refusé (actif disparu), vente possible au dernier prix
+  feePctTaker: { 1: 0.10, 2: 0.20, 3: 0.35, 4: 0.60 } as Record<number, number>,   // frais de la plateforme (0,1 à 0,6 %)
+  makerFactor: 0.5,              // un ordre limite qui attend dans le carnet paie la moitié
+  minFeeCoins: 1,
+  spreadPct: { 1: 0.02, 2: 0.05, 3: 0.20, 4: 0.80 } as Record<number, number>,     // écart achat/vente complet ; moitié à chaque exécution « au marché »
+  slippage: { k: 0.10, maxFraction: 0.05 },                                        // glissement = k × √(montant / volume quotidien moyen), plafonné
+} as const;

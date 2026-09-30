@@ -60,18 +60,4 @@ export const clockService = {
     if (end === null || target > end) throw new CryptoDataError('INVALID_INPUT', 'Fin des données disponibles : tu ne peux pas avancer davantage.');
     return target;
   },
-
-  // Avance l'horloge du joueur (le serveur décide ; jamais en arrière). Mise à jour conditionnelle : deux clics simultanés n'avancent pas deux fois la même étape.
-  async advance(userId: string, step: unknown): Promise<CryptoAccount> {
-    const acc = await clockService.get(userId);
-    if (!acc) throw new CryptoDataError('NOT_FOUND', 'Compte Crypto non créé');
-    const target = await clockService.nextDate(acc, step);
-    const r = await query(
-      `UPDATE crypto_accounts SET simulated_at = to_timestamp($2::float8 / 1000.0), updated_at = NOW()
-        WHERE user_id = $1 AND simulated_at = to_timestamp($3::float8 / 1000.0)`,
-      [userId, target, acc.simulatedAt]
-    );
-    if (!r.rowCount) throw new CryptoDataError('INVALID_INPUT', 'L\'horloge a déjà changé : recharge la page.');
-    return (await clockService.get(userId))!;
-  },
 };
