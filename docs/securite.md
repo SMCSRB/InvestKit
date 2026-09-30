@@ -56,3 +56,11 @@ Feuille de route v6, phases 1 et 6. Ce lot ne change rien de visible pour un jou
 - `.github/dependabot.yml` : mises à jour de dépendances hebdomadaires (site, backend, actions).
 - `.github/workflows/security.yml` : analyse statique CodeQL et recherche de secrets (gitleaks) à chaque PR et chaque lundi.
 - RGPD : export et suppression immédiate du compte (`/mes-donnees`), journal d'audit anonymisé à la suppression, registre des violations à tenir (voir le plan d'incident).
+
+## Robustesse face aux entrées malveillantes (feuille de route 6B)
+- `tests/fuzz.test.ts` : **101 routes × 20 corps piégés × 3 profils** (anonyme, joueur, administrateur) — types inattendus, opérateurs de type NoSQL, objets imbriqués, valeurs `Infinity`/`NaN`/1e400, pollution de prototype, injections SQL et traversée de chemin, chaînes de 100 000 caractères, emoji, caractères de contrôle. Règle : jamais d'erreur serveur (5xx).
+- Premier passage : le test a trouvé **deux vraies erreurs serveur**, corrigées :
+  1. un corps JSON invalide, ou qui n'est pas un objet (`"texte"`, `12345`, `true`), renvoyait **500** sur *toutes* les routes (le gestionnaire d'erreurs ne distinguait pas les erreurs du client) → désormais **400** (`Corps de requête invalide`), **413** (trop gros), etc. ;
+  2. `POST /auth/2fa/disable` avec un mot de passe qui n'est pas du texte provoquait un 500 → 401.
+  De plus, un paiement non configuré sur le serveur renvoie **503** (« le paiement n'est pas disponible ») au lieu de 500.
+- Corps limités (100 ko par défaut d'Express : un corps de 2 Mo → 413), types vérifiés dans les services, requêtes SQL toutes paramétrées (aucune concaténation de données utilisateur), identifiants validés en UUID.

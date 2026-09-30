@@ -261,3 +261,9 @@ Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
 3. **Voir le détail** : six facteurs avec barres et explications, cinq crises historiques.
 4. Achète beaucoup d'une seule action : « Concentration » monte ; en Crypto, « Exposition aux cryptomonnaies » et le score montent nettement.
 5. Emprunte sur ton portefeuille (Banque) : le facteur « Endettement » apparaît.
+
+## PR Sécurité — robustesse des entrées (fuzz)
+Aucun changement visible pour un usage normal.
+1. Formulaire de connexion avec des données normales : inchangé. Erreurs : un mauvais mot de passe affiche toujours le même message.
+2. (Facultatif) `cd backend && npm test` : le test `fuzz.test.ts` (environ 20 secondes) passe.
+3. Si le paiement Stripe n'est pas encore configuré, le bouton d'abonnement affiche « Le paiement n'est pas disponible pour le moment » (avant : une erreur technique).

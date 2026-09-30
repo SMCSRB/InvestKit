@@ -71,9 +71,9 @@ export const billingController = {
       const priceId = plan === 'yearly' ? env.stripe.priceIdYearly : env.stripe.priceIdMonthly;
 
       if (!priceId) {
-        res.status(500).json({
-          error: `STRIPE_PRICE_ID_${plan === 'yearly' ? 'YEARLY' : 'MONTHLY'} non configuré`,
-        });
+        // Configuration du serveur incomplète (pas une erreur de l'utilisateur ni un bug) : 503, sans détail technique pour le visiteur.
+        console.error(`STRIPE_PRICE_ID_${plan === 'yearly' ? 'YEARLY' : 'MONTHLY'} non configuré`);
+        res.status(503).json({ error: 'Le paiement n\'est pas disponible pour le moment.', code: 'BILLING_NOT_CONFIGURED' });
         return;
       }
 

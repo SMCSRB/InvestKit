@@ -95,9 +95,19 @@ app.use((_req: Request, res: Response) => {
 });
 
 // Error handler (4 paramètres obligatoires pour qu'Express le reconnaisse comme tel)
-app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
-  if (err.status === 403) {
-    res.status(403).json({ error: err.message });
+app.use((err: Error & { status?: number; statusCode?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  // Erreurs du client (JSON invalide, corps trop gros, type non géré, origine CORS refusée) : un refus propre 4xx, jamais une « erreur serveur ».
+  const status = err.status ?? err.statusCode;
+  if (status && status >= 400 && status < 500) {
+    const messages: Record<string, string> = {
+      'entity.parse.failed': 'Corps de requête invalide (JSON attendu)',
+      'entity.too.large': 'Requête trop volumineuse',
+      'encoding.unsupported': 'Encodage non pris en charge',
+      'charset.unsupported': 'Jeu de caractères non pris en charge',
+      'request.aborted': 'Requête interrompue',
+      'request.size.invalid': 'Taille de requête invalide',
+    };
+    res.status(status).json({ error: (err.type && messages[err.type]) || (status === 403 ? err.message : 'Requête invalide'), code: err.type || undefined });
     return;
   }
   console.error('Erreur:', err);

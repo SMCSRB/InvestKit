@@ -619,7 +619,7 @@ export const authController = {
         return;
       }
 
-      const passwordMatch = password && (await bcrypt.compare(password, user.password_hash));
+      const passwordMatch = typeof password === 'string' && password.length > 0 && (await bcrypt.compare(password, user.password_hash));
       if (!passwordMatch) {
         res.status(401).json({ error: 'Mot de passe incorrect' });
         return;
