@@ -16,6 +16,8 @@ export const ROUTES: Row[] = [
   ['post', '/auth/reset-password', 'Compte', 'Réinitialiser le mot de passe', 'public'],
   ['get', '/auth/check-email/{email}', 'Compte', 'Vérifier si un e-mail est déjà utilisé', 'public'],
   ['post', '/auth/2fa/login-verify', 'Compte', 'Terminer la connexion avec le code 2FA', 'public'],
+  ['post', '/auth/logout', 'Compte', 'Se déconnecter (efface les cookies de session)', 'public'],
+  ['post', '/auth/session/upgrade', 'Compte', 'Échanger un ancien jeton (Bearer) contre un cookie de session httpOnly'],
   ['get', '/auth/me', 'Compte', 'Profil de l\'utilisateur connecté'],
   ['post', '/auth/set-free-domain', 'Compte', 'Choisir le domaine gratuit'],
   ['post', '/auth/2fa/setup', 'Compte', 'Démarrer l\'activation de la 2FA'],

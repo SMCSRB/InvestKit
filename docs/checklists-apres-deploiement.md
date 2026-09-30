@@ -153,3 +153,12 @@ Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub �
 1. Compte gratuit neuf : après validation de l'e-mail, solde 500 🪙.
 2. Compte gratuit qui passe Pro (paiement test Stripe) : le solde augmente de **500 🪙** (une seule fois). Historique : ligne « pro_starting_bonus ».
 3. Résilie puis reprends l'abonnement Pro : aucun nouveau bonus.
+
+## PR Sessions par cookie httpOnly + CSRF
+Avant : lis `docs/sessions-cookies.md` (réglages `CORS_ORIGIN`, `COOKIE_SECURE`). En production HTTPS, rien à régler sauf `CORS_ORIGIN=https://ton-site`.
+1. Déconnecte-toi, reconnecte-toi : la connexion marche ; dans les outils du navigateur (Application → Cookies) `ik_session` est coché **HttpOnly**, et `localStorage.token` vaut seulement `cookie-session`.
+2. Sans te déconnecter avant le déploiement : après déploiement, recharge le site : tu restes connecté (migration automatique de l'ancien jeton).
+3. Dashboard, Bourse, Immobilier, Banque : tout fonctionne (achat, vente, avancer d'une année…).
+4. Bouton **Déconnexion** : tu es renvoyé à l'accueil, le cookie `ik_session` disparaît.
+5. Compte avec double authentification : après le mot de passe, une case « Code de double authentification » apparaît ; un mauvais code est refusé, le bon connecte.
+6. Si la connexion semble réussir mais que tu es aussitôt renvoyé à la page de connexion : le cookie n'est pas enregistré (voir « Piège n°1 » : `COOKIE_SECURE=false` en HTTP, ou `CORS_ORIGIN` incorrect).

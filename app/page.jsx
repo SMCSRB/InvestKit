@@ -1,5 +1,6 @@
 'use client';
 
+import { endSession } from '@/app/lib/session';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -133,7 +134,7 @@ export default function HomePage() {
                   📊 Dashboard
                 </Link>
                 <button onClick={() => {
-                  localStorage.removeItem('token');
+                  endSession();
                   setIsAuthenticated(false);
                   router.push('/');
                 }} style={{
@@ -296,7 +297,7 @@ export default function HomePage() {
                 📊 Dashboard
               </Link>
               <button onClick={() => {
-                localStorage.removeItem('token');
+                endSession();
                 setIsAuthenticated(false);
                 setMobileMenuOpen(false);
                 router.push('/');

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { exportUserData, deleteAccount, AccountError } from '../services/accountService';
+import { clearSessionCookies } from '../utils/session';
 import { auditLog } from '../services/auditService';
 
 const STATUS: Record<string, number> = { INVALID_INPUT: 400, BAD_CREDENTIALS: 401, TWO_FACTOR_REQUIRED: 401, SUBSCRIPTION_CANCEL_FAILED: 502, NOT_FOUND: 404 };
@@ -23,7 +24,7 @@ export const accountController = {
   },
   deleteAccount: async (req: AuthRequest, res: Response): Promise<void> => {
     if (!req.user) { res.status(401).json({ error: 'Non authentifié' }); return; }
-    try { res.json({ success: true, ...(await deleteAccount(req.user.userId, req.body ?? {}, undefined, req.ip)) }); }
+    try { const done = await deleteAccount(req.user.userId, req.body ?? {}, undefined, req.ip); clearSessionCookies(res); res.json({ success: true, ...done }); }
     catch (error) { fail(res, 'Erreur lors de la suppression', error); }
   },
 };

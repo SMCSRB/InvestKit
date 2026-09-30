@@ -2,6 +2,7 @@ import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { generateToken, generatePending2FAToken, verifyToken } from '../utils/jwt';
+import { setSessionCookies, clearSessionCookies, tokenInBody } from '../utils/session';
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
@@ -263,11 +264,12 @@ export const authController = {
 
       // Générer un token JWT
       const token = generateToken(user.id, user.email);
+      setSessionCookies(res, token);
 
       res.json({
         success: true,
         message: 'Préférences sauvegardées',
-        token,
+        ...(tokenInBody() ? { token } : {}),
         user: {
           id: user.id,
           email: user.email,
@@ -324,11 +326,12 @@ export const authController = {
       await auditLog({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, metadata: { twoFactor: false }, ip: req.ip });
 
       const token = generateToken(user.id, user.email);
+      setSessionCookies(res, token);
 
       res.json({
         success: true,
         message: 'Connexion réussie',
-        token,
+        ...(tokenInBody() ? { token } : {}),
         user: {
           id: user.id,
           email: user.email,
@@ -641,11 +644,12 @@ export const authController = {
       await userRepository.updateLastLogin(user.id);
       await auditLog({ userId: user.id, action: 'login', entityType: 'user', entityId: user.id, metadata: { twoFactor: true }, ip: req.ip });
       const token = generateToken(user.id, user.email);
+      setSessionCookies(res, token);
 
       res.json({
         success: true,
         message: 'Connexion réussie',
-        token,
+        ...(tokenInBody() ? { token } : {}),
         user: {
           id: user.id,
           email: user.email,
@@ -658,5 +662,21 @@ export const authController = {
       console.error('Verify login 2FA error:', error);
       res.status(500).json({ error: 'Erreur lors de la vérification' });
     }
+  },
+  // Déconnexion : efface les cookies de session (le jeton lui-même reste valide jusqu'à son expiration, comme tout JWT sans liste de révocation).
+  logout: async (_req: AuthRequest, res: Response): Promise<void> => {
+    clearSessionCookies(res);
+    res.json({ success: true });
+  },
+
+  // Migration des sessions : un navigateur qui détient encore un ancien jeton (localStorage) l'échange contre un cookie httpOnly.
+  // Appelé avec l'en-tête Bearer ; renvoie 200 et pose les cookies avec un jeton neuf de même identité.
+  upgradeSession: async (req: AuthRequest, res: Response): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({ error: 'Non authentifié' });
+      return;
+    }
+    setSessionCookies(res, generateToken(req.user.userId, req.user.email));
+    res.json({ success: true });
   },
 };

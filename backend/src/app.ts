@@ -30,7 +30,7 @@ app.use(cors({
     if (!origin || env.corsOrigins.includes('*') || env.corsOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Origine non autorisée par CORS'));
+      callback(Object.assign(new Error('Origine non autorisée par CORS'), { status: 403 }));
     }
   },
   credentials: true,
@@ -85,7 +85,11 @@ app.use((_req: Request, res: Response) => {
 });
 
 // Error handler (4 paramètres obligatoires pour qu'Express le reconnaisse comme tel)
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
+  if (err.status === 403) {
+    res.status(403).json({ error: err.message });
+    return;
+  }
   console.error('Erreur:', err);
   res.status(500).json({
     error: env.isDev ? err.message : 'Erreur serveur interne',

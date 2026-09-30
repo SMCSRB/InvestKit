@@ -1,5 +1,6 @@
 'use client';
 
+import { endSession } from '@/app/lib/session';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ export default function OptimizedHeader() {
 
   const handleLogout = () => {
     setIsLoading(true);
-    localStorage.removeItem('token');
+    endSession();
     setIsAuthenticated(false);
     router.push('/');
     setTimeout(() => setIsLoading(false), 300);

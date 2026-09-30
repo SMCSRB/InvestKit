@@ -4,10 +4,12 @@ import { EducationProvider } from '@/app/context/EducationContext';
 import { NotificationProvider } from '@/app/context/NotificationContext';
 import { UserProvider } from '@/app/context/UserContext';
 import Toast from '@/app/components/Toast';
+import SessionBootstrap from '@/app/components/SessionBootstrap';
 
 export default function ClientLayoutWrapper({ children }) {
   return (
     <NotificationProvider>
+      <SessionBootstrap />
       <EducationProvider>
         <UserProvider>
           {children}

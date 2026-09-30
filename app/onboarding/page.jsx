@@ -1,5 +1,6 @@
 'use client';
 
+import { markLoggedIn } from '@/app/lib/session';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -97,7 +98,7 @@ export default function OnboardingPage() {
       const data = await response.json();
       if (response.ok) {
         setMessage('✅ Préférences enregistrées!');
-        localStorage.setItem('token', data.token || '');
+        markLoggedIn();
         sessionStorage.removeItem('userEmail');
         setTimeout(() => router.push('/dashboard'), 1500);
       } else {
@@ -111,7 +112,7 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = () => {
-    localStorage.setItem('token', 'temporary');
+    markLoggedIn();
     sessionStorage.removeItem('userEmail');
     router.push('/dashboard');
   };

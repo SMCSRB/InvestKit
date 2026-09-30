@@ -17,9 +17,11 @@ authRoutes.post('/forgot-password', authLimiter, authController.forgotPassword);
 authRoutes.post('/reset-password', authLimiter, authController.resetPassword);
 authRoutes.get('/check-email/:email', authController.checkEmail);
 authRoutes.post('/2fa/login-verify', authLimiter, authController.verifyLoginTwoFactor);
+authRoutes.post('/logout', authController.logout);
 
 // Protected routes
 authRoutes.get('/me', authMiddleware, authController.getCurrentUser);
+authRoutes.post('/session/upgrade', authMiddleware, authController.upgradeSession);
 authRoutes.post('/set-free-domain', authMiddleware, authController.setFreeDomain);
 authRoutes.post('/2fa/setup', authMiddleware, authController.setupTwoFactor);
 authRoutes.post('/2fa/verify-setup', authMiddleware, authController.verifyTwoFactorSetup);
