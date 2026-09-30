@@ -2,7 +2,7 @@ import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { generateToken, generatePending2FAToken, verifyToken } from '../utils/jwt';
-import { setSessionCookies, clearSessionCookies, tokenInBody } from '../utils/session';
+import { setSessionCookies, clearSessionCookies, tokenInBody, readCookie, ADMIN_BACKUP_COOKIE } from '../utils/session';
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
@@ -472,6 +472,7 @@ export const authController = {
           enable2FA: user.enable_2fa,
           referralCode: user.referral_code,
         },
+        impersonatedBy: req.impersonatedBy ?? null,
       });
     } catch (error) {
       console.error('Get current user error:', error);
@@ -710,6 +711,26 @@ export const authController = {
   // Déconnexion : efface les cookies de session (le jeton lui-même reste valide jusqu'à son expiration, comme tout JWT sans liste de révocation).
   logout: async (_req: AuthRequest, res: Response): Promise<void> => {
     clearSessionCookies(res);
+    res.json({ success: true });
+  },
+
+  // Sortie de l'impersonation : rétablit la session de l'administrateur mise de côté (cookie httpOnly), après avoir revérifié qu'il est toujours admin.
+  stopImpersonation: async (req: AuthRequest, res: Response): Promise<void> => {
+    const backup = readCookie(req, ADMIN_BACKUP_COOKIE);
+    const payload = backup ? verifyToken(backup) : null;
+    if (!req.user?.impersonatedBy || !payload || payload.impersonatedBy || payload.pending2fa || payload.userId !== req.user.impersonatedBy) {
+      res.status(400).json({ error: 'Aucune impersonation en cours' });
+      return;
+    }
+    const admin = await userRepository.findById(payload.userId);
+    if (!admin || admin.role !== 'admin') {
+      clearSessionCookies(res);
+      res.status(403).json({ error: 'Session administrateur invalide' });
+      return;
+    }
+    setSessionCookies(res, backup!);
+    res.clearCookie(ADMIN_BACKUP_COOKIE, { path: '/' });
+    await auditLog({ userId: admin.id, action: 'admin_impersonate_stop', entityType: 'user', entityId: req.user.userId, ip: req.ip });
     res.json({ success: true });
   },
 

@@ -143,6 +143,7 @@ function UserDetail({ id, onClose, onChanged }) {
       {!isAdmin && (
         <div style={{ display: 'grid', gap: 12, marginTop: 12 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button style={btn()} onClick={() => { if (confirm(`Voir le site comme ${u.email} ? Lecture seule, 15 minutes, action tracée.`)) act(async () => { await api(`/users/${id}/impersonate`, { method: 'POST' }); window.location.href = '/dashboard'; }, 'Impersonation démarrée'); }}>👁️ Voir comme cet utilisateur</button>
             <button style={btn()} onClick={() => act(() => api(`/users/${id}/pro`, { method: 'POST', body: { proOverride: !u.pro_override } }), u.pro_override ? 'Statut Pro manuel retiré' : 'Statut Pro manuel accordé')}>
               {u.pro_override ? 'Retirer le Pro manuel' : 'Accorder le Pro manuel'}
             </button>

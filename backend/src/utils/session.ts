@@ -13,6 +13,7 @@ import { env } from '../config/env';
 
 export const SESSION_COOKIE = 'ik_session';
 export const CSRF_COOKIE = 'ik_csrf';
+export const ADMIN_BACKUP_COOKIE = 'ik_admin_backup'; // session de l'administrateur, mise de côté pendant une impersonation
 export const CSRF_HEADER = 'x-csrf-token';
 
 const csrfKey = crypto.createHash('sha256').update(`csrf:${env.jwtSecret}`).digest();
@@ -44,10 +45,18 @@ export const setSessionCookies = (res: Response, sessionJwt: string): void => {
   res.cookie(CSRF_COOKIE, csrfTokenFor(sessionJwt), { ...base(), httpOnly: false });
 };
 
+// Session d'impersonation (courte) : le cookie de session est remplacé, celui de l'administrateur est gardé de côté (httpOnly).
+export const setImpersonationCookies = (res: Response, impersonationJwt: string, adminJwt: string, maxAgeMs: number): void => {
+  res.cookie(SESSION_COOKIE, impersonationJwt, { ...base(), httpOnly: true, maxAge: maxAgeMs });
+  res.cookie(CSRF_COOKIE, csrfTokenFor(impersonationJwt), { ...base(), httpOnly: false, maxAge: maxAgeMs });
+  res.cookie(ADMIN_BACKUP_COOKIE, adminJwt, { ...base(), httpOnly: true, maxAge: maxAgeMs });
+};
+
 export const clearSessionCookies = (res: Response): void => {
   const { maxAge: _m, ...opts } = base();
   res.clearCookie(SESSION_COOKIE, { ...opts, httpOnly: true });
   res.clearCookie(CSRF_COOKIE, { ...opts, httpOnly: false });
+  res.clearCookie(ADMIN_BACKUP_COOKIE, { ...opts, httpOnly: true });
 };
 
 // Lecture minimale du en-tête Cookie (évite une dépendance pour deux cookies).

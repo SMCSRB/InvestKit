@@ -31,3 +31,11 @@ Activer/désactiver une fonction sans redéployer, ou la déployer à un pourcen
 Six sections : **Vue d'ensemble** (alertes, utilisateurs actifs, abonnés Pro, pièces en circulation, graphique des inscriptions avec tableau alternatif, joueurs par domaine, puits d'InvestCoins), **Utilisateurs** (recherche, filtres, fiche avec Pro manuel, suspension avec motif, ajustement de pièces avec confirmation), **Journal** (filtrable, paginé), **Drapeaux** (créer, activer, pourcentage, supprimer), **Facturation**, **Système** (santé + contrôles de configuration, rafraîchi toutes les 15 s). Un non-admin voit « Accès refusé » ; un admin sans 2FA est invité à l'activer. Migration de session : la page fonctionne aussi juste après le passage aux cookies (ancien jeton envoyé tant que l'échange n'est pas terminé).
 
 Testé de bout en bout dans un vrai navigateur : refus non-admin, refus sans 2FA, statistiques, recherche, fiche, suspension (le jeton du joueur est aussitôt refusé) puis réactivation, journal, drapeaux, système.
+
+## « Voir comme » (impersonation, lecture seule)
+Depuis la fiche d'un utilisateur (`👁️ Voir comme cet utilisateur`) : l'administrateur voit le site tel que le joueur le voit, pour comprendre un problème. Garde-fous :
+- **Lecture seule** : toute écriture (achat, vente, emprunt, suppression…) répond 403 `IMPERSONATION_READ_ONLY` ; pas d'export RGPD ; pas d'accès à l'administration avec l'identité du joueur.
+- **15 minutes** maximum (jeton dédié, marqué par l'identifiant de l'administrateur).
+- Impossible sur un autre administrateur ou sur soi-même ; exige le rôle admin + 2FA.
+- **Tracé** : `admin_impersonate_start` et `admin_impersonate_stop` dans le journal d'audit.
+- Bandeau rouge permanent avec le bouton **Quitter** ; la session de l'administrateur est gardée de côté dans un cookie httpOnly et rétablie à la sortie (après revérification que le compte est toujours administrateur).

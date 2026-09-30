@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import { investcoinsRepository, InsufficientFundsError } from '../repositories/investcoinsRepository';
 import { auditLog } from './auditService';
 import { invalidateUserStatus } from '../utils/userStatus';
+import { generateImpersonationToken, IMPERSONATION_MINUTES } from '../utils/jwt';
 
 export type AdminErrorCode = 'INVALID_INPUT' | 'NOT_FOUND' | 'FORBIDDEN';
 export class AdminError extends Error {
@@ -104,6 +105,17 @@ export const adminService = {
       if (e instanceof InsufficientFundsError) throw new AdminError('INVALID_INPUT', 'Solde insuffisant pour ce retrait');
       throw e;
     } finally { client.release(); }
+  },
+
+  // Impersonation : l'administrateur voit le site comme l'utilisateur, en lecture seule, 15 minutes. Toujours tracé.
+  async startImpersonation(adminId: string, idRaw: unknown, ip?: string | null) {
+    const id = uuid(idRaw);
+    if (id === adminId) throw new AdminError('FORBIDDEN', 'Inutile : c\'est déjà ton compte');
+    const target = (await query('SELECT id, email, role FROM users WHERE id = $1', [id])).rows[0];
+    if (!target) throw new AdminError('NOT_FOUND', 'Utilisateur introuvable');
+    if (target.role === 'admin') throw new AdminError('FORBIDDEN', 'On ne peut pas se substituer à un autre administrateur');
+    await auditLog({ userId: adminId, action: 'admin_impersonate_start', entityType: 'user', entityId: id, metadata: { minutes: IMPERSONATION_MINUTES }, ip });
+    return { target: { id: target.id, email: target.email }, token: generateImpersonationToken(target.id, target.email, adminId) };
   },
 
   // ── Journal d'audit ───────────────────────────────────────────────────

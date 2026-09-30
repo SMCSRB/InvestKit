@@ -11,6 +11,7 @@ adminRoutes.post('/users/:id/pro', authMiddleware, adminController.setPro);
 adminRoutes.post('/users/:id/disable', authMiddleware, adminController.disable);
 adminRoutes.post('/users/:id/enable', authMiddleware, adminController.enable);
 adminRoutes.post('/users/:id/coins', authMiddleware, adminController.coins);
+adminRoutes.post('/users/:id/impersonate', authMiddleware, adminController.impersonate);
 adminRoutes.get('/audit', authMiddleware, adminController.audit);
 adminRoutes.get('/stats', authMiddleware, adminController.stats);
 adminRoutes.get('/billing', authMiddleware, adminController.billing);

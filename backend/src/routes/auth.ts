@@ -21,6 +21,7 @@ authRoutes.post('/logout', authController.logout);
 
 // Protected routes
 authRoutes.get('/me', authMiddleware, authController.getCurrentUser);
+authRoutes.post('/impersonation/stop', authMiddleware, authController.stopImpersonation);
 authRoutes.post('/session/upgrade', authMiddleware, authController.upgradeSession);
 authRoutes.post('/set-free-domain', authMiddleware, authController.setFreeDomain);
 authRoutes.post('/2fa/setup', authMiddleware, authController.setupTwoFactor);

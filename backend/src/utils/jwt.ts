@@ -4,6 +4,7 @@ import { env } from '../config/env';
 export interface TokenPayload {
   userId: string;
   email: string;
+  impersonatedBy?: string; // identifiant de l'administrateur qui « voit comme » cet utilisateur (session en lecture seule)
   pending2fa?: boolean; // true = jeton intermédiaire, valide UNIQUEMENT pour finaliser la 2FA
   iat?: number;
   exp?: number;
@@ -28,6 +29,11 @@ export const generatePending2FAToken = (userId: string, email: string): string =
     { expiresIn: '5m' }
   );
 };
+
+// Session d'impersonation : l'administrateur voit le site comme l'utilisateur, en LECTURE SEULE, pendant 15 minutes.
+export const IMPERSONATION_MINUTES = 15;
+export const generateImpersonationToken = (userId: string, email: string, adminId: string): string =>
+  jwt.sign({ userId, email, impersonatedBy: adminId }, env.jwtSecret, { expiresIn: `${IMPERSONATION_MINUTES}m` });
 
 export const verifyToken = (token: string): TokenPayload | null => {
   try {

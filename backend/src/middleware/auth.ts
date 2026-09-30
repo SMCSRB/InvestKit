@@ -8,6 +8,7 @@ import {
 export interface AuthRequest extends Request {
   user?: TokenPayload;
   authVia?: 'bearer' | 'cookie';
+  impersonatedBy?: string;
 }
 
 // Deux façons de s'authentifier :
@@ -62,6 +63,18 @@ export const authMiddleware = async (
     if (await isDisabled(payload.userId)) {
       res.status(403).json({ error: 'Ce compte est suspendu.', code: 'ACCOUNT_DISABLED' });
       return;
+    }
+
+    // Impersonation : lecture seule, et pas d'accès aux données les plus sensibles (export RGPD). Seule la sortie de l'impersonation est permise en écriture.
+    if (payload.impersonatedBy) {
+      const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
+      const isStop = path.endsWith('/auth/impersonation/stop');
+      const sensitive = path.endsWith('/auth/me/export');
+      if ((!isSafeMethod(req.method) && !isStop) || sensitive) {
+        res.status(403).json({ error: 'Session d\'impersonation : lecture seule.', code: 'IMPERSONATION_READ_ONLY' });
+        return;
+      }
+      req.impersonatedBy = payload.impersonatedBy;
     }
 
     req.user = payload;

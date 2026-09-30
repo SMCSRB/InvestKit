@@ -225,3 +225,9 @@ Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
 5. Drapeaux : crée `test_flag` activé à 100 %, vérifie qu'il apparaît, supprime-le.
 6. Système : base de données « OK » et liste des contrôles : complète ce qui est marqué ⚠️ (voir `docs/securite.md`).
 7. Avec un compte **non administrateur** : `/admin` affiche « Accès refusé ».
+
+## PR Administration — « Voir comme » (impersonation en lecture seule)
+1. `/admin` → Utilisateurs → fiche d'un compte de test → **Voir comme cet utilisateur** → confirme : tu arrives sur son dashboard avec un **bandeau rouge** « Lecture seule ».
+2. Essaie d'acheter une action ou de réclamer la récompense quotidienne : refus (« lecture seule »). Les pages (Bourse, Immobilier, Banque) s'affichent avec les données du joueur.
+3. **Quitter** : retour sur `/admin`, tu es de nouveau administrateur.
+4. `/admin` → Journal : `admin_impersonate_start` et `admin_impersonate_stop` sont présents.

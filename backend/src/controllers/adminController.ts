@@ -4,6 +4,8 @@ import { requireAdmin } from '../middleware/admin';
 import { adminService, AdminError } from '../services/adminService';
 import { featureFlagService, FlagError } from '../services/featureFlagService';
 import { auditLog } from '../services/auditService';
+import { readCookie, SESSION_COOKIE, setImpersonationCookies } from '../utils/session';
+import { IMPERSONATION_MINUTES } from '../utils/jwt';
 
 const STATUS: Record<string, number> = { INVALID_INPUT: 400, NOT_FOUND: 404, FORBIDDEN: 403 };
 
@@ -23,7 +25,24 @@ const admin = (fallback: string, fn: (req: AuthRequest, adminId: string) => Prom
     }
   };
 
+// Impersonation : pose le cookie de session de l'utilisateur (lecture seule, 15 min) et met celui de l'administrateur de côté.
+const startImpersonation = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!(await requireAdmin(req, res))) return;
+    const adminToken = req.headers.authorization?.split(' ')[1] ?? readCookie(req, SESSION_COOKIE);
+    if (!adminToken) { res.status(401).json({ error: 'Non authentifié' }); return; }
+    const { target, token } = await adminService.startImpersonation(req.user!.userId, req.params.id, req.ip);
+    setImpersonationCookies(res, token, adminToken, IMPERSONATION_MINUTES * 60_000);
+    res.json({ success: true, target, minutes: IMPERSONATION_MINUTES, readOnly: true });
+  } catch (error) {
+    if (error instanceof AdminError) { res.status(STATUS[error.code] ?? 400).json({ error: error.message, code: error.code }); return; }
+    console.error('Impersonation error:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'impersonation' });
+  }
+};
+
 export const adminController = {
+  impersonate: startImpersonation,
   users: admin('Erreur lors de la liste des utilisateurs', (r) => adminService.listUsers(r.query)),
   user: admin('Erreur lors de la lecture de l\'utilisateur', async (r, adminId) => {
     const data = await adminService.getUser(r.params.id);
