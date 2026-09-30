@@ -55,3 +55,14 @@ export const toolsLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de simulations. Réessayez dans quelques minutes.' },
 });
+
+// Ordres Crypto : 30 par minute et PAR JOUEUR (jeton déjà vérifié avant ce limiteur), une saisie refusée compte aussi (anti-martelage).
+export const cryptoOrderLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  keyGenerator: (req) => `crypto-order:${(req as any).user?.userId ?? req.ip}`,
+  validate: { keyGeneratorIpFallback: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'ordres en peu de temps. Réessaie dans une minute.' },
+});

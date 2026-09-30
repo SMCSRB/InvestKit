@@ -30,7 +30,7 @@ const loadTools = (symbol) => {
 };
 const saveTools = (symbol, tools) => { try { localStorage.setItem(`ik_crypto_tools_${symbol}`, JSON.stringify(tools)); } catch { /* ignore */ } };
 
-export default function PriceChart({ symbol, tf, candleLoader, refreshKey, markers }) {
+export default function PriceChart({ symbol, tf, candleLoader, refreshKey, markers, levels }) {
   const boxRef = useRef(null);
   const chartRef = useRef(null);
   const mainRef = useRef(null);
@@ -181,9 +181,19 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
       s.setData([{ time: t.t1, value: t.p1 }, { time: t.t2, value: t.p2 }].sort((a, b) => a.time - b.time));
       toolSeriesRef.current.push(s);
     });
-    // Repères d'ordres (achats / ventes du joueur)
-    if (markers?.length) markersApiRef.current = createSeriesMarkers(main, [...markers].sort((a, b) => a.time - b.time));
-  }, [version, type, scale, indicators, tools, markers]);
+    // Niveaux du joueur : prix de revient moyen, ordres en attente
+    (levels || []).forEach((l) => { priceLinesRef.current.push(main.createPriceLine({ price: l.price, color: l.color, lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: true, title: l.title })); });
+    // Repères d'ordres (achats / ventes du joueur) : accrochés à la bougie qui contient l'exécution
+    if (markers?.length) {
+      const first = candles[0].ts;
+      const mk = markers.filter((m) => m.ts >= first).map((m) => {
+        let lo = 0; let hi = candles.length - 1;
+        while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (candles[mid].ts <= m.ts) lo = mid; else hi = mid - 1; }
+        return { time: Math.floor(candles[lo].ts / 1000), position: m.side === 'buy' ? 'belowBar' : 'aboveBar', color: m.side === 'buy' ? '#22c55e' : '#ef4444', shape: m.side === 'buy' ? 'arrowUp' : 'arrowDown', text: m.text };
+      }).sort((a, b) => a.time - b.time);
+      markersApiRef.current = createSeriesMarkers(main, mk);
+    }
+  }, [version, type, scale, indicators, tools, markers, levels]);
 
   // Infobulle OHLC au survol + outils de dessin (clic)
   useEffect(() => {

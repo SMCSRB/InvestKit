@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { cryptoDataService, CryptoDataError } from '../services/crypto/dataService';
 import { clockService, availableStarts, dataEnd } from '../services/crypto/clockService';
+import { cryptoTradingService } from '../services/crypto/tradingService';
 import { compareAssets } from '../services/crypto/compare';
 import { ATTRIBUTION, DISCLAIMER, TIMEFRAMES, TF_LABELS, Timeframe, CRYPTO_DOMAIN } from '../config/cryptoMarketRules';
 import { CATEGORY_LABELS, RISK_LABELS } from '../data/crypto/catalog';
@@ -62,8 +63,8 @@ export const cryptoController = {
 
   advance: wrap('Erreur lors de l\'avance du temps', async (req) => {
     const before = await requireAccount(req);
-    const acc = await clockService.advance(req.user!.userId, req.body?.step);
-    return { success: true, from: before.simulatedAt, simulatedAt: acc.simulatedAt };
+    const r = await cryptoTradingService.advance(req.user!.userId, req.body?.step);
+    return { success: true, from: before.simulatedAt, simulatedAt: r.simulatedAt, events: r.events };
   }),
 
   assets: wrap('Erreur lors de la lecture des actifs', async (req) => {
@@ -83,6 +84,23 @@ export const cryptoController = {
     const acc = await requireAccount(req);
     return cryptoDataService.getCandles(symbolOf(req.query.symbol), tfOf(req.query.tf ?? '1d'), acc.simulatedAt, { before: intOf(req.query.before, 'before'), limit: intOf(req.query.limit, 'limit') });
   }),
+
+  quote: wrap('Erreur lors du chiffrage de l\'ordre', async (req) => cryptoTradingService.quote(req.user!.userId, symbolOf(req.query.symbol), req.query.side, req.query.quantity, req.query.amountCoins)),
+
+  placeOrder: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const r = await cryptoTradingService.placeOrder(req.user!.userId, { ...(req.body ?? {}) }, req.ip);
+      res.status(r.idempotent ? 200 : 201).json({ success: true, ...r });
+    } catch (error) {
+      if (error instanceof CryptoDataError) { res.status(STATUS[error.code] ?? 400).json({ error: error.message, code: error.code }); return; }
+      console.error('Erreur ordre Crypto', error);
+      res.status(500).json({ error: 'Erreur lors de l\'envoi de l\'ordre' });
+    }
+  },
+
+  cancelOrder: wrap('Erreur lors de l\'annulation', async (req) => ({ success: true, order: await cryptoTradingService.cancelOrder(req.user!.userId, String(req.params.id), req.ip) })),
+  orders: wrap('Erreur lors de la lecture des ordres', async (req) => ({ orders: await cryptoTradingService.listOrders(req.user!.userId, req.query.status) })),
+  portfolio: wrap('Erreur lors de la lecture du portefeuille', async (req) => cryptoTradingService.portfolio(req.user!.userId)),
 
   compare: wrap('Erreur lors de la comparaison', async (req) => {
     const acc = await requireAccount(req);

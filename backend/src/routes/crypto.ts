@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { cryptoOrderLimiter } from '../middleware/rateLimiter';
 import { cryptoController } from '../controllers/cryptoController';
 
 // Domaine Crypto (marché simulé). Toutes les routes sont authentifiées ; la date simulée vient du compte (serveur), jamais du navigateur.
@@ -11,3 +12,8 @@ cryptoRoutes.get('/assets/:symbol', authMiddleware, cryptoController.asset);
 cryptoRoutes.get('/candles', authMiddleware, cryptoController.candles);
 cryptoRoutes.get('/compare', authMiddleware, cryptoController.compare);
 cryptoRoutes.post('/time/advance', authMiddleware, cryptoController.advance);
+cryptoRoutes.get('/quote', authMiddleware, cryptoController.quote);
+cryptoRoutes.get('/portfolio', authMiddleware, cryptoController.portfolio);
+cryptoRoutes.get('/orders', authMiddleware, cryptoController.orders);
+cryptoRoutes.post('/orders', authMiddleware, cryptoOrderLimiter, cryptoController.placeOrder);
+cryptoRoutes.delete('/orders/:id', authMiddleware, cryptoOrderLimiter, cryptoController.cancelOrder);

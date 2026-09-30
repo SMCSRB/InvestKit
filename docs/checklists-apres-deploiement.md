@@ -298,3 +298,6 @@ Voir `docs/crypto-donnees.md` (section « À tester chez moi » et commandes d'i
 
 ## PR Crypto — page Marché et graphique
 Voir `docs/crypto-graphique.md` (section « À tester chez moi »).
+
+## PR Crypto — ordres et portefeuille
+Voir `docs/crypto-ordres.md` (section « À tester chez moi »).
