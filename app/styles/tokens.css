@@ -111,7 +111,7 @@
 
 :root {
   /* Typographie */
-  --ik-font: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ik-font: var(--font-jakarta), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ik-fs-xs: 0.75rem;
   --ik-fs-sm: 0.84rem;
   --ik-fs-base: 0.94rem;
@@ -120,7 +120,7 @@
   --ik-fs-xl: 1.6rem;
   --ik-fs-2xl: 2.1rem;
   --ik-fs-3xl: clamp(2.3rem, 4.6vw, 3.2rem);
-  --ik-fs-hero: clamp(2.5rem, 6vw, 4.4rem);
+  --ik-fs-hero: clamp(2.3rem, 4.6vw, 3.7rem);
 
   /* Espacements, rayons */
   --ik-space-1: 4px;

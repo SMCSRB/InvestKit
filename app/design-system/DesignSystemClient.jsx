@@ -7,6 +7,7 @@ import { Button, Card, CardHead, Coin, Delta, EmptyState, Modal, Segmented, Skel
 import { Donut, LineChart, SegmentedBar, Sparkline, StackedBars } from '@/app/components/ui/charts';
 import { Reveal } from '@/app/components/ui/motion';
 import { useTheme } from '@/app/context/ThemeContext';
+import { fmtInt } from '@/app/lib/format';
 
 // Valeurs d'EXEMPLE uniquement (cette page n'existe pas en production).
 const YEARS = ['2018', '2019', '2020', '2021', '2022', '2023', '2024'];
@@ -14,7 +15,7 @@ const LINE_A = [120, 135, 128, 160, 152, 190, 210, 198, 240, 262, 255, 290];
 const LINE_B = [80, 82, 95, 90, 110, 118, 112, 130, 128, 150, 160, 158];
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 const STACK = [[2, 1, 1], [3, 2, 1], [2, 2, 2], [4, 2, 2], [3, 3, 2], [4, 3, 3], [5, 3, 3]].map((p, i) => ({ label: YEARS[i], parts: p.map((x) => x * 1000) }));
-const fmt = (v) => Math.round(v).toLocaleString('fr-FR');
+const fmt = fmtInt;
 
 const Swatch = ({ name, varName }) => (
   <div style={{ display: 'grid', gap: 6 }}>

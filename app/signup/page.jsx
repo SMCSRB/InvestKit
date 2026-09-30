@@ -2,12 +2,26 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
+import AuthLayout, { AuthHeader } from '@/app/components/landing/AuthLayout';
+import { LogoMark } from '@/app/components/ui/Logo';
+import Icon from '@/app/components/ui/Icon';
+import { Button, Modal, Segmented } from '@/app/components/ui/primitives';
+import { useTheme } from '@/app/context/ThemeContext';
 
 const TRANSLATIONS = {
   fr: {
-    createAccount: 'Créer votre compte',
-    joinInvestors: 'Rejoignez des milliers d\'investisseurs',
+    showPassword: 'Afficher le mot de passe',
+    hidePassword: 'Masquer le mot de passe',
+    haveAccount: 'Déjà un compte ?',
+    login: 'Se connecter',
+    checking: 'Vérification…',
+    acceptTerms: 'En t\'inscrivant, tu acceptes les',
+    and: 'et la',
+    privacy: 'politique de confidentialité',
+    createAccount: 'Créer ton compte',
+    joinInvestors: 'Rejoins InvestKit et apprends à investir sans risque',
     progress: 'Progression',
     email: 'Email',
     emailAvailable: 'Email disponible',
@@ -16,14 +30,14 @@ const TRANSLATIONS = {
     passwordsMatch: 'Les mots de passe correspondent',
     passwordDontMatch: 'Les mots de passe ne correspondent pas',
     strength: 'Force:',
-    weak: '❌ Faible',
-    medium: '⚠️ Moyen',
-    strong: '💪 Fort',
+    weak: 'Faible',
+    medium: 'Moyen',
+    strong: 'Fort',
     iamHuman: 'Je suis un humain',
-    gdprConsent: '🔒 Je consens au traitement de mes données personnelles',
+    gdprConsent: 'Je consens au traitement de mes données personnelles',
     gdprDetails: 'Voir les détails RGPD',
     terms: 'conditions d\'utilisation',
-    signup: '✨ S\'inscrire',
+    signup: 'S\'inscrire',
     signupError: 'Erreur lors de l\'inscription',
     resendCode: 'Renvoyer le code',
     serverError: 'Erreur de connexion au serveur',
@@ -38,8 +52,16 @@ const TRANSLATIONS = {
     close: 'Fermer',
   },
   en: {
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    haveAccount: 'Already have an account?',
+    login: 'Log in',
+    checking: 'Checking…',
+    acceptTerms: 'By signing up you accept the',
+    and: 'and the',
+    privacy: 'privacy policy',
     createAccount: 'Create your account',
-    joinInvestors: 'Join thousands of investors',
+    joinInvestors: 'Join InvestKit and learn to invest without risk',
     progress: 'Progress',
     email: 'Email',
     emailAvailable: 'Email available',
@@ -48,14 +70,14 @@ const TRANSLATIONS = {
     passwordsMatch: 'Passwords match',
     passwordDontMatch: 'Passwords don\'t match',
     strength: 'Strength:',
-    weak: '❌ Weak',
-    medium: '⚠️ Medium',
-    strong: '💪 Strong',
+    weak: 'Weak',
+    medium: 'Medium',
+    strong: 'Strong',
     iamHuman: 'I\'m human',
-    gdprConsent: '🔒 I consent to the processing of my personal data',
+    gdprConsent: 'I consent to the processing of my personal data',
     gdprDetails: 'See GDPR details',
     terms: 'terms of service',
-    signup: '✨ Sign up',
+    signup: 'Sign up',
     signupError: 'Signup error',
     serverError: 'Server connection error',
     resendCode: 'Resend code',
@@ -70,8 +92,16 @@ const TRANSLATIONS = {
     close: 'Close',
   },
   es: {
+    showPassword: 'Mostrar contraseña',
+    hidePassword: 'Ocultar contraseña',
+    haveAccount: '¿Ya tienes cuenta?',
+    login: 'Iniciar sesión',
+    checking: 'Comprobando…',
+    acceptTerms: 'Al registrarte aceptas los',
+    and: 'y la',
+    privacy: 'política de privacidad',
     createAccount: 'Crear tu cuenta',
-    joinInvestors: 'Únete a miles de inversores',
+    joinInvestors: 'Únete a InvestKit y aprende a invertir sin riesgo',
     progress: 'Progreso',
     email: 'Correo electrónico',
     emailAvailable: 'Correo disponible',
@@ -80,14 +110,14 @@ const TRANSLATIONS = {
     passwordsMatch: 'Las contraseñas coinciden',
     passwordDontMatch: 'Las contraseñas no coinciden',
     strength: 'Fuerza:',
-    weak: '❌ Débil',
-    medium: '⚠️ Media',
-    strong: '💪 Fuerte',
+    weak: 'Débil',
+    medium: 'Media',
+    strong: 'Fuerte',
     iamHuman: 'Soy humano',
-    gdprConsent: '🔒 Doy mi consentimiento para el tratamiento de mis datos personales',
+    gdprConsent: 'Doy mi consentimiento para el tratamiento de mis datos personales',
     gdprDetails: 'Ver detalles RGPD',
     terms: 'términos de servicio',
-    signup: '✨ Registrarse',
+    signup: 'Registrarse',
     signupError: 'Error de registro',
     serverError: 'Error de conexión al servidor',
     resendCode: 'Reenviar código',
@@ -135,21 +165,14 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
   const [showGdprModal, setShowGdprModal] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
-  const formRef = useRef(null);
 
   const t = TRANSLATIONS[lang];
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsInitialLoad(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+  const { motionEnabled } = useTheme();
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -276,7 +299,7 @@ export default function SignupPage() {
     setMessage('');
 
     if (!isFormValid) {
-      setMessage('❌ ' + t.signupError);
+      setMessage(t.signupError);
       setLoading(false);
       return;
     }
@@ -296,13 +319,13 @@ export default function SignupPage() {
           router.push('/verify-email');
         }, 1500);
       } else {
-        setMessage(`❌ ${data.error || t.signupError}`);
+        setMessage(data.error || t.signupError);
         console.error('Signup error:', data);
         captchaRef.current?.resetCaptcha();
         setCaptchaToken(null);
       }
     } catch (error) {
-      setMessage('❌ ' + t.serverError);
+      setMessage(t.serverError);
       captchaRef.current?.resetCaptcha();
       setCaptchaToken(null);
     } finally {
@@ -311,794 +334,156 @@ export default function SignupPage() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && isFormValid) {
+    // Entrée valide le formulaire seulement depuis un champ de saisie (pas depuis un bouton, une option ou une case à cocher).
+    if (e.key === 'Enter' && isFormValid && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') {
       e.preventDefault();
       handleSubmit(e);
     }
   };
 
-  if (isInitialLoad) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <style>{`
-          @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-          }
-          .skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-            border-radius: 16px;
-          }
-        `}</style>
-
-        <div style={{
-          maxWidth: '460px',
-          width: '100%',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)',
-          borderRadius: '24px',
-          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3), 0 0 100px rgba(59, 130, 246, 0.1)',
-          padding: '40px',
-          backdropFilter: 'blur(10px)',
-        }}>
-          <div className="skeleton" style={{ width: '60px', height: '60px', borderRadius: '20px', margin: '0 auto 20px' }} />
-          <div className="skeleton" style={{ width: '100%', height: '32px', marginBottom: '12px' }} />
-          <div className="skeleton" style={{ width: '85%', height: '16px', marginBottom: '28px', margin: '0 auto 28px' }} />
-          <div className="skeleton" style={{ width: '100%', height: '8px', marginBottom: '35px' }} />
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ marginBottom: '18px' }}>
-              <div className="skeleton" style={{ width: '70px', height: '16px', marginBottom: '10px' }} />
-              <div className="skeleton" style={{ width: '100%', height: '48px', marginBottom: '10px' }} />
-            </div>
-          ))}
-          <div className="skeleton" style={{ width: '100%', height: '50px', marginTop: '25px' }} />
-        </div>
-      </div>
-    );
-  }
+  const COLORS = ['#6d4ff0', '#c15bf0', '#3ddc97', '#ffc14d', '#5cc8ff'];
+  const strengthLabel = passwordStrength === 'fort' ? t.strong : passwordStrength === 'moyen' ? t.medium : t.weak;
+  const strengthLevel = passwordStrength === 'fort' ? 3 : passwordStrength === 'moyen' ? 2 : 1;
+  const strengthColor = strengthLevel === 3 ? 'var(--ik-positive)' : strengthLevel === 2 ? 'var(--ik-warning)' : 'var(--ik-negative)';
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '20px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <style>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-25px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+    <AuthLayout wide>
+      {showConfetti && motionEnabled && [...Array(40)].map((_, i) => (
+        <span key={i} className="ik-confetti" aria-hidden="true" style={{ left: `${Math.random() * 100}%`, background: COLORS[i % COLORS.length], animationDelay: `${Math.random() * 0.4}s`, '--dx': `${Math.random() * 160 - 80}px` }} />
+      ))}
 
-        @keyframes floatGradient {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-
-        @keyframes confetti-fall {
-          to {
-            transform: translateY(100vh) rotate(360deg);
-            opacity: 0;
-          }
-        }
-
-        @keyframes glow {
-          0%, 100% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-          50% { text-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
-        }
-
-        .confetti {
-          position: fixed;
-          width: 12px;
-          height: 12px;
-          pointer-events: none;
-          z-index: 9999;
-          animation: confetti-fall 2s forwards;
-          border-radius: 50%;
-        }
-
-        .form-container {
-          animation: slideIn 0.6s ease-out;
-        }
-
-        .valid-checkmark {
-          color: #10b981;
-          font-weight: bold;
-          margin-left: 8px;
-          animation: glow 2s infinite;
-        }
-
-        .requirement-item {
-          display: flex;
-          align-items: center;
-          padding: 10px 0;
-          font-size: 13px;
-          color: #64748b;
-          transition: all 0.2s;
-        }
-
-        .requirement-item.met {
-          color: #10b981;
-        }
-
-        .requirement-check {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 20px;
-          height: 20px;
-          border: 2px solid #cbd5e1;
-          border-radius: 6px;
-          margin-right: 10px;
-          font-size: 13px;
-          transition: all 0.2s;
-          background: #f8fafc;
-        }
-
-        .requirement-item.met .requirement-check {
-          border-color: #10b981;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: white;
-        }
-
-        input:focus {
-          outline: none;
-        }
-
-        button:hover:not(:disabled) {
-          transform: translateY(-2px);
-        }
-      `}</style>
-
-      {/* Background Decorative Elements */}
-      <div style={{
-        position: 'absolute',
-        top: '-50%',
-        right: '-10%',
-        width: '500px',
-        height: '500px',
-        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-        borderRadius: '50%',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '-30%',
-        left: '-5%',
-        width: '400px',
-        height: '400px',
-        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%)',
-        borderRadius: '50%',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Confetti Animation */}
-      {showConfetti && (
-        <>
-          {[...Array(40)].map((_, i) => (
-            <div
-              key={i}
-              className="confetti"
-              style={{
-                left: Math.random() * 100 + '%',
-                backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 5)],
-                delay: Math.random() * 0.2 + 's',
-              }}
-            />
-          ))}
-        </>
-      )}
-
-      {/* Language Selector */}
-      <div style={{
-        position: 'absolute',
-        top: '25px',
-        right: '25px',
-        display: 'flex',
-        gap: '10px',
-        zIndex: 100,
-      }}>
-        {['fr', 'en', 'es'].map(l => (
-          <button
-            key={l}
-            onClick={() => setLang(l)}
-            style={{
-              padding: '10px 16px',
-              border: 'none',
-              borderRadius: '10px',
-              background: lang === l ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'rgba(255, 255, 255, 0.15)',
-              color: lang === l ? 'white' : 'rgba(255, 255, 255, 0.7)',
-              cursor: 'pointer',
-              fontWeight: lang === l ? '600' : '500',
-              fontSize: '13px',
-              transition: 'all 0.3s',
-              backdropFilter: 'blur(10px)',
-              border: lang === l ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
-            }}
-          >
-            {l.toUpperCase()}
-          </button>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+        <Segmented ariaLabel="Langue" value={lang} onChange={setLang} options={['fr', 'en', 'es'].map((l) => ({ value: l, label: l.toUpperCase() }))} />
       </div>
 
-      {/* Main Form Container */}
-      <div className="form-container" style={{
-        maxWidth: '420px',
-        width: '100%',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
-        borderRadius: '28px',
-        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        position: 'relative',
-        zIndex: 10,
-        maxHeight: 'calc(100vh - 40px)',
-        overflowY: 'auto',
-      }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '18px' }}>
-          <div style={{
-            fontSize: '40px',
-            marginBottom: '8px',
-            animation: 'floatGradient 4s ease-in-out infinite',
-          }}>
-            💰
-          </div>
-          <h1 style={{
-            margin: '0 0 4px 0',
-            fontSize: 'clamp(18px, 5vw, 22px)',
-            fontWeight: '700',
-            background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}>
-            {t.createAccount}
-          </h1>
-          <p style={{
-            margin: 0,
-            color: '#64748b',
-            fontSize: '12px',
-            fontWeight: '500',
-          }}>
-            {t.joinInvestors}
-          </p>
+      <AuthHeader icon={<div style={{ display: 'grid', placeItems: 'center', marginBottom: 14 }}><LogoMark size={52} /></div>} title={t.createAccount} subtitle={t.joinInvestors} />
+
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span className="ik-muted">{t.progress}</span>
+          <span className="ik-num" style={{ fontWeight: 800, color: 'var(--ik-accent)' }}>{formProgress}%</span>
         </div>
-
-        {/* Progress Bar */}
-        <div style={{ marginBottom: '18px' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '6px',
-          }}>
-            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>{t.progress}</span>
-            <span style={{
-              fontSize: '12px',
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              {formProgress}%
-            </span>
-          </div>
-          <div style={{
-            width: '100%',
-            height: '6px',
-            background: '#e2e8f0',
-            borderRadius: '3px',
-            overflow: 'hidden',
-            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
-          }}>
-            <div style={{
-              height: '100%',
-              background: `linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)`,
-              width: `${formProgress}%`,
-              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              borderRadius: '3px',
-              boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)',
-            }} />
-          </div>
+        <div className="ik-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={formProgress} aria-label={t.progress}>
+          <div className="ik-progress__bar" style={{ width: `${formProgress}%`, transition: 'width var(--ik-dur) var(--ik-ease)' }} />
         </div>
+      </div>
 
-        {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {referralCode && (
-            <div style={{
-              padding: '10px 14px',
-              borderRadius: '8px',
-              background: 'rgba(245, 158, 11, 0.12)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              color: '#f59e0b',
-              fontSize: '13px',
-              fontWeight: '600',
-            }}>
-              🎁 Invité(e) par un ami — code {referralCode}
-            </div>
-          )}
-
-          {inviteOnly && (
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: '#94a3b8' }}>
-                🎟️ Code d'invitation (site en phase de test)
-              </label>
-              <input
-                type="text"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="XXXXX-XXXXX"
-                autoComplete="off"
-                style={{
-                  width: '100%', padding: '12px 14px', borderRadius: '10px', boxSizing: 'border-box',
-                  border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)',
-                  color: 'white', fontSize: '14px', letterSpacing: '1px',
-                }}
-              />
-            </div>
-          )}
-
-          {/* Email Field */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: '700',
-              marginBottom: '6px',
-              color: '#1e293b',
-              letterSpacing: '0.3px',
-            }}>
-              {t.email}
-              {isEmailValid && <span className="valid-checkmark">✓</span>}
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                placeholder="vous@exemple.com"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `2px solid ${isEmailValid ? '#10b981' : '#e2e8f0'}`,
-                  borderRadius: '12px',
-                  fontSize: '13px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxSizing: 'border-box',
-                  backgroundColor: isEmailValid ? 'rgba(16, 185, 129, 0.03)' : '#f8fafc',
-                  color: '#1e293b',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.boxShadow = 'none';
-                  if (!isEmailValid) e.target.style.borderColor = '#e2e8f0';
-                }}
-              />
-              {checkingEmail && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px' }}>⏳</span>}
-              {emailSuggestions.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  background: 'white',
-                  border: '2px solid #e2e8f0',
-                  borderTop: 'none',
-                  borderBottomLeftRadius: '12px',
-                  borderBottomRightRadius: '12px',
-                  zIndex: 20,
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-                  marginTop: '-2px',
-                }}>
-                  {emailSuggestions.map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => selectEmailSuggestion(suggestion)}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        background: 'transparent',
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#3b82f6',
-                        borderBottom: idx < emailSuggestions.length - 1 ? '1px solid #f1f5f9' : 'none',
-                        fontWeight: '500',
-                      }}
-                      onMouseOver={(e) => e.target.style.background = '#f8fafc'}
-                      onMouseOut={(e) => e.target.style.background = 'transparent'}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'grid', gap: 16 }}>
+        {referralCode && (
+          <div className="ik-notice ik-notice--info" style={{ margin: 0 }} role="status">
+            <Icon name="gift" size={20} /><p>Invité(e) par un ami : code {referralCode}</p>
           </div>
+        )}
 
-          {/* Password Field */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: '700',
-              marginBottom: '6px',
-              color: '#1e293b',
-              letterSpacing: '0.3px',
-            }}>
-              {t.password}
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  paddingRight: '40px',
-                  border: `2px solid ${password.length >= 8 ? '#10b981' : '#e2e8f0'}`,
-                  borderRadius: '12px',
-                  fontSize: '13px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxSizing: 'border-box',
-                  backgroundColor: password.length >= 8 ? 'rgba(16, 185, 129, 0.03)' : '#f8fafc',
-                  color: '#1e293b',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.boxShadow = 'none';
-                  if (password.length < 8) e.target.style.borderColor = '#e2e8f0';
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  padding: '6px 8px',
-                  transition: 'transform 0.2s',
-                }}
-                onMouseOver={(e) => e.target.style.transform = 'translateY(-50%) scale(1.2)'}
-                onMouseOut={(e) => e.target.style.transform = 'translateY(-50%) scale(1)'}
-              >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
+        {inviteOnly && (
+          <div className="ik-field">
+            <label className="ik-label" htmlFor="invite">Code d&apos;invitation (site en phase de test)</label>
+            <input id="invite" className="ik-input" type="text" value={inviteCode} onChange={(e) => setInviteCode(e.target.value.toUpperCase())} placeholder="XXXXX-XXXXX" autoComplete="off" />
+          </div>
+        )}
 
-            {/* Password Requirements */}
-            {password.length > 0 && (
-              <div style={{
-                marginTop: '8px',
-                padding: '10px 12px',
-                background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.8) 100%)',
-                border: '1px solid #e2e8f0',
-                borderRadius: '10px',
-              }}>
-                <p style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: '700', color: '#1e293b' }}>
-                  {t.passwordRequirements}
-                </p>
-                <div>
-                  {[
-                    { met: requirements.minLength, label: t.minLength },
-                    { met: requirements.uppercase, label: t.uppercase },
-                    { met: requirements.lowercase, label: t.lowercase },
-                    { met: requirements.number, label: t.number },
-                    { met: requirements.specialChar, label: t.specialChar },
-                  ].map((req, idx) => (
-                    <div key={idx} className={`requirement-item ${req.met ? 'met' : ''}`}>
-                      <span className="requirement-check">{req.met ? '✓' : ''}</span>
-                      {req.label}
-                    </div>
-                  ))}
-                </div>
+        <div className="ik-field">
+          <label className="ik-label" htmlFor="su-email" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {t.email}
+            {isEmailValid && <Icon name="check" size={16} className="ik-up" strokeWidth={2.6} />}
+          </label>
+          <div style={{ position: 'relative' }}>
+            <input id="su-email" className="ik-input" type="email" autoComplete="email" value={email} onChange={(e) => handleEmailChange(e.target.value)} placeholder="toi@exemple.com" aria-invalid={isEmailFormatValid && emailAvailable === false ? 'true' : undefined} />
+            {emailSuggestions.length > 0 && (
+              <div className="ik-menu" role="listbox" style={{ top: 'calc(100% + 6px)', left: 0, right: 0 }}>
+                {emailSuggestions.map((suggestion) => (
+                  <button key={suggestion} type="button" role="option" aria-selected="false" className="ik-menu__item" onClick={() => selectEmailSuggestion(suggestion)}>{suggestion}</button>
+                ))}
               </div>
             )}
           </div>
+          {checkingEmail && <span className="ik-muted" role="status">{t.checking}</span>}
+          {isEmailValid && !checkingEmail && <span className="ik-up" style={{ fontSize: 'var(--ik-fs-sm)', fontWeight: 700 }}>{t.emailAvailable}</span>}
+        </div>
 
-          {/* Password Strength Indicator */}
-          {password.length >= 6 && (
-            <div style={{
-              padding: '8px 12px',
-              background: passwordStrength === 'fort' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))' : passwordStrength === 'moyen' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05))' : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
-              border: `1px solid ${passwordStrength === 'fort' ? '#d1fae5' : passwordStrength === 'moyen' ? '#fef3c7' : '#fee2e2'}`,
-              borderRadius: '10px',
-              fontSize: '12px',
-              fontWeight: '600',
-              color: passwordStrength === 'fort' ? '#065f46' : passwordStrength === 'moyen' ? '#92400e' : '#991b1b',
-            }}>
-              {t.strength} {
-                passwordStrength === 'fort' ? t.strong :
-                passwordStrength === 'moyen' ? t.medium :
-                t.weak
-              }
+        <div className="ik-field">
+          <label className="ik-label" htmlFor="su-pass">{t.password}</label>
+          <div className="ik-input-wrap">
+            <input id="su-pass" className="ik-input" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+            <Button variant="ghost" size="sm" icon={showPassword ? 'eyeOff' : 'eye'} className="ik-input-wrap__btn" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? t.hidePassword : t.showPassword} />
+          </div>
+          {password.length > 0 && (
+            <div style={{ padding: '12px 14px', borderRadius: 'var(--ik-radius-sm)', background: 'var(--ik-surface-2)', border: '1px solid var(--ik-border)' }}>
+              <p style={{ margin: '0 0 8px', fontSize: 'var(--ik-fs-xs)', fontWeight: 800, color: 'var(--ik-text-2)' }}>{t.passwordRequirements}</p>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
+                {[
+                  { met: requirements.minLength, label: t.minLength },
+                  { met: requirements.uppercase, label: t.uppercase },
+                  { met: requirements.lowercase, label: t.lowercase },
+                  { met: requirements.number, label: t.number },
+                  { met: requirements.specialChar, label: t.specialChar },
+                ].map((req) => (
+                  <li key={req.label} className={req.met ? 'ik-up' : ''} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--ik-fs-sm)', color: req.met ? undefined : 'var(--ik-text-3)' }}>
+                    <Icon name={req.met ? 'check' : 'x'} size={15} strokeWidth={2.4} />{req.label}
+                    <span className="ik-sr-only">{req.met ? ' (rempli)' : ' (à remplir)'}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
+        </div>
 
-          {/* Confirm Password Field */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: '700',
-              marginBottom: '6px',
-              color: '#1e293b',
-              letterSpacing: '0.3px',
-            }}>
-              {t.passwordConfirm}
-              {passwordsMatch && passwordConfirm.length > 0 && <span className="valid-checkmark">✓</span>}
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPasswordConfirm ? 'text' : 'password'}
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  paddingRight: '40px',
-                  border: `2px solid ${passwordsMatch && passwordConfirm.length > 0 ? '#10b981' : '#e2e8f0'}`,
-                  borderRadius: '12px',
-                  fontSize: '13px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxSizing: 'border-box',
-                  backgroundColor: passwordsMatch && passwordConfirm.length > 0 ? 'rgba(16, 185, 129, 0.03)' : '#f8fafc',
-                  color: '#1e293b',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.boxShadow = 'none';
-                  if (!(passwordsMatch && passwordConfirm.length > 0)) e.target.style.borderColor = '#e2e8f0';
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                style={{
-                  position: 'absolute',
-                  right: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  padding: '6px 8px',
-                  transition: 'transform 0.2s',
-                }}
-                onMouseOver={(e) => e.target.style.transform = 'translateY(-50%) scale(1.2)'}
-                onMouseOut={(e) => e.target.style.transform = 'translateY(-50%) scale(1)'}
-              >
-                {showPasswordConfirm ? '👁️' : '👁️‍🗨️'}
-              </button>
+        {password.length >= 6 && (
+          <div aria-live="polite" style={{ display: 'grid', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 4 }} aria-hidden="true">
+              {[1, 2, 3].map((n) => <span key={n} style={{ flex: 1, height: 6, borderRadius: 6, background: n <= strengthLevel ? strengthColor : 'var(--ik-surface-3)', transition: 'background var(--ik-dur) var(--ik-ease)' }} />)}
             </div>
-            {password.length > 0 && passwordConfirm.length > 0 && (
-              <p style={{
-                margin: '4px 0 0 0',
-                fontSize: '12px',
-                fontWeight: '600',
-                color: passwordsMatch ? '#10b981' : '#ef4444',
-              }}>
-                {passwordsMatch ? '✓ ' + t.passwordsMatch : '✗ ' + t.passwordDontMatch}
-              </p>
-            )}
+            <span style={{ fontSize: 'var(--ik-fs-sm)', fontWeight: 700, color: strengthColor }}>{t.strength} {strengthLabel}</span>
           </div>
+        )}
 
-          {/* hCaptcha */}
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
-            <HCaptcha
-              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
-              onVerify={(token) => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken(null)}
-              ref={captchaRef}
-            />
+        <div className="ik-field">
+          <label className="ik-label" htmlFor="su-pass2" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {t.passwordConfirm}
+            {passwordsMatch && passwordConfirm.length > 0 && <Icon name="check" size={16} className="ik-up" strokeWidth={2.6} />}
+          </label>
+          <div className="ik-input-wrap">
+            <input id="su-pass2" className="ik-input" type={showPasswordConfirm ? 'text' : 'password'} autoComplete="new-password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} placeholder="••••••••" />
+            <Button variant="ghost" size="sm" icon={showPasswordConfirm ? 'eyeOff' : 'eye'} className="ik-input-wrap__btn" onClick={() => setShowPasswordConfirm(!showPasswordConfirm)} aria-label={showPasswordConfirm ? t.hidePassword : t.showPassword} />
           </div>
-
-          {/* GDPR Consent */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-            <input
-              type="checkbox"
-              id="gdpr"
-              checked={gdprConsent}
-              onChange={(e) => setGdprConsent(e.target.checked)}
-              style={{
-                marginTop: '4px',
-                cursor: 'pointer',
-                width: '18px',
-                height: '18px',
-                accentColor: '#3b82f6',
-                borderRadius: '4px',
-                flexShrink: 0,
-              }}
-            />
-            <div style={{ flex: 1 }}>
-              <label htmlFor="gdpr" style={{
-                fontSize: '12px',
-                color: '#475569',
-                cursor: 'pointer',
-                margin: 0,
-                fontWeight: '500',
-                lineHeight: '1.4',
-              }}>
-                {t.gdprConsent}
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowGdprModal(true)}
-                style={{
-                  marginTop: '2px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#3b82f6',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  padding: 0,
-                  textDecoration: 'underline',
-                  fontWeight: '500',
-                }}
-              >
-                {t.gdprDetails}
-              </button>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {message && (
-            <div style={{
-              padding: '10px 12px',
-              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
-              border: '1px solid #fee2e2',
-              borderRadius: '10px',
-              color: '#991b1b',
-              fontSize: '12px',
-              fontWeight: '500',
-              marginTop: '-4px',
-            }}>
-              {message}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={!isFormValid || loading}
-            style={{
-              width: '100%',
-              padding: '11px 14px',
-              background: isFormValid ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)' : '#cbd5e1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '700',
-              cursor: isFormValid ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              opacity: loading ? 0.9 : 1,
-              letterSpacing: '0.3px',
-              boxShadow: isFormValid ? '0 10px 30px rgba(59, 130, 246, 0.3)' : 'none',
-              marginTop: '-2px',
-            }}
-            onMouseOver={(e) => isFormValid && (e.target.style.transform = 'translateY(-3px)', e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)')}
-            onMouseOut={(e) => isFormValid && (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)')}
-          >
-            {loading ? '⏳ ' + t.signup : t.signup}
-          </button>
-        </form>
-      </div>
-
-      {/* GDPR Modal */}
-      {showGdprModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          padding: '20px',
-          backdropFilter: 'blur(5px)',
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
-            borderRadius: '24px',
-            padding: '32px',
-            maxWidth: '520px',
-            width: '100%',
-            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-          }}>
-            <h2 style={{
-              margin: '0 0 16px 0',
-              fontSize: '22px',
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              {t.gdprModal}
-            </h2>
-            <p style={{
-              margin: '0 0 24px 0',
-              fontSize: '14px',
-              color: '#475569',
-              lineHeight: '1.7',
-            }}>
-              {t.gdprText}
+          {password.length > 0 && passwordConfirm.length > 0 && (
+            <p className={passwordsMatch ? 'ik-up' : 'ik-error'} role="status" style={{ margin: 0, fontSize: 'var(--ik-fs-sm)', fontWeight: 700 }}>
+              {passwordsMatch ? t.passwordsMatch : t.passwordDontMatch}
             </p>
-            <button
-              onClick={() => setShowGdprModal(false)}
-              style={{
-                width: '100%',
-                padding: '13px 16px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '15px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
-              }}
-              onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)', e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)')}
-              onMouseOut={(e) => (e.target.style.transform = 'translateY(0)', e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)')}
-            >
-              {t.close}
-            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
+          <HCaptcha sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY} onVerify={(token) => setCaptchaToken(token)} onExpire={() => setCaptchaToken(null)} ref={captchaRef} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <input type="checkbox" id="gdpr" checked={gdprConsent} onChange={(e) => setGdprConsent(e.target.checked)} style={{ width: 20, height: 20, marginTop: 2, accentColor: 'var(--ik-primary)', flex: 'none' }} />
+          <div style={{ flex: 1 }}>
+            <label htmlFor="gdpr" style={{ fontSize: 'var(--ik-fs-sm)', color: 'var(--ik-text-2)', lineHeight: 1.5 }}>{t.gdprConsent}</label>
+            <button type="button" className="ik-link" style={{ display: 'block', background: 'none', border: 0, padding: 0, cursor: 'pointer' }} onClick={() => setShowGdprModal(true)}>{t.gdprDetails}</button>
           </div>
         </div>
-      )}
-    </div>
+
+        {message && (
+          <div className="ik-notice ik-notice--danger" role="alert" style={{ margin: 0 }}>
+            <Icon name="alert" size={20} /><p>{message}</p>
+          </div>
+        )}
+
+        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={!isFormValid || loading}>{t.signup}</Button>
+        <p className="ik-muted" style={{ margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
+          {t.acceptTerms} <Link href="/conditions" className="ik-link">{t.terms}</Link> {t.and} <Link href="/privacy" className="ik-link">{t.privacy}</Link>.
+        </p>
+      </form>
+
+      <p className="ik-muted" style={{ margin: '20px 0 0', textAlign: 'center', paddingTop: 16, borderTop: '1px solid var(--ik-border)' }}>
+        {t.haveAccount} <Link href="/login" className="ik-link">{t.login}</Link>
+      </p>
+
+      <Modal open={showGdprModal} onClose={() => setShowGdprModal(false)} title={t.gdprModal} footer={<Button variant="primary" onClick={() => setShowGdprModal(false)}>{t.close}</Button>}>
+        <p style={{ margin: 0, color: 'var(--ik-text-2)', lineHeight: 1.65 }}>{t.gdprText}</p>
+      </Modal>
+    </AuthLayout>
   );
 }

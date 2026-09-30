@@ -31,7 +31,6 @@
   },
   "homepage": "https://github.com/SMCSRB/InvestKit#readme",
   "dependencies": {
-    "@fontsource-variable/plus-jakarta-sans": "5.3.0",
     "@hcaptcha/react-hcaptcha": "^2.2.0",
     "@types/node": "20.x",
     "@types/react": "18.2.0",

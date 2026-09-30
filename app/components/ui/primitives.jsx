@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Icon from './Icon';
 import { AnimatedNumber } from './motion';
@@ -198,8 +199,8 @@ export function Modal({ open, onClose, title, children, footer }) {
       prev?.focus?.();
     };
   }, [open]);
-  if (!open) return null;
-  return (
+  if (!open || typeof document === 'undefined') return null;
+  return createPortal(
     <div className="ik-overlay" onMouseDown={(e) => e.target === e.currentTarget && closeRef.current()}>
       <div ref={ref} className="ik-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -211,7 +212,8 @@ export function Modal({ open, onClose, title, children, footer }) {
         {children}
         {footer && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
