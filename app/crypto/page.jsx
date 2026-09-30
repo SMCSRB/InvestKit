@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import HelpTip from '../components/HelpTip';
 
 // Le graphique n'existe que dans le navigateur (canvas) : chargement dynamique, sans rendu serveur.
 const PriceChart = dynamic(() => import('./PriceChart'), { ssr: false, loading: () => <div style={{ color: '#94a3b8' }}>Chargement du graphique…</div> });
@@ -90,7 +91,7 @@ function OrderTicket({ symbol, asset, onDone }) {
   const tab = (active, color) => ({ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14, color: '#fff', background: active ? color : 'rgba(15,23,42,0.8)', opacity: active ? 1 : 0.6 });
   return (
     <div style={card} data-testid="order-ticket">
-      <h3 style={{ margin: '0 0 10px', color: '#fff', fontSize: 16 }}>Passer un ordre — {symbol}</h3>
+      <h3 style={{ margin: '0 0 10px', color: '#fff', fontSize: 16 }}>Passer un ordre — {symbol}<HelpTip term="ordre-marche" /></h3>
       <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
         <button data-testid="side-buy" style={tab(side === 'buy', '#16a34a')} onClick={() => setSide('buy')}>Acheter</button>
         <button data-testid="side-sell" style={tab(side === 'sell', '#dc2626')} onClick={() => setSide('sell')}>Vendre</button>
@@ -110,12 +111,12 @@ function OrderTicket({ symbol, asset, onDone }) {
       </div>
       {quote && (
         <div data-testid="quote" style={{ marginTop: 10, fontSize: 13, color: '#cbd5e1', lineHeight: 1.6 }}>
-          Prix estimé <b>{usd(quote.execution.price)}</b> (marché {usd(quote.refPrice)}) · écart {quote.execution.spreadPct.toFixed(2)} % · glissement {quote.execution.slippagePct.toFixed(3)} %<br />
+          Prix estimé <b>{usd(quote.execution.price)}</b> (marché {usd(quote.refPrice)}) · écart<HelpTip term="ecart-achat-vente" /> {quote.execution.spreadPct.toFixed(2)} % · glissement<HelpTip term="glissement" /> {quote.execution.slippagePct.toFixed(3)} %<br />
           Montant <b>{coins(quote.execution.notionalCoins)}</b> · frais <b>{coins(quote.execution.feeCoins)}</b> · {side === 'buy' ? 'total débité' : 'net crédité (avant impôt)'} <b>{coins(quote.execution.totalCoins)}</b>
           {quote.stale && <div style={{ color: '#fbbf24' }}>Cet actif n&apos;est plus coté : dernier prix connu.</div>}
         </div>
       )}
-      {side === 'sell' && <div style={{ marginTop: 8, fontSize: 12, color: '#94a3b8' }}>Une vente est imposée si tes cessions de l&apos;année dépassent le seuil de la flat tax (barème de jeu, à reconfirmer).</div>}
+      {side === 'sell' && <div style={{ marginTop: 8, fontSize: 12, color: '#94a3b8' }}>Stop-loss<HelpTip term="stop-loss" /> · Take-profit<HelpTip term="take-profit" /> · Ordre limite<HelpTip term="ordre-limite" /><br />Une vente est imposée si tes cessions de l&apos;année dépassent le seuil de la flat tax (barème de jeu, à reconfirmer).</div>}
       <button data-testid="submit-order" style={{ ...btn(true), width: '100%', marginTop: 12, background: side === 'buy' ? '#16a34a' : '#dc2626' }} disabled={busy} onClick={submit}>{side === 'buy' ? 'Acheter' : 'Vendre'} {symbol}</button>
       {msg && <div role="status" data-testid="order-msg" style={{ marginTop: 10, fontSize: 13, color: msg.ok ? '#86efac' : '#fca5a5' }}>{msg.text}</div>}
     </div>
@@ -225,7 +226,7 @@ function SwapCard({ positions, assets, onDone }) {
   if (!positions.length) return null;
   return (
     <div style={card} data-testid="swap-card">
-      <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Échanger une crypto contre une autre</h3>
+      <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Échanger une crypto contre une autre<HelpTip term="echange-crypto" /></h3>
       <p style={{ margin: '0 0 10px', color: '#94a3b8', fontSize: 13 }}>Pas d&apos;impôt sur un échange crypto contre crypto : l&apos;impôt n&apos;intervient qu&apos;à la sortie vers l&apos;euro. Tu paies seulement les frais, et ton prix de revient est reporté sur l&apos;actif reçu.</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <select aria-label="Actif à donner" style={input} value={from} onChange={(e) => setFrom(e.target.value)}><option value="">Je donne…</option>{positions.map((p) => <option key={p.symbol} value={p.symbol}>{p.symbol} ({p.quantity})</option>)}</select>
@@ -254,8 +255,8 @@ function LoanView({ simulatedAt, refreshKey, onChanged }) {
   return (
     <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'minmax(0,1fr)' }} data-testid="loan-view">
       <div style={card}>
-        <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Prêt sur mon portefeuille Crypto</h3>
-        <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, lineHeight: 1.5 }}>La banque te prête jusqu&apos;à <b>{v.ltv.max} %</b> de la valeur de tes cryptos. Si ta dette dépasse <b>{v.ltv.call} %</b> de cette valeur : appel de marge. Au-delà de <b>{v.ltv.liquidation} %</b> : tes cryptos sont vendues de force. Les pièces empruntées ne servent que dans le domaine Crypto. <b>Emprunter amplifie les gains… et les pertes.</b></p>
+        <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Prêt sur mon portefeuille Crypto<HelpTip term="ltv" /></h3>
+        <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, lineHeight: 1.5 }}>La banque te prête jusqu&apos;à <b>{v.ltv.max} %</b> de la valeur de tes cryptos. Si ta dette dépasse <b>{v.ltv.call} %</b> de cette valeur : appel de marge<HelpTip term="appel-de-marge" />. Au-delà de <b>{v.ltv.liquidation} %</b> : tes cryptos sont vendues de force (liquidation<HelpTip term="liquidation" />). Les pièces empruntées ne servent que dans le domaine Crypto. <b>Emprunter amplifie les gains… et les pertes.</b></p>
         <div style={{ marginTop: 10, fontSize: 13, color: '#cbd5e1' }}>Valeur de ta garantie : <b>{coins(v.limits.value)}</b> · capacité d&apos;emprunt : <b>{coins(v.capacityCoins)}</b></div>
       </div>
       {v.loan ? (
@@ -297,7 +298,7 @@ function BoardView({ simulatedAt }) {
   const pct = (n) => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`;
   return (
     <div style={card} data-testid="board">
-      <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Classement Crypto — {b.period}</h3>
+      <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Classement Crypto — {b.period}<HelpTip term="levier" /></h3>
       <p style={{ margin: '0 0 10px', color: '#94a3b8', fontSize: 13, lineHeight: 1.5 }}>Il compare les joueurs au <b>même mois simulé</b>, en pourcentage, <b>net de dettes</b> : les intérêts d&apos;un prêt sont déduits, le gain est rapporté à ton capital propre et le <b>levier</b> utilisé est affiché. Il faut avoir investi au moins {b.minCapital} 🪙 pour être classé.</p>
       <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', color: '#e2e8f0', fontSize: 13, minWidth: 360 }}>
         <thead><tr style={{ color: '#94a3b8', textAlign: 'right' }}><th style={{ textAlign: 'left', padding: 6 }}>#</th><th style={{ textAlign: 'left', padding: 6 }}>Joueur</th><th style={{ padding: 6 }}>Performance</th><th style={{ padding: 6 }}>Levier</th></tr></thead>
@@ -356,7 +357,7 @@ function AssetList({ assets, onOpen, filters, setFilters, categories }) {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e2e8f0', fontSize: 13, minWidth: 560 }}>
           <thead><tr style={{ color: '#94a3b8', textAlign: 'right' }}>
-            <th style={{ textAlign: 'left', padding: '8px 12px' }}>Actif</th><th style={{ padding: 8 }}>Prix</th><th style={{ padding: 8 }}>24 h</th><th style={{ padding: 8 }}>7 j</th><th style={{ padding: 8 }}>30 j</th><th style={{ padding: 8 }}>Volume 24 h</th><th style={{ padding: 8 }}>Capi.</th><th style={{ padding: 8 }}>Risque</th>
+            <th style={{ textAlign: 'left', padding: '8px 12px' }}>Actif</th><th style={{ padding: 8 }}>Prix</th><th style={{ padding: 8 }}>24 h</th><th style={{ padding: 8 }}>7 j</th><th style={{ padding: 8 }}>30 j</th><th style={{ padding: 8 }}>Volume 24 h<HelpTip term="volume" /></th><th style={{ padding: 8 }}>Capi.<HelpTip term="capitalisation" /></th><th style={{ padding: 8 }}>Risque<HelpTip term="drawdown" /></th>
           </tr></thead>
           <tbody>
             {assets.map((a) => (
@@ -422,9 +423,9 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
         <div style={{ color: '#94a3b8', fontSize: 13, margin: '4px 0 10px' }}>{state.categories[a.category] || a.category} · coté depuis le {a.listedSince ? dateFr(Date.parse(a.listedSince)) : '—'}</div>
         <p style={{ color: '#cbd5e1', lineHeight: 1.6, margin: '0 0 10px' }}>{a.description}</p>
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 13, color: '#cbd5e1' }}>
-          <span>Capitalisation : <b>{big(a.marketCap)}</b></span><span>Volume 24 h : <b>{big(a.volume24h)}</b></span>
-          <span>Plus haut historique (à ce jour) : <b>{usd(a.allTimeHigh)}</b></span><span>Plus bas : <b>{usd(a.allTimeLow)}</b></span>
-          <span>Liquidité : <b>palier {a.liquidityTier}</b></span>
+          <span>Capitalisation<HelpTip term="capitalisation" /> : <b>{big(a.marketCap)}</b></span><span>Volume 24 h<HelpTip term="volume" /> : <b>{big(a.volume24h)}</b></span>
+          <span>Plus haut historique (à ce jour)<HelpTip term="plus-haut-historique" /> : <b>{usd(a.allTimeHigh)}</b></span><span>Plus bas : <b>{usd(a.allTimeLow)}</b></span>
+          <span>Liquidité : <b>palier {a.liquidityTier}</b><HelpTip term="palier-liquidite" /></span>
         </div>
         <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(148,163,184,0.25)', color: '#e2e8f0', fontSize: 13 }}>
           <b>Risque {a.risk}/5</b> — {state.riskLabels[a.risk]}
@@ -446,7 +447,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
       <OrderTicket symbol={symbol} asset={a} onDone={() => { reloadMine(); onTraded(); }} />
 
       <div style={card}>
-        <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: 16 }}>Comparer avec d&apos;autres actifs</h3>
+        <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: 16 }}>Comparer avec d&apos;autres actifs<HelpTip term="base-100" /></h3>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
           <select aria-label="Ajouter un actif à comparer" style={input} value="" onChange={(e) => { const v = e.target.value; if (v && cmpWith.length < 3 && !cmpWith.includes(v)) setCmpWith([...cmpWith, v]); }}>
             <option value="">+ Ajouter un actif…</option>
@@ -503,7 +504,7 @@ export default function CryptoPage() {
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '20px 16px 60px', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
         <h1 style={{ margin: 0, color: '#fff', fontSize: 26 }}>₿ Marché Crypto <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 400 }}>simulation</span></h1>
-        <Link href="/dashboard" style={{ color: '#60a5fa', fontSize: 14 }}>← Tableau de bord</Link>
+        <span style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}><Link href="/education/crypto_market" data-testid="learn-link" style={{ color: '#fde68a', fontSize: 14 }}>📚 Apprendre : cours et quiz</Link><Link href="/glossaire" style={{ color: '#60a5fa', fontSize: 14 }}>Glossaire</Link><Link href="/dashboard" style={{ color: '#60a5fa', fontSize: 14 }}>← Tableau de bord</Link></span>
       </div>
       <div style={{ marginBottom: 14 }}><Disclaimer text={state.disclaimer} /></div>
       {info && <div role="status" style={{ ...card, borderColor: 'rgba(96,165,250,0.6)', color: '#bfdbfe', marginBottom: 12 }}>{info}</div>}

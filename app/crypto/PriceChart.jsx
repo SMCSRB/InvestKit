@@ -6,12 +6,14 @@ import {
   CrosshairMode, LineStyle, PriceScaleMode,
 } from 'lightweight-charts';
 import { INDICATORS, computeIndicator } from '../lib/indicators';
+import HelpTip from '../components/HelpTip';
 
 // Graphique professionnel basé sur TradingView Lightweight Charts™ (Apache 2.0) — le logo d'attribution reste affiché.
 // Toutes les données viennent du serveur, déjà bornées à la date simulée : ce composant ne choisit jamais une date.
 
 const COLORS = { up: '#22c55e', down: '#ef4444', grid: 'rgba(148,163,184,0.12)', text: '#94a3b8', line: '#60a5fa' };
 const IND_COLORS = ['#f59e0b', '#a78bfa', '#22d3ee', '#f472b6', '#84cc16', '#fb923c'];
+const IND_TIP = { sma: 'moyenne-mobile', ema: 'moyenne-mobile', bollinger: 'bollinger', rsi: 'rsi', macd: 'macd' };
 const SCALES = [['linear', 'Linéaire'], ['log', 'Log'], ['percent', '%']];
 const SCALE_MODE = { linear: PriceScaleMode.Normal, log: PriceScaleMode.Logarithmic, percent: PriceScaleMode.Percentage };
 const TYPES = [['candles', 'Bougies'], ['line', 'Ligne'], ['area', 'Aire']];
@@ -243,7 +245,9 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
         <span style={{ width: 8 }} />
         {SCALES.map(([id, l]) => <button key={id} style={btn(scale === id)} onClick={() => setScale(id)} title="Échelle de l'axe des prix">{l}</button>)}
         <span style={{ width: 8 }} />
+        <HelpTip term="echelle-log" />
         <button style={btn(showInd)} onClick={() => setShowInd((s) => !s)}>Indicateurs{indicators.length ? ` (${indicators.length})` : ''}</button>
+        <HelpTip term="moyenne-mobile" />
         <button style={btn(drawMode === 'hline')} onClick={() => setDrawMode(drawMode === 'hline' ? 'none' : 'hline')} title="Puis clique sur le graphique">― Ligne horizontale</button>
         <button style={btn(drawMode === 'trend')} onClick={() => setDrawMode(drawMode === 'trend' ? 'none' : 'trend')} title="Clique deux points sur le graphique">╱ Ligne de tendance</button>
         {(tools.h.length > 0 || tools.t.length > 0) && <button style={btn(false)} onClick={clearTools}>Effacer mes tracés</button>}
@@ -258,7 +262,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
           {indicators.map((ind, idx) => (
             <div key={ind.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 8, fontSize: 12, color: '#cbd5e1' }}>
               <span style={{ width: 10, height: 10, borderRadius: 2, background: IND_COLORS[idx % IND_COLORS.length], display: 'inline-block' }} />
-              <strong>{INDICATORS[ind.type].label}</strong>
+              <strong>{INDICATORS[ind.type].label}</strong>{IND_TIP[ind.type] && <HelpTip term={IND_TIP[ind.type]} />}
               {Object.entries(ind.params).map(([k, v]) => (
                 <label key={k} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                   {k === 'period' ? 'période' : k === 'mult' ? 'écarts-types' : k === 'fast' ? 'rapide' : k === 'slow' ? 'lente' : 'signal'}

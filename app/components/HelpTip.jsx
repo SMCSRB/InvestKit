@@ -53,6 +53,11 @@ export default function HelpTip({ term, label }) {
           <Link href={`/glossaire#${entry.id}`} style={{ display: 'block', marginTop: 8, color: '#60a5fa', fontSize: 12 }}>
             Voir l&apos;explication complète →
           </Link>
+          {entry.quiz && (
+            <Link href={`/education/${entry.quiz.domain}/${entry.quiz.chapter}`} style={{ display: 'block', marginTop: 4, color: '#60a5fa', fontSize: 12 }}>
+              📝 Teste-toi : quiz lié →
+            </Link>
+          )}
         </span>
       )}
     </span>
