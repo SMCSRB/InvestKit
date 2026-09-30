@@ -122,7 +122,7 @@ function OrderTicket({ symbol, asset, onDone }) {
   );
 }
 
-function PortfolioView({ simulatedAt, refreshKey, onOpen }) {
+function PortfolioView({ simulatedAt, refreshKey, onOpen, assets }) {
   const [p, setP] = useState(null);
   const [history, setHistory] = useState([]);
   const [err, setErr] = useState('');
@@ -156,6 +156,7 @@ function PortfolioView({ simulatedAt, refreshKey, onOpen }) {
             {!p.positions.length && <tr><td colSpan={7} style={{ padding: 16, textAlign: 'center', color: '#94a3b8' }}>Aucune position : ouvre un actif du marché pour acheter.</td></tr>}
           </tbody></table></div>
       </div>
+      <SwapCard positions={p.positions} assets={assets} onDone={load} />
       <div style={card}>
         <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: 16 }}>Ordres en attente</h3>
         {p.openOrders.length === 0 ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Aucun ordre en attente.</div> : p.openOrders.map((o) => (
@@ -178,6 +179,61 @@ function PortfolioView({ simulatedAt, refreshKey, onOpen }) {
             {!history.length && <tr><td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#94a3b8' }}>Aucune exécution pour l&apos;instant.</td></tr>}
           </tbody></table></div>
       </div>
+    </div>
+  );
+}
+
+const KIND_COLOR = { crash: '#ef4444', rally: '#22c55e', platform_failure: '#f97316', regulation: '#a78bfa', rates: '#38bdf8', milestone: '#94a3b8', outage: '#f97316', volatility: '#eab308' };
+
+function JournalView({ simulatedAt }) {
+  const [events, setEvents] = useState(null);
+  useEffect(() => { call('/events').then((r) => setEvents(r.events)).catch(() => setEvents([])); }, [simulatedAt]);
+  if (!events) return <div style={{ color: '#94a3b8' }}>Chargement…</div>;
+  return (
+    <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)' }}>
+      <p style={{ color: '#94a3b8', margin: 0, fontSize: 13 }}>Les événements du marché apparaissent ici au fur et à mesure que ta date simulée les franchit, avec la leçon à en tirer. Les incidents et épisodes de volatilité « aléatoires » sont tirés de façon reproductible : ils ne dépendent pas de tes choix.</p>
+      {events.map((e) => (
+        <div key={e.key} data-testid={`event-${e.key}`} style={{ ...card, borderLeft: `4px solid ${KIND_COLOR[e.kind] || '#64748b'}` }}>
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>{dateFr(Date.parse(e.date))} · <span style={{ color: KIND_COLOR[e.kind] || '#94a3b8', fontWeight: 700 }}>{e.kindLabel}</span>{e.origin === 'random' && ' · tirage du jeu'}</div>
+          <div style={{ color: '#fff', fontWeight: 800, margin: '2px 0 4px' }}>{e.title}</div>
+          <div style={{ color: '#cbd5e1', fontSize: 14, lineHeight: 1.5 }}>{e.message}</div>
+          <div style={{ color: '#fde68a', fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>💡 {e.lesson}</div>
+        </div>
+      ))}
+      {!events.length && <div style={card}><span style={{ color: '#94a3b8' }}>Aucun événement pour l&apos;instant : avance dans le temps pour découvrir l&apos;histoire du marché.</span></div>}
+      <div style={{ color: '#64748b', fontSize: 11 }}>Chiffres arrondis à titre pédagogique, à reconfirmer avant toute citation.</div>
+    </div>
+  );
+}
+
+function SwapCard({ positions, assets, onDone }) {
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [qty, setQty] = useState('');
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true); setMsg(null);
+    try {
+      const r = await call('/swap', 'POST', { clientOrderId: uid(), from, to, quantity: qty });
+      setMsg({ ok: true, text: `Échangé : tu reçois ${r.received.quantity} ${r.received.symbol}. Frais : ${coins(r.order.fill.feeCoins)}. Aucun impôt.` });
+      setQty(''); onDone();
+    } catch (e) { setMsg({ ok: false, text: e.message }); }
+    setBusy(false);
+  };
+  if (!positions.length) return null;
+  return (
+    <div style={card} data-testid="swap-card">
+      <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Échanger une crypto contre une autre</h3>
+      <p style={{ margin: '0 0 10px', color: '#94a3b8', fontSize: 13 }}>Pas d&apos;impôt sur un échange crypto contre crypto : l&apos;impôt n&apos;intervient qu&apos;à la sortie vers l&apos;euro. Tu paies seulement les frais, et ton prix de revient est reporté sur l&apos;actif reçu.</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <select aria-label="Actif à donner" style={input} value={from} onChange={(e) => setFrom(e.target.value)}><option value="">Je donne…</option>{positions.map((p) => <option key={p.symbol} value={p.symbol}>{p.symbol} ({p.quantity})</option>)}</select>
+        <select aria-label="Actif à recevoir" style={input} value={to} onChange={(e) => setTo(e.target.value)}><option value="">Je reçois…</option>{assets.filter((a) => a.symbol !== from && !a.collapsed).map((a) => <option key={a.symbol} value={a.symbol}>{a.symbol} — {a.name}</option>)}</select>
+        <input aria-label="Quantité à échanger" inputMode="decimal" placeholder="Quantité" style={{ ...input, width: 130 }} value={qty} onChange={(e) => setQty(e.target.value.replace(',', '.'))} />
+        <button data-testid="swap-submit" style={btn(true)} disabled={busy || !from || !to || !qty} onClick={submit}>Échanger</button>
+      </div>
+      {msg && <div role="status" style={{ marginTop: 8, fontSize: 13, color: msg.ok ? '#86efac' : '#fca5a5' }}>{msg.text}</div>}
     </div>
   );
 }
@@ -360,7 +416,7 @@ export default function CryptoPage() {
   const advance = async (step) => {
     if (busy) return;
     setBusy(true); setMsg(''); setInfo('');
-    try { const r = await call('/time/advance', 'POST', { step }); await loadState(); setRefreshKey((k) => k + 1); const f = (r.events || []).filter((e) => e.status === 'filled').length; const c = (r.events || []).filter((e) => e.status === 'cancelled').length; if (f || c) setInfo(`Ordres en attente : ${f} exécuté(s)${c ? `, ${c} annulé(s)` : ''} pendant cette période (détails dans l'historique et les notifications).`); } catch (e) { setMsg(e.message); }
+    try { const r = await call('/time/advance', 'POST', { step }); await loadState(); setRefreshKey((k) => k + 1); const f = (r.events || []).filter((e) => e.status === 'filled').length; const c = (r.events || []).filter((e) => e.status === 'cancelled').length; const ev = (r.marketEvents || []).length; if (f || c || ev) setInfo(`${f || c ? `Ordres en attente : ${f} exécuté(s)${c ? `, ${c} annulé(s)` : ''}. ` : ''}${ev ? `${ev} événement(s) de marché : ouvre le Journal du marché pour lire l'explication.` : ''}`); } catch (e) { setMsg(e.message); }
     setBusy(false);
   };
 
@@ -392,10 +448,11 @@ export default function CryptoPage() {
             {!state.account.canAdvance && <span style={{ color: '#94a3b8', fontSize: 12 }}>Fin des données disponibles.</span>}
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            {[['market', 'Marché'], ['portfolio', 'Mon portefeuille']].map(([id, l]) => <button key={id} data-testid={`tab-${id}`} onClick={() => { setTab(id); setSelected(null); }} style={{ ...btn(tab === id), background: tab === id ? '#2563eb' : 'rgba(59,130,246,0.15)' }}>{l}</button>)}
+            {[['market', 'Marché'], ['portfolio', 'Mon portefeuille'], ['journal', 'Journal du marché']].map(([id, l]) => <button key={id} data-testid={`tab-${id}`} onClick={() => { setTab(id); setSelected(null); }} style={{ ...btn(tab === id), background: tab === id ? '#2563eb' : 'rgba(59,130,246,0.15)' }}>{l}</button>)}
           </div>
-          {tab === 'portfolio'
-            ? <PortfolioView simulatedAt={simulatedAt} refreshKey={refreshKey} onOpen={(sym) => { setTab('market'); setSelected(sym); }} />
+          {tab === 'journal' ? <JournalView simulatedAt={simulatedAt} refreshKey={refreshKey} />
+            : tab === 'portfolio'
+            ? <PortfolioView simulatedAt={simulatedAt} refreshKey={refreshKey} assets={allAssets} onOpen={(sym) => { setTab('market'); setSelected(sym); }} />
             : selected
               ? <AssetView symbol={selected} state={state} simulatedAt={simulatedAt} refreshKey={refreshKey} allAssets={allAssets} onBack={() => setSelected(null)} onTraded={() => setRefreshKey((k) => k + 1)} />
               : <AssetList assets={allAssets} onOpen={setSelected} filters={filters} setFilters={setFilters} categories={state.categories} />}

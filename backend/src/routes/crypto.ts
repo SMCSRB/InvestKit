@@ -17,3 +17,5 @@ cryptoRoutes.get('/portfolio', authMiddleware, cryptoController.portfolio);
 cryptoRoutes.get('/orders', authMiddleware, cryptoController.orders);
 cryptoRoutes.post('/orders', authMiddleware, cryptoOrderLimiter, cryptoController.placeOrder);
 cryptoRoutes.delete('/orders/:id', authMiddleware, cryptoOrderLimiter, cryptoController.cancelOrder);
+cryptoRoutes.post('/swap', authMiddleware, cryptoOrderLimiter, cryptoController.swap);
+cryptoRoutes.get('/events', authMiddleware, cryptoController.events);
