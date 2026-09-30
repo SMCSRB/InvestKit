@@ -39,3 +39,8 @@ Feuille de route v6, phases 1 et 6. Ce lot ne change rien de visible pour un jou
 - Limite : `script-src` garde `'unsafe-inline'` (Next.js et les simulateurs HTML utilisent des scripts en ligne) : la CSP bloque le chargement de scripts d'origines étrangères mais pas l'injection de script en ligne. Piste : nonces (demande un middleware Next et la réécriture des simulateurs).
 - Testé en production dans un vrai navigateur sur 15 pages : aucune violation de la CSP ; un site étranger ne peut pas encadrer le nôtre.
 - Bug corrigé au passage : le graphique « Patrimoine » du simulateur immobilier utilisait le type `area` (inexistant depuis Chart.js 3) et ne s'affichait pas.
+
+## Dépendances (feuille de route 6E)
+- **Backend** : `npm audit --omit=dev` passe de 12 vulnérabilités (dont 1 critique et 5 hautes) à **0** : Express 4.18 → 4.22.3 (body-parser, path-to-regexp, qs…), bcrypt 5.1 → 6.0 (tar, node-pre-gyp), zod 3.22 → 3.25.76. `uuid` (inutilisé) retiré. 403 tests passent avec les nouvelles versions.
+- **Site** : Next.js 14.2.3 → 14.2.35 (dernier correctif de la branche 14 ; corrige les failles critiques connues à la date). Il reste des avis d'audit que seul Next 15 ou 16 corrige (surtout des cas d'usage que le site n'utilise pas : Server Actions, réécritures, middleware, i18n, optimiseur d'images avec AVIF). La montée de version majeure est traitée dans une PR séparée.
+- Le CI exécute `npm audit` (informatif) à chaque PR.

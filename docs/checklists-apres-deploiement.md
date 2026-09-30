@@ -181,3 +181,9 @@ Aucun changement visible, sauf un point :
 2. `/simulateurs/pea`, `/simulateurs/loan1`, `/simulateurs/loan2`, `/demo` : les graphiques s'affichent (ils fonctionnent même sans accès au CDN) ; l'export PDF marche. Le graphique « Patrimoine » du simulateur immobilier apparaît désormais.
 3. Après déploiement, l'API doit être joignable depuis le site : si des données ne chargent plus, vérifie que `NEXT_PUBLIC_API_URL` est bien défini **au moment du build** (la CSP en reprend l'adresse).
 4. Facultatif, quand le HTTPS est stable : ajouter `ENABLE_HSTS=true` dans l'environnement du site puis reconstruire.
+
+## PR Sécurité — mises à jour des dépendances
+Après fusion : `npm ci` dans le dossier du site **et** dans `backend/` (les versions ont changé), puis reconstruction (`npm run build`) et redémarrage.
+1. Le site et l'API démarrent ; connexion, dashboard, Bourse, Immobilier, Banque fonctionnent.
+2. Connexion avec mot de passe : OK (bcrypt a changé de version : les anciens mots de passe restent valides).
+3. `cd backend && npm audit --omit=dev` affiche `found 0 vulnerabilities`.
