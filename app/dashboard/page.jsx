@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import HelpTip from '@/app/components/HelpTip';
 import PortfolioRisk from '@/app/components/PortfolioRisk';
+import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 import { educationDomains } from '@/data/education';
@@ -2795,6 +2796,7 @@ export default function DashboardPage() {
         {/* MAIN PORTFOLIO CARD - BANK CARD STYLE */}
         {activeTab === 'overview' && (
           <>
+            <OnboardingChecklist />
             <div className="metric-card" style={{
               background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
               borderRadius: '24px',

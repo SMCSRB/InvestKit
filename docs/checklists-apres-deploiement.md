@@ -273,3 +273,10 @@ Aucun changement visible pour un usage normal.
 2. Provoque un événement : change ton mot de passe (Oublié ?) → « Mot de passe modifié » ; active/désactive la 2FA ; emprunte puis laisse passer des années sans payer (Banque) → « Mensualité impayée » / « Appel de marge » ; en Immobilier laisse un locataire ne plus payer → « Loyers impayés ». Un administrateur qui ajuste tes pièces → notification avec le motif.
 3. Le nombre de non lues apparaît à côté de « Notifications » ; une pastille s'affiche quelques secondes pour une nouvelle notification (au plus 1 minute après).
 4. Cliquer sur une notification la marque comme lue (elle le reste après rechargement) et ouvre la page concernée.
+
+## PR Checklist d'accueil et profil d'investisseur
+1. Dashboard → Vue d'ensemble : carte **« 🚀 Tes premiers pas »** avec 7 étapes et une barre de progression ; la prochaine étape est mise en avant.
+2. **C'est parti** sur « Remplir ton profil » : 4 questions (niveau, réaction à −30 %, objectifs, marchés) → **Enregistrer** : un encadré vert donne un conseil de départ adapté.
+3. Un bouton **Récupérer mes N 🪙** apparaît (10 🪙 par étape terminée) : après clic, ton solde augmente et la mention « récompense reçue » s'affiche. Recliquer ne donne rien de plus.
+4. Fais d'autres étapes (leçon, récompense quotidienne, premier achat…) : elles se cochent toutes seules au rechargement, et leur récompense est récupérable.
+5. Tout terminé : « Masquer cette carte ».
