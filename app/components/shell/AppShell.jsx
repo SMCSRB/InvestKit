@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/app/context/ThemeContext';
 import CommandPalette from './CommandPalette';
 import Sidebar from './Sidebar';
@@ -10,6 +10,13 @@ import Topbar from './Topbar';
 import useShellData from './useShellData';
 
 const COLLAPSE_KEY = 'ik-sidebar';
+
+// Suit la requête de l'adresse (?tab=…) pour surligner la bonne entrée du menu. Isolé dans Suspense (exigé par Next.js).
+function SearchSync({ onChange }) {
+  const s = useSearchParams().toString();
+  useEffect(() => onChange(s), [s, onChange]);
+  return null;
+}
 
 // Coque commune des pages connectées : menu latéral repliable, bandeau de cours, barre supérieure, recherche Ctrl/⌘ + K.
 export default function AppShell({ children }) {
@@ -20,6 +27,8 @@ export default function AppShell({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const mainRef = useRef(null);
 
   useEffect(() => {
     try { setCollapsed(localStorage.getItem(COLLAPSE_KEY) === 'collapsed'); } catch { /* ignore */ }
@@ -27,7 +36,19 @@ export default function AppShell({ children }) {
     return () => document.body.classList.remove('ik');
   }, []);
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => { setMenuOpen(false); }, [pathname, search]);
+
+  // Menu mobile : Échap le ferme ; à l'ouverture le focus va sur son bouton de fermeture, à la fermeture il revient au bouton d'ouverture.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.querySelector('#ik-sidebar button[aria-label="Fermer le menu"]')?.focus();
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.querySelector('button[aria-controls="ik-sidebar"]')?.focus();
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -52,8 +73,10 @@ export default function AppShell({ children }) {
   return (
     <div className="ik-app" data-collapsed={collapsed} data-open={menuOpen}>
       <a href="#ik-main" className="ik-skip-link">Aller au contenu</a>
+      <Suspense fallback={null}><SearchSync onChange={setSearch} /></Suspense>
       <Sidebar
         pathname={pathname}
+        search={search}
         collapsed={collapsed}
         onToggle={toggleCollapsed}
         onNavigate={() => setMenuOpen(false)}
@@ -66,7 +89,7 @@ export default function AppShell({ children }) {
       <div className="ik-main">
         <TickerBar />
         <Topbar data={data} theme={theme} onToggleTheme={toggleTheme} onOpenSearch={() => setSearchOpen(true)} onOpenMenu={() => setMenuOpen(true)} />
-        <main id="ik-main" className="ik-content ik-page-enter" key={pathname}>
+        <main id="ik-main" ref={mainRef} className="ik-content ik-page-enter" key={pathname}>
           {children}
         </main>
       </div>

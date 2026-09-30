@@ -26,12 +26,14 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState('dark');
   const [motion, setMotionState] = useState('auto'); // auto = suit le système ; on ; off
   const [systemReduced, setSystemReduced] = useState(false);
+  const [ready, setReady] = useState(false); // vrai une fois les réglages lus : avant, on ne touche pas aux attributs posés par le script d'initialisation
 
   useEffect(() => {
     const t = read(THEME_KEY, 'dark');
     setThemeState(t === 'light' ? 'light' : 'dark');
     const m = read(MOTION_KEY, 'auto');
     setMotionState(m === 'on' || m === 'off' ? m : 'auto');
+    setReady(true);
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setSystemReduced(mq.matches);
     const onChange = (e) => setSystemReduced(e.matches);
@@ -41,14 +43,16 @@ export function ThemeProvider({ children }) {
 
   const themed = isThemedPath(pathname);
   useEffect(() => {
+    if (!ready) return;
     document.documentElement.setAttribute('data-theme', themed ? theme : 'dark');
-  }, [theme, themed]);
+  }, [theme, themed, ready]);
 
   useEffect(() => {
+    if (!ready) return;
     const d = document.documentElement;
     if (motion === 'auto') d.removeAttribute('data-motion');
     else d.setAttribute('data-motion', motion);
-  }, [motion]);
+  }, [motion, ready]);
 
   const setTheme = useCallback((t) => {
     const v = t === 'light' ? 'light' : 'dark';

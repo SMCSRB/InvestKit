@@ -166,6 +166,8 @@ export function EmptyState({ icon = 'info', title, children, action }) {
 export function Modal({ open, onClose, title, children, footer }) {
   const ref = useRef(null);
   const titleId = useId();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!open) return undefined;
     const prev = document.activeElement;
@@ -173,7 +175,7 @@ export function Modal({ open, onClose, title, children, footer }) {
     const focusables = () => root.querySelectorAll('a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])');
     (focusables()[0] || root).focus();
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') closeRef.current();
       if (e.key === 'Tab') {
         const f = [...focusables()];
         if (!f.length) return;
@@ -195,10 +197,10 @@ export function Modal({ open, onClose, title, children, footer }) {
       document.body.style.overflow = '';
       prev?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return (
-    <div className="ik-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="ik-overlay" onMouseDown={(e) => e.target === e.currentTarget && closeRef.current()}>
       <div ref={ref} className="ik-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <h2 id={titleId} style={{ margin: 0, fontSize: 'var(--ik-fs-lg)' }}>

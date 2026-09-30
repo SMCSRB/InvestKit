@@ -540,9 +540,15 @@
     width: min(300px, 86vw);
     transform: translate3d(-102%, 0, 0);
     box-shadow: var(--ik-shadow-pop);
+    visibility: hidden;
+    transition:
+      transform var(--ik-dur-slow) var(--ik-ease),
+      visibility 0s linear var(--ik-dur-slow);
   }
   .ik-app[data-open='true'] .ik-sidebar {
     transform: none;
+    visibility: visible;
+    transition-delay: 0s;
   }
   .ik-app[data-collapsed='true'] .ik-sidebar {
     width: min(300px, 86vw);

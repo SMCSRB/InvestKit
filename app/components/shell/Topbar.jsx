@@ -7,6 +7,7 @@ import Icon from '@/app/components/ui/Icon';
 import { Button, Popover } from '@/app/components/ui/primitives';
 import { AnimatedNumber, burstCoins } from '@/app/components/ui/motion';
 import { endSession } from '@/app/lib/session';
+import { useTheme } from '@/app/context/ThemeContext';
 
 const fmtCoins = (v) => Math.round(v).toLocaleString('fr-FR');
 
@@ -34,7 +35,7 @@ function Notifications({ notif, onRead }) {
                 <span>{n.body}</span>
               </>
             );
-            return n.link && n.link.startsWith('/') ? (
+            return n.link && n.link.startsWith('/') && !n.link.startsWith('//') ? (
               <Link key={n.id} href={n.link} className="ik-notif__item" data-unread={!n.read} onClick={close}>{body}</Link>
             ) : (
               <div key={n.id} className="ik-notif__item" data-unread={!n.read}>{body}</div>
@@ -86,6 +87,8 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
   const balanceRef = useRef(null);
   const rewardRef = useRef(null);
   const [msg, setMsg] = useState('');
+  const busyRef = useRef(false);
+  const { motionEnabled } = useTheme();
   useEffect(() => {
     if (!msg) return undefined;
     const t = setTimeout(() => setMsg(''), 4000);
@@ -93,17 +96,20 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
   }, [msg]);
 
   const reward = async () => {
-    if (!wallet) return;
+    if (!wallet || busyRef.current) return;
     if (!wallet.canClaimToday) {
       setMsg(`Récompense du jour déjà récupérée. Série en cours : ${wallet.dailyStreak} jour${wallet.dailyStreak > 1 ? 's' : ''}.`);
       return;
     }
+    busyRef.current = true;
     try {
       const r = await claimDaily();
-      burstCoins(rewardRef.current, balanceRef.current);
+      if (motionEnabled) burstCoins(rewardRef.current, balanceRef.current);
       setMsg(`+${r.reward} InvestCoins ! Série : ${r.newStreak} jour${r.newStreak > 1 ? 's' : ''}.`);
     } catch (e) {
       setMsg(e.message);
+    } finally {
+      busyRef.current = false;
     }
   };
 

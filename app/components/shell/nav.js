@@ -1,5 +1,5 @@
 // Navigation principale : UNE seule source. Chaque entrée pointe vers une vraie page.
-import { SITE_INFO } from '@/app/lib/siteInfo';
+import { SITE_INFO } from '../../lib/siteInfo';
 
 export const NAV_MAIN = [
   { id: 'dashboard', label: 'Tableau de bord', href: '/dashboard', icon: 'dashboard' },
@@ -28,9 +28,19 @@ export const NAV_BOTTOM = [
 
 export const flatNav = () => [...NAV_MAIN.flatMap((n) => (n.children ? n.children : [n])), ...NAV_BOTTOM];
 
-// Une entrée est active si l'adresse courante (sans la requête) correspond.
-export const isActive = (pathname, href) => {
+// Une entrée est active si le chemin correspond ET, quand elle a une requête (?tab=…), si cette requête correspond aussi.
+// Une entrée sans requête n'est pas active quand la page est ouverte sur un onglet précis (?tab=…) réclamé par une autre entrée.
+export const isActive = (pathname, search, href) => {
   if (!href || href.startsWith('http')) return false;
-  const path = href.split('?')[0];
-  return pathname === path || (path !== '/' && pathname.startsWith(path + '/'));
+  const [path, query] = href.split('?');
+  const samePath = pathname === path || (path !== '/' && pathname.startsWith(path + '/'));
+  if (!samePath) return false;
+  const current = new URLSearchParams(search || '');
+  if (query) {
+    const want = new URLSearchParams(query);
+    return [...want].every(([k, v]) => current.get(k) === v);
+  }
+  return !flatNavWithQuery().some((n) => n.href.split('?')[0] === path && n.href.includes('?') && isQueryMatch(current, n.href.split('?')[1]));
 };
+const isQueryMatch = (current, query) => [...new URLSearchParams(query)].every(([k, v]) => current.get(k) === v);
+const flatNavWithQuery = () => flatNav().filter((n) => n.href && n.href.includes('?'));

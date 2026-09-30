@@ -7,8 +7,8 @@ import Logo, { LogoMark } from '@/app/components/ui/Logo';
 import { Button, Switch } from '@/app/components/ui/primitives';
 import { NAV_BOTTOM, NAV_MAIN, isActive } from './nav';
 
-function Item({ item, pathname, collapsed, onNavigate }) {
-  const active = isActive(pathname, item.href);
+function Item({ item, pathname, search, collapsed, onNavigate }) {
+  const active = isActive(pathname, search, item.href);
   const props = {
     className: 'ik-navitem',
     'aria-current': active ? 'page' : undefined,
@@ -33,7 +33,7 @@ function Item({ item, pathname, collapsed, onNavigate }) {
   );
 }
 
-export default function Sidebar({ pathname, collapsed, onToggle, onNavigate, theme, onToggleTheme, isAdmin, showUpgrade }) {
+export default function Sidebar({ pathname, search, collapsed, onToggle, onNavigate, theme, onToggleTheme, isAdmin, showUpgrade }) {
   const [open, setOpen] = useState(true);
   const bottom = isAdmin ? [...NAV_BOTTOM.slice(0, 1), { id: 'admin', label: 'Administration', href: '/admin', icon: 'shield' }, ...NAV_BOTTOM.slice(1)] : NAV_BOTTOM;
   return (
@@ -48,20 +48,19 @@ export default function Sidebar({ pathname, collapsed, onToggle, onNavigate, the
 
       <nav className="ik-nav ik-scroll" aria-label="Menu">
         {NAV_MAIN.map((item) => {
-          if (!item.children) return <Item key={item.id} item={item} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />;
-          if (collapsed) return item.children.map((c) => <Item key={c.id} item={c} pathname={pathname} collapsed onNavigate={onNavigate} />);
-          const anyActive = item.children.some((c) => isActive(pathname, c.href));
+          if (!item.children) return <Item key={item.id} item={item} pathname={pathname} search={search} collapsed={collapsed} onNavigate={onNavigate} />;
+          if (collapsed) return item.children.map((c) => <Item key={c.id} item={c} pathname={pathname} search={search} collapsed onNavigate={onNavigate} />);
           return (
             <div key={item.id}>
-              <button type="button" className="ik-navitem" aria-expanded={open || anyActive} aria-controls={`sub-${item.id}`} onClick={() => setOpen((o) => !o)}>
+              <button type="button" className="ik-navitem" aria-expanded={open} aria-controls={`sub-${item.id}`} onClick={() => setOpen((o) => !o)}>
                 <Icon name={item.icon} />
                 <span className="ik-sidebar__text">{item.label}</span>
                 <Icon name="chevronDown" size={16} className="ik-navitem__chev" />
               </button>
-              {(open || anyActive) && (
+              {open && (
                 <div className="ik-navsub" id={`sub-${item.id}`}>
                   {item.children.map((c) => (
-                    <Item key={c.id} item={c} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
+                    <Item key={c.id} item={c} pathname={pathname} search={search} collapsed={false} onNavigate={onNavigate} />
                   ))}
                 </div>
               )}
@@ -85,7 +84,7 @@ export default function Sidebar({ pathname, collapsed, onToggle, onNavigate, the
 
       <div className="ik-sidebar__foot">
         {bottom.map((item) => (
-          <Item key={item.id} item={item} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+          <Item key={item.id} item={item} pathname={pathname} search={search} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
         <div className="ik-themerow">
           <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={18} />

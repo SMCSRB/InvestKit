@@ -16,6 +16,11 @@ export default function DashboardPage() {
   const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  // Les liens du menu latéral (?tab=trading, ?tab=settings…) ouvrent directement l'onglet demandé.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (t && ['overview', 'projects', 'market', 'trading', 'education', 'friends', 'notifications', 'activity', 'risk', 'settings'].includes(t)) setActiveTab(t);
+  }, []);
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);

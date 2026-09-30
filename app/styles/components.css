@@ -631,16 +631,19 @@
 }
 
 /* ---------- Bandeaux (annonces, « voir comme »), avis, toasts, notes ---------- */
-.ik-banner {
+/* Bloc collant qui contient tous les bandeaux ; sa hauteur est publiée dans --ik-banner-h (voir BannerStack.jsx) */
+.ik-banners {
   position: sticky;
   top: 0;
   z-index: 10000;
+}
+.ik-banner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 10px 14px;
-  min-height: var(--ik-banner-h);
+  min-height: 44px;
   padding: 8px 16px;
   color: #fff;
   font-size: var(--ik-fs-sm);
@@ -667,9 +670,6 @@
 }
 .ik-banner__close:hover {
   background: rgba(255, 255, 255, 0.16);
-}
-:root:has(.ik-banner) {
-  --ik-banner-h: 44px;
 }
 
 .ik-fb {

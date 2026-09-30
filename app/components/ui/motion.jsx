@@ -48,11 +48,13 @@ export function AnimatedNumber({ value, format = (v) => Math.round(v).toLocaleSt
   const { motionEnabled } = useTheme();
   const [shown, setShown] = useState(value);
   const fromRef = useRef(value);
+  const shownRef = useRef(value);
 
   useEffect(() => {
     if (!Number.isFinite(value)) return undefined;
     if (!motionEnabled) {
       fromRef.current = value;
+      shownRef.current = value;
       setShown(value);
       return undefined;
     }
@@ -61,29 +63,25 @@ export function AnimatedNumber({ value, format = (v) => Math.round(v).toLocaleSt
     let raf;
     const tick = (now) => {
       const t = Math.min(1, (now - start) / duration);
-      setShown(from + (value - from) * easeOut(t));
+      const v = from + (value - from) * easeOut(t);
+      shownRef.current = v;
+      setShown(v);
       if (t < 1) raf = requestAnimationFrame(tick);
       else fromRef.current = value;
     };
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
-      fromRef.current = value;
+      fromRef.current = shownRef.current;
     };
   }, [value, motionEnabled, duration]);
 
   return <span className={`ik-num ${className}`.trim()}>{Number.isFinite(value) ? format(shown) : '–'}</span>;
 }
 
-// Pièces qui s'envolent d'un point de départ vers le solde (récompense quotidienne).
+// Pièces qui s'envolent d'un point de départ vers le solde (récompense quotidienne). L'appelant vérifie `motionEnabled`.
 export function burstCoins(fromEl, toEl, count = 8) {
   if (typeof document === 'undefined' || !fromEl || !toEl) return;
-  if (document.documentElement.getAttribute('data-motion') === 'off') return;
-  if (
-    document.documentElement.getAttribute('data-motion') !== 'on' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  )
-    return;
   const a = fromEl.getBoundingClientRect();
   const b = toEl.getBoundingClientRect();
   for (let i = 0; i < count; i += 1) {
