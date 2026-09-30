@@ -295,3 +295,6 @@ Voir `docs/crypto-donnees.md` (section « À tester chez moi » et commandes d'i
 - [ ] Migrations 033 et 034 appliquées au démarrage (tables `crypto_assets`, `crypto_candles`, `crypto_import_runs`, `crypto_accounts`).
 - [ ] Import réel lancé (journalier d'abord) ; vérifier dans `crypto_import_runs` qu'aucune ligne n'est en erreur.
 - [ ] Aucun actif « DEMO* » en production (jeu fictif réservé aux essais).
+
+## PR Crypto — page Marché et graphique
+Voir `docs/crypto-graphique.md` (section « À tester chez moi »).
