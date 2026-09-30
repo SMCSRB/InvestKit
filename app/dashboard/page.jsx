@@ -56,7 +56,7 @@ export default function DashboardPage() {
   const [tradingBoardYear, setTradingBoardYear] = useState(null); // null = mon année simulée
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
-  const [fullName, setFullName] = useState('Jean Dupont');
+  const [fullName, setFullName] = useState('Investisseur');
   const [email, setEmail] = useState('jean.dupont@example.com');
   const [profileVisibility, setProfileVisibility] = useState('public');
   const [hideStats, setHideStats] = useState(false);
@@ -1267,30 +1267,25 @@ export default function DashboardPage() {
 
   const currentTheme = isDarkMode ? theme.dark : theme.light;
 
-  const [portfolioData] = useState({
-    totalValue: 245680.50,
-    dayChange: 1245.30,
-    dayChangePercent: 0.51,
-    weekChange: 3420.75,
-    monthChange: 8560.45,
-    yearGain: 32450.20,
-    ytdReturn: 18.3,
-    totalInvested: 213230.30,
-    unrealizedGain: 32450.20,
-    sharpeRatio: 1.45,
-    volatility: 12.3,
-    maxDrawdown: -8.5,
-    winRate: 72.5,
-  });
+  // Vue d'ensemble RÉELLE (serveur) : pièces, Bourse, Crypto, Immobilier, dette, risque. Aucune valeur de démonstration.
+  const [overview, setOverview] = useState(null);
+  const loadOverview = useCallback(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/overview`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setOverview(d); })
+      .catch(() => {});
+  }, []);
+  const n0 = (v) => Number(v ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+  const signed = (v) => `${Number(v) > 0 ? '+' : ''}${n0(v)}`;
+  const ovTot = overview?.totals;
 
-  const [portfolioMetrics] = useState({
-    beta: 0.85,
-    alpha: 2.34,
-    treynorRatio: 0.42,
-    sortinoRatio: 2.15,
-    informationRatio: 1.68,
-    rsquared: 0.78,
-  });
+  useEffect(() => {
+    loadOverview();
+  }, [loadOverview, tradingPortfolio?.simulatedYear, tradingPortfolio?.cashBalance, tradingPortfolio?.positions?.length]);
+  useEffect(() => {
+    // Nom affiché : celui du compte, sauf si l'utilisateur en a saisi un autre dans son profil.
+    if (overview?.username && !(typeof window !== 'undefined' && localStorage.getItem('userFullName'))) setFullName(overview.username);
+  }, [overview?.username]);
 
   const [dailyTips] = useState([
     {
@@ -1325,38 +1320,8 @@ export default function DashboardPage() {
     },
   ]);
 
-  const [projects] = useState([
-    {
-      id: 1,
-      name: 'Investissement Immobilier - Premier Appart',
-      type: 'immobilier',
-      currentValue: 268500,
-      yearGain: 18500,
-      allocation: '45%',
-      projectedReturn: 18,
-      riskLevel: 'modéré',
-    },
-    {
-      id: 2,
-      name: 'Portefeuille Crypto Diversifié',
-      type: 'crypto',
-      currentValue: 21750,
-      yearGain: 6750,
-      allocation: '12%',
-      projectedReturn: 45,
-      riskLevel: 'élevé',
-    },
-    {
-      id: 3,
-      name: 'PEA Multi-Secteurs',
-      type: 'pea',
-      currentValue: 84430.50,
-      yearGain: 9430.50,
-      allocation: '35%',
-      projectedReturn: 12,
-      riskLevel: 'faible',
-    },
-  ]);
+  // Projets : fonctionnalité pas encore branchée au serveur. Les anciens projets de démonstration (valeurs inventées) ne sont plus affichés.
+  const [projects] = useState([]);
 
   const [marketData] = useState([
     { name: 'CAC 40', value: 7425.38, change: 0.75 },
@@ -2503,9 +2468,9 @@ export default function DashboardPage() {
             Aperçu
           </p>
           {[
-            { label: 'Portefeuille', value: '€' + (portfolioData.totalValue / 1000).toFixed(0) + 'k', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-            { label: 'Gain YTD', value: '+' + portfolioData.ytdReturn + '%', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-            { label: 'Projets', value: projects.length, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+            { label: 'Pièces + titres', value: ovTot ? '🪙 ' + n0(ovTot.coinsAndTrading) : '…', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+            { label: 'Perf. Bourse / Crypto', value: ovTot ? (ovTot.invested > 0 ? signed(ovTot.performancePct) + ' %' : '—') : '…', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+            { label: 'Biens immobiliers', value: overview ? overview.realEstate.properties ?? 0 : '…', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
           ].map((stat, idx) => (
             <div key={idx} style={{
               padding: '16px',
@@ -2636,7 +2601,7 @@ export default function DashboardPage() {
             margin: '0 0 12px 0',
             fontWeight: '700',
           }}>
-            3 ans
+            {overview?.memberSince ? new Date(overview.memberSince).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : '…'}
           </p>
           <div style={{
             padding: '8px 12px',
@@ -2650,7 +2615,7 @@ export default function DashboardPage() {
               margin: 0,
               fontWeight: '700',
             }}>
-              ✓ KYC Vérifié
+              ✓ E-mail vérifié
             </p>
           </div>
         </div>
@@ -2862,7 +2827,7 @@ export default function DashboardPage() {
                       textTransform: 'uppercase',
                       letterSpacing: '1px',
                     }}>
-                      INVESTKIT PREMIUM
+                      {overview?.tier === 'pro' ? 'INVESTKIT PRO' : 'INVESTKIT'}
                     </p>
                   </div>
                   <div style={{
@@ -2976,7 +2941,7 @@ export default function DashboardPage() {
                   color: '#60a5fa',
                   margin: '0 0 12px 0',
                 }}>
-                  €{portfolioData.totalValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+                  🪙 {ovTot ? n0(ovTot.coinsAndTrading) : '…'}
                 </p>
                 <div style={{
                   display: 'flex',
@@ -2985,16 +2950,9 @@ export default function DashboardPage() {
                 }}>
                   <span style={{
                     fontSize: '12px',
-                    color: '#10b981',
-                    fontWeight: '700',
+                    color: 'rgba(255, 255, 255, 0.7)',
                   }}>
-                    ↑ +€{portfolioData.dayChange.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
-                  </span>
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'rgba(255, 255, 255, 0.6)',
-                  }}>
-                    ({portfolioData.dayChangePercent}% today)
+                    dont 🪙 {n0(overview?.coins)} de liquidités et 🪙 {n0(ovTot?.tradingValue)} de titres (Bourse + Crypto)
                   </span>
                 </div>
               </div>
@@ -3015,7 +2973,7 @@ export default function DashboardPage() {
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                 }}>
-                  Gain Année (YTD)
+                  Performance (Bourse + Crypto)
                 </p>
                 <p style={{
                   fontSize: '32px',
@@ -3023,14 +2981,14 @@ export default function DashboardPage() {
                   color: '#86efac',
                   margin: '0 0 12px 0',
                 }}>
-                  +{portfolioData.ytdReturn}%
+                  {ovTot && ovTot.invested > 0 ? `${signed(ovTot.performancePct)} %` : '—'}
                 </p>
                 <p style={{
                   fontSize: '12px',
                   color: 'rgba(255, 255, 255, 0.6)',
                   margin: 0,
                 }}>
-                  €{portfolioData.yearGain.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} gains réalisés
+                  {ovTot && ovTot.invested > 0 ? `🪙 ${signed(ovTot.gain)} de gain ou perte (latent + réalisé)` : 'Achète un premier titre dans le Simulateur'}
                 </p>
               </div>
 
@@ -3065,7 +3023,7 @@ export default function DashboardPage() {
                       margin: 0,
                       fontWeight: '600',
                     }}>
-                      Win Rate
+                      Positions ouvertes
                     </p>
                     <p style={{
                       fontSize: '18px',
@@ -3073,7 +3031,7 @@ export default function DashboardPage() {
                       color: '#a78bfa',
                       margin: '4px 0 0 0',
                     }}>
-                      {portfolioData.winRate}%
+                      {overview ? (overview.trading.stocks.positions + overview.trading.crypto.positions) : '…'}
                     </p>
                   </div>
                   <div>
@@ -3091,15 +3049,15 @@ export default function DashboardPage() {
                       color: '#c4b5fd',
                       margin: '4px 0 0 0',
                     }}>
-                      €{(portfolioData.totalInvested / 1000).toFixed(0)}k
+                      🪙 {n0(ovTot?.invested)}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* PROJECTS SECTION */}
-            <div style={{ marginBottom: '32px' }}>
+            {/* PROJECTS SECTION (masquée tant qu'aucun vrai projet n'existe) */}
+            <div style={{ marginBottom: '32px', display: projects.length ? 'block' : 'none' }}>
               <h2 style={{
                 fontSize: '18px',
                 fontWeight: '800',
@@ -3284,9 +3242,9 @@ export default function DashboardPage() {
                   </h4>
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {[
-                      { label: 'Sharpe Ratio', value: portfolioData.sharpeRatio, color: '#10b981' },
-                      { label: 'Volatilité', value: portfolioData.volatility + '%', color: '#f59e0b' },
-                      { label: 'Max Drawdown', value: portfolioData.maxDrawdown + '%', color: '#f43f5e' },
+                      { label: 'Score de risque', value: overview?.risk ? `${overview.risk.score} / 100 · ${overview.risk.label}` : '—', color: '#10b981' },
+                      { label: 'Volatilité estimée', value: overview?.risk ? overview.risk.volatilityPct + ' %' : '—', color: '#f59e0b' },
+                      { label: 'Pire crise historique', value: overview?.risk ? overview.risk.worstCrisis.lossPct + ' %' : '—', color: '#f43f5e' },
                     ].map((m, idx) => (
                       <div key={idx} style={{
                         display: 'flex',
@@ -3329,13 +3287,13 @@ export default function DashboardPage() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                   }}>
-                    📈 Métriques
+                    🏦 Dettes & immobilier
                   </h4>
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {[
-                      { label: 'Alpha', value: portfolioMetrics.alpha + '%', color: '#3b82f6' },
-                      { label: 'Beta', value: portfolioMetrics.beta, color: '#8b5cf6' },
-                      { label: 'Sortino', value: portfolioMetrics.sortinoRatio, color: '#a78bfa' },
+                      { label: 'Dette bancaire', value: overview ? '🪙 ' + n0(overview.bank.debtCoins) : '…', color: '#3b82f6' },
+                      { label: 'Biens immobiliers', value: overview?.realEstate?.started ? overview.realEstate.properties : '—', color: '#8b5cf6' },
+                      { label: 'Patrimoine immo net', value: overview?.realEstate?.started ? '€ ' + n0(overview.realEstate.equityEuros) : '—', color: '#a78bfa' },
                     ].map((m, idx) => (
                       <div key={idx} style={{
                         display: 'flex',
@@ -3382,9 +3340,9 @@ export default function DashboardPage() {
                   </h4>
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {[
-                      { label: 'Capital Investi', value: '€' + (portfolioData.totalInvested / 1000).toFixed(0) + 'k', color: '#3b82f6' },
-                      { label: 'Gain Non-Réalisé', value: '+€' + (portfolioData.unrealizedGain / 1000).toFixed(1) + 'k', color: '#10b981' },
-                      { label: 'Var. Semaine', value: '+€' + (portfolioData.weekChange / 1000).toFixed(1) + 'k', color: '#a78bfa' },
+                      { label: 'Capital investi', value: ovTot ? '🪙 ' + n0(ovTot.invested) : '…', color: '#3b82f6' },
+                      { label: 'Gain / perte (latent + réalisé)', value: ovTot ? '🪙 ' + signed(ovTot.gain) : '…', color: '#10b981' },
+                      { label: 'Frais et impôts payés', value: ovTot ? '🪙 ' + n0(ovTot.feesPaid + ovTot.taxPaid) : '…', color: '#a78bfa' },
                     ].map((m, idx) => (
                       <div key={idx} style={{
                         display: 'flex',

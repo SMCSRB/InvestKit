@@ -97,6 +97,7 @@ export const ROUTES: Row[] = [
   ['get', '/onboarding', 'Accueil', 'Checklist d\'accueil (étapes réelles, récompenses, profil)'],
   ['post', '/onboarding/claim', 'Accueil', 'Récupérer les récompenses des étapes terminées'],
   ['post', '/onboarding/profile', 'Accueil', 'Enregistrer le profil d\'investisseur (et obtenir un conseil de départ)'],
+  ['get', '/overview', 'Accueil', 'Vue d\'ensemble réelle : pièces, Bourse, Crypto, Immobilier, dette, risque'],
   ['get', '/admin/users', 'Administration', 'Liste des utilisateurs (recherche, filtres, pagination)', 'admin'],
   ['get', '/admin/users/{id}', 'Administration', 'Fiche d\'un utilisateur (consultation tracée)', 'admin'],
   ['post', '/admin/users/{id}/pro', 'Administration', 'Activer/retirer le statut Pro manuel', 'admin'],

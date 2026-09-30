@@ -14,7 +14,7 @@ import { flagsRoutes } from './routes/flags';
 import { contentRoutes } from './routes/content';
 import { toolsRoutes, riskRoutes } from './routes/risk';
 import { notificationRoutes } from './routes/notifications';
-import { onboardingRoutes } from './routes/onboarding';
+import { onboardingRoutes, overviewRoutes } from './routes/onboarding';
 import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -92,6 +92,7 @@ app.use('/api/v1/tools', toolsRoutes);
 app.use('/api/v1/risk', riskRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/onboarding', onboardingRoutes);
+app.use('/api/v1/overview', overviewRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

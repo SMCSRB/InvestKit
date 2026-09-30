@@ -280,3 +280,9 @@ Aucun changement visible pour un usage normal.
 3. Un bouton **Récupérer mes N 🪙** apparaît (10 🪙 par étape terminée) : après clic, ton solde augmente et la mention « récompense reçue » s'affiche. Recliquer ne donne rien de plus.
 4. Fais d'autres étapes (leçon, récompense quotidienne, premier achat…) : elles se cochent toutes seules au rechargement, et leur récompense est récupérable.
 5. Tout terminé : « Masquer cette carte ».
+
+## PR Tableau de bord : données réelles
+1. Dashboard → Vue d'ensemble : plus aucun chiffre du genre « 246 k€ », « +18,3 % », « Jean Dupont », « KYC vérifié », « Sharpe ». Les montants sont en 🪙 et cohérents avec le Simulateur ; un compte neuf affiche des zéros ou « — ».
+2. Achète des titres dans le Simulateur, reviens : « Pièces + titres », « Performance », « Positions ouvertes », « Score de risque » ont changé en conséquence.
+3. Démarre l'Immobilier et emprunte : « Dette bancaire » et « Biens immobiliers » se mettent à jour.
+4. La carte affiche ton vrai pseudo et « INVESTKIT » (ou « INVESTKIT PRO » si tu es Pro) ; la barre latérale affiche ta vraie date d'inscription.
