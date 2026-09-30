@@ -88,7 +88,7 @@ export const bankRecoveryService = {
       if (domain === 'real_estate') await q(c, 'DELETE FROM re_games WHERE user_id = $1', [userId]);
       else {
         const d = getDomain(domain)!;
-        await q(c, `UPDATE virtual_portfolios SET positions = '[]', total_bought = 0, total_proceeds = 0, simulated_year = $3, updated_at = NOW() WHERE user_id = $1 AND domain = $2`, [userId, domain, d.minYear]);
+        await q(c, `UPDATE virtual_portfolios SET positions = '[]', total_bought = 0, total_proceeds = 0, tax_state = '{}'::jsonb, simulated_year = $3, updated_at = NOW() WHERE user_id = $1 AND domain = $2`, [userId, domain, d.minYear]);
       }
       await q(c, 'DELETE FROM leaderboard_rankings WHERE user_id = $1 AND domain = $2', [userId, domain]);
 

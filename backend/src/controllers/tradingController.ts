@@ -14,6 +14,8 @@ const STATUS: Record<string, number> = {
   NOT_LISTED: 400,
   INSUFFICIENT_FUNDS: 400,
   INSUFFICIENT_QUANTITY: 400,
+  INVALID_ACCOUNT: 400,
+  PEA_CEILING: 400,
   MAX_YEAR_REACHED: 400,
   DOMAIN_LOCKED: 403,
   FREE_DOMAIN_NOT_CHOSEN: 403,
@@ -67,10 +69,13 @@ export const tradingController = {
     tradingService.getPortfolioView(uid, domainOf(req))),
 
   buy: handle('Erreur lors de l\'achat', (req, uid) =>
-    tradingService.buy(uid, domainOf(req), req.body?.symbol, req.body?.quantity)),
+    tradingService.buy(uid, domainOf(req), req.body?.symbol, req.body?.quantity, req.body?.account)),
 
   sell: handle('Erreur lors de la vente', (req, uid) =>
-    tradingService.sell(uid, domainOf(req), req.body?.symbol, req.body?.quantity)),
+    tradingService.sell(uid, domainOf(req), req.body?.symbol, req.body?.quantity, req.body?.account)),
+
+  quote: handle('Erreur lors de l\'aperçu de l\'ordre', (req, uid) =>
+    tradingService.quote(uid, domainOf(req), req.body?.side, req.body?.symbol, req.body?.quantity, req.body?.account)),
 
   advanceYear: handle('Erreur lors de l\'avancée dans le temps', (req, uid) =>
     tradingService.advanceYear(uid, domainOf(req))),

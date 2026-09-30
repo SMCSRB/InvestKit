@@ -139,3 +139,12 @@ Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub �
 1. `/glossaire` : une nouvelle rubrique **Bourse et crypto** (action, ETF, obligation, cryptomonnaie, volatilité, diversification, cours de clôture annuel, année simulée, valeur des positions, performance). La recherche (« volatil… ») les trouve.
 2. Dashboard → onglet Bourse ou Crypto : sur les cartes **Année simulée**, **Valeur positions** et **Performance**, une petite bulle « ? » ouvre l'explication, avec un lien vers le glossaire.
 3. Lis les textes : ils doivent être compréhensibles par un débutant complet. Dis-moi ce qui est obscur.
+
+## PR Fiscalité et frais Bourse / Crypto
+1. Dashboard → Bourse : à côté de « Acheter », un choix **PEA / Compte-titres** et la mention « + courtage (~0,5 %) ». Sous le cadre, une phrase explique le PEA (ouverture à ton premier achat, exonération à partir de l'année N+5).
+2. Achète quelques actions : ton solde baisse du prix **plus** le courtage (1 🪙 minimum).
+3. **Vendre tout…** ouvre un **aperçu** : produit, courtage, impôt, ce que tu reçois, et une explication (« PEA de plus de 5 ans : pas d'impôt sur le revenu… »). Rien n'est vendu tant que tu n'as pas cliqué **Confirmer la vente**.
+4. Avance de 5 ans, vends une position PEA gagnante : impôt faible (prélèvements sociaux seulement). Même chose sur un compte-titres : impôt plus élevé.
+5. Crypto : vends une petite quantité (total de l'année sous 305 🪙) : aucun impôt ; au-dessus : impôt.
+6. La ligne « Payé depuis le début » cumule courtage et impôts. Glossaire : courtage, PEA, compte-titres, flat tax, impôt sur les cryptos.
+7. Admin : `/api/v1/economy/admin/coins-by-domain` contient `sinks` (frais et impôts par domaine).

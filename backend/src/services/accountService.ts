@@ -42,7 +42,7 @@ export const exportUserData = async (userId: string) => {
       transactions: await one('SELECT amount, reason, metadata, domain, nature, created_at FROM investcoins_transactions WHERE user_id = $1 ORDER BY created_at'),
     },
     education: { progress: await one('SELECT * FROM education_progress WHERE user_id = $1'), userProgress: await one('SELECT * FROM user_progress WHERE user_id = $1') },
-    portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, started_at FROM virtual_portfolios WHERE user_id = $1'),
+    portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
     leaderboard: await one('SELECT mode, domain, period, performance_pct, capital_committed, leverage, computed_at FROM leaderboard_rankings WHERE user_id = $1'),
     projects: { projects, riskAnalyses: projects.length ? await one('SELECT * FROM risk_analysis WHERE project_id = ANY($1)', [projects.map((p: any) => p.id)]) : [] },
     investorProfile: await one('SELECT * FROM investor_profiles WHERE user_id = $1'),

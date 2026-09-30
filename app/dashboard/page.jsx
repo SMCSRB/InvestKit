@@ -44,6 +44,8 @@ export default function DashboardPage() {
   const [tradingPortfolio, setTradingPortfolio] = useState(null);
   const [tradingSelectedAsset, setTradingSelectedAsset] = useState('LVMH');
   const [tradingQuantity, setTradingQuantity] = useState(1);
+  const [tradingAccount, setTradingAccount] = useState('pea'); // enveloppe d'achat en Bourse : PEA ou compte-titres
+  const [tradingQuote, setTradingQuote] = useState(null);     // aperçu (frais, impôt) affiché avant de vendre
   const [tradingLoading, setTradingLoading] = useState(false);
   const [tradingError, setTradingError] = useState('');
   const [tradingLoaded, setTradingLoaded] = useState(false);
@@ -533,7 +535,7 @@ export default function DashboardPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-        body: JSON.stringify({ domain: tradingDomain, symbol: tradingSelectedAsset, quantity: Number(tradingQuantity) }),
+        body: JSON.stringify({ domain: tradingDomain, symbol: tradingSelectedAsset, quantity: Number(tradingQuantity), account: tradingDomain === 'crypto' ? undefined : tradingAccount }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -545,14 +547,35 @@ export default function DashboardPage() {
     }
   };
 
-  const tradingSell = async (symbol, quantity) => {
+  // Aperçu d'une vente : frais et impôt calculés par le serveur ; la vente n'est exécutée qu'après confirmation.
+  const tradingPreviewSell = async (pos) => {
     setTradingError('');
     setTradingLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ domain: tradingDomain, side: 'sell', symbol: pos.symbol, quantity: pos.quantity, account: pos.account }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setTradingQuote({ ...data, symbol: pos.symbol, quantity: pos.quantity });
+    } catch (err) {
+      setTradingError(err.message);
+    } finally {
+      setTradingLoading(false);
+    }
+  };
+
+  const tradingSell = async (symbol, quantity, account) => {
+    setTradingError('');
+    setTradingLoading(true);
+    setTradingQuote(null);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trading/sell`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
-        body: JSON.stringify({ domain: tradingDomain, symbol, quantity }),
+        body: JSON.stringify({ domain: tradingDomain, symbol, quantity, account }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -3650,8 +3673,21 @@ export default function DashboardPage() {
                         background: '#1a1a2e', color: 'white', fontSize: '13px',
                       }}
                     />
+                    {tradingDomain !== 'crypto' && (
+                      <select
+                        value={tradingAccount}
+                        onChange={(e) => setTradingAccount(e.target.value)}
+                        aria-label="Enveloppe"
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: '13px' }}
+                      >
+                        <option value="pea">PEA</option>
+                        <option value="cto">Compte-titres</option>
+                      </select>
+                    )}
                     <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
                       ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} 🪙
+                      {' '}+ courtage (~{tradingPortfolio?.costs?.brokeragePct?.[tradingAssets.find((a) => a.symbol === tradingSelectedAsset)?.type ?? 'stock'] ?? 0} %)
+                      <HelpTip term="courtage" />
                     </span>
                     <button
                       onClick={tradingBuy}
@@ -3666,6 +3702,27 @@ export default function DashboardPage() {
                       Acheter
                     </button>
                   </div>
+                  {tradingDomain === 'stocks' && tradingPortfolio?.costs?.pea && (
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                      {tradingAccount === 'pea'
+                        ? (tradingPortfolio.costs.pea.openedYear
+                          ? `PEA ouvert en ${tradingPortfolio.costs.pea.openedYear} : exonéré d'impôt sur le revenu à partir de ${tradingPortfolio.costs.pea.exemptFromYear}. Versé : ${tradingPortfolio.costs.pea.deposits.toLocaleString('fr-FR')} / ${tradingPortfolio.costs.pea.depositCeiling.toLocaleString('fr-FR')} 🪙.`
+                          : 'Ton PEA s\'ouvre à ton premier achat : après 5 ans, plus d\'impôt sur le revenu sur les gains (il reste les prélèvements sociaux).')
+                        : 'Compte-titres : flat tax sur chaque plus-value, sans condition de durée.'}
+                      <HelpTip term="pea" />
+                    </p>
+                  )}
+                  {tradingDomain === 'crypto' && tradingPortfolio?.costs && (
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                      Crypto : impôt uniquement à la vente contre euros. Cessions de l'année : {(tradingPortfolio.costs.cryptoDisposalsThisYear ?? 0).toLocaleString('fr-FR')} 🪙 (aucun impôt tant que le total reste sous {tradingPortfolio.costs.cryptoThreshold} 🪙).
+                      <HelpTip term="impot-crypto" />
+                    </p>
+                  )}
+                  {tradingPortfolio?.costs && (tradingPortfolio.costs.feesPaid > 0 || tradingPortfolio.costs.taxPaid > 0) && (
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                      Payé depuis le début : {tradingPortfolio.costs.feesPaid.toLocaleString('fr-FR')} 🪙 de courtage, {tradingPortfolio.costs.taxPaid.toLocaleString('fr-FR')} 🪙 d'impôts.
+                    </p>
+                  )}
                 </div>
 
                 {/* Positions */}
@@ -3675,7 +3732,7 @@ export default function DashboardPage() {
                 ) : (
                   <div style={{ display: 'grid', gap: '10px' }}>
                     {tradingPortfolio?.positions?.map((pos) => (
-                      <div key={pos.symbol} style={{
+                      <div key={`${pos.symbol}-${pos.account}`} style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
@@ -3685,13 +3742,13 @@ export default function DashboardPage() {
                         padding: '14px 18px',
                       }}>
                         <div>
-                          <p style={{ color: 'white', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}</p>
+                          <p style={{ color: 'white', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
                           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: 0 }}>
                             {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}€
                           </p>
                         </div>
                         <button
-                          onClick={() => tradingSell(pos.symbol, pos.quantity)}
+                          onClick={() => tradingPreviewSell(pos)}
                           disabled={tradingLoading}
                           style={{
                             padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(244, 63, 94, 0.4)',
@@ -3699,10 +3756,23 @@ export default function DashboardPage() {
                             cursor: tradingLoading ? 'wait' : 'pointer',
                           }}
                         >
-                          Vendre tout
+                          Vendre tout…
                         </button>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {tradingQuote && (
+                  <div style={{ marginTop: 14, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
+                    <strong>Vente de {Number(tradingQuote.quantity.toFixed(6))} {tradingQuote.symbol}</strong> : produit {tradingQuote.amount.toLocaleString('fr-FR')} 🪙,
+                    courtage {tradingQuote.fee.toLocaleString('fr-FR')} 🪙, impôt sur la plus-value {tradingQuote.tax.toLocaleString('fr-FR')} 🪙
+                    {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} 🪙</strong>.
+                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.65)' }}>{tradingQuote.note}</div>}
+                    <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#f43f5e', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
+                      <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'white', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
+                    </div>
                   </div>
                 )}
 

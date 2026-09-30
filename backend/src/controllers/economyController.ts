@@ -11,7 +11,7 @@ export const economyController = {
   getCoinsByDomain: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!(await requireAdmin(req, res))) return;
-      res.json({ domains: await investcoinsRepository.ledgerStatsByDomain() });
+      res.json({ domains: await investcoinsRepository.ledgerStatsByDomain(), sinks: await investcoinsRepository.sinksByDomainAndReason() });
     } catch (error) {
       console.error('Coins by domain error:', error);
       res.status(500).json({ error: 'Erreur lors du calcul de la statistique' });

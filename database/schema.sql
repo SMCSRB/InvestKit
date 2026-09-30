@@ -679,3 +679,7 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_audit_logs_guard ON audit_logs;
 CREATE TRIGGER trg_audit_logs_guard BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW EXECUTE FUNCTION audit_logs_guard();
+
+-- 026
+-- Fiscalité et frais Bourse/Crypto : état fiscal du portefeuille (ouverture du PEA, versements, cessions crypto de l'année, frais et impôts payés).
+ALTER TABLE virtual_portfolios ADD COLUMN IF NOT EXISTS tax_state JSONB NOT NULL DEFAULT '{}'::jsonb;

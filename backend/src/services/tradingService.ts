@@ -11,6 +11,8 @@ import { getBuyAccess, BuyAccess } from '../utils/entitlements';
 import { computePerformancePct, chargeForBuy, creditForSell } from '../utils/performance';
 import { query } from '../utils/db';
 import { computeNetPerformance } from '../engine/immo';
+import { Account, AssetKind, brokerageFee, readTaxState, saleTax, TaxState } from '../engine/trading/costs';
+import { TRADING_COSTS, TRADING_TAX } from '../config/tradingRules';
 import { bankPortfolioService, portfolioLoanView, portfolioDebtInfo } from './bankPortfolioService';
 import {
   MAX_TRADE_QUANTITY,
@@ -29,6 +31,8 @@ export type TradingErrorCode =
   | 'NOT_LISTED'
   | 'INSUFFICIENT_FUNDS'
   | 'INSUFFICIENT_QUANTITY'
+  | 'INVALID_ACCOUNT'
+  | 'PEA_CEILING'
   | 'MAX_YEAR_REACHED'
   | 'USER_NOT_FOUND';
 
@@ -61,6 +65,47 @@ const validateOrder = (domain: DomainConfig, symbol: unknown, quantity: unknown)
   }
   return { symbol, quantity };
 };
+
+
+// ── Enveloppes (PEA / compte-titres / crypto), frais et impôts ──
+const defaultAccount = (domain: DomainConfig): Account => (domain.id === 'crypto' ? 'crypto' : 'cto');
+const accountOf = (domain: DomainConfig, p: Position): Account => (p.account as Account) ?? defaultAccount(domain);
+
+const kindOf = (domain: DomainConfig, symbol: string): AssetKind => {
+  const t = domain.assets.find((a) => a.symbol === symbol)?.type;
+  return t === 'etf' || t === 'crypto' ? t : 'stock';
+};
+
+// Enveloppe demandée. Achat : PEA par défaut en Bourse (c'est le plus avantageux, le joueur peut choisir le compte-titres).
+const resolveAccount = (domain: DomainConfig, raw: unknown): Account | null => {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const allowed: Account[] = domain.id === 'crypto' ? ['crypto'] : ['pea', 'cto'];
+  if (typeof raw !== 'string' || !allowed.includes(raw as Account)) {
+    throw new TradingError('INVALID_ACCOUNT', domain.id === 'crypto' ? 'La crypto n\'a pas d\'enveloppe à choisir' : 'Enveloppe inconnue : choisis « pea » ou « cto »');
+  }
+  return raw as Account;
+};
+
+const findPosition = (domain: DomainConfig, positions: Position[], symbol: string, account: Account) =>
+  positions.find((p) => p.symbol === symbol && accountOf(domain, p) === account);
+
+// Devis commun à l'aperçu et à l'exécution : frais, impôt et explication.
+const saleQuote = (domain: DomainConfig, pos: Position, sold: number, price: number, year: number, ts: TaxState) => {
+  const proceeds = creditForSell(price, sold);
+  const account = accountOf(domain, pos);
+  const fee = proceeds > 0 ? brokerageFee(kindOf(domain, pos.symbol), proceeds) : 0;
+  const tax = saleTax({ account, year, proceeds, basis: pos.avgBuyPrice * sold, taxState: ts });
+  return { account, proceeds, fee, tax, net: proceeds - fee - tax.total };
+};
+
+const pickSellAccount = (domain: DomainConfig, positions: Position[], symbol: string, requested: Account | null): Account => {
+  if (requested) return requested;
+  const held = positions.filter((p) => p.symbol === symbol).map((p) => accountOf(domain, p));
+  if (held.length > 1) throw new TradingError('INVALID_ACCOUNT', 'Tu détiens ce titre sur plusieurs enveloppes : précise laquelle vendre (« pea » ou « cto »)');
+  return held[0] ?? defaultAccount(domain);
+};
+
+const PEA_YEARS = TRADING_TAX.pea.exemptAfterYears;
 
 const valuePositions = (domain: DomainConfig, positions: Position[], year: number) => {
   let marketValue = 0;
@@ -129,11 +174,26 @@ export const tradingService = {
     }
 
     const access = accessFor(user, domain.id);
+    const ts = readTaxState(portfolio.tax_state);
+    const positions = portfolio.positions.map((p) => ({ ...p, account: accountOf(domain, p) }));
     const bank = ['stocks', 'crypto'].includes(domain.id) ? await portfolioLoanView({ query } as any, userId, domain, portfolio.positions, portfolio.simulated_year) : null;
     return {
       bank,
       domain: domain.id,
-      positions: portfolio.positions,
+      positions,
+      costs: {
+        brokeragePct: Object.fromEntries(Object.entries(TRADING_COSTS.brokerage).map(([k, v]) => [k, v.ratePct])),
+        feesPaid: ts.feesPaid,
+        taxPaid: ts.taxPaid,
+        pea: domain.id === 'stocks' ? {
+          openedYear: ts.peaOpenedYear,
+          exemptFromYear: ts.peaOpenedYear === null ? null : ts.peaOpenedYear + PEA_YEARS,
+          deposits: ts.peaDeposits,
+          depositCeiling: TRADING_TAX.pea.depositCeiling,
+        } : null,
+        cryptoDisposalsThisYear: domain.id === 'crypto' ? (ts.cryptoSales[String(portfolio.simulated_year)] ?? 0) : null,
+        cryptoThreshold: TRADING_TAX.cryptoDisposalThreshold,
+      },
       simulatedYear: portfolio.simulated_year,
       minYear: domain.minYear,
       maxYear: domain.maxYear,
@@ -151,9 +211,10 @@ export const tradingService = {
     };
   },
 
-  async buy(userId: string, domainId: unknown, rawSymbol: unknown, rawQuantity: unknown) {
+  async buy(userId: string, domainId: unknown, rawSymbol: unknown, rawQuantity: unknown, rawAccount?: unknown) {
     const domain = resolveDomainOrThrow(domainId);
     const { symbol, quantity } = validateOrder(domain, rawSymbol, rawQuantity);
+    const account: Account = resolveAccount(domain, rawAccount) ?? (domain.id === 'crypto' ? 'crypto' : 'pea');
 
     const user = await loadUser(userId);
     const access = accessFor(user, domain.id);
@@ -180,28 +241,43 @@ export const tradingService = {
             throw new TradingError('INVALID_INPUT', 'Montant trop faible (minimum 1 🪙)');
           }
 
-          await investcoinsRepository.applyTransaction(userId, -cost, 'trade_buy', {
-            domain: domain.id, symbol, quantity, price, year,
-          }, tx);
+          const fee = brokerageFee(kindOf(domain, symbol), cost);
+          const ts = readTaxState(portfolio.tax_state);
+          if (account === 'pea') {
+            if (ts.peaDeposits + cost > TRADING_TAX.pea.depositCeiling) {
+              throw new TradingError('PEA_CEILING', `Plafond de versements du PEA (${TRADING_TAX.pea.depositCeiling.toLocaleString('fr-FR')} 🪙) dépassé : utilise le compte-titres`);
+            }
+            ts.peaDeposits += cost;
+            if (ts.peaOpenedYear === null) ts.peaOpenedYear = year;
+          }
 
-          const positions = portfolio.positions.map((p) => ({ ...p }));
-          const existing = positions.find((p) => p.symbol === symbol);
+          await investcoinsRepository.applyTransaction(userId, -cost, 'trade_buy', {
+            domain: domain.id, symbol, quantity, price, year, account,
+          }, tx);
+          // Courtage : pièces détruites (puits d'InvestCoins).
+          if (fee > 0) {
+            await investcoinsRepository.applyTransaction(userId, -fee, 'fee_brokerage', { domain: domain.id, symbol, side: 'buy', year, account }, tx);
+            ts.feesPaid += fee;
+          }
+
+          const positions = portfolio.positions.map((p) => ({ ...p, account: accountOf(domain, p) }));
+          const existing = findPosition(domain, positions, symbol, account);
           if (existing) {
             const total = existing.quantity + quantity;
             existing.avgBuyPrice = (existing.avgBuyPrice * existing.quantity + price * quantity) / total;
             existing.quantity = total;
           } else {
-            positions.push({ symbol, quantity, avgBuyPrice: price });
+            positions.push({ symbol, quantity, avgBuyPrice: price, account });
           }
 
           const totals = {
-            totalBought: portfolio.total_bought + cost,
+            totalBought: portfolio.total_bought + cost + fee,
             totalProceeds: portfolio.total_proceeds,
           };
-          await virtualPortfolioRepository.save(tx, portfolio.id, { positions, ...totals });
+          await virtualPortfolioRepository.save(tx, portfolio.id, { positions, ...totals, taxState: ts });
           await snapshot(tx, userId, domain, positions, totals, year);
 
-          return { success: true, cost, price, positions };
+          return { success: true, cost, fee, account, price, positions };
         }
       );
     } catch (error) {
@@ -212,9 +288,10 @@ export const tradingService = {
     }
   },
 
-  async sell(userId: string, domainId: unknown, rawSymbol: unknown, rawQuantity: unknown) {
+  async sell(userId: string, domainId: unknown, rawSymbol: unknown, rawQuantity: unknown, rawAccount?: unknown) {
     const domain = resolveDomainOrThrow(domainId);
     const { symbol, quantity } = validateOrder(domain, rawSymbol, rawQuantity);
+    const requested = resolveAccount(domain, rawAccount);
     // La vente est toujours autorisée (même sur un domaine verrouillé) :
     // on ne piège jamais un joueur dans une position.
     await loadUser(userId);
@@ -223,8 +300,9 @@ export const tradingService = {
       userId, MODE, domain.id, domain.minYear,
       async (portfolio, tx) => {
         const year = portfolio.simulated_year;
-        const positions = portfolio.positions.map((p) => ({ ...p }));
-        const existing = positions.find((p) => p.symbol === symbol);
+        const positions = portfolio.positions.map((p) => ({ ...p, account: accountOf(domain, p) }));
+        const account = pickSellAccount(domain, positions, symbol, requested);
+        const existing = findPosition(domain, positions, symbol, account);
         // Tolérance flottante pour une vente "de tout" sur une quantité fractionnaire.
         if (!existing || existing.quantity < quantity - 1e-9) {
           throw new TradingError('INSUFFICIENT_QUANTITY', 'Quantité détenue insuffisante');
@@ -235,7 +313,9 @@ export const tradingService = {
         }
 
         const sold = Math.min(quantity, existing.quantity);
-        const proceeds = creditForSell(price, sold);
+        const ts = readTaxState(portfolio.tax_state);
+        const q = saleQuote(domain, existing, sold, price, year, ts);
+        const { proceeds, fee, tax } = q;
         existing.quantity -= sold;
         const remaining = positions.filter((p) => p.quantity > 1e-9);
 
@@ -244,23 +324,63 @@ export const tradingService = {
         // n'écrit pas de ligne dans ce cas.
         if (proceeds > 0) {
           await investcoinsRepository.applyTransaction(userId, proceeds, 'trade_sell', {
-            domain: domain.id, symbol, quantity: sold, price, year,
+            domain: domain.id, symbol, quantity: sold, price, year, account,
           }, tx);
+          // Courtage puis impôt sur la plus-value : pièces détruites (puits d'InvestCoins).
+          if (fee > 0) await investcoinsRepository.applyTransaction(userId, -fee, 'fee_brokerage', { domain: domain.id, symbol, side: 'sell', year, account }, tx);
+          if (tax.total > 0) {
+            await investcoinsRepository.applyTransaction(userId, -tax.total, 'tax_capital_gains', {
+              domain: domain.id, symbol, year, account, gain: tax.gain, incomeTax: tax.incomeTax, social: tax.social,
+            }, tx);
+          }
         }
+        ts.feesPaid += fee;
+        ts.taxPaid += tax.total;
+        if (account === 'crypto') ts.cryptoSales[String(year)] = (ts.cryptoSales[String(year)] ?? 0) + proceeds;
+        const net = Math.max(0, q.net);
 
-        // Titres en garantie d'un prêt : ce qui manque à la garantie est remboursé sur le produit de la vente, sinon la vente est refusée.
-        const release = await bankPortfolioService.releaseCollateral(tx as any, userId, domain, remaining, year, proceeds);
+        // Titres en garantie d'un prêt : ce qui manque à la garantie est remboursé sur le produit net de la vente, sinon la vente est refusée.
+        const release = await bankPortfolioService.releaseCollateral(tx as any, userId, domain, remaining, year, net);
 
         const totals = {
           totalBought: portfolio.total_bought,
-          totalProceeds: portfolio.total_proceeds + proceeds,
+          totalProceeds: portfolio.total_proceeds + net,
         };
-        await virtualPortfolioRepository.save(tx, portfolio.id, { positions: remaining, ...totals });
+        await virtualPortfolioRepository.save(tx, portfolio.id, { positions: remaining, ...totals, taxState: ts });
         await snapshot(tx, userId, domain, remaining, totals, year);
 
-        return { success: true, proceeds, price, positions: remaining, loanAutoRepaid: release.autoRepaid, loanMessage: release.message };
+        return { success: true, proceeds, fee, tax: tax.total, taxDetails: tax, netProceeds: net, account, price, positions: remaining, loanAutoRepaid: release.autoRepaid, loanMessage: release.message };
       }
     );
+  },
+
+
+  // Aperçu d'un ordre SANS l'exécuter : frais, impôt sur la plus-value et explication (affichés avant validation).
+  async quote(userId: string, domainId: unknown, rawSide: unknown, rawSymbol: unknown, rawQuantity: unknown, rawAccount?: unknown) {
+    const domain = resolveDomainOrThrow(domainId);
+    const { symbol, quantity } = validateOrder(domain, rawSymbol, rawQuantity);
+    if (rawSide !== 'buy' && rawSide !== 'sell') throw new TradingError('INVALID_INPUT', 'Sens de l\'ordre invalide (buy ou sell)');
+    await loadUser(userId);
+    const portfolio = await virtualPortfolioRepository.getOrCreate(userId, MODE, domain.id, domain.minYear);
+    const year = portfolio.simulated_year;
+    const price = domain.getPrice(symbol, year);
+    if (price === null) throw new TradingError('NOT_LISTED', `${symbol} n'existe pas encore en ${year}`);
+    const ts = readTaxState(portfolio.tax_state);
+    const requested = resolveAccount(domain, rawAccount);
+    if (rawSide === 'buy') {
+      const account: Account = requested ?? (domain.id === 'crypto' ? 'crypto' : 'pea');
+      const cost = chargeForBuy(price, quantity);
+      const fee = brokerageFee(kindOf(domain, symbol), cost);
+      return { side: 'buy', account, price, amount: cost, fee, total: cost + fee,
+        note: account === 'pea' ? `PEA : gains exonérés d'impôt sur le revenu après ${PEA_YEARS} ans${ts.peaOpenedYear === null ? ' (le compteur démarre à ton premier achat)' : ` (ouvert en ${ts.peaOpenedYear})`}.` : null };
+    }
+    const positions = portfolio.positions.map((p) => ({ ...p, account: accountOf(domain, p) }));
+    const account = pickSellAccount(domain, positions, symbol, requested);
+    const pos = findPosition(domain, positions, symbol, account);
+    if (!pos || pos.quantity < quantity - 1e-9) throw new TradingError('INSUFFICIENT_QUANTITY', 'Quantité détenue insuffisante');
+    const q = saleQuote(domain, pos, Math.min(quantity, pos.quantity), price, year, ts);
+    return { side: 'sell', account, price, amount: q.proceeds, fee: q.fee, tax: q.tax.total, gain: q.tax.gain,
+      incomeTax: q.tax.incomeTax, social: q.tax.social, net: q.net, note: q.tax.note };
   },
 
   async advanceYear(userId: string, domainId: unknown) {

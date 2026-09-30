@@ -37,6 +37,7 @@ export const ROUTES: Row[] = [
   ['get', '/trading/portfolio', 'Bourse / Crypto', 'Portefeuille virtuel'],
   ['post', '/trading/buy', 'Bourse / Crypto', 'Acheter'],
   ['post', '/trading/sell', 'Bourse / Crypto', 'Vendre'],
+  ['post', '/trading/quote', 'Bourse / Crypto', 'Aperçu d\'un ordre : frais, impôt sur la plus-value, explication'],
   ['post', '/trading/advance-year', 'Bourse / Crypto', 'Avancer d\'un an'],
   ['get', '/trading/leaderboard', 'Bourse / Crypto', 'Classement'],
   ['get', '/realestate/state', 'Immobilier', 'État de la partie'],

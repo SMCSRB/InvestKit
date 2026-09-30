@@ -9,3 +9,9 @@ if (url) {
   }
   process.env.DATABASE_URL = url;
 }
+
+// Frais et impôts Bourse/Crypto : coupés par défaut pour que les tests des autres modules (banque, portefeuille…)
+// restent sur des montants ronds. tests/tradingCosts.test.ts les réactive explicitement.
+import { TRADING_COSTS, TRADING_TAX } from '../src/config/tradingRules';
+TRADING_COSTS.enabled = false;
+TRADING_TAX.enabled = false;

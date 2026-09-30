@@ -5,6 +5,8 @@ export interface Position {
   symbol: string;
   quantity: number;
   avgBuyPrice: number;
+  // Enveloppe : 'pea' | 'cto' (Bourse) ou 'crypto'. Absent (anciens portefeuilles) = compte-titres.
+  account?: string;
 }
 
 export interface VirtualPortfolio {
@@ -16,6 +18,7 @@ export interface VirtualPortfolio {
   simulated_year: number;
   total_bought: number;
   total_proceeds: number;
+  tax_state: any;
   started_at: Date;
   updated_at: Date;
 }
@@ -32,6 +35,7 @@ export interface PortfolioSave {
   positions: Position[];
   totalBought: number;
   totalProceeds: number;
+  taxState?: unknown;
 }
 
 export const virtualPortfolioRepository = {
@@ -98,9 +102,9 @@ export const virtualPortfolioRepository = {
   async save(db: Queryable, id: string, data: PortfolioSave): Promise<void> {
     await db.query(
       `UPDATE virtual_portfolios
-       SET positions = $1, total_bought = $2, total_proceeds = $3, updated_at = NOW()
+       SET positions = $1, total_bought = $2, total_proceeds = $3, tax_state = COALESCE($5::jsonb, tax_state), updated_at = NOW()
        WHERE id = $4`,
-      [JSON.stringify(data.positions), data.totalBought, data.totalProceeds, id]
+      [JSON.stringify(data.positions), data.totalBought, data.totalProceeds, id, data.taxState === undefined ? null : JSON.stringify(data.taxState)]
     );
   },
 

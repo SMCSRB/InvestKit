@@ -173,6 +173,17 @@ export const investcoinsRepository = {
     return byDomain;
   },
 
+  // Puits d'InvestCoins : pièces détruites PAR DOMAINE et PAR MOTIF (courtage, impôts, intérêts de prêt…), hors remboursements de prêts.
+  async sinksByDomainAndReason() {
+    const result = await query(
+      `SELECT COALESCE(domain, '(hors domaine)') AS domain, reason, COUNT(*)::int AS entries, COALESCE(-SUM(amount), 0)::bigint AS destroyed
+       FROM investcoins_transactions WHERE nature = 'destruction' GROUP BY 1, 2 ORDER BY 1, 2`
+    );
+    const out: Record<string, Record<string, { entries: number; destroyed: number }>> = {};
+    for (const r of result.rows) (out[r.domain] ??= {})[r.reason] = { entries: r.entries, destroyed: Number(r.destroyed) };
+    return out;
+  },
+
   async getRecentTransactions(userId: string, limit = 20) {
     const result = await query(
       `SELECT amount, reason, metadata, created_at FROM investcoins_transactions
