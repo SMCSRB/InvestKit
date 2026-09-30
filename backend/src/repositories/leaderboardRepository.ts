@@ -36,6 +36,7 @@ export const leaderboardRepository = {
       performancePct: number;
       capitalCommitted: number;
       leverage?: number | null;
+      period?: string;   // période explicite (ex. "M2020-03" pour le marché Crypto) ; sinon l'année simulée
     }
   ): Promise<void> {
     await db.query(
@@ -51,7 +52,7 @@ export const leaderboardRepository = {
         snapshot.userId,
         snapshot.mode,
         snapshot.domain,
-        periodForYear(snapshot.year),
+        snapshot.period ?? periodForYear(snapshot.year),
         snapshot.performancePct,
         snapshot.capitalCommitted,
         snapshot.leverage ?? null,
@@ -66,6 +67,7 @@ export const leaderboardRepository = {
     mode: string;
     domain: string;
     year: number;
+    period?: string;
     minCapital: number;
     limit: number;
     callerId: string;
@@ -87,7 +89,7 @@ export const leaderboardRepository = {
        FROM ranked
        WHERE rank <= $5 OR user_id = $6
        ORDER BY rank, username`,
-      [params.mode, params.domain, periodForYear(params.year), params.minCapital, params.limit, params.callerId]
+      [params.mode, params.domain, params.period ?? periodForYear(params.year), params.minCapital, params.limit, params.callerId]
     );
 
     const toEntry = (row: any): BoardEntry => ({

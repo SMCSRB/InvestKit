@@ -76,7 +76,7 @@ export const portfolioDebtInfo = async (db: Db, userId: string, domain: string) 
 };
 
 // Paie `coins` pièces entières sur un prêt à intérêts seuls : intérêts échus d'abord, puis capital. Le prêt est soldé si plus rien n'est dû.
-const applyPayment = async (db: Db, userId: string, loan: any, coins: number, extra: object = {}) => {
+export const applyPayment = async (db: Db, userId: string, loan: any, coins: number, extra: object = {}) => {
   let payH = coins * 100;
   const interestPart = Math.min(Number(loan.due_interest_h), payH);
   payH -= interestPart;
@@ -162,6 +162,11 @@ export const bankPortfolioService = {
     if (typeof coinsRaw !== 'number' || !Number.isInteger(coinsRaw) || coinsRaw < 1) throw new BankError('INVALID_INPUT', 'Montant : nombre entier de pièces attendu');
     const head = (await query(`SELECT domain FROM bank_loans WHERE id = $1 AND user_id = $2 AND product = 'portfolio'`, [loanIdRaw, userId])).rows[0];
     if (!head) throw new BankError('NOT_FOUND', 'Prêt introuvable');
+    if (head.domain === 'crypto_market') {   // prêt du marché Crypto : même règle de remboursement, horloge du joueur Crypto
+      const { cryptoLoanService } = await import('./crypto/loanService');
+      try { const r = await cryptoLoanService.repay(userId, loanIdRaw, coinsRaw); return { ...r, marginState: 'ok', message: r.repaid ? 'Prêt Crypto soldé : tes cryptos ne sont plus en garantie.' : `Remboursement effectué : il reste ${fr(r.remainingCoins)} 🪙 à rembourser.` }; }
+      catch (e: any) { throw e?.name === 'CryptoDataError' ? new BankError('INVALID_INPUT', e.message) : e; }
+    }
     const domain = domainOrThrow(head.domain);
     return virtualPortfolioRepository.withLock(userId, MODE, domain.id, domain.minYear, async (portfolio, tx) => {
       const loan = (await q(tx as any, `SELECT * FROM bank_loans WHERE id = $1 AND user_id = $2 FOR UPDATE`, [loanIdRaw, userId])).rows[0];

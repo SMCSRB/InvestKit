@@ -19,3 +19,8 @@ cryptoRoutes.post('/orders', authMiddleware, cryptoOrderLimiter, cryptoControlle
 cryptoRoutes.delete('/orders/:id', authMiddleware, cryptoOrderLimiter, cryptoController.cancelOrder);
 cryptoRoutes.post('/swap', authMiddleware, cryptoOrderLimiter, cryptoController.swap);
 cryptoRoutes.get('/events', authMiddleware, cryptoController.events);
+cryptoRoutes.get('/loan', authMiddleware, cryptoController.loan);
+cryptoRoutes.post('/loan/quote', authMiddleware, cryptoController.loanQuote);
+cryptoRoutes.post('/loan/borrow', authMiddleware, cryptoOrderLimiter, cryptoController.loanBorrow);
+cryptoRoutes.post('/loan/repay', authMiddleware, cryptoOrderLimiter, cryptoController.loanRepay);
+cryptoRoutes.get('/leaderboard', authMiddleware, cryptoController.leaderboard);

@@ -154,6 +154,8 @@ export const adminService = {
     const coins = await one(`SELECT COALESCE(SUM(balance), 0)::bigint AS in_circulation FROM investcoins_balance`);
     const subs = (await query(`SELECT status, COUNT(*)::int AS n FROM subscriptions GROUP BY status ORDER BY n DESC`)).rows;
     const domains = (await query(`SELECT domain, COUNT(DISTINCT user_id)::int AS players FROM virtual_portfolios GROUP BY domain`)).rows;
+    const cryptoPlayers = Number((await query(`SELECT COUNT(*)::int AS n FROM crypto_accounts`)).rows[0].n);
+    if (cryptoPlayers > 0) domains.push({ domain: 'crypto_market', players: cryptoPlayers });
     const realEstate = await one(`SELECT COUNT(*)::int AS players FROM re_games`);
     const loans = (await query(`SELECT product, status, COUNT(*)::int AS n FROM bank_loans GROUP BY product, status ORDER BY product, status`)).rows;
     return {
@@ -187,6 +189,18 @@ export const adminService = {
     if (mismatch > 0) out.push({ level: 'critique', code: 'LEDGER_MISMATCH', title: 'Soldes différents du registre', detail: `${mismatch} joueur(s) dont le solde ne correspond pas à la somme de leur registre (hors soldes antérieurs au registre). À examiner sans attendre.` });
     const neg = await n(`SELECT COUNT(*)::int AS n FROM investcoins_balance WHERE balance < 0`);
     if (neg > 0) out.push({ level: 'critique', code: 'NEGATIVE_BALANCE', title: 'Solde négatif', detail: `${neg} joueur(s) avec un solde négatif : ne devrait jamais arriver.` });
+    // Domaine Crypto (marché simulé) : cohérence du registre, rafales d'ordres, ventes forcées.
+    const cryptoCreated = await n(`SELECT COUNT(*)::int AS n FROM investcoins_transactions WHERE domain = 'crypto_market' AND nature = 'creation'`);
+    if (cryptoCreated > 0) out.push({ level: 'critique', code: 'CRYPTO_COIN_CREATION', title: 'Pièces créées par le marché Crypto', detail: `${cryptoCreated} écriture(s) de création dans le domaine Crypto : le trading ne doit jamais créer de pièces (seul le crédit bancaire en crée).` });
+    const cryptoDrift = await n(`SELECT COUNT(*)::int AS n FROM (
+        SELECT t.user_id, SUM(t.amount) AS led FROM investcoins_transactions t WHERE t.domain = 'crypto_market' AND t.reason IN ('trade_buy','trade_sell','fee_brokerage','tax_capital_gains') GROUP BY t.user_id) l
+      LEFT JOIN (SELECT user_id, SUM(CASE WHEN swap THEN 0 WHEN side = 'sell' THEN notional_coins ELSE -notional_coins END) - SUM(fee_coins) - SUM(tax_coins) AS fl FROM crypto_fills GROUP BY user_id) f ON f.user_id = l.user_id
+      WHERE l.led <> COALESCE(f.fl, 0)`);
+    if (cryptoDrift > 0) out.push({ level: 'critique', code: 'CRYPTO_LEDGER_DRIFT', title: 'Registre et exécutions Crypto incohérents', detail: `${cryptoDrift} joueur(s) dont les écritures du domaine Crypto ne correspondent pas à leurs exécutions. À examiner sans attendre.` });
+    const burst = await n(`SELECT COUNT(*)::int AS n FROM (SELECT user_id FROM audit_logs WHERE action IN ('crypto.order.create','crypto.swap') AND created_at > NOW() - INTERVAL '1 hour' GROUP BY user_id HAVING COUNT(*) >= 300) x`);
+    if (burst > 0) out.push({ level: 'attention', code: 'CRYPTO_ORDER_BURST', title: 'Rafale d\'ordres Crypto', detail: `${burst} joueur(s) ont passé 300 ordres ou plus en 1 h : script automatisé possible.` });
+    const liq = await n(`SELECT COUNT(*)::int AS n FROM bank_events WHERE kind = 'liquidation' AND details ? 'proceeds' AND created_at > NOW() - INTERVAL '24 hours' AND loan_id IN (SELECT id FROM bank_loans WHERE domain = 'crypto_market')`);
+    if (liq > 0) out.push({ level: 'info', code: 'CRYPTO_LIQUIDATIONS', title: 'Ventes forcées sur prêts Crypto', detail: `${liq} vente(s) forcée(s) en 24 h.` });
     const defaulted = await n(`SELECT COUNT(*)::int AS n FROM bank_loans WHERE status = 'defaulted'`);
     if (defaulted > 0) out.push({ level: 'info', code: 'BANK_DEFAULTS', title: 'Prêts en défaut', detail: `${defaulted} prêt(s) en défaut (les joueurs peuvent lancer la procédure de rétablissement).` });
     const pastDue = await n(`SELECT COUNT(*)::int AS n FROM subscriptions WHERE status IN ('past_due','unpaid')`);

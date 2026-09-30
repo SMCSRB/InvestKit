@@ -55,3 +55,12 @@ export const CRYPTO_ECONOMY = {
   spreadPct: { 1: 0.02, 2: 0.05, 3: 0.20, 4: 0.80 } as Record<number, number>,     // écart achat/vente complet ; moitié à chaque exécution « au marché »
   slippage: { k: 0.10, maxFraction: 0.05 },                                        // glissement = k × √(montant / volume quotidien moyen), plafonné
 } as const;
+
+// ── Prêt sur portefeuille Crypto (Banque) ─────────────────────────────────────────────────────────────────────────
+// Décision produit : emprunt jusqu'à 30 % de la valeur des cryptos déposées en garantie, appel de marge à 65 %, vente forcée à 80 % de dette ÷ valeur.
+// Prix d'évaluation d'une période : plus bas connu de la période si disponible, sinon clôture (simplification signalée au joueur).
+// Décote de vente forcée et taux variable : repris du module Banque (valeurs de jeu, à reconfirmer).
+export const CRYPTO_LOAN = {
+  ltv: { max: 30, call: 65, liquidation: 80 },
+  simplification: 'Simplification : pour décider d\'un appel de marge ou d\'une vente forcée, le jeu utilise le PLUS BAS prix de chaque crypto sur la période écoulée (quand la donnée existe, sinon la clôture), même si ces plus bas n\'ont pas eu lieu au même moment. C\'est plus sévère que la réalité, mais reproductible.',
+} as const;

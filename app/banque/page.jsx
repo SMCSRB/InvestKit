@@ -8,7 +8,7 @@ import HelpTip from '../components/HelpTip';
 const API = `${process.env.NEXT_PUBLIC_API_URL}/bank`;
 const TRADING_API = `${process.env.NEXT_PUBLIC_API_URL}/trading`;
 const num = (n, d = 2) => Number(n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: d });
-const DOMAIN_LABEL = { real_estate: 'Immobilier', stocks: 'Bourse', crypto: 'Crypto', bonds: 'Obligations' };
+const DOMAIN_LABEL = { real_estate: 'Immobilier', stocks: 'Bourse', crypto: 'Crypto', crypto_market: 'Marché Crypto', bonds: 'Obligations' };
 const LOMBARD_DOMAINS = [['stocks', 'Bourse'], ['crypto', 'Crypto']];
 const PRODUCT_LABEL = { personal: 'Prêt personnel', portfolio: 'Prêt sur portefeuille', mortgage: 'Prêt immobilier' };
 const STATUS_LABEL = { active: 'En cours', repaid: 'Soldé', defaulted: 'En défaut', liquidated: 'Liquidé', written_off: 'Dette effacée' };

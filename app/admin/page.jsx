@@ -95,7 +95,7 @@ function Overview() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
         <div style={card}>
           <h3 style={{ margin: '0 0 8px', fontSize: 15, color: '#fff' }}>Joueurs par domaine</h3>
-          {stats.players.trading.map((p) => <div key={p.domain} style={{ fontSize: 13 }}>{p.domain === 'stocks' ? 'Bourse' : p.domain === 'crypto' ? 'Crypto' : p.domain} : {fr(p.players)}</div>)}
+          {stats.players.trading.map((p) => <div key={p.domain} style={{ fontSize: 13 }}>{p.domain === 'stocks' ? 'Bourse' : p.domain === 'crypto' ? 'Crypto' : p.domain === 'crypto_market' ? 'Marché Crypto' : p.domain} : {fr(p.players)}</div>)}
           <div style={{ fontSize: 13 }}>Immobilier : {fr(stats.players.realEstate)}</div>
         </div>
         <div style={card}>

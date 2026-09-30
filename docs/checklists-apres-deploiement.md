@@ -304,3 +304,6 @@ Voir `docs/crypto-ordres.md` (section « À tester chez moi »).
 
 ## PR Crypto — impôt, échanges, événements
 Voir `docs/crypto-frais-evenements.md` (section « À tester chez moi »).
+
+## PR Crypto — prêt sur portefeuille, classement, administration
+Voir `docs/crypto-banque-classement.md` (section « À tester chez moi »).

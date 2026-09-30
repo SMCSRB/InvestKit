@@ -238,6 +238,81 @@ function SwapCard({ positions, assets, onDone }) {
   );
 }
 
+function LoanView({ simulatedAt, refreshKey, onChanged }) {
+  const [v, setV] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [quote, setQuote] = useState(null);
+  const [repay, setRepay] = useState('');
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => { call('/loan').then(setV).catch((e) => setMsg({ ok: false, text: e.message })); }, []);
+  useEffect(() => { load(); }, [load, simulatedAt, refreshKey]);
+  const doQuote = async () => { setMsg(null); try { setQuote(await call('/loan/quote', 'POST', { amountCoins: Number(amount) })); } catch (e) { setQuote(null); setMsg({ ok: false, text: e.message }); } };
+  const act = async (fn, okText) => { if (busy) return; setBusy(true); setMsg(null); try { const r = await fn(); setMsg({ ok: true, text: r.message || okText }); setQuote(null); setAmount(''); setRepay(''); load(); onChanged(); } catch (e) { setMsg({ ok: false, text: e.message }); } setBusy(false); };
+  if (!v) return <div style={{ color: '#94a3b8' }}>{msg ? msg.text : 'Chargement…'}</div>;
+  const stateLabel = { ok: 'Garantie suffisante', call: 'APPEL DE MARGE', liquidation: 'VENTE FORCÉE imminente' };
+  return (
+    <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'minmax(0,1fr)' }} data-testid="loan-view">
+      <div style={card}>
+        <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Prêt sur mon portefeuille Crypto</h3>
+        <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, lineHeight: 1.5 }}>La banque te prête jusqu&apos;à <b>{v.ltv.max} %</b> de la valeur de tes cryptos. Si ta dette dépasse <b>{v.ltv.call} %</b> de cette valeur : appel de marge. Au-delà de <b>{v.ltv.liquidation} %</b> : tes cryptos sont vendues de force. Les pièces empruntées ne servent que dans le domaine Crypto. <b>Emprunter amplifie les gains… et les pertes.</b></p>
+        <div style={{ marginTop: 10, fontSize: 13, color: '#cbd5e1' }}>Valeur de ta garantie : <b>{coins(v.limits.value)}</b> · capacité d&apos;emprunt : <b>{coins(v.capacityCoins)}</b></div>
+      </div>
+      {v.loan ? (
+        <div style={{ ...card, borderColor: v.loan.state === 'ok' && !v.loan.marginCall ? undefined : '#ef4444' }} data-testid="loan-active">
+          <div style={{ color: '#fff', fontWeight: 800 }}>Dette : {coins(v.loan.debtCoins)} <span style={{ color: '#94a3b8', fontWeight: 400, fontSize: 13 }}>(capital {coins(v.loan.principalCoins)}, taux variable {v.loan.annualRatePct.toLocaleString('fr-FR')} %)</span></div>
+          <div style={{ fontSize: 13, color: '#cbd5e1', margin: '6px 0' }}>Dette ÷ garantie : <b>{v.loan.ltvPct.toLocaleString('fr-FR')} %</b> · {stateLabel[v.loan.state]}{v.loan.marginCall && <span style={{ color: '#fca5a5' }}> — appel de marge en cours : rembourse ou achète des cryptos avant d&apos;avancer dans le temps, sinon vente forcée.</span>}</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input aria-label="Montant à rembourser" inputMode="numeric" placeholder="Montant en 🪙" style={{ ...input, width: 150 }} value={repay} onChange={(e) => setRepay(e.target.value.replace(/[^0-9]/g, ''))} />
+            <button style={btn(true)} disabled={busy || !repay} onClick={() => act(() => call('/loan/repay', 'POST', { loanId: v.loan.id, coins: Number(repay) }), 'Remboursement effectué.')}>Rembourser</button>
+            <button style={btn(false)} disabled={busy} onClick={() => act(() => call('/loan/repay', 'POST', { loanId: v.loan.id, coins: Math.ceil(v.loan.debtCoins) }), 'Prêt soldé.')}>Tout rembourser</button>
+          </div>
+        </div>
+      ) : (
+        <div style={card}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input aria-label="Montant à emprunter" inputMode="numeric" placeholder="Montant à emprunter en 🪙" style={{ ...input, width: 220 }} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} />
+            <button data-testid="loan-quote" style={btn(false)} disabled={!amount} onClick={doQuote}>Simuler</button>
+          </div>
+          {quote && (
+            <div data-testid="loan-quote-result" style={{ marginTop: 10, fontSize: 13, color: '#cbd5e1', lineHeight: 1.6 }}>
+              {quote.approved ? <>Taux variable <b>{quote.loan.annualRatePct.toLocaleString('fr-FR')} %</b> · intérêts d&apos;environ <b>{coins(quote.loan.yearlyInterestCoins)}</b> par an simulé. {quote.loan.interest}<br />{quote.margin}<br />{quote.earmark}<br /><span style={{ color: '#fde68a' }}>{quote.simplification}</span><br />
+                <button data-testid="loan-borrow" style={{ ...btn(true), marginTop: 8 }} disabled={busy} onClick={() => act(() => call('/loan/borrow', 'POST', { amountCoins: Number(amount) }), 'Prêt accordé.')}>Emprunter {coins(quote.loan.amountCoins)}</button></>
+                : <span style={{ color: '#fca5a5' }}>{quote.reasons.map((r) => r.message).join(' ')}</span>}
+            </div>
+          )}
+        </div>
+      )}
+      {msg && <div role="status" style={{ ...card, color: msg.ok ? '#86efac' : '#fca5a5' }}>{msg.text}</div>}
+    </div>
+  );
+}
+
+function BoardView({ simulatedAt }) {
+  const [b, setB] = useState(null);
+  const [err, setErr] = useState('');
+  useEffect(() => { call('/leaderboard').then(setB).catch((e) => setErr(e.message)); }, [simulatedAt]);
+  if (err) return <div style={card}><span style={{ color: '#fca5a5' }}>{err}</span></div>;
+  if (!b) return <div style={{ color: '#94a3b8' }}>Chargement…</div>;
+  const pct = (n) => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`;
+  return (
+    <div style={card} data-testid="board">
+      <h3 style={{ margin: '0 0 6px', color: '#fff', fontSize: 16 }}>Classement Crypto — {b.period}</h3>
+      <p style={{ margin: '0 0 10px', color: '#94a3b8', fontSize: 13, lineHeight: 1.5 }}>Il compare les joueurs au <b>même mois simulé</b>, en pourcentage, <b>net de dettes</b> : les intérêts d&apos;un prêt sont déduits, le gain est rapporté à ton capital propre et le <b>levier</b> utilisé est affiché. Il faut avoir investi au moins {b.minCapital} 🪙 pour être classé.</p>
+      <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', color: '#e2e8f0', fontSize: 13, minWidth: 360 }}>
+        <thead><tr style={{ color: '#94a3b8', textAlign: 'right' }}><th style={{ textAlign: 'left', padding: 6 }}>#</th><th style={{ textAlign: 'left', padding: 6 }}>Joueur</th><th style={{ padding: 6 }}>Performance</th><th style={{ padding: 6 }}>Levier</th></tr></thead>
+        <tbody>{b.entries.map((e) => (
+          <tr key={e.rank + e.username} style={{ borderTop: '1px solid rgba(148,163,184,0.12)', textAlign: 'right', background: e.isMe ? 'rgba(59,130,246,0.15)' : undefined }}>
+            <td style={{ textAlign: 'left', padding: 6 }}>{e.rank}</td><td style={{ textAlign: 'left', padding: 6 }}>{e.username}{e.isMe && ' (toi)'}</td>
+            <td style={{ padding: 6, color: e.performancePct >= 0 ? '#22c55e' : '#ef4444' }}>{pct(e.performancePct)}</td><td style={{ padding: 6 }}>{e.leverage ? `×${e.leverage.toLocaleString('fr-FR')}` : '—'}</td>
+          </tr>))}
+          {!b.entries.length && <tr><td colSpan={4} style={{ padding: 14, textAlign: 'center', color: '#94a3b8' }}>Personne n&apos;est encore classé ce mois-ci.</td></tr>}
+        </tbody></table></div>
+      {b.me && b.me.rank > b.entries.length && <div style={{ marginTop: 8, fontSize: 13, color: '#bfdbfe' }}>Ton rang : {b.me.rank} sur {b.totalRanked} ({pct(b.me.performancePct)})</div>}
+    </div>
+  );
+}
+
 function Disclaimer({ text }) {
   return (
     <div role="note" data-testid="crypto-disclaimer" style={{ ...card, borderColor: 'rgba(251,191,36,0.5)', background: 'rgba(120,53,15,0.25)', color: '#fde68a', fontSize: 13, padding: '10px 14px' }}>
@@ -416,7 +491,7 @@ export default function CryptoPage() {
   const advance = async (step) => {
     if (busy) return;
     setBusy(true); setMsg(''); setInfo('');
-    try { const r = await call('/time/advance', 'POST', { step }); await loadState(); setRefreshKey((k) => k + 1); const f = (r.events || []).filter((e) => e.status === 'filled').length; const c = (r.events || []).filter((e) => e.status === 'cancelled').length; const ev = (r.marketEvents || []).length; if (f || c || ev) setInfo(`${f || c ? `Ordres en attente : ${f} exécuté(s)${c ? `, ${c} annulé(s)` : ''}. ` : ''}${ev ? `${ev} événement(s) de marché : ouvre le Journal du marché pour lire l'explication.` : ''}`); } catch (e) { setMsg(e.message); }
+    try { const r = await call('/time/advance', 'POST', { step }); await loadState(); setRefreshKey((k) => k + 1); const f = (r.events || []).filter((e) => e.status === 'filled').length; const c = (r.events || []).filter((e) => e.status === 'cancelled').length; const ev = (r.marketEvents || []).length; const le = (r.loanEvents || []).map((x) => x.message.split('.')[0]); if (le.length) setMsg(le.join(' · ')); if (f || c || ev) setInfo(`${f || c ? `Ordres en attente : ${f} exécuté(s)${c ? `, ${c} annulé(s)` : ''}. ` : ''}${ev ? `${ev} événement(s) de marché : ouvre le Journal du marché pour lire l'explication.` : ''}`); } catch (e) { setMsg(e.message); }
     setBusy(false);
   };
 
@@ -448,9 +523,11 @@ export default function CryptoPage() {
             {!state.account.canAdvance && <span style={{ color: '#94a3b8', fontSize: 12 }}>Fin des données disponibles.</span>}
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            {[['market', 'Marché'], ['portfolio', 'Mon portefeuille'], ['journal', 'Journal du marché']].map(([id, l]) => <button key={id} data-testid={`tab-${id}`} onClick={() => { setTab(id); setSelected(null); }} style={{ ...btn(tab === id), background: tab === id ? '#2563eb' : 'rgba(59,130,246,0.15)' }}>{l}</button>)}
+            {[['market', 'Marché'], ['portfolio', 'Mon portefeuille'], ['bank', 'Banque'], ['board', 'Classement'], ['journal', 'Journal du marché']].map(([id, l]) => <button key={id} data-testid={`tab-${id}`} onClick={() => { setTab(id); setSelected(null); }} style={{ ...btn(tab === id), background: tab === id ? '#2563eb' : 'rgba(59,130,246,0.15)' }}>{l}</button>)}
           </div>
           {tab === 'journal' ? <JournalView simulatedAt={simulatedAt} refreshKey={refreshKey} />
+            : tab === 'bank' ? <LoanView simulatedAt={simulatedAt} refreshKey={refreshKey} onChanged={() => setRefreshKey((k) => k + 1)} />
+            : tab === 'board' ? <BoardView simulatedAt={simulatedAt} />
             : tab === 'portfolio'
             ? <PortfolioView simulatedAt={simulatedAt} refreshKey={refreshKey} assets={allAssets} onOpen={(sym) => { setTab('market'); setSelected(sym); }} />
             : selected
