@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur PEA MEGA ULTRA PRO v6.0</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/vendor/chart-3.9.1.min.js"></script>
+    <script src="/vendor/html2pdf-0.10.1.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -488,6 +488,7 @@
             <button class="tab-btn" onclick="switchTab('sensibilite')">📈 Sensibilité <span class="badge badge-new" style="margin-left: 5px; padding: 2px 8px; font-size: 0.7em;">NOUVEAU</span></button>
             <button class="tab-btn" onclick="switchTab('frais')">💳 Frais Détaillés <span class="badge badge-new" style="margin-left: 5px; padding: 2px 8px; font-size: 0.7em;">NOUVEAU</span></button>
             <button class="tab-btn" onclick="switchTab('crise')">🔴 Scénarios Crise <span class="badge badge-new" style="margin-left: 5px; padding: 2px 8px; font-size: 0.7em;">NOUVEAU</span></button>
+            <button class="tab-btn" onclick="switchTab('montecarlo')">🎲 Monte Carlo &amp; Risque <span class="badge badge-new" style="margin-left: 5px; padding: 2px 8px; font-size: 0.7em;">NOUVEAU</span></button>
             <button class="tab-btn" onclick="switchTab('backtesting')">⏳ Backtesting <span class="badge badge-new" style="margin-left: 5px; padding: 2px 8px; font-size: 0.7em;">NOUVEAU</span></button>
             <button class="tab-btn" onclick="switchTab('comparaison')">⚖️ Comparaison <span class="badge badge-new" style="margin-left: 5px; padding: 2px 8px; font-size: 0.7em;">NOUVEAU</span></button>
             <button class="tab-btn" onclick="switchTab('etf')">📈 ETF</button>
@@ -731,9 +732,9 @@
                     <ul>
                         <li>📉 Les crises font baisser le portefeuille de 30-70%</li>
                         <li>💰 MAIS: Tu achètes à prix réduit pendant la crise! (DCA profit)</li>
-                        <li>📈 Historiquement: Les marchés rebondissent toujours après 5-10 ans</li>
-                        <li>🎯 Résultat: Même après crise, tu gagnes 50-80% sur 15 ans!</li>
-                        <li>⭐ Règle d'or: <strong>Ne pas sortir pendant la crise = GAIN garanti à long terme</strong></li>
+                        <li>📈 Historiquement, les grands indices ont fini par retrouver leurs sommets, mais pas toujours vite (plus de 7 ans après 2000) ni pour chaque titre</li>
+                        <li>🎯 Sur ces simulations, le résultat reste positif après la crise, mais rien ne garantit que l'avenir ressemble au passé</li>
+                        <li>⭐ Règle d'or : <strong>vendre en pleine crise transforme une perte provisoire en perte réelle</strong> ; encore faut-il pouvoir attendre (horizon long, argent non nécessaire à court terme)</li>
                     </ul>
                 </div>
 
@@ -743,7 +744,63 @@
                         <li>Crise 2008: Marché -57%, rebond à +100% en 2014</li>
                         <li>COVID 2020: Marché -35%, rebond à +80% en 2021</li>
                         <li>Guerre Ukraine 2022: Marché -25%, rebond à +50% en 2023-24</li>
-                        <li>Conclusion: À long terme (10+ ans), les crises = opportunités!</li>
+                        <li>Conclusion : sur un horizon long, les crises passées ont été surmontées, sans garantie pour l'avenir (les performances passées ne préjugent pas des performances futures)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB : MONTE CARLO & RISQUE (NOUVEAU) ===== -->
+        <div id="montecarlo" class="tab-content">
+            <div class="section">
+                <h2>🎲 Monte Carlo : et si les marchés étaient plus capricieux ?</h2>
+                <p style="color: #d0d0d0; margin-bottom: 20px;">Le simulateur principal suppose un rendement <strong>identique chaque année</strong>. Dans la vraie vie, il varie. Ici, on simule des milliers d'avenirs possibles avec tes paramètres (capital, versements, rendement, durée de l'onglet « Simulateur ») et on regarde l'éventail des résultats.</p>
+
+                <div class="input-group" style="max-width: 420px;">
+                    <label>Volatilité annuelle : <span id="mcVolVal">16%</span> <span style="color:#a0a0a0;font-size:0.85em;">(à quel point ça secoue ; ~16 % pour des actions mondiales, ~20 % pour le CAC 40)</span></label>
+                    <input type="range" id="mcVol" value="16" min="2" max="40" step="1" oninput="document.getElementById('mcVolVal').textContent = this.value + '%'">
+                </div>
+                <button class="toggle-btn active" style="margin-top: 10px;" onclick="runMonteCarlo()">🎲 Lancer la simulation (2 000 avenirs)</button>
+                <div id="mcStatus" style="margin-top: 12px; color: #d0d0d0;"></div>
+
+                <div id="mcCards" style="display:none; margin-top: 24px;"></div>
+                <div class="chart-card" style="margin-top: 24px; display:none;" id="mcChartCard">
+                    <h3>Éventail des résultats dans le temps</h3>
+                    <div class="chart-container"><canvas id="mcChart"></canvas></div>
+                    <p style="color:#a0a0a0; font-size:0.85em; margin-top:8px;">Zone bleue : de « 1 chance sur 10 d'être en dessous » (défavorable) à « 1 chance sur 10 d'être au-dessus » (favorable). Ligne pleine : scénario médian. Pointillés : ce que tu as versé.</p>
+                </div>
+
+                <hr style="margin: 36px 0; border-color: rgba(255,255,255,0.15);">
+                <h2>🧪 Résiste-t-il aux grandes crises ?</h2>
+                <p style="color: #d0d0d0; margin-bottom: 16px;">Que serait devenu un portefeuille de ce type pendant les vraies crises (2000, 2008, 2020, 2022, hiver crypto 2018) ? Baisse du pic au creux, d'après des données historiques.</p>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+                    <div class="input-group" style="min-width:260px;">
+                        <label>Répartition à tester</label>
+                        <select id="stressPreset">
+                            <option value='{"equity_world":100}'>100 % actions internationales</option>
+                            <option value='{"equity_fr":100}'>100 % actions françaises (CAC 40)</option>
+                            <option value='{"equity_world":60,"bonds":40}' selected>60 % actions / 40 % obligations</option>
+                            <option value='{"equity_world":30,"bonds":50,"cash":20}'>Prudent : 30 % actions, 50 % obligations, 20 % liquidités</option>
+                            <option value='{"equity_world":70,"crypto":30}'>70 % actions / 30 % crypto</option>
+                            <option value='{"crypto":100}'>100 % crypto</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="min-width:160px;">
+                        <label>Capital à tester (€)</label>
+                        <input type="number" id="stressCapital" value="10000" min="0" step="1000">
+                    </div>
+                    <button class="toggle-btn active" onclick="runStress()">🧪 Tester</button>
+                </div>
+                <div id="stressStatus" style="margin-top: 12px; color: #d0d0d0;"></div>
+                <div id="stressResults" style="margin-top: 16px;"></div>
+                <div id="riskScoreBox" style="margin-top: 24px;"></div>
+
+                <div class="verdict-box warning" style="margin-top: 30px;">
+                    <strong>⚠️ À lire avant d'interpréter</strong>
+                    <ul>
+                        <li>Simulation pédagogique : les performances passées ne préjugent pas des performances futures. Ce n'est pas un conseil en investissement.</li>
+                        <li>Le modèle suppose un rendement et une volatilité constants. Les vrais krachs sont souvent plus violents que ce que la simulation montre : regarde aussi les crises historiques ci-dessus.</li>
+                        <li>Un portefeuille ne retrouve pas toujours son sommet vite : après 2000, il a fallu plus de 7 ans aux actions internationales.</li>
                     </ul>
                 </div>
             </div>
@@ -1728,6 +1785,104 @@
         }
 
         // API ETF
+        // ===== MONTE CARLO, TESTS DE RÉSISTANCE, SCORE DE RISQUE (API InvestKit, sans compte) =====
+        const API_BASE = (function () {
+            const v = new URLSearchParams(location.search).get('api');
+            return v && /^https?:\/\//.test(v) ? v.replace(/\/$/, '') : null;
+        })();
+        const eur = (n) => Math.round(n).toLocaleString('fr-FR') + ' €';
+        const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        let mcChart = null;
+
+        async function callTool(path, body) {
+            if (!API_BASE) throw new Error("Service de calcul indisponible depuis cette page : ouvre le simulateur depuis le site InvestKit.");
+            const res = await fetch(API_BASE + '/tools/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Le calcul a échoué');
+            return data;
+        }
+
+        async function runMonteCarlo() {
+            const status = document.getElementById('mcStatus');
+            status.textContent = '⏳ Simulation en cours…';
+            try {
+                const vol = parseFloat(document.getElementById('mcVol').value) || 16;
+                let frais = parseFloat(document.getElementById('courtierSelect').value) || 0.35;
+                if (document.getElementById('courtierSelect').value === 'custom') frais = parseFloat(document.getElementById('fraisCustom').value) || 0.5;
+                const r = await callTool('monte-carlo', {
+                    initial: parseFloat(document.getElementById('capitalInitial').value) || 0,
+                    monthly: parseFloat(document.getElementById('versementMensuel').value) || 0,
+                    years: parseInt(document.getElementById('dureeAns').value) || 15,
+                    annualReturnPct: parseFloat(document.getElementById('rendementAnnuel').value) || 0,
+                    annualVolPct: vol,
+                    feesPct: frais,
+                    contributionGrowthPct: parseFloat(document.getElementById('augmentationEpargne').value) || 0,
+                    inflationPct: parseFloat(document.getElementById('inflation').value) || 2,
+                });
+                status.textContent = '';
+                const f = r.final;
+                const card = (t, v, sub, color) => '<div class="result-card" style="border-left:4px solid ' + color + ';"><h3>' + t + '</h3><div class="result-value" style="color:' + color + ';">' + v + '</div><div class="result-sub">' + sub + '</div></div>';
+                const cards = document.getElementById('mcCards');
+                cards.style.display = 'grid';
+                cards.style.gridTemplateColumns = 'repeat(auto-fit, minmax(210px, 1fr))';
+                cards.style.gap = '14px';
+                cards.innerHTML =
+                    card('Scénario défavorable', eur(f.p10), '1 chance sur 10 de finir en dessous', '#f59e0b') +
+                    card('Scénario médian', eur(f.p50), 'une chance sur deux de faire mieux', '#3b82f6') +
+                    card('Scénario favorable', eur(f.p90), '1 chance sur 10 de finir au-dessus', '#10b981') +
+                    card('Total versé', eur(f.contributions), 'ce que tu auras mis de ta poche', '#a0a0a0') +
+                    card('Risque de finir en perte', (r.probLoss * 100).toFixed(1) + ' %', 'valeur finale inférieure aux versements', r.probLoss > 0.2 ? '#ef4444' : '#10b981') +
+                    card('Pouvoir d\'achat préservé', (r.probBeatInflation * 100).toFixed(0) + ' %', 'chance que la valeur, corrigée de l\'inflation, dépasse tes versements', '#8b5cf6');
+                document.getElementById('mcChartCard').style.display = 'block';
+                if (mcChart) mcChart.destroy();
+                mcChart = new Chart(document.getElementById('mcChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: r.years.map((y) => y + ' ans'),
+                        datasets: [
+                            { label: 'Défavorable (P10)', data: r.p10, borderColor: 'rgba(245,158,11,0.9)', borderWidth: 1, pointRadius: 0, fill: false },
+                            { label: 'Favorable (P90)', data: r.p90, borderColor: 'rgba(16,185,129,0.9)', borderWidth: 1, pointRadius: 0, backgroundColor: 'rgba(59,130,246,0.18)', fill: '-1' },
+                            { label: 'Médian (P50)', data: r.p50, borderColor: '#3b82f6', borderWidth: 3, pointRadius: 0, fill: false },
+                            { label: 'Total versé', data: r.contributions, borderColor: '#a0a0a0', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false },
+                        ],
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { labels: { color: '#fff' } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ' : ' + eur(c.parsed.y) } } },
+                        scales: { y: { ticks: { color: '#fff', callback: (v) => eur(v) }, grid: { color: 'rgba(255,255,255,0.08)' } }, x: { ticks: { color: '#fff' } } } },
+                });
+            } catch (e) {
+                status.innerHTML = '<span style="color:#f87171;">❌ ' + esc(e.message) + '</span>';
+            }
+        }
+
+        async function runStress() {
+            const status = document.getElementById('stressStatus');
+            status.textContent = '⏳ Calcul en cours…';
+            try {
+                const allocation = JSON.parse(document.getElementById('stressPreset').value);
+                const capital = parseFloat(document.getElementById('stressCapital').value) || 0;
+                const [st, sc] = await Promise.all([
+                    callTool('stress-test', { allocation, capital }),
+                    callTool('risk-score', { allocation, horizonYears: parseInt(document.getElementById('dureeAns').value) || 10 }),
+                ]);
+                status.textContent = '';
+                document.getElementById('stressResults').innerHTML =
+                    '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.95em;">' +
+                    '<tr style="text-align:left;color:#a0a0a0;"><th style="padding:8px;">Crise</th><th style="padding:8px;">Période</th><th style="padding:8px;">Baisse</th><th style="padding:8px;">Sur ' + eur(capital) + '</th><th style="padding:8px;">Retour au sommet</th></tr>' +
+                    st.results.map((x) => '<tr style="border-top:1px solid rgba(255,255,255,0.12);"><td style="padding:8px;"><strong>' + esc(x.label) + '</strong>' + (x.estimated ? ' <span title="Une partie du résultat repose sur une valeur estimée" style="color:#f59e0b;">≈</span>' : '') + '<div style="color:#a0a0a0;font-size:0.85em;">' + esc(x.description) + '</div></td><td style="padding:8px;">' + esc(x.period) + '</td><td style="padding:8px;color:' + (x.lossPct < -30 ? '#ef4444' : x.lossPct < 0 ? '#f59e0b' : '#10b981') + ';font-weight:700;">' + x.lossPct.toFixed(1) + ' %</td><td style="padding:8px;">' + (x.lossAmount !== null ? eur(x.lossAmount) : '') + '</td><td style="padding:8px;">' + (x.recoveryMonths ? '≈ ' + (x.recoveryMonths >= 24 ? Math.round(x.recoveryMonths / 12) + ' ans' : x.recoveryMonths + ' mois') : 'n.c.') + '</td></tr>').join('') +
+                    '</table></div><p style="color:#a0a0a0;font-size:0.8em;margin-top:6px;">≈ : valeur partiellement estimée. « n.c. » : durée de retour non connue.</p>';
+                const color = sc.score < 25 ? '#10b981' : sc.score < 50 ? '#3b82f6' : sc.score < 75 ? '#f59e0b' : '#ef4444';
+                document.getElementById('riskScoreBox').innerHTML =
+                    '<h3>Score de risque de cette répartition : <span style="color:' + color + ';">' + sc.score + ' / 100 — ' + esc(sc.label) + '</span></h3>' +
+                    '<div style="display:grid;gap:10px;margin-top:12px;">' + sc.factors.map((f) =>
+                        '<div><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + esc(f.label) + '</strong><span style="color:#a0a0a0;">' + esc(f.value) + ' · poids ' + Math.round(f.weight * 100) + ' %</span></div>' +
+                        '<div style="background:rgba(255,255,255,0.1);border-radius:6px;height:8px;margin:4px 0;"><div style="width:' + f.score + '%;height:8px;border-radius:6px;background:' + (f.score < 25 ? '#10b981' : f.score < 50 ? '#3b82f6' : f.score < 75 ? '#f59e0b' : '#ef4444') + ';"></div></div>' +
+                        '<div style="color:#d0d0d0;font-size:0.85em;">' + esc(f.explanation) + (f.advice ? ' <em style="color:#fbbf24;">' + esc(f.advice) + '</em>' : '') + '</div></div>').join('') + '</div>';
+            } catch (e) {
+                status.innerHTML = '<span style="color:#f87171;">❌ ' + esc(e.message) + '</span>';
+            }
+        }
+
         async function fetchETFPrices() {
             const staticPrices = {
                 'SWRD': { price: 89.45, change: 0.32, changePercent: 0.36 },

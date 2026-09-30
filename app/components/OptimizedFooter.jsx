@@ -71,7 +71,10 @@ export default function OptimizedFooter() {
               { href: '/', label: 'Accueil' },
               { href: '/dashboard', label: 'Dashboard' },
               { href: '/education', label: 'Éducation' },
-              { href: '/pricing', label: 'Tarifs' },
+              { href: '/immobilier', label: 'Immobilier' },
+              { href: '/glossaire', label: 'Glossaire' },
+              { href: '/demo', label: 'Essayer les simulateurs' },
+              { href: '/changelog', label: 'Nouveautés' },
             ].map((link) => (
               <Link
                 key={link.href}
@@ -115,8 +118,11 @@ export default function OptimizedFooter() {
             {[
               { href: '/privacy', label: 'Politique de Confidentialité' },
               { href: '/conditions', label: 'Conditions d\'Utilisation' },
-              { href: '#contact', label: 'Contact' },
-              { href: '#blog', label: 'Blog' },
+              { href: '/legal', label: 'Mentions légales' },
+              { href: '/cookies', label: 'Cookies' },
+              { href: '/mes-donnees', label: 'Mes données (RGPD)' },
+              { href: '/contact', label: 'Contact' },
+              { href: '/support', label: 'Aide' },
             ].map((link) => (
               <Link
                 key={link.href}
@@ -143,6 +149,7 @@ export default function OptimizedFooter() {
         </div>
 
         {/* Social */}
+        {SITE_INFO.discordUrl && (
         <div>
           <h4
             style={{
@@ -157,15 +164,15 @@ export default function OptimizedFooter() {
             Suivez-Nous
           </h4>
           <div style={{ display: 'flex', gap: '12px' }}>
+            {/* Pas de faux liens : seuls les réseaux renseignés dans app/lib/siteInfo.js s'affichent. */}
             {[
-              { icon: '𝕏', label: 'Twitter' },
-              { icon: 'f', label: 'Facebook' },
-              { icon: 'in', label: 'LinkedIn' },
-              { icon: '📷', label: 'Instagram' },
-            ].map((social) => (
+              { icon: '💬', label: 'Discord', url: SITE_INFO.discordUrl },
+            ].filter((social) => social.url).map((social) => (
               <a
                 key={social.label}
-                href="#"
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 title={social.label}
                 style={{
                   width: '40px',
@@ -198,6 +205,7 @@ export default function OptimizedFooter() {
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {/* Bottom Bar */}

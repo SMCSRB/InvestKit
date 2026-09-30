@@ -7,8 +7,15 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "set-pro": "ts-node scripts/set-pro.ts",
+    "set-admin": "ts-node scripts/set-admin.ts",
+    "crypto:import": "ts-node scripts/crypto-import.ts",
+    "invite": "ts-node scripts/invite.ts",
+    "coins-stats": "ts-node scripts/coins-stats.ts",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "encrypt-totp": "ts-node scripts/encrypt-totp-secrets.ts"
   },
   "keywords": [
     "investissement",
@@ -18,27 +25,37 @@
   "author": "InvestKit Team",
   "license": "MIT",
   "dependencies": {
-    "bcrypt": "5.1.0",
+    "bcrypt": "^6.0.0",
     "cors": "2.8.5",
     "dotenv": "16.0.3",
-    "express": "4.18.2",
+    "express": "^4.22.3",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "9.0.2",
     "nodemailer": "^10.0.10",
+    "otplib": "^12.0.1",
     "pg": "8.10.0",
-    "uuid": "9.0.0",
-    "zod": "3.22.2"
+    "qrcode": "^1.5.4",
+    "resend": "^6.28.1",
+    "stripe": "^22.6.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/bcrypt": "5.0.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "2.8.13",
-    "@types/express": "4.17.20",
+    "@types/express": "^4.17.25",
     "@types/jsonwebtoken": "9.0.2",
     "@types/node": "20.10.0",
     "@types/nodemailer": "^8.0.2",
-    "@types/uuid": "9.0.2",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "@types/supertest": "^7.2.1",
+    "autocannon": "^8.0.0",
     "eslint": "8.52.0",
     "prettier": "3.1.0",
+    "supertest": "^7.3.0",
     "ts-node": "10.9.2",
-    "typescript": "5.3.2"
+    "typescript": "5.3.2",
+    "vitest": "^3.2.7"
   }
 }

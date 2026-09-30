@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { markLoggedIn } from '@/app/lib/session';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -9,6 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [tempToken, setTempToken] = useState(null); // connexion en attente du code 2FA
+  const [code, setCode] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -17,24 +20,35 @@ export default function LoginPage() {
     }
   }, [router]);
 
+  const finishLogin = () => {
+    setMessage('✅ Connexion réussie!');
+    markLoggedIn(); // le vrai jeton est dans un cookie httpOnly posé par le serveur
+    setTimeout(() => router.push('/dashboard'), 1500);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
     try {
-      const response = await fetch('http://192.168.1.201:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/${tempToken ? '2fa/login-verify' : 'login'}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tempToken ? { tempToken, code: code.trim() } : { email, password }),
+        }
+      );
 
       const data = await response.json();
-      if (response.ok) {
-        setMessage('✅ Connexion réussie!');
-        localStorage.setItem('token', data.token);
-        setTimeout(() => router.push('/dashboard'), 1500);
+      if (response.ok && data.requires2FA) {
+        setTempToken(data.tempToken);
+        setMessage('🔐 Entre le code à 6 chiffres de ton application d\'authentification (ou un code de secours).');
+      } else if (response.ok) {
+        finishLogin();
       } else {
+        if (tempToken && response.status === 401 && /expir/i.test(data.error || '')) { setTempToken(null); setCode(''); }
         setMessage(`❌ ${data.error || 'Email ou mot de passe incorrect'}`);
       }
     } catch (error) {
@@ -102,7 +116,7 @@ export default function LoginPage() {
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: '28px 32px',
+        padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         position: 'relative',
@@ -128,7 +142,7 @@ export default function LoginPage() {
           </div>
           <h1 style={{
             margin: '0 0 6px 0',
-            fontSize: '24px',
+            fontSize: 'clamp(18px, 5vw, 24px)',
             fontWeight: '700',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -241,6 +255,24 @@ export default function LoginPage() {
               required
             />
           </div>
+
+          {tempToken && (
+            <div>
+              <label htmlFor="code2fa" style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', display: 'block', marginBottom: '8px' }}>🔐 Code de double authentification</label>
+              <input
+                id="code2fa"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                autoFocus
+                required
+                style={{ width: '100%', padding: '11px 14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: '#f8fafc' }}
+              />
+            </div>
+          )}
 
           {/* Message */}
           {message && (

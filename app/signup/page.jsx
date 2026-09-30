@@ -115,6 +115,21 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [referralCode, setReferralCode] = useState(null);
+  const [inviteOnly, setInviteOnly] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) setReferralCode(ref);
+    const invite = params.get('invite');
+    if (invite) setInviteCode(invite);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup-config`)
+      .then((r) => r.json())
+      .then((c) => setInviteOnly(!!c.inviteOnly))
+      .catch(() => {});
+  }, []);
   const [emailAvailable, setEmailAvailable] = useState(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -171,7 +186,7 @@ export default function SignupPage() {
 
     setCheckingEmail(true);
     try {
-      const response = await fetch(`http://192.168.1.201:5000/api/auth/check-email/${encodeURIComponent(emailToCheck)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check-email/${encodeURIComponent(emailToCheck)}`);
       const data = await response.json();
       setEmailAvailable(data.available);
     } catch (error) {
@@ -243,7 +258,7 @@ export default function SignupPage() {
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
   const allRequirementsMet = Object.values(requirements).every(Boolean);
-  const isFormValid = isEmailValid && passwordsMatch && allRequirementsMet && gdprConsent;
+  const isFormValid = isEmailValid && passwordsMatch && allRequirementsMet && gdprConsent && !!captchaToken;
 
   const formSteps = [
     isEmailValid,
@@ -267,10 +282,10 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await fetch('http://192.168.1.201:5000/api/auth/register', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken: '' }),
+        body: JSON.stringify({ email, password, captchaToken, referralCode, inviteCode }),
       });
 
       const data = await response.json();
@@ -283,9 +298,13 @@ export default function SignupPage() {
       } else {
         setMessage(`❌ ${data.error || t.signupError}`);
         console.error('Signup error:', data);
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
       }
     } catch (error) {
       setMessage('❌ ' + t.serverError);
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -527,7 +546,7 @@ export default function SignupPage() {
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: '28px 32px',
+        padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         position: 'relative',
@@ -546,7 +565,7 @@ export default function SignupPage() {
           </div>
           <h1 style={{
             margin: '0 0 4px 0',
-            fontSize: '22px',
+            fontSize: 'clamp(18px, 5vw, 22px)',
             fontWeight: '700',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -606,6 +625,40 @@ export default function SignupPage() {
 
         {/* Form */}
         <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {referralCode && (
+            <div style={{
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: 'rgba(245, 158, 11, 0.12)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              color: '#f59e0b',
+              fontSize: '13px',
+              fontWeight: '600',
+            }}>
+              🎁 Invité(e) par un ami — code {referralCode}
+            </div>
+          )}
+
+          {inviteOnly && (
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: '#94a3b8' }}>
+                🎟️ Code d'invitation (site en phase de test)
+              </label>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="XXXXX-XXXXX"
+                autoComplete="off"
+                style={{
+                  width: '100%', padding: '12px 14px', borderRadius: '10px', boxSizing: 'border-box',
+                  border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)',
+                  color: 'white', fontSize: '14px', letterSpacing: '1px',
+                }}
+              />
+            </div>
+          )}
+
           {/* Email Field */}
           <div>
             <label style={{
@@ -875,14 +928,15 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* hCaptcha - Disabled for now */}
-          {/* <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
+          {/* hCaptcha */}
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
             <HCaptcha
-              sitekey="YOUR_HCAPTCHA_SITE_KEY"
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY}
               onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
               ref={captchaRef}
             />
-          </div> */}
+          </div>
 
           {/* GDPR Consent */}
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>

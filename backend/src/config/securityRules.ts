@@ -1,0 +1,15 @@
+// Paramètres de sécurité réglables sans toucher à la logique. VALEURS DE JEU/PRODUIT, NON SOURCÉES, À RECONFIRMER :
+// inspirées des recommandations OWASP (verrouillage temporaire plutôt que définitif, pour ne pas permettre de bloquer un compte à vie).
+export const LOGIN_THROTTLE = {
+  maxFailures: 8,              // échecs tolérés dans la fenêtre avant verrouillage (par compte, toutes adresses IP confondues)
+  windowMinutes: 15,           // fenêtre de comptage
+  baseLockMinutes: 15,         // première durée de verrouillage ; doublée à chaque verrouillage consécutif
+  maxLockMinutes: 240,         // plafond (4 h)
+  totpMaxFailures: 5,          // codes 2FA erronés tolérés avant verrouillage
+};
+
+export const PASSWORD_POLICY = {
+  minLength: 8,
+  maxLength: 128,              // au-delà, bcrypt ne lit de toute façon que 72 octets ; on borne pour éviter les abus
+  common: ['password', 'motdepasse', 'azerty123', 'qwerty123', '12345678', '123456789', 'password1', 'motdepasse1', 'investkit', 'azertyuiop', 'iloveyou', 'azerty1234', 'qwertyuiop'],
+};

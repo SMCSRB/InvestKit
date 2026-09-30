@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur Immobilier ULTRA PRO</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="/vendor/chart-3.9.1.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1924,7 +1924,7 @@
             const ctx3 = document.getElementById('patrimoinChart');
             if (ctx3) {
                 charts.patrimoinChart = new Chart(ctx3.getContext('2d'), {
-                    type: 'area',
+                    type: 'line',
                     data: {
                         labels: years.map(y => y + ' ans'),
                         datasets: [{

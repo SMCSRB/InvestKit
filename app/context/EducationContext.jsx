@@ -4,35 +4,37 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const EducationContext = createContext();
 
+const DEFAULT_PROGRESS = {
+  completedChapters: [],
+  completedDomains: [],
+  totalXP: 0,
+  userLevel: 1,
+  streak: 0,
+  maxStreak: 0,
+  badges: [],
+  notes: {},
+  attempts: {},
+  selectedTheme: 'dark',
+  domainsProgress: {
+    crypto: 0,
+    stocks: 0,
+    bonds: 0,
+    realestate: 0,
+  },
+};
+
 export function EducationProvider({ children }) {
-  const [progress, setProgress] = useState({
-    completedChapters: [],
-    completedDomains: [],
-    totalXP: 0,
-    userLevel: 1,
-    streak: 0,
-    maxStreak: 0,
-    badges: [],
-    notes: {}, // { "domainId-chapterId": "note text" }
-    attempts: {}, // { "domainId-chapterId": attemptCount }
-    selectedTheme: 'dark', // Theme seleccionado
-  });
+  const [progress, setProgress] = useState(DEFAULT_PROGRESS);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem('educationProgress');
-    if (savedProgress) {
-      try {
-        const parsed = JSON.parse(savedProgress);
-        setProgress((prev) => ({
-          ...prev,
-          ...parsed,
-          notes: parsed.notes || {},
-          attempts: parsed.attempts || {},
-        }));
-      } catch (error) {
-        console.error('Erreur lors du chargement de la progression:', error);
+    try {
+      const saved = localStorage.getItem('educationProgress');
+      if (saved) {
+        setProgress((prev) => ({ ...prev, ...JSON.parse(saved) }));
       }
+    } catch (error) {
+      console.error('Erreur lors du chargement de la progression éducation:', error);
     }
     setIsLoading(false);
   }, []);
@@ -43,7 +45,24 @@ export function EducationProvider({ children }) {
     }
   }, [progress, isLoading]);
 
+  const notifyBackendCompletion = (endpoint, body) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/education/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    }).catch((error) => console.error(`Erreur notification ${endpoint}:`, error));
+  };
+
   const completeChapter = (domainId, chapterId, score, xpEarned = 100) => {
+    const alreadyCompletedBefore = progress.completedChapters.some(
+      (c) => c.domainId === domainId && c.chapterId === chapterId
+    );
+    if (!alreadyCompletedBefore) {
+      notifyBackendCompletion('complete-chapter', { domainId, chapterId, score, xpEarned });
+    }
+
     setProgress((prev) => {
       const alreadyCompleted = prev.completedChapters.some(
         (c) => c.domainId === domainId && c.chapterId === chapterId
@@ -105,6 +124,11 @@ export function EducationProvider({ children }) {
   };
 
   const completeDomain = (domainId, finalScore, xpEarned = 500) => {
+    const alreadyCompletedBefore = progress.completedDomains.some((d) => d.domainId === domainId);
+    if (!alreadyCompletedBefore) {
+      notifyBackendCompletion('complete-domain', { domainId, score: finalScore, xpEarned });
+    }
+
     setProgress((prev) => {
       const alreadyCompleted = prev.completedDomains.some((d) => d.domainId === domainId);
 
@@ -167,18 +191,7 @@ export function EducationProvider({ children }) {
   };
 
   const resetProgress = () => {
-    setProgress({
-      completedChapters: [],
-      completedDomains: [],
-      totalXP: 0,
-      userLevel: 1,
-      streak: 0,
-      maxStreak: 0,
-      badges: [],
-      notes: {},
-      attempts: {},
-      selectedTheme: 'dark',
-    });
+    setProgress(DEFAULT_PROGRESS);
   };
 
   const addNote = (domainId, chapterId, noteText) => {

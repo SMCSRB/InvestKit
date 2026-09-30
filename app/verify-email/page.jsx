@@ -61,7 +61,7 @@ export default function VerifyEmailPage() {
     }
 
     try {
-      const response = await fetch('http://192.168.1.201:5000/api/auth/verify-email', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: fullCode }),
@@ -87,7 +87,7 @@ export default function VerifyEmailPage() {
     setMessage('');
 
     try {
-      const response = await fetch('http://192.168.1.201:5000/api/auth/resend-code', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

@@ -1,0 +1,111 @@
+import bcrypt from 'bcrypt';
+import type { PoolClient } from 'pg';
+import { query, getClient } from '../utils/db';
+import { userRepository } from '../repositories/userRepository';
+import { subscriptionRepository } from '../repositories/subscriptionRepository';
+import { getStripeClient } from '../utils/stripe';
+import { consumeBackupCode, verifyTotpCode } from '../utils/totp';
+import { decryptField } from '../utils/fieldCrypto';
+import { auditLog } from './auditService';
+
+// ─────────────────────────────────────────────────────────────────────────
+// DROITS RGPD : export de ses données (accès / portabilité) et suppression du compte (effacement).
+// L'export ne contient jamais de secret (mot de passe haché, secret 2FA, codes, jetons, identifiants Stripe).
+// La suppression exige le mot de passe (+ code 2FA si activée) et une confirmation écrite ; elle annule l'abonnement Stripe d'abord ;
+// les données de jeu sont supprimées en cascade ; les lignes du journal d'audit sont anonymisées (jamais supprimées).
+// ─────────────────────────────────────────────────────────────────────────
+export type AccountErrorCode = 'INVALID_INPUT' | 'BAD_CREDENTIALS' | 'TWO_FACTOR_REQUIRED' | 'SUBSCRIPTION_CANCEL_FAILED' | 'NOT_FOUND';
+export class AccountError extends Error {
+  constructor(public code: AccountErrorCode, message: string) { super(message); this.name = 'AccountError'; }
+}
+
+export const DELETE_CONFIRM_PHRASE = 'SUPPRIMER';
+
+const USER_FIELDS = `id, email, first_name, last_name, username, role, subscription_tier, free_domain, pro_override, account_type, interests, language,
+  enable_2fa, daily_streak, last_daily_claim_at, referral_code, referred_by_user_id, verified, created_at, last_login_at`;
+
+export const exportUserData = async (userId: string) => {
+  const one = async (sql: string, params: any[] = [userId]) => (await query(sql, params)).rows;
+  const user = (await one(`SELECT ${USER_FIELDS} FROM users WHERE id = $1`))[0];
+  if (!user) throw new AccountError('NOT_FOUND', 'Compte introuvable');
+  const games = await one('SELECT id FROM re_games WHERE user_id = $1');
+  const gameIds = games.map((g: any) => g.id);
+  const byGame = async (table: string) => (gameIds.length ? one(`SELECT * FROM ${table} WHERE game_id = ANY($1)`, [gameIds]) : []);
+  const projects = await one('SELECT * FROM investment_projects WHERE user_id = $1');
+  return {
+    exportedAt: new Date().toISOString(),
+    notice: 'Export de tes données personnelles InvestKit. Aucun mot de passe, secret 2FA, code ni jeton n\'y figure.',
+    profile: user,
+    invitedUsersCount: Number((await one('SELECT COUNT(*) AS n FROM users WHERE referred_by_user_id = $1'))[0].n),
+    coins: {
+      balance: (await one('SELECT balance, updated_at FROM investcoins_balance WHERE user_id = $1'))[0] ?? null,
+      transactions: await one('SELECT amount, reason, metadata, domain, nature, created_at FROM investcoins_transactions WHERE user_id = $1 ORDER BY created_at'),
+    },
+    education: { progress: await one('SELECT * FROM education_progress WHERE user_id = $1'), userProgress: await one('SELECT * FROM user_progress WHERE user_id = $1') },
+    portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
+    leaderboard: await one('SELECT mode, domain, period, performance_pct, capital_committed, leverage, computed_at FROM leaderboard_rankings WHERE user_id = $1'),
+    projects: { projects, riskAnalyses: projects.length ? await one('SELECT * FROM risk_analysis WHERE project_id = ANY($1)', [projects.map((p: any) => p.id)]) : [] },
+    investorProfile: await one('SELECT * FROM investor_profiles WHERE user_id = $1'),
+    subscriptions: await one('SELECT tier, status, payment_provider, started_at, current_period_end, canceled_at FROM subscriptions WHERE user_id = $1'),
+    quota: { quota: await one('SELECT * FROM api_quota WHERE user_id = $1'), transactions: await one('SELECT * FROM quota_transactions WHERE user_id = $1') },
+    realEstate: {
+      games: await one('SELECT id, profile, simulated_year, simulated_month, arrears_eur, missed_months, created_at FROM re_games WHERE user_id = $1'),
+      properties: await byGame('re_properties'), loans: await byGame('re_loans'), statements: await byGame('re_statements'),
+      events: await byGame('re_events'), sales: await byGame('re_sales'), expertises: await byGame('re_expertises'),
+    },
+    bank: {
+      account: (await one('SELECT credit_blocked, blocked_reason, blocked_until, defaults, recoveries, written_off_coins, created_at FROM bank_accounts WHERE user_id = $1'))[0] ?? null,
+      loans: await one('SELECT * FROM bank_loans WHERE user_id = $1 ORDER BY created_at'),
+      reservedCredit: await one('SELECT domain, coins FROM bank_credit_balances WHERE user_id = $1'),
+      events: await one('SELECT kind, message, details, created_at FROM bank_events WHERE user_id = $1 ORDER BY id'),
+      recoveries: await one('SELECT domain, written_off_coins, seized_coins, grant_coins, created_at FROM bank_recoveries WHERE user_id = $1'),
+    },
+    auditLog: await one('SELECT action, entity_type, metadata, ip_address, created_at FROM audit_logs WHERE user_id = $1 ORDER BY created_at'),
+  };
+};
+
+// Annulation de l'abonnement chez Stripe (si le paiement est configuré et qu'un abonnement actif existe).
+export const cancelStripeSubscription = async (externalId: string): Promise<void> => { await getStripeClient().subscriptions.cancel(externalId); };
+
+export const deleteAccount = async (
+  userId: string,
+  input: { password?: unknown; code?: unknown; confirm?: unknown },
+  deps: { cancelSubscription: (externalId: string) => Promise<void> } = { cancelSubscription: cancelStripeSubscription },
+  ip?: string | null
+) => {
+  if (input.confirm !== DELETE_CONFIRM_PHRASE) throw new AccountError('INVALID_INPUT', `Confirmation requise : écris ${DELETE_CONFIRM_PHRASE}.`);
+  if (typeof input.password !== 'string' || !input.password) throw new AccountError('INVALID_INPUT', 'Mot de passe requis.');
+  const user = await userRepository.findById(userId);
+  if (!user) throw new AccountError('NOT_FOUND', 'Compte introuvable');
+  if (!(await bcrypt.compare(input.password, user.password_hash))) throw new AccountError('BAD_CREDENTIALS', 'Mot de passe incorrect.');
+
+  if (user.enable_2fa) {
+    const code = typeof input.code === 'string' ? input.code.trim() : '';
+    if (!code) throw new AccountError('TWO_FACTOR_REQUIRED', 'Ton compte a la double authentification : indique ton code (ou un code de secours).');
+    let ok = !!user.totp_secret && verifyTotpCode(code, decryptField(user.totp_secret));
+    if (!ok && user.totp_backup_codes?.length) ok = (await consumeBackupCode(code, user.totp_backup_codes)) !== null;
+    if (!ok) throw new AccountError('BAD_CREDENTIALS', 'Code de double authentification invalide.');
+  }
+
+  // Abonnement Stripe annulé AVANT la suppression : on ne supprime pas un compte qui continuerait d'être facturé.
+  const sub = await subscriptionRepository.findActiveByUserId(userId);
+  let cancelled = false;
+  if (sub?.external_subscription_id && sub.payment_provider === 'stripe') {
+    try { await deps.cancelSubscription(sub.external_subscription_id); cancelled = true; }
+    catch (e) { throw new AccountError('SUBSCRIPTION_CANCEL_FAILED', 'Impossible d\'annuler ton abonnement pour le moment : ton compte n\'a pas été supprimé. Réessaie plus tard ou contacte le support.'); }
+  }
+
+  const client: PoolClient = await getClient();
+  try {
+    await client.query('BEGIN');
+    await auditLog({ userId, action: 'account_deleted', entityType: 'user', entityId: userId, metadata: { subscriptionCancelled: cancelled }, ip }, client);
+    await client.query('DELETE FROM users WHERE id = $1', [userId]);   // cascade : données de jeu, prêts, pièces… ; audit anonymisé
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+  return { deleted: true, subscriptionCancelled: cancelled };
+};

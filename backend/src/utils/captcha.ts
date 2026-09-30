@@ -1,4 +1,7 @@
-import { env } from '../config/env';
+interface HCaptchaResponse {
+  success: boolean;
+  'error-codes'?: string[];
+}
 
 export const verifyCaptcha = async (token: string): Promise<boolean> => {
   if (!token) {
@@ -16,7 +19,7 @@ export const verifyCaptcha = async (token: string): Promise<boolean> => {
       }),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as HCaptchaResponse;
 
     if (data.success) {
       console.log('✅ hCaptcha verified successfully');

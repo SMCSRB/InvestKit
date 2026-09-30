@@ -1,11 +1,14 @@
 'use client';
 
+import { SITE_INFO } from '../lib/siteInfo';
+import TestPhaseNotice from '../components/TestPhaseNotice';
+
 export default function PrivacyPage() {
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      padding: '40px 24px 60px',
+      padding: 'clamp(30px, 8vw, 40px) clamp(16px, 4vw, 24px) clamp(40px, 10vw, 60px)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     }}>
       <style>{`
@@ -24,7 +27,7 @@ export default function PrivacyPage() {
         margin: '0 auto',
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
-        padding: '48px 40px',
+        padding: 'clamp(30px, 6vw, 48px) clamp(20px, 5vw, 40px)',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         backdropFilter: 'blur(20px)',
@@ -32,7 +35,7 @@ export default function PrivacyPage() {
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{
-            fontSize: '36px',
+            fontSize: 'clamp(24px, 7vw, 36px)',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -51,6 +54,8 @@ export default function PrivacyPage() {
             Dernière mise à jour : 2026-09-19
           </p>
         </div>
+
+        <TestPhaseNotice />
 
         {/* Content Sections */}
         {[
@@ -99,11 +104,11 @@ export default function PrivacyPage() {
             title: '6. Vos Droits',
             content: 'Vous avez le droit de :',
             list: [
-              { text: 'Accéder à vos données personnelles' },
+              { text: 'Accéder à vos données personnelles (export JSON depuis la page « Mes données »)' },
               { text: 'Rectifier les informations inexactes' },
-              { text: 'Demander la suppression de vos données' },
+              { text: 'Supprimer votre compte et vos données immédiatement, depuis la page « Mes données » (/mes-donnees)' },
               { text: 'Vous opposer au traitement de vos données' },
-              { text: 'Demander la portabilité de vos données' },
+              { text: 'Récupérer vos données dans un format portable (JSON) depuis /mes-donnees' },
             ],
           },
           {
@@ -117,7 +122,7 @@ export default function PrivacyPage() {
           },
           {
             title: '8. Conservation des Données',
-            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. Après la suppression du compte, nous conservons les données minimum requises par la loi pendant 90 jours, puis nous les supprimons définitivement.',
+            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. La suppression du compte est immédiate et définitive : vos données sont effacées et le journal de sécurité est anonymisé. Les obligations légales de conservation (par exemple la facturation d’un abonnement) restent réservées.',
             list: null,
           },
           {
@@ -129,7 +134,7 @@ export default function PrivacyPage() {
             title: '10. Contact',
             content: 'Pour toute question concernant cette politique ou vos données, contactez-nous à :',
             list: null,
-            email: 'privacy@investkit.com',
+            email: SITE_INFO.contactEmail || '[adresse à compléter]',
           },
         ].map((section, idx) => (
           <section key={idx} style={{
@@ -200,7 +205,7 @@ export default function PrivacyPage() {
                 color: '#475569',
                 margin: '12px 0 0 0',
               }}>
-                Email: <a href={`mailto:${section.email}`} style={{
+                Email: <a href={section.email.includes('@') ? `mailto:${section.email}` : undefined} style={{
                   color: '#3b82f6',
                   textDecoration: 'none',
                   fontWeight: '600',

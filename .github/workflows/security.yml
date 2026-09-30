@@ -1,0 +1,34 @@
+name: Sécurité
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * 1'   # chaque lundi
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    name: Analyse statique (CodeQL)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+
+  secrets:
+    name: Recherche de secrets dans le dépôt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source=/repo --redact --no-banner

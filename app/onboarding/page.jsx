@@ -1,10 +1,12 @@
 'use client';
 
+import { markLoggedIn } from '@/app/lib/session';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [accountType, setAccountType] = useState('');
   const [interests, setInterests] = useState([]);
@@ -67,6 +69,12 @@ export default function OnboardingPage() {
     setLoading(true);
     setMessage('');
 
+    if (!username.trim()) {
+      setMessage('❌ Veuillez entrer votre pseudo');
+      setLoading(false);
+      return;
+    }
+
     if (!accountType) {
       setMessage('❌ Veuillez sélectionner un type de compte');
       setLoading(false);
@@ -74,11 +82,12 @@ export default function OnboardingPage() {
     }
 
     try {
-      const response = await fetch('http://192.168.1.201:5000/api/auth/save-preferences', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/save-preferences`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
+          username: username.trim(),
           accountType,
           interests,
           language,
@@ -89,7 +98,7 @@ export default function OnboardingPage() {
       const data = await response.json();
       if (response.ok) {
         setMessage('✅ Préférences enregistrées!');
-        localStorage.setItem('token', data.token || '');
+        markLoggedIn();
         sessionStorage.removeItem('userEmail');
         setTimeout(() => router.push('/dashboard'), 1500);
       } else {
@@ -103,7 +112,7 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = () => {
-    localStorage.setItem('token', 'temporary');
+    markLoggedIn();
     sessionStorage.removeItem('userEmail');
     router.push('/dashboard');
   };
@@ -182,7 +191,7 @@ export default function OnboardingPage() {
         background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
         borderRadius: '28px',
         boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: '28px 32px',
+        padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.3)',
         position: 'relative',
@@ -210,7 +219,7 @@ export default function OnboardingPage() {
           </div>
           <h1 style={{
             margin: '0 0 6px 0',
-            fontSize: '22px',
+            fontSize: 'clamp(18px, 5vw, 22px)',
             fontWeight: '700',
             background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',
@@ -226,6 +235,57 @@ export default function OnboardingPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Username Input */}
+          <div>
+            <label style={{
+              fontSize: '12px',
+              fontWeight: '700',
+              color: '#1e293b',
+              display: 'block',
+              marginBottom: '8px',
+              letterSpacing: '0.3px',
+            }}>
+              0️⃣ Votre Pseudo
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+              placeholder="ex: InvestorPro123"
+              maxLength="30"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                outline: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.02)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = 'none';
+                e.target.style.backgroundColor = '#f8fafc';
+              }}
+              required
+            />
+            <p style={{
+              fontSize: '11px',
+              color: '#94a3b8',
+              margin: '4px 0 0 0',
+            }}>
+              {username.length}/30 caractères • Lettres, chiffres, - et _ uniquement
+            </p>
+          </div>
+
           {/* Account Type Selection */}
           <div>
             <label style={{

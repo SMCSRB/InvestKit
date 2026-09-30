@@ -1,0 +1,78 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
+import { requireAdmin } from '../middleware/admin';
+import { userRepository } from '../repositories/userRepository';
+import { investcoinsRepository } from '../repositories/investcoinsRepository';
+import { claimDailyReward, canClaimDailyReward } from '../services/dailyRewardService';
+
+
+
+export const economyController = {
+  getCoinsByDomain: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!(await requireAdmin(req, res))) return;
+      res.json({ domains: await investcoinsRepository.ledgerStatsByDomain(), sinks: await investcoinsRepository.sinksByDomainAndReason() });
+    } catch (error) {
+      console.error('Coins by domain error:', error);
+      res.status(500).json({ error: 'Erreur lors du calcul de la statistique' });
+    }
+  },
+
+  getBalance: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const balance = await investcoinsRepository.getBalance(req.user.userId);
+      const user = await userRepository.findById(req.user.userId);
+
+      res.json({
+        balance,
+        dailyStreak: user?.daily_streak ?? 0,
+        canClaimToday: canClaimDailyReward(user?.last_daily_claim_at),
+      });
+    } catch (error) {
+      console.error('Get balance error:', error);
+      res.status(500).json({ error: 'Erreur lors de la récupération du solde' });
+    }
+  },
+
+  getHistory: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+
+      const transactions = await investcoinsRepository.getRecentTransactions(req.user.userId);
+      res.json({ transactions });
+    } catch (error) {
+      console.error('Get history error:', error);
+      res.status(500).json({ error: 'Erreur lors de la récupération de l\'historique' });
+    }
+  },
+
+  claimDailyReward: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Non authentifié' });
+        return;
+      }
+      const result = await claimDailyReward(req.user.userId);
+      if (!result.claimed) {
+        if (result.reason === 'USER_NOT_FOUND') {
+          res.status(404).json({ error: 'Utilisateur non trouvé' });
+        } else {
+          res.status(400).json({ error: 'Récompense déjà réclamée aujourd\'hui' });
+        }
+        return;
+      }
+      res.json({ success: true, reward: result.reward, newStreak: result.newStreak, balance: result.balance });
+    } catch (error) {
+      console.error('Claim daily reward error:', error);
+      res.status(500).json({ error: 'Erreur lors de la réclamation de la récompense' });
+    }
+  },
+};
