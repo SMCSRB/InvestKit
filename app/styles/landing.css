@@ -1168,3 +1168,15 @@
     left: -8px;
   }
 }
+
+.lp-auth__card--wide {
+  width: min(520px, 100%);
+}
+.lp-auth__head {
+  margin-bottom: 22px;
+  text-align: center;
+}
+.lp-auth__head p {
+  margin: 0;
+  font-size: var(--ik-fs-base);
+}

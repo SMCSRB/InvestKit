@@ -9,10 +9,10 @@ import { Donut, SegmentedBar } from '@/app/components/ui/charts';
 import { BILLING_OPEN, PLANS, PRICES, formatEuro, yearlySavingPct } from '@/app/lib/plans';
 import { GLOSSARY } from '@/app/lib/glossaire';
 import { SITE_INFO } from '@/app/lib/siteInfo';
+import { AVAILABLE_DOMAINS as AVAILABLE, CRYPTO_ASSET_COUNT, countWord } from '@/app/lib/siteFacts';
 import useVisitor from './useVisitor';
 
 // Les chiffres affichés sont des comptes réels (glossaire, catalogue) ; aucun nombre d'utilisateurs ni témoignage.
-const CRYPTO_ASSETS = 110;
 
 export function InviteNote() {
   const { inviteOnly, loggedIn } = useVisitor();
@@ -34,12 +34,6 @@ export function HeroActions() {
   );
 }
 
-const AVAILABLE = [
-  { icon: 'building', name: 'Immobilier', sub: 'Achat à crédit, loyers, revente' },
-  { icon: 'candles', name: 'Crypto', sub: 'Marché simulé, graphique pro' },
-  { icon: 'chart', name: 'Bourse et PEA', sub: 'Actions, ETF, fiscalité du PEA' },
-];
-
 // Pastilles sous l'accroche : on voit tout de suite qu'il y a plusieurs domaines, et que d'autres arrivent.
 export function HeroDomains() {
   return (
@@ -56,7 +50,7 @@ export function HeroDomains() {
 export function DomainStrip() {
   return (
     <div className="lp-strip">
-      <p className="lp-strip__title"><span className="lp-live" aria-hidden="true" /> 3 domaines disponibles aujourd&apos;hui · d&apos;autres arrivent</p>
+      <p className="lp-strip__title"><span className="lp-live" aria-hidden="true" /> {AVAILABLE.length} domaines disponibles aujourd&apos;hui · d&apos;autres arrivent</p>
       <div className="lp-strip__row">
         {AVAILABLE.map((d, i) => (
           <Reveal key={d.name} index={i} className="lp-strip__tile" data-tilt>
@@ -83,8 +77,8 @@ export function DomainStrip() {
 
 export function Facts() {
   const facts = [
-    { v: 3, label: 'domaines de simulation' },
-    { v: CRYPTO_ASSETS, label: 'actifs crypto simulés', plus: true },
+    { v: AVAILABLE.length, label: 'domaines de simulation' },
+    { v: CRYPTO_ASSET_COUNT, label: 'actifs crypto simulés', plus: true },
     { v: GLOSSARY.length, label: 'termes expliqués au glossaire' },
     { v: 0, label: 'euro réel en jeu', unit: '€' },
   ];

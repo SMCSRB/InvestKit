@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Logo from '@/app/components/ui/Logo';
 import Icon from '@/app/components/ui/Icon';
 import { Button } from '@/app/components/ui/primitives';
@@ -22,9 +21,8 @@ export const PUBLIC_NAV = [
 export default function PublicHeader() {
   const { theme, toggleTheme } = useTheme();
   const { loggedIn, ctaLabel } = useVisitor();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const logout = async () => { await endSession(); router.push('/'); router.refresh(); };
+  const logout = async () => { setOpen(false); await endSession(); window.location.assign('/'); };
 
   const actions = loggedIn ? (
     <>

@@ -3,6 +3,9 @@ import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 // @ts-expect-error module JavaScript du frontend
 import { PLANS, PRICES, yearlySavingPct } from '../../app/lib/plans.js';
+// @ts-expect-error module JavaScript du frontend
+import { AVAILABLE_DOMAINS, CRYPTO_ASSET_COUNT } from '../../app/lib/siteFacts.js';
+import { CATALOG } from '../src/data/crypto/catalog';
 
 const APP = join(__dirname, '../../app');
 const read = (p: string) => readFileSync(join(APP, p), 'utf8');
@@ -54,5 +57,21 @@ describe('offres : source unique', () => {
   it('le paiement n\'est pas annoncé comme ouvert par défaut', () => {
     expect(read('lib/plans.js')).toMatch(/NEXT_PUBLIC_BILLING_ENABLED === 'true'/);
     expect(existsSync(join(APP, 'lib/plans.js'))).toBe(true);
+  });
+});
+
+describe('chiffres affichés : jamais recopiés à la main', () => {
+  it('le nombre d\'actifs crypto annoncé est celui du catalogue réel', () => {
+    expect(CRYPTO_ASSET_COUNT).toBe(CATALOG.length);
+  });
+  it('les domaines annoncés « disponibles » existent vraiment (une page chacun)', () => {
+    const pages: Record<string, string> = { Immobilier: 'immobilier', Crypto: 'crypto', 'Bourse et PEA': 'dashboard' };
+    for (const d of AVAILABLE_DOMAINS) expect(existsSync(join(APP, pages[d.name], 'page.jsx')), d.name).toBe(true);
+  });
+  it('le tableau de bord lit les prix dans app/lib/plans.js (pas de prix recopiés)', () => {
+    const dash = read('dashboard/page.jsx');
+    expect(dash).toMatch(/from '@\/app\/lib\/plans'/);
+    expect(dash).not.toMatch(/>7,99€</);
+    expect(dash).not.toMatch(/>79€</);
   });
 });

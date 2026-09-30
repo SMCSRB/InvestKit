@@ -4,6 +4,7 @@ import { DomainStrip, Domains, Education, Facts, Faq, Features, FinalCta, HeroAc
 import Icon from '@/app/components/ui/Icon';
 import { Reveal } from '@/app/components/ui/motion';
 import TiltScope from '@/app/components/landing/TiltScope';
+import { AVAILABLE_DOMAINS, countWord } from '@/app/lib/siteFacts';
 
 const SEO_OPEN = process.env.NEXT_PUBLIC_SEO_ENABLED === 'true';
 
@@ -57,7 +58,7 @@ export default function HomePage() {
 
       <section className="lp-section" id="domaines">
         <div className="lp-wrap">
-          <Head eyebrow="Les domaines" title="Trois domaines ouverts, d'autres en route." lead="Choisis ton domaine gratuit, ou ouvre-les tous avec le plan Pro. Chaque domaine a ses propres règles et son propre calendrier." />
+          <Head eyebrow="Les domaines" title={`${countWord(AVAILABLE_DOMAINS.length).replace(/^./, (c) => c.toUpperCase())} domaines ouverts, d'autres en route.`} lead="Choisis ton domaine gratuit, ou ouvre-les tous avec le plan Pro. Chaque domaine a ses propres règles et son propre calendrier." />
           <Domains />
         </div>
       </section>

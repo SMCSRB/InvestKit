@@ -14,7 +14,7 @@ const jsonLd = {
 
 // Police auto-hébergée (licence OFL) : préchargée, affichage immédiat avec une police de secours ajustée (pas de saut de mise en page).
 const jakarta = localFont({
-  src: '../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2',
+  src: './fonts/plus-jakarta-sans-latin-wght-normal.woff2',
   variable: '--font-jakarta',
   weight: '200 800',
   display: 'swap',

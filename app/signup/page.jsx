@@ -7,7 +7,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import AuthLayout, { AuthHeader } from '@/app/components/landing/AuthLayout';
 import { LogoMark } from '@/app/components/ui/Logo';
 import Icon from '@/app/components/ui/Icon';
-import { Button, Modal, Segmented, Skeleton } from '@/app/components/ui/primitives';
+import { Button, Modal, Segmented } from '@/app/components/ui/primitives';
 import { useTheme } from '@/app/context/ThemeContext';
 
 const TRANSLATIONS = {
@@ -165,22 +165,14 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
   const [showGdprModal, setShowGdprModal] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
   const captchaRef = useRef(null);
   const emailCheckTimeoutRef = useRef(null);
-  const formRef = useRef(null);
 
   const t = TRANSLATIONS[lang];
   const { motionEnabled } = useTheme();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsInitialLoad(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
 
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -342,7 +334,8 @@ export default function SignupPage() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && isFormValid) {
+    // Entrée valide le formulaire seulement depuis un champ de saisie (pas depuis un bouton, une option ou une case à cocher).
+    if (e.key === 'Enter' && isFormValid && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -352,20 +345,6 @@ export default function SignupPage() {
   const strengthLabel = passwordStrength === 'fort' ? t.strong : passwordStrength === 'moyen' ? t.medium : t.weak;
   const strengthLevel = passwordStrength === 'fort' ? 3 : passwordStrength === 'moyen' ? 2 : 1;
   const strengthColor = strengthLevel === 3 ? 'var(--ik-positive)' : strengthLevel === 2 ? 'var(--ik-warning)' : 'var(--ik-negative)';
-
-  if (isInitialLoad) {
-    return (
-      <AuthLayout wide>
-        <div style={{ display: 'grid', gap: 14 }} aria-busy="true" aria-label="Chargement du formulaire">
-          <Skeleton width={52} height={52} style={{ margin: '0 auto', borderRadius: 16 }} />
-          <Skeleton height={28} />
-          <Skeleton height={8} />
-          {[1, 2, 3, 4].map((i) => <div key={i} style={{ display: 'grid', gap: 8 }}><Skeleton width={90} height={14} /><Skeleton height={44} /></div>)}
-          <Skeleton height={50} />
-        </div>
-      </AuthLayout>
-    );
-  }
 
   return (
     <AuthLayout wide>
@@ -389,7 +368,7 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'grid', gap: 16 }}>
+      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} style={{ display: 'grid', gap: 16 }}>
         {referralCode && (
           <div className="ik-notice ik-notice--info" style={{ margin: 0 }} role="status">
             <Icon name="gift" size={20} /><p>Invité(e) par un ami : code {referralCode}</p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { markLoggedIn } from '@/app/lib/session';
@@ -18,6 +18,9 @@ export default function LoginPage() {
   const [tempToken, setTempToken] = useState(null); // connexion en attente du code 2FA
   const [code, setCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [redirecting, setRedirecting] = useState(false); // connexion réussie : le bouton reste bloqué jusqu'à la redirection
+  const redirectTimer = useRef(null);
+  useEffect(() => () => clearTimeout(redirectTimer.current), []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,7 +32,8 @@ export default function LoginPage() {
   const finishLogin = () => {
     setMessage({ kind: 'success', text: 'Connexion réussie !' });
     markLoggedIn(); // le vrai jeton est dans un cookie httpOnly posé par le serveur
-    setTimeout(() => router.push('/dashboard'), 1500);
+    setRedirecting(true);
+    redirectTimer.current = setTimeout(() => router.push('/dashboard'), 1500);
   };
 
   const handleSubmit = async (e) => {
@@ -99,8 +103,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || !email || !password}>
-          {loading ? 'Connexion…' : 'Se connecter'}
+        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || redirecting || !email || !password}>
+          {loading || redirecting ? 'Connexion…' : 'Se connecter'}
         </Button>
       </form>
 

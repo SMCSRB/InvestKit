@@ -11,6 +11,14 @@ export function Reveal({ children, index = 0, as: Tag = 'div', className = '', s
   const [visible, setVisible] = useState(false);
   const [settled, setSettled] = useState(false);
 
+  // Les cartes inclinables (data-tilt) attendent la fin de leur entrée avant de réagir au curseur (durée + décalage maximal).
+  const tilts = 'data-tilt' in rest;
+  useEffect(() => {
+    if (!tilts || !visible) return undefined;
+    const t = setTimeout(() => setSettled(true), 800);
+    return () => clearTimeout(t);
+  }, [tilts, visible]);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;
@@ -35,7 +43,7 @@ export function Reveal({ children, index = 0, as: Tag = 'div', className = '', s
     <Tag
       ref={ref}
       className={`ik-reveal ${visible ? 'is-visible' : ''} ${settled ? 'is-settled' : ''} ${className}`.trim()}
-      onTransitionEnd={(e) => { if (visible && e.target === e.currentTarget && e.propertyName === 'transform') setSettled(true); }}
+     
       style={{ '--ik-i': index, ...style }}
       {...rest}
     >

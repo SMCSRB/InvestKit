@@ -5,7 +5,7 @@ export default function AuthLayout({ children, footer = false, wide = false }) {
   return (
     <PublicShell footer={footer}>
       <div className="lp-wrap lp-auth">
-        <div className="ik-card ik-card--glow lp-auth__card ik-page-enter" style={wide ? { width: 'min(520px, 100%)' } : undefined}>
+        <div className={`ik-card ik-card--glow lp-auth__card ik-page-enter ${wide ? 'lp-auth__card--wide' : ''}`.trim()}>
           {children}
         </div>
       </div>
@@ -15,10 +15,10 @@ export default function AuthLayout({ children, footer = false, wide = false }) {
 
 export function AuthHeader({ title, subtitle, icon }) {
   return (
-    <div style={{ textAlign: 'center', marginBottom: 22 }}>
+    <div className="lp-auth__head">
       {icon}
-      <h1 style={{ margin: '0 0 6px', fontSize: 'var(--ik-fs-xl)', letterSpacing: '-0.02em' }}>{title}</h1>
-      {subtitle && <p className="ik-muted" style={{ margin: 0, fontSize: 'var(--ik-fs-base)' }}>{subtitle}</p>}
+      <h1>{title}</h1>
+      {subtitle && <p className="ik-muted">{subtitle}</p>}
     </div>
   );
 }

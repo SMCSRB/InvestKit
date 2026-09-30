@@ -1,5 +1,6 @@
 'use client';
 
+import { PRICES, formatEuro } from '@/app/lib/plans';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -9709,7 +9710,7 @@ export default function DashboardPage() {
                           gap: '12px',
                         }}>
                           <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Mensuel</p>
-                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>7,99€<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/mois</span></p>
+                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>{formatEuro(PRICES.monthly)}<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/mois</span></p>
                           <button
                             onClick={() => startCheckout('monthly')}
                             disabled={billingLoading}
@@ -9749,7 +9750,7 @@ export default function DashboardPage() {
                             2 mois offerts
                           </span>
                           <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Annuel</p>
-                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>79€<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/an</span></p>
+                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>{formatEuro(PRICES.yearly)}<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/an</span></p>
                           <button
                             onClick={() => startCheckout('yearly')}
                             disabled={billingLoading}

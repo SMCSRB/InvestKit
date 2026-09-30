@@ -186,7 +186,8 @@ html body {
 }
 
 .ik-page-enter {
-  animation: ik-rise var(--ik-dur-slow) var(--ik-ease) both;
+  /* « backwards » : aucun transform ne reste après l'animation (sinon les éléments position: fixed à l'intérieur se calent sur ce bloc) */
+  animation: ik-rise var(--ik-dur-slow) var(--ik-ease) backwards;
 }
 
 /* Animations coupées : réglage utilisateur ou préférence système */
