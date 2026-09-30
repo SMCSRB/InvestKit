@@ -187,3 +187,9 @@ Après fusion : `npm ci` dans le dossier du site **et** dans `backend/` (les ver
 1. Le site et l'API démarrent ; connexion, dashboard, Bourse, Immobilier, Banque fonctionnent.
 2. Connexion avec mot de passe : OK (bcrypt a changé de version : les anciens mots de passe restent valides).
 3. `cd backend && npm audit --omit=dev` affiche `found 0 vulnerabilities`.
+
+## PR Montée de version Next.js 15 / React 19
+Après fusion : `npm ci` à la racine du site, puis `npm run build` et redémarrage. Node 18.18 ou plus récent requis (vérifie avec `node -v`).
+1. Parcours complet du site (accueil, inscription, connexion, dashboard et ses onglets, Bourse : acheter/vendre, Crypto, Immobilier, Banque, glossaire, démo, pages légales, profil) : tout doit fonctionner comme avant, sans écran blanc.
+2. Regarde la console du navigateur (F12) : pas de texte rouge sur les pages principales.
+3. Si une page est cassée, note laquelle et le message : c'est probablement une particularité de React 19, à corriger en une ligne.

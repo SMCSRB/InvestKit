@@ -25,7 +25,6 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Performance optimizations
-  swcMinify: true,
   compress: true,
 
   // Image optimizations
@@ -191,9 +190,6 @@ const nextConfig = {
 
   // Production source maps are disabled by default
   productionBrowserSourceMaps: false,
-
-  // Optimize fonts
-  optimizeFonts: true,
 
   // Powered by header
   poweredByHeader: false,

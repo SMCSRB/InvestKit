@@ -44,3 +44,9 @@ Feuille de route v6, phases 1 et 6. Ce lot ne change rien de visible pour un jou
 - **Backend** : `npm audit --omit=dev` passe de 12 vulnérabilités (dont 1 critique et 5 hautes) à **0** : Express 4.18 → 4.22.3 (body-parser, path-to-regexp, qs…), bcrypt 5.1 → 6.0 (tar, node-pre-gyp), zod 3.22 → 3.25.76. `uuid` (inutilisé) retiré. 403 tests passent avec les nouvelles versions.
 - **Site** : Next.js 14.2.3 → 14.2.35 (dernier correctif de la branche 14 ; corrige les failles critiques connues à la date). Il reste des avis d'audit que seul Next 15 ou 16 corrige (surtout des cas d'usage que le site n'utilise pas : Server Actions, réécritures, middleware, i18n, optimiseur d'images avec AVIF). La montée de version majeure est traitée dans une PR séparée.
 - Le CI exécute `npm audit` (informatif) à chaque PR.
+
+### Montée de version majeure : Next.js 15 / React 19
+- Next 14 n'est plus corrigé (26 avis dont 2 critiques corrigés seulement dans les versions 15/16). Passage à **Next 15.5.26** (dernier correctif de la branche 15) et **React 19** ; `npm audit --omit=dev` : 5 → 2 avis, tous deux liés à la copie interne de PostCSS de Next (génération du CSS à la construction, pas exécutée avec des données de visiteurs).
+- Adaptations : retrait des options supprimées de `next.config.js` (`swcMinify`, `optimizeFonts`). Aucune autre modification du code n'a été nécessaire.
+- Vérifié en production dans un vrai navigateur : 15 pages sans erreur ni violation de CSP, connexion/déconnexion par cookie, migration de session, achat/vente avec aperçu des frais et de l'impôt, CSRF.
+- À savoir : la route `/api/auth/[...nextauth]` (connexion Google/GitHub via next-auth) existe mais n'est reliée à aucun écran et n'a pas de clés configurées ; elle reste compilée. À supprimer si l'option n'est pas prévue.
