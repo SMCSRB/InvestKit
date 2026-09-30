@@ -88,4 +88,4 @@ Déploiement, sauvegardes, plan d'incident : `docs/DEPLOIEMENT.md`, `docs/DEPLOI
 
 ## Outils (MCP) du projet
 
-Déclarés dans `.mcp.json` (portée projet, versions fixées) : Context7 (documentation à jour), Playwright (tests visuels dans un navigateur), shadcn (catalogue de composants). Les serveurs `filesystem` et Figma ne sont volontairement **pas** activés. Aucun secret de production ne doit leur être fourni.
+Déclarés dans `.mcp.json` (portée projet, versions fixées, jamais `@latest`) : Context7 (documentation à jour), Playwright (parcours et captures dans un navigateur, limité à localhost), shadcn (catalogue de composants), Chrome DevTools (performance, Lighthouse, fluidité des animations ; statistiques d'usage et envoi à CrUX désactivés). L'outil Playwright `browser_run_code_unsafe` est bloqué dans `.claude/settings.json`. Les serveurs `filesystem` et Figma ne sont volontairement **pas** activés. Aucun secret de production ne doit leur être fourni.
