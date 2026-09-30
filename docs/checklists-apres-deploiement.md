@@ -238,3 +238,11 @@ Avant : `npm run set-admin -- ton@email.fr on` et 2FA activée sur ton compte.
 3. `/admin` → **Annonces** : crée une annonce de type *maintenance* publiée : un bandeau orange apparaît en haut du site (teste dans une fenêtre privée, même sans connexion). « Fermer » le masque ; « Dépublier » le retire pour tous.
 4. Crée une annonce de type *nouveauté* : elle apparaît en haut de `/changelog`.
 5. Le texte est affiché tel quel : écris `<b>gras</b>` dans une annonce, tu dois voir les balises, pas du gras.
+
+## PR Moteur de risque (API : Monte Carlo, crises, score, corrélations)
+(L'interface dans les simulateurs et le dashboard arrive dans les PR suivantes ; ici on teste l'API dans Swagger `/api/v1/docs`.)
+1. `POST /tools/monte-carlo` avec `{"initial":5000,"monthly":150,"years":12,"annualReturnPct":6.5,"annualVolPct":14}` (sans être connecté) : P10 < P50 < P90 et un texte « pas un conseil ». Deux appels identiques donnent les mêmes chiffres.
+2. `POST /tools/stress-test` avec `{"allocation":{"equity_world":60,"bonds":40},"capital":20000}` : 5 crises avec la perte en % et en euros.
+3. `POST /tools/risk-score` avec `{"allocation":{"crypto":60,"equity_world":40},"horizonYears":2}` : score élevé, six facteurs expliqués.
+4. `GET /tools/correlation?domain=all` : matrice des actifs.
+5. Connecté : `GET /risk/portfolio?domain=stocks` après avoir acheté quelques titres : répartition, score, crises de ton portefeuille.

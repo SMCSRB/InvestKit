@@ -12,6 +12,7 @@ import { bankRoutes } from './routes/bank';
 import { adminRoutes } from './routes/admin';
 import { flagsRoutes } from './routes/flags';
 import { contentRoutes } from './routes/content';
+import { toolsRoutes, riskRoutes } from './routes/risk';
 import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -85,6 +86,8 @@ app.use('/api/bank', bankRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/flags', flagsRoutes);
 app.use('/api/v1', contentRoutes);
+app.use('/api/v1/tools', toolsRoutes);
+app.use('/api/v1/risk', riskRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

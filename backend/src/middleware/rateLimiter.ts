@@ -46,3 +46,12 @@ export const feedbackLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de retours envoyés. Réessayez plus tard.' },
 });
+
+// Outils de calcul publics (Monte Carlo…) : 40 requêtes par 15 minutes et par IP.
+export const toolsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de simulations. Réessayez dans quelques minutes.' },
+});
