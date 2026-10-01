@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import HelpTip from '../components/HelpTip';
+import AppShell from '@/app/components/shell/AppShell';
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/realestate`;
 const clean = (n) => (Math.abs(Number(n ?? 0)) < 0.005 ? 0 : Number(n ?? 0));
@@ -14,9 +15,9 @@ const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet'
 const TYPE_LABEL = { studio: 'Studio', apartment: 'Appartement', house: 'Maison' };
 const CONDITION_LABEL = { good: 'Bon état', to_refresh: 'À rafraîchir', to_renovate: 'À rénover' };
 const STATUS_LABEL = { let: 'Loué', vacant: 'Vide', notice: 'Préavis donné' };
-const card = { background: 'rgba(15,23,42,0.65)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 14, padding: 16 };
-const btn = (primary) => ({ padding: '10px 16px', borderRadius: 10, border: primary ? 'none' : '1px solid rgba(96,165,250,0.6)', background: primary ? '#2563eb' : 'rgba(59,130,246,0.15)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
-const input = { padding: '9px 10px', borderRadius: 8, border: '1px solid rgba(148,163,184,0.4)', background: 'rgba(15,23,42,0.8)', color: '#fff', fontSize: 14 };
+const card = { background: 'var(--ik-surface-2)', border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', borderRadius: 14, padding: 16 };
+const btn = (primary) => ({ padding: '10px 16px', borderRadius: 10, border: primary ? 'none' : '1px solid color-mix(in srgb, var(--ik-primary) 60%, transparent)', background: primary ? 'var(--ik-primary)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)', color: primary ? 'var(--ik-text-on-primary)' : 'var(--ik-text)', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
+const input = { padding: '9px 10px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 24%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: 14 };
 
 async function call(path, method = 'GET', body) {
   const token = localStorage.getItem('token');
@@ -33,9 +34,9 @@ async function call(path, method = 'GET', body) {
 function Stat({ label, value, tip, tone, sub }) {
   return (
     <div style={{ ...card, flex: '1 1 200px' }}>
-      <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}{tip && <HelpTip term={tip} />}</div>
-      <div style={{ fontSize: 24, fontWeight: 800, color: tone || '#fff', marginTop: 4 }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{sub}</div>}
+      <div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}{tip && <HelpTip term={tip} />}</div>
+      <div style={{ fontSize: 24, fontWeight: 800, color: tone || 'var(--ik-text)', marginTop: 4 }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: 'var(--ik-text-3)', marginTop: 4 }}>{sub}</div>}
     </div>
   );
 }
@@ -44,13 +45,13 @@ function Stat({ label, value, tip, tone, sub }) {
 function StartScreen({ profiles, onStart, busy }) {
   return (
     <div>
-      <h2 style={{ color: '#fff' }}>Commence ta partie Immobilier</h2>
-      <p style={{ color: '#94a3b8' }}>Choisis ta situation de départ : elle décide de tes revenus, et donc de ce que la banque acceptera de te prêter. Tu joues en mode accéléré, sur des villes fictives.</p>
+      <h2 style={{ color: 'var(--ik-text)' }}>Commence ta partie Immobilier</h2>
+      <p style={{ color: 'var(--ik-text-3)' }}>Choisis ta situation de départ : elle décide de tes revenus, et donc de ce que la banque acceptera de te prêter. Tu joues en mode accéléré, sur des villes fictives.</p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {profiles.map((p) => (
           <div key={p.id} style={{ ...card, flex: '1 1 220px' }}>
-            <h3 style={{ margin: 0, color: '#fff' }}>{p.label}</h3>
-            <p style={{ color: '#cbd5e1', fontSize: 14 }}>Revenus : {eur(p.netMonthlyIncome)}/mois<br />Dépenses courantes : {eur(p.livingCharges)}/mois</p>
+            <h3 style={{ margin: 0, color: 'var(--ik-text)' }}>{p.label}</h3>
+            <p style={{ color: 'var(--ik-text-2)', fontSize: 14 }}>Revenus : {eur(p.netMonthlyIncome)}/mois<br />Dépenses courantes : {eur(p.livingCharges)}/mois</p>
             <button style={btn(true)} disabled={busy} onClick={() => onStart(p.id)}>Choisir ce profil</button>
           </div>
         ))}
@@ -120,26 +121,26 @@ function Listings({ game, refresh, notify }) {
       </div>
       {cityFiche && (
         <div style={{ ...card, marginBottom: 14 }}>
-          <strong style={{ color: '#fff' }}>{cityFiche.name}</strong> <span style={{ color: '#94a3b8' }}>· {cityFiche.region}{cityFiche.tenseZone ? ' · zone tendue' : ''}</span><HelpTip term="zone-tendue" />
-          <div style={{ fontSize: 14, color: '#cbd5e1', marginTop: 4 }}>{cityFiche.description}</div>
-          {lowYield(cityFiche.id) && <div style={{ fontSize: 14, color: '#93c5fd', marginTop: 6 }}>Les métropoles et grandes villes chères ont des rendements plus faibles.<HelpTip term="rendement-metropole" /></div>}
+          <strong style={{ color: 'var(--ik-text)' }}>{cityFiche.name}</strong> <span style={{ color: 'var(--ik-text-3)' }}>· {cityFiche.region}{cityFiche.tenseZone ? ' · zone tendue' : ''}</span><HelpTip term="zone-tendue" />
+          <div style={{ fontSize: 14, color: 'var(--ik-text-2)', marginTop: 4 }}>{cityFiche.description}</div>
+          {lowYield(cityFiche.id) && <div style={{ fontSize: 14, color: 'var(--ik-accent)', marginTop: 6 }}>Les métropoles et grandes villes chères ont des rendements plus faibles.<HelpTip term="rendement-metropole" /></div>}
         </div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
         {listings.map((l) => (
-          <button key={l.id} onClick={() => open(l)} style={{ ...card, textAlign: 'left', cursor: 'pointer', color: '#e2e8f0', outline: selected?.id === l.id ? '2px solid #3b82f6' : 'none' }}>
-            <strong style={{ color: '#fff' }}>{l.title}</strong>
-            <div style={{ fontSize: 13, color: '#94a3b8' }}>{l.neighborhoodName} · {l.surfaceSqm} m² · DPE {l.energyClass} · {CONDITION_LABEL[l.condition]}</div>
+          <button key={l.id} onClick={() => open(l)} style={{ ...card, textAlign: 'left', cursor: 'pointer', color: 'var(--ik-text-2)', outline: selected?.id === l.id ? '2px solid var(--ik-primary)' : 'none' }}>
+            <strong style={{ color: 'var(--ik-text)' }}>{l.title}</strong>
+            <div style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>{l.neighborhoodName} · {l.surfaceSqm} m² · DPE {l.energyClass} · {CONDITION_LABEL[l.condition]}</div>
             <div style={{ fontSize: 20, fontWeight: 800, margin: '6px 0' }}>{eur(l.price)}</div>
             <div style={{ fontSize: 13 }}>Loyer estimé : {eur(l.marketRentMonthly)}/mois</div>
-            <div style={{ fontSize: 12, color: '#94a3b8' }}>Rendement brut : {(((l.marketRentMonthly * 12) / l.price) * 100).toFixed(1)} %</div>
+            <div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>Rendement brut : {(((l.marketRentMonthly * 12) / l.price) * 100).toFixed(1)} %</div>
           </button>
         ))}
       </div>
 
       {selected && (
         <div style={{ ...card, marginTop: 18 }}>
-          <h3 style={{ marginTop: 0, color: '#fff' }}>{selected.title} — simulation d&apos;achat</h3>
+          <h3 style={{ marginTop: 0, color: 'var(--ik-text)' }}>{selected.title} — simulation d&apos;achat</h3>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             <label style={{ fontSize: 13 }}>Apport (🪙, 1 🪙 = 20 €)<HelpTip term="apport" />
               <input style={{ ...input, display: 'block', width: 130 }} type="number" min="0" value={plan.downPaymentCoins} onChange={(e) => setPlan({ ...plan, downPaymentCoins: e.target.value })} />
@@ -152,17 +153,17 @@ function Listings({ game, refresh, notify }) {
             <button style={btn(false)} disabled={busy} onClick={() => simulate(selected)}>Simuler</button>
             <span><button style={btn(false)} disabled={busy} onClick={expertise}>Faire expertiser</button><HelpTip term="expertise" /></span>
           </div>
-          {preview?.error && <p style={{ color: '#fca5a5' }}>{preview.error}</p>}
+          {preview?.error && <p style={{ color: 'var(--ik-negative)' }}>{preview.error}</p>}
           {preview?.costs && (
             <div style={{ marginTop: 14, display: 'grid', gap: 6, fontSize: 14 }}>
               <div>Prix : {eur(preview.costs.price)} · Frais de notaire<HelpTip term="frais-notaire" /> : {eur(preview.costs.notaryFees)} · Travaux : {eur(preview.costs.works)}</div>
               <div>Emprunt : <strong>{eur(preview.costs.loanPrincipal)}</strong> à {preview.loan.annualRatePct} % (TAEG<HelpTip term="taeg" /> {preview.loan.taegPct.toFixed(2)} %)</div>
               <div>Mensualité<HelpTip term="mensualite" /> : <strong>{eur2(preview.loan.monthlyPaymentWithInsurance)}</strong> (assurance comprise)</div>
-              <div style={{ color: preview.bank.approved ? '#86efac' : '#fca5a5' }}>
+              <div style={{ color: preview.bank.approved ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>
                 Banque : {preview.bank.approved ? 'accord' : 'refus'} — taux d&apos;endettement<HelpTip term="endettement" /> {preview.bank.debtRatioPct} %, reste à vivre<HelpTip term="reste-a-vivre" /> {eur(preview.bank.livingRemaining)}
                 {preview.bank.reasons?.map((r) => <div key={r.code} style={{ fontSize: 13 }}>• {r.message}</div>)}
               </div>
-              <div>Coût en InvestCoins : <strong>{preview.coins.total} 🪙</strong>{!preview.coins.affordable && <span style={{ color: '#fca5a5' }}> — solde insuffisant</span>}</div>
+              <div>Coût en InvestCoins : <strong>{preview.coins.total} 🪙</strong>{!preview.coins.affordable && <span style={{ color: 'var(--ik-negative)' }}> — solde insuffisant</span>}</div>
               <div><button style={btn(true)} disabled={busy || !preview.bank.approved || !preview.coins.affordable} onClick={buy}>Acheter</button></div>
             </div>
           )}
@@ -198,11 +199,11 @@ function SalePanel({ property, onDone, notify }) {
     setBusy(false);
   };
 
-  if (!options) return <p style={{ color: '#94a3b8', fontSize: 13 }}>Calcul des prix possibles…</p>;
+  if (!options) return <p style={{ color: 'var(--ik-text-3)', fontSize: 13 }}>Calcul des prix possibles…</p>;
   return (
-    <div style={{ ...card, marginTop: 8, background: 'rgba(30,41,59,0.6)' }}>
-      <strong style={{ color: '#fff' }}>{sale ? 'Modifier le prix de vente' : 'Vendre ce bien'}</strong>
-      <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 8px' }}>
+    <div style={{ ...card, marginTop: 8, background: 'var(--ik-surface-2)' }}>
+      <strong style={{ color: 'var(--ik-text)' }}>{sale ? 'Modifier le prix de vente' : 'Vendre ce bien'}</strong>
+      <p style={{ fontSize: 13, color: 'var(--ik-text-3)', margin: '4px 0 8px' }}>
         Valeur estimée : {eur(options.estimatedValue)}. Plus le prix demandé est élevé, plus l&apos;acquéreur est long à trouver.
         {options.occupied && ` Le bien est occupé : le prix final est réduit de ${options.occupiedDiscountPct} %.`}
       </p>
@@ -216,7 +217,7 @@ function SalePanel({ property, onDone, notify }) {
           Prix demandé : <strong>{eur(chosen.askingPrice)}</strong> · chance de vendre chaque mois : {chosen.monthlyBuyerProbabilityPct} % · délai moyen : environ {Number(chosen.expectedMonthsToSell).toFixed(1)} mois (au plus {chosen.maxMonthsToSell}).
         </p>
       )}
-      {sale && <p style={{ fontSize: 13, color: '#93c5fd' }}>En vente depuis {sale.monthsSoFar} mois, au prix de {eur(sale.askingPrice)}. Le nouveau prix s&apos;applique dès le mois prochain.</p>}
+      {sale && <p style={{ fontSize: 13, color: 'var(--ik-accent)' }}>En vente depuis {sale.monthsSoFar} mois, au prix de {eur(sale.askingPrice)}. Le nouveau prix s&apos;applique dès le mois prochain.</p>}
       <button style={btn(true)} disabled={busy || (sale && chosen && Math.abs(chosen.askingPrice - sale.askingPrice) < 1)} onClick={submit}>
         {sale ? 'Appliquer le nouveau prix' : 'Mettre en vente'}
       </button>
@@ -242,10 +243,10 @@ function RenovationPanel({ property, onDone, notify }) {
     } catch (e) { notify(e.message, true); }
     setBusy(false);
   };
-  if (!pv) return <p style={{ color: '#94a3b8', fontSize: 13 }}>Calcul du devis…</p>;
+  if (!pv) return <p style={{ color: 'var(--ik-text-3)', fontSize: 13 }}>Calcul du devis…</p>;
   return (
-    <div style={{ ...card, marginTop: 8, background: 'rgba(30,41,59,0.6)' }}>
-      <strong style={{ color: '#fff' }}>Rénovation énergétique</strong><HelpTip term="dpe" />
+    <div style={{ ...card, marginTop: 8, background: 'var(--ik-surface-2)' }}>
+      <strong style={{ color: 'var(--ik-text)' }}>Rénovation énergétique</strong><HelpTip term="dpe" />
       {pv.canRenovate ? (
         <>
           <p style={{ fontSize: 14, margin: '8px 0' }}>
@@ -253,23 +254,23 @@ function RenovationPanel({ property, onDone, notify }) {
           </p>
           <table style={{ fontSize: 14, borderCollapse: 'collapse', marginBottom: 8 }}>
             <tbody>
-              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Loyer de marché</td><td>{eur2(pv.rentBefore)} → {eur2(pv.rentAfter)} <strong style={{ color: pv.rentGainMonthly > 0 ? '#86efac' : '#cbd5e1' }}>({pv.rentGainMonthly > 0 ? '+' : ''}{eur2(pv.rentGainMonthly)}/mois, {eur(pv.rentGainYearly)}/an)</strong></td></tr>
-              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Valeur du bien<HelpTip term="valeur-verte" /></td><td>{eur(pv.valueBefore)} → {eur(pv.valueBefore + pv.valueGain)} <strong style={{ color: pv.valueGain > 0 ? '#86efac' : '#cbd5e1' }}>({pv.valueGain > 0 ? '+' : ''}{eur(pv.valueGain)})</strong></td></tr>
-              <tr><td style={{ padding: '3px 12px 3px 0', color: '#94a3b8' }}>Amorti en</td><td>{pv.paybackYears === 0 ? 'tout de suite : la valeur gagnée couvre les travaux' : pv.paybackYears ? `${pv.paybackYears} ans de loyers en plus (coût des travaux moins la valeur gagnée)` : 'jamais par les loyers'}</td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: 'var(--ik-text-3)' }}>Loyer de marché</td><td>{eur2(pv.rentBefore)} → {eur2(pv.rentAfter)} <strong style={{ color: pv.rentGainMonthly > 0 ? 'var(--ik-positive)' : 'var(--ik-text-2)' }}>({pv.rentGainMonthly > 0 ? '+' : ''}{eur2(pv.rentGainMonthly)}/mois, {eur(pv.rentGainYearly)}/an)</strong></td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: 'var(--ik-text-3)' }}>Valeur du bien<HelpTip term="valeur-verte" /></td><td>{eur(pv.valueBefore)} → {eur(pv.valueBefore + pv.valueGain)} <strong style={{ color: pv.valueGain > 0 ? 'var(--ik-positive)' : 'var(--ik-text-2)' }}>({pv.valueGain > 0 ? '+' : ''}{eur(pv.valueGain)})</strong></td></tr>
+              <tr><td style={{ padding: '3px 12px 3px 0', color: 'var(--ik-text-3)' }}>Amorti en</td><td>{pv.paybackYears === 0 ? 'tout de suite : la valeur gagnée couvre les travaux' : pv.paybackYears ? `${pv.paybackYears} ans de loyers en plus (coût des travaux moins la valeur gagnée)` : 'jamais par les loyers'}</td></tr>
             </tbody>
           </table>
-          <p style={{ fontSize: 14, margin: '8px 0', color: pv.verdict === 'profitable' ? '#86efac' : pv.verdict === 'profitable_slowly' ? '#fbbf24' : '#fca5a5' }}>
+          <p style={{ fontSize: 14, margin: '8px 0', color: pv.verdict === 'profitable' ? 'var(--ik-positive)' : pv.verdict === 'profitable_slowly' ? 'var(--ik-warning)' : 'var(--ik-negative)' }}>
             {pv.verdict === 'profitable' && '✅ Opération rentable : la valeur gagnée et le loyer en plus remboursent les travaux en moins de 15 ans.'}
             {pv.verdict === 'partly_recovered' && `⚠️ La valeur du bien récupère ${Math.round((pv.valueGain / pv.costEuros) * 100)} % du coût des travaux, mais le loyer n'augmente pas : c'est surtout utile pour éviter l'interdiction de louer.`}
             {pv.verdict === 'profitable_slowly' && '⚠️ Rentable, mais lentement : plus de 15 ans de loyers en plus pour rembourser ce que la valeur gagnée ne couvre pas.'}
             {pv.verdict === 'no_direct_gain' && '⚠️ Aucun gain direct de loyer ni de valeur : cette rénovation ne se justifie que pour éviter l\'interdiction de louer.'}
           </p>
-          <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 8px' }}>Le nouveau loyer s&apos;applique à la prochaine mise en location (le loyer d&apos;un bail en cours ne change pas). Seuil de 15 ans : repère du jeu.</p>
-          {pv.currentClassBannedFromYear && <p style={{ fontSize: 13, color: '#fbbf24' }}>Classe {pv.currentClass} : location interdite {pv.bannedNow ? 'depuis' : 'à partir de'} {pv.currentClassBannedFromYear}.{!pv.bannedAfter && pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : interdite à partir de ${pv.newClassBannedFromYear}.` : ''}{!pv.bannedAfter && !pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : aucune interdiction prévue.` : ''}</p>}
-          {!pv.affordable && <p style={{ color: '#fca5a5', fontSize: 13 }}>Solde InvestCoins insuffisant.</p>}
+          <p style={{ fontSize: 12, color: 'var(--ik-text-3)', margin: '0 0 8px' }}>Le nouveau loyer s&apos;applique à la prochaine mise en location (le loyer d&apos;un bail en cours ne change pas). Seuil de 15 ans : repère du jeu.</p>
+          {pv.currentClassBannedFromYear && <p style={{ fontSize: 13, color: 'var(--ik-warning)' }}>Classe {pv.currentClass} : location interdite {pv.bannedNow ? 'depuis' : 'à partir de'} {pv.currentClassBannedFromYear}.{!pv.bannedAfter && pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : interdite à partir de ${pv.newClassBannedFromYear}.` : ''}{!pv.bannedAfter && !pv.newClassBannedFromYear ? ` Classe ${pv.newClass} : aucune interdiction prévue.` : ''}</p>}
+          {!pv.affordable && <p style={{ color: 'var(--ik-negative)', fontSize: 13 }}>Solde InvestCoins insuffisant.</p>}
           <button style={btn(true)} disabled={busy || !pv.affordable} onClick={go}>Lancer les travaux</button>
         </>
-      ) : <p style={{ fontSize: 14, color: '#cbd5e1' }}>{pv.reason}</p>}
+      ) : <p style={{ fontSize: 14, color: 'var(--ik-text-2)' }}>{pv.reason}</p>}
     </div>
   );
 }
@@ -286,8 +287,8 @@ function GliPanel({ property, onDone, notify }) {
     setBusy(false);
   };
   return (
-    <div style={{ ...card, marginTop: 8, background: 'rgba(30,41,59,0.6)' }}>
-      <strong style={{ color: '#fff' }}>Assurance loyers impayés</strong><HelpTip term="gli" />
+    <div style={{ ...card, marginTop: 8, background: 'var(--ik-surface-2)' }}>
+      <strong style={{ color: 'var(--ik-text)' }}>Assurance loyers impayés</strong><HelpTip term="gli" />
       {g.active ? (
         <p style={{ fontSize: 14, margin: '8px 0' }}>
           ✅ Assuré. Prime : environ <strong>{eur2(g.premiumMonthly)}</strong>/mois quand le bien est loué ({g.premiumPct} % du loyer charges comprises, déductible de tes impôts).
@@ -296,9 +297,9 @@ function GliPanel({ property, onDone, notify }) {
           {g.tenantRefused && <> ⚠️ Le locataire actuel est refusé par l&apos;assureur : tu ne paies pas de prime et tu n&apos;es pas couvert pour lui.<HelpTip term="gli-etudiants" /></>}
         </p>
       ) : (
-        <p style={{ fontSize: 14, margin: '8px 0', color: '#cbd5e1' }}>
+        <p style={{ fontSize: 14, margin: '8px 0', color: 'var(--ik-text-2)' }}>
           Prime estimée : <strong>{eur2(g.premiumMonthly)}</strong>/mois ({g.premiumPct} % du loyer + charges), seulement les mois où le bien est loué. Délai de carence : {g.carenceMonths} mois<HelpTip term="carence" />.
-          {g.reason && <span style={{ color: '#fbbf24' }}> {g.reason}<HelpTip term="gli-etudiants" /></span>}
+          {g.reason && <span style={{ color: 'var(--ik-warning)' }}> {g.reason}<HelpTip term="gli-etudiants" /></span>}
         </p>
       )}
       <button style={btn(!g.active)} disabled={busy || (!g.active && !g.canSubscribe)} onClick={toggle}>{g.active ? 'Résilier l\'assurance' : 'Souscrire l\'assurance'}</button>
@@ -321,23 +322,23 @@ function Portfolio({ data, summary, refresh, notify }) {
     <div>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <Stat label="Patrimoine net" tip="patrimoine-net" value={eur(data.totals.equity)} sub={`Valeur ${eur(data.totals.value)} − dette ${eur(data.totals.debt)}`} />
-        <Stat label="Effort d'épargne mensuel" tip="effort-epargne" value={t ? eur(t.savingsEffort) : '—'} tone={t && t.savingsEffort > 0 ? '#fbbf24' : '#86efac'} sub={t ? (t.savingsEffort > 0 ? 'À ajouter de ta poche, un mois normal' : 'Le bien s\'autofinance ce mois-ci') : 'Disponible après le premier mois'} />
-        <Stat label="Capital remboursé ce mois" tip="capital-rembourse" value={t ? eur(t.principalRepaid) : '—'} tone="#86efac" sub="Ta dette baisse : cet argent t'enrichit" />
+        <Stat label="Effort d'épargne mensuel" tip="effort-epargne" value={t ? eur(t.savingsEffort) : '—'} tone={t && t.savingsEffort > 0 ? 'var(--ik-warning)' : 'var(--ik-positive)'} sub={t ? (t.savingsEffort > 0 ? 'À ajouter de ta poche, un mois normal' : 'Le bien s\'autofinance ce mois-ci') : 'Disponible après le premier mois'} />
+        <Stat label="Capital remboursé ce mois" tip="capital-rembourse" value={t ? eur(t.principalRepaid) : '—'} tone="var(--ik-positive)" sub="Ta dette baisse : cet argent t'enrichit" />
       </div>
       {data.missedMonths > 0 && (
-        <div style={{ ...card, borderColor: '#f87171', marginBottom: 14 }}>
+        <div style={{ ...card, borderColor: 'var(--ik-negative)', marginBottom: 14 }}>
           ⚠️ <strong>Impayés de crédit : {data.missedMonths} mois ({eur(data.arrearsEur)}).</strong> Après 3 mois, tu peux vendre à l&apos;amiable avec une décote de 12 %. Si tu ne fais rien, la banque lance une vente forcée (−25 % + frais)<HelpTip term="vente-forcee" />. Dans la réalité, cette procédure est bien plus longue ; elle est raccourcie ici.
         </div>
       )}
-      {data.properties.length === 0 && <p style={{ color: '#94a3b8' }}>Tu n&apos;as pas encore de bien. Va dans « Annonces ».</p>}
+      {data.properties.length === 0 && <p style={{ color: 'var(--ik-text-3)' }}>Tu n&apos;as pas encore de bien. Va dans « Annonces ».</p>}
       <div style={{ display: 'grid', gap: 12 }}>
         {data.properties.map((p) => (
           <div key={p.id} style={card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <strong style={{ color: '#fff' }}>{p.title}</strong>
-              <span style={{ color: p.status === 'let' ? '#86efac' : '#fbbf24' }}>{STATUS_LABEL[p.status] || p.status}</span>
+              <strong style={{ color: 'var(--ik-text)' }}>{p.title}</strong>
+              <span style={{ color: p.status === 'let' ? 'var(--ik-positive)' : 'var(--ik-warning)' }}>{STATUS_LABEL[p.status] || p.status}</span>
             </div>
-            <div style={{ fontSize: 14, color: '#cbd5e1', margin: '6px 0' }}>
+            <div style={{ fontSize: 14, color: 'var(--ik-text-2)', margin: '6px 0' }}>
               Valeur {eur(p.value)} · Dette {eur(p.remainingLoan)} · Fonds propres {eur(p.equity)}<br />
               {p.status === 'let' && <>Loyer : {eur2(p.current_rent)}/mois<HelpTip term="loyer" /> · </>}DPE {p.energy_class}
               {p.search && <> · Recherche de locataire : mois {p.search.vacantMonthsSoFar}, chance de louer {p.search.monthlyLetProbabilityPct} %/mois</>}
@@ -353,7 +354,7 @@ function Portfolio({ data, summary, refresh, notify }) {
               {p.status !== 'sold' && p.gli && <button style={btn(false)} disabled={busy} onClick={() => toggle(p.id, 'gli')}>{p.gli.active ? '🛡️ Assuré' : '🛡️ Assurance loyers'}</button>}
               {data.missedMonths >= 3 && <button style={btn(false)} disabled={busy} onClick={() => act(() => call('/distress/sell', 'POST', { propertyId: p.id }), 'Vente à l\'amiable réalisée')}>Vendre à l&apos;amiable (−12 %)</button>}
             </div>
-            {p.saleSearch && <div style={{ fontSize: 13, color: '#93c5fd', marginTop: 8 }}>🏷️ En vente à {eur(p.saleSearch.askingPrice)} depuis {p.saleSearch.monthsSoFar} mois (chance de vendre : {p.saleSearch.monthlyBuyerProbabilityPct} % par mois).</div>}
+            {p.saleSearch && <div style={{ fontSize: 13, color: 'var(--ik-accent)', marginTop: 8 }}>🏷️ En vente à {eur(p.saleSearch.askingPrice)} depuis {p.saleSearch.monthsSoFar} mois (chance de vendre : {p.saleSearch.monthlyBuyerProbabilityPct} % par mois).</div>}
             {panel?.id === p.id && panel.kind === 'sale' && <SalePanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
             {panel?.id === p.id && panel.kind === 'gli' && <GliPanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
             {panel?.id === p.id && panel.kind === 'reno' && <RenovationPanel property={p} onDone={async () => { await refresh(); }} notify={notify} />}
@@ -366,12 +367,12 @@ function Portfolio({ data, summary, refresh, notify }) {
 
 // ── Bilan du mois
 function Summary({ summary, events }) {
-  if (!summary || !summary.totals) return <p style={{ color: '#94a3b8' }}>Aucun mois réglé pour l&apos;instant. Fais avancer le temps.</p>;
+  if (!summary || !summary.totals) return <p style={{ color: 'var(--ik-text-3)' }}>Aucun mois réglé pour l&apos;instant. Fais avancer le temps.</p>;
   const t = summary.totals;
   const row = (label, v, tip) => <tr key={label}><td style={{ padding: '4px 8px' }}>{label}{tip && <HelpTip term={tip} />}</td><td style={{ padding: '4px 8px', textAlign: 'right' }}>{eur2(v)}</td></tr>;
   return (
     <div>
-      <h3 style={{ color: '#fff' }}>Bilan de {MONTHS[summary.month - 1]} {summary.year}</h3>
+      <h3 style={{ color: 'var(--ik-text)' }}>Bilan de {MONTHS[summary.month - 1]} {summary.year}</h3>
       <table style={{ width: '100%', maxWidth: 480, fontSize: 14, borderCollapse: 'collapse', ...card }}>
         <tbody>
           {row('Loyers encaissés', t.rentCollected, 'loyer')}
@@ -382,17 +383,17 @@ function Summary({ summary, events }) {
           {t.gliPremium > 0 && row('Prime d\'assurance loyers impayés', -t.gliPremium, 'gli')}
           {t.gliReimbursed > 0 && row('Remboursement de l\'assurance', t.gliReimbursed, 'gli')}
           {row('Impôt sur les loyers', -t.rentTax, 'impot-loyers')}
-          <tr style={{ borderTop: '1px solid rgba(148,163,184,0.3)', fontWeight: 800 }}><td style={{ padding: '6px 8px' }}>Résultat du mois<HelpTip term="cash-flow" /></td><td style={{ padding: '6px 8px', textAlign: 'right' }}>{eur2(t.netCashFlow)}</td></tr>
+          <tr style={{ borderTop: '1px solid color-mix(in srgb, var(--ik-text) 18%, transparent)', fontWeight: 800 }}><td style={{ padding: '6px 8px' }}>Résultat du mois<HelpTip term="cash-flow" /></td><td style={{ padding: '6px 8px', textAlign: 'right' }}>{eur2(t.netCashFlow)}</td></tr>
         </tbody>
       </table>
       {summary.properties.map((p) => p.explanations.length > 0 && (
         <div key={p.propertyId} style={{ marginTop: 12 }}>
-          <strong style={{ color: '#fff' }}>{p.title}</strong>
-          {p.explanations.map((e, i) => <div key={i} style={{ fontSize: 14, color: '#cbd5e1', margin: '4px 0' }}>• {e.message}{e.cashFlowImpact ? ` (${e.cashFlowImpact > 0 ? '+' : ''}${eur2(e.cashFlowImpact)})` : ''}</div>)}
+          <strong style={{ color: 'var(--ik-text)' }}>{p.title}</strong>
+          {p.explanations.map((e, i) => <div key={i} style={{ fontSize: 14, color: 'var(--ik-text-2)', margin: '4px 0' }}>• {e.message}{e.cashFlowImpact ? ` (${e.cashFlowImpact > 0 ? '+' : ''}${eur2(e.cashFlowImpact)})` : ''}</div>)}
         </div>
       ))}
-      {events?.length > 0 && <details style={{ marginTop: 16 }}><summary style={{ cursor: 'pointer', color: '#60a5fa' }}>Journal des événements</summary>
-        {events.slice(0, 30).map((e) => <div key={`${e.year}-${e.month}-${e.kind}-${e.propertyId}-${e.message.length}`} style={{ fontSize: 13, color: '#cbd5e1', margin: '4px 0' }}>{e.month}/{e.year} — {e.message}</div>)}
+      {events?.length > 0 && <details style={{ marginTop: 16 }}><summary style={{ cursor: 'pointer', color: 'var(--ik-accent)' }}>Journal des événements</summary>
+        {events.slice(0, 30).map((e) => <div key={`${e.year}-${e.month}-${e.kind}-${e.propertyId}-${e.message.length}`} style={{ fontSize: 13, color: 'var(--ik-text-2)', margin: '4px 0' }}>{e.month}/{e.year} — {e.message}</div>)}
       </details>}
     </div>
   );
@@ -409,12 +410,12 @@ function Leaderboard({ game, notify }) {
   }, [year, game.month, notify]);
   const years = [];
   for (let y = 2010; y <= game.year; y++) years.push(y);
-  if (!data) return <p style={{ color: '#94a3b8' }}>Chargement du classement…</p>;
+  if (!data) return <p style={{ color: 'var(--ik-text-3)' }}>Chargement du classement…</p>;
   const pct = (n) => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`;
   return (
     <div>
-      <h3 style={{ color: '#fff', marginTop: 0 }}>Classement Immobilier<HelpTip term="performance" /></h3>
-      <p style={{ color: '#94a3b8', fontSize: 14, marginTop: 0 }}>
+      <h3 style={{ color: 'var(--ik-text)', marginTop: 0 }}>Classement Immobilier<HelpTip term="performance" /></h3>
+      <p style={{ color: 'var(--ik-text-3)', fontSize: 14, marginTop: 0 }}>
         Il compare la performance de chaque joueur à la même année de jeu : (fonds propres + argent encaissé − argent investi) ÷ argent investi. Un gain réalisé en vendant reste compté.
         Le classement est net de dettes : les intérêts d&apos;un prêt personnel sont déduits et le gain est rapporté à ton capital propre (le levier utilisé est affiché). Pour être classé, il faut avoir investi au moins {data.mine?.minCapitalCoins ?? data.minCapital} 🪙.
       </p>
@@ -422,21 +423,21 @@ function Leaderboard({ game, notify }) {
         <select style={input} value={year} onChange={(e) => setYear(Number(e.target.value))}>{years.map((y) => <option key={y} value={y}>{y}</option>)}</select>
       </label>
       {data.mine && (
-        <div style={{ ...card, margin: '14px 0', borderColor: data.mine.ranked ? '#4ade80' : '#fbbf24' }}>
-          <strong style={{ color: '#fff' }}>Ma performance : {pct(data.mine.performancePct)}</strong>
-          <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 4 }}>
+        <div style={{ ...card, margin: '14px 0', borderColor: data.mine.ranked ? 'var(--ik-positive)' : 'var(--ik-warning)' }}>
+          <strong style={{ color: 'var(--ik-text)' }}>Ma performance : {pct(data.mine.performancePct)}</strong>
+          <div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginTop: 4 }}>
             Investi {eur(data.mine.investedEuros)} ({data.mine.investedCoins} 🪙) · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}
           </div>
-          {!data.mine.ranked && <div style={{ fontSize: 13, color: '#fbbf24', marginTop: 4 }}>Tu n&apos;es pas encore classé : investis au moins {data.mine.minCapitalCoins} 🪙 (apport, frais et travaux compris).</div>}
+          {!data.mine.ranked && <div style={{ fontSize: 13, color: 'var(--ik-warning)', marginTop: 4 }}>Tu n&apos;es pas encore classé : investis au moins {data.mine.minCapitalCoins} 🪙 (apport, frais et travaux compris).</div>}
           {data.me && <div style={{ fontSize: 13, marginTop: 4 }}>Ton rang en {year} : n°{data.me.rank} sur {data.totalRanked}.</div>}
         </div>
       )}
-      {data.entries.length === 0 ? <p style={{ color: '#94a3b8' }}>Personne n&apos;est encore classé pour {year}.</p> : (
+      {data.entries.length === 0 ? <p style={{ color: 'var(--ik-text-3)' }}>Personne n&apos;est encore classé pour {year}.</p> : (
         <table style={{ width: '100%', maxWidth: 560, borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead><tr style={{ textAlign: 'left', color: '#94a3b8' }}><th style={{ padding: 6 }}>Rang</th><th style={{ padding: 6 }}>Joueur</th><th style={{ padding: 6, textAlign: 'right' }}>Levier<HelpTip term="levier" /></th><th style={{ padding: 6, textAlign: 'right' }}>Performance</th></tr></thead>
+          <thead><tr style={{ textAlign: 'left', color: 'var(--ik-text-3)' }}><th style={{ padding: 6 }}>Rang</th><th style={{ padding: 6 }}>Joueur</th><th style={{ padding: 6, textAlign: 'right' }}>Levier<HelpTip term="levier" /></th><th style={{ padding: 6, textAlign: 'right' }}>Performance</th></tr></thead>
           <tbody>
             {data.entries.map((e) => (
-              <tr key={e.rank + e.username} style={{ background: e.isMe ? 'rgba(59,130,246,0.2)' : 'transparent' }}>
+              <tr key={e.rank + e.username} style={{ background: e.isMe ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent' }}>
                 <td style={{ padding: 6 }}>{e.rank}</td><td style={{ padding: 6 }}>{e.username}{e.isMe ? ' (toi)' : ''}</td><td style={{ padding: 6, textAlign: 'right' }}>{e.leverage && e.leverage > 1 ? `×${num(e.leverage)}` : '×1'}</td><td style={{ padding: 6, textAlign: 'right' }}>{pct(e.performancePct)}</td>
               </tr>
             ))}
@@ -496,25 +497,26 @@ export default function ImmobilierPage() {
   const game = state?.game;
 
   return (
-    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)', padding: 'clamp(16px, 4vw, 28px)', color: '#e2e8f0' }}>
+    <AppShell>
+    <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <Link href="/dashboard" style={{ color: '#60a5fa', fontSize: 14 }}>← Tableau de bord</Link>
-            <Link href="/banque" style={{ color: '#60a5fa', fontSize: 14, marginLeft: 16 }}>🏦 Ma banque</Link>
-            <h1 style={{ margin: '6px 0 0', color: '#fff', fontSize: 'clamp(24px, 5vw, 32px)' }}>🏠 Immobilier</h1>
+            <Link href="/dashboard" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Tableau de bord</Link>
+            <Link href="/banque" style={{ color: 'var(--ik-accent)', fontSize: 14, marginLeft: 16 }}>🏦 Ma banque</Link>
+            <h1 style={{ margin: '6px 0 0', color: 'var(--ik-text)', fontSize: 'clamp(24px, 5vw, 32px)' }}>🏠 Immobilier</h1>
           </div>
           {game && (
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontWeight: 700, color: '#fff' }}>{MONTHS[game.month - 1]} {game.year}<HelpTip term="mode-accelere" /></div>
-              <div style={{ fontSize: 14, color: '#fbbf24' }}>{Number(state.balance).toLocaleString('fr-FR')} 🪙<HelpTip term="investcoin" /></div>
+              <div style={{ fontWeight: 700, color: 'var(--ik-text)' }}>{MONTHS[game.month - 1]} {game.year}<HelpTip term="mode-accelere" /></div>
+              <div style={{ fontSize: 14, color: 'var(--ik-warning)' }}>{Number(state.balance).toLocaleString('fr-FR')} 🪙<HelpTip term="investcoin" /></div>
             </div>
           )}
         </div>
 
-        {toast && <div role="status" style={{ ...card, marginTop: 14, borderColor: toast.isError ? '#f87171' : '#4ade80' }}>{toast.msg}</div>}
+        {toast && <div role="status" style={{ ...card, marginTop: 14, borderColor: toast.isError ? 'var(--ik-negative)' : 'var(--ik-positive)' }}>{toast.msg}</div>}
 
-        {state && !state.access?.canBuy && <div style={{ ...card, marginTop: 14, borderColor: '#fbbf24' }}>🔒 Tu peux consulter le domaine Immobilier, mais l&apos;achat demande de l&apos;avoir choisi comme domaine gratuit ou d&apos;avoir l&apos;abonnement Pro.</div>}
+        {state && !state.access?.canBuy && <div style={{ ...card, marginTop: 14, borderColor: 'var(--ik-warning)' }}>🔒 Tu peux consulter le domaine Immobilier, mais l&apos;achat demande de l&apos;avoir choisi comme domaine gratuit ou d&apos;avoir l&apos;abonnement Pro.</div>}
 
         {needStart && state?.profiles && <StartScreen profiles={state.profiles} onStart={start} busy={busy} />}
 
@@ -535,6 +537,7 @@ export default function ImmobilierPage() {
           </>
         )}
       </div>
-    </main>
+    </div>
+    </AppShell>
   );
 }
