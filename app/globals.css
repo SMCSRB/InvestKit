@@ -13,6 +13,7 @@
 @import './styles/social.css';
 @import './styles/sim.css';
 @import './styles/auth.css';
+@import './styles/immo.css';
 
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-30px); }

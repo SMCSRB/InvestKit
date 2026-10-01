@@ -8,7 +8,7 @@ import {
   BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT,
   loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
 } from '../config/immoRules';
-import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks } from '../engine/immo';
+import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees } from '../engine/immo';
 import { spendableCoins, monthlyInstalmentCoins } from './bankService';
 
 export const RE_DOMAIN = 'real_estate';
@@ -67,6 +67,18 @@ export const decorateListing = (l: Listing) => ({
   priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
   needsWorks: needsWorks(l),
 });
+
+// Rendements estimés d'une annonce AVANT crédit (loyer de marché, vacance attendue, charges du catalogue, frais de notaire) :
+// uniquement le moteur existant (computeIndicators), aucun nouveau calcul.
+export const listingEconomics = (l: Listing) => {
+  const notary = computeNotaryFees(l.price, l.age, NOTARY_RULE);
+  const annualCharges = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
+  const ind = computeIndicators({
+    totalInvestment: l.price + notary + l.advertisedWorks, loanPrincipal: 0, monthlyRent: l.marketRentMonthly,
+    occupancyPct: Math.min(100, Math.max(0, 100 - l.vacancyPct)), annualCharges, monthlyLoanPayment: 0,
+  });
+  return { notaryFees: notary, totalInvestment: l.price + notary + l.advertisedWorks, annualCharges, ...ind };
+};
 
 const checkListingId = (v: unknown): string => {
   if (typeof v !== 'string' || !/^[a-z0-9-]{1,80}$/.test(v)) throw new RealEstateError('INVALID_INPUT', 'Identifiant de bien invalide');
@@ -264,7 +276,7 @@ export const realEstateService = {
     ]);
     const exp = await query('SELECT real_works, hidden_defects FROM re_expertises WHERE game_id = $1 AND listing_id = $2 AND year = $3', [game.id, id, game.simulated_year]);
     return {
-      listing: decorateListing(listing), city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
+      listing: decorateListing(listing), economics: listingEconomics(listing), city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
       expertiseCostCoins: coinsFor(expertiseCostEuros(listing.price)),
       expertise: exp.rows[0] ? { realWorks: Number(exp.rows[0].real_works), hiddenDefects: exp.rows[0].hidden_defects } : null,
     };

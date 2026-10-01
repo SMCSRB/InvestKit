@@ -1,3 +1,5 @@
+> **Refonte « portail d'annonces »** : l'écran est décrit dans `docs/immo-portail.md` (les fonctions ci-dessous existent toujours, présentées autrement).
+
 # Immobilier — étape 7 (interface), partie 7a
 
 - `/immobilier` : choix du profil, annonces (filtres, simulation d'achat avec décision de la banque expliquée, expertise, achat),

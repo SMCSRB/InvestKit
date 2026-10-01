@@ -5,6 +5,7 @@ import { realEstateService as svc, RealEstateError } from '../src/services/realE
 import { realEstateWatchService as watch, WATCH_LIMITS } from '../src/services/realEstateWatchService';
 import { hasDb, setupDb, teardownDb, createUser } from './helpers';
 import { query } from '../src/utils/db';
+import { exportUserData } from '../src/services/accountService';
 
 const YEAR = 2010;
 let all: Awaited<ReturnType<typeof src.listListings>>;
@@ -113,6 +114,17 @@ describe.skipIf(!hasDb)('API Immobilier : filtres via le service, favoris et rec
     expect((await rejects(svc.listListings(a, { sort: 'x' }))).code).toBe('INVALID_INPUT');
   });
 
+  it('fiche : les rendements estimés viennent du moteur (computeIndicators), frais de notaire inclus', async () => {
+    const id = (await svc.listListings(a, {})).listings[0].id;
+    const d: any = await svc.getListingDetail(a, id);
+    const l = d.listing;
+    const charges = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
+    expect(d.economics.annualCharges).toBeCloseTo(charges, 2);
+    expect(d.economics.totalInvestment).toBeCloseTo(l.price + d.economics.notaryFees + l.advertisedWorks, 2);
+    expect(d.economics.netYieldPct).toBeCloseTo(((l.marketRentMonthly * 12 * (1 - l.vacancyPct / 100) - charges) / d.economics.totalInvestment) * 100, 1);
+    expect(d.economics.grossYieldPct).toBeLessThan(l.grossYieldPct);   // sur le coût total (notaire compris) : plus bas que sur le seul prix
+  });
+
   it('favoris : ajout idempotent, lecture, retrait ; annonce inconnue ou identifiant piégé refusés', async () => {
     const r = await svc.listListings(a, {}); const id = r.listings[0].id;
     expect(await watch.addFavorite(a, id)).toMatchObject({ favorite: true, already: false });
@@ -156,6 +168,18 @@ describe.skipIf(!hasDb)('API Immobilier : filtres via le service, favoris et rec
     expect(list.newCount).toBe(list.count);
     await watch.markSeen(u, s.id);
     expect((await watch.listSavedSearches(u)).searches[0].newCount).toBe(0);
+  });
+
+  it('RGPD : l\'export contient mes favoris et mes recherches enregistrées, et seulement les miens', async () => {
+    const u = await createUser({ balance: 1000, freeDomain: 'real_estate' }); const other = await createUser({ balance: 1000, freeDomain: 'real_estate' });
+    await svc.startGame(u, 'employee'); await svc.startGame(other, 'employee');
+    const id = (await svc.listListings(u, {})).listings[0].id;
+    await watch.addFavorite(u, id); await watch.addFavorite(other, id);
+    await watch.saveSearch(u, { name: 'Ma recherche', filters: { maxPrice: 100000 } });
+    const data: any = await exportUserData(u);
+    expect(data.realEstate.favorites.map((f: any) => f.listing_id)).toEqual([id]);
+    expect(data.realEstate.savedSearches).toHaveLength(1);
+    expect(JSON.stringify(data.realEstate.savedSearches)).not.toContain(other);
   });
 
   it('les favoris d\'une année passée ne sont pas présentés comme disponibles', async () => {
