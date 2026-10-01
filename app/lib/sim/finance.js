@@ -68,22 +68,25 @@ export const earlyRepayment = ({ principal, annualRatePct, months, insuranceRate
   const remaining = k === 0 ? principal : before.rows[k - 1].balance;
   const paid = Math.min(Math.max(0, num(amount)), remaining);
   const i = num(annualRatePct) / 100 / 12;
-  const penalty = round2(Math.min((penaltyPct / 100) * paid, 6 * i * remaining));
+  // Plafond légal (immobilier) : le plus petit de 6 mois d'intérêts sur la somme remboursée et 3 % du capital restant dû.
+  const penalty = paid <= 0 ? 0 : round2(Math.min(6 * i * paid, (penaltyPct / 100) * remaining));
   const newPrincipal = round2(remaining - paid);
   const head = before.rows.slice(0, k);
   let tail;
   let newMonths = months - k;
   if (newPrincipal <= 0) { tail = { rows: [], totalInterest: 0, totalInsurance: 0 }; newMonths = 0; }
   else if (mode === 'payment') {
-    tail = buildSchedule({ principal: newPrincipal, annualRatePct, months: newMonths, insuranceRatePct, insuranceBasis: 'remaining' });
+    tail = buildSchedule({ principal: newPrincipal, annualRatePct, months: newMonths, insuranceRatePct, insuranceBasis });
   } else {
     // même mensualité : on cherche la nouvelle durée (en mois) qui amortit le capital restant
     const pay = before.monthlyPayment;
     newMonths = i === 0 ? Math.ceil(newPrincipal / pay) : Math.ceil(-Math.log(1 - (newPrincipal * i) / pay) / Math.log(1 + i));
-    tail = buildSchedule({ principal: newPrincipal, annualRatePct, months: Math.max(1, newMonths), insuranceRatePct, insuranceBasis: 'remaining' });
+    tail = buildSchedule({ principal: newPrincipal, annualRatePct, months: Math.max(1, newMonths), insuranceRatePct, insuranceBasis });
   }
   const interestAfter = round2(head.reduce((a, r) => a + r.interest, 0) + tail.totalInterest);
-  const insuranceAfter = round2(head.reduce((a, r) => a + r.insurance, 0) + tail.totalInsurance);
+  // Assurance sur le capital initial : la prime mensuelle ne change pas (hypothèse : le contrat n'est pas renégocié) ; sinon elle suit le capital restant dû.
+  const tailInsurance = insuranceBasis === 'initial' ? round2(((principal * num(insuranceRatePct)) / 100 / 12) * (tail.rows ? tail.rows.length : 0)) : tail.totalInsurance;
+  const insuranceAfter = round2(head.reduce((a, r) => a + r.insurance, 0) + tailInsurance);
   return {
     remainingBefore: remaining, repaid: paid, penalty, newPrincipal, newMonths, newTotalMonths: k + newMonths,
     newMonthlyPayment: tail.monthlyPayment ?? 0,

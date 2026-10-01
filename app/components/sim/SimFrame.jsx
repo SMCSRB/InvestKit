@@ -7,11 +7,11 @@ import { Button } from '@/app/components/ui/primitives';
 import { copyText } from '@/app/lib/social';
 
 // Cadre commun des simulateurs : coque connectée si tu es connecté, en-tête public sinon (les simulateurs sont ouverts à tous).
-export default function SimFrame({ title, subtitle, children, onReset }) {
+export default function SimFrame({ title, subtitle, children, onReset, shareUrl }) {
   const [logged, setLogged] = useState(null);
   const [copied, setCopied] = useState(false);
   useEffect(() => { try { setLogged(!!localStorage.getItem('token')); } catch { setLogged(false); } }, []);
-  const share = async () => { if (await copyText(window.location.href)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } };
+  const share = async () => { if (await copyText(shareUrl ? shareUrl() : window.location.href)) { setCopied(true); setTimeout(() => setCopied(false), 2000); } };
   const body = (
     <div className="sim">
       {logged ? (
@@ -23,12 +23,12 @@ export default function SimFrame({ title, subtitle, children, onReset }) {
         </header>
       )}
       <p className="sim-notice" role="note">
-        <strong>Simulation pédagogique.</strong> Les résultats dépendent des hypothèses que tu saisis ; ce ne sont ni des promesses de rendement ni un conseil en investissement. Les taux et règles fiscales de référence sont affichés et modifiables : vérifie-les sur les sources officielles avant toute décision.
+        <strong>Simulation pédagogique.</strong> Les résultats dépendent des hypothèses que tu saisis ; ce ne sont ni des promesses de rendement ni un conseil en investissement. Les taux et règles fiscales de référence sont affichés dans les pages : vérifie-les sur les sources officielles avant toute décision.
       </p>
       {children}
     </div>
   );
-  if (logged === null) return <div className="sim" aria-busy="true" />;
+  // Contenu rendu tout de suite dans l'en-tête public (utile au premier affichage et aux moteurs de recherche), puis coque connectée si besoin.
   return logged ? <AppShell>{body}</AppShell> : <PublicShell><div className="sim-public">{body}</div></PublicShell>;
 }
 

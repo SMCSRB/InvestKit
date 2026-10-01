@@ -59,8 +59,16 @@ describe('simulateurs : crédit (cohérence avec le moteur du serveur)', () => {
     expect(d.interestSaved).toBeGreaterThan(0);
     expect(d.monthsSaved).toBeGreaterThan(0);
     expect(p.newMonthlyPayment).toBeLessThan(fin.monthlyPayment(200000, 3.5, 240));
-    expect(d.penalty).toBeLessThanOrEqual(0.03 * 30000 + 0.01);
-    expect(fin.earlyRepayment({ ...base, amount: 0 }).interestSaved).toBe(0);
+    expect(d.penalty).toBeLessThanOrEqual(6 * (0.035 / 12) * 30000 + 0.01);
+    const zero = fin.earlyRepayment({ ...base, amount: 0 });
+    expect(zero.interestSaved).toBe(0);
+    expect(zero.insuranceSaved).toBe(0);
+    expect(zero.netSaving).toBe(0);
+  });
+  it('indemnité : plus petit de 6 mois d’intérêts sur la somme remboursée et 3 % du capital restant', () => {
+    const l = { principal: 200000, annualRatePct: 3.5, months: 240, insuranceRatePct: 0, afterMonth: 0, amount: 20000 };
+    expect(fin.earlyRepayment(l).penalty).toBeCloseTo(Math.min(6 * (0.035 / 12) * 20000, 0.03 * 200000), 2);
+    expect(fin.earlyRepayment({ ...l, amount: 150000 }).penalty).toBeCloseTo(Math.min(6 * (0.035 / 12) * 150000, 0.03 * 200000), 2);
   });
   it('IRR : retrouve un taux connu, NaN sans solution', () => {
     expect(fin.irr([-100, 110])).toBeCloseTo(0.1, 6);
@@ -98,6 +106,9 @@ describe('simulateurs : investissement PEA / CTO', () => {
     expect(inv.exitTax(1000, 'pea', 3).pct).toBe(SIM_RULES.socialLevyPct + SIM_RULES.flatIncomeTaxPct);
     expect(inv.exitTax(1000, 'cto', 20).pct).toBe(SIM_RULES.socialLevyPct + SIM_RULES.flatIncomeTaxPct);
     expect(inv.exitTax(-500, 'cto', 20).tax).toBe(0);
+  });
+  it('étiquettes de scénarios formatées à la française', () => {
+    expect(inv.scenarios({ ...base, annualReturnPct: 5.1 })[0].label).toContain('2,1');
   });
   it('trois scénarios ordonnés ; entrées aberrantes bornées', () => {
     const [lo, mid, hi] = inv.scenarios(base);

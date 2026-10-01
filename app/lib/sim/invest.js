@@ -53,8 +53,10 @@ export const projectInvestment = (raw, rules = SIM_RULES) => {
 };
 
 // Trois scénarios de rendement autour de l'hypothèse centrale (±écart en points), pour montrer l'incertitude.
+// Étiquette : valeur réellement simulée (bornée), formatée à la française.
+const lab = (v) => String(Math.round(clamp(v, -50, 50) * 10) / 10).replace('.', ',');
 export const scenarios = (raw, spread = 3, rules = SIM_RULES) => ([
-  { id: 'low', label: `Prudent (${num(raw.annualReturnPct) - spread} %/an)`, plan: projectInvestment({ ...raw, annualReturnPct: num(raw.annualReturnPct) - spread }, rules) },
-  { id: 'mid', label: `Central (${num(raw.annualReturnPct)} %/an)`, plan: projectInvestment(raw, rules) },
-  { id: 'high', label: `Optimiste (${num(raw.annualReturnPct) + spread} %/an)`, plan: projectInvestment({ ...raw, annualReturnPct: num(raw.annualReturnPct) + spread }, rules) },
+  { id: 'low', label: `Prudent (${lab(num(raw.annualReturnPct) - spread)} %/an)`, plan: projectInvestment({ ...raw, annualReturnPct: num(raw.annualReturnPct) - spread }, rules) },
+  { id: 'mid', label: `Central (${lab(num(raw.annualReturnPct))} %/an)`, plan: projectInvestment(raw, rules) },
+  { id: 'high', label: `Optimiste (${lab(num(raw.annualReturnPct) + spread)} %/an)`, plan: projectInvestment({ ...raw, annualReturnPct: num(raw.annualReturnPct) + spread }, rules) },
 ]);

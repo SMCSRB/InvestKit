@@ -22,11 +22,11 @@ export function Field({ label, value, onChange, min = 0, max, step = 1, suffix, 
   );
 }
 
-export function SelectField({ label, value, onChange, options, hint }) {
+export function SelectField({ label, value, onChange, options, hint, term }) {
   const id = useId();
   return (
     <div className="sim-field">
-      <label htmlFor={id} className="sim-field__label">{label}</label>
+      <label htmlFor={id} className="sim-field__label">{label}{term && <HelpTip term={term} />}</label>
       <select id={id} className="ik-select" value={value} onChange={(e) => onChange(e.target.value)}>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>

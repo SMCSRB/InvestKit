@@ -21,7 +21,7 @@ const DEFAULTS = {
 };
 
 export default function RentalSimulatorPage() {
-  const [s, set, reset] = useSimState(DEFAULTS);
+  const [s, set, reset, shareUrl] = useSimState(DEFAULTS, { age: ['old','new'], regime: ['micro_foncier','reel','lmnp_micro'], tmiPct: [0,11,30,41,45] });
   const [tab, setTab] = useState('result');
   const r = useMemo(() => simulateRental(s), [s]);
   const regimes = useMemo(() => compareRegimes(s), [s]);
@@ -32,7 +32,7 @@ export default function RentalSimulatorPage() {
   const tabs = [{ value: 'result', label: 'Résultat' }, { value: 'tax', label: 'Fiscalité' }, { value: 'projection', label: 'Projection' }, { value: 'risk', label: 'Risques' }];
 
   return (
-    <SimFrame title="Simulateur d'investissement locatif" subtitle="Rendement, cash-flow, impôt selon le régime et patrimoine sur la durée." onReset={reset}>
+    <SimFrame title="Simulateur d'investissement locatif" subtitle="Rendement, cash-flow, impôt selon le régime et patrimoine sur la durée." onReset={reset} shareUrl={shareUrl}>
       <div className="sim-layout">
         <Card className="sim-inputs">
           <div className="sim-group">

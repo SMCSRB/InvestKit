@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardHead, EmptyState, Segmented, StatCard, Tabs } from '@/app/components/ui/primitives';
 import { Donut, LineChart } from '@/app/components/ui/charts';
 import { Field, SelectField } from '@/app/components/sim/Field';
@@ -24,7 +24,7 @@ async function tool(path, body) {
 }
 
 export default function PeaSimulatorPage() {
-  const [s, set, reset] = useSimState(DEFAULTS);
+  const [s, set, reset, shareUrl] = useSimState(DEFAULTS, { envelope: ['pea','cto'] });
   const [tab, setTab] = useState('result');
   const plan = useMemo(() => projectInvestment(s), [s]);
   const sc = useMemo(() => scenarios(s), [s]);
@@ -33,9 +33,12 @@ export default function PeaSimulatorPage() {
   const [alloc, setAlloc] = useState(ALLOC_DEFAULT);
   const [stress, setStress] = useState({ status: 'idle' });
 
+  // Les résultats serveur ne valent que pour les chiffres saisis : on les efface dès qu'ils changent.
+  useEffect(() => { setMc({ status: 'idle' }); setStress({ status: 'idle' }); }, [s]);
+
   const runMc = async () => {
     setMc({ status: 'loading' });
-    try { setMc({ status: 'ok', data: await tool('monte-carlo', { initial: Number(s.initial) || 0, monthly: Number(s.monthly) || 0, years: Number(s.years) || 1, annualReturnPct: Number(s.annualReturnPct) || 0, annualVolPct: Number(s.vol) || 0, feesPct: Number(s.annualFeesPct) || 0, contributionGrowthPct: Number(s.contributionGrowthPct) || 0, inflationPct: Number(s.inflationPct) || 0 }) }); }
+    try { setMc({ status: 'ok', data: await tool('monte-carlo', { initial: Number(s.initial) || 0, monthly: Number(s.monthly) || 0, years: Math.max(1, Math.round(Number(s.years) || 1)), annualReturnPct: Number(s.annualReturnPct) || 0, annualVolPct: Number(s.vol) || 0, feesPct: Number(s.annualFeesPct) || 0, contributionGrowthPct: Number(s.contributionGrowthPct) || 0, inflationPct: Number(s.inflationPct) || 0 }) }); }
     catch (e) { setMc({ status: 'error', message: e.message }); }
   };
   const runStress = async () => {
@@ -48,7 +51,7 @@ export default function PeaSimulatorPage() {
   const gainPart = Math.max(0, plan.gains);
 
   return (
-    <SimFrame title="Simulateur d'investissement (PEA)" subtitle="Intérêts composés, frais, fiscalité et inflation : vois où peut mener un plan d'épargne." onReset={reset}>
+    <SimFrame title="Simulateur d'investissement (PEA)" subtitle="Intérêts composés, frais, fiscalité et inflation : vois où peut mener un plan d'épargne." onReset={reset} shareUrl={shareUrl}>
       <div className="sim-layout">
         <Card className="sim-inputs">
           <div className="sim-group">

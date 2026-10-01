@@ -21,8 +21,10 @@ const DEFAULTS = {
   bRatePct: 3.4, bInsuranceRatePct: 0.4, bFees: 1500, bYears: 20,
 };
 
+const pctOk = (v) => (Number.isFinite(v) ? pct(v) : 'Indisponible');
+
 export default function LoanSimulatorPage() {
-  const [s, set, reset] = useSimState(DEFAULTS);
+  const [s, set, reset, shareUrl] = useSimState(DEFAULTS, { age: ['old','new'], repayMode: ['duration','payment'] });
   const [tab, setTab] = useState('result');
 
   const calc = useMemo(() => {
@@ -67,7 +69,7 @@ export default function LoanSimulatorPage() {
   const debtTone = !Number.isFinite(calc.debt) ? '' : calc.debt > SIM_RULES.maxDebtRatioPct ? 'ik-down' : 'ik-up';
 
   return (
-    <SimFrame title="Simulateur de crédit immobilier" subtitle="Mensualité, coût total, TAEG, capacité d'emprunt et remboursement anticipé." onReset={reset}>
+    <SimFrame title="Simulateur de crédit immobilier" subtitle="Mensualité, coût total, TAEG, capacité d'emprunt et remboursement anticipé." onReset={reset} shareUrl={shareUrl}>
       <div className="sim-layout">
         <Card className="sim-inputs">
           <div className="sim-group">
@@ -100,7 +102,7 @@ export default function LoanSimulatorPage() {
                 <StatCard hero icon="bank" label="Mensualité (assurance incluse)" value={calc.total} format={eur2} deltaLabel={`dont ${eur2(calc.insMonthly)} d'assurance`} />
                 <StatCard icon="coins" label="Tu empruntes" value={calc.principal} format={eur} deltaLabel={`prix + notaire ${eur(calc.notary)}${calc.works ? ' + travaux' : ''} − apport`} />
                 <StatCard icon="alert" label="Coût total du crédit" value={calc.cost} format={eur} deltaLabel="intérêts + assurance + frais" />
-                <StatCard icon="chart" label="TAEG" value={calc.taeg} format={(v) => pct(v)} help={<HelpTip term="taeg" />} deltaLabel="taux tout compris" />
+                <StatCard icon="chart" label="TAEG" value={calc.taeg} format={(v) => (Number.isFinite(calc.taeg) ? pct(v) : 'Indisponible')} help={<HelpTip term="taeg" />} deltaLabel="taux tout compris" />
               </div>
               <Card>
                 <CardHead title="Ton taux d'endettement" icon="shield" />
@@ -161,7 +163,7 @@ export default function LoanSimulatorPage() {
                   <div className="sim-cards">
                     <StatCard hero icon="coins" label="Capital empruntable" value={cap.principal} format={eur} deltaLabel={`à ${pct(calc.ratePct)} sur ${calc.months / 12} ans`} />
                     <StatCard icon="bank" label="Mensualité maximale" value={cap.budget} format={eur2} deltaLabel={`${SIM_RULES.maxDebtRatioPct} % de tes revenus − autres crédits`} />
-                    <StatCard icon="building" label="Prix de bien accessible" value={cap.principal + calc.down} format={eur} deltaLabel="avec ton apport, frais de notaire inclus" />
+                    <StatCard icon="building" label="Budget total accessible" value={cap.principal + calc.down} format={eur} deltaLabel="capital + apport : le prix du bien sera plus bas (notaire, travaux)" />
                   </div>
                   <p className="ik-muted" style={{ marginBottom: 0 }}>Calcul de la règle des {SIM_RULES.maxDebtRatioPct} % d&apos;endettement (recommandation du HCSF). Une banque regarde aussi ton reste à vivre, ton apport et la stabilité de tes revenus : c&apos;est une estimation, pas un accord de prêt.</p>
                 </>
@@ -182,7 +184,7 @@ export default function LoanSimulatorPage() {
                   <div className="sim-cards" style={{ marginTop: 14 }}>
                     <StatCard hero icon="sparkles" label="Économie nette" value={early.netSaving} format={eur} deltaLabel="intérêts + assurance économisés − indemnité" />
                     <StatCard icon="clock" label={s.repayMode === 'duration' ? 'Mois gagnés' : 'Nouvelle mensualité'} value={s.repayMode === 'duration' ? early.monthsSaved : early.newMonthlyPayment} format={s.repayMode === 'duration' ? (v) => `${fmtInt(v)} mois` : eur2} deltaLabel={s.repayMode === 'duration' ? 'plus tôt libéré' : 'hors assurance'} />
-                    <StatCard icon="alert" label="Indemnité de remboursement" value={early.penalty} format={eur} help={<HelpTip term="remboursement-anticipe" />} deltaLabel="plafond : 3 % du capital, 6 mois d'intérêts" />
+                    <StatCard icon="alert" label="Indemnité de remboursement" value={early.penalty} format={eur} help={<HelpTip term="remboursement-anticipe" />} deltaLabel="plafond légal : 6 mois d'intérêts sur la somme remboursée, ou 3 % du capital restant (le plus bas)" />
                   </div>
                   <p className="ik-muted" style={{ marginBottom: 0 }}>Capital restant dû avant remboursement : {eur(early.remainingBefore)}. Indemnité maximale prévue par la loi pour un prêt immobilier ; ton contrat peut prévoir moins (ou pas du tout : vérifie-le).</p>
                 </>
@@ -203,7 +205,7 @@ export default function LoanSimulatorPage() {
               <div className="ik-table-wrap" style={{ marginTop: 12 }}><table className="ik-table"><thead><tr><th scope="col" /><th scope="col">Offre A</th><th scope="col">Offre B</th><th scope="col">Écart (B − A)</th></tr></thead><tbody>
                 <tr><th scope="row">Mensualité (assurance incluse)</th><td className="ik-num">{eur2(calc.total)}</td><td className="ik-num">{eur2(offerB.payment)}</td><td className="ik-num">{eur2(offerB.payment - calc.total)}</td></tr>
                 <tr><th scope="row">Coût total du crédit</th><td className="ik-num">{eur(calc.cost)}</td><td className="ik-num">{eur(offerB.cost)}</td><td className={`ik-num ${offerB.cost <= calc.cost ? 'ik-up' : 'ik-down'}`}>{eur(offerB.cost - calc.cost)}</td></tr>
-                <tr><th scope="row">TAEG</th><td className="ik-num">{pct(calc.taeg)}</td><td className="ik-num">{pct(offerB.taeg)}</td><td className="ik-num">{pct(offerB.taeg - calc.taeg)}</td></tr>
+                <tr><th scope="row">TAEG</th><td className="ik-num">{pctOk(calc.taeg)}</td><td className="ik-num">{pctOk(offerB.taeg)}</td><td className="ik-num">{Number.isFinite(offerB.taeg - calc.taeg) ? pct(offerB.taeg - calc.taeg) : '—'}</td></tr>
               </tbody></table></div>
               <p className="ik-muted" style={{ marginBottom: 0 }}>Compare surtout le <strong>coût total</strong> et le <strong>TAEG</strong> : à durées différentes, la mensualité seule est trompeuse.</p>
             </Card>

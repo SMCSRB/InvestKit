@@ -1,6 +1,6 @@
-// Hypothèses de référence des simulateurs. VALEUR DE RÉFÉRENCE, NON SOURCÉE ICI, À RECONFIRMER sur les sources officielles
+// Hypothèses de référence des simulateurs. VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER sur les sources officielles
 // (impots.gouv.fr, service-public.fr, Banque de France) avant toute décision réelle : les taux et seuils fiscaux changent d'une année à l'autre.
-// Tout ce qui est ici est AFFICHÉ et modifiable dans l'interface : un simulateur ne cache jamais ses hypothèses.
+// Tout ce qui est ici est AFFICHÉ dans l'interface : un simulateur ne cache jamais ses hypothèses.
 export const SIM_RULES = {
   // Prélèvements sociaux sur les gains (taux en vigueur à la rédaction, à reconfirmer).
   socialLevyPct: 17.2,
