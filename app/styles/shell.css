@@ -213,15 +213,20 @@
   margin-left: var(--ik-sidebar-w-collapsed);
 }
 
-/* Bandeau de cours */
+/* Bande de cours : collée juste sous la barre du haut (qui est elle-même collée), au-dessus du contenu mais SOUS les menus, tiroirs et fenêtres
+   (z-index plus bas que le menu latéral ; la barre du haut reste au-dessus). Elle garde sa place dans la page : elle ne masque jamais le contenu. */
 .ik-ticker {
+  position: sticky;
+  top: calc(var(--ik-banner-h, 0px) + var(--ik-topbar-real, var(--ik-topbar-h)));
+  z-index: calc(var(--ik-z-sidebar) - 2);
   display: flex;
   align-items: center;
   gap: 14px;
   height: var(--ik-ticker-h);
   padding: 0 20px;
   border-bottom: 1px solid var(--ik-border);
-  background: color-mix(in srgb, var(--ik-surface-1) 70%, transparent);
+  background: color-mix(in srgb, var(--ik-bg) 90%, transparent);
+  backdrop-filter: blur(14px);
   font-size: var(--ik-fs-sm);
   overflow: hidden;
 }
@@ -587,10 +592,16 @@
   }
   .ik-ticker {
     padding: 0 14px;
+    height: 36px;
+    gap: 10px;
   }
   .ik-ticker__intro {
     display: none;
   }
+  /* Version compacte : pas de mini-courbes, le bandeau défile horizontalement ; arrêt au toucher */
+  .ik-tick svg { display: none; }
+  .ik-ticker__row { gap: 20px; animation-duration: 45s; }
+  .ik-ticker__track:active .ik-ticker__row { animation-play-state: paused; }
 }
 @media (max-width: 560px) {
   .ik-topbar__label {
@@ -626,4 +637,32 @@
   .ik-sidebar__top {
     padding-bottom: 10px;
   }
+}
+
+/* ---------- Statut Pro (badge, ligne de statut, encart « Passer Pro ») ---------- */
+.ik-planbadge {
+  display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
+  padding: 3px 10px; border-radius: 999px; font: 800 var(--ik-fs-xs) / 1 var(--ik-font); letter-spacing: .04em;
+  color: var(--ik-text-on-primary); background: linear-gradient(135deg, var(--ik-primary), var(--ik-orchid));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ik-orchid) 55%, transparent), 0 4px 14px color-mix(in srgb, var(--ik-primary) 35%, transparent);
+}
+.ik-planbadge--sm { padding: 2px 7px; font-size: 10px; box-shadow: none; }
+.ik-planbadge--md { font-size: 12px; }
+.dh__plan { margin: 2px 0 0; color: var(--ik-text-2); font-size: var(--ik-fs-sm); }
+.ik-upgradecard { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 18px; }
+.ik-upgradecard__main { min-width: 0; }
+.ik-upgradecard__main ul { margin: 6px 0 0; padding-left: 18px; color: var(--ik-text-2); font-size: var(--ik-fs-sm); display: grid; gap: 2px; }
+.ik-upgradecard__actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ik-menu__item { min-height: 44px; }
+
+/* Animations coupées : la bande ne défile plus toute seule, on la fait défiler à la main (et on cache la copie pour la boucle) */
+:root[data-motion='off'] .ik-ticker__track { overflow-x: auto; mask-image: none; }
+:root[data-motion='off'] .ik-ticker__row > [aria-hidden='true'] { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) .ik-ticker__track { overflow-x: auto; mask-image: none; }
+  :root:not([data-motion='on']) .ik-ticker__row > [aria-hidden='true'] { display: none; }
+}
+@media (max-width: 560px) {
+  /* Petit écran : la pastille Pro de la barre du haut ferait déborder la page ; elle reste visible dans le menu du profil et sur le tableau de bord */
+  .ik-profile .ik-planbadge { display: none; }
 }

@@ -19,6 +19,7 @@ import { LOGIN_THROTTLE } from '../config/securityRules';
 import { activateAccount } from '../services/verificationService';
 import { DOMAINS } from '../data/marketData';
 import { hasProAccess } from '../utils/entitlements';
+import { planService } from '../services/planService';
 import { generateUniqueReferralCode } from '../utils/referral';
 import { invitationRepository, normalizeInvitationCode } from '../repositories/invitationRepository';
 import { getClient } from '../utils/db';
@@ -499,6 +500,7 @@ export const authController = {
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
           hasProAccess: hasProAccess(user),
+          plan: await planService.planOf(user),
           isAdmin: user.role === 'admin',
           canChangeFreeDomain: !!user.free_domain && user.free_domain_change_allowed === true,
           enable2FA: user.enable_2fa,

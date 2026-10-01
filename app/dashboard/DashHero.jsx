@@ -7,6 +7,8 @@ import { Coin3D } from '@/app/components/landing/Stage3D';
 import { AnimatedNumber, Reveal, burstCoins } from '@/app/components/ui/motion';
 import { useTheme } from '@/app/context/ThemeContext';
 import { useShell } from '@/app/components/shell/ShellContext';
+import PlanBadge from '@/app/components/plan/PlanBadge';
+import { planLine } from '@/app/lib/plan';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -74,7 +76,8 @@ export default function DashHero({ username, patrimoine, loading }) {
         <section ref={ref} className="dh" aria-label="Accueil du tableau de bord">
           <div className="dh__copy">
             <p className="dh__eyebrow">{hello}{username ? ',' : ''}</p>
-            <h2 className="dh__title">{username || 'Investisseur'}<span className="dh__wave" aria-hidden="true"> 👋</span></h2>
+            <h2 className="dh__title">{username || 'Investisseur'}<span className="dh__wave" aria-hidden="true"> 👋</span> <PlanBadge plan={shell?.user?.plan} /></h2>
+            {shell?.user?.plan?.isPro && <p className="dh__plan" data-testid="plan-line">{planLine(shell.user.plan)}</p>}
             <p className="dh__sub">Voici où en est ton parcours. Choisis une action pour continuer.</p>
             <div className="dh__chips">
               {streak > 0 && <span className="dh__chip dh__chip--flame"><Icon name="flame" size={16} /> Série de {streak} jour{streak > 1 ? 's' : ''}</span>}

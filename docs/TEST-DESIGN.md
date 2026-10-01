@@ -41,27 +41,38 @@ Valeurs utiles pour un test local (invente des valeurs de test, jamais celles de
 
 ## 3. Lancer
 
-Deux terminaux.
+Un seul terminal suffit.
 
-**Terminal 1 : l'API** (port 5000)
-
-```bash
-cd InvestKit-test/backend
-PORT=5000 npm run dev
-```
-
-**Terminal 2 : le site** (port 3100, pour ne pas gêner un autre site sur 3000)
+On utilise le script `ops/stack.sh` : il lance l'API et le site à l'arrière-plan (journaux dans des fichiers), et **l'arrête par port** (fiable, sans fichier .pid à gérer). Dans le **même terminal**, depuis le dossier du projet de test :
 
 ```bash
 cd InvestKit-test
-NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1 PORT=3100 npm run dev
+# Réglages de CE test (ports différents de ta vraie installation, journaux à part)
+export API_PORT=5001 SITE_PORT=3001 LOG_DIR=$HOME/test-design RUN_DIR=$HOME/test-design/run
+mkdir -p "$LOG_DIR"
+# L'API lit ces variables (valeurs de TEST, voir l'étape 2) : DATABASE_URL, JWT_SECRET, FIELD_ENCRYPTION_KEY, CORS_ORIGIN, FRONTEND_URL, EMAIL_PROVIDER…
+export API_START="npm run dev"
+# Le site : l'adresse de l'API est figée au moment de la compilation
+NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1 npm run build
+export SITE_ENV="NODE_ENV=production"
+./ops/stack.sh start
+./ops/stack.sh status
 ```
 
-Ouvre <http://localhost:3100>. Pour arrêter : `Ctrl + C` dans chaque terminal.
+Tu dois voir `✓ API : démarré sur le port 5001` puis `✓ Site : démarré sur le port 3001`. Ouvre <http://localhost:3001>. Un souci ? Les journaux : `tail -n 40 $LOG_DIR/investkit-api.log` et `tail -n 40 $LOG_DIR/investkit-site.log`.
+
+**Arrêter le test** (avec les mêmes `export` dans le terminal) :
+
+```bash
+./ops/stack.sh stop
+./ops/stack.sh status        # doit afficher « ✗ API : arrêté » et « ✗ Site : arrêté »
+```
+
+Si tu as fermé le terminal et perdu les `export`, refais-les puis `./ops/stack.sh stop` : l'arrêt retrouve les processus par leur port.
 
 ## 4. Le voir depuis ton téléphone ou le montrer à quelqu'un (facultatif)
 
-Sur le même Wi-Fi : remplace `localhost` par l'adresse de ton ordinateur (ex. `192.168.1.20`) dans `NEXT_PUBLIC_API_URL`, `CORS_ORIGIN` et `FRONTEND_URL`. Pour un lien public temporaire, un service de tunnel existe, mais **ne l'utilise pas avec de vraies données** ; demande-moi d'abord.
+Sur le même Wi-Fi : remplace `localhost` par l'adresse de ton ordinateur (ex. `192.168.1.20`) dans `NEXT_PUBLIC_API_URL`, `CORS_ORIGIN` et `FRONTEND_URL`, puis recompile le site et relance (`./ops/stack.sh restart`). Pour un lien public temporaire, un service de tunnel existe, mais **ne l'utilise pas avec de vraies données** ; demande-moi d'abord.
 
 ## 5. Revenir à la normale
 

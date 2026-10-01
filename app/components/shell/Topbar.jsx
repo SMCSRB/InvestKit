@@ -8,6 +8,8 @@ import { Button, Popover } from '@/app/components/ui/primitives';
 import { AnimatedNumber, burstCoins } from '@/app/components/ui/motion';
 import { endSession } from '@/app/lib/session';
 import { readPhoto, onPhotoChange } from '@/app/lib/profilePhoto';
+import PlanBadge from '@/app/components/plan/PlanBadge';
+import { planLine } from '@/app/lib/plan';
 import { useTheme } from '@/app/context/ThemeContext';
 
 import { fmtInt } from '@/app/lib/format';
@@ -51,7 +53,7 @@ function Notifications({ notif, onRead }) {
   );
 }
 
-function ProfileMenu({ user, theme, onToggleTheme }) {
+function ProfileMenu({ user, isAdmin, theme, onToggleTheme }) {
   const router = useRouter();
   const name = user?.username || user?.firstName || 'Mon compte';
   const [photo, setPhoto] = useState(null);
@@ -62,12 +64,15 @@ function ProfileMenu({ user, theme, onToggleTheme }) {
   };
   return (
     <Popover
+      menu
+      label="Menu du compte"
       trigger={({ toggle, open }) => (
-        <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="true" aria-label={`Menu du compte : ${name}`}>
+        <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="menu" aria-label={`Menu du compte : ${name}${user?.plan?.isPro ? ', Pro' : ''}`}>
           {photo
             ? <img className="ik-avatar" src={photo} alt="" aria-hidden="true" style={{ objectFit: 'cover' }} />
             : <span className="ik-avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>}
           <span className="ik-profile__name">{name}</span>
+          <PlanBadge plan={user?.plan} size="sm" />
           <Icon name="chevronDown" size={16} />
         </button>
       )}
@@ -76,14 +81,17 @@ function ProfileMenu({ user, theme, onToggleTheme }) {
         <>
           <div style={{ padding: '8px 12px 10px' }}>
             <strong style={{ display: 'block' }}>{name}</strong>
-            <span className="ik-muted">{user?.hasProAccess ? 'Plan Pro' : 'Plan gratuit'}</span>
+            <span className="ik-muted" data-testid="plan-line">{planLine(user?.plan)}</span>
           </div>
-          <div className="ik-menu__sep" />
-          <Link href="/profile" className="ik-menu__item" onClick={close}><Icon name="user" size={18} />Mon profil</Link>
-          <Link href="/support" className="ik-menu__item" onClick={close}><Icon name="help" size={18} />Aide et support</Link>
-          <button type="button" className="ik-menu__item" onClick={() => { onToggleTheme(); }}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />{theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}</button>
-          <div className="ik-menu__sep" />
-          <button type="button" className="ik-menu__item" onClick={logout}><Icon name="logout" size={18} />Se déconnecter</button>
+          <div className="ik-menu__sep" role="separator" />
+          <Link href="/profile" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="user" size={18} />Mon profil</Link>
+          <Link href="/dashboard?tab=settings" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="settings" size={18} />Paramètres</Link>
+          <Link href="/dashboard?tab=settings&section=billing" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="crown" size={18} />Abonnement</Link>
+          <Link href="/support" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="help" size={18} />Aide</Link>
+          {isAdmin && <Link href="/admin" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="shield" size={18} />Administration</Link>}
+          <button type="button" role="menuitem" className="ik-menu__item" onClick={() => { onToggleTheme(); }}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />{theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}</button>
+          <div className="ik-menu__sep" role="separator" />
+          <button type="button" role="menuitem" className="ik-menu__item" onClick={logout}><Icon name="logout" size={18} />Se déconnecter</button>
         </>
       )}
     </Popover>
@@ -144,7 +152,7 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
         <kbd className="ik-kbd">Ctrl K</kbd>
       </button>
       <Notifications notif={notif} onRead={markAllRead} />
-      <ProfileMenu user={user} theme={theme} onToggleTheme={onToggleTheme} />
+      <ProfileMenu user={user} isAdmin={data.isAdmin} theme={theme} onToggleTheme={onToggleTheme} />
       <div role="status" aria-live="polite" className="ik-sr-only">{msg}</div>
       {msg && (
         <div className="ik-menu" style={{ top: 'calc(100% + 6px)', left: 20, minWidth: 0, maxWidth: 'calc(100vw - 40px)', fontSize: 'var(--ik-fs-sm)', fontWeight: 600, padding: '10px 14px' }}>

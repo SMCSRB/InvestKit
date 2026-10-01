@@ -208,6 +208,9 @@ html body {
   animation: ik-rise var(--ik-dur-slow) var(--ik-ease) backwards;
 }
 
+/* Ancres : on laisse la place de la barre du haut + bande de cours collées (jamais de titre caché dessous) */
+:root { scroll-padding-top: calc(var(--ik-banner-h, 0px) + var(--ik-sticky-offset, 0px) + 12px); }
+
 /* Animations coupées : réglage utilisateur ou préférence système */
 :root[data-motion='off'] *,
 :root[data-motion='off'] *::before,

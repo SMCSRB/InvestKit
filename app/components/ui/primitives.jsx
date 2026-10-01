@@ -218,26 +218,45 @@ export function Modal({ open, onClose, title, children, footer }) {
 }
 
 // Menu déroulant ancré à un bouton : fermeture au clic extérieur et sur Échap.
-export function Popover({ trigger, children, align = 'right', width }) {
+// Fenêtre flottante sous un bouton. Avec `menu` : vrai menu au clavier (role="menu", flèches haut/bas, Début/Fin, Échap ferme et rend
+// le focus au bouton, Tab ferme), le premier élément (role="menuitem") reçoit le focus à l'ouverture. Clic à l'extérieur : ferme.
+export function Popover({ trigger, children, align = 'right', width, menu = false, label }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const close = useCallback(() => setOpen(false), []);
+  const closeAndRestore = useCallback(() => { setOpen(false); ref.current?.querySelector('[aria-haspopup]')?.focus(); }, []);
   useEffect(() => {
     if (!open) return undefined;
     const onDoc = (e) => ref.current && !ref.current.contains(e.target) && close();
-    const onKey = (e) => e.key === 'Escape' && close();
+    const onKey = (e) => { if (e.key === 'Escape') (menu ? closeAndRestore : close)(); };
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open, close]);
+  }, [open, close, closeAndRestore, menu]);
+  useEffect(() => {
+    if (!open || !menu) return;
+    const raf = requestAnimationFrame(() => ref.current?.querySelector('[role="menuitem"]')?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [open, menu]);
+  const onMenuKey = (e) => {
+    const items = [...(ref.current?.querySelectorAll('[role="menuitem"]') ?? [])];
+    if (!items.length) return;
+    const i = items.indexOf(document.activeElement);
+    const go = (n) => { e.preventDefault(); items[(n + items.length) % items.length].focus(); };
+    if (e.key === 'ArrowDown') go(i + 1);
+    else if (e.key === 'ArrowUp') go(i - 1);
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(items.length - 1);
+    else if (e.key === 'Tab') close();
+  };
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       {trigger({ open, toggle: () => setOpen((o) => !o), close })}
       {open && (
-        <div className="ik-menu" style={{ top: 'calc(100% + 8px)', [align]: 0, width }}>
+        <div className="ik-menu" style={{ top: 'calc(100% + 8px)', [align]: 0, width }} {...(menu ? { role: 'menu', 'aria-label': label, onKeyDown: onMenuKey } : {})}>
           {typeof children === 'function' ? children({ close }) : children}
         </div>
       )}

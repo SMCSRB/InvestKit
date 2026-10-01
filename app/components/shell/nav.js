@@ -24,7 +24,7 @@ export const NAV_MAIN = [
 ];
 
 export const NAV_BOTTOM = [
-  { id: 'settings', label: 'Paramètres', href: '/profile', icon: 'settings' },
+  { id: 'settings', label: 'Paramètres', href: '/dashboard?tab=settings', icon: 'settings' },
   { id: 'support', label: 'Aide et support', href: '/support', icon: 'help' },
 ];
 

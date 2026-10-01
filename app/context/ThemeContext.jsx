@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { MOTION_KEY, THEME_KEY } from '@/app/lib/designRoutes';
 
 const ThemeContext = createContext(null);
+const TICKER_KEY = 'ik-ticker';
 
 const read = (key, fallback) => {
   try {
@@ -24,6 +25,7 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState('dark');
   const [motion, setMotionState] = useState('auto'); // auto = suit le système ; on ; off
   const [systemReduced, setSystemReduced] = useState(false);
+  const [ticker, setTickerState] = useState('on'); // bande de cours : on | off
   const [ready, setReady] = useState(false); // vrai une fois les réglages lus : avant, on ne touche pas aux attributs posés par le script d'initialisation
 
   useEffect(() => {
@@ -31,6 +33,7 @@ export function ThemeProvider({ children }) {
     setThemeState(t === 'light' ? 'light' : 'dark');
     const m = read(MOTION_KEY, 'auto');
     setMotionState(m === 'on' || m === 'off' ? m : 'auto');
+    setTickerState(read(TICKER_KEY, 'on') === 'off' ? 'off' : 'on');
     setReady(true);
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setSystemReduced(mq.matches);
@@ -62,6 +65,12 @@ export function ThemeProvider({ children }) {
     write(MOTION_KEY, v);
   }, []);
 
+  const setTicker = useCallback((v) => {
+    const t = v === 'off' ? 'off' : 'on';
+    setTickerState(t);
+    write(TICKER_KEY, t);
+  }, []);
+
   const value = useMemo(
     () => ({
       theme,
@@ -70,8 +79,11 @@ export function ThemeProvider({ children }) {
       motion,
       setMotion,
       motionEnabled: motion === 'off' ? false : motion === 'on' ? true : !systemReduced,
+      ticker,
+      setTicker,
+      tickerVisible: ticker !== 'off',
     }),
-    [theme, motion, systemReduced, setTheme, setMotion]
+    [theme, motion, systemReduced, ticker, setTheme, setMotion, setTicker]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

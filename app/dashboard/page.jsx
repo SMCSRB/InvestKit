@@ -17,6 +17,8 @@ import PortfolioRisk from '@/app/components/PortfolioRisk';
 import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
+import { useShell } from '@/app/components/shell/ShellContext';
+import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
 
 // Transparence d'une couleur quelconque (hexadécimale ou variable de design).
@@ -35,6 +37,7 @@ function DashboardContent() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
   const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
+  const shell = useShell();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTabState] = useState('overview');
   const [socialTab, setSocialTab] = useState('friends');
@@ -57,6 +60,11 @@ function DashboardContent() {
   const { theme: globalTheme, toggleTheme: toggleGlobalTheme } = useTheme();
   const isDarkMode = globalTheme === 'dark';
   const [settingsTab, setSettingsTab] = useState('general');
+  // ?section=billing (menu du profil, « Abonnement ») ouvre directement la bonne partie des paramètres.
+  const sectionParam = searchParams.get('section');
+  useEffect(() => {
+    if (['general', 'profile', 'security', 'privacy', 'billing'].includes(sectionParam)) setSettingsTab(sectionParam);
+  }, [sectionParam]);
   // 2FA - configuration réelle (backend TOTP)
   const [twoFAModal, setTwoFAModal] = useState(null); // null | 'setup' | 'verify' | 'backup-codes' | 'disable'
   const [twoFAQrCode, setTwoFAQrCode] = useState('');
@@ -2960,7 +2968,7 @@ function DashboardContent() {
                     <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: 0 }}>{billingError}</p>
                   )}
 
-                  {userData?.subscriptionTier === 'pro' ? (
+                  {(shell?.user?.plan?.isPro ?? userData?.subscriptionTier === 'pro') ? (
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -2972,7 +2980,7 @@ function DashboardContent() {
                     }}>
                       <div>
                         <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                          ✨ Abonnement Pro actif
+                          ✨ {planLine(shell?.user?.plan)}
                         </p>
                         <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
                           Tous les domaines et fonctionnalités débloqués

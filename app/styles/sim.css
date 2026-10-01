@@ -35,10 +35,10 @@
 }
 .sim-inputs {
   position: sticky;
-  top: calc(var(--ik-banner-h, 0px) + var(--ik-topbar-h) + var(--ik-ticker-h, 0px) + 12px);
+  top: calc(var(--ik-banner-h, 0px) + var(--ik-sticky-offset, calc(var(--ik-topbar-h) + var(--ik-ticker-h, 0px))) + 12px);
   display: grid;
   gap: var(--ik-space-3);
-  max-height: calc(100vh - var(--ik-topbar-h) - var(--ik-ticker-h, 0px) - 40px);
+  max-height: calc(100vh - var(--ik-sticky-offset, calc(var(--ik-topbar-h) + var(--ik-ticker-h, 0px))) - 40px);
   overflow-y: auto;
 }
 .sim-group {

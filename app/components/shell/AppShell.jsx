@@ -40,6 +40,28 @@ export default function AppShell({ children }) {
 
   useEffect(() => { setMenuOpen(false); }, [pathname, search]);
 
+  // Hauteur réelle de la barre du haut + bande de cours (toutes deux collées en haut de l'écran) : publiée dans --ik-sticky-offset.
+  // Elle sert aux ancres (scroll-padding) et aux éléments collants de page, pour que rien ne passe SOUS ces barres.
+  useEffect(() => {
+    const root = document.documentElement;
+    const measure = () => {
+      const top = document.querySelector('.ik-topbar');
+      const tick = document.querySelector('.ik-ticker');
+      const h = (top?.offsetHeight ?? 0) + (tick?.offsetHeight ?? 0);
+      root.style.setProperty('--ik-sticky-offset', `${h}px`);
+      root.style.setProperty('--ik-topbar-real', `${top?.offsetHeight ?? 0}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    const watch = () => { ro.disconnect(); ['.ik-topbar', '.ik-ticker'].forEach((s) => { const el = document.querySelector(s); if (el) ro.observe(el); }); measure(); };
+    watch();
+    const mo = new MutationObserver(watch);                       // la bande apparaît quand ses cours sont chargés (ou quand on la masque)
+    const host = document.querySelector('.ik-main');
+    if (host) mo.observe(host, { childList: true });
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); mo.disconnect(); window.removeEventListener('resize', measure); root.style.removeProperty('--ik-sticky-offset'); root.style.removeProperty('--ik-topbar-real'); };
+  }, []);
+
   // Menu mobile : Échap le ferme ; à l'ouverture le focus va sur son bouton de fermeture, à la fermeture il revient au bouton d'ouverture.
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -91,8 +113,8 @@ export default function AppShell({ children }) {
       />
       <div className="ik-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
       <div className="ik-main">
-        <TickerBar />
         <Topbar data={data} theme={theme} onToggleTheme={toggleTheme} onOpenSearch={() => setSearchOpen(true)} onOpenMenu={() => setMenuOpen(true)} />
+        <TickerBar />
         <main id="ik-main" ref={mainRef} className="ik-content ik-page-enter" key={pathname}>
           {children}
         </main>

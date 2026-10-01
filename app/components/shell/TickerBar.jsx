@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Delta } from '@/app/components/ui/primitives';
 import { Sparkline } from '@/app/components/ui/charts';
+import { useTheme } from '@/app/context/ThemeContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 const CACHE_KEY = 'ik-ticker-v1';
@@ -48,7 +49,8 @@ function useTickerItems() {
 
 export default function TickerBar() {
   const items = useTickerItems();
-  if (!items.length) return null;
+  const { tickerVisible } = useTheme();
+  if (!tickerVisible || !items.length) return null;
   const row = (suffix) => items.map((t) => (
     <Link key={`${t.symbol}${suffix}`} href="/crypto" className="ik-tick" tabIndex={suffix ? -1 : 0} aria-hidden={suffix ? true : undefined}>
       <span className="ik-tick__sym" aria-hidden="true">{t.symbol.slice(0, 3)}</span>

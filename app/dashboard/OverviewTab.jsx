@@ -6,6 +6,8 @@ import { Reveal } from '@/app/components/ui/motion';
 import { Donut, SegmentedBar } from '@/app/components/ui/charts';
 import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import DashHero from './DashHero';
+import UpgradeCard from '@/app/components/plan/UpgradeCard';
+import { useShell } from '@/app/components/shell/ShellContext';
 import ProgressCard from './ProgressCard';
 import HelpTip from '@/app/components/HelpTip';
 import { tone as riskTone } from '@/app/components/PortfolioRisk';
@@ -44,6 +46,7 @@ function Line({ label, value, tone }) {
 
 // Vue d'ensemble : uniquement des données réelles du serveur (/overview). Aucune valeur de démonstration.
 export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }) {
+  const shell = useShell();
   const loading = !ov && !failed;
   const t = ov?.totals;
   const coins = ov?.coins ?? 0;
@@ -73,6 +76,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
   return (
     <div className="dash-overview">
       <DashHero username={ov?.username} patrimoine={t?.coinsAndTrading} loading={loading} />
+      <UpgradeCard plan={shell?.user?.plan} />
 
       <OnboardingChecklist />
 

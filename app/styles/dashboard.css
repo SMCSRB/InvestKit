@@ -8,8 +8,8 @@
 }
 .dash-rail {
   position: sticky;
-  top: calc(var(--ik-banner-h, 0px) + var(--ik-topbar-h) + var(--ik-ticker-h) + 16px);
-  max-height: calc(100vh - var(--ik-topbar-h) - var(--ik-ticker-h) - 40px);
+  top: calc(var(--ik-banner-h, 0px) + var(--ik-sticky-offset, calc(var(--ik-topbar-h) + var(--ik-ticker-h))) + 16px);
+  max-height: calc(100vh - var(--ik-sticky-offset, calc(var(--ik-topbar-h) + var(--ik-ticker-h))) - 40px);
   overflow-y: auto;
   padding: 18px 16px;
   border-radius: var(--ik-radius-lg);
