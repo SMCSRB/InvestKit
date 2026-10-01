@@ -27,7 +27,10 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
   });
 
   it('la vue d\'ensemble n\'utilise que des données du serveur et ses boutons mènent à un onglet existant', () => {
-    const tabs = [...page.matchAll(/\{ value: '([a-z]+)', label:/g)].map((m) => m[1]);
+    // Les sections restent joignables par ?tab=… (menu principal) ; la barre d'onglets en doublon a été retirée.
+    const list = page.match(/\[('overview'[^\]]*)\]\.includes\(target\)/);
+    expect(list, 'liste des sections autorisées').toBeTruthy();
+    const tabs = [...list![1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]);
     expect(tabs).toEqual(['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'settings']);
     const overview = read('dashboard/OverviewTab.jsx');
     for (const m of overview.matchAll(/onOpenTab\('([a-z]+)'\)/g)) expect(tabs, `onglet ${m[1]}`).toContain(m[1]);

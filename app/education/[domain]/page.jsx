@@ -52,24 +52,24 @@ export default function DomainPage() {
   const progressPercent = Math.round((completedChaptersCount / domain.chapters.length) * 100);
   const isDomainDone = isDomainCompleted(domain.id);
 
-  // Calcular recomendaciones
+  // Calcul des recommandations
   const getRecommendations = () => {
     const recommendations = [];
 
-    // Buscar el primer capítulo no completado desbloqueado
+    // Premier chapitre non terminé et débloqué
     for (let i = 0; i < domain.chapters.length; i++) {
       const chapter = domain.chapters[i];
       if (!isChapterCompleted(domain.id, chapter.id) && isChapterUnlocked(domain.id, chapter.id)) {
         recommendations.push({
           type: 'continue',
           chapter,
-          reason: 'Continuar desde aquí'
+          reason: 'Reprendre là où tu t\'es arrêté'
         });
         break;
       }
     }
 
-    // Buscar capítulos completados con baja puntuación (< 85%)
+    // Chapitres terminés avec un score inférieur à 85 %
     domain.chapters.forEach((chapter) => {
       if (isChapterCompleted(domain.id, chapter.id)) {
         const score = getChapterScore(domain.id, chapter.id);
@@ -78,13 +78,13 @@ export default function DomainPage() {
             type: 'improve',
             chapter,
             score,
-            reason: `Mejorar tu puntuación (${score}%)`
+            reason: `Améliorer ton score (${score} %)`
           });
         }
       }
     });
 
-    return recommendations.slice(0, 2); // Solo 2 recomendaciones
+    return recommendations.slice(0, 2); // 2 recommandations au maximum
   };
 
   const recommendations = getRecommendations();

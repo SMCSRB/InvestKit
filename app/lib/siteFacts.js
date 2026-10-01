@@ -3,7 +3,7 @@
 // Domaines ouverts aujourd'hui (l'ordre est celui de l'affichage).
 export const AVAILABLE_DOMAINS = [
   { icon: 'building', name: 'Immobilier', sub: 'Achat à crédit, loyers, revente' },
-  { icon: 'candles', name: 'Crypto', sub: 'Marché simulé, graphique pro' },
+  { icon: 'candles', name: 'Crypto', sub: 'Marché historique, graphique pro' },
   { icon: 'chart', name: 'Bourse et PEA', sub: 'Actions, ETF, fiscalité du PEA' },
 ];
 

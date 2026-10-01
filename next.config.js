@@ -115,11 +115,6 @@ const nextConfig = {
         permanent: false,
       },
       {
-        source: '/education',
-        destination: '/dashboard',
-        permanent: false,
-      },
-      {
         source: '/pricing',
         destination: '/',
         permanent: false,

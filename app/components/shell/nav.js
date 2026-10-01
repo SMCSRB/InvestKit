@@ -3,6 +3,7 @@ import { SITE_INFO } from '../../lib/siteInfo';
 
 export const NAV_MAIN = [
   { id: 'dashboard', label: 'Tableau de bord', href: '/dashboard', icon: 'dashboard' },
+  { id: 'marche', label: 'Marché', href: '/dashboard?tab=market', icon: 'chart' },
   {
     id: 'domains',
     label: 'Domaines',

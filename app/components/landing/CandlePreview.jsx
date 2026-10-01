@@ -63,7 +63,7 @@ export default function CandlePreview() {
             Technique
           </span>
         </div>
-        <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Exemple de graphique en bougies avec volumes (données d'exemple)" style={{ display: 'block' }}>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Graphique en bougies avec volumes" style={{ display: 'block' }}>
           {ticks.map((t, k) => (
             <g key={k}>
               <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="var(--ik-grid)" strokeDasharray="3 5" />

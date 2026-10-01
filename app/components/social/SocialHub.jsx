@@ -96,7 +96,7 @@ export default function SocialHub({ tab, onTab }) {
       <div key={tab} className="soc-panel">
         {tab === 'friends' && (friends === null ? <Skeleton height={180} style={{ borderRadius: 16 }} /> : friends.length === 0 ? (
           <Card><EmptyState icon="users" title="Pas encore d'ami" action={<Button variant="primary" onClick={() => onTab('add')}>Ajouter un ami</Button>}>
-            Échange ton code ami avec quelqu'un et vous pourrez comparer vos niveaux. Aucun profil d'exemple : ici, tout est réel.
+            Échange ton code ami avec quelqu'un et vous pourrez comparer vos niveaux.
           </EmptyState></Card>
         ) : (
           <Card><CardHead title="Mes amis" icon="users" />

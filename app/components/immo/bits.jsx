@@ -30,23 +30,3 @@ export function Heart({ on, onClick, label }) {
   );
 }
 
-// Bandeau permanent : aucune confusion possible avec de vraies annonces.
-export function FictionBanner({ compact }) {
-  return (
-    <p className={`rp-fiction ${compact ? 'rp-fiction--compact' : ''}`} role="note">
-      <strong>Annonces fictives, simulation à but éducatif.</strong> {compact ? '' : 'Villes, prix et biens sont inventés pour s’entraîner : ils ne correspondent à aucune vraie annonce ni à aucune vraie vente.'}
-    </p>
-  );
-}
-
-export function Row({ label, children, help }) {
-  return <div className="rp-row"><dt>{label}{help}</dt><dd>{children}</dd></div>;
-}
-
-// Éléments « plein écran » (signature, tiroir de filtres, barre d'achat) : posés directement sur <body>. Dans la page, un parent animé
-// (transform) ferait « fixed » se comporter comme « absolute » et décalerait ces éléments.
-export function Portal({ children }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => { setReady(true); }, []);
-  return ready ? createPortal(<div className="rp-portal">{children}</div>, document.body) : null;
-}

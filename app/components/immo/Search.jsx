@@ -6,7 +6,7 @@ import { Button, EmptyState, Segmented, Skeleton, Switch } from '@/app/component
 import HelpTip from '@/app/components/HelpTip';
 import { LazyListingArt } from './art';
 import CityMap from './CityMap';
-import { Dpe, FictionBanner, Heart, Pill, Portal } from './bits';
+import { Dpe, Heart, Pill, Portal } from './bits';
 import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct } from './api';
 
 export const DEFAULT_SEARCH = { filters: {}, view: 'grid', sort: 'relevance', favOnly: false };
@@ -205,7 +205,6 @@ export default function Search({ state, setState, onOpen, notify, game }) {
 
   return (
     <div className="rp-search">
-      <FictionBanner />
 
       <div className="rp-searchbar" role="search">
         <label className="rp-searchbar__input">

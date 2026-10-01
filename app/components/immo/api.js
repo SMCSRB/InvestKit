@@ -57,4 +57,4 @@ export function describeListing(l, city, nbh) {
   return `${intro} ${state} ${energy} ${market}${urgent}`;
 }
 
-export const listingAlt = (l, city) => `Illustration d’un ${TYPE_LABEL[l.type]?.toLowerCase()} de ${l.surfaceSqm} m² à ${city?.name ?? l.cityId}, ${CONDITION_LABEL[l.condition]?.toLowerCase()}, DPE ${l.energyClass}. Image fictive.`;
+export const listingAlt = (l, city) => `Illustration d’un ${TYPE_LABEL[l.type]?.toLowerCase()} de ${l.surfaceSqm} m² à ${city?.name ?? l.cityId}, ${CONDITION_LABEL[l.condition]?.toLowerCase()}, DPE ${l.energyClass}.`;

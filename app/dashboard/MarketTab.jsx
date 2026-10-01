@@ -45,12 +45,12 @@ export default function MarketTab() {
     <div className="dash-overview">
       <Card>
         <CardHead
-          title="Marché Crypto simulé"
+          title="Marché Crypto"
           icon="candles"
           actions={<Button size="sm" href="/crypto">Ouvrir le marché</Button>}
         />
         <p className="ik-muted" style={{ margin: '0 0 16px', fontSize: 'var(--ik-fs-sm)' }}>
-          Cours issus des données historiques importées, rejouées dans ta simulation. Ce ne sont pas des cours en direct.
+          Cours historiques, rejoués à ta date de jeu (ils ne sont pas en direct).
         </p>
         {state.status === 'loading' && (
           <div className="dash-market">

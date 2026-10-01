@@ -231,6 +231,9 @@ export default function OnboardingPage() {
           <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
             Adaptez la plateforme à vos besoins
           </p>
+          <p style={{ margin: '10px 0 0 0', fontSize: '11px', color: 'var(--ik-text-3)' }}>
+            InvestKit est un jeu pédagogique : monnaie virtuelle, aucun argent réel, aucun conseil en investissement.
+          </p>
         </div>
 
         {/* Form */}

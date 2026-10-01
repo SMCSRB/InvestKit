@@ -83,6 +83,7 @@
   .hover\:bg-gray-600:hover{background-color:color-mix(in srgb, var(--ik-text) 22%, transparent)}
   .hover\:bg-green-700:hover{background-color:var(--ik-positive)}
   .hover\:bg-purple-700:hover{background-color:var(--ik-orchid)}
+  .hover\:bg-slate-600:hover{background-color:color-mix(in srgb, var(--ik-text) 22%, transparent)}
   .hover\:border-amber-400:hover{border-color:color-mix(in srgb, var(--ik-warning) 60%, transparent)}
   .hover\:border-gray-500:hover{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}
   .hover\:border-gray-600\/50:hover{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}

@@ -30,7 +30,7 @@ export function PropertyCard({ p, data, game, onOpen, act, busy }) {
   const next = p.l_payment && p.l_status === 'active' ? `mensualité ${eur2(p.l_payment)}` : null;
   return (
     <article className={`rp-own ${alerts.some((a) => a.tone === 'bad') ? 'has-bad' : ''}`}>
-      <div className="rp-own__media" onClick={() => onOpen(p.id)}><LazyListingArt listing={artOf(p)} alt={`Illustration fictive de ${p.title}`} badge={false} /><div className="rp-card__dpe"><Dpe cls={p.energy_class} /></div></div>
+      <div className="rp-own__media" onClick={() => onOpen(p.id)}><LazyListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} badge={false} /><div className="rp-card__dpe"><Dpe cls={p.energy_class} /></div></div>
       <div className="rp-own__body">
         <div className="rp-own__head"><h3><button type="button" onClick={() => onOpen(p.id)}>{p.title}</button></h3><Pill tone={p.status === 'let' ? 'ok' : p.status === 'notice' ? 'warn' : 'neutral'}>{STATUS_LABEL[p.status] ?? p.status}</Pill></div>
         <p className="rp-own__nums">Valeur {eur(p.value)} · Dette {eur(p.remainingLoan)} · Fonds propres <strong>{eur(p.equity)}</strong></p>
@@ -93,7 +93,7 @@ export function PropertySheet({ p, data, game, onBack, refresh, notify, act, bus
   return (
     <div className="rp-detail rp-enter">
       <div className="rp-detail__top"><Button variant="ghost" icon="chevronLeft" onClick={onBack}>Mes biens</Button></div>
-      <div className="rp-sheet__hero"><ListingArt listing={artOf(p)} alt={`Illustration fictive de ${p.title}`} /><div><h2>{p.title}</h2><p className="ik-muted">{TYPE_LABEL[p.property_type]} {Number(p.surface_sqm)} m² · <Pill tone={p.status === 'let' ? 'ok' : 'neutral'}>{STATUS_LABEL[p.status] ?? p.status}</Pill> · <Dpe cls={p.energy_class} size="sm" /></p></div></div>
+      <div className="rp-sheet__hero"><ListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} /><div><h2>{p.title}</h2><p className="ik-muted">{TYPE_LABEL[p.property_type]} {Number(p.surface_sqm)} m² · <Pill tone={p.status === 'let' ? 'ok' : 'neutral'}>{STATUS_LABEL[p.status] ?? p.status}</Pill> · <Dpe cls={p.energy_class} size="sm" /></p></div></div>
       <div className="rp-kpis rp-kpis--big">
         <div><span>Valeur</span><strong>{eur(p.value)}</strong></div>
         <div><span>Dette restante</span><strong>{eur(p.remainingLoan)}</strong></div>

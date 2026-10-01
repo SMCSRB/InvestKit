@@ -23,7 +23,7 @@ export default function SimFrame({ title, subtitle, children, onReset, shareUrl 
         </header>
       )}
       <p className="sim-notice" role="note">
-        <strong>Simulation pédagogique.</strong> Les résultats dépendent des hypothèses que tu saisis ; ce ne sont ni des promesses de rendement ni un conseil en investissement. Les taux et règles fiscales de référence sont affichés dans les pages : vérifie-les sur les sources officielles avant toute décision.
+        Les résultats dépendent des hypothèses que tu saisis. Les taux et règles fiscales de référence sont affichés dans les pages : vérifie-les sur les sources officielles avant toute décision.
       </p>
       {children}
     </div>

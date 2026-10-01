@@ -10,7 +10,7 @@ import Search, { DEFAULT_SEARCH } from '@/app/components/immo/Search';
 import Detail from '@/app/components/immo/Detail';
 import { OwnedList, PropertySheet } from '@/app/components/immo/Owned';
 import { Leaderboard, Summary } from '@/app/components/immo/Bilan';
-import { ImmoModeProvider, useImmoMode, FictionBanner } from '@/app/components/immo/bits';
+import { ImmoModeProvider, useImmoMode } from '@/app/components/immo/bits';
 import { MONTHS, call, eur } from '@/app/components/immo/api';
 
 // Immobilier façon portail d'annonces : Chercher → fiche → simuler → acheter, puis Mes biens (gestion locative), Bilan du mois, Classement.
@@ -20,9 +20,8 @@ const TABS = ['chercher', 'biens', 'bilan', 'classement'];
 function StartScreen({ profiles, onStart, busy }) {
   return (
     <div className="rp-start rp-enter">
-      <FictionBanner />
       <h2>Commence ta partie Immobilier</h2>
-      <p className="ik-muted">Choisis ta situation de départ : elle décide de tes revenus, et donc de ce que la banque acceptera de te prêter. Tu joues en mode accéléré, sur des villes fictives.</p>
+      <p className="ik-muted">Choisis ta situation de départ : elle décide de tes revenus, et donc de ce que la banque acceptera de te prêter. Tu joues en mode accéléré.</p>
       <div className="rp-start__grid">
         {profiles.map((p) => (
           <Card key={p.id} className="rp-start__card">
@@ -112,7 +111,7 @@ function ImmoInner() {
   return (
     <AppShell>
       <div className="rp">
-        <PageHeader title="Immobilier" subtitle="Cherche un bien, simule ton financement, achète et gère-le. Annonces fictives, simulation à but éducatif."
+        <PageHeader title="Immobilier" subtitle="Cherche un bien, simule ton financement, achète et gère-le."
           actions={game && (
             <>
               <span className="rp-date" title="Mode accéléré : un mois passe quand tu le décides"><strong>{MONTHS[game.month - 1]} {game.year}</strong><HelpTip term="mode-accelere" /></span>
@@ -132,7 +131,7 @@ function ImmoInner() {
         {toast && <div role={toast.isError ? 'alert' : 'status'} className={`rp-toast ${toast.isError ? 'is-bad' : 'is-ok'}`} key={toast.k}>{toast.msg}</div>}
         {state && !state.access?.canBuy && game && <div className="rp-banner rp-banner--warn">🔒 Tu peux consulter le domaine Immobilier, mais l’achat demande de l’avoir choisi comme domaine gratuit ou d’avoir l’abonnement Pro.</div>}
         {content}
-        <p className="rp-foot"><Link href="/banque">🏦 Ma banque</Link> · Source des données : {state?.dataSource === 'fictive' ? 'catalogue fictif' : state?.dataSource}</p>
+        <p className="rp-foot"><Link href="/banque">🏦 Ma banque</Link></p>
       </div>
     </AppShell>
   );

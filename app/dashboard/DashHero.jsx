@@ -15,7 +15,7 @@ const greeting = () => {
 
 const ACTIONS = [
   { href: '/dashboard?tab=trading', icon: 'chart', title: 'Bourse et PEA', hint: 'Simule des achats' },
-  { href: '/crypto', icon: 'candles', title: 'Crypto', hint: 'Marché simulé' },
+  { href: '/crypto', icon: 'candles', title: 'Crypto', hint: 'Marché' },
   { href: '/immobilier', icon: 'building', title: 'Immobilier', hint: 'Achète, loue, revends' },
   { href: '/education', icon: 'book', title: 'Apprendre', hint: 'Cours et quiz' },
 ];

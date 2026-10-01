@@ -155,10 +155,9 @@ export default function ListingArt({ listing, view = 'facade', alt, className = 
   const p = pal(listing.cityId);
   const Scene = { facade: Facade, living: Living, kitchen: Kitchen, plan: Plan }[view] ?? Facade;
   return (
-    <svg className={`rp-art ${className}`} viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" {...(alt === '' ? { 'aria-hidden': 'true' } : { role: 'img', 'aria-label': alt ?? `Illustration fictive, vue ${view}` })} focusable="false">
+    <svg className={`rp-art ${className}`} viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" {...(alt === '' ? { 'aria-hidden': 'true' } : { role: 'img', 'aria-label': alt ?? `Illustration, vue ${view}` })} focusable="false">
       <Sky id={uid} p={p} night={listing.energyClass === 'G'} />
       <Scene l={listing} uid={uid} />
-      {badge && <g><rect x="6" y="238" width="196" height="16" rx="8" fill="#000" opacity=".55" /><text x="104" y="249.5" textAnchor="middle" fontSize="9" fill="#fff" fontWeight="700">ANNONCE FICTIVE · ILLUSTRATION</text></g>}
       <rect x="8" y="8" width="26" height="22" rx="6" fill={DPE_COLORS[listing.energyClass]} opacity=".0" />
     </svg>
   );
@@ -177,5 +176,5 @@ export function LazyListingArt(props) {
     io.observe(el);
     return () => io.disconnect();
   }, [seen]);
-  return <div ref={ref} className="rp-art-slot">{seen ? <ListingArt {...props} /> : <div className="rp-art-skel" role="img" aria-label={props.alt ?? 'Illustration fictive en cours de chargement'} />}</div>;
+  return <div ref={ref} className="rp-art-slot">{seen ? <ListingArt {...props} /> : <div className="rp-art-skel" role="img" aria-label={props.alt ?? 'Illustration en cours de chargement'} />}</div>;
 }

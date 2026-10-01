@@ -5,7 +5,7 @@ import Icon from '@/app/components/ui/Icon';
 import { Button, Card, Modal, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { VIEWS } from './art';
-import { Dpe, FictionBanner, Heart, Pill, Portal, Row, useImmoMode } from './bits';
+import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
 import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct } from './api';
 
 // Signature chez le notaire : un stylo trace la signature, un tampon « Acte signé » tombe, puis les clés sont remises.
@@ -127,7 +127,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
   return (
     <div className="rp-detail rp-enter">
-      <div className="rp-detail__top"><Button variant="ghost" icon="chevronLeft" onClick={onBack}>Retour aux résultats</Button><FictionBanner compact /></div>
+      <div className="rp-detail__top"><Button variant="ghost" icon="chevronLeft" onClick={onBack}>Retour aux résultats</Button></div>
       <div className="rp-detail__grid">
         <div className="rp-detail__main">
           <Gallery listing={l} city={city} />
@@ -265,7 +265,6 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
       <Modal open={confirm} onClose={() => setConfirm(false)} title="Confirmer l’achat" footer={<><Button onClick={() => setConfirm(false)}>Annuler</Button><Button variant="primary" onClick={buy}>Signer chez le notaire</Button></>}>
         {pv?.costs && <dl className="rp-facts"><Row label="Bien">{l.title}</Row><Row label="Prix">{eur(l.price)}</Row><Row label="Emprunt">{eur(pv.costs.loanPrincipal)} sur {plan.months / 12} ans</Row><Row label="Mensualité">{eur2(pv.loan.monthlyPaymentWithInsurance)}</Row><Row label="Coût en InvestCoins"><strong>{coins(pv.coins.total)}</strong></Row></dl>}
-        <p className="ik-muted">C’est une simulation : les InvestCoins sont une monnaie de jeu, l’annonce est fictive.</p>
       </Modal>
       {sign && <Portal><Signature phase={sign.phase} error={sign.error} onClose={() => { setSign(null); if (sign.phase === 'keys') onBought(); }} /></Portal>}
     </div>

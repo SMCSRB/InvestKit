@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useNotification } from '@/app/context/NotificationContext';
@@ -11,6 +11,7 @@ import AppShell from '@/app/components/shell/AppShell';
 import AppearanceSettings from '@/app/components/AppearanceSettings';
 import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
+import { readPhoto, onPhotoChange, savePhotoFromFile, clearPhoto, PHOTO_TYPES } from '@/app/lib/profilePhoto';
 
 export default function ProfilePage() {
   const { theme, toggleTheme } = useTheme();
@@ -32,6 +33,17 @@ export default function ProfilePage() {
     avatar: '👤',
   });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [photo, setPhoto] = useState(null);
+  const [photoError, setPhotoError] = useState('');
+  const photoInput = useRef(null);
+  useEffect(() => { setPhoto(readPhoto()); return onPhotoChange(() => setPhoto(readPhoto())); }, []);
+  const choosePhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    setPhotoError('');
+    const r = await savePhotoFromFile(file);
+    if (!r.ok) setPhotoError(r.error);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -120,7 +132,9 @@ export default function ProfilePage() {
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <div className="flex items-center gap-6 flex-wrap" style={{ minWidth: 0 }}>
-                <div className="text-8xl" style={{ fontSize: 'clamp(64px, 20vw, 128px)', lineHeight: 1 }}>{profileData.avatar}</div>
+                {photo
+                  ? <img src={photo} alt="Ta photo de profil" data-testid="profile-photo" style={{ width: 'clamp(72px, 20vw, 128px)', height: 'clamp(72px, 20vw, 128px)', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--ik-primary)' }} />
+                  : <div className="text-8xl" style={{ fontSize: 'clamp(64px, 20vw, 128px)', lineHeight: 1 }}>{profileData.avatar}</div>}
                 <div style={{ minWidth: 0 }}>
                   <h1 className="text-4xl font-bold text-white mb-2" style={{ overflowWrap: 'anywhere' }}>{profileData.username}</h1>
                   <p className="text-gray-400 mb-3">{profileData.bio}</p>
@@ -141,9 +155,24 @@ export default function ProfilePage() {
                   <h3 className="text-2xl font-bold text-white mb-6">Modifier le Profil</h3>
 
                   <div className="space-y-4">
+                    {/* Photo de profil */}
+                    <div>
+                      <label className="block text-white font-semibold mb-2">Photo de profil</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        {photo
+                          ? <img src={photo} alt="Aperçu de ta photo" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
+                          : <span aria-hidden="true" style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 30, background: 'var(--ik-surface-3)' }}>{profileData.avatar}</span>}
+                        <input ref={photoInput} type="file" accept={PHOTO_TYPES.join(',')} onChange={choosePhoto} data-testid="photo-input" style={{ display: 'none' }} aria-label="Choisir une photo de profil" />
+                        <button type="button" onClick={() => photoInput.current?.click()} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">{photo ? 'Changer la photo' : 'Choisir une photo'}</button>
+                        {photo && <button type="button" onClick={() => { setPhotoError(''); clearPhoto(); }} className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">Retirer</button>}
+                      </div>
+                      <p className="text-gray-400" style={{ fontSize: 12, margin: '8px 0 0' }}>JPG, PNG ou WebP. La photo reste sur cet appareil : les autres joueurs ne la voient pas.</p>
+                      {photoError && <p role="alert" style={{ color: 'var(--ik-negative)', fontSize: 13, margin: '6px 0 0' }}>{photoError}</p>}
+                    </div>
+
                     {/* Avatar Selection */}
                     <div>
-                      <label className="block text-white font-semibold mb-2">Avatar</label>
+                      <label className="block text-white font-semibold mb-2">Avatar (si tu n'as pas de photo)</label>
                       <div className="grid grid-cols-6 gap-2">
                         {['👤', '👨', '👩', '🧑', '🎭', '⭐'].map((emoji) => (
                           <button

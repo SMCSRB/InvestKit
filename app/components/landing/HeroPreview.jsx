@@ -9,11 +9,10 @@ import Stage3D, { Coin3D, Layer } from './Stage3D';
 
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août'];
 
-// Aperçu animé du produit en 3D. Toutes les valeurs sont des exemples et sont annoncées comme telles.
+// Aperçu animé du produit en 3D (valeurs illustratives).
 export default function HeroPreview() {
   return (
-    <div className="lp-preview" aria-label="Aperçu du produit, données d'exemple">
-      <span className="ik-chip ik-chip--example lp-preview__tag">Aperçu · données d&apos;exemple</span>
+    <div className="lp-preview" aria-label="Aperçu du produit">
       <Stage3D>
         <Layer z={-90} par={0.05} className="lp-layer--glow" aria-hidden="true" />
         <Layer z={0} par={0}>
@@ -27,7 +26,7 @@ export default function HeroPreview() {
           </div>
           <div className="lp-mini" style={{ paddingBottom: 6 }}>
             <small>Valeur sur 8 mois</small>
-            <LineChart labels={MONTHS} xEvery={2} height={96} area minimal series={[{ label: 'Exemple', color: 'var(--ik-series-1)', data: [100, 104, 101, 110, 108, 118, 121, 130] }]} format={(v) => String(Math.round(v))} ariaLabel="Exemple de courbe de valeur" />
+            <LineChart labels={MONTHS} xEvery={2} height={96} area minimal series={[{ label: 'Valeur', color: 'var(--ik-series-1)', data: [100, 104, 101, 110, 108, 118, 121, 130] }]} format={(v) => String(Math.round(v))} ariaLabel="Courbe de valeur" />
           </div>
         </Layer>
         <Layer z={96} par={-0.05} className="lp-abs lp-abs--a">

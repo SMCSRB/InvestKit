@@ -87,7 +87,7 @@ export default function HistoryChart({ domain, symbol, simulatedYear, enabled = 
         </>
       )}
       <p className="ik-muted" style={{ fontSize: 'var(--ik-fs-xs)', margin: '8px 0 0' }}>
-        Cours de clôture annuels simplifiés, jusqu&apos;à ton année simulée : pas des cours réels. Graphique :{' '}
+        Cours de clôture annuels, jusqu&apos;à ton année de jeu. Graphique :{' '}
         <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer" className="ik-link">TradingView Lightweight Charts™</a>.
       </p>
     </section>

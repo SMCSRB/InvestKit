@@ -315,14 +315,6 @@ function BoardView({ simulatedAt }) {
   );
 }
 
-function Disclaimer({ text }) {
-  return (
-    <div role="note" data-testid="crypto-disclaimer" style={{ ...card, borderColor: 'color-mix(in srgb, var(--ik-warning) 50%, transparent)', background: 'var(--ik-warning-soft)', color: 'var(--ik-warning)', fontSize: 13, padding: '10px 14px' }}>
-      ⚠️ {text || 'Simulation à but éducatif, pas un conseil en investissement.'}
-    </div>
-  );
-}
-
 function StartScreen({ starts, onStart, busy }) {
   const [pick, setPick] = useState('y2017');
   return (
@@ -504,10 +496,9 @@ export default function CryptoPage() {
     <AppShell>
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-        <h1 style={{ margin: 0, color: 'var(--ik-text)', fontSize: 26 }}>₿ Marché Crypto <span style={{ fontSize: 13, color: 'var(--ik-text-3)', fontWeight: 400 }}>simulation</span></h1>
+        <h1 style={{ margin: 0, color: 'var(--ik-text)', fontSize: 26 }}>₿ Marché Crypto</h1>
         <span style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}><Link href="/education/crypto_market" data-testid="learn-link" style={{ color: 'var(--ik-warning)', fontSize: 14 }}>📚 Apprendre : cours et quiz</Link><Link href="/glossaire" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>Glossaire</Link><Link href="/dashboard" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Tableau de bord</Link></span>
       </div>
-      <div style={{ marginBottom: 14 }}><Disclaimer text={state.disclaimer} /></div>
       {info && <div role="status" style={{ ...card, borderColor: 'color-mix(in srgb, var(--ik-primary) 60%, transparent)', color: 'var(--ik-accent)', marginBottom: 12 }}>{info}</div>}
       {msg && <div role="alert" style={{ ...card, borderColor: 'var(--ik-negative)', color: 'var(--ik-negative)', marginBottom: 12 }}>{msg}</div>}
 

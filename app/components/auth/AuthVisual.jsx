@@ -51,12 +51,12 @@ export default function AuthVisual({ mode = 'signup' }) {
         <div className="au-stage__scene">
           <div className="au-pos au-pos--chart"><div className="au-bob" style={{ '--t': '8s' }}>
             <div className="au-glass au-chartcard">
-              <div className="au-chartcard__head"><span>Portefeuille d’exemple</span><span>▲ tendance</span></div>
+              <div className="au-chartcard__head"><span>Portefeuille</span><span>▲ tendance</span></div>
               <div className="au-candles">
                 {candles.map((c) => <i key={c.i} className={c.up ? 'up' : 'dn'} style={{ '--i': c.i, '--wl': `${c.wl}%`, '--wh': `${c.wh}%`, '--bl': `${c.bl}%`, '--bh': `${c.bh}%` }} />)}
                 <svg className="au-trend" viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d={trend} /></svg>
               </div>
-              <div className="au-chartcard__cap"><span>Exemple illustratif</span><span>pas un cours réel</span></div>
+              <div className="au-chartcard__cap"><span>8 derniers mois</span></div>
             </div>
           </div></div>
 

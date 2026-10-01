@@ -59,10 +59,9 @@ export default function TickerBar() {
     </Link>
   ));
   return (
-    <div className="ik-ticker" role="region" aria-label="Cours du marché simulé">
+    <div className="ik-ticker" role="region" aria-label="Cours du marché">
       <span className="ik-ticker__intro">
-        <span className="ik-chip ik-chip--example">Simulation</span>
-        Marché simulé
+        Marché
       </span>
       <div className="ik-ticker__track">
         <div className="ik-ticker__row">{row('')}{row('-bis')}</div>

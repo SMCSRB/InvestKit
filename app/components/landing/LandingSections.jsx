@@ -77,8 +77,8 @@ export function DomainStrip() {
 
 export function Facts() {
   const facts = [
-    { v: AVAILABLE.length, label: 'domaines de simulation' },
-    { v: CRYPTO_ASSET_COUNT, label: 'actifs crypto simulés', plus: true },
+    { v: AVAILABLE.length, label: 'domaines' },
+    { v: CRYPTO_ASSET_COUNT, label: 'actifs crypto', plus: true },
     { v: GLOSSARY.length, label: 'termes expliqués au glossaire' },
     { v: 0, label: 'euro réel en jeu', unit: '€' },
   ];
@@ -136,7 +136,7 @@ const DOMAINS = [
   },
   {
     icon: 'candles', title: 'Crypto',
-    text: 'Trade sur un marché simulé avec un graphique professionnel.',
+    text: 'Trade sur un marché historique avec un graphique professionnel.',
     points: ['Ordres au marché, limite, stop et objectif', 'Échanges crypto contre crypto, frais et écarts réalistes', 'Prêt sur portefeuille, appel de marge, liquidation', 'Événements de marché historiques'],
   },
   {
@@ -215,7 +215,7 @@ function FeatureVisual({ kind }) {
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800 }}><Coin size={26} /> Récompense du jour</div>
-      <div className="lp-streak" aria-label="Série de jours d'exemple">
+      <div className="lp-streak" aria-label="Série de jours">
         {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <i key={i} className={i < 5 ? 'is-on' : ''}>{d}</i>)}
       </div>
     </div>
@@ -276,7 +276,6 @@ export function Education() {
         <div style={{ marginTop: 26 }}><Button href="/education">Voir le parcours d&apos;éducation</Button></div>
       </div>
       <Reveal className="ik-card ik-card--glow" style={{ padding: 28 }}>
-        <span className="ik-chip ik-chip--example" style={{ marginBottom: 14 }}>Exemple de quiz</span>
         <h3 style={{ margin: '0 0 6px', fontSize: 'var(--ik-fs-md)', lineHeight: 1.4 }}>{QUIZ.q}</h3>
         <div role="group" aria-label="Réponses possibles">
           {QUIZ.options.map((o, i) => {

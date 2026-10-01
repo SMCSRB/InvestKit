@@ -7,6 +7,7 @@ import Icon from '@/app/components/ui/Icon';
 import { Button, Popover } from '@/app/components/ui/primitives';
 import { AnimatedNumber, burstCoins } from '@/app/components/ui/motion';
 import { endSession } from '@/app/lib/session';
+import { readPhoto, onPhotoChange } from '@/app/lib/profilePhoto';
 import { useTheme } from '@/app/context/ThemeContext';
 
 import { fmtInt } from '@/app/lib/format';
@@ -43,6 +44,7 @@ function Notifications({ notif, onRead }) {
               <div key={n.id} className="ik-notif__item" data-unread={!n.read}>{body}</div>
             );
           })}
+          <Link href="/dashboard?tab=notifications" className="ik-link" style={{ display: 'block', padding: '10px 12px 6px', textAlign: 'center' }} onClick={close}>Voir toutes les notifications</Link>
         </div>
       )}
     </Popover>
@@ -52,6 +54,8 @@ function Notifications({ notif, onRead }) {
 function ProfileMenu({ user, theme, onToggleTheme }) {
   const router = useRouter();
   const name = user?.username || user?.firstName || 'Mon compte';
+  const [photo, setPhoto] = useState(null);
+  useEffect(() => { setPhoto(readPhoto()); return onPhotoChange(() => setPhoto(readPhoto())); }, []);
   const logout = async () => {
     await endSession();
     router.push('/');
@@ -60,7 +64,9 @@ function ProfileMenu({ user, theme, onToggleTheme }) {
     <Popover
       trigger={({ toggle, open }) => (
         <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="true" aria-label={`Menu du compte : ${name}`}>
-          <span className="ik-avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+          {photo
+            ? <img className="ik-avatar" src={photo} alt="" aria-hidden="true" style={{ objectFit: 'cover' }} />
+            : <span className="ik-avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>}
           <span className="ik-profile__name">{name}</span>
           <Icon name="chevronDown" size={16} />
         </button>

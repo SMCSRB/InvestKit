@@ -13,8 +13,6 @@
 .rp-hint { margin: 6px 0 0; font-size: var(--ik-fs-xs); color: var(--ik-text-3); }
 
 /* ----- Bandeaux, pastilles ----- */
-.rp-fiction { margin: 0; padding: 8px 14px; border-radius: var(--ik-radius-sm); border: 1px dashed var(--ik-border-strong); background: var(--ik-primary-soft); color: var(--ik-text); font-size: var(--ik-fs-sm); }
-.rp-fiction--compact { padding: 6px 12px; }
 .rp-banner { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--ik-radius-sm); border: 1px solid var(--ik-border-strong); background: var(--ik-surface-2); }
 .rp-banner p { margin: 0; }
 .rp-banner--bad { border-color: var(--ik-negative); background: var(--ik-negative-soft); }

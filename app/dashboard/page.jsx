@@ -1,7 +1,7 @@
 'use client';
 
 import AppShell, { PageHeader } from '@/app/components/shell/AppShell';
-import { Button, EmptyState, Tabs } from '@/app/components/ui/primitives';
+import { Button, EmptyState } from '@/app/components/ui/primitives';
 import { useTheme } from '@/app/context/ThemeContext';
 import OverviewTab from './OverviewTab';
 import MarketTab from './MarketTab';
@@ -222,6 +222,10 @@ function DashboardContent() {
   const [badgeUnlockToasts, setBadgeUnlockToasts] = useState([]); // Toast notifications for new badges
   const [badgeConfetti, setBadgeConfetti] = useState([]); // Confetti particles for celebrations
   const [badgeDateObtained, setBadgeDateObtained] = useState({}); // { badgeId: timestamp }
+  // Annonce des badges : un badge n'est « annoncé » (pop-up + confettis) qu'UNE SEULE FOIS, puis marqué comme vu (enregistré dans le navigateur).
+  const [badgesHydrated, setBadgesHydrated] = useState(false);   // vrai quand l'état enregistré a été relu : avant, on n'attribue ni n'annonce rien
+  const [announcedBadges, setAnnouncedBadges] = useState([]);
+  const announcedRef = useRef(new Set());
   const [badgeUnlockProgress, setBadgeUnlockProgress] = useState({}); // Progress for near-unlock badges
   const [showBadgeAlbum, setShowBadgeAlbum] = useState(false); // Badge collection album modal
   const [badgeAlbumFilter, setBadgeAlbumFilter] = useState('all'); // all, obtained, locked, seasonal, secret
@@ -622,17 +626,10 @@ function DashboardContent() {
     }, 4000);
   }, [badgeDefinitions, playSound, createConfetti]);
 
-  // Unlock a new badge with all animations and effects
+  // Débloque un badge. L'annonce (pop-up) est faite une seule fois par l'effet « annonce des badges » plus bas.
   const unlockBadge = useCallback((badgeId) => {
-    if (userBadges.includes(badgeId)) return;
-
-    setUserBadges(prev => [...prev, badgeId]);
-    setBadgeDateObtained(prev => ({
-      ...prev,
-      [badgeId]: new Date().toISOString(),
-    }));
-    showBadgeToast(badgeId);
-  }, [userBadges, showBadgeToast]);
+    setUserBadges(prev => (prev.includes(badgeId) ? prev : [...prev, badgeId]));
+  }, []);
 
   // Calculate progress for near-unlock badges
   const calculateBadgeProgress = useCallback(() => {
@@ -794,13 +791,24 @@ function DashboardContent() {
       if (savedBadgeAuras) {
         setBadgeAuraColors(JSON.parse(savedBadgeAuras));
       }
+      // Badges déjà annoncés. Pour un navigateur qui a déjà des badges (avant cette correction), tout badge connu est considéré comme déjà annoncé.
+      const known = new Set();
+      try { JSON.parse(localStorage.getItem('investkit_badges_announced') || '[]').forEach((id) => known.add(id)); } catch { /* ignore */ }
+      try { JSON.parse(localStorage.getItem('investkit_badges') || '[]').forEach((id) => known.add(id)); } catch { /* ignore */ }
+      try { Object.keys(JSON.parse(localStorage.getItem('investkit_badge_dates') || '{}')).forEach((id) => known.add(id)); } catch { /* ignore */ }
+      announcedRef.current = known;
+      setAnnouncedBadges([...known]);
     } catch (e) {
       console.log('LocalStorage not available');
     }
+    setBadgesHydrated(true);
   }, []);
 
   useEffect(() => {
+    // Tant que l'état enregistré n'est pas relu, on n'écrit rien : sinon les valeurs vides de départ écraseraient les badges déjà obtenus.
+    if (!badgesHydrated) return;
     try {
+      localStorage.setItem('investkit_badges_announced', JSON.stringify(announcedBadges));
       localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
       localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
       localStorage.setItem('investkit_badges', JSON.stringify(userBadges));
@@ -817,13 +825,13 @@ function DashboardContent() {
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress, pinnedBadges, badgeCustomTitles, badgeAuraColors]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress, pinnedBadges, badgeCustomTitles, badgeAuraColors, badgesHydrated, announcedBadges]);
 
-  // Auto-award badges based on level progression
+  // Attribution automatique des badges de niveau et de cours (seulement une fois l'état enregistré relu).
   useEffect(() => {
+    if (!badgesHydrated) return;
     const currentLevel = userLevel || 1;
-    const newBadges = [...userBadges];
-    let badgesAwarded = false;
+    const wanted = [];
 
     // Level-based badges
     const levelBadges = {
@@ -833,12 +841,8 @@ function DashboardContent() {
       20: 'portfolio_genius',
       50: 'legend',
     };
-
     Object.entries(levelBadges).forEach(([level, badgeId]) => {
-      if (currentLevel >= parseInt(level) && !newBadges.includes(badgeId)) {
-        newBadges.push(badgeId);
-        badgesAwarded = true;
-      }
+      if (currentLevel >= parseInt(level)) wanted.push(badgeId);
     });
 
     // Course completion badges
@@ -848,37 +852,38 @@ function DashboardContent() {
       'stocks': 'stock_master',
       'realestate': 'real_estate_pro',
     };
-
     Object.entries(courseBadges).forEach(([course, badgeId]) => {
-      if (completedCourses.includes(course) && !newBadges.includes(badgeId)) {
-        newBadges.push(badgeId);
-        badgesAwarded = true;
-      }
+      if (completedCourses.includes(course)) wanted.push(badgeId);
     });
 
-    if (badgesAwarded) {
-      setUserBadges(newBadges);
+    if (wanted.length) {
+      setUserBadges(prev => {
+        const add = wanted.filter((id) => !prev.includes(id));
+        return add.length ? [...prev, ...add] : prev;
+      });
     }
-  }, [userLevel, progress?.completedDomains]);
+  }, [badgesHydrated, userLevel, progress?.completedDomains]);
 
-  // Calculate badge unlock progress and trigger toasts for newly unlocked badges
+  // Annonce des badges : pop-up + date d'obtention, UNE SEULE FOIS par badge (puis marqué comme vu, enregistré dans le navigateur).
   useEffect(() => {
+    if (!badgesHydrated) return;
     calculateBadgeProgress();
 
-    // Check for newly unlocked badges and show toasts
-    userBadges.forEach(badgeId => {
-      if (!badgeDateObtained[badgeId] && !badgeUnlockToasts.some(t => t.badgeId === badgeId)) {
-        showBadgeToast(badgeId);
-        setBadgeDateObtained(prev => ({
-          ...prev,
-          [badgeId]: new Date().toISOString(),
-        }));
-      }
+    const fresh = userBadges.filter((id) => !announcedRef.current.has(id));
+    if (!fresh.length) return;
+    fresh.forEach((id) => announcedRef.current.add(id));   // marqué tout de suite : aucun second affichage possible
+    setAnnouncedBadges([...announcedRef.current]);
+    setBadgeDateObtained(prev => {
+      const next = { ...prev };
+      fresh.forEach((id) => { if (!next[id]) next[id] = new Date().toISOString(); });
+      return next;
     });
-  }, [userLevel, userBadges, isDomainCompleted]);
+    fresh.forEach((id) => showBadgeToast(id));
+  }, [badgesHydrated, userLevel, userBadges, isDomainCompleted]);
 
-  // Auto-unlock seasonal badges based on current month
+  // Badge de saison : attribué une fois (il reste dans la liste des badges, il n'est donc plus jamais ré-annoncé).
   useEffect(() => {
+    if (!badgesHydrated) return;
     const currentMonth = new Date().getMonth();
     let seasonalBadgeId = null;
 
@@ -892,21 +897,19 @@ function DashboardContent() {
       seasonalBadgeId = 'winter_champion';
     }
 
-    if (seasonalBadgeId && !userBadges.includes(seasonalBadgeId)) {
-      unlockBadge(seasonalBadgeId);
-    }
-  }, []);
+    if (seasonalBadgeId) unlockBadge(seasonalBadgeId);
+  }, [badgesHydrated, unlockBadge]);
 
-  // Random secret badge unlock chance (1% per mount)
+  // Badge secret : 1 chance sur 100, tirée une seule fois par visite de la page.
+  const secretRolled = useRef(false);
   useEffect(() => {
+    if (!badgesHydrated || secretRolled.current) return;
+    secretRolled.current = true;
     if (Math.random() < 0.01) {
       const secretBadges = ['night_trader', 'lucky_seven', 'speedster', 'million_club'];
-      const randomSecret = secretBadges[Math.floor(Math.random() * secretBadges.length)];
-      if (!userBadges.includes(randomSecret)) {
-        unlockBadge(randomSecret);
-      }
+      unlockBadge(secretBadges[Math.floor(Math.random() * secretBadges.length)]);
     }
-  }, [userBadges, unlockBadge]);
+  }, [badgesHydrated, unlockBadge]);
 
   // Notifications réelles : chargées au démarrage puis toutes les 60 s. Une nouvelle notification non lue déclenche une pastille (pop-up) de quelques secondes.
   const NOTIF_ICONS = { bank: '🏦', re: '🏠', security: '🔐', admin: '🎁', pro: '⭐' };
@@ -1485,22 +1488,7 @@ function DashboardContent() {
           subtitle="Ton patrimoine et tes domaines, en un coup d'œil."
           actions={<Button icon="file" onClick={() => setNewsModalOpen(true)}>Actualités</Button>}
         />
-        <div className="dash-tabs">
-          <Tabs
-            ariaLabel="Sections du tableau de bord"
-            value={activeTab}
-            onChange={setActiveTab}
-            tabs={[
-              { value: 'overview', label: 'Vue d\'ensemble' },
-              { value: 'market', label: 'Marché' },
-              { value: 'trading', label: 'Simulateur' },
-              { value: 'education', label: 'Académie' },
-              { value: 'friends', label: `Amis (${userData.friends.length})` },
-              { value: 'notifications', label: `Notifications${notifications.filter((n) => !n.read).length > 0 ? ` (${notifications.filter((n) => !n.read).length})` : ''}` },
-              { value: 'settings', label: 'Paramètres' },
-            ]}
-          />
-        </div>
+        {/* Plus de barre d'onglets ici : la navigation est UNIQUE (menu principal à gauche). Les sections restent joignables par ?tab=… depuis ce menu. */}
 
         <div key={activeTab} className="dash-tabpanel">
         {activeTab === 'overview' && <OverviewTab overview={overview} failed={overviewFailed} onRetry={() => { setOverviewFailed(false); loadOverview(); }} onOpenTab={setActiveTab} />}

@@ -85,7 +85,7 @@ export default function CityMap({ cityId, cities, listings, allListings, activeI
 
   if (!city) {
     return (
-      <div className="rp-map" role="group" aria-label="Carte des villes fictives : choisis une ville pour voir ses annonces">
+      <div className="rp-map" role="group" aria-label="Carte des villes : choisis une ville pour voir ses annonces">
         <svg viewBox={`0 0 ${W} ${H}`} className="rp-map__svg" aria-hidden="true" focusable="false">
           <rect width={W} height={H} className="rp-map__sea" />
           {archipelago.map(({ c, path }, i) => <path key={c.id} d={path} className="rp-map__island" style={{ animationDelay: `${i * 60}ms` }} />)}
