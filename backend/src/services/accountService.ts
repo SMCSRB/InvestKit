@@ -59,6 +59,8 @@ export const exportUserData = async (userId: string) => {
       games: await one('SELECT id, profile, simulated_year, simulated_month, arrears_eur, missed_months, created_at FROM re_games WHERE user_id = $1'),
       properties: await byGame('re_properties'), loans: await byGame('re_loans'), statements: await byGame('re_statements'),
       events: await byGame('re_events'), sales: await byGame('re_sales'), expertises: await byGame('re_expertises'),
+      favorites: await one('SELECT listing_id, year, created_at FROM re_favorites WHERE user_id = $1'),
+      savedSearches: await one('SELECT id, name, filters, created_at FROM re_saved_searches WHERE user_id = $1'),
     },
     bank: {
       account: (await one('SELECT credit_blocked, blocked_reason, blocked_until, defaults, recoveries, written_off_coins, created_at FROM bank_accounts WHERE user_id = $1'))[0] ?? null,

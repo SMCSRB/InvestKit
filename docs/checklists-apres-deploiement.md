@@ -539,3 +539,28 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 12. Plus d'en-tête au milieu de la carte ; « Aller au contenu » n'apparaît qu'en appuyant sur Tab. Plus de badge rouge « Issue » en mode développement sur ces pages.
 13. Mobile 390 px : formulaire seul, pas de défilement horizontal, clair et sombre lisibles ; tout se fait au clavier (Tab, Entrée).
 14. La bascule de langue FR/EN/ES a disparu (traductions incomplètes) ; tout est tutoyé.
+
+## PR Design 12 — Immobilier façon portail d'annonces
+
+À fusionner **après** la PR « Design 11 » (#75). **Une migration** (`038`, s'applique toute seule au démarrage de l'API). Il te faut un compte avec le domaine Immobilier (gratuit ou Pro) et des InvestCoins.
+
+**Chercher**
+1. `/immobilier` : bandeau « Annonces fictives, simulation à but éducatif » ; barre de recherche, filtres, cartes avec image, prix en € **et** en 🪙, pastille DPE, pastilles « Vente pressée » et « Travaux à prévoir », ♥.
+2. Tape « Valcourt » : seules les annonces de Valcourt restent. « Filtres » : type, budget, surface, pièces, état, DPE, rendement, options → les pastilles de filtres actifs se retirent d'un clic. Tri par prix, prix au m², rendement.
+3. Grille / Liste / Carte : sur la carte, choisis une ville ; chaque annonce a une pastille de prix ; survol d'une pastille = carte de la liste mise en évidence ; clic = fiche. Les quartiers sont teintés selon le prix au m² réel des annonces.
+4. ♥ : le favori reste après rechargement et « Favoris (n) » filtre la liste. « Mes recherches » → « Enregistrer cette recherche » ; après « Avancer d'un an », une pastille indique les nouvelles annonces.
+
+**Fiche et achat**
+5. Fiche : galerie (façade, séjour, cuisine, plan), description, diagnostics (échelle DPE), charges, quartier (tension locative), loyer estimé, rendements brut et net. Les images sont des **illustrations** (mention visible).
+6. « Simuler mon financement » : change l'apport et la durée → mensualité et décision de la banque expliquée ; apport très bas = refus expliqué et « Acheter » bloqué. Mode **Avancé** (en haut à droite) : TAEG, intérêts, assurance, frais. Mode Simple par défaut.
+7. « Faire expertiser » affiche les défauts cachés. « Acheter ce bien » → confirmation → animation de **signature chez le notaire** → « Clés remises » → « Voir mes biens ».
+
+**Mes biens, bilan, classement**
+8. Mes biens : carte du bien (statut, loyer, prochaine échéance, alertes). « Mettre en location », « Payer les travaux » sur la carte ; « Gérer le bien » ouvre la fiche avec vente (85–110 %), rénovation (devis), assurance loyers, selon la situation.
+9. « Avancer d'un mois » plusieurs fois : Bilan du mois (tableau, enveloppe « Courrier du mois » qui s'ouvre, journal des événements). Classement inchangé.
+10. Aucun chiffre ne doit avoir changé par rapport à avant : mêmes prix, mensualités, loyers, décisions de la banque.
+
+**Mobile et accessibilité**
+11. 390 px : « Filtres » = tiroir plein écran, bascule Liste/Carte, fiche en pleine page avec barre « Simuler et acheter » collante, aucun défilement horizontal.
+12. Clavier : Tab jusqu'au titre d'une annonce, Entrée ouvre la fiche. Réglage « Animations : Non » : plus aucun mouvement.
+13. Parkings et immeubles n'apparaissent pas dans les filtres (ils n'existent pas dans le catalogue) : c'est voulu et expliqué sous « Type de bien ».

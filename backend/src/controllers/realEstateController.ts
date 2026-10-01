@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
+import { realEstateWatchService as watch } from '../services/realEstateWatchService';
 import { realEstateService, RealEstateError } from '../services/realEstateService';
 import { realEstateLifeService as life } from '../services/realEstateLifeService';
 import { realEstateSaleService as sales, getRealEstateLeaderboard } from '../services/realEstateSaleService';
@@ -42,7 +43,14 @@ export const realEstateController = {
   getState: handle('Erreur lors de la récupération de la partie', (_r, uid) => realEstateService.getState(uid)),
   start: handle('Erreur lors de la création de la partie', (r, uid) => realEstateService.startGame(uid, r.body?.profile)),
   listings: handle('Erreur lors de la récupération des annonces', (r, uid) =>
-    realEstateService.listListings(uid, { cityId: r.query.cityId, type: r.query.type, maxPrice: r.query.maxPrice })),
+    realEstateService.listListings(uid, r.query as Record<string, unknown>)),
+  favorites: handle('Erreur lors de la lecture des favoris', (_r, uid) => watch.listFavorites(uid)),
+  addFavorite: handle('Erreur lors de l\'ajout du favori', (r, uid) => watch.addFavorite(uid, r.params.id)),
+  removeFavorite: handle('Erreur lors du retrait du favori', (r, uid) => watch.removeFavorite(uid, r.params.id)),
+  savedSearches: handle('Erreur lors de la lecture des recherches', (_r, uid) => watch.listSavedSearches(uid)),
+  saveSearch: handle('Erreur lors de l\'enregistrement de la recherche', (r, uid) => watch.saveSearch(uid, r.body)),
+  searchSeen: handle('Erreur lors de la mise à jour de la recherche', (r, uid) => watch.markSeen(uid, r.params.id)),
+  deleteSearch: handle('Erreur lors de la suppression de la recherche', (r, uid) => watch.deleteSearch(uid, r.params.id)),
   listing: handle('Erreur lors de la récupération de l\'annonce', (r, uid) => realEstateService.getListingDetail(uid, r.params.id)),
   expertise: handle('Erreur lors de l\'expertise', (r, uid) => realEstateService.buyExpertise(uid, r.params.id)),
   preview: handle('Erreur lors de la simulation d\'achat', (r, uid) => realEstateService.previewPurchase(uid, r.body)),
