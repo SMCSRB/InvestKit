@@ -1437,6 +1437,7 @@ function DashboardContent() {
   return (
     <AppShell>
     <div className="dash-layout">
+      <div className="dash-aurora" aria-hidden="true" />
       <style>{`
         @keyframes slideInUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -1621,6 +1622,7 @@ function DashboardContent() {
           />
         </div>
 
+        <div key={activeTab} className="dash-tabpanel">
         {activeTab === 'overview' && <OverviewTab overview={overview} failed={overviewFailed} onRetry={() => { setOverviewFailed(false); loadOverview(); }} onOpenTab={setActiveTab} />}
 
         {/* MARKET TAB : cours réels du marché simulé, aucune valeur en dur */}
@@ -8311,6 +8313,7 @@ function DashboardContent() {
           </>)}
           </div>
         )}
+        </div>
       </div>
 
       {/* NEWS FEED MODAL */}

@@ -75,6 +75,11 @@ Méthode : le `<main>` plein écran d'origine devient `<AppShell>` ; les couleur
 
 Plusieurs pages (amis, profil, quiz final…) utilisaient des classes de type Tailwind (`flex`, `p-4`, `text-gray-400`…) alors que **Tailwind n'est pas installé** : ces classes ne faisaient rien. `scripts/gen-utilities.py` génère `app/styles/utilities.css` : un sous-ensemble de ces utilitaires, **limité aux classes réellement utilisées**, avec des couleurs du thème (clair/sombre). Après avoir ajouté une classe dans une de ces pages : `python3 scripts/gen-utilities.py`. Pour une page neuve, préférer les composants du design system.
 
+## Tableau de bord vivant (lot 8)
+
+- `DashHero.jsx` : salutation, série de jours (réelle), scène 3D à couches décalées par le curseur (variables `--px`/`--py` × profondeur `--d`), raccourcis `data-tilt`. `ProgressCard.jsx` : anneau de niveau (XP réels). `TiltScope` est monté dans `AppShell` : toute carte `data-tilt` s'incline.
+- Règles : uniquement `transform`/`opacity` ; chaque animation a sa coupure `data-motion='off'` et `prefers-reduced-motion` (testé) ; aucun chiffre inventé ; pas de suivi de souris sur écran tactile.
+
 ## Voir les composants
 
 En développement uniquement : `/design-system` (renvoie 404 en production).

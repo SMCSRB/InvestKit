@@ -462,3 +462,16 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 
 **Contrastes (ajouté après la revue du lot 7)**
 10. En mode clair, les textes « atténués » (libellés, heures, mentions) sont plus foncés qu'avant, les couleurs vert/rouge/orange/violet de texte ont été légèrement assombries en clair : vérifie que rien n'est devenu illisible sur le Tableau de bord, Crypto, Immobilier, Banque, Profil, Éducation. (Contrôle automatique fait : plus aucun texte sous 4,5:1 en clair ni en sombre sur ces pages, sauf pastilles décoratives.)
+
+## PR Design 8 — Un tableau de bord vivant (3D et mouvement)
+
+À fusionner **après** la PR « Design 7 ». Ouvre `/dashboard` (Vue d'ensemble).
+
+1. **Accueil** : un grand bandeau violet te salue (« Bonjour/Bon après-midi/Bonsoir, <ton nom> »). Bouge la souris dessus : la pièce 3D, les petites pièces, les sphères et la carte « Patrimoine » se décalent à des profondeurs différentes (parallaxe) et flottent doucement. Sur téléphone : pas de suivi de souris, la scène flotte seulement.
+2. **Série de jours** : la pastille « Série de N jours » n'apparaît que si ta série est réelle (> 0). Si ta récompense du jour est disponible, un bouton blanc « Récupérer ma récompense du jour » pulse ; il fait exactement la même chose que le bouton cadeau de la barre du haut (compare ton solde avant/après).
+3. **Raccourcis** (Bourse et PEA, Crypto, Immobilier, Apprendre) : les cartes s'inclinent vers le curseur avec un reflet, l'icône se soulève au survol. Chaque carte ouvre la bonne page.
+4. **Cartes de chiffres** (Patrimoine, Liquidités, Titres, Dette) : même inclinaison ; les chiffres s'animent jusqu'à leur valeur réelle.
+5. **Ma progression** : un anneau se remplit jusqu'à ton avancement vers le niveau suivant ; niveau et XP viennent de ta progression d'éducation (compare avec l'onglet Académie). « Continuer à apprendre » ouvre `/education`.
+6. **Fond** : deux halos de lumière dérivent très lentement derrière la page ; à chaque changement d'onglet, le contenu glisse doucement en place ; les boutons ont un petit effet « pressé ».
+7. **Animations : Non** (carte Apparence de `/profile`) : tout devient immobile et à plat (pas de flottement, pas d'inclinaison, pas de halo qui bouge). « Auto » respecte le réglage « réduire les animations » de ton appareil.
+8. Mobile (390 px) : pas de défilement horizontal, la scène passe au-dessus du texte.
