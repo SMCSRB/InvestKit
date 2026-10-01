@@ -76,3 +76,12 @@ export const socialWriteLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop d\'actions sociales. Réessaie dans quelques minutes.' },
 });
+
+// Favoris et recherches enregistrées (Immobilier) : 120 par 10 minutes et par IP (assez pour parcourir, pas pour martelage).
+export const watchLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'actions sur tes favoris. Réessaie dans quelques minutes.' },
+});

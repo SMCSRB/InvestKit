@@ -3,12 +3,12 @@ import type { PoolClient } from 'pg';
 import { investcoinsRepository, InsufficientFundsError } from '../repositories/investcoinsRepository';
 import { userRepository } from '../repositories/userRepository';
 import { getBuyAccess } from '../utils/entitlements';
-import { getRealEstateDataSource, Listing, ListingFilter, PropertyType } from '../data/realEstate';
+import { getRealEstateDataSource, Listing } from '../data/realEstate';
 import {
   BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT,
   loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
 } from '../config/immoRules';
-import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation } from '../engine/immo';
+import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks } from '../engine/immo';
 import { spendableCoins, monthlyInstalmentCoins } from './bankService';
 
 export const RE_DOMAIN = 'real_estate';
@@ -58,6 +58,15 @@ const checkInt = (v: unknown, name: string, min: number, max: number): number =>
   }
   return v;
 };
+
+// Annonce + champs dérivés pour l'affichage (aucun nouveau chiffre : divisions des champs de l'annonce).
+export const decorateListing = (l: Listing) => ({
+  ...l,
+  pricePerSqm: pricePerSqm(l),
+  grossYieldPct: grossYieldPct(l),
+  priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
+  needsWorks: needsWorks(l),
+});
 
 const checkListingId = (v: unknown): string => {
   if (typeof v !== 'string' || !/^[a-z0-9-]{1,80}$/.test(v)) throw new RealEstateError('INVALID_INPUT', 'Identifiant de bien invalide');
@@ -226,27 +235,24 @@ export const realEstateService = {
     return this.getState(userId);
   },
 
-  async listListings(userId: string, filter: { cityId?: unknown; type?: unknown; maxPrice?: unknown }) {
+  // Recherche d'annonces : filtres et tri validés et appliqués par le moteur pur (engine/immo/listingSearch.ts).
+  // Les champs ajoutés (prix au m², rendement brut, prix en pièces) sont de simples divisions des champs de l'annonce.
+  async listListings(userId: string, filter: Record<string, unknown>) {
     const game = await requireGame(userId);
-    const f: ListingFilter = {};
-    if (filter.cityId !== undefined) {
-      if (typeof filter.cityId !== 'string') throw new RealEstateError('INVALID_INPUT', 'cityId invalide');
-      f.cityId = filter.cityId;
+    let params;
+    try { params = parseSearch(filter); } catch (e) {
+      if (e instanceof SearchInputError) throw new RealEstateError('INVALID_INPUT', e.message);
+      throw e;
     }
-    if (filter.type !== undefined) {
-      if (!['studio', 'apartment', 'house'].includes(filter.type as string)) throw new RealEstateError('INVALID_INPUT', 'type invalide');
-      f.type = filter.type as PropertyType;
-    }
-    if (filter.maxPrice !== undefined) {
-      const n = Number(filter.maxPrice);
-      if (!Number.isFinite(n) || n <= 0) throw new RealEstateError('INVALID_INPUT', 'maxPrice invalide');
-      f.maxPrice = n;
-    }
-    const listings = await source().listListings(game.simulated_year, f);
+    const all = await source().listListings(game.simulated_year);
     const owned = await query(`SELECT listing_id FROM re_properties WHERE game_id = $1 AND status <> 'sold'`, [game.id]);
     const ownedSet = new Set(owned.rows.map((r: any) => r.listing_id));
-    const cities = (await source().listCities()).map((c) => ({ id: c.id, name: c.name, region: c.region, tier: c.tier, description: c.description, tenseZone: c.tenseZone }));
-    return { year: game.simulated_year, cities, listings: listings.filter((l) => !ownedSet.has(l.id)) };
+    const available = all.filter((l) => !ownedSet.has(l.id));
+    const citiesFull = await source().listCities();
+    const places = Object.fromEntries(citiesFull.map((c) => [c.id, { cityName: c.name, region: c.region }]));
+    const cities = citiesFull.map((c) => ({ id: c.id, name: c.name, region: c.region, tier: c.tier, description: c.description, tenseZone: c.tenseZone }));
+    const found = searchListings(available, params, places);
+    return { year: game.simulated_year, cities, total: available.length, count: found.length, eurosPerCoin: EUROS_PER_COIN, listings: found.map(decorateListing) };
   },
 
   async getListingDetail(userId: string, listingId: unknown) {
@@ -258,7 +264,7 @@ export const realEstateService = {
     ]);
     const exp = await query('SELECT real_works, hidden_defects FROM re_expertises WHERE game_id = $1 AND listing_id = $2 AND year = $3', [game.id, id, game.simulated_year]);
     return {
-      listing, city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
+      listing: decorateListing(listing), city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
       expertiseCostCoins: coinsFor(expertiseCostEuros(listing.price)),
       expertise: exp.rows[0] ? { realWorks: Number(exp.rows[0].real_works), hiddenDefects: exp.rows[0].hidden_defects } : null,
     };
