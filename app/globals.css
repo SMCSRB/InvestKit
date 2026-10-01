@@ -10,6 +10,7 @@
 @import './styles/landing.css';
 @import './styles/dashboard.css';
 @import './styles/utilities.css';
+@import './styles/social.css';
 
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-30px); }

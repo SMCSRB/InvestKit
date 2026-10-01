@@ -10,8 +10,8 @@ function generateFriendCode() {
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState({
-    friendCode: '#UJYD0L',
-    fullName: 'SMC.SRB',
+    friendCode: '', // le vrai code ami vient du serveur (/api/v1/social/me)
+    fullName: '',
     bio: 'Investisseur Premium 🚀',
     profilePhoto: '',
     friends: [], // { userId, friendCode, name, status: 'confirmed', addedDate }
@@ -84,8 +84,8 @@ export function UserProvider({ children }) {
     if (!user.friendCode || user.friendCode === '') {
       setUser((prev) => ({
         ...prev,
-        friendCode: '#UJYD0L',
-        fullName: 'SMC.SRB',
+        friendCode: '', // le vrai code ami vient du serveur (/api/v1/social/me)
+        fullName: '',
         bio: 'Investisseur Premium 🚀',
       }));
     }
