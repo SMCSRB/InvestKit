@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../src/app';
 import { generateToken } from '../src/utils/jwt';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId } from './helpers';
 import { query } from '../src/utils/db';
 import { importDemo } from '../src/services/crypto/importer';
 import { cryptoDataService } from '../src/services/crypto/dataService';
@@ -31,7 +31,7 @@ describe.skipIf(!hasDb)('Prêt sur portefeuille Crypto, classement, contrôles (
   const setClock = (u: string, ms: number) => query(`UPDATE crypto_accounts SET simulated_at = to_timestamp($2::float8/1000.0), start_at = to_timestamp($2::float8/1000.0) WHERE user_id = $1`, [u, ms]);
   // Joueur placé au jour `day` d'un actif de test, sans incident technique ce jour-là.
   const player = async (balance = 50_000, opts: any = {}) => {
-    const id = await createUser({ balance, tier: 'pro', ...opts });
+    const id = await createUser({ id: calmUserId(), balance, tier: 'pro', ...opts });
     await clockService.create(id, 'y2020');
     let day = 5;
     while (activeEffects(id, T0 + day * D, T0).outage || activeEffects(id, T0 + (day - 1) * D, T0).outage) day++;
