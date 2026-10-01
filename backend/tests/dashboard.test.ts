@@ -42,8 +42,30 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
   });
 
   it('le texte sur surface utilise les jetons de thème (lisible en clair comme en sombre)', () => {
-    for (const f of ['components/PortfolioRisk.jsx', 'components/HelpTip.jsx']) expect(read(f), f).not.toMatch(/color: '(?:white|#fff)'/);
+    for (const f of ['components/PortfolioRisk.jsx', 'components/HelpTip.jsx', 'crypto/page.jsx']) expect(read(f), f).not.toMatch(/color: '(?:white|#fff)'/);
     // seuls les 3 boutons pleins (fond violet ou vert) gardent du blanc
     expect(read('components/OnboardingChecklist.jsx').match(/'white'/g)).toHaveLength(3);
+  });
+});
+
+describe('marchés (lot 4) : thème et honnêteté des graphiques', () => {
+  it('le graphique pro lit les couleurs du thème (plus de palette sombre codée en dur)', () => {
+    const chart = read('crypto/PriceChart.jsx');
+    expect(chart).toContain('useChartTheme');
+    expect(chart).not.toMatch(/const COLORS = /);
+    expect(chart).not.toMatch(/createChart\([\s\S]{0,400}#[0-9a-fA-F]{6}/);
+  });
+
+  it('l\'historique Bourse est borné côté serveur, étiqueté illustratif et attribué à TradingView', () => {
+    const h = read('components/HistoryChart.jsx');
+    expect(h).toMatch(/Données illustratives/);
+    expect(h).toMatch(/Lightweight Charts/);
+    expect(h).toMatch(/\/trading\/history\?domain=/);
+    expect(h).toMatch(/Voir les valeurs \(tableau\)/); // vue tableau accessible
+  });
+
+  it('/crypto utilise la coque et le thème', () => {
+    expect(read('crypto/page.jsx')).toContain('<AppShell>');
+    expect(read('lib/designRoutes.js')).toContain("'/crypto'");
   });
 });

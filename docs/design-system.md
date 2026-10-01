@@ -60,6 +60,13 @@ Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les i
 - Les cartes chargées ont des emplacements réservés (skeleton à la hauteur mesurée) : pas de saut de mise en page (CLS mobile 0,38 → 0,001).
 - Contenus d'exemple restants (amis, guildes, messages) : annoncés par `.dash-demo-note` tant que le réseau social n'est pas réel.
 
+## Marchés et graphiques (lot 4)
+
+- `/crypto` est dans la coque (`AppShell`) et dans `THEMED_PREFIXES` ; les couleurs codées en dur de la page ont été remplacées par les jetons.
+- Graphiques canvas (Lightweight Charts n'accepte pas `var(--…)`) : `app/lib/chartTheme.js` lit les jetons du thème actif (`useChartTheme`) et se met à jour quand `data-theme` change ; `withAlpha` fabrique les transparences. Couleurs d'indicateurs = séries validées (ordre fixe).
+- Bourse : `app/components/HistoryChart.jsx` (courbe annuelle, étiquette « Données illustratives », tableau accessible) lit `GET /api/v1/trading/history`, borné côté serveur à l'année simulée du joueur.
+- L'attribution TradingView reste obligatoire (logo du graphique + lien sous la carte).
+
 ## Voir les composants
 
 En développement uniquement : `/design-system` (renvoie 404 en production).

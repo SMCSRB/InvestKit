@@ -5,6 +5,7 @@ import { Button, EmptyState, Tabs } from '@/app/components/ui/primitives';
 import { useTheme } from '@/app/context/ThemeContext';
 import OverviewTab from './OverviewTab';
 import MarketTab from './MarketTab';
+import HistoryChart from '@/app/components/HistoryChart';
 
 import { PRICES, formatEuro } from '@/app/lib/plans';
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
@@ -1699,7 +1700,7 @@ function DashboardContent() {
                       padding: '16px',
                     }}>
                       <p style={{ fontSize: '11px', color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
-                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'white', margin: 0 }}>{stat.value}</p>
+                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'var(--ik-text)', margin: 0 }}>{stat.value}</p>
                     </div>
                   ))}
                 </div>
@@ -1714,7 +1715,7 @@ function DashboardContent() {
                     background: tradingPortfolio?.simulatedYear >= tradingPortfolio?.maxYear
                       ? 'color-mix(in srgb, var(--ik-text) 10%, transparent)'
                       : 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
-                    color: 'var(--ik-text)',
+                    color: 'var(--ik-text-on-primary)',
                     fontWeight: '700',
                     fontSize: '13px',
                     cursor: tradingLoading ? 'wait' : 'pointer',
@@ -1775,6 +1776,8 @@ function DashboardContent() {
                     )}
                   </div>
                 )}
+
+                <HistoryChart domain={tradingDomain} symbol={tradingSelectedAsset} simulatedYear={tradingPortfolio?.simulatedYear} />
 
                 {/* Achat */}
                 <div style={{
