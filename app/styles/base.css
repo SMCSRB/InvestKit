@@ -1,0 +1,214 @@
+/* Base commune : corps de page, focus clavier, mouvement, utilitaires. */
+
+html {
+  background: var(--ik-bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+html body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--ik-font);
+  font-size: var(--ik-fs-base);
+  line-height: 1.55;
+  color: var(--ik-text);
+  background:
+    radial-gradient(900px 520px at 8% -8%, var(--ik-bg-glow-1), transparent 70%),
+    radial-gradient(820px 480px at 100% 4%, var(--ik-bg-glow-2), transparent 70%),
+    var(--ik-bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.ik-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Focus clavier toujours visible */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--ik-focus);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.ik-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ik-skip-link {
+  position: fixed;
+  left: 16px;
+  top: -60px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: var(--ik-radius-sm);
+  background: var(--ik-primary);
+  color: var(--ik-text-on-primary);
+  font-weight: 700;
+  transition: top var(--ik-dur-fast) var(--ik-ease);
+}
+.ik-skip-link:focus {
+  top: 12px;
+}
+
+/* Barres de défilement discrètes */
+.ik-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ik-border-strong) transparent;
+}
+.ik-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.ik-scroll::-webkit-scrollbar-thumb {
+  background: var(--ik-border-strong);
+  border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Mouvement : uniquement transform et opacity (fluide à 60 images/s)
+   -------------------------------------------------------------------------- */
+@keyframes ik-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes ik-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ik-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+@keyframes ik-shimmer {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+@keyframes ik-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ik-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes ik-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes ik-ticker {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+@keyframes ik-coin-fly {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--ik-fly-x, 120px), var(--ik-fly-y, -140px), 0) scale(1);
+  }
+}
+@keyframes ik-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(109, 79, 240, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(109, 79, 240, 0);
+  }
+}
+
+/* Apparition au défilement (activée par le composant Reveal) */
+.ik-reveal {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity var(--ik-dur-slow) var(--ik-ease),
+    transform var(--ik-dur-slow) var(--ik-ease);
+  transition-delay: calc(var(--ik-i, 0) * var(--ik-stagger));
+}
+.ik-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+/* Sans JavaScript, tout reste visible */
+.no-js .ik-reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.ik-page-enter {
+  animation: ik-rise var(--ik-dur-slow) var(--ik-ease) both;
+}
+
+/* Animations coupées : réglage utilisateur ou préférence système */
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) *,
+  :root:not([data-motion='on']) *::before,
+  :root:not([data-motion='on']) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

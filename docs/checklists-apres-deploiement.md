@@ -310,3 +310,19 @@ Voir `docs/crypto-banque-classement.md` (section « À tester chez moi »).
 
 ## PR Crypto — éducation (glossaire, quiz, « ? »)
 Voir `docs/crypto-education.md` (section « À tester chez moi »).
+
+## PR Design 1 — Socle du nouveau design (variables, composants, coque)
+
+Cette PR ne change pas encore l'apparence des pages existantes (elles restent comme avant, en sombre). Elle pose les fondations : variables de design, composants,
+menu latéral, barre supérieure, recherche. Elle change aussi, pour TOUT le site : la police (Plus Jakarta Sans), le fond de page, l'ancien CSS passé en « priorité basse »,
+les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les messages de confirmation (toasts).
+
+1. Ouvre le site en navigation privée, connecte-toi, parcours **Tableau de bord, Immobilier, Crypto, Banque, Éducation, Glossaire, Profil** : les pages marchent comme avant (pas de texte coupé, pas de boutons déformés). La police a changé (plus arrondie), c'est normal.
+2. En bas à droite, le bouton **« Un retour ? »** s'ouvre : choisis « Avis », clique « Utile » : un message de remerciement s'affiche. Essaie aussi « Bug » avec un texte de plus de 5 caractères.
+3. Sur téléphone (ou fenêtre étroite, 390 px) : aucune page n'a de barre de défilement horizontale.
+4. **Zoom** : tu peux maintenant zoomer avec deux doigts sur téléphone (avant, c'était bloqué).
+5. Si une annonce « info » ou « maintenance » est publiée depuis l'administration, le bandeau s'affiche en haut (violet ou ocre), avec un bouton « Fermer » qui marche.
+6. En tant qu'administrateur, **Voir comme** un utilisateur : le bandeau rouge « Lecture seule » s'affiche et « Quitter » te ramène à l'administration.
+7. Un compte **administrateur** : `GET /api/v1/auth/me` contient maintenant `isAdmin: true` ; pour un joueur normal, `false`.
+8. `/design-system` : **404 en production** (la page de démonstration n'existe qu'en développement). Normal.
+9. Aucune erreur rouge dans la console du navigateur (touche F12) sur les pages ci-dessus.

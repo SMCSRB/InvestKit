@@ -471,6 +471,7 @@ export const authController = {
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
           hasProAccess: hasProAccess(user),
+          isAdmin: user.role === 'admin',
           canChangeFreeDomain: !!user.free_domain && user.free_domain_change_allowed === true,
           enable2FA: user.enable_2fa,
           referralCode: user.referral_code,
