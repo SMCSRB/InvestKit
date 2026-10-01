@@ -67,6 +67,10 @@ Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les i
 - Bourse : `app/components/HistoryChart.jsx` (courbe annuelle, étiquette « Données illustratives », tableau accessible) lit `GET /api/v1/trading/history`, borné côté serveur à l'année simulée du joueur.
 - L'attribution TradingView reste obligatoire (logo du graphique + lien sous la carte).
 
+## Pages migrées (lots 5 à 7)
+
+Méthode : le `<main>` plein écran d'origine devient `<AppShell>` ; les couleurs d'origine sont remplacées par les jetons (script de migration jetable, relu à la main) ; la route est ajoutée à `THEMED_PREFIXES`. `backend/tests/designMigration.test.ts` liste les pages migrées et vérifie : coque, route thémée, aucune couleur d'origine ni texte blanc nu. Texte sur boutons pleins : `--ik-text-on-primary|positive|negative`.
+
 ## Voir les composants
 
 En développement uniquement : `/design-system` (renvoie 404 en production).

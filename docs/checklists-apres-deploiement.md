@@ -400,3 +400,20 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 **Partout**
 8. Mobile (390 px) : pas de défilement horizontal sur `/crypto` ni sur le Simulateur ; le graphique se zoome au doigt.
 9. Aucune erreur rouge dans la console (F12).
+
+## PR Design 5 — Immobilier et Banque (lot 5/6)
+
+À fusionner **après** la PR « Design 4 ». Connecte-toi avec ton compte de test.
+
+**Immobilier (`/immobilier`)**
+1. La page s'ouvre dans la coque du site (menu, barre du haut). Bascule clair/sombre : annonces, cartes, bandeaux et boutons restent lisibles.
+2. Parcours complet comme avant : filtrer les annonces (ville, type, prix max), ouvrir une annonce, acheter (si domaine gratuit/Pro), « Avancer d'un mois / d'un an », « Mon portefeuille », « Bilan du mois », « Classement », vente, travaux, locataires. Rien n'a été retiré.
+3. Si Immobilier n'est pas ton domaine gratuit, le bandeau « Tu peux consulter… l'achat demande… » s'affiche et les achats sont refusés comme avant.
+
+**Banque (`/banque`)**
+4. Même coque. Les cartes « Dette en cours » et « Crédit fléché non dépensé » affichent tes vraies valeurs (compare avec le Tableau de bord).
+5. « Simuler » un prêt personnel et un prêt sur portefeuille : le résultat s'affiche, la confirmation demande bien l'accord ; « Mes prêts » liste tes prêts ; la procédure de recours (bouton rouge) est lisible en clair comme en sombre.
+
+**Partout**
+6. Mobile (390 px) : pas de défilement horizontal sur les deux pages.
+7. Aucune erreur rouge dans la console (F12).

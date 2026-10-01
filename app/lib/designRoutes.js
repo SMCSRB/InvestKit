@@ -1,6 +1,6 @@
 // Pages déjà passées au nouveau thème. Les autres restent en sombre fixe (leur habillage d'origine n'a pas de thème clair).
 // Retirer ce filtre quand toutes les pages seront migrées (lot 6).
-export const THEMED_PREFIXES = ['/', '/dashboard', '/crypto', '/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/design-system'];
+export const THEMED_PREFIXES = ['/', '/dashboard', '/crypto', '/immobilier', '/banque', '/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/design-system'];
 
 export const isThemedPath = (pathname) =>
   THEMED_PREFIXES.some((p) => pathname === p || (p !== '/' && pathname.startsWith(p + '/')));
