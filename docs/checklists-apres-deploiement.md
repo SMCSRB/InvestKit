@@ -354,3 +354,30 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 
 **Partout**
 16. Mobile (390 px) : pas de défilement horizontal sur l'accueil, la connexion et l'inscription. Mode clair : tout reste lisible.
+
+## PR Design 3 — Tableau de bord (lot 3/6)
+
+À fusionner **après** la PR « Design 2 ». Connecte-toi avec ton compte de test.
+
+**Coque et navigation**
+1. `/dashboard` : menu latéral à gauche, barre du haut avec ton solde d'InvestCoins (réel), ta série de jours, tes notifications.
+2. Les onglets sont : Vue d'ensemble, Marché, Simulateur, Académie, Amis, Notifications, Activité, Paramètres. Les anciens onglets « Projets » et « Risques » (qui n'affichaient que « Section en développement ») sont masqués ; un ancien lien `?tab=risk` ouvre l'analyse de risque réelle (dans le Simulateur).
+3. Clique chaque onglet : l'adresse change (`?tab=…`), F5 te remet sur le même onglet. Les liens du menu latéral (Bourse et PEA, Éducation, Amis, Paramètres…) ouvrent le bon onglet.
+
+**Vue d'ensemble (chiffres réels uniquement)**
+4. Quatre cartes : Patrimoine, Liquidités, Titres, Dette bancaire ; répartition (anneau + barre) ; risque du portefeuille ; trois cartes de domaine Bourse / Crypto / Immobilier ; synthèse. Compare avec ton solde en haut : mêmes valeurs.
+5. Compte **gratuit** : les domaines non choisis sont floutés avec « Voir l'offre Pro » (mène à Paramètres). Compte Pro : tout est visible.
+6. « Tes premiers pas » : la checklist affiche tes étapes réelles ; « C'est parti » ouvre la bonne page.
+7. « Ouvrir l'analyse » / « Voir l'analyse » ouvrent l'analyse de risque (onglet Simulateur), pas une page vide.
+
+**Marché**
+8. L'onglet Marché n'affiche plus de faux cours (CAC 40, BTC…). Il montre les vrais cours du marché Crypto simulé (8 actifs, mini-courbes) s'il est activé sur ton compte, sinon un message honnête et un bouton vers `/crypto`.
+
+**Données d'exemple signalées**
+9. Onglet Amis : un bandeau « Exemple » rappelle que les amis/guildes/messages sont des profils d'exemple (réseau social pas encore connecté). Onglet Activité : plus de personnes inventées, message « Pas encore d'activité ».
+10. Simulateur → Classement : **20 lignes au maximum** (avant, des centaines de joueurs à égalité pouvaient s'afficher).
+
+**Partout**
+11. Bascule Mode clair/sombre : texte lisible partout (checklist, risque, info-bulles « ? »).
+12. Mobile (390 px) : pas de défilement horizontal ; la barre d'onglets défile sur le côté.
+13. Aucune erreur rouge dans la console (F12). Note : en développement, recharger la page très souvent peut déclencher « Trop de requêtes » (limite de 300 requêtes par 15 minutes) : attendre ou relancer le serveur.

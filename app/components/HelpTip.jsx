@@ -34,7 +34,7 @@ export default function HelpTip({ term, label }) {
         onClick={() => setOpen((o) => !o)}
         style={{
           borderRadius: '50%', border: '1px solid rgba(96,165,250,0.7)',
-          background: 'rgba(59,130,246,0.2)', color: '#93c5fd', fontWeight: 700, cursor: 'pointer',
+          background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)', color: 'var(--ik-info, var(--ik-primary-soft, var(--ik-accent)))', fontWeight: 700, cursor: 'pointer',
         }}
       >?</button>
       {open && (
@@ -42,19 +42,19 @@ export default function HelpTip({ term, label }) {
           role="dialog"
           style={{
             position: 'absolute', zIndex: 50, top: 24, left: -8, width: 'min(320px, 80vw)', padding: '12px 14px',
-            borderRadius: 10, background: '#0f172a', border: '1px solid rgba(96,165,250,0.5)',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.5)', color: '#e2e8f0', fontSize: 13, lineHeight: 1.5, textAlign: 'left',
+            borderRadius: 10, background: 'var(--ik-surface-1)', border: '1px solid var(--ik-border-strong)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)', color: 'var(--ik-text-2)', fontSize: 13, lineHeight: 1.5, textAlign: 'left',
             fontWeight: 400, textTransform: 'none', letterSpacing: 'normal',
           }}
         >
-          <strong style={{ display: 'block', marginBottom: 4, color: '#fff' }}>{entry.term}</strong>
+          <strong style={{ display: 'block', marginBottom: 4, color: 'var(--ik-text)' }}>{entry.term}</strong>
           {entry.short}
-          {entry.inGame && <span style={{ display: 'block', marginTop: 6, color: '#93c5fd' }}>Dans le jeu : {entry.inGame}</span>}
-          <Link href={`/glossaire#${entry.id}`} style={{ display: 'block', marginTop: 8, color: '#60a5fa', fontSize: 12 }}>
+          {entry.inGame && <span style={{ display: 'block', marginTop: 6, color: 'var(--ik-info, var(--ik-primary-soft, var(--ik-accent)))' }}>Dans le jeu : {entry.inGame}</span>}
+          <Link href={`/glossaire#${entry.id}`} style={{ display: 'block', marginTop: 8, color: 'var(--ik-accent)', fontSize: 12 }}>
             Voir l&apos;explication complète →
           </Link>
           {entry.quiz && (
-            <Link href={`/education/${entry.quiz.domain}/${entry.quiz.chapter}`} style={{ display: 'block', marginTop: 4, color: '#60a5fa', fontSize: 12 }}>
+            <Link href={`/education/${entry.quiz.domain}/${entry.quiz.chapter}`} style={{ display: 'block', marginTop: 4, color: 'var(--ik-accent)', fontSize: 12 }}>
               📝 Teste-toi : quiz lié →
             </Link>
           )}
