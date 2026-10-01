@@ -15,7 +15,8 @@
     "coins-stats": "ts-node scripts/coins-stats.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
-    "encrypt-totp": "ts-node scripts/encrypt-totp-secrets.ts"
+    "encrypt-totp": "ts-node scripts/encrypt-totp-secrets.ts",
+    "education-abuse": "ts-node scripts/education-abuse.ts"
   },
   "keywords": [
     "investissement",
