@@ -142,7 +142,7 @@ export default function PrivacyPage() {
             <h2 style={{
               fontSize: '18px',
               fontWeight: '700',
-              color: 'var(--ik-text)',
+              color: 'var(--ik-text-on-primary)',
               margin: '0 0 12px 0',
               background: 'linear-gradient(135deg, var(--ik-text) 0%, var(--ik-primary) 100%)',
               WebkitBackgroundClip: 'text',

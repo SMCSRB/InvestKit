@@ -38,7 +38,7 @@ def color(kind, name, shade, alpha):
             return base
         if kind == 'border': return mix('var(--ik-text)', 16 if a is None or a >= 50 else 10)
     v = TOKEN[fam]
-    if kind == 'text': return f"var({TEXT_ACCENT.get(fam, v)})"
+    if kind == 'text': return f"color-mix(in srgb, var({TEXT_ACCENT.get(fam, v)}) 78%, var(--ik-text))"
     if kind == 'border': return mix(f"var({v})", a if a is not None else 60)
     if sh >= 800 or (a is not None and a <= 40): return mix(f"var({v})", max(8, min(a if a is not None else 100, 100)) if a is not None and a > 20 else 16)
     return mix(f"var({v})", a) if a is not None else f"var({v})"
@@ -76,8 +76,8 @@ def base_rule(c):
               'flex-col': 'flex-direction:column', 'flex-wrap': 'flex-wrap:wrap', 'flex-1': 'flex:1 1 0%', 'items-center': 'align-items:center', 'items-start': 'align-items:flex-start',
               'justify-between': 'justify-content:space-between', 'justify-center': 'justify-content:center', 'text-center': 'text-align:center', 'font-bold': 'font-weight:700',
               'font-semibold': 'font-weight:600', 'font-mono': 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace', 'relative': 'position:relative', 'absolute': 'position:absolute', 'fixed': 'position:fixed',
-              'overflow-hidden': 'overflow:hidden', 'cursor-pointer': 'cursor:pointer', 'border': 'border-width:1px;border-style:solid;border-color:var(--ik-border-strong)', 'border-2': 'border-width:2px;border-style:solid;border-color:var(--ik-border-strong)',
-              'border-b': 'border-bottom-width:1px;border-bottom-style:solid;border-color:var(--ik-border-strong)', 'border-t': 'border-top-width:1px;border-top-style:solid;border-color:var(--ik-border-strong)', 'border-b-2': 'border-bottom-width:2px;border-bottom-style:solid;border-color:var(--ik-border-strong)',
+              'overflow-hidden': 'overflow:hidden', 'cursor-pointer': 'cursor:pointer', 'border': 'border-width:1px;border-style:solid', 'border-2': 'border-width:2px;border-style:solid',
+              'border-b': 'border-bottom-width:1px;border-bottom-style:solid', 'border-t': 'border-top-width:1px;border-top-style:solid', 'border-b-2': 'border-bottom-width:2px;border-bottom-style:solid',
               'mx-auto': 'margin-left:auto;margin-right:auto', 'transition': 'transition:all var(--ik-dur-fast) var(--ik-ease)', 'transition-all': 'transition:all var(--ik-dur-fast) var(--ik-ease)',
               'duration-300': 'transition-duration:300ms', 'duration-500': 'transition-duration:500ms', 'z-50': 'z-index:50', 'top-1': 'top:.25rem', 'left-1': 'left:.25rem', 'left-7': 'left:1.75rem',
               'animate-pulse': 'animation:ik-fade 1.4s ease-in-out infinite alternate', 'focus:outline-none': 'outline:none', 'bg-gradient-to-r': 'background-image:linear-gradient(to right,var(--tw-from,transparent),var(--tw-via,var(--tw-to,transparent)),var(--tw-to,transparent))',
@@ -123,6 +123,7 @@ for c in sorted(used):
 
 out = ['/* GÉNÉRÉ par scripts/gen-utilities.py : ne pas modifier à la main. Utilitaires (sous-ensemble) aux couleurs du thème. */', '@layer utilities {']
 base = [r for r in rules if not r[0]]
+out.append('  .border,.border-2,.border-t,.border-b,.border-b-2{border-color:var(--ik-border-strong)}')
 out += [f"  {s}{{{d}}}" for _, s, d in base]
 # texte blanc sur fonds pleins : texte « sur primaire / positif / négatif » (jamais blanc sur blanc en mode clair)
 out += ['  :is(.bg-blue-500,.bg-blue-600,.bg-purple-600,.hover\\:bg-blue-600,.hover\\:bg-blue-700,.hover\\:bg-purple-700).text-white{color:var(--ik-text-on-primary)}',

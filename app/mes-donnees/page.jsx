@@ -7,8 +7,8 @@ import AppShell from '@/app/components/shell/AppShell';
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/auth`;
 const card = { background: 'var(--ik-surface-2)', border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', borderRadius: 14, padding: 18, marginBottom: 16 };
-const input = { padding: '10px 12px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 24%, transparent)', background: 'var(--ik-surface-2)', color: '#fff', fontSize: 14, width: '100%', maxWidth: 360, display: 'block', marginTop: 4 };
-const btn = (danger) => ({ padding: '10px 16px', borderRadius: 10, border: 'none', background: danger ? 'var(--ik-negative)' : 'var(--ik-primary)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
+const input = { padding: '10px 12px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 24%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: 14, width: '100%', maxWidth: 360, display: 'block', marginTop: 4 };
+const btn = (danger) => ({ padding: '10px 16px', borderRadius: 10, border: 'none', background: danger ? 'var(--ik-negative)' : 'var(--ik-primary)', color: danger ? 'var(--ik-text-on-negative)' : 'var(--ik-text-on-primary)', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
 
 export default function MesDonneesPage() {
   const router = useRouter();

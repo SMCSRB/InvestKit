@@ -1,8 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { isThemedPath, MOTION_KEY, THEME_KEY } from '@/app/lib/designRoutes';
+import { MOTION_KEY, THEME_KEY } from '@/app/lib/designRoutes';
 
 const ThemeContext = createContext(null);
 
@@ -22,7 +21,6 @@ const write = (key, value) => {
 };
 
 export function ThemeProvider({ children }) {
-  const pathname = usePathname() || '/';
   const [theme, setThemeState] = useState('dark');
   const [motion, setMotionState] = useState('auto'); // auto = suit le système ; on ; off
   const [systemReduced, setSystemReduced] = useState(false);
@@ -41,11 +39,10 @@ export function ThemeProvider({ children }) {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const themed = isThemedPath(pathname);
   useEffect(() => {
     if (!ready) return;
-    document.documentElement.setAttribute('data-theme', themed ? theme : 'dark');
-  }, [theme, themed, ready]);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme, ready]);
 
   useEffect(() => {
     if (!ready) return;
@@ -67,15 +64,14 @@ export function ThemeProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      theme: themed ? theme : 'dark',
-      themed,
+      theme,
       setTheme,
       toggleTheme: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
       motion,
       setMotion,
       motionEnabled: motion === 'off' ? false : motion === 'on' ? true : !systemReduced,
     }),
-    [theme, themed, motion, systemReduced, setTheme, setMotion]
+    [theme, motion, systemReduced, setTheme, setMotion]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

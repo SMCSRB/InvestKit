@@ -1,6 +1,4 @@
-// Toutes les pages du site utilisent le nouveau thème (clair/sombre) depuis le lot 7 : plus aucune page n'est forcée en sombre.
-export const isThemedPath = () => true;
-
+// Toutes les pages du site suivent le thème (clair/sombre) : aucune page n'est forcée en sombre.
 export const THEME_KEY = 'ik-theme';
 export const MOTION_KEY = 'ik-motion';
 

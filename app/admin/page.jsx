@@ -23,7 +23,7 @@ const api = async (path, opts = {}) => {
 const C = { bg: 'linear-gradient(135deg, var(--ik-surface-1) 0%, var(--ik-surface-2) 50%, #0f4c75 100%)', card: 'color-mix(in srgb, var(--ik-text) 6%, transparent)', border: 'color-mix(in srgb, var(--ik-text) 12%, transparent)', muted: 'var(--ik-text-3)', accent: 'var(--ik-primary)', bad: 'var(--ik-negative)', warn: 'var(--ik-warning)', good: 'var(--ik-positive)' };
 const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 };
 const btn = (variant = 'default') => ({ padding: '8px 14px', borderRadius: 8, border: `1px solid ${variant === 'danger' ? 'color-mix(in srgb, var(--ik-negative) 50%, transparent)' : C.border}`, background: variant === 'primary' ? C.accent : variant === 'danger' ? 'color-mix(in srgb, var(--ik-negative) 15%, transparent)' : 'color-mix(in srgb, var(--ik-text) 8%, transparent)', color: variant === 'danger' ? 'var(--ik-negative)' : 'var(--ik-text)', cursor: 'pointer', fontSize: 13, fontWeight: 600 });
-const input = { width: 'auto', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--ik-surface-2)', color: 'white', fontSize: 13 };
+const input = { width: 'auto', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: 13 };
 const fr = (n) => Number(n ?? 0).toLocaleString('fr-FR');
 const date = (d) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 const LEVEL = { critique: { c: C.bad, i: '⛔' }, attention: { c: C.warn, i: '⚠️' }, info: { c: C.accent, i: 'ℹ️' } };

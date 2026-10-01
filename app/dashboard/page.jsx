@@ -1632,12 +1632,12 @@ function DashboardContent() {
             <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>
               📈 Simulateur — Mode Accéléré
             </h2>
-            <p style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px', margin: '0 0 24px 0' }}>
+            <p style={{ color: 'var(--ik-text-3)', fontSize: '13px', margin: '0 0 24px 0' }}>
               Achète et vends avec tes InvestCoins sur des données historiques simplifiées (illustratives, pas de vrais cours).
             </p>
 
             {!tradingLoaded ? (
-              <p style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>Chargement...</p>
+              <p style={{ color: 'var(--ik-text-3)' }}>Chargement...</p>
             ) : (
               <>
                 {/* Sélecteur de domaine */}
@@ -1663,13 +1663,13 @@ function DashboardContent() {
                   ))}
                   <button
                     onClick={() => router.push('/immobilier')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                   >
                     🏠 Immobilier →
                   </button>
                   <button
                     onClick={() => router.push('/crypto')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                   >
                     ₿ Marché Crypto →
                   </button>
@@ -1699,7 +1699,7 @@ function DashboardContent() {
                       borderRadius: '12px',
                       padding: '16px',
                     }}>
-                      <p style={{ fontSize: '11px', color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
+                      <p style={{ fontSize: '11px', color: 'var(--ik-text-3)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
                       <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'var(--ik-text)', margin: 0 }}>{stat.value}</p>
                     </div>
                   ))}
@@ -1731,7 +1731,7 @@ function DashboardContent() {
 
                 {/* Prêt sur portefeuille en cours : rapport prêt/valeur et appel de marge (calculés par le serveur) */}
                 {tradingPortfolio?.bank?.loan && (
-                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'color-mix(in srgb, var(--ik-primary) 12%, transparent)' : 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'color-mix(in srgb, var(--ik-warning) 60%, transparent)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'color-mix(in srgb, var(--ik-text) 85%, transparent)', fontSize: '13px' }}>
+                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'color-mix(in srgb, var(--ik-primary) 12%, transparent)' : 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'color-mix(in srgb, var(--ik-warning) 60%, transparent)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'var(--ik-text)', fontSize: '13px' }}>
                     🏦 Prêt sur portefeuille : dette {tradingPortfolio.bank.loan.debtCoins} 🪙 · rapport prêt/valeur {tradingPortfolio.bank.loan.ltvPct} %.
                     {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: 'var(--ik-warning)' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
                     <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
@@ -1742,7 +1742,7 @@ function DashboardContent() {
                 {(tradingPortfolio?.access?.reason === 'FREE_DOMAIN_NOT_CHOSEN' || showDomainChooser) && (
                   <div style={{ background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>{showDomainChooser ? 'Change ton domaine gratuit (une seule fois)' : 'Choisis ton domaine gratuit'}</h3>
-                    <p style={{ color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', fontSize: '13px', margin: '0 0 14px 0' }}>
+                    <p style={{ color: 'var(--ik-text-2)', fontSize: '13px', margin: '0 0 14px 0' }}>
                       Le plan gratuit débloque l'achat dans UN domaine. {showDomainChooser ? 'Ce changement est le dernier : ensuite le choix sera définitif.' : 'Ce choix est définitif (le plan Pro débloque tous les domaines).'} Tu peux vendre partout à tout moment.
                     </p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1763,7 +1763,7 @@ function DashboardContent() {
                         🏠 Immobilier{tradingPortfolio?.freeDomain === 'real_estate' ? ' (actuel)' : ''}
                       </button>
                       {showDomainChooser && (
-                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
+                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'var(--ik-text-3)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
                       )}
                     </div>
                   </div>
@@ -1828,7 +1828,7 @@ function DashboardContent() {
                         <option value="cto">Compte-titres</option>
                       </select>
                     )}
-                    <span style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>
                       ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} 🪙
                       {' '}+ courtage (~{tradingPortfolio?.costs?.brokeragePct?.[tradingAssets.find((a) => a.symbol === tradingSelectedAsset)?.type ?? 'stock'] ?? 0} %)
                       <HelpTip term="courtage" />
@@ -1847,7 +1847,7 @@ function DashboardContent() {
                     </button>
                   </div>
                   {tradingDomain === 'stocks' && tradingPortfolio?.costs?.pea && (
-                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       {tradingAccount === 'pea'
                         ? (tradingPortfolio.costs.pea.openedYear
                           ? `PEA ouvert en ${tradingPortfolio.costs.pea.openedYear} : exonéré d'impôt sur le revenu à partir de ${tradingPortfolio.costs.pea.exemptFromYear}. Versé : ${tradingPortfolio.costs.pea.deposits.toLocaleString('fr-FR')} / ${tradingPortfolio.costs.pea.depositCeiling.toLocaleString('fr-FR')} 🪙.`
@@ -1857,13 +1857,13 @@ function DashboardContent() {
                     </p>
                   )}
                   {tradingDomain === 'crypto' && tradingPortfolio?.costs && (
-                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       Crypto : impôt uniquement à la vente contre euros. Cessions de l'année : {(tradingPortfolio.costs.cryptoDisposalsThisYear ?? 0).toLocaleString('fr-FR')} 🪙 (aucun impôt tant que le total reste sous {tradingPortfolio.costs.cryptoThreshold} 🪙).
                       <HelpTip term="impot-crypto" />
                     </p>
                   )}
                   {tradingPortfolio?.costs && (tradingPortfolio.costs.feesPaid > 0 || tradingPortfolio.costs.taxPaid > 0) && (
-                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)' }}>
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       Payé depuis le début : {tradingPortfolio.costs.feesPaid.toLocaleString('fr-FR')} 🪙 de courtage, {tradingPortfolio.costs.taxPaid.toLocaleString('fr-FR')} 🪙 d'impôts.
                     </p>
                   )}
@@ -1872,7 +1872,7 @@ function DashboardContent() {
                 {/* Positions */}
                 <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 16px 0' }}>Mes positions</h3>
                 {tradingPortfolio?.positions?.length === 0 ? (
-                  <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
+                  <p style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '10px' }}>
                     {tradingPortfolio?.positions?.map((pos) => (
@@ -1887,7 +1887,7 @@ function DashboardContent() {
                       }}>
                         <div>
                           <p style={{ color: 'var(--ik-text)', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
-                          <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '12px', margin: 0 }}>
+                          <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: 0 }}>
                             {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}€
                           </p>
                         </div>
@@ -1908,11 +1908,11 @@ function DashboardContent() {
                 )}
 
                 {tradingQuote && (
-                  <div style={{ marginTop: 14, background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'color-mix(in srgb, var(--ik-text) 85%, transparent)', fontSize: 13 }}>
+                  <div style={{ marginTop: 14, background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'var(--ik-text)', fontSize: 13 }}>
                     <strong>Vente de {Number(tradingQuote.quantity.toFixed(6))} {tradingQuote.symbol}</strong> : produit {tradingQuote.amount.toLocaleString('fr-FR')} 🪙,
                     courtage {tradingQuote.fee.toLocaleString('fr-FR')} 🪙, impôt sur la plus-value {tradingQuote.tax.toLocaleString('fr-FR')} 🪙
                     {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} 🪙</strong>.
-                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'color-mix(in srgb, var(--ik-text) 65%, transparent)' }}>{tradingQuote.note}</div>}
+                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'var(--ik-text-2)' }}>{tradingQuote.note}</div>}
                     <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
                       <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-negative)', color: 'var(--ik-text-on-negative)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
                       <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'transparent', color: 'var(--ik-text)', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
@@ -1924,7 +1924,7 @@ function DashboardContent() {
 
                 {/* Classement (comparaison à année simulée égale) */}
                 <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
-                <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '12px', margin: '0 0 12px 0' }}>
+                <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: '0 0 12px 0' }}>
                   Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} 🪙 pour être classé.
                 </p>
                 <div style={{ marginBottom: '12px' }}>
@@ -1939,7 +1939,7 @@ function DashboardContent() {
                   </select>
                 </div>
                 {!tradingBoard || tradingBoard.entries.length === 0 ? (
-                  <p style={{ color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
+                  <p style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '6px' }}>
                     {tradingBoard.entries.map((e, i) => (
@@ -1958,7 +1958,7 @@ function DashboardContent() {
                   </div>
                 )}
                 {tradingBoard && !tradingBoard.entries.some((e) => e.isMe) && (
-                  <p style={{ color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)', fontSize: '13px', marginTop: '10px' }}>
+                  <p style={{ color: 'var(--ik-text-3)', fontSize: '13px', marginTop: '10px' }}>
                     {tradingBoard.me
                       ? `Ton rang : #${tradingBoard.me.rank} sur ${tradingBoard.totalRanked} (${tradingBoard.me.performancePct.toFixed(1)}%)`
                       : 'Non classé pour cette année (capital engagé insuffisant ou aucun achat).'}
@@ -3465,7 +3465,7 @@ function DashboardContent() {
                           background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-primary) 100%)',
                           border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
                           borderRadius: '12px',
-                          color: '#fff',
+                          color: 'var(--ik-text-on-primary)',
                           fontWeight: '800',
                           fontSize: '14px',
                           cursor: 'pointer',
@@ -3839,7 +3839,7 @@ function DashboardContent() {
                           background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-primary) 100%)',
                           border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
                           borderRadius: '12px',
-                          color: '#fff',
+                          color: 'var(--ik-text-on-primary)',
                           fontWeight: '800',
                           fontSize: '14px',
                           cursor: 'pointer',
@@ -3957,7 +3957,7 @@ function DashboardContent() {
                               {unreadCount > 0 && (
                                 <div style={{
                                   background: 'var(--ik-negative)',
-                                  color: '#fff',
+                                  color: 'var(--ik-text-on-negative)',
                                   borderRadius: '50%',
                                   width: '24px',
                                   height: '24px',
@@ -4121,10 +4121,10 @@ function DashboardContent() {
                             maxWidth: '70%',
                             marginLeft: 'auto',
                             padding: '12px 14px',
-                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #0ea5e9 100%)`,
+                            background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                             borderRadius: '14px',
                             borderTopRightRadius: '4px',
-                            color: '#fff',
+                            color: 'var(--ik-text-on-primary)',
                           }}>
                             <p style={{ color: 'var(--ik-text)', margin: 0, fontSize: '14px' }}>
                               Bien ! On travaille sur InvestKit 🚀
@@ -4249,10 +4249,10 @@ function DashboardContent() {
                         onClick={() => setMessageInput('')}
                         style={{
                           padding: '10px 14px',
-                          background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #0ea5e9 100%)`,
+                          background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                           border: 'none',
                           borderRadius: '10px',
-                          color: '#fff',
+                          color: 'var(--ik-text-on-primary)',
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
@@ -4295,10 +4295,10 @@ function DashboardContent() {
                       onClick={() => setShowCreateGuilde(!showCreateGuilde)}
                       style={{
                         padding: '8px 16px',
-                        background: currentTheme.accent,
+                        background: 'var(--ik-primary)',
                         border: 'none',
                         borderRadius: '8px',
-                        color: 'var(--ik-text)',
+                        color: 'var(--ik-text-on-primary)',
                         fontWeight: '600',
                         cursor: 'pointer',
                         fontSize: '13px',
@@ -4468,10 +4468,10 @@ function DashboardContent() {
                             href={`/guild/${myGuilde.id}`}
                             style={{
                               padding: '8px 16px',
-                              background: currentTheme.accent,
+                              background: 'var(--ik-primary)',
                               border: 'none',
                               borderRadius: '6px',
-                              color: 'var(--ik-text)',
+                              color: 'var(--ik-text-on-primary)',
                               fontWeight: '600',
                               cursor: 'pointer',
                               fontSize: '12px',
@@ -5191,10 +5191,10 @@ function DashboardContent() {
                               onClick={() => sendFriendRequest(user.friendCode, user.name)}
                               style={{
                                 padding: '8px 16px',
-                                background: currentTheme.accent,
+                                background: 'var(--ik-primary)',
                                 border: 'none',
                                 borderRadius: '8px',
-                                color: 'var(--ik-text)',
+                                color: 'var(--ik-text-on-primary)',
                                 fontWeight: '600',
                                 fontSize: '13px',
                                 cursor: 'pointer',
@@ -5379,7 +5379,7 @@ function DashboardContent() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#fff',
+                          color: 'var(--ik-text-on-primary)',
                           fontWeight: '700',
                           fontSize: '18px',
                           flexShrink: 0,
@@ -5482,7 +5482,7 @@ function DashboardContent() {
                                 background: 'var(--ik-positive)',
                                 border: 'none',
                                 borderRadius: '8px',
-                                color: '#fff',
+                                color: 'var(--ik-text-on-positive)',
                                 fontSize: '11px',
                                 fontWeight: '600',
                                 cursor: 'pointer',
@@ -5497,7 +5497,7 @@ function DashboardContent() {
                                 background: 'var(--ik-negative)',
                                 border: 'none',
                                 borderRadius: '8px',
-                                color: '#fff',
+                                color: 'var(--ik-text-on-negative)',
                                 fontSize: '11px',
                                 fontWeight: '600',
                                 cursor: 'pointer',
@@ -5773,10 +5773,10 @@ function DashboardContent() {
                 <button
                   style={{
                     padding: '12px 16px',
-                    background: currentTheme.accent,
+                    background: 'var(--ik-primary)',
                     border: 'none',
                     borderRadius: '10px',
-                    color: 'var(--ik-text)',
+                    color: 'var(--ik-text-on-primary)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -6117,7 +6117,7 @@ function DashboardContent() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontWeight: '700',
-                            color: '#fff',
+                            color: 'var(--ik-text-on-primary)',
                             fontSize: '14px',
                             flexShrink: 0,
                           }}>
@@ -6758,10 +6758,10 @@ function DashboardContent() {
                         }}
                         style={{
                           padding: '8px 12px',
-                          background: currentTheme.accent,
+                          background: 'var(--ik-primary)',
                           border: 'none',
                           borderRadius: '6px',
-                          color: 'var(--ik-text)',
+                          color: 'var(--ik-text-on-primary)',
                           fontWeight: '600',
                           cursor: 'pointer',
                           fontSize: '12px',
@@ -7940,7 +7940,7 @@ function DashboardContent() {
                             top: '-10px',
                             right: '16px',
                             background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
-                            color: '#fff',
+                            color: 'var(--ik-text-on-primary)',
                             fontSize: '11px',
                             fontWeight: '700',
                             padding: '4px 10px',
@@ -7958,7 +7958,7 @@ function DashboardContent() {
                               borderRadius: '8px',
                               border: 'none',
                               background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
-                              color: '#fff',
+                              color: 'var(--ik-text-on-primary)',
                               fontWeight: '600',
                               cursor: billingLoading ? 'wait' : 'pointer',
                             }}
@@ -8008,7 +8008,7 @@ function DashboardContent() {
                             borderRadius: '8px',
                             border: 'none',
                             background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
-                            color: '#fff',
+                            color: 'var(--ik-text-on-primary)',
                             fontWeight: '600',
                             fontSize: '13px',
                             cursor: 'pointer',
@@ -8384,7 +8384,7 @@ function DashboardContent() {
               justifyContent: 'space-between',
               alignItems: 'center',
               fontSize: '13px',
-              color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)',
+              color: 'var(--ik-text-2)',
             }}>
               <span>9:41</span>
               <span style={{ fontWeight: '700' }}>InvestKit</span>
@@ -8474,7 +8474,7 @@ function DashboardContent() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -8484,7 +8484,7 @@ function DashboardContent() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       À l'instant
                     </span>
@@ -8516,7 +8516,7 @@ function DashboardContent() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -8526,7 +8526,7 @@ function DashboardContent() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 2h
                     </span>
@@ -8558,7 +8558,7 @@ function DashboardContent() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -8568,7 +8568,7 @@ function DashboardContent() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 5h
                     </span>
@@ -8600,7 +8600,7 @@ function DashboardContent() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -8610,7 +8610,7 @@ function DashboardContent() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 1h
                     </span>
@@ -8642,7 +8642,7 @@ function DashboardContent() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -8652,7 +8652,7 @@ function DashboardContent() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 3h
                     </span>
@@ -8693,7 +8693,7 @@ function DashboardContent() {
                           </p>
                           <p style={{
                             fontSize: '13px',
-                            color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                            color: 'var(--ik-text-2)',
                             margin: 0,
                             lineHeight: '1.4',
                           }}>
@@ -8703,7 +8703,7 @@ function DashboardContent() {
                       </div>
                       <span style={{
                         fontSize: '11px',
-                        color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                        color: 'var(--ik-text-3)',
                       }}>
                         Conseil quotidien
                       </span>
@@ -8858,7 +8858,7 @@ function DashboardContent() {
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                      color: 'var(--ik-text-2)',
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -8887,7 +8887,7 @@ function DashboardContent() {
                             background: color.value,
                             border: badgeBackgroundColor === color.value ? '2px solid var(--ik-accent)' : '2px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                             borderRadius: '12px',
-                            color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                            color: 'var(--ik-text-2)',
                             fontSize: '12px',
                             fontWeight: '600',
                             cursor: 'pointer',
@@ -8905,7 +8905,7 @@ function DashboardContent() {
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                      color: 'var(--ik-text-2)',
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -8971,7 +8971,7 @@ function DashboardContent() {
                     display: 'block',
                     fontSize: '12px',
                     fontWeight: '600',
-                    color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                    color: 'var(--ik-text-2)',
                     marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -9008,7 +9008,7 @@ function DashboardContent() {
                   />
                   <p style={{
                     fontSize: '11px',
-                    color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                    color: 'var(--ik-text-3)',
                     margin: '6px 0 0 0',
                   }}>
                     {bioEditInput.length}/150 caractères
@@ -9033,7 +9033,7 @@ function DashboardContent() {
                   background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
                   border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                   borderRadius: '10px',
-                  color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                  color: 'var(--ik-text-3)',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -9151,7 +9151,7 @@ function DashboardContent() {
             </div>
             <div style={{
               fontSize: '13px',
-              color: 'color-mix(in srgb, var(--ik-text) 90%, transparent)',
+              color: 'var(--ik-text)',
               marginBottom: '8px',
             }}>
               {newAchievement.description}
@@ -9344,12 +9344,12 @@ function DashboardContent() {
               }}>🎉 Nouveau Badge!</div>
               <div style={{
                 fontSize: '13px',
-                color: 'color-mix(in srgb, var(--ik-text) 90%, transparent)',
+                color: 'var(--ik-text)',
                 marginBottom: '2px',
               }}>{toast.badgeName}</div>
               <div style={{
                 fontSize: '11px',
-                color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                color: 'var(--ik-text-2)',
               }}>+{toast.xp} XP • {toast.rarity.replace('_', ' ').toUpperCase()}</div>
             </div>
             <div style={{
@@ -9431,7 +9431,7 @@ function DashboardContent() {
               padding: '12px 16px',
               marginBottom: '20px',
               fontSize: '14px',
-              color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)',
+              color: 'var(--ik-text-2)',
             }}>
               <strong>{userBadges.length} / {Object.keys(badgeDefinitions).length}</strong> badges collectés ({Math.round((userBadges.length / Object.keys(badgeDefinitions).length) * 100)}%)
             </div>
@@ -9474,7 +9474,7 @@ function DashboardContent() {
                     <div style={{ fontSize: '18px', fontWeight: '700', color: stat.color }}>
                       {stat.count}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--ik-text-3)' }}>
                       {stat.label}
                     </div>
                   </div>
@@ -9565,7 +9565,7 @@ function DashboardContent() {
                       {!isObtained && badgeUnlockProgress[badgeId] && badgeUnlockProgress[badgeId].percent > 0 && (
                         <div style={{
                           fontSize: '9px',
-                          color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                          color: 'var(--ik-text-3)',
                           marginTop: '4px',
                         }}>
                           {badgeUnlockProgress[badgeId].percent}% progressé
@@ -9574,7 +9574,7 @@ function DashboardContent() {
                       {isObtained && badgeDateObtained[badgeId] && (
                         <div style={{
                           fontSize: '8px',
-                          color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                          color: 'var(--ik-text-3)',
                           marginTop: '4px',
                         }}>
                           {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
@@ -9702,7 +9702,7 @@ function DashboardContent() {
                       borderRadius: '8px',
                       border: 'none',
                       background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
-                      color: '#fff',
+                      color: 'var(--ik-text-on-primary)',
                       fontWeight: 600,
                       cursor: twoFACodeInput.length === 6 ? 'pointer' : 'not-allowed',
                       opacity: twoFACodeInput.length === 6 ? 1 : 0.5,
@@ -9737,7 +9737,7 @@ function DashboardContent() {
                 </div>
                 <button
                   onClick={closeTwoFAModal}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)', color: 'var(--ik-text-on-primary)', fontWeight: 600, cursor: 'pointer' }}
                 >
                   J'ai noté mes codes
                 </button>
@@ -9783,7 +9783,7 @@ function DashboardContent() {
                       borderRadius: '8px',
                       border: 'none',
                       background: 'var(--ik-negative)',
-                      color: '#fff',
+                      color: 'var(--ik-text-on-negative)',
                       fontWeight: 600,
                       cursor: twoFADisablePassword ? 'pointer' : 'not-allowed',
                       opacity: twoFADisablePassword ? 1 : 0.5,

@@ -147,6 +147,7 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(style);
 }
 
+const asHex = (v, fallback) => (/^#[0-9a-fA-F]{6}$/.test(String(v)) ? v : fallback); // <input type="color"> n'accepte que #rrggbb
 const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 export default function GuildPage() {
@@ -160,7 +161,6 @@ export default function GuildPage() {
   const [activeTab, setActiveTab] = useState('info');
   const [lastGuildeTab, setLastGuildeTab] = useState('info');
   const [guildChatInput, setGuildChatInput] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [memberActionMenu, setMemberActionMenu] = useState(null);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
@@ -577,9 +577,7 @@ export default function GuildPage() {
     warning: 'var(--ik-warning)',
     danger: 'var(--ik-negative)',
   };
-  const theme = { dark: tokens, light: tokens };
-
-  const currentTheme = isDarkMode ? theme.dark : theme.light;
+  const currentTheme = tokens;
 
   if (!selectedGuilde) {
     return (
@@ -763,7 +761,7 @@ export default function GuildPage() {
                   { label: 'Palier', value: guildTier, icon: '👑' },
                 ].map((stat, idx) => (
                   <div key={idx} style={{ animation: `fadeInUp 0.6s ease-out ${0.3 + idx * 0.1}s backwards` }}>
-                    <p style={{ color: 'color-mix(in srgb, var(--ik-text) 65%, transparent)', fontSize: '11px', margin: '0 0 6px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px' }}>{stat.icon} {stat.label}</p>
+                    <p style={{ color: 'var(--ik-text-2)', fontSize: '11px', margin: '0 0 6px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px' }}>{stat.icon} {stat.label}</p>
                     <p style={{ color: 'var(--ik-text)', fontSize: '22px', fontWeight: '800', margin: 0 }}>{stat.value}</p>
                   </div>
                 ))}
@@ -1876,10 +1874,10 @@ export default function GuildPage() {
                     onClick={() => setEditingGuilde(true)}
                     style={{
                       padding: '10px 16px',
-                      background: currentTheme.accent,
+                      background: 'var(--ik-primary)',
                       border: 'none',
                       borderRadius: '8px',
-                      color: 'var(--ik-text)',
+                      color: 'var(--ik-text-on-primary)',
                       fontWeight: '600',
                       cursor: 'pointer',
                       fontSize: '13px',
@@ -1993,10 +1991,10 @@ export default function GuildPage() {
                       style={{
                         flex: 1,
                         padding: '10px 16px',
-                        background: currentTheme.accent,
+                        background: 'var(--ik-primary)',
                         border: 'none',
                         borderRadius: '8px',
-                        color: 'var(--ik-text)',
+                        color: 'var(--ik-text-on-primary)',
                         fontWeight: '600',
                         cursor: 'pointer',
                         fontSize: '13px',
@@ -2389,10 +2387,10 @@ export default function GuildPage() {
                   width: '100%',
                   marginTop: '12px',
                   padding: '10px',
-                  background: currentTheme.accent,
+                  background: 'var(--ik-primary)',
                   border: 'none',
                   borderRadius: '8px',
-                  color: 'var(--ik-text)',
+                  color: 'var(--ik-text-on-primary)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   fontSize: '13px',
@@ -2516,10 +2514,10 @@ export default function GuildPage() {
                   onClick={() => { if (newEvent.title && newEvent.date) { addEvent(newEvent.title, newEvent.date, 'event'); setNewEvent({ title: '', date: '', type: 'event' }); } }}
                   style={{
                     padding: '8px',
-                    background: currentTheme.accent,
+                    background: 'var(--ik-primary)',
                     border: 'none',
                     borderRadius: '6px',
-                    color: 'var(--ik-text)',
+                    color: 'var(--ik-text-on-primary)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -2606,10 +2604,10 @@ export default function GuildPage() {
                   <button
                     style={{
                       padding: '8px 16px',
-                      background: currentTheme.accent,
+                      background: 'var(--ik-primary)',
                       border: 'none',
                       borderRadius: '6px',
-                      color: 'var(--ik-text)',
+                      color: 'var(--ik-text-on-primary)',
                       fontWeight: '600',
                       cursor: 'pointer',
                       fontSize: '12px',
@@ -2630,11 +2628,11 @@ export default function GuildPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ color: currentTheme.textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>Couleur Primaire</label>
-                  <input type="color" value={guildTheme.primaryColor} onChange={(e) => setGuildTheme({ ...guildTheme, primaryColor: e.target.value })} style={{ width: '100%', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }} />
+                  <input type="color" value={asHex(guildTheme.primaryColor, '#6d4ff0')} onChange={(e) => setGuildTheme({ ...guildTheme, primaryColor: e.target.value })} style={{ width: '100%', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }} />
                 </div>
                 <div>
                   <label style={{ color: currentTheme.textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>Couleur Secondaire</label>
-                  <input type="color" value={guildTheme.secondaryColor} onChange={(e) => setGuildTheme({ ...guildTheme, secondaryColor: e.target.value })} style={{ width: '100%', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }} />
+                  <input type="color" value={asHex(guildTheme.secondaryColor, '#c15bf0')} onChange={(e) => setGuildTheme({ ...guildTheme, secondaryColor: e.target.value })} style={{ width: '100%', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer' }} />
                 </div>
               </div>
             </div>
@@ -2682,10 +2680,10 @@ export default function GuildPage() {
                     width: '100%',
                     marginTop: '12px',
                     padding: '10px',
-                    background: currentTheme.accent,
+                    background: 'var(--ik-primary)',
                     border: 'none',
                     borderRadius: '8px',
-                    color: 'var(--ik-text)',
+                    color: 'var(--ik-text-on-primary)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     fontSize: '12px',

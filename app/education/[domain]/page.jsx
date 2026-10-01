@@ -7,6 +7,9 @@ import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
 
+// Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
+const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
+
 export default function DomainPage() {
   const params = useParams();
   const domainId = params?.domain;
@@ -150,7 +153,7 @@ export default function DomainPage() {
                 </h1>
                 <p style={{
                   fontSize: '18px',
-                  color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                  color: 'var(--ik-text-3)',
                   margin: '0',
                 }}>
                   {domain.description}
@@ -183,7 +186,7 @@ export default function DomainPage() {
                   </h3>
                   <p style={{
                     fontSize: '14px',
-                    color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                    color: 'var(--ik-text-3)',
                     margin: '0',
                   }}>
                     {completedChaptersCount} / {domain.chapters.length} chapitres complétés
@@ -195,7 +198,7 @@ export default function DomainPage() {
                   <div style={{
                     fontSize: '36px',
                     fontWeight: 'bold',
-                    color: domain.color,
+                    color: readable(domain.color),
                   }}>
                     {progressPercent}%
                   </div>
@@ -302,7 +305,7 @@ export default function DomainPage() {
                         <span style={{
                           fontSize: '12px',
                           fontWeight: '600',
-                          color: domain.color,
+                          color: readable(domain.color),
                           textTransform: 'uppercase',
                         }}>
                           {rec.reason}
@@ -318,7 +321,7 @@ export default function DomainPage() {
                       </h4>
                       <p style={{
                         fontSize: '13px',
-                        color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                        color: 'var(--ik-text-3)',
                         margin: '0',
                       }}>
                         {rec.chapter.description}
@@ -427,7 +430,7 @@ export default function DomainPage() {
                       <h4 style={{
                         fontSize: '16px',
                         fontWeight: '600',
-                        color: domain.color,
+                        color: readable(domain.color),
                         margin: '0 0 8px 0',
                       }}>
                         {chapter.title}
@@ -436,7 +439,7 @@ export default function DomainPage() {
                       {/* Description */}
                       <p style={{
                         fontSize: '14px',
-                        color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                        color: 'var(--ik-text-3)',
                         margin: '0 0 16px 0',
                         flex: '1',
                       }}>
@@ -456,7 +459,7 @@ export default function DomainPage() {
                           alignItems: 'center',
                           gap: '6px',
                           fontSize: '13px',
-                          color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
+                          color: 'var(--ik-text-3)',
                         }}>
                           ⏱️ {chapter.duration}
                         </div>
@@ -528,7 +531,7 @@ export default function DomainPage() {
                 </h3>
                 <p style={{
                   fontSize: '16px',
-                  color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
+                  color: 'var(--ik-text-2)',
                   margin: '0 0 16px 0',
                   lineHeight: '1.5',
                 }}>
@@ -538,7 +541,7 @@ export default function DomainPage() {
                   display: 'flex',
                   gap: '16px',
                   fontSize: '14px',
-                  color: 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
+                  color: 'var(--ik-text-3)',
                 }}>
                   <div style={{
                     display: 'flex',
@@ -590,7 +593,7 @@ export default function DomainPage() {
                   disabled
                   style={{
                     background: 'color-mix(in srgb, var(--ik-text) 15%, transparent)',
-                    color: 'color-mix(in srgb, var(--ik-text) 40%, transparent)',
+                    color: 'var(--ik-text-3)',
                     border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                     padding: '16px 32px',
                     borderRadius: '12px',

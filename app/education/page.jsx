@@ -8,6 +8,9 @@ import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
 
+// Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
+const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
+
 export default function EducationPage() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress, isLoading } = useEducationProgress();
@@ -204,7 +207,7 @@ export default function EducationPage() {
                           <span className="text-sm text-gray-400">Progression</span>
                           <span
                             className="text-sm font-semibold"
-                            style={{ color: domain.color }}
+                            style={{ color: readable(domain.color) }}
                           >
                             {progressPercent}%
                           </span>

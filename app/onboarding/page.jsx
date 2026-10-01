@@ -188,12 +188,12 @@ export default function OnboardingPage() {
       <div className="form-container" style={{
         maxWidth: '480px',
         width: '100%',
-        background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-text) 97%, transparent) 0%, rgba(248,250,252,0.97) 100%)',
+        background: 'var(--ik-surface-card)',
         borderRadius: '28px',
-        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+        boxShadow: 'var(--ik-shadow-card)',
         padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
         backdropFilter: 'blur(20px)',
-        border: '1px solid color-mix(in srgb, var(--ik-text) 30%, transparent)',
+        border: '1px solid var(--ik-border)',
         position: 'relative',
         zIndex: 10,
         maxHeight: 'calc(100vh - 40px)',
@@ -209,7 +209,7 @@ export default function OnboardingPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
+            color: 'var(--ik-text-on-primary)',
             fontSize: '28px',
             margin: '0 auto 12px',
             animation: 'floatGradient 3s ease-in-out infinite',
@@ -240,7 +240,7 @@ export default function OnboardingPage() {
             <label style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: 'var(--ik-surface-2)',
+              color: 'var(--ik-text)',
               display: 'block',
               marginBottom: '8px',
               letterSpacing: '0.3px',
@@ -256,14 +256,14 @@ export default function OnboardingPage() {
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                border: '2px solid var(--ik-text-2)',
+                border: '2px solid var(--ik-border-strong)',
                 borderRadius: '12px',
                 fontSize: '13px',
                 fontFamily: 'inherit',
                 outline: 'none',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                color: 'var(--ik-surface-2)',
-                backgroundColor: '#f8fafc',
+                color: 'var(--ik-text)',
+                backgroundColor: 'var(--ik-surface-2)',
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = 'var(--ik-primary)';
@@ -271,9 +271,9 @@ export default function OnboardingPage() {
                 e.target.style.backgroundColor = 'color-mix(in srgb, var(--ik-primary) 2%, transparent)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = 'var(--ik-text-2)';
+                e.target.style.borderColor = 'var(--ik-border-strong)';
                 e.target.style.boxShadow = 'none';
-                e.target.style.backgroundColor = '#f8fafc';
+                e.target.style.backgroundColor = 'var(--ik-surface-2)';
               }}
               required
             />
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
             <label style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: 'var(--ik-surface-2)',
+              color: 'var(--ik-text)',
               display: 'block',
               marginBottom: '10px',
               letterSpacing: '0.3px',
@@ -307,11 +307,11 @@ export default function OnboardingPage() {
                   className="account-card"
                   style={{
                     padding: '12px 14px',
-                    border: `2px solid ${accountType === type.id ? 'var(--ik-positive)' : 'var(--ik-text-2)'}`,
+                    border: `2px solid ${accountType === type.id ? 'var(--ik-positive)' : 'var(--ik-border-strong)'}`,
                     borderRadius: '12px',
                     background: accountType === type.id
                       ? 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 5%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 3%, transparent) 100%)'
-                      : '#f8fafc',
+                      : 'var(--ik-surface-2)',
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -321,20 +321,20 @@ export default function OnboardingPage() {
                   }}
                   onMouseOver={(e) => {
                     if (accountType !== type.id) {
-                      e.currentTarget.style.borderColor = 'var(--ik-text-2)';
+                      e.currentTarget.style.borderColor = 'var(--ik-border-strong)';
                       e.currentTarget.style.background = '#f1f5f9';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (accountType !== type.id) {
-                      e.currentTarget.style.borderColor = 'var(--ik-text-2)';
-                      e.currentTarget.style.background = '#f8fafc';
+                      e.currentTarget.style.borderColor = 'var(--ik-border-strong)';
+                      e.currentTarget.style.background = 'var(--ik-surface-2)';
                     }
                   }}
                 >
                   <span style={{ fontSize: '24px' }}>{type.icon}</span>
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: '0', fontWeight: '700', color: 'var(--ik-surface-2)', fontSize: '13px' }}>
+                    <p style={{ margin: '0', fontWeight: '700', color: 'var(--ik-text)', fontSize: '13px' }}>
                       {type.label}
                     </p>
                     <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: 'var(--ik-text-3)' }}>
@@ -354,7 +354,7 @@ export default function OnboardingPage() {
             <label style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: 'var(--ik-surface-2)',
+              color: 'var(--ik-text)',
               display: 'block',
               marginBottom: '8px',
               letterSpacing: '0.3px',
@@ -370,28 +370,28 @@ export default function OnboardingPage() {
                   className="interest-btn"
                   style={{
                     padding: '10px 8px',
-                    border: `2px solid ${interests.includes(interest.id) ? 'var(--ik-positive)' : 'var(--ik-text-2)'}`,
+                    border: `2px solid ${interests.includes(interest.id) ? 'var(--ik-positive)' : 'var(--ik-border-strong)'}`,
                     borderRadius: '10px',
                     background: interests.includes(interest.id)
                       ? 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 8%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 4%, transparent) 100%)'
-                      : '#f8fafc',
+                      : 'var(--ik-surface-2)',
                     cursor: 'pointer',
                     textAlign: 'center',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     fontSize: '12px',
                     fontWeight: '600',
-                    color: 'var(--ik-surface-2)',
+                    color: 'var(--ik-text)',
                   }}
                   onMouseOver={(e) => {
                     if (!interests.includes(interest.id)) {
-                      e.currentTarget.style.borderColor = 'var(--ik-text-2)';
+                      e.currentTarget.style.borderColor = 'var(--ik-border-strong)';
                       e.currentTarget.style.background = '#f1f5f9';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (!interests.includes(interest.id)) {
-                      e.currentTarget.style.borderColor = 'var(--ik-text-2)';
-                      e.currentTarget.style.background = '#f8fafc';
+                      e.currentTarget.style.borderColor = 'var(--ik-border-strong)';
+                      e.currentTarget.style.background = 'var(--ik-surface-2)';
                     }
                   }}
                 >
@@ -407,7 +407,7 @@ export default function OnboardingPage() {
             <label style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: 'var(--ik-surface-2)',
+              color: 'var(--ik-text)',
               display: 'block',
               marginBottom: '6px',
               letterSpacing: '0.3px',
@@ -420,15 +420,15 @@ export default function OnboardingPage() {
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                border: '2px solid var(--ik-text-2)',
+                border: '2px solid var(--ik-border-strong)',
                 borderRadius: '12px',
                 fontSize: '13px',
                 fontFamily: 'inherit',
                 outline: 'none',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 cursor: 'pointer',
-                color: 'var(--ik-surface-2)',
-                backgroundColor: '#f8fafc',
+                color: 'var(--ik-text)',
+                backgroundColor: 'var(--ik-surface-2)',
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = 'var(--ik-primary)';
@@ -436,9 +436,9 @@ export default function OnboardingPage() {
                 e.target.style.backgroundColor = 'color-mix(in srgb, var(--ik-primary) 2%, transparent)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = 'var(--ik-text-2)';
+                e.target.style.borderColor = 'var(--ik-border-strong)';
                 e.target.style.boxShadow = 'none';
-                e.target.style.backgroundColor = '#f8fafc';
+                e.target.style.backgroundColor = 'var(--ik-surface-2)';
               }}
             >
               <option value="fr">🇫🇷 Français</option>
@@ -452,7 +452,7 @@ export default function OnboardingPage() {
           <div style={{
             padding: '10px 12px',
             background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 5%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 3%, transparent) 100%)',
-            border: '1px solid var(--ik-text-2)',
+            border: '1px solid var(--ik-border)',
             borderRadius: '12px',
             display: 'flex',
             gap: '10px',
@@ -474,7 +474,7 @@ export default function OnboardingPage() {
             />
             <label htmlFor="2fa" style={{
               fontSize: '12px',
-              color: 'var(--ik-surface-2)',
+              color: 'var(--ik-text)',
               margin: '0',
               cursor: 'pointer',
               flex: 1,
@@ -490,7 +490,7 @@ export default function OnboardingPage() {
               padding: '10px 12px',
               background: message.includes('✅')
                 ? 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 10%, transparent), color-mix(in srgb, var(--ik-positive) 5%, transparent))'
-                : 'linear-gradient(135deg, color-mix(in srgb, var(--ik-negative) 10%, transparent), rgba(185, 28, 28, 0.05))',
+                : 'linear-gradient(135deg, color-mix(in srgb, var(--ik-negative) 10%, transparent), color-mix(in srgb, var(--ik-negative) 5%, transparent))',
               border: `1px solid ${message.includes('✅') ? '#d1fae5' : '#fee2e2'}`,
               borderRadius: '10px',
               color: message.includes('✅') ? '#065f46' : '#991b1b',
@@ -538,9 +538,9 @@ export default function OnboardingPage() {
                 flex: 1,
                 padding: '11px 14px',
                 background: !loading && accountType
-                  ? 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 50%, #ec4899 100%)'
-                  : 'var(--ik-text-2)',
-                color: 'var(--ik-text)',
+                  ? 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 50%, var(--ik-series-4) 100%)'
+                  : 'color-mix(in srgb, var(--ik-text) 14%, transparent)',
+                color: !loading && accountType ? 'var(--ik-text-on-primary)' : 'var(--ik-text-3)',
                 border: 'none',
                 borderRadius: '12px',
                 fontSize: '14px',

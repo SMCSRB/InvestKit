@@ -19,7 +19,6 @@ export default function ProfilePage() {
   const { addNotification } = useNotification();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [settings, setSettings] = useState({
-    darkMode: true,
     notificationsEnabled: true,
     soundEnabled: true,
     remindersEnabled: true,
@@ -261,7 +260,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
                   <div>
                     <h3 className="text-white font-semibold">Mode Sombre</h3>
-                    <p className="text-gray-400 text-sm">Activer le thème sombre automatiquement</p>
+                    <p className="text-gray-400 text-sm">Bascule entre le thème sombre et le thème clair (aussi dans la carte Apparence ci-dessus)</p>
                   </div>
                   <button
                     onClick={toggleTheme} role="switch" aria-checked={theme === 'dark'} aria-label="Mode sombre"
@@ -784,7 +783,7 @@ export default function ProfilePage() {
                 className="px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex-1"
                 style={{
                   background: 'linear-gradient(135deg, var(--ik-accent), var(--ik-primary))',
-                  color: 'white',
+                  color: 'var(--ik-text-on-primary)',
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'scale(1.05)';
@@ -800,7 +799,7 @@ export default function ProfilePage() {
                 className="px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex-1"
                 style={{
                   background: 'linear-gradient(135deg, var(--ik-accent), var(--ik-orchid))',
-                  color: 'white',
+                  color: 'var(--ik-text-on-primary)',
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'scale(1.05)';

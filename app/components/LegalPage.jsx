@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import TestPhaseNotice from './TestPhaseNotice';
+import PublicShell from '@/app/components/landing/PublicShell';
 
 // Gabarit commun des pages légales. `sections` : [{ title, body: ReactNode }]
-import PublicShell from '@/app/components/landing/PublicShell';
 export default function LegalPage({ title, updated, sections }) {
   return (
     <PublicShell>

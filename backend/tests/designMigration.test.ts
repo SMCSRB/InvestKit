@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { spawnSync } from 'child_process';
 // @ts-expect-error module JavaScript du frontend
-import { isThemedPath, themeInitScript } from '../../app/lib/designRoutes.js';
+import { themeInitScript } from '../../app/lib/designRoutes.js';
 
 const APP = join(__dirname, '../../app');
 const read = (p: string) => readFileSync(join(APP, p), 'utf8');
@@ -21,7 +21,6 @@ describe('pages migrées vers le nouveau design', () => {
   for (const [route, file] of Object.entries(MIGRATED)) {
     it(`${route} : coque, thème et jetons`, () => {
       const src = read(file);
-      expect(isThemedPath(route)).toBe(true);
       expect(src).toContain('<AppShell>');
       expect(src, 'plus de <main> plein écran avec dégradé').not.toMatch(/minHeight: '100vh'/);
       // texte blanc codé en dur seulement sur boutons pleins (jetons text-on-*), jamais « white » / « #fff » nus
@@ -32,7 +31,6 @@ describe('pages migrées vers le nouveau design', () => {
   }
 
   it('/education : toutes les pages dans la coque, sans couleurs d\'origine', () => {
-    expect(isThemedPath('/education')).toBe(true);
     for (const f of EDUCATION) {
       const src = read(f);
       expect(src, f).toContain('<AppShell>');
@@ -74,8 +72,7 @@ describe('pages migrées vers le nouveau design', () => {
     }
   });
 
-  it('le thème s\'applique partout et l\'init anti-flash ne dépend plus de la route', () => {
-    expect(isThemedPath('/n-importe-quoi')).toBe(true);
+  it('l\'init anti-flash du thème ne dépend d\'aucune route (le thème s\'applique partout)', () => {
     expect(themeInitScript).toContain("data-theme");
     expect(themeInitScript).not.toContain('location.pathname');
   });

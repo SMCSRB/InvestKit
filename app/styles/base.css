@@ -1,5 +1,12 @@
 /* Base commune : corps de page, focus clavier, mouvement, utilitaires. */
 
+/* Un bouton sans style n'a ni fond gris du navigateur ni texte noir : il hérite du thème (poids nul : tout style l'emporte) */
+:where(button) {
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
 html {
   background: var(--ik-bg);
   -webkit-text-size-adjust: 100%;

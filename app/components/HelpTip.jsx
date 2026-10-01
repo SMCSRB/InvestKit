@@ -34,7 +34,7 @@ export default function HelpTip({ term, label }) {
         onClick={() => setOpen((o) => !o)}
         style={{
           borderRadius: '50%', border: '1px solid rgba(96,165,250,0.7)',
-          background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)', color: 'var(--ik-info, var(--ik-primary-soft, var(--ik-accent)))', fontWeight: 700, cursor: 'pointer',
+          background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)', color: 'var(--ik-text)', fontWeight: 700, cursor: 'pointer',
         }}
       >?</button>
       {open && (

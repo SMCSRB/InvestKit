@@ -459,3 +459,6 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 **Partout**
 8. Mobile (390 px) : pas de défilement horizontal ; le bouton « Mon tableau de bord » de l'en-tête public passe dans le menu burger quand tu es connecté.
 9. Aucune erreur rouge dans la console (F12).
+
+**Contrastes (ajouté après la revue du lot 7)**
+10. En mode clair, les textes « atténués » (libellés, heures, mentions) sont plus foncés qu'avant, les couleurs vert/rouge/orange/violet de texte ont été légèrement assombries en clair : vérifie que rien n'est devenu illisible sur le Tableau de bord, Crypto, Immobilier, Banque, Profil, Éducation. (Contrôle automatique fait : plus aucun texte sous 4,5:1 en clair ni en sombre sur ces pages, sauf pastilles décoratives.)

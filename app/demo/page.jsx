@@ -31,7 +31,7 @@ export default function DemoPage() {
               onClick={() => setActive(s)}
               aria-pressed={active.key === s.key}
               style={{
-                padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: 'white',
+                padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: active.key === s.key ? 'var(--ik-text-on-primary)' : 'var(--ik-text)',
                 border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                 background: active.key === s.key ? 'var(--ik-primary)' : 'color-mix(in srgb, var(--ik-text) 8%, transparent)',
               }}
