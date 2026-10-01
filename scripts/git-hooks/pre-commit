@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Bloque un commit qui contiendrait un secret. Installation (une fois) : npm run setup:hooks
+cd "$(git rev-parse --show-toplevel)"
+if ! node scripts/check-secrets.mjs --tree; then
+  echo "⛔ Commit refusé : un secret possible a été trouvé (voir ci-dessus)." >&2
+  exit 1
+fi

@@ -1,0 +1,20 @@
+# Réglage de gitleaks (utilisé par la CI « Sécurité »). On garde toutes les règles par défaut.
+# Les 6 détections historiques ont été examinées une par une : ce sont des FAUX POSITIFS
+# (valeurs d'exemple ou de test, jamais de vrai secret). Elles sont listées ici pour que la CI
+# ne s'arrête que sur une vraie nouveauté.
+title = "InvestKit"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Faux positifs examinés (voir docs/secrets.md)"
+paths = [
+  '''backend/tests/.*''',                  # mots de passe de test (ex. 'MotDePasse-Test-123')
+  '''backend/\.env\.example''',            # modèle de configuration : valeurs d'exemple en commentaire
+  '''backend/src/data/crypto/events\.ts''', # « key: 'terra-2022-05' » = identifiant d'événement, pas une clé
+]
+regexTarget = "line"
+regexes = [
+  '''sitekey="[0-9a-f-]{36}"''',           # clé de site hCaptcha : publique par conception (visible dans la page)
+]

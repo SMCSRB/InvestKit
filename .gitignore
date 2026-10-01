@@ -43,3 +43,9 @@ yarn-error.log*
 # OS
 Thumbs.db
 backups/
+
+# Secrets et scripts personnels : JAMAIS dans git (voir docs/secrets.md)
+.env.dev
+.env.*.local
+start-dev.sh
+*.secret
