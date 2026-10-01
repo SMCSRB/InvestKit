@@ -475,3 +475,26 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 6. **Fond** : deux halos de lumière dérivent très lentement derrière la page ; à chaque changement d'onglet, le contenu glisse doucement en place ; les boutons ont un petit effet « pressé ».
 7. **Animations : Non** (carte Apparence de `/profile`) : tout devient immobile et à plat (pas de flottement, pas d'inclinaison, pas de halo qui bouge). « Auto » respecte le réglage « réduire les animations » de ton appareil.
 8. Mobile (390 px) : pas de défilement horizontal, la scène passe au-dessus du texte.
+
+## PR Design 9 — Amis et guildes réels
+
+À fusionner **après** la PR « Design 8 ». Il te faut **deux comptes de test** (A et B). La migration 037 s'applique toute seule au démarrage de l'API.
+
+**Code ami et demandes**
+1. `/friends` (ou « Amis » dans le menu) : un bandeau affiche **ton code ami** (8 caractères). « Copier mon code » le copie (« Copié ! »).
+2. Avec le compte B : onglet « Ajouter », colle le code de A, « Envoyer la demande » → « Demande envoyée à … ». Un code faux affiche « Aucun joueur avec ce code ». Écrire ton propre code ou renvoyer une demande donne un message clair.
+3. Avec A : une notification « Nouvelle demande d'ami » arrive ; onglet « Demandes (1) » → « Accepter ». A et B apparaissent dans « Amis » avec **leur niveau et leur XP** (compare avec leur onglet Académie). « Refuser » / « Annuler » effacent la demande.
+4. « Retirer » (avec confirmation) supprime l'amitié des deux côtés. « Bloquer » la supprime aussi : B ne peut plus renvoyer de demande à A et **ne voit pas qu'il est bloqué** (même message que pour un code inconnu). « Débloquer » dans l'onglet « Bloqués ».
+
+**Guildes**
+5. Onglet « Guilde » : « Créer ma guilde » (nom 3 à 24 caractères). Le nom est refusé s'il existe déjà (même avec d'autres majuscules ou accents) ou contient des caractères spéciaux.
+6. Le chef voit un **code d'invitation** : avec B, « Rejoindre » + ce code. Le classement de la guilde montre les membres par XP (🥇🥈🥉). « Changer le code » rend l'ancien code inutilisable.
+7. Le chef peut « Retirer » (le membre reçoit une notification), « Passer chef », « Dissoudre » (confirmation à chaque fois). Un membre ne voit aucun de ces boutons et ne voit pas le code. « Quitter la guilde » fonctionne ; si le chef part, le membre le plus ancien devient chef.
+
+**Tableau de bord**
+8. L'onglet **Amis** du tableau de bord affiche la même chose (plus aucun profil d'exemple : Alice, Bob… ont disparu). L'onglet « Activité » (fil inventé) n'existe plus. `/guild/<n'importe quoi>` redirige vers l'onglet Guilde.
+
+**Vie privée**
+9. Seuls le nom de joueur, le niveau et l'XP sont visibles par les amis et la guilde — jamais l'e-mail ni le vrai nom. Il n'existe aucune liste de joueurs à parcourir.
+10. Mon compte → export de mes données : une rubrique « social » contient mon code ami, mes amitiés et ma guilde. La suppression du compte retire tout.
+11. Mobile (390 px) : pas de défilement horizontal ; clair et sombre lisibles.

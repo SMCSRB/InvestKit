@@ -1,0 +1,129 @@
+/* Amis et guildes (préfixe soc-). */
+.soc {
+  display: grid;
+  gap: var(--ik-space-4);
+}
+.soc-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ik-space-4);
+}
+.soc-code__label {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+.soc-code__value {
+  margin: 4px 0;
+  font: 800 clamp(1.6rem, 6vw, 2.4rem) / 1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+}
+.soc-code__hint {
+  margin: 0;
+  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: var(--ik-fs-sm);
+}
+.soc-panel {
+  animation: ik-fade var(--ik-dur-slow) var(--ik-ease) backwards;
+}
+.soc-list {
+  display: grid;
+}
+.soc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ik-border);
+}
+.soc-list > :last-child .soc-row,
+.soc-list > .soc-row:last-child {
+  border-bottom: 0;
+}
+.soc-row__main {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.soc-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.soc-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.soc-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--ik-grad-brand);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 8px 18px -10px var(--ik-primary);
+}
+.soc-rank {
+  flex: none;
+  width: 30px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.soc-form {
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+}
+.soc-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.soc-form__row .ik-input {
+  flex: 1 1 200px;
+  letter-spacing: 0.08em;
+}
+.soc-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--ik-space-4);
+}
+.soc-invite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--ik-radius);
+  background: var(--ik-primary-soft);
+  border: 1px dashed var(--ik-border-strong);
+}
+.soc-invite__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+}
+.soc-msg {
+  padding: 10px 14px;
+  border-radius: var(--ik-radius);
+  background: var(--ik-positive-soft);
+  color: var(--ik-text);
+  border: 1px solid var(--ik-positive);
+}
+.soc-msg--bad {
+  background: var(--ik-negative-soft);
+  border-color: var(--ik-negative);
+}
+@media (max-width: 560px) {
+  .soc-row { flex-wrap: wrap; }
+  .soc-row__actions { width: 100%; justify-content: flex-start; padding-left: 54px; }
+}

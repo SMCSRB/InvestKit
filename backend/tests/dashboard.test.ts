@@ -11,16 +11,12 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
     for (const fake of ['7425.38', '68450.50', '2850.75', '2095.30', 'marketData']) expect(page, fake).not.toContain(fake);
   });
 
-  it('le fil d\'activité ne contient plus de personnes inventées et ne relit plus l\'ancien fil enregistré', () => {
-    const start = page.indexOf('const [activityFeed, setActivityFeed]');
-    expect(page.slice(start, start + 120)).toContain('useState([])');
-    expect(page).not.toMatch(/setActivityFeed\(JSON\.parse/);
-  });
-
-  it('les contenus d\'exemple du réseau social sont annoncés comme tels', () => {
-    expect(page).toMatch(/dash-demo-note/);
-    expect(page).not.toContain('dash-rail');
-    expect(page).toMatch(/profils d&apos;exemple/);
+  it('plus aucun ami, guilde ni activité d\'exemple : amis et guildes sont réels (serveur)', () => {
+    expect(page).toContain('<SocialHub');
+    for (const fake of ['Alice Dupont', 'Bob Martin', 'Charlie Dubois', 'dash-demo-note']) expect(page, fake).not.toContain(fake);
+    const friends = read('friends/page.jsx');
+    expect(friends).toContain('SocialHub');
+    expect(friends).not.toMatch(/mockUsers|Alice Dupont/);
   });
 
   it('prix Pro : lus depuis plans.js, jamais recopiés', () => {
@@ -31,7 +27,7 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
 
   it('la vue d\'ensemble n\'utilise que des données du serveur et ses boutons mènent à un onglet existant', () => {
     const tabs = [...page.matchAll(/\{ value: '([a-z]+)', label:/g)].map((m) => m[1]);
-    expect(tabs).toEqual(['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'activity', 'settings']);
+    expect(tabs).toEqual(['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'settings']);
     const overview = read('dashboard/OverviewTab.jsx');
     for (const m of overview.matchAll(/onOpenTab\('([a-z]+)'\)/g)) expect(tabs, `onglet ${m[1]}`).toContain(m[1]);
   });
