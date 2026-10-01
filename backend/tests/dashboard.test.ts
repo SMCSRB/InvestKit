@@ -68,3 +68,35 @@ describe('marchés (lot 4) : thème et honnêteté des graphiques', () => {
     expect(read('crypto/page.jsx')).toContain('<AppShell>');
   });
 });
+
+describe('vie du tableau de bord (lot 8) : mouvement honnête et respectueux', () => {
+  const css = read('styles/dashboard.css');
+
+  it('chaque animation du lot est coupée par « Animations : Non » et par « réduire les animations »', () => {
+    for (const k of ['.dh__float', '.dh__wave', '.dash-layout::before', '.dh-ring__bar']) {
+      expect(css, `${k} / data-motion=off`).toContain(`:root[data-motion='off'] ${k}`);
+      expect(css, `${k} / prefers-reduced-motion`).toContain(`:root:not([data-motion='on']) ${k}`);
+    }
+    expect(css).toMatch(/:root\[data-motion='off'\] \.dh__layer/);
+  });
+
+  it('uniquement transform et opacity pour animer (aucune propriété qui force la mise en page)', () => {
+    const frames = [...css.matchAll(/@keyframes (dh-[\w-]+) \{([\s\S]*?)\n\}/g)].map((m) => m[2]);
+    expect(frames.length).toBeGreaterThan(3);
+    for (const f of frames) expect(f).not.toMatch(/\b(width|height|top|left|right|bottom|margin|padding)\s*:/);
+  });
+
+  it('l\'accueil n\'affiche que des données réelles (nom, série, patrimoine du serveur) et rien d\'inventé', () => {
+    const hero = read('dashboard/DashHero.jsx');
+    expect(hero).toContain('/economy/balance');
+    expect(hero).toMatch(/streak > 0/);                 // pas de série affichée tant qu'elle n'existe pas
+    expect(hero).toMatch(/Number\.isFinite\(patrimoine\)/);
+    const prog = read('dashboard/ProgressCard.jsx');
+    expect(prog).toContain('useEducationProgress');     // niveau et XP réels
+  });
+
+  it('la récompense du jour passe par le même bouton que la barre du haut (une seule logique)', () => {
+    expect(read('dashboard/DashHero.jsx')).toContain(".ik-rewardbtn");
+    expect(read('components/shell/Topbar.jsx')).toContain('ik-rewardbtn');
+  });
+});

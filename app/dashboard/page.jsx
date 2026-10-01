@@ -1621,6 +1621,7 @@ function DashboardContent() {
           />
         </div>
 
+        <div key={activeTab} className="dash-tabpanel">
         {activeTab === 'overview' && <OverviewTab overview={overview} failed={overviewFailed} onRetry={() => { setOverviewFailed(false); loadOverview(); }} onOpenTab={setActiveTab} />}
 
         {/* MARKET TAB : cours réels du marché simulé, aucune valeur en dur */}
@@ -8311,6 +8312,7 @@ function DashboardContent() {
           </>)}
           </div>
         )}
+        </div>
       </div>
 
       {/* NEWS FEED MODAL */}

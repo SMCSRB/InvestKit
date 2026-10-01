@@ -5,6 +5,8 @@ import { Button, Card, CardHead, Coin, EmptyState, StatCard } from '@/app/compon
 import { Reveal } from '@/app/components/ui/motion';
 import { Donut, SegmentedBar } from '@/app/components/ui/charts';
 import OnboardingChecklist from '@/app/components/OnboardingChecklist';
+import DashHero from './DashHero';
+import ProgressCard from './ProgressCard';
 import HelpTip from '@/app/components/HelpTip';
 import { tone as riskTone } from '@/app/components/PortfolioRisk';
 import { fmtInt } from '@/app/lib/format';
@@ -17,7 +19,7 @@ const isLocked = (ov, domainIds) => ov.tier !== 'pro' && !domainIds.includes(ov.
 
 function DomainCard({ icon, name, locked, free, children, action, index }) {
   return (
-    <Reveal index={index}>
+    <Reveal index={index} data-tilt="">
       <Card glow className="dash-domain" data-locked={locked || undefined}>
         <div className="dash-domain__head">
           <span className="lp-domain__icon" style={{ margin: 0, width: 44, height: 44, borderRadius: 14 }}><Icon name={icon} size={22} /></span>
@@ -70,20 +72,22 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
   }
   return (
     <div className="dash-overview">
+      <DashHero username={ov?.username} patrimoine={t?.coinsAndTrading} loading={loading} />
+
       <OnboardingChecklist />
 
       <div className="ik-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-        <Reveal index={0}>
+        <Reveal index={0} data-tilt="">
           <StatCard hero icon="wallet" label="Patrimoine" value={loading ? NaN : t.coinsAndTrading} unit={<Coin size={26} />}
             delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : 'liquidités + titres (Bourse, Crypto)'} />
         </Reveal>
-        <Reveal index={1}>
+        <Reveal index={1} data-tilt="">
           <StatCard icon="coins" label="Liquidités" value={loading ? NaN : coins} unit={<Coin size={22} />} deltaLabel="à dépenser dans les domaines" href="/banque" />
         </Reveal>
-        <Reveal index={2}>
+        <Reveal index={2} data-tilt="">
           <StatCard icon="chart" label="Titres" value={loading ? NaN : t.tradingValue} unit={<Coin size={22} />} delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : invested > 0 ? 'depuis le début' : 'Bourse + Crypto'} />
         </Reveal>
-        <Reveal index={3}>
+        <Reveal index={3} data-tilt="">
           <StatCard icon="bank" label="Dette bancaire" value={loading ? NaN : ov.bank.debtCoins} unit={<Coin size={22} />} deltaLabel="à rembourser" href="/banque" />
         </Reveal>
       </div>
@@ -173,7 +177,10 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
 
       <div className="ik-grid dash-two">
         <Reveal index={0}>
-          <Card>
+          <ProgressCard />
+        </Reveal>
+        <Reveal index={1}>
+          <Card style={{ height: '100%' }}>
             <CardHead title="Synthèse Bourse + Crypto" icon="file" />
             <div style={{ display: 'grid', gap: 12 }}>
               <Line label="Capital investi" value={loading ? '…' : fmtInt(invested)} />
@@ -183,8 +190,11 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
             <p className="ik-muted" style={{ margin: '14px 0 0' }}>Bourse et Crypto sont en InvestCoins ; l&apos;Immobilier est en euros (1 InvestCoin = 20 €) : les deux ne sont pas additionnés.</p>
           </Card>
         </Reveal>
-        <Reveal index={1}>
-          <Card hero style={{ height: '100%', display: 'grid', alignContent: 'space-between', gap: 14 }}>
+      </div>
+
+      <div className="ik-grid">
+        <Reveal index={0} data-tilt="">
+          <Card hero style={{ display: 'grid', alignContent: 'space-between', gap: 14 }}>
             <div>
               <span className="ik-chip" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}><Icon name="sparkles" size={14} />Analyse de risque</span>
               <h3 style={{ margin: '14px 0 6px', fontSize: 'var(--ik-fs-lg)' }}>Comprends ce qui menace ton portefeuille</h3>
