@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AppShell from '@/app/components/shell/AppShell';
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/auth`;
-const card = { background: 'rgba(15,23,42,0.65)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 14, padding: 18, marginBottom: 16 };
-const input = { padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(148,163,184,0.4)', background: 'rgba(15,23,42,0.8)', color: '#fff', fontSize: 14, width: '100%', maxWidth: 360, display: 'block', marginTop: 4 };
-const btn = (danger) => ({ padding: '10px 16px', borderRadius: 10, border: 'none', background: danger ? '#dc2626' : '#2563eb', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
+const card = { background: 'var(--ik-surface-2)', border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', borderRadius: 14, padding: 18, marginBottom: 16 };
+const input = { padding: '10px 12px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 24%, transparent)', background: 'var(--ik-surface-2)', color: '#fff', fontSize: 14, width: '100%', maxWidth: 360, display: 'block', marginTop: 4 };
+const btn = (danger) => ({ padding: '10px 16px', borderRadius: 10, border: 'none', background: danger ? 'var(--ik-negative)' : 'var(--ik-primary)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' });
 
 export default function MesDonneesPage() {
   const router = useRouter();
@@ -62,22 +63,23 @@ export default function MesDonneesPage() {
 
   if (!ready) return null;
   return (
-    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)', padding: 'clamp(16px, 4vw, 28px)', color: '#e2e8f0' }}>
+    <AppShell>
+    <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
-        <Link href="/dashboard" style={{ color: '#60a5fa', fontSize: 14 }}>← Tableau de bord</Link>
-        <h1 style={{ margin: '8px 0 4px', color: '#fff', fontSize: 'clamp(24px, 5vw, 32px)' }}>Mes données</h1>
-        <p style={{ color: '#94a3b8', marginTop: 0 }}>Tu as le droit de récupérer tes données et de faire supprimer ton compte. Voir aussi la <Link href="/privacy" style={{ color: '#60a5fa' }}>politique de confidentialité</Link>.</p>
-        {msg && <div role="status" style={{ ...card, borderColor: msg.ok ? '#4ade80' : '#f87171' }}>{msg.text}</div>}
+        <Link href="/dashboard" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Tableau de bord</Link>
+        <h1 style={{ margin: '8px 0 4px', color: 'var(--ik-text)', fontSize: 'clamp(24px, 5vw, 32px)' }}>Mes données</h1>
+        <p style={{ color: 'var(--ik-text-3)', marginTop: 0 }}>Tu as le droit de récupérer tes données et de faire supprimer ton compte. Voir aussi la <Link href="/privacy" style={{ color: 'var(--ik-accent)' }}>politique de confidentialité</Link>.</p>
+        {msg && <div role="status" style={{ ...card, borderColor: msg.ok ? '#4ade80' : 'var(--ik-negative)' }}>{msg.text}</div>}
 
         <section style={card}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: 18 }}>Télécharger mes données</h2>
-          <p style={{ fontSize: 14, color: '#cbd5e1' }}>Un fichier contenant ton profil, tes pièces, tes portefeuilles, ta partie Immobilier, ta banque et ton historique de sécurité. Il ne contient jamais ton mot de passe, ton secret de double authentification ni aucun code.</p>
+          <h2 style={{ marginTop: 0, color: 'var(--ik-text)', fontSize: 18 }}>Télécharger mes données</h2>
+          <p style={{ fontSize: 14, color: 'var(--ik-text-2)' }}>Un fichier contenant ton profil, tes pièces, tes portefeuilles, ta partie Immobilier, ta banque et ton historique de sécurité. Il ne contient jamais ton mot de passe, ton secret de double authentification ni aucun code.</p>
           <button style={btn(false)} disabled={busy} onClick={download}>Télécharger mes données</button>
         </section>
 
-        <section style={{ ...card, borderColor: '#f87171' }}>
-          <h2 style={{ marginTop: 0, color: '#fff', fontSize: 18 }}>Supprimer mon compte</h2>
-          <p style={{ fontSize: 14, color: '#cbd5e1' }}><strong>Cette action est définitive.</strong> Toutes tes données de jeu (pièces, portefeuilles, biens, prêts, classement) sont supprimées. Ton abonnement Pro éventuel est annulé d&apos;abord. Le journal de sécurité est conservé sans ton identité. Pense à télécharger tes données avant.</p>
+        <section style={{ ...card, borderColor: 'var(--ik-negative)' }}>
+          <h2 style={{ marginTop: 0, color: 'var(--ik-text)', fontSize: 18 }}>Supprimer mon compte</h2>
+          <p style={{ fontSize: 14, color: 'var(--ik-text-2)' }}><strong>Cette action est définitive.</strong> Toutes tes données de jeu (pièces, portefeuilles, biens, prêts, classement) sont supprimées. Ton abonnement Pro éventuel est annulé d&apos;abord. Le journal de sécurité est conservé sans ton identité. Pense à télécharger tes données avant.</p>
           <label style={{ fontSize: 13, display: 'block', marginBottom: 10 }}>Ton mot de passe
             <input style={input} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
@@ -92,6 +94,7 @@ export default function MesDonneesPage() {
           <button style={btn(true)} disabled={busy || confirm !== 'SUPPRIMER' || !password} onClick={remove}>Supprimer définitivement mon compte</button>
         </section>
       </div>
-    </main>
+    </div>
+    </AppShell>
   );
 }

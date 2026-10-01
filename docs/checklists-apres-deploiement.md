@@ -436,3 +436,26 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 **Partout**
 6. Mobile (390 px) : pas de défilement horizontal.
 7. Aucune erreur rouge dans la console (F12).
+
+## PR Design 7 — Paramètres, légal, administration, états d'erreur (lot 7, fin de la refonte)
+
+À fusionner **après** la PR « Design 6 ». C'est la dernière : à partir d'ici **toutes** les pages suivent le thème clair/sombre (plus aucune page n'est forcée en sombre).
+
+**Paramètres (`/profile`)**
+1. Nouvelle carte **Apparence** : Thème Sombre/Clair et **Animations Auto / Oui / Non**. Choisis « Non » : plus aucun mouvement sur le site ; « Auto » suit le réglage de ton appareil. Les choix restent après rechargement (sur cet appareil).
+2. L'interrupteur « Mode Sombre » de l'onglet Affichage change maintenant vraiment le thème (avant, il ne faisait rien). Les « Thèmes Disponibles » (déblocables par XP) restent affichés comme avant.
+3. La page était mal mise en forme (classes Tailwind sans Tailwind) : elle est maintenant lisible en clair et en sombre, sans défilement horizontal à 390 px.
+
+**Pages légales et publiques**
+4. `/privacy`, `/conditions`, `/cookies`, `/legal`, `/contact`, `/changelog`, `/demo` ont l'en-tête et le pied de page du site (même habillage que l'accueil), une carte lisible en clair et en sombre. **Le texte juridique n'a pas été modifié** (il reste à faire valider).
+
+**Pages internes**
+5. `/mes-donnees` (export / suppression RGPD), `/simulateurs/pea|loan1|loan2`, `/guild/<id>` (guilde d'exemple), `/admin` (si ton compte est administrateur avec 2FA) sont dans la coque et lisibles en clair/sombre. Fonctionnement inchangé.
+
+**États d'erreur**
+6. Une adresse inexistante (ex. `/nimportequoi`) affiche une page « Cette page n'existe pas » avec les boutons « Retour à l'accueil » / « Mon tableau de bord » (statut 404, non indexée).
+7. En cas d'erreur inattendue, une page claire avec « Réessayer » s'affiche (aucun détail technique).
+
+**Partout**
+8. Mobile (390 px) : pas de défilement horizontal ; le bouton « Mon tableau de bord » de l'en-tête public passe dans le menu burger quand tu es connecté.
+9. Aucune erreur rouge dans la console (F12).

@@ -66,6 +66,5 @@ describe('marchés (lot 4) : thème et honnêteté des graphiques', () => {
 
   it('/crypto utilise la coque et le thème', () => {
     expect(read('crypto/page.jsx')).toContain('<AppShell>');
-    expect(read('lib/designRoutes.js')).toContain("'/crypto'");
   });
 });

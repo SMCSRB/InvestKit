@@ -30,11 +30,11 @@
   .bg-white{background-color:#fff}
   .bg-yellow-900\/30{background-color:color-mix(in srgb, var(--ik-warning) 30%, transparent)}
   .block{display:block}
-  .border{border-width:1px;border-style:solid}
-  .border-2{border-width:2px;border-style:solid}
+  .border{border-width:1px;border-style:solid;border-color:var(--ik-border-strong)}
+  .border-2{border-width:2px;border-style:solid;border-color:var(--ik-border-strong)}
   .border-amber-400\/50{border-color:color-mix(in srgb, var(--ik-warning) 50%, transparent)}
-  .border-b{border-bottom-width:1px;border-bottom-style:solid}
-  .border-b-2{border-bottom-width:2px;border-bottom-style:solid}
+  .border-b{border-bottom-width:1px;border-bottom-style:solid;border-color:var(--ik-border-strong)}
+  .border-b-2{border-bottom-width:2px;border-bottom-style:solid;border-color:var(--ik-border-strong)}
   .border-blue-400\/30{border-color:color-mix(in srgb, var(--ik-primary) 30%, transparent)}
   .border-blue-500\/20{border-color:color-mix(in srgb, var(--ik-primary) 20%, transparent)}
   .border-blue-500\/50{border-color:color-mix(in srgb, var(--ik-primary) 50%, transparent)}
@@ -52,7 +52,7 @@
   .border-red-500\/50{border-color:color-mix(in srgb, var(--ik-negative) 50%, transparent)}
   .border-slate-600{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}
   .border-slate-600\/50{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}
-  .border-t{border-top-width:1px;border-top-style:solid}
+  .border-t{border-top-width:1px;border-top-style:solid;border-color:var(--ik-border-strong)}
   .border-yellow-400\/30{border-color:color-mix(in srgb, var(--ik-warning) 30%, transparent)}
   .cursor-pointer{cursor:pointer}
   .duration-300{transition-duration:300ms}
@@ -131,7 +131,6 @@
   .mb-4{margin-bottom:1rem}
   .mb-6{margin-bottom:1.5rem}
   .mb-8{margin-bottom:2rem}
-  .min-h-screen{min-height:100vh}
   .ml-15{margin-left:3.75rem}
   .mr-3{margin-right:0.75rem}
   .mt-1{margin-top:0.25rem}
@@ -147,11 +146,9 @@
   .p-6{padding:1.5rem}
   .p-8{padding:2rem}
   .pb-12{padding-bottom:3rem}
-  .pb-20{padding-bottom:5rem}
   .pb-8{padding-bottom:2rem}
   .placeholder-gray-400::placeholder{color:var(--ik-text-3)}
   .placeholder-slate-400::placeholder{color:var(--ik-text-3)}
-  .pt-32{padding-top:8rem}
   .pt-4{padding-top:1rem}
   .px-2{padding-left:0.5rem;padding-right:0.5rem}
   .px-3{padding-left:0.75rem;padding-right:0.75rem}

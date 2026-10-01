@@ -19,7 +19,7 @@ La police est **Plus Jakarta Sans** (licence libre OFL), auto-hébergée via `@f
 ## Thème et animations
 
 - `<html data-theme="dark|light">` : choix mémorisé (`localStorage.ik-theme`). Bascule dans le menu latéral, le menu du profil et la recherche.
-- Tant qu'une page n'est pas migrée, elle reste en sombre fixe (liste `THEMED_PREFIXES` dans `app/lib/designRoutes.js`, à supprimer au dernier lot).
+- Depuis le lot 7, **toutes** les pages suivent le thème (le filtre `THEMED_PREFIXES` a disparu). Les réglages Thème et Animations sont aussi dans `/profile` (carte Apparence, `AppearanceSettings.jsx`).
 - **Animations** : réglage `Auto / Oui / Non` (`localStorage.ik-motion`, `<html data-motion>`). « Auto » suit la préférence système « réduire les animations ».
   On n'anime que `transform` et `opacity` ; durées : 150 ms (rapide), 240 ms, 420 ms, 900 ms (tracé des graphiques). Variables `--ik-dur-*`, `--ik-ease`, `--ik-stagger`.
 - Aucune animation ne retarde l'affichage des données ni un clic ; rien ne clignote.
@@ -62,14 +62,14 @@ Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les i
 
 ## Marchés et graphiques (lot 4)
 
-- `/crypto` est dans la coque (`AppShell`) et dans `THEMED_PREFIXES` ; les couleurs codées en dur de la page ont été remplacées par les jetons.
+- `/crypto` est dans la coque (`AppShell`) ; les couleurs codées en dur de la page ont été remplacées par les jetons.
 - Graphiques canvas (Lightweight Charts n'accepte pas `var(--…)`) : `app/lib/chartTheme.js` lit les jetons du thème actif (`useChartTheme`) et se met à jour quand `data-theme` change ; `withAlpha` fabrique les transparences. Couleurs d'indicateurs = séries validées (ordre fixe).
 - Bourse : `app/components/HistoryChart.jsx` (courbe annuelle, étiquette « Données illustratives », tableau accessible) lit `GET /api/v1/trading/history`, borné côté serveur à l'année simulée du joueur.
 - L'attribution TradingView reste obligatoire (logo du graphique + lien sous la carte).
 
 ## Pages migrées (lots 5 à 7)
 
-Méthode : le `<main>` plein écran d'origine devient `<AppShell>` ; les couleurs d'origine sont remplacées par les jetons (script de migration jetable, relu à la main) ; la route est ajoutée à `THEMED_PREFIXES`. `backend/tests/designMigration.test.ts` liste les pages migrées et vérifie : coque, route thémée, aucune couleur d'origine ni texte blanc nu. Texte sur boutons pleins : `--ik-text-on-primary|positive|negative`.
+Méthode : le `<main>` plein écran d'origine devient `<AppShell>` ; les couleurs d'origine sont remplacées par les jetons (script de migration jetable, relu à la main) ; plus de filtre par route. `backend/tests/designMigration.test.ts` liste les pages migrées et vérifie : coque, aucune couleur d'origine ni texte blanc nu. Texte sur boutons pleins : `--ik-text-on-primary|positive|negative`.
 
 ## Classes utilitaires (Tailwind absent)
 

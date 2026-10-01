@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
+import AppShell from '@/app/components/shell/AppShell';
 
 // Premium Animation Styles
 const styleSheet = `
@@ -85,10 +86,10 @@ const styleSheet = `
 
   @keyframes glow {
     0%, 100% {
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--ik-primary) 30%, transparent), 0 4px 12px color-mix(in srgb, var(--ik-primary) 20%, transparent);
     }
     50% {
-      box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 4px 20px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 0 30px color-mix(in srgb, var(--ik-primary) 50%, transparent), 0 4px 20px color-mix(in srgb, var(--ik-primary) 30%, transparent);
     }
   }
 
@@ -145,6 +146,8 @@ if (typeof document !== 'undefined') {
   style.textContent = styleSheet;
   document.head.appendChild(style);
 }
+
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 export default function GuildPage() {
   const router = useRouter();
@@ -209,8 +212,8 @@ export default function GuildPage() {
 
   // 🎨 Guild Customization
   const [guildTheme, setGuildTheme] = useState({
-    primaryColor: '#3b82f6',
-    secondaryColor: '#8b5cf6',
+    primaryColor: 'var(--ik-primary)',
+    secondaryColor: 'var(--ik-orchid)',
     bannerEmoji: '🎪',
   });
 
@@ -252,7 +255,7 @@ export default function GuildPage() {
           setAnalyses(guilde.analyses || []);
           setEvents(guilde.events || []);
           setPrivateMessages(guilde.privateMessages || {});
-          setGuildTheme(guilde.guildTheme || { primaryColor: '#3b82f6', secondaryColor: '#8b5cf6', bannerEmoji: '🎪' });
+          setGuildTheme(guilde.guildTheme || { primaryColor: 'var(--ik-primary)', secondaryColor: 'var(--ik-orchid)', bannerEmoji: '🎪' });
           setGuildRules(guilde.guildRules || []);
 
           // Charger l'onglet sauvegardé
@@ -561,40 +564,26 @@ export default function GuildPage() {
     }
   };
 
-  const theme = {
-    dark: {
-      bg: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f3d66 100%)',
-      cardBg: 'rgba(20, 28, 52, 0.6)',
-      text: '#ffffff',
-      textSecondary: 'rgba(255, 255, 255, 0.65)',
-      textTertiary: 'rgba(255, 255, 255, 0.45)',
-      border: 'rgba(255, 255, 255, 0.08)',
-      accent: '#3b82f6',
-      success: '#10b981',
-      warning: '#f59e0b',
-      danger: '#ef4444',
-    },
-    light: {
-      bg: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f0f4f8 100%)',
-      cardBg: 'rgba(241, 245, 250, 0.8)',
-      text: '#1e293b',
-      textSecondary: 'rgba(30, 41, 59, 0.7)',
-      textTertiary: 'rgba(30, 41, 59, 0.5)',
-      border: 'rgba(30, 41, 59, 0.08)',
-      accent: '#2563eb',
-      success: '#059669',
-      warning: '#d97706',
-      danger: '#dc2626',
-    },
+  // La palette vient des variables de design communes (app/styles/tokens.css) : clair et sombre suivent le thème du site.
+  const tokens = {
+    bg: 'transparent',
+    cardBg: 'var(--ik-surface-card)',
+    text: 'var(--ik-text)',
+    textSecondary: 'var(--ik-text-2)',
+    textTertiary: 'var(--ik-text-3)',
+    border: 'var(--ik-border-strong)',
+    accent: 'var(--ik-accent)',
+    success: 'var(--ik-positive)',
+    warning: 'var(--ik-warning)',
+    danger: 'var(--ik-negative)',
   };
+  const theme = { dark: tokens, light: tokens };
 
   const currentTheme = isDarkMode ? theme.dark : theme.light;
 
   if (!selectedGuilde) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: currentTheme.bg,
+      <AppShell><div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -611,7 +600,7 @@ export default function GuildPage() {
             ← Retour au dashboard
           </Link>
         </div>
-      </div>
+      </div></AppShell>
     );
   }
 
@@ -647,9 +636,7 @@ export default function GuildPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: currentTheme.bg,
+    <AppShell><div style={{
       paddingBottom: '40px',
     }}>
       {/* PREMIUM HEADER */}
@@ -658,7 +645,7 @@ export default function GuildPage() {
         padding: '50px 24px',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: `0 10px 40px rgba(0, 0, 0, 0.2), 0 0 80px ${guildTheme.primaryColor}20`,
+        boxShadow: `0 10px 40px rgba(0, 0, 0, 0.2), 0 0 80px ${alpha(guildTheme.primaryColor, 13)}`,
         animation: 'fadeInDown 0.8s ease-out',
       }}>
         {/* Animated Background Elements */}
@@ -680,7 +667,7 @@ export default function GuildPage() {
           left: '0',
           width: '400px',
           height: '400px',
-          background: `radial-gradient(circle, ${guildTheme.primaryColor}30 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha(guildTheme.primaryColor, 19)} 0%, transparent 70%)`,
           borderRadius: '50%',
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'none',
@@ -694,9 +681,9 @@ export default function GuildPage() {
               router.push('/dashboard?tab=guildes');
             }}
             style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              border: '1.5px solid rgba(255, 255, 255, 0.35)',
-              color: '#fff',
+              background: 'color-mix(in srgb, var(--ik-text) 15%, transparent)',
+              border: '1.5px solid color-mix(in srgb, var(--ik-text) 35%, transparent)',
+              color: 'var(--ik-text)',
               padding: '10px 18px',
               borderRadius: '10px',
               fontWeight: '600',
@@ -709,16 +696,16 @@ export default function GuildPage() {
               letterSpacing: '0.3px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 25%, transparent)';
               e.currentTarget.style.transform = 'translateX(-6px) translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.25)';
-              e.currentTarget.style.border = '1.5px solid rgba(255, 255, 255, 0.5)';
+              e.currentTarget.style.border = '1.5px solid color-mix(in srgb, var(--ik-text) 50%, transparent)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
               e.currentTarget.style.transform = 'translateX(0) translateY(0)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-              e.currentTarget.style.border = '1.5px solid rgba(255, 255, 255, 0.35)';
+              e.currentTarget.style.border = '1.5px solid color-mix(in srgb, var(--ik-text) 35%, transparent)';
             }}
           >
             ← Retour au Dashboard
@@ -730,31 +717,31 @@ export default function GuildPage() {
               width: '110px',
               height: '110px',
               borderRadius: '20px',
-              background: 'rgba(255, 255, 255, 0.15)',
+              background: 'color-mix(in srgb, var(--ik-text) 15%, transparent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '56px',
               backdropFilter: 'blur(12px)',
-              border: '2.5px solid rgba(255, 255, 255, 0.4)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
+              border: '2.5px solid color-mix(in srgb, var(--ik-text) 40%, transparent)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 30%, transparent)',
               transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
               animation: 'float 4s ease-in-out infinite',
               position: 'relative',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'scale(1.08) rotateZ(5deg)';
-              e.currentTarget.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5)';
+              e.currentTarget.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 50%, transparent)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1) rotateZ(0deg)';
-              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 30%, transparent)';
             }}>
               {selectedGuilde?.emoji}
             </div>
             <div style={{ flex: 1 }}>
               <h1 style={{
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontWeight: '900',
                 fontSize: '48px',
                 margin: '0 0 16px 0',
@@ -776,8 +763,8 @@ export default function GuildPage() {
                   { label: 'Palier', value: guildTier, icon: '👑' },
                 ].map((stat, idx) => (
                   <div key={idx} style={{ animation: `fadeInUp 0.6s ease-out ${0.3 + idx * 0.1}s backwards` }}>
-                    <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', margin: '0 0 6px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px' }}>{stat.icon} {stat.label}</p>
-                    <p style={{ color: '#fff', fontSize: '22px', fontWeight: '800', margin: 0 }}>{stat.value}</p>
+                    <p style={{ color: 'color-mix(in srgb, var(--ik-text) 65%, transparent)', fontSize: '11px', margin: '0 0 6px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '1px' }}>{stat.icon} {stat.label}</p>
+                    <p style={{ color: 'var(--ik-text)', fontSize: '22px', fontWeight: '800', margin: 0 }}>{stat.value}</p>
                   </div>
                 ))}
               </div>
@@ -798,7 +785,7 @@ export default function GuildPage() {
             {
               category: '📋 Aperçu & Gestion',
               icon: '📋',
-              color: '#3b82f6',
+              color: 'var(--ik-primary)',
               tabs: [
                 { id: 'info', label: 'À Propos', icon: '📊' },
                 { id: 'members', label: 'Membres', icon: '👥' },
@@ -808,7 +795,7 @@ export default function GuildPage() {
             {
               category: '💬 Communication',
               icon: '💬',
-              color: '#8b5cf6',
+              color: 'var(--ik-orchid)',
               tabs: [
                 { id: 'announcements', label: 'Annonces', icon: '📌' },
                 { id: 'chat', label: 'Chat', icon: '💬' },
@@ -818,7 +805,7 @@ export default function GuildPage() {
             {
               category: '🎯 Activité & Récompenses',
               icon: '🎯',
-              color: '#f59e0b',
+              color: 'var(--ik-warning)',
               tabs: [
                 { id: 'activity', label: 'Activité', icon: '📊' },
                 { id: 'coins', label: 'Coins', icon: '💰' },
@@ -828,7 +815,7 @@ export default function GuildPage() {
             {
               category: '📚 Contenu & Apprentissage',
               icon: '📚',
-              color: '#10b981',
+              color: 'var(--ik-positive)',
               tabs: [
                 { id: 'qa', label: 'Q&A', icon: '❓' },
                 { id: 'portfolio', label: 'Portfolio', icon: '💼' },
@@ -865,7 +852,7 @@ export default function GuildPage() {
                 <div style={{
                   height: '2px',
                   flex: 1,
-                  background: `linear-gradient(90deg, ${section.color}80 0%, ${section.color}20 100%)`,
+                  background: `linear-gradient(90deg, ${alpha(section.color, 50)} 0%, ${alpha(section.color, 13)} 100%)`,
                   borderRadius: '1px',
                 }} />
               </div>
@@ -893,10 +880,10 @@ export default function GuildPage() {
                     style={{
                       padding: '20px 18px',
                       background: activeTab === tab.id
-                        ? `linear-gradient(135deg, ${section.color} 0%, ${section.color}dd 100%)`
+                        ? `linear-gradient(135deg, ${section.color} 0%, ${alpha(section.color, 87)} 100%)`
                         : `linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%)`,
                       border: activeTab === tab.id
-                        ? `2px solid rgba(255, 255, 255, 0.4)`
+                        ? `2px solid color-mix(in srgb, var(--ik-text) 40%, transparent)`
                         : `1.5px solid ${currentTheme.border}`,
                       borderRadius: '16px',
                       color: activeTab === tab.id ? '#fff' : currentTheme.text,
@@ -905,7 +892,7 @@ export default function GuildPage() {
                       fontSize: '13px',
                       transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       boxShadow: activeTab === tab.id
-                        ? `0 12px 32px ${section.color}40, inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+                        ? `0 12px 32px ${alpha(section.color, 25)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 20%, transparent)`
                         : '0 4px 12px rgba(0, 0, 0, 0.15)',
                       transform: activeTab === tab.id ? 'translateY(-6px) scale(1.02)' : 'translateY(0)',
                       backdropFilter: 'blur(12px)',
@@ -921,9 +908,9 @@ export default function GuildPage() {
                     }}
                     onMouseEnter={(e) => {
                       if (activeTab !== tab.id) {
-                        e.currentTarget.style.background = `linear-gradient(135deg, ${section.color}30 0%, ${section.color}20 100%)`;
+                        e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(section.color, 19)} 0%, ${alpha(section.color, 13)} 100%)`;
                         e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = `0 8px 24px ${section.color}25`;
+                        e.currentTarget.style.boxShadow = `0 8px 24px ${alpha(section.color, 15)}`;
                         e.currentTarget.style.borderColor = section.color;
                       }
                     }}
@@ -997,56 +984,56 @@ export default function GuildPage() {
                 {/* Card 1: Members */}
                 <div style={{
                   padding: '28px',
-                  background: `linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.04) 100%)`,
+                  background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 12%, transparent) 0%, color-mix(in srgb, var(--ik-primary) 4%, transparent) 100%)`,
                   borderRadius: '18px',
-                  border: `1.5px solid rgba(59, 130, 246, 0.25)`,
+                  border: `1.5px solid color-mix(in srgb, var(--ik-primary) 25%, transparent)`,
                   backdropFilter: 'blur(12px)',
                   transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(59, 130, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px color-mix(in srgb, var(--ik-primary) 20%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 25%, transparent)';
                 }}>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>👥 Membres</p>
-                  <p style={{ color: '#3b82f6', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{selectedGuilde.membersList?.length || 0}</p>
+                  <p style={{ color: 'var(--ik-primary)', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{selectedGuilde.membersList?.length || 0}</p>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>Actifs cette semaine</p>
                 </div>
 
                 {/* Card 2: Level */}
                 <div style={{
                   padding: '28px',
-                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 100%)`,
+                  background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 12%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 4%, transparent) 100%)`,
                   borderRadius: '18px',
-                  border: `1.5px solid rgba(139, 92, 246, 0.25)`,
+                  border: `1.5px solid color-mix(in srgb, var(--ik-orchid) 25%, transparent)`,
                   backdropFilter: 'blur(12px)',
                   transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(139, 92, 246, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px color-mix(in srgb, var(--ik-orchid) 20%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-orchid) 50%, transparent)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.25)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-orchid) 25%, transparent)';
                 }}>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>🎯 Niveau</p>
-                  <p style={{ color: '#8b5cf6', fontSize: '40px', fontWeight: '900', margin: '0 0 12px 0' }}>Lvl {selectedGuilde.level}</p>
-                  <div style={{ width: '100%', height: '8px', background: 'rgba(139, 92, 246, 0.15)', borderRadius: '4px', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)' }}>
-                    <div style={{ width: `${(selectedGuilde.level / 20) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)', borderRadius: '4px', boxShadow: '0 0 12px rgba(139, 92, 246, 0.4)' }} />
+                  <p style={{ color: 'var(--ik-orchid)', fontSize: '40px', fontWeight: '900', margin: '0 0 12px 0' }}>Lvl {selectedGuilde.level}</p>
+                  <div style={{ width: '100%', height: '8px', background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)', borderRadius: '4px', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+                    <div style={{ width: `${(selectedGuilde.level / 20) * 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--ik-orchid), var(--ik-accent))', transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)', borderRadius: '4px', boxShadow: '0 0 12px color-mix(in srgb, var(--ik-orchid) 40%, transparent)' }} />
                   </div>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '12px', margin: '10px 0 0 0', fontWeight: '600' }}>{selectedGuilde.level}/20</p>
                 </div>
@@ -1054,54 +1041,54 @@ export default function GuildPage() {
                 {/* Card 3: XP */}
                 <div style={{
                   padding: '28px',
-                  background: `linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)`,
+                  background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 12%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 4%, transparent) 100%)`,
                   borderRadius: '18px',
-                  border: `1.5px solid rgba(16, 185, 129, 0.25)`,
+                  border: `1.5px solid color-mix(in srgb, var(--ik-positive) 25%, transparent)`,
                   backdropFilter: 'blur(12px)',
                   transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(16, 185, 129, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px color-mix(in srgb, var(--ik-positive) 20%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-positive) 50%, transparent)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.25)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-positive) 25%, transparent)';
                 }}>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>⚡ Total XP</p>
-                  <p style={{ color: '#10b981', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{selectedGuilde.totalXP}</p>
+                  <p style={{ color: 'var(--ik-positive)', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{selectedGuilde.totalXP}</p>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>+240 cette semaine</p>
                 </div>
 
                 {/* Card 4: Tier */}
                 <div style={{
                   padding: '28px',
-                  background: `linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)`,
+                  background: `linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 12%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 4%, transparent) 100%)`,
                   borderRadius: '18px',
-                  border: `1.5px solid rgba(245, 158, 11, 0.25)`,
+                  border: `1.5px solid color-mix(in srgb, var(--ik-warning) 25%, transparent)`,
                   backdropFilter: 'blur(12px)',
                   transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(245, 158, 11, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 16px 40px color-mix(in srgb, var(--ik-warning) 20%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 50%, transparent)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.25)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 15%, transparent)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 25%, transparent)';
                 }}>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: '0 0 12px 0', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>🏆 Palier</p>
-                  <p style={{ color: '#f59e0b', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{guildTier}</p>
+                  <p style={{ color: 'var(--ik-warning)', fontSize: '40px', fontWeight: '900', margin: '0 0 8px 0' }}>{guildTier}</p>
                   <p style={{ color: currentTheme.textSecondary, fontSize: '13px', margin: 0 }}>Avantages débloqués</p>
                 </div>
               </div>
@@ -1111,9 +1098,9 @@ export default function GuildPage() {
             {selectedGuilde.restrictions && (
               <div style={{
                 padding: '20px',
-                background: 'rgba(59, 130, 246, 0.1)',
+                background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)',
                 borderRadius: '12px',
-                border: `1px solid rgba(59, 130, 246, 0.3)`,
+                border: `1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)`,
                 gridColumn: '1 / -1',
               }}>
                 <h2 style={{
@@ -1217,10 +1204,10 @@ export default function GuildPage() {
                   overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.08)`;
+                  e.currentTarget.style.background = `color-mix(in srgb, var(--ik-primary) 8%, transparent)`;
                   e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
                   e.currentTarget.style.borderColor = guildTheme.primaryColor;
-                  e.currentTarget.style.boxShadow = `0 12px 28px ${guildTheme.primaryColor}20`;
+                  e.currentTarget.style.boxShadow = `0 12px 28px ${alpha(guildTheme.primaryColor, 13)}`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = currentTheme.cardBg;
@@ -1240,7 +1227,7 @@ export default function GuildPage() {
                     justifyContent: 'center',
                     fontSize: '24px',
                     fontWeight: '800',
-                    boxShadow: `0 8px 20px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.3)`,
+                    boxShadow: `0 8px 20px ${alpha(guildTheme.primaryColor, 19)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 30%, transparent)`,
                     transition: 'all 0.3s ease',
                   }}>
                     {member.name.charAt(0).toUpperCase()}
@@ -1269,13 +1256,13 @@ export default function GuildPage() {
                   <span style={{
                     fontSize: '11px',
                     fontWeight: '800',
-                    color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
+                    color: member.role === 'Leader' ? 'var(--ik-warning)' : member.role === 'Co-leader' ? 'var(--ik-accent)' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
                     textTransform: 'uppercase',
                     letterSpacing: '1.2px',
                     padding: '8px 14px',
-                    background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.18)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.18)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.18)' : 'rgba(0,0,0,0.08)',
+                    background: member.role === 'Leader' ? 'color-mix(in srgb, var(--ik-warning) 18%, transparent)' : member.role === 'Co-leader' ? 'color-mix(in srgb, var(--ik-primary) 18%, transparent)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.18)' : 'rgba(0,0,0,0.08)',
                     borderRadius: '10px',
-                    border: member.role === 'Leader' ? '1.5px solid rgba(251, 191, 36, 0.35)' : member.role === 'Co-leader' ? '1.5px solid rgba(96, 165, 250, 0.35)' : member.role === 'Elder' ? '1.5px solid rgba(129, 140, 248, 0.35)' : `1.5px solid ${currentTheme.border}`,
+                    border: member.role === 'Leader' ? '1.5px solid color-mix(in srgb, var(--ik-warning) 35%, transparent)' : member.role === 'Co-leader' ? '1.5px solid color-mix(in srgb, var(--ik-primary) 35%, transparent)' : member.role === 'Elder' ? '1.5px solid rgba(129, 140, 248, 0.35)' : `1.5px solid ${currentTheme.border}`,
                     transition: 'all 0.3s ease',
                     backdropFilter: 'blur(8px)',
                   }}>
@@ -1320,24 +1307,24 @@ export default function GuildPage() {
                   key={msg.id}
                   style={{
                     padding: '28px',
-                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.04) 100%)',
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 12%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 4%, transparent) 100%)',
                     borderRadius: '18px',
-                    border: `2px solid rgba(251, 191, 36, 0.35)`,
+                    border: `2px solid color-mix(in srgb, var(--ik-warning) 35%, transparent)`,
                     position: 'relative',
                     overflow: 'hidden',
                     animation: `fadeInUp 0.6s ease-out ${0.2 + idx * 0.1}s backwards`,
-                    boxShadow: '0 8px 24px rgba(251, 191, 36, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 8px 24px color-mix(in srgb, var(--ik-warning) 15%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 10%, transparent)',
                     transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 16px 40px rgba(251, 191, 36, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                    e.currentTarget.style.boxShadow = '0 16px 40px color-mix(in srgb, var(--ik-warning) 25%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 10%, transparent)';
+                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 50%, transparent)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(251, 191, 36, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.35)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px color-mix(in srgb, var(--ik-warning) 15%, transparent), inset 0 1px 1px color-mix(in srgb, var(--ik-text) 10%, transparent)';
+                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 35%, transparent)';
                   }}
                 >
                   <div style={{
@@ -1372,13 +1359,13 @@ export default function GuildPage() {
                         <span style={{
                           fontSize: '11px',
                           fontWeight: '800',
-                          color: '#fbbf24',
+                          color: 'var(--ik-warning)',
                           textTransform: 'uppercase',
                           letterSpacing: '1px',
                           padding: '4px 10px',
-                          background: 'rgba(251, 191, 36, 0.25)',
+                          background: 'color-mix(in srgb, var(--ik-warning) 25%, transparent)',
                           borderRadius: '6px',
-                          border: '1px solid rgba(251, 191, 36, 0.4)',
+                          border: '1px solid color-mix(in srgb, var(--ik-warning) 40%, transparent)',
                           backdropFilter: 'blur(8px)',
                         }}>
                           Leader
@@ -1407,10 +1394,10 @@ export default function GuildPage() {
                         onClick={() => togglePinnedMessage(msg.id)}
                         style={{
                           padding: '10px 14px',
-                          background: 'rgba(251, 191, 36, 0.2)',
-                          border: `1.5px solid rgba(251, 191, 36, 0.4)`,
+                          background: 'color-mix(in srgb, var(--ik-warning) 20%, transparent)',
+                          border: `1.5px solid color-mix(in srgb, var(--ik-warning) 40%, transparent)`,
                           borderRadius: '8px',
-                          color: '#fbbf24',
+                          color: 'var(--ik-warning)',
                           fontWeight: '700',
                           cursor: 'pointer',
                           fontSize: '12px',
@@ -1419,16 +1406,16 @@ export default function GuildPage() {
                           letterSpacing: '0.3px',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(251, 191, 36, 0.35)';
+                          e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-warning) 35%, transparent)';
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.2)';
-                          e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px color-mix(in srgb, var(--ik-warning) 20%, transparent)';
+                          e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 60%, transparent)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)';
+                          e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-warning) 20%, transparent)';
                           e.currentTarget.style.transform = 'translateY(0)';
                           e.currentTarget.style.boxShadow = 'none';
-                          e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+                          e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-warning) 40%, transparent)';
                         }}
                       >
                         Dépingler
@@ -1593,7 +1580,7 @@ export default function GuildPage() {
                 <div style={{
                   width: `${(selectedGuilde.level / 20) * 100}%`,
                   height: '100%',
-                  background: `linear-gradient(90deg, ${currentTheme.accent}, #8b5cf6)`,
+                  background: `linear-gradient(90deg, ${currentTheme.accent}, var(--ik-orchid))`,
                   transition: 'width 0.3s ease',
                 }} />
               </div>
@@ -1749,10 +1736,10 @@ export default function GuildPage() {
                               }}
                               style={{
                                 padding: '4px 8px',
-                                background: 'rgba(96, 165, 250, 0.2)',
-                                border: '1px solid rgba(96, 165, 250, 0.4)',
+                                background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                                border: '1px solid color-mix(in srgb, var(--ik-primary) 40%, transparent)',
                                 borderRadius: '4px',
-                                color: '#60a5fa',
+                                color: 'var(--ik-accent)',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 fontSize: '10px',
@@ -1793,10 +1780,10 @@ export default function GuildPage() {
                             }}
                             style={{
                               padding: '4px 8px',
-                              background: 'rgba(239, 68, 68, 0.2)',
-                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              background: 'color-mix(in srgb, var(--ik-negative) 20%, transparent)',
+                              border: '1px solid color-mix(in srgb, var(--ik-negative) 40%, transparent)',
                               borderRadius: '4px',
-                              color: '#ef4444',
+                              color: 'var(--ik-negative)',
                               fontWeight: '600',
                               cursor: 'pointer',
                               fontSize: '10px',
@@ -1892,7 +1879,7 @@ export default function GuildPage() {
                       background: currentTheme.accent,
                       border: 'none',
                       borderRadius: '8px',
-                      color: '#fff',
+                      color: 'var(--ik-text)',
                       fontWeight: '600',
                       cursor: 'pointer',
                       fontSize: '13px',
@@ -2009,7 +1996,7 @@ export default function GuildPage() {
                         background: currentTheme.accent,
                         border: 'none',
                         borderRadius: '8px',
-                        color: '#fff',
+                        color: 'var(--ik-text)',
                         fontWeight: '600',
                         cursor: 'pointer',
                         fontSize: '13px',
@@ -2279,10 +2266,10 @@ export default function GuildPage() {
                   style={{
                     flex: 1,
                     padding: '10px 16px',
-                    background: showConfirmDialog.action === 'kick' ? 'rgba(239, 68, 68, 0.3)' : currentTheme.accent,
-                    border: `1px solid ${showConfirmDialog.action === 'kick' ? 'rgba(239, 68, 68, 0.5)' : currentTheme.accent}`,
+                    background: showConfirmDialog.action === 'kick' ? 'color-mix(in srgb, var(--ik-negative) 30%, transparent)' : currentTheme.accent,
+                    border: `1px solid ${showConfirmDialog.action === 'kick' ? 'color-mix(in srgb, var(--ik-negative) 50%, transparent)' : currentTheme.accent}`,
                     borderRadius: '8px',
-                    color: showConfirmDialog.action === 'kick' ? '#ef4444' : '#fff',
+                    color: showConfirmDialog.action === 'kick' ? 'var(--ik-negative)' : 'var(--ik-text)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     fontSize: '13px',
@@ -2352,7 +2339,7 @@ export default function GuildPage() {
               {['Bronze', 'Silver', 'Gold', 'Platinum'].map((tier, idx) => (
                 <div key={tier} style={{
                   padding: '20px',
-                  background: tier === guildTier ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.2)',
+                  background: tier === guildTier ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'rgba(0,0,0,0.2)',
                   borderRadius: '10px',
                   border: tier === guildTier ? `2px solid ${currentTheme.accent}` : `1px solid ${currentTheme.border}`,
                   textAlign: 'center',
@@ -2405,7 +2392,7 @@ export default function GuildPage() {
                   background: currentTheme.accent,
                   border: 'none',
                   borderRadius: '8px',
-                  color: '#fff',
+                  color: 'var(--ik-text)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   fontSize: '13px',
@@ -2438,7 +2425,7 @@ export default function GuildPage() {
             </div>
             <div style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px' }}>
               <p style={{ color: currentTheme.text, fontWeight: '600', fontSize: '13px', margin: '0 0 12px 0' }}>🗳️ Votes Actifs</p>
-              <div style={{ padding: '8px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '6px', marginBottom: '8px' }}>
+              <div style={{ padding: '8px', background: 'color-mix(in srgb, var(--ik-primary) 10%, transparent)', borderRadius: '6px', marginBottom: '8px' }}>
                 <p style={{ color: currentTheme.text, fontSize: '12px', margin: '0 0 4px 0' }}>Acheter Bitcoin?</p>
                 <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>8 votes pour - 2 votes contre</p>
               </div>
@@ -2532,7 +2519,7 @@ export default function GuildPage() {
                     background: currentTheme.accent,
                     border: 'none',
                     borderRadius: '6px',
-                    color: '#fff',
+                    color: 'var(--ik-text)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -2622,7 +2609,7 @@ export default function GuildPage() {
                       background: currentTheme.accent,
                       border: 'none',
                       borderRadius: '6px',
-                      color: '#fff',
+                      color: 'var(--ik-text)',
                       fontWeight: '600',
                       cursor: 'pointer',
                       fontSize: '12px',
@@ -2698,7 +2685,7 @@ export default function GuildPage() {
                     background: currentTheme.accent,
                     border: 'none',
                     borderRadius: '8px',
-                    color: '#fff',
+                    color: 'var(--ik-text)',
                     fontWeight: '600',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -2782,7 +2769,7 @@ export default function GuildPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '48px',
-                    boxShadow: `0 12px 32px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)`,
+                    boxShadow: `0 12px 32px ${alpha(guildTheme.primaryColor, 19)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 20%, transparent)`,
                     animation: 'float 4s ease-in-out infinite',
                   }}>
                     💬
@@ -2819,7 +2806,7 @@ export default function GuildPage() {
                         fontWeight: '800',
                         color: '#fff',
                         flexShrink: 0,
-                        boxShadow: `0 4px 12px ${guildTheme.primaryColor}30`,
+                        boxShadow: `0 4px 12px ${alpha(guildTheme.primaryColor, 19)}`,
                         transition: 'all 0.3s ease',
                       }}>
                         {msg.author.charAt(0).toUpperCase()}
@@ -2836,7 +2823,7 @@ export default function GuildPage() {
                         ? '18px 18px 4px 18px'
                         : '18px 18px 18px 4px',
                       wordBreak: 'break-word',
-                      boxShadow: isCurrentUser ? `0 8px 24px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)` : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                      boxShadow: isCurrentUser ? `0 8px 24px ${alpha(guildTheme.primaryColor, 19)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 20%, transparent)` : '0 2px 8px rgba(0, 0, 0, 0.08)',
                       transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       border: isCurrentUser ? 'none' : `1px solid ${currentTheme.border}`,
                     }}>
@@ -2862,7 +2849,7 @@ export default function GuildPage() {
                       </p>
                       <p style={{
                         fontSize: '12px',
-                        color: isCurrentUser ? 'rgba(255, 255, 255, 0.65)' : currentTheme.textSecondary,
+                        color: isCurrentUser ? 'color-mix(in srgb, var(--ik-text) 65%, transparent)' : currentTheme.textSecondary,
                         margin: '8px 0 0 0',
                         fontWeight: '500',
                       }}>
@@ -2909,8 +2896,8 @@ export default function GuildPage() {
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = guildTheme.primaryColor;
-                  e.currentTarget.style.background = `rgba(59, 130, 246, 0.08)`;
-                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(59, 130, 246, 0.12), 0 4px 12px rgba(59, 130, 246, 0.15)`;
+                  e.currentTarget.style.background = `color-mix(in srgb, var(--ik-primary) 8%, transparent)`;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px color-mix(in srgb, var(--ik-primary) 12%, transparent), 0 4px 12px color-mix(in srgb, var(--ik-primary) 15%, transparent)`;
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = currentTheme.border;
@@ -2933,7 +2920,7 @@ export default function GuildPage() {
                   cursor: guildChatInput.trim() ? 'pointer' : 'not-allowed',
                   fontSize: '14px',
                   transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  boxShadow: guildChatInput.trim() ? `0 8px 24px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)` : 'none',
+                  boxShadow: guildChatInput.trim() ? `0 8px 24px ${alpha(guildTheme.primaryColor, 19)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 20%, transparent)` : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -2943,13 +2930,13 @@ export default function GuildPage() {
                 onMouseEnter={(e) => {
                   if (guildChatInput.trim()) {
                     e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = `0 12px 32px ${guildTheme.primaryColor}40, inset 0 1px 0 rgba(255, 255, 255, 0.3)`;
+                    e.currentTarget.style.boxShadow = `0 12px 32px ${alpha(guildTheme.primaryColor, 25)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 30%, transparent)`;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (guildChatInput.trim()) {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = `0 8px 24px ${guildTheme.primaryColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.2)`;
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${alpha(guildTheme.primaryColor, 19)}, inset 0 1px 0 color-mix(in srgb, var(--ik-text) 20%, transparent)`;
                   }
                 }}
               >
@@ -2960,6 +2947,6 @@ export default function GuildPage() {
           </div>
         )}
       </div>
-    </div>
+    </div></AppShell>
   );
 }

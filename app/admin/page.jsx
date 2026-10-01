@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { isLoggedIn } from '@/app/lib/session';
+import AppShell from '@/app/components/shell/AppShell';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -19,10 +20,10 @@ const api = async (path, opts = {}) => {
   return data;
 };
 
-const C = { bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)', card: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)', muted: '#94a3b8', accent: '#3b82f6', bad: '#f43f5e', warn: '#f59e0b', good: '#10b981' };
+const C = { bg: 'linear-gradient(135deg, var(--ik-surface-1) 0%, var(--ik-surface-2) 50%, #0f4c75 100%)', card: 'color-mix(in srgb, var(--ik-text) 6%, transparent)', border: 'color-mix(in srgb, var(--ik-text) 12%, transparent)', muted: 'var(--ik-text-3)', accent: 'var(--ik-primary)', bad: 'var(--ik-negative)', warn: 'var(--ik-warning)', good: 'var(--ik-positive)' };
 const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 };
-const btn = (variant = 'default') => ({ padding: '8px 14px', borderRadius: 8, border: `1px solid ${variant === 'danger' ? 'rgba(244,63,94,0.5)' : C.border}`, background: variant === 'primary' ? C.accent : variant === 'danger' ? 'rgba(244,63,94,0.15)' : 'rgba(255,255,255,0.08)', color: variant === 'danger' ? '#fda4af' : 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600 });
-const input = { width: 'auto', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#1a1a2e', color: 'white', fontSize: 13 };
+const btn = (variant = 'default') => ({ padding: '8px 14px', borderRadius: 8, border: `1px solid ${variant === 'danger' ? 'color-mix(in srgb, var(--ik-negative) 50%, transparent)' : C.border}`, background: variant === 'primary' ? C.accent : variant === 'danger' ? 'color-mix(in srgb, var(--ik-negative) 15%, transparent)' : 'color-mix(in srgb, var(--ik-text) 8%, transparent)', color: variant === 'danger' ? 'var(--ik-negative)' : 'var(--ik-text)', cursor: 'pointer', fontSize: 13, fontWeight: 600 });
+const input = { width: 'auto', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--ik-surface-2)', color: 'white', fontSize: 13 };
 const fr = (n) => Number(n ?? 0).toLocaleString('fr-FR');
 const date = (d) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 const LEVEL = { critique: { c: C.bad, i: '⛔' }, attention: { c: C.warn, i: '⚠️' }, info: { c: C.accent, i: 'ℹ️' } };
@@ -44,7 +45,7 @@ function SignupsChart({ data }) {
   return (
     <div>
       <svg viewBox={`0 0 ${w} ${h + 22}`} role="img" aria-label="Inscriptions par jour sur les 30 derniers jours" style={{ width: '100%', height: 'auto' }}>
-        <line x1="0" y1={h} x2={w} y2={h} stroke="rgba(255,255,255,0.25)" />
+        <line x1="0" y1={h} x2={w} y2={h} stroke="color-mix(in srgb, var(--ik-text) 25%, transparent)" />
         {data.map((d, i) => (
           <g key={d.day}>
             <title>{`${d.day} : ${d.n} inscription(s)`}</title>
@@ -73,11 +74,11 @@ function Overview() {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <section aria-label="Alertes" style={{ display: 'grid', gap: 8 }}>
-        {alerts?.length === 0 && <div style={{ ...card, borderColor: 'rgba(16,185,129,0.4)' }}>✅ Aucune alerte.</div>}
+        {alerts?.length === 0 && <div style={{ ...card, borderColor: 'color-mix(in srgb, var(--ik-positive) 40%, transparent)' }}>✅ Aucune alerte.</div>}
         {alerts?.map((a) => (
           <div key={a.code} style={{ ...card, borderColor: LEVEL[a.level].c }}>
             <strong>{LEVEL[a.level].i} {a.title}</strong>
-            <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 4 }}>{a.detail}</div>
+            <div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginTop: 4 }}>{a.detail}</div>
           </div>
         ))}
       </section>
@@ -89,24 +90,24 @@ function Overview() {
         <Stat label="Pièces en circulation" value={`🪙 ${fr(stats.coins.inCirculation)}`} />
       </div>
       <div style={card}>
-        <h3 style={{ margin: '0 0 8px', fontSize: 15, color: '#fff' }}>Inscriptions — 30 derniers jours</h3>
+        <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Inscriptions — 30 derniers jours</h3>
         <SignupsChart data={stats.signupsLast30Days} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
         <div style={card}>
-          <h3 style={{ margin: '0 0 8px', fontSize: 15, color: '#fff' }}>Joueurs par domaine</h3>
+          <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Joueurs par domaine</h3>
           {stats.players.trading.map((p) => <div key={p.domain} style={{ fontSize: 13 }}>{p.domain === 'stocks' ? 'Bourse' : p.domain === 'crypto' ? 'Crypto' : p.domain === 'crypto_market' ? 'Marché Crypto' : p.domain} : {fr(p.players)}</div>)}
           <div style={{ fontSize: 13 }}>Immobilier : {fr(stats.players.realEstate)}</div>
         </div>
         <div style={card}>
-          <h3 style={{ margin: '0 0 8px', fontSize: 15, color: '#fff' }}>Puits d'InvestCoins (pièces détruites)</h3>
+          <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Puits d'InvestCoins (pièces détruites)</h3>
           {Object.entries(stats.coins.sinks).map(([domain, reasons]) => Object.entries(reasons).map(([reason, v]) => (
             <div key={domain + reason} style={{ fontSize: 13 }}>{domain} · {reason} : {fr(v.destroyed)}</div>
           )))}
           {Object.keys(stats.coins.sinks).length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Aucun encore.</div>}
         </div>
         <div style={card}>
-          <h3 style={{ margin: '0 0 8px', fontSize: 15, color: '#fff' }}>Abonnements et prêts</h3>
+          <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Abonnements et prêts</h3>
           {stats.subscriptions.map((s) => <div key={s.status} style={{ fontSize: 13 }}>Abonnement {s.status} : {s.n}</div>)}
           {stats.loans.map((l) => <div key={l.product + l.status} style={{ fontSize: 13 }}>Prêt {l.product} · {l.status} : {l.n}</div>)}
         </div>
@@ -131,7 +132,7 @@ function UserDetail({ id, onClose, onChanged }) {
     <div style={{ ...card, borderColor: C.accent }} role="region" aria-label="Fiche utilisateur">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
         <div>
-          <h3 style={{ margin: 0, color: '#fff' }}>{u.email}</h3>
+          <h3 style={{ margin: 0, color: 'var(--ik-text)' }}>{u.email}</h3>
           <div style={{ fontSize: 12, color: C.muted }}>{u.username || '(pas de pseudo)'} · {isAdmin ? 'administrateur' : 'utilisateur'} · {(u.pro_override || u.subscription_tier === 'pro') ? 'Pro' : 'gratuit'}{u.pro_override ? ' (manuel)' : ''} · 2FA {u.enable_2fa ? 'oui' : 'non'} · {u.verified ? 'e-mail vérifié' : 'non vérifié'}</div>
           <div style={{ fontSize: 12, color: C.muted }}>Inscrit le {date(u.created_at)} · dernière connexion {date(u.last_login_at)} · solde 🪙 {fr(u.balance)}</div>
           {u.disabled_at && <div style={{ color: C.bad, fontSize: 13, marginTop: 4 }}>⛔ Suspendu le {date(u.disabled_at)} — {u.disabled_reason}</div>}
@@ -365,7 +366,7 @@ function Announcements() {
         <div key={a.id} style={{ ...card, display: 'flex', gap: 12, justifyContent: 'space-between', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ flex: '1 1 300px' }}>
             <strong>{KINDS[a.kind]?.split(' ')[0]} {a.title}</strong> <span style={{ fontSize: 12, color: a.published ? C.good : C.muted }}>{a.published ? '● publiée' : '○ brouillon'}</span>
-            {a.body && <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 4, whiteSpace: 'pre-wrap' }}>{a.body}</div>}
+            {a.body && <div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginTop: 4, whiteSpace: 'pre-wrap' }}>{a.body}</div>}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button style={btn()} onClick={() => save(a, { published: !a.published })}>{a.published ? 'Dépublier' : 'Publier'}</button>
@@ -417,7 +418,7 @@ function System() {
         <Stat label="Charge (1 / 5 / 15 min)" value={d.loadAverage.join(' / ')} sub={`${d.cpus} processeur(s)`} />
       </div>
       <div style={card}>
-        <h3 style={{ margin: '0 0 8px', fontSize: 15, color: '#fff' }}>Contrôles de configuration</h3>
+        <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Contrôles de configuration</h3>
         {d.config.map((c) => (
           <div key={c.key} style={{ fontSize: 13, padding: '4px 0' }}>
             {c.status === 'ok' ? '✅' : c.status === 'ko' ? '⚠️' : 'ℹ️'} {c.label}
@@ -454,11 +455,12 @@ export default function AdminPage() {
   const Current = useMemo(() => TABS.find((t) => t.id === tab).C, [tab]);
 
   return (
-    <main style={{ minHeight: '100vh', background: C.bg, color: '#e2e8f0', padding: 'clamp(16px, 3vw, 28px)' }}>
+    <AppShell>
+    <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 26px)', color: '#fff' }}>🛡️ Administration</h1>
-          <Link href="/dashboard" style={{ color: '#93c5fd', textDecoration: 'none', fontSize: 14 }}>← Retour au site</Link>
+          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 26px)', color: 'var(--ik-text)' }}>🛡️ Administration</h1>
+          <Link href="/dashboard" style={{ color: 'var(--ik-accent)', textDecoration: 'none', fontSize: 14 }}>← Retour au site</Link>
         </div>
         {state === 'checking' && <p style={{ color: C.muted }}>Vérification des droits…</p>}
         {state === 'no2fa' && <div style={{ ...card, borderColor: C.warn }}><strong>Double authentification requise.</strong><p style={{ margin: '8px 0 0', fontSize: 14 }}>Active la 2FA sur ton compte (Dashboard → Paramètres → Sécurité) : elle est obligatoire pour accéder à l'administration.</p></div>}
@@ -475,6 +477,7 @@ export default function AdminPage() {
           </>
         )}
       </div>
-    </main>
+    </div>
+    </AppShell>
   );
 }
