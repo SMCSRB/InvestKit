@@ -7,6 +7,7 @@ export const SOCIAL = {
   guildNameMin: 3,
   guildNameMax: 24,
   guildDescMax: 140,
+  xpPerRowMax: 500,         // plafond d'XP compté par complétion (anciennes lignes enregistrées avec une XP fournie par le client)
   xpPerLevel: 500,          // même règle que le niveau d'éducation affiché dans l'interface (EducationContext)
 } as const;
 

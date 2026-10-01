@@ -22,7 +22,7 @@ describe.skipIf(!hasDb)('amis réels', () => {
 
   it('demande → acceptation : amis des deux côtés, niveau et XP réels, notifications', async () => {
     const a = await createUser(), b = await createUser();
-    await query('INSERT INTO education_progress (user_id, domain_id, chapter_id, xp_earned) VALUES ($1,\'d\',\'c1\',1200)', [b]);
+    await query('INSERT INTO education_progress (user_id, domain_id, chapter_id, xp_earned) VALUES ($1,\'d\',\'c1\',500),($1,\'d\',\'c2\',500),($1,\'d\',\'c3\',200)', [b]);
     const r = await svc.sendRequest(a, `#${(await code(b)).toLowerCase()}`);
     expect(r.status).toBe('pending');
     expect((await svc.requests(b)).incoming).toHaveLength(1);
@@ -95,7 +95,7 @@ describe.skipIf(!hasDb)('guildes réelles', () => {
 
   it('création, entrée par code, classement interne par XP réel, code visible du seul propriétaire', async () => {
     const o = await createUser(), m = await createUser();
-    await query('INSERT INTO education_progress (user_id, domain_id, chapter_id, xp_earned) VALUES ($1,\'d\',\'c1\',900)', [m]);
+    await query('INSERT INTO education_progress (user_id, domain_id, chapter_id, xp_earned) VALUES ($1,\'d\',\'c1\',450),($1,\'d\',\'c2\',450)', [m]);
     const { guild } = await svc.createGuild(o, uniq(), 'Pour apprendre ensemble');
     expect(guild!.role).toBe('owner'); expect(guild!.inviteCode).toMatch(/^[A-Z2-9]{8}$/);
     const joined = await svc.joinGuild(m, guild!.inviteCode);
@@ -172,5 +172,102 @@ describe.skipIf(!hasDb)('social : HTTP', () => {
     expect(ok.status).toBe(200);
     const weird = await request(app).delete('/api/v1/social/friends/__proto__').set('Authorization', tok(a));
     expect(weird.status).toBe(400);
+  });
+});
+
+describe.skipIf(!hasDb)('social : durcissement (revue de code)', () => {
+  beforeAll(async () => { await setupDb(); });
+  afterAll(async () => { await teardownDb(); });
+  const uniq = () => `Guilde ${Math.random().toString(36).slice(2, 8)}`;
+
+  it('XP : une valeur énorme ne casse rien (plafond par ligne, pas de dépassement d\'entier) et le repli de nom ne contient pas le code ami', async () => {
+    const a = await createUser(), b = await createUser();
+    await query('INSERT INTO education_progress (user_id, domain_id, chapter_id, xp_earned) VALUES ($1,\'d\',\'c1\',2000000000),($1,\'d\',\'c2\',2000000000)', [b]);
+    await svc.sendRequest(a, await code(b)); await svc.respond(b, (await svc.requests(b)).incoming[0].id, 'accept');
+    const f = (await svc.friends(a)).friends[0];
+    expect(f.xp).toBe(1000);                                  // 2 × plafond de 500
+    expect(f.name).toMatch(/^Joueur [0-9A-F]{4}$/);
+    expect(f.name).not.toContain(await code(b));
+  });
+
+  it('demandes croisées simultanées et doubles clics : une seule amitié, jamais d\'erreur serveur', async () => {
+    const a = await createUser(), b = await createUser();
+    const ca = await code(a), cb = await code(b);
+    const res = await Promise.allSettled([svc.sendRequest(a, cb), svc.sendRequest(b, ca), svc.sendRequest(a, cb)]);
+    for (const r of res) if (r.status === 'rejected') expect(r.reason).toBeInstanceOf(SocialError);   // CONFLICT autorisé, jamais d'erreur brute
+    const rows = (await query('SELECT status FROM friendships WHERE (user_low = LEAST($1::uuid,$2::uuid) AND user_high = GREATEST($1::uuid,$2::uuid))', [a, b])).rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe('accepted');
+  });
+
+  it('refus tardif : accepter une demande déjà refusée ne crée pas d\'amitié et ne notifie pas', async () => {
+    const a = await createUser(), b = await createUser();
+    await svc.sendRequest(a, await code(b));
+    const id = (await svc.requests(b)).incoming[0].id;
+    await svc.respond(b, id, 'decline');
+    await fails(svc.respond(b, id, 'accept'), 'NOT_FOUND');
+    expect((await query('SELECT 1 FROM notifications WHERE user_id = $1 AND kind = \'friend_accepted\'', [a])).rowCount).toBe(0);
+  });
+
+  it('plafond d\'amis : valable pour LES DEUX joueurs (pas de contournement par celui qui reçoit)', async () => {
+    const full = await createUser(), newcomer = await createUser();
+    const others = await Promise.all(Array.from({ length: 100 }, () => createUser()));
+    for (const o of others) {
+      const [lo, hi] = full < o ? [full, o] : [o, full];
+      await query('INSERT INTO friendships (user_low, user_high, requested_by, status, responded_at) VALUES ($1,$2,$3,\'accepted\', NOW())', [lo, hi, full]);
+    }
+    await svc.sendRequest(full, await code(newcomer)).catch(() => {});
+    const pending = (await svc.requests(newcomer)).incoming;
+    if (pending.length) await fails(svc.respond(newcomer, pending[0].id, 'accept'), 'LIMIT');
+    await fails(svc.sendRequest(full, await code(newcomer)), pending.length ? 'CONFLICT' : 'LIMIT');
+  });
+
+  it('identifiants en MAJUSCULES : bloquer, retirer, expulser et transférer se comportent comme en minuscules ; se cibler soi-même est refusé', async () => {
+    const a = await createUser(), b = await createUser();
+    await svc.sendRequest(a, await code(b)); await svc.respond(b, (await svc.requests(b)).incoming[0].id, 'accept');
+    await svc.block(b, a.toUpperCase());
+    expect((await svc.friends(b)).friends).toHaveLength(0);                    // l'amitié est bien supprimée
+    await fails(svc.block(a, a.toUpperCase()), 'INVALID_INPUT');
+    const o = await createUser();
+    const g = (await svc.createGuild(o, uniq(), '')).guild!;
+    await fails(svc.kick(o, o.toUpperCase()), 'INVALID_INPUT');
+    expect((await svc.myGuild(o)).guild!.role).toBe('owner');
+  });
+
+  it('blocage et guilde : un joueur lié par un blocage apparaît « masqué » (ni nom, ni niveau, ni XP) dans le classement', async () => {
+    const o = await createUser(), m = await createUser();
+    const { guild } = await svc.createGuild(o, uniq(), '');
+    await svc.joinGuild(m, guild!.inviteCode!);
+    await svc.block(m, o);
+    const seenByO = (await svc.myGuild(o)).guild!.members.find((x) => x.userId === m)!;
+    expect(seenByO).toMatchObject({ name: 'Joueur masqué', hidden: true });
+    expect(seenByO.level).toBeUndefined(); expect(seenByO.xp).toBeUndefined();
+    const seenByM = (await svc.myGuild(m)).guild!.members.find((x) => x.userId === o)!;
+    expect(seenByM.hidden).toBe(true);
+  });
+
+  it('expulsion : le code d\'invitation est renouvelé, l\'expulsé ne peut pas revenir avec l\'ancien', async () => {
+    const o = await createUser(), m = await createUser();
+    const { guild } = await svc.createGuild(o, uniq(), '');
+    await svc.joinGuild(m, guild!.inviteCode!);
+    await svc.kick(o, m);
+    await fails(svc.joinGuild(m, guild!.inviteCode!), 'NOT_FOUND');
+    expect((await svc.myGuild(o)).guild!.inviteCode).not.toBe(guild!.inviteCode);
+  });
+
+  it('guildes : créations simultanées par le même joueur : une seule réussit, l\'autre est un CONFLICT (jamais une erreur serveur)', async () => {
+    const o = await createUser();
+    const res = await Promise.allSettled([svc.createGuild(o, uniq(), ''), svc.createGuild(o, uniq(), '')]);
+    expect(res.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    for (const r of res) if (r.status === 'rejected') expect(r.reason).toBeInstanceOf(SocialError);
+  });
+
+  it('une demande refusée puis renvoyée ne crée pas une seconde notification identique le même jour', async () => {
+    const a = await createUser(), b = await createUser();
+    for (let i = 0; i < 3; i++) {
+      await svc.sendRequest(a, await code(b));
+      await svc.respond(b, (await svc.requests(b)).incoming[0].id, 'decline');
+    }
+    expect((await query('SELECT 1 FROM notifications WHERE user_id = $1 AND kind = \'friend_request\'', [b])).rowCount).toBe(1);
   });
 });

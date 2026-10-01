@@ -19,3 +19,7 @@ export const MAX_QUANTITY_DECIMALS = 8;
 export const STARTING_CAPITAL = 500;
 export const PRO_STARTING_CAPITAL_MULTIPLIER = 2;
 export const proStartingBonus = (): number => Math.max(0, Math.round(STARTING_CAPITAL * (PRO_STARTING_CAPITAL_MULTIPLIER - 1)));
+
+// XP d'éducation fixée par le serveur (le client ne la fournit plus). VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : mêmes valeurs que l'interface (100 par chapitre, 500 par domaine).
+export const EDUCATION_CHAPTER_XP = 100;
+export const EDUCATION_DOMAIN_XP = 500;

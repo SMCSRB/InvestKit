@@ -498,3 +498,6 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 9. Seuls le nom de joueur, le niveau et l'XP sont visibles par les amis et la guilde — jamais l'e-mail ni le vrai nom. Il n'existe aucune liste de joueurs à parcourir.
 10. Mon compte → export de mes données : une rubrique « social » contient mon code ami, mes amitiés et ma guilde. La suppression du compte retire tout.
 11. Mobile (390 px) : pas de défilement horizontal ; clair et sombre lisibles.
+
+12. **Éducation (correctif de sécurité)** : termine un vrai chapitre : tu gagnes toujours 20 🪙 et 100 XP une seule fois. Avant ce lot, un identifiant de chapitre inventé rapportait aussi des pièces : ce n'est plus possible (le serveur répond « Chapitre inconnu »).
+13. Dans une guilde où quelqu'un t'a bloqué (ou que tu as bloqué), il apparaît « Joueur masqué ». Quand le chef retire un membre, le code d'invitation change.

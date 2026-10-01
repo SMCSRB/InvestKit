@@ -162,31 +162,7 @@ function DashboardContent() {
   const [guildLeaderboards, setGuildLeaderboards] = useState({});
 
   // 6. SYSTÈME DE POINTS GUILDE - Trésor/points partagés
-  const [guildTreasures, setGuildTreasures] = useState({
-    'crypto-masters': {
-      totalPoints: 2500,
-      members: 35,
-      level: 3,
-      nextLevel: 3500,
-      recentContributions: [
-        { member: 'Alice', points: 100, action: 'Partage stratégie' },
-        { member: 'Bob', points: 75, action: 'Analyse technique' },
-        { member: 'You', points: 50, action: 'Participation défi' },
-        { member: 'Emma', points: 120, action: 'Animation community' },
-      ]
-    },
-    'immobilier-pro': {
-      totalPoints: 1800,
-      members: 18,
-      level: 2,
-      nextLevel: 2000,
-      recentContributions: [
-        { member: 'Diana', points: 80, action: 'Mentor newbie' },
-        { member: 'You', points: 60, action: 'Visite immeuble' },
-        { member: 'David', points: 95, action: 'Guide ROI' },
-      ]
-    },
-  });
+  const [guildTreasures, setGuildTreasures] = useState({});
 
   // 1. REAL-TIME NOTIFICATIONS - Système en temps réel
   const [realtimeNotifications, setRealtimeNotifications] = useState([]);
@@ -194,15 +170,7 @@ function DashboardContent() {
 
   // 2. CHAT GUILDES AMÉLIORÉ - Sidebar chat intégré
   const [selectedGuildChat, setSelectedGuildChat] = useState(null);
-  const [guildChatMessages, setGuildChatMessages] = useState({
-    'crypto-masters': [
-      { id: 1, author: 'Alice', avatar: '👩‍💼', message: 'Qui pense que le BTC va atteindre 100k?', timestamp: new Date(Date.now() - 1800000) },
-      { id: 2, author: 'Bob', avatar: '👨‍💻', message: 'Possible d\'ici 2025!', timestamp: new Date(Date.now() - 1500000) },
-    ],
-    'immobilier-pro': [
-      { id: 1, author: 'Charlie', avatar: '🎯', message: 'Quelqu\'un a des sources de crédit immo?', timestamp: new Date(Date.now() - 3600000) },
-    ]
-  });
+  const [guildChatMessages, setGuildChatMessages] = useState({});
 
   // 3. SYSTÈME DE NOTIFICATIONS PUSH - Alertes pop-up
   const [pushNotifications, setPushNotifications] = useState([]);

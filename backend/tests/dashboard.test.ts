@@ -13,7 +13,8 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
 
   it('plus aucun ami, guilde ni activité d\'exemple : amis et guildes sont réels (serveur)', () => {
     expect(page).toContain('<SocialHub');
-    for (const fake of ['Alice Dupont', 'Bob Martin', 'Charlie Dubois', 'dash-demo-note']) expect(page, fake).not.toContain(fake);
+    for (const fake of ['Alice', 'Bob', 'Emma', 'Diana', 'Charlie', 'dash-demo-note']) expect(page, fake).not.toContain(`'${fake}`);
+    expect(read('context/UserContext.jsx')).not.toMatch(/UJYD0L|SMC\.SRB/);
     const friends = read('friends/page.jsx');
     expect(friends).toContain('SocialHub');
     expect(friends).not.toMatch(/mockUsers|Alice Dupont/);

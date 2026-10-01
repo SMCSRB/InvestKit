@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { educationProgressRepository } from '../repositories/educationProgressRepository';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
+import { EDUCATION_CATALOG } from '../data/educationCatalog';
+import { EDUCATION_CHAPTER_XP, EDUCATION_DOMAIN_XP } from '../config/game';
 
 const CHAPTER_COINS = 20;
 const DOMAIN_COMPLETE_COINS = 100;
@@ -16,9 +18,14 @@ export const educationController = {
         return;
       }
 
-      const { domainId, chapterId, score, xpEarned } = req.body;
+      const { domainId, chapterId, score } = req.body;
       if (!domainId || !chapterId) {
         res.status(400).json({ error: 'domainId et chapterId requis' });
+        return;
+      }
+      // Le serveur décide : seuls les chapitres qui existent sont récompensés, et l'XP est fixée ici (jamais fournie par le client).
+      if (typeof domainId !== 'string' || !Object.prototype.hasOwnProperty.call(EDUCATION_CATALOG, domainId) || !EDUCATION_CATALOG[domainId].includes(String(chapterId))) {
+        res.status(400).json({ error: 'Chapitre inconnu' });
         return;
       }
 
@@ -27,7 +34,7 @@ export const educationController = {
         domainId,
         String(chapterId),
         score,
-        xpEarned || 0,
+        EDUCATION_CHAPTER_XP,
         CHAPTER_COINS
       );
 
@@ -61,9 +68,13 @@ export const educationController = {
         return;
       }
 
-      const { domainId, score, xpEarned } = req.body;
+      const { domainId, score } = req.body;
       if (!domainId) {
         res.status(400).json({ error: 'domainId requis' });
+        return;
+      }
+      if (typeof domainId !== 'string' || !Object.prototype.hasOwnProperty.call(EDUCATION_CATALOG, domainId)) {
+        res.status(400).json({ error: 'Domaine inconnu' });
         return;
       }
 
@@ -72,7 +83,7 @@ export const educationController = {
         domainId,
         undefined,
         score,
-        xpEarned || 0,
+        EDUCATION_DOMAIN_XP,
         DOMAIN_COMPLETE_COINS
       );
 
