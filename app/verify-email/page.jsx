@@ -1,158 +1,82 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AuthLayout, { AuthHeader } from '@/app/components/landing/AuthLayout';
-import Icon from '@/app/components/ui/Icon';
+import AuthLayout, { AuthBadge, AuthHeader } from '@/app/components/landing/AuthLayout';
 import { Button } from '@/app/components/ui/primitives';
+import { useTheme } from '@/app/context/ThemeContext';
+import { CodeInput, Confetti, Notice, SuccessMark } from '@/app/components/auth/fields';
+import { authPost, errorText } from '@/app/lib/authApi';
 
+// Vérification de l'e-mail : code à 6 chiffres en cases séparées (collage accepté), envoi automatique à la saisie du 6e chiffre.
+// Les messages restent neutres : on ne dit jamais si l'adresse existe.
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const { motionEnabled } = useTheme();
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null); // { kind, text }
-  const [resendTimer, setResendTimer] = useState(0);
+  const [msg, setMsg] = useState(null); // { kind, text }
+  const [timer, setTimer] = useState(0);
+  const [done, setDone] = useState(false);
+  const redirect = useRef(null);
 
   useEffect(() => {
-    const verificationEmail = sessionStorage.getItem('verificationEmail');
-    if (!verificationEmail) {
-      router.push('/signup');
-    } else {
-      setEmail(verificationEmail);
-    }
+    let mail = null;
+    try { mail = sessionStorage.getItem('verificationEmail'); } catch { /* ignore */ }
+    if (!mail) router.push('/signup'); else setEmail(mail);
+    return () => clearTimeout(redirect.current);
   }, [router]);
 
   useEffect(() => {
-    if (resendTimer > 0) {
-      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendTimer]);
+    if (timer <= 0) return undefined;
+    const t = setTimeout(() => setTimer((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timer]);
 
-  const handleCodeChange = (index, value) => {
-    if (value.length > 1) return;
-    if (!/^[0-9]*$/.test(value)) return;
-
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
-
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`code-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      const prevInput = document.getElementById(`code-${index - 1}`);
-      prevInput?.focus();
+  const verify = async (value) => {
+    const c = value ?? code;
+    if (loading || c.length !== 6) return;
+    setLoading(true); setMsg(null);
+    const r = await authPost('verify-email', { email, code: c });
+    setLoading(false);
+    if (r.ok) {
+      try { sessionStorage.setItem('userEmail', email); } catch { /* ignore */ }
+      setDone(true);
+      redirect.current = setTimeout(() => router.push('/onboarding'), motionEnabled ? 1500 : 400);
+    } else {
+      setCode('');
+      setMsg({ kind: 'danger', text: errorText(r, 'Code invalide ou expiré.') });
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
-    const fullCode = code.join('');
-    if (fullCode.length !== 6) {
-      setMessage({ kind: 'danger', text: 'Entre le code à 6 chiffres' });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: fullCode }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setMessage({ kind: 'success', text: 'Email vérifié !' });
-        sessionStorage.setItem('userEmail', email);
-        setTimeout(() => router.push('/onboarding'), 1500);
-      } else {
-        setMessage({ kind: 'danger', text: data.error || 'Code invalide' });
-      }
-    } catch (error) {
-      setMessage({ kind: 'danger', text: 'Erreur de connexion au serveur' });
-    } finally {
-      setLoading(false);
-    }
+  const resend = async () => {
+    setLoading(true); setMsg(null);
+    const r = await authPost('resend-code', { email });
+    setLoading(false);
+    if (r.ok) { setMsg({ kind: 'success', text: 'Si l’adresse est valide, un nouveau code vient d’être envoyé.' }); setTimer(60); setCode(''); }
+    else setMsg({ kind: 'danger', text: errorText(r, 'Impossible d’envoyer le code pour le moment.') });
   };
 
-  const handleResendCode = async () => {
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setMessage({ kind: 'success', text: 'Code renvoyé avec succès' });
-        setResendTimer(60);
-      } else {
-        setMessage({ kind: 'danger', text: 'Erreur lors de l\'envoi du code' });
-      }
-    } catch (error) {
-      setMessage({ kind: 'danger', text: 'Erreur de connexion' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (done) {
+    return <AuthLayout><Confetti run={motionEnabled} /><div className="au-success" role="status"><SuccessMark /><h1 style={{ margin: 0, fontSize: 'var(--ik-fs-xl)' }}>E-mail vérifié !</h1><p className="ik-muted" style={{ margin: 0 }}>On prépare ton compte…</p></div></AuthLayout>;
+  }
 
   return (
     <AuthLayout>
-      <AuthHeader
-        icon={<div className="lp-domain__icon" style={{ margin: '0 auto 14px', width: 56, height: 56 }}><Icon name="mail" size={28} /></div>}
-        title="Vérifie ton email"
-        subtitle={<>Nous avons envoyé un code à<br /><strong style={{ color: 'var(--ik-text)', wordBreak: 'break-all' }}>{email}</strong></>}
-      />
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 18 }}>
+      <AuthHeader icon={<AuthBadge name="mail" />} title="Vérifie ton e-mail" subtitle={<>Si l’adresse est valide, un code à 6 chiffres vient d’être envoyé à<br /><strong style={{ color: 'var(--ik-text)', wordBreak: 'break-all' }}>{email}</strong></>} />
+      <form className="au-form" onSubmit={(e) => { e.preventDefault(); verify(); }}>
         <div className="ik-field">
-          <label className="ik-label" htmlFor="code-0" style={{ textAlign: 'center' }}>Code de vérification (6 chiffres)</label>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }} role="group" aria-label="Code à 6 chiffres">
-            {code.map((digit, index) => (
-              <input
-                key={index}
-                id={`code-${index}`}
-                className="ik-input"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={digit}
-                onChange={(e) => handleCodeChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                maxLength={1}
-                autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                autoFocus={index === 0}
-                aria-label={`Chiffre ${index + 1} sur 6`}
-                required
-                style={{ width: 'clamp(40px, 12vw, 52px)', height: 56, padding: 0, textAlign: 'center', fontSize: 'var(--ik-fs-lg)', fontWeight: 800, borderColor: digit ? 'var(--ik-positive)' : undefined }}
-              />
-            ))}
-          </div>
+          <span className="ik-label" style={{ textAlign: 'center' }}>Code de vérification</span>
+          <CodeInput label="Code de vérification à 6 chiffres" value={code} onChange={setCode} onComplete={verify} disabled={loading} status={msg?.kind === 'danger' ? 'error' : undefined} />
+          <p className="au-hint" style={{ textAlign: 'center' }}>Tu peux coller le code d’un seul coup. Il est valable 15 minutes.</p>
         </div>
-
-        {message && (
-          <div className={`ik-notice ik-notice--${message.kind}`} role={message.kind === 'danger' ? 'alert' : 'status'} style={{ margin: 0 }}>
-            <Icon name={message.kind === 'success' ? 'check' : 'alert'} size={20} /><p>{message.text}</p>
-          </div>
-        )}
-
-        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || code.join('').length !== 6}>{loading ? 'Vérification…' : 'Vérifier le code'}</Button>
-        <Button variant="ghost" block onClick={handleResendCode} disabled={resendTimer > 0 || loading}>{resendTimer > 0 ? `Renvoyer dans ${resendTimer} s` : 'Renvoyer le code'}</Button>
+        {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
+        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || code.length !== 6}>{loading ? 'Vérification…' : 'Vérifier le code'}</Button>
+        <Button variant="ghost" block onClick={resend} disabled={timer > 0 || loading}>{timer > 0 ? `Renvoyer le code dans ${timer} s` : 'Renvoyer le code'}</Button>
       </form>
-      <p style={{ margin: '18px 0 0', textAlign: 'center' }}><Link href="/signup" className="ik-link">← Retour à l&apos;inscription</Link></p>
+      <p className="au-alt"><Link href="/signup" className="ik-link">← Retour à l’inscription</Link></p>
     </AuthLayout>
   );
 }

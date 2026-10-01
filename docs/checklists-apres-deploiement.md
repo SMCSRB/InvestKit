@@ -513,3 +513,29 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 5. « Copier le lien » puis ouvrir le lien dans une fenêtre privée : mêmes valeurs. « Réinitialiser » remet les valeurs de départ. « Imprimer / PDF » ouvre l'impression.
 6. Connecté : la page est dans la coque du site (menu à gauche). Déconnecté : en-tête public. Clair et sombre lisibles ; mobile 390 px sans défilement horizontal.
 7. Les hypothèses fiscales affichées (17,2 %, 12,8 %, 5 ans, 35 %…) sont à **reconfirmer** sur les sources officielles avant l'ouverture au public.
+
+## PR Design 11 — Inscription, connexion et pages liées
+
+À fusionner **après** la PR « Design 10 ». Aucune migration. Variable facultative : `AUTH_MIN_RESPONSE_MS` (durée minimale des réponses d'inscription, 700 par défaut).
+
+**Sécurité (le plus important)**
+1. Inscris-toi avec une adresse **déjà utilisée** (avec un code d'invitation valable) : tu vois exactement le même écran « C'est presque fini » qu'avec une adresse neuve, sans aucune erreur. La boîte mail de l'adresse existante reçoit « Quelqu'un a essayé de créer un compte… ». Le code d'invitation n'est **pas** consommé (`npm run invite -- list`).
+2. Dans le champ e-mail, plus aucun message « Email disponible » ni requête en direct.
+3. Connexion : un e-mail inconnu et un mauvais mot de passe affichent **le même message**. Mot de passe oublié : même écran pour une adresse connue ou non. Vérification du code : un code faux et un code périmé donnent « Code invalide ou expiré ».
+
+**Inscription (3 étapes)**
+4. `/signup` : le code d'invitation est le **premier** champ. Un faux code → « Ce code n'est pas reconnu ou n'est plus valable ». L'indicateur en haut montre l'étape réelle (1, 2, 3) et se remplit en vert au fur et à mesure.
+5. Étape 2 : les règles s'affichent pendant la saisie et **se replient** quand tout est bon ; une seule barre de force ; la confirmation réagit à chaque lettre ; l'œil affiche/masque ; ton gestionnaire de mots de passe propose d'enregistrer le mot de passe.
+6. Étape 3 : deux cases séparées (conditions, confidentialité) avec des liens qui ouvrent les vraies pages ; le bouton reste grisé tant qu'elles ne sont pas cochées. Pas de case « Je suis un humain » : le captcha est invisible. Succès animé (coche et confettis), puis la page du code.
+7. Un compte neuf reçoit bien son e-mail avec le code ; « Renvoyer le code » fonctionne.
+
+**Code, connexion, 2FA**
+8. `/verify-email` : 6 cases, **coller** le code entier remplit tout et valide tout seul ; un mauvais code affiche une erreur et vide les cases.
+9. `/login` : connexion normale ; avec la 2FA, 6 cases de code (validation automatique au 6e chiffre) et le lien « Utiliser un code de secours ».
+10. `/forgot-password`, `/reset-password` (lien reçu par e-mail), `/nexistepas` (page 404) : même fond et mêmes composants ; une erreur forcée affiche la page « Quelque chose s'est mal passé ».
+
+**Fond, accessibilité, mobile**
+11. Sur ordinateur, la scène de gauche est vivante : le mot du titre change, les bougies se dessinent, la pièce tourne, les cartes flottent et suivent un peu la souris ; la carte du formulaire a une bordure lumineuse qui tourne. Sur téléphone : un bandeau compact au-dessus du formulaire. Le fond bouge lentement (aurore, halos, courbes). Dans Profil → Apparence → Animations = « Non » (ou réglage « réduire les animations » du téléphone) : fond **fixe**. Onglet en arrière-plan : le CPU retombe.
+12. Plus d'en-tête au milieu de la carte ; « Aller au contenu » n'apparaît qu'en appuyant sur Tab. Plus de badge rouge « Issue » en mode développement sur ces pages.
+13. Mobile 390 px : formulaire seul, pas de défilement horizontal, clair et sombre lisibles ; tout se fait au clavier (Tab, Entrée).
+14. La bascule de langue FR/EN/ES a disparu (traductions incomplètes) ; tout est tutoyé.

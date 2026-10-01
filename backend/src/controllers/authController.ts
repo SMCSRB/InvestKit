@@ -6,7 +6,10 @@ import { setSessionCookies, clearSessionCookies, tokenInBody, readCookie, ADMIN_
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email';
+import { sendVerificationEmail, sendPasswordResetEmail, sendAccountExistsEmail } from '../utils/email';
+import { padResponse } from '../utils/timing';
+import { allowMail } from '../utils/mailThrottle';
+import { MAIL_THROTTLE } from '../config/securityRules';
 import { verifyCaptcha } from '../utils/captcha';
 import { notify } from '../services/notificationService';
 import { query } from '../utils/db';
@@ -41,11 +44,14 @@ const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);
 
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
+    const startedAt = Date.now();
+    // Réponse NEUTRE : identique que l'adresse ait déjà un compte ou non (aucune énumération de comptes), et de durée constante.
+    const neutral = { success: true, message: 'Si l\'adresse est valide, un code de vérification vient d\'être envoyé.' };
     try {
       const { email, password, captchaToken, referralCode, inviteCode } = req.body;
 
-      // Validation
-      if (!email || !password) {
+      // Validation (ne dépend pas de l'existence du compte)
+      if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
         res.status(400).json({ error: 'Données manquantes' });
         return;
       }
@@ -66,23 +72,40 @@ export const authController = {
         return;
       }
 
-      // Inscription sur invitation : le code est vérifié ici (format), puis
-      // consommé de façon atomique avec la création du compte plus bas.
+      // Inscription sur invitation : le code est vérifié ici (format et validité, sans le consommer) AVANT de regarder si
+      // l'adresse existe : l'erreur est donc la même pour tout le monde. Il est consommé de façon atomique avec la création du compte.
       const normalizedInvite = normalizeInvitationCode(inviteCode);
-      if (env.inviteOnly && !normalizedInvite) {
-        res.status(403).json({ error: 'Un code d\'invitation valide est requis pour s\'inscrire' });
-        return;
+      if (env.inviteOnly) {
+        if (!normalizedInvite) {
+          res.status(403).json({ error: 'Un code d\'invitation valide est requis pour s\'inscrire' });
+          return;
+        }
+        if (!(await invitationRepository.isUsable(normalizedInvite))) {
+          res.status(403).json({ error: 'Code d\'invitation invalide, expiré ou épuisé' });
+          return;
+        }
       }
 
-      // Vérifier si l'utilisateur existe déjà
+      // Hash calculé dans les deux cas : même coût de calcul que l'adresse soit connue ou non.
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       const existingUser = await userRepository.findByEmail(email);
       if (existingUser) {
-        res.status(409).json({ error: 'Cet email est déjà utilisé' });
+        const base = env.frontendUrl.replace(/\/$/, '');
+        if (!existingUser.verified) {
+          // Compte jamais vérifié (inscription abandonnée, ou adresse « réservée » par quelqu'un d'autre) : la nouvelle inscription
+          // remplace le mot de passe et envoie un nouveau code. Seul le propriétaire de la boîte mail peut l'utiliser.
+          const code = generateVerificationCode();
+          await userRepository.restartPendingRegistration(existingUser.id, hashedPassword, code, new Date(Date.now() + 15 * 60 * 1000));
+          void Promise.resolve(sendVerificationEmail(existingUser.email, 'User', code)).catch((e) => console.error('Email sending error:', e));
+        } else if (allowMail('account-exists', existingUser.email, MAIL_THROTTLE.accountExists.max, MAIL_THROTTLE.accountExists.windowMs)) {
+          // Compte actif : aucune erreur à l'écran. Le propriétaire est prévenu par e-mail (non bloquant, au plus 1 par heure et par adresse).
+          void sendAccountExistsEmail(existingUser.email, `${base}/login`, `${base}/forgot-password`).catch(() => undefined);
+        }
+        await padResponse(startedAt);
+        res.status(200).json(neutral);
         return;
       }
-
-      // Hasher le mot de passe
-      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Générer un code de vérification à 6 chiffres
       const verificationCode = generateVerificationCode();
@@ -101,7 +124,6 @@ export const authController = {
       // du code et la création du compte sont UNE transaction : si le compte
       // n'est pas créé, le code n'est pas brûlé ; et un code à usage unique
       // ne peut servir qu'à un seul compte.
-      let newUser;
       const client = await getClient();
       try {
         await client.query('BEGIN');
@@ -114,7 +136,7 @@ export const authController = {
             return;
           }
         }
-        newUser = await userRepository.create({
+        await userRepository.create({
           email,
           password_hash: hashedPassword,
           first_name: 'Unknown',
@@ -126,25 +148,25 @@ export const authController = {
           invitation_code_id: invitationId,
         }, client);
         await client.query('COMMIT');
-      } catch (txError) {
+      } catch (txError: any) {
         await client.query('ROLLBACK');
+        // Deux inscriptions simultanées avec la même adresse : la seconde reçoit la même réponse neutre.
+        if (txError?.code === '23505' && /email/i.test(String(txError?.constraint ?? txError?.detail ?? ''))) {
+          await padResponse(startedAt);
+          res.status(200).json(neutral);
+          return;
+        }
         throw txError;
       } finally {
         client.release();
       }
 
-      // Envoyer email de vérification
-      try {
-        await sendVerificationEmail(email, 'User', verificationCode);
-      } catch (emailError) {
-        console.error('Email sending error:', emailError);
-        // Continue anyway, user can still request resend
-      }
+      // Envoi de l'e-mail de vérification sans attendre (durée de réponse constante) ; en cas d'échec, « Renvoyer le code » existe.
+      void Promise.resolve(sendVerificationEmail(email, 'User', verificationCode)).catch((emailError) => console.error('Email sending error:', emailError));
 
-      res.status(201).json({
-        success: true,
-        message: 'Inscription réussie. Vérifiez votre email.',
-        userId: newUser.id,
+      await padResponse(startedAt);
+      res.status(200).json({
+        ...neutral,
         verificationCode: env.isDev ? verificationCode : undefined, // Afficher le code en dev uniquement
       });
     } catch (error) {
@@ -158,29 +180,39 @@ export const authController = {
     res.json({ inviteOnly: env.inviteOnly });
   },
 
+  // Le code d'invitation saisi est-il utilisable ? Réponse minimale (« valide » ou non) : aucun détail sur POURQUOI il ne l'est pas
+  // (inconnu, expiré, épuisé, révoqué), et rien n'est consommé.
+  validateInvite: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!env.inviteOnly) {
+        res.json({ valid: true });
+        return;
+      }
+      const code = normalizeInvitationCode(req.body?.code);
+      res.json({ valid: code ? await invitationRepository.isUsable(code) : false });
+    } catch (error) {
+      console.error('Validate invite error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification' });
+    }
+  },
+
   verifyEmail: async (req: AuthRequest, res: Response): Promise<void> => {
+    const startedAt = Date.now();
+    // Même message pour TOUT échec (compte inconnu, code faux, code expiré, déjà utilisé) : aucune fuite sur l'existence du compte.
+    const invalid = { error: 'Code invalide ou expiré' };
     try {
       const { email, code } = req.body;
 
-      if (!email || !code) {
+      if (!email || !code || typeof email !== 'string' || typeof code !== 'string') {
         res.status(400).json({ error: 'Données manquantes' });
         return;
       }
 
       const user = await userRepository.findByEmail(email);
-      if (!user) {
-        res.status(404).json({ error: 'Utilisateur non trouvé' });
-        return;
-      }
-
-      if (user.verification_code !== code) {
-        res.status(400).json({ error: 'Code de vérification invalide' });
-        return;
-      }
-
-      // Vérifier si le code a expiré
-      if (user.verification_code_expires_at && new Date() > user.verification_code_expires_at) {
-        res.status(400).json({ error: 'Code expiré' });
+      const expired = !!user?.verification_code_expires_at && new Date() > user.verification_code_expires_at;
+      if (!user || user.verification_code !== code || expired) {
+        await padResponse(startedAt);
+        res.status(400).json(invalid);
         return;
       }
 
@@ -188,7 +220,8 @@ export const authController = {
       // verse les InvestCoins qu'une fois.
       const activated = await activateAccount(user, code);
       if (!activated) {
-        res.status(400).json({ error: 'Code de vérification invalide ou déjà utilisé' });
+        await padResponse(startedAt);
+        res.status(400).json(invalid);
         return;
       }
 
@@ -208,22 +241,21 @@ export const authController = {
   },
 
   resendCode: async (req: AuthRequest, res: Response): Promise<void> => {
+    const startedAt = Date.now();
     try {
       const { email } = req.body;
 
-      if (!email) {
+      if (!email || typeof email !== 'string') {
         res.status(400).json({ error: 'Email requis' });
         return;
       }
 
+      // Réponse identique que l'adresse existe, soit déjà vérifiée, ou n'existe pas : aucune énumération de comptes.
+      const neutral = { success: true, message: 'Si l\'adresse est valide, un nouveau code vient d\'être envoyé.' };
       const user = await userRepository.findByEmail(email);
-      if (!user) {
-        res.status(404).json({ error: 'Utilisateur non trouvé' });
-        return;
-      }
-
-      if (user.verified) {
-        res.status(400).json({ error: 'Cet utilisateur est déjà vérifié' });
+      if (!user || user.verified) {
+        await padResponse(startedAt);
+        res.json(neutral);
         return;
       }
 
@@ -233,18 +265,10 @@ export const authController = {
 
       await userRepository.updateVerificationCode(user.id, newCode, expiresAt);
 
-      // Envoyer email
-      try {
-        await sendVerificationEmail(email, user.first_name, newCode);
-      } catch (emailError) {
-        console.error('Email sending error:', emailError);
-      }
+      void Promise.resolve(sendVerificationEmail(email, user.first_name, newCode)).catch((emailError) => console.error('Email sending error:', emailError));
 
-      res.json({
-        success: true,
-        message: 'Code renvoyé avec succès',
-        verificationCode: env.isDev ? newCode : undefined,
-      });
+      await padResponse(startedAt);
+      res.json({ ...neutral, verificationCode: env.isDev ? newCode : undefined });
     } catch (error) {
       console.error('Resend code error:', error);
       res.status(500).json({ error: 'Erreur lors de l\'envoi du code' });
@@ -375,10 +399,11 @@ export const authController = {
   },
 
   forgotPassword: async (req: AuthRequest, res: Response): Promise<void> => {
+    const startedAt = Date.now();
     try {
       const { email } = req.body;
 
-      if (!email) {
+      if (!email || typeof email !== 'string') {
         res.status(400).json({ error: 'Email requis' });
         return;
       }
@@ -387,6 +412,7 @@ export const authController = {
       const uniform = { success: true, message: 'Si cet email correspond à un compte, un lien de réinitialisation vient d\'être envoyé.' };
       const user = await userRepository.findByEmail(email);
       if (!user) {
+        await padResponse(startedAt);
         res.json(uniform);
         return;
       }
@@ -398,7 +424,9 @@ export const authController = {
       await auditLog({ userId: user.id, action: 'password_reset_requested', entityType: 'user', entityId: user.id, ip: req.ip });
 
       const link = `${env.frontendUrl.replace(/\/$/, '')}/reset-password?token=${resetToken}`;
-      await sendPasswordResetEmail(user.email, link);
+      // non bloquant (durée identique à « compte inconnu ») et plafonné par adresse (anti-harcèlement)
+      if (allowMail('password-reset', user.email, MAIL_THROTTLE.passwordReset.max, MAIL_THROTTLE.passwordReset.windowMs)) void Promise.resolve(sendPasswordResetEmail(user.email, link)).catch(() => undefined);
+      await padResponse(startedAt);
 
       // Jamais en production : uniquement pour les tests automatisés (variable explicite).
       res.json(process.env.EXPOSE_RESET_TOKEN_FOR_TESTS === 'true' ? { ...uniform, resetToken } : uniform);
@@ -517,27 +545,6 @@ export const authController = {
     } catch (error) {
       console.error('Set free domain error:', error);
       res.status(500).json({ error: 'Erreur lors de la sauvegarde du domaine' });
-    }
-  },
-
-  checkEmail: async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const { email } = req.params;
-
-      if (!email) {
-        res.status(400).json({ error: 'Email requis' });
-        return;
-      }
-
-      const user = await userRepository.findByEmail(email);
-
-      res.json({
-        available: !user,
-        exists: !!user,
-      });
-    } catch (error) {
-      console.error('Check email error:', error);
-      res.status(500).json({ error: 'Erreur lors de la vérification' });
     }
   },
 

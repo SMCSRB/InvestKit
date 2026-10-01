@@ -4,8 +4,9 @@ import { join } from 'path';
 // @ts-expect-error module JavaScript du frontend
 import { PLANS, PRICES, yearlySavingPct } from '../../app/lib/plans.js';
 // @ts-expect-error module JavaScript du frontend
-import { AVAILABLE_DOMAINS, CRYPTO_ASSET_COUNT } from '../../app/lib/siteFacts.js';
+import { AVAILABLE_DOMAINS, CRYPTO_ASSET_COUNT, STARTING_COINS } from '../../app/lib/siteFacts.js';
 import { CATALOG } from '../src/data/crypto/catalog';
+import { STARTING_CAPITAL } from '../src/config/game';
 
 const APP = join(__dirname, '../../app');
 const read = (p: string) => readFileSync(join(APP, p), 'utf8');
@@ -74,4 +75,9 @@ describe('chiffres affichés : jamais recopiés à la main', () => {
     expect(dash).not.toMatch(/>7,99€</);
     expect(dash).not.toMatch(/>79€</);
   });
+});
+
+
+describe('capital de départ affiché à l\'inscription', () => {
+  it('correspond à la valeur du serveur', () => { expect(STARTING_COINS).toBe(STARTING_CAPITAL); });
 });
