@@ -24,3 +24,7 @@
 
 ## État vérifié (octobre 2026)
 Le script a parcouru les fichiers suivis et tout l'historique de toutes les branches du dépôt : **aucun secret trouvé**. `start-dev.sh` n'a jamais été suivi par git (il est resté sur ton ordinateur), donc ce secret n'est pas dans le dépôt GitHub — mais il a pu être copié ailleurs (captures, discussions) : d'où la révocation.
+
+## Faux positifs de gitleaks déjà examinés
+
+Au premier passage, gitleaks signalait 6 « fuites » dans l'historique. Je les ai toutes regardées : **aucune n'est un vrai secret** (mot de passe de test, valeur d'exemple commentée dans `.env.example`, identifiants d'événements Crypto, clé de site hCaptcha qui est publique). Elles sont listées dans `.gitleaks.toml` pour que la CI reste rouge uniquement sur une vraie nouveauté. Si gitleaks s'arrête un jour : regarde d'abord le fichier et la ligne signalés ; ne l'ajoute à `.gitleaks.toml` que si tu es certain que ce n'est pas un secret.
