@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authController } from '../controllers/authController';
 import { authMiddleware } from '../middleware/auth';
-import { authLimiter, accountLimiter, checkEmailLimiter } from '../middleware/rateLimiter';
+import { authLimiter, accountLimiter, inviteCheckLimiter } from '../middleware/rateLimiter';
 import { accountController } from '../controllers/accountController';
 
 export const authRoutes = Router();
@@ -15,7 +15,7 @@ authRoutes.post('/resend-code', authLimiter, authController.resendCode);
 authRoutes.post('/save-preferences', authController.savePreferences);
 authRoutes.post('/forgot-password', authLimiter, authController.forgotPassword);
 authRoutes.post('/reset-password', authLimiter, authController.resetPassword);
-authRoutes.get('/check-email/:email', checkEmailLimiter, authController.checkEmail);
+authRoutes.post('/validate-invite', inviteCheckLimiter, authController.validateInvite);
 authRoutes.post('/2fa/login-verify', authLimiter, authController.verifyLoginTwoFactor);
 authRoutes.post('/logout', authController.logout);
 

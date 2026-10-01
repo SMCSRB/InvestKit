@@ -14,7 +14,7 @@ export const ROUTES: Row[] = [
   ['post', '/auth/save-preferences', 'Compte', 'Enregistrer les préférences d\'inscription', 'public'],
   ['post', '/auth/forgot-password', 'Compte', 'Demander une réinitialisation du mot de passe', 'public'],
   ['post', '/auth/reset-password', 'Compte', 'Réinitialiser le mot de passe', 'public'],
-  ['get', '/auth/check-email/{email}', 'Compte', 'Vérifier si un e-mail est déjà utilisé', 'public'],
+  ['post', '/auth/validate-invite', 'Compte', 'Vérifier (sans le consommer) un code d\'invitation : répond seulement valide ou non', 'public'],
   ['post', '/auth/2fa/login-verify', 'Compte', 'Terminer la connexion avec le code 2FA', 'public'],
   ['post', '/auth/logout', 'Compte', 'Se déconnecter (efface les cookies de session)', 'public'],
   ['post', '/auth/impersonation/stop', 'Compte', 'Quitter une impersonation et retrouver sa session administrateur'],

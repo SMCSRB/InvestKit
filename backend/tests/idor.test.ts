@@ -132,9 +132,8 @@ describe.skipIf(!hasDb)('SÉCURITÉ : anti-IDOR sur toutes les routes à identif
     expect(r.status).toBe(403);
   });
 
-  it('anti-énumération : la vérification d\'e-mail est limitée (429 au-delà de 20 requêtes)', async () => {
-    let last = 0;
-    for (let i = 0; i < 22; i++) last = (await request(app).get(`/api/v1/auth/check-email/${encodeURIComponent(`inconnu${i}@test.local`)}`)).status;
-    expect(last).toBe(429);
+  it('anti-énumération : il n\'existe plus de route qui dit si un e-mail a un compte', async () => {
+    const r = await request(app).get('/api/v1/auth/check-email/quelquun%40test.local');
+    expect(r.status).toBe(404);
   });
 });
