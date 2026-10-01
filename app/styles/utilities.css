@@ -1,5 +1,6 @@
 /* GÉNÉRÉ par scripts/gen-utilities.py : ne pas modifier à la main. Utilitaires (sous-ensemble) aux couleurs du thème. */
 @layer utilities {
+  .border,.border-2,.border-t,.border-b,.border-b-2{border-color:var(--ik-border-strong)}
   .absolute{position:absolute}
   .animate-pulse{animation:ik-fade 1.4s ease-in-out infinite alternate}
   .bg-black\/70{background-color:color-mix(in srgb, #000 70%, transparent)}
@@ -106,7 +107,7 @@
   .hover\:border-gray-600\/50:hover{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}
   .hover\:border-purple-400:hover{border-color:color-mix(in srgb, var(--ik-orchid) 60%, transparent)}
   .hover\:border-red-500:hover{border-color:color-mix(in srgb, var(--ik-negative) 60%, transparent)}
-  .hover\:text-blue-300:hover{color:var(--ik-accent)}
+  .hover\:text-blue-300:hover{color:color-mix(in srgb, var(--ik-accent) 78%, var(--ik-text))}
   .hover\:translate-y-\[-4px\]:hover{transform:translateY(-4px)}
   .inline-block{display:inline-block}
   .inline-flex{display:inline-flex}
@@ -131,7 +132,6 @@
   .mb-4{margin-bottom:1rem}
   .mb-6{margin-bottom:1.5rem}
   .mb-8{margin-bottom:2rem}
-  .min-h-screen{min-height:100vh}
   .ml-15{margin-left:3.75rem}
   .mr-3{margin-right:0.75rem}
   .mt-1{margin-top:0.25rem}
@@ -147,11 +147,9 @@
   .p-6{padding:1.5rem}
   .p-8{padding:2rem}
   .pb-12{padding-bottom:3rem}
-  .pb-20{padding-bottom:5rem}
   .pb-8{padding-bottom:2rem}
   .placeholder-gray-400::placeholder{color:var(--ik-text-3)}
   .placeholder-slate-400::placeholder{color:var(--ik-text-3)}
-  .pt-32{padding-top:8rem}
   .pt-4{padding-top:1rem}
   .px-2{padding-left:0.5rem;padding-right:0.5rem}
   .px-3{padding-left:0.75rem;padding-right:0.75rem}
@@ -179,31 +177,31 @@
   .text-6xl{font-size:3.75rem;line-height:1.4}
   .text-8xl{font-size:6rem;line-height:1.4}
   .text-9xl{font-size:8rem;line-height:1.4}
-  .text-amber-300{color:var(--ik-warning)}
-  .text-blue-200{color:var(--ik-accent)}
-  .text-blue-300{color:var(--ik-accent)}
-  .text-blue-400{color:var(--ik-accent)}
+  .text-amber-300{color:color-mix(in srgb, var(--ik-warning) 78%, var(--ik-text))}
+  .text-blue-200{color:color-mix(in srgb, var(--ik-accent) 78%, var(--ik-text))}
+  .text-blue-300{color:color-mix(in srgb, var(--ik-accent) 78%, var(--ik-text))}
+  .text-blue-400{color:color-mix(in srgb, var(--ik-accent) 78%, var(--ik-text))}
   .text-center{text-align:center}
   .text-gray-300{color:var(--ik-text-2)}
   .text-gray-400{color:var(--ik-text-3)}
   .text-gray-500{color:var(--ik-text-3)}
-  .text-green-400{color:var(--ik-positive)}
+  .text-green-400{color:color-mix(in srgb, var(--ik-positive) 78%, var(--ik-text))}
   .text-lg{font-size:1.125rem;line-height:1.4}
-  .text-orange-300{color:var(--ik-warning)}
-  .text-orange-400{color:var(--ik-warning)}
-  .text-pink-400{color:var(--ik-orchid)}
-  .text-purple-300{color:var(--ik-orchid)}
-  .text-purple-400{color:var(--ik-orchid)}
-  .text-red-300{color:var(--ik-negative)}
-  .text-red-400{color:var(--ik-negative)}
+  .text-orange-300{color:color-mix(in srgb, var(--ik-warning) 78%, var(--ik-text))}
+  .text-orange-400{color:color-mix(in srgb, var(--ik-warning) 78%, var(--ik-text))}
+  .text-pink-400{color:color-mix(in srgb, var(--ik-orchid) 78%, var(--ik-text))}
+  .text-purple-300{color:color-mix(in srgb, var(--ik-orchid) 78%, var(--ik-text))}
+  .text-purple-400{color:color-mix(in srgb, var(--ik-orchid) 78%, var(--ik-text))}
+  .text-red-300{color:color-mix(in srgb, var(--ik-negative) 78%, var(--ik-text))}
+  .text-red-400{color:color-mix(in srgb, var(--ik-negative) 78%, var(--ik-text))}
   .text-slate-300{color:var(--ik-text-2)}
   .text-slate-400{color:var(--ik-text-3)}
   .text-sm{font-size:0.875rem;line-height:1.4}
   .text-white{color:var(--ik-text)}
   .text-xl{font-size:1.25rem;line-height:1.4}
   .text-xs{font-size:0.75rem;line-height:1.4}
-  .text-yellow-300{color:var(--ik-warning)}
-  .text-yellow-400{color:var(--ik-warning)}
+  .text-yellow-300{color:color-mix(in srgb, var(--ik-warning) 78%, var(--ik-text))}
+  .text-yellow-400{color:color-mix(in srgb, var(--ik-warning) 78%, var(--ik-text))}
   .to-amber-800\/20{--tw-to:color-mix(in srgb, var(--ik-warning) 16%, transparent)}
   .to-blue-400{--tw-to:var(--ik-primary)}
   .to-green-400{--tw-to:var(--ik-positive)}

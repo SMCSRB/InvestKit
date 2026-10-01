@@ -7,15 +7,18 @@ import { useNotification } from '@/app/context/NotificationContext';
 import { educationDomains } from '@/data/education';
 import { themes, getUnlockedThemes, getNextTheme } from '@/data/themes';
 import PageWrapper from '@/app/components/PageWrapper';
+import AppShell from '@/app/components/shell/AppShell';
+import AppearanceSettings from '@/app/components/AppearanceSettings';
+import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
 
 export default function ProfilePage() {
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const { progress, isChapterCompleted, getChapterScore, isDomainCompleted, isLoading, setSelectedTheme } = useEducationProgress();
   const { addNotification } = useNotification();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [settings, setSettings] = useState({
-    darkMode: true,
     notificationsEnabled: true,
     soundEnabled: true,
     remindersEnabled: true,
@@ -69,13 +72,13 @@ export default function ProfilePage() {
 
   if (!isAuthenticated || isLoading) {
     return (
-      <PageWrapper>
-        <div className="min-h-screen pt-32 pb-20 px-6">
+      <AppShell><PageWrapper>
+        <div className="pb-12 px-6">
           <div className="animate-pulse">
             <div className="h-12 bg-gray-700 rounded w-64 mb-4" />
           </div>
         </div>
-      </PageWrapper>
+      </PageWrapper></AppShell>
     );
   }
 
@@ -102,8 +105,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <PageWrapper animation="fade-in-up">
-      <div className="min-h-screen pt-32 pb-20 px-6 lg:px-12">
+    <AppShell><PageWrapper animation="fade-in-up">
+      <div className="pb-12 px-6 lg:px-12">
         <div className="max-w-4xl mx-auto">
           {/* Header with back link */}
           <Link
@@ -115,11 +118,11 @@ export default function ProfilePage() {
 
           {/* Profile Header */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-6">
-                <div className="text-8xl">{profileData.avatar}</div>
-                <div>
-                  <h1 className="text-4xl font-bold text-white mb-2">{profileData.username}</h1>
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+              <div className="flex items-center gap-6 flex-wrap" style={{ minWidth: 0 }}>
+                <div className="text-8xl" style={{ fontSize: 'clamp(64px, 20vw, 128px)', lineHeight: 1 }}>{profileData.avatar}</div>
+                <div style={{ minWidth: 0 }}>
+                  <h1 className="text-4xl font-bold text-white mb-2" style={{ overflowWrap: 'anywhere' }}>{profileData.username}</h1>
                   <p className="text-gray-400 mb-3">{profileData.bio}</p>
                   <button
                     onClick={() => setIsEditingProfile(true)}
@@ -257,17 +260,17 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
                   <div>
                     <h3 className="text-white font-semibold">Mode Sombre</h3>
-                    <p className="text-gray-400 text-sm">Activer le thème sombre automatiquement</p>
+                    <p className="text-gray-400 text-sm">Bascule entre le thème sombre et le thème clair (aussi dans la carte Apparence ci-dessus)</p>
                   </div>
                   <button
-                    onClick={() => updateSetting('darkMode', !settings.darkMode)}
+                    onClick={toggleTheme} role="switch" aria-checked={theme === 'dark'} aria-label="Mode sombre"
                     className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.darkMode ? 'bg-blue-600' : 'bg-gray-600'
+                      theme === 'dark' ? 'bg-blue-600' : 'bg-gray-600'
                     }`}
                   >
                     <div
                       className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.darkMode ? 'left-7' : 'left-1'
+                        theme === 'dark' ? 'left-7' : 'left-1'
                       }`}
                     />
                   </button>
@@ -707,6 +710,8 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          <AppearanceSettings />
+
           {/* Themes Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
             <h2 className="text-2xl font-bold text-white mb-6">🎨 Thèmes Disponibles</h2>
@@ -777,8 +782,8 @@ export default function ProfilePage() {
                 onClick={copyProfileLink}
                 className="px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex-1"
                 style={{
-                  background: 'linear-gradient(135deg, #60a5fa, #3b82f6)',
-                  color: 'white',
+                  background: 'linear-gradient(135deg, var(--ik-accent), var(--ik-primary))',
+                  color: 'var(--ik-text-on-primary)',
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'scale(1.05)';
@@ -793,8 +798,8 @@ export default function ProfilePage() {
                 onClick={shareProfile}
                 className="px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex-1"
                 style={{
-                  background: 'linear-gradient(135deg, #a78bfa, #c084fc)',
-                  color: 'white',
+                  background: 'linear-gradient(135deg, var(--ik-accent), var(--ik-orchid))',
+                  color: 'var(--ik-text-on-primary)',
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'scale(1.05)';
@@ -809,6 +814,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </PageWrapper>
+    </PageWrapper></AppShell>
   );
 }

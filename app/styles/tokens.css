@@ -87,17 +87,17 @@
   --ik-primary: #5b3fe0;
   --ik-primary-hover: #4a30c8;
   --ik-primary-soft: rgba(91, 63, 224, 0.1);
-  --ik-accent: #5b3fe0;
+  --ik-accent: #4d31d1;
   --ik-orchid: #a93fd6;
   --ik-grad-brand: linear-gradient(135deg, #5b3fe0 0%, #a04ad8 100%);
 
-  --ik-positive: #0a7448;
+  --ik-positive: #08683f;
   --ik-positive-soft: rgba(10, 116, 72, 0.1);
-  --ik-negative: #c62b48;
+  --ik-negative: #b5203d;
   --ik-negative-soft: rgba(198, 43, 72, 0.1);
-  --ik-warning: #8a5a00;
+  --ik-warning: #7a5000;
   --ik-warning-soft: rgba(138, 90, 0, 0.1);
-  --ik-info: #0a6ea8;
+  --ik-info: #075f94;
 
   --ik-series-1: #5b3fe0;
   --ik-series-2: #0a8ca8;

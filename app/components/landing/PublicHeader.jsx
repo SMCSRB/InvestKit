@@ -27,7 +27,7 @@ export default function PublicHeader() {
   const actions = loggedIn ? (
     <>
       <Button variant="ghost" size="sm" onClick={logout} className="lp-hide-mobile">Se déconnecter</Button>
-      <Button variant="primary" size="sm" href="/dashboard">Mon tableau de bord</Button>
+      <Button variant="primary" size="sm" href="/dashboard" className="lp-hide-mobile">Mon tableau de bord</Button>
     </>
   ) : (
     <>

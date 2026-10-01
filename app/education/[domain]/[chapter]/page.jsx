@@ -105,7 +105,7 @@ export default function ChapterPage() {
             ))}
             {result === null ? (
               <button data-testid="quiz-submit" onClick={submit} disabled={Object.keys(answers).length < quiz.questions.length}
-                style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-primary)', color: '#fff', fontWeight: 700, cursor: 'pointer', opacity: Object.keys(answers).length < quiz.questions.length ? 0.5 : 1 }}>Valider mes réponses</button>
+                style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-primary)', color: 'var(--ik-text-on-primary)', fontWeight: 700, cursor: 'pointer', opacity: Object.keys(answers).length < quiz.questions.length ? 0.5 : 1 }}>Valider mes réponses</button>
             ) : (
               <div data-testid="quiz-result">
                 <p style={{ color: result.passed ? 'var(--ik-positive)' : 'var(--ik-negative)', fontWeight: 800, fontSize: 18 }}>{result.passed ? `Réussi : ${result.score} % 🎉` : `${result.score} % : il faut ${quiz.passingScore} % pour valider. Relis le chapitre et réessaie.`}</p>

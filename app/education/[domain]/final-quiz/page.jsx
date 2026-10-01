@@ -8,6 +8,9 @@ import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
 
+// Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
+const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
+
 export default function FinalQuizPage() {
   const router = useRouter();
   const params = useParams();
@@ -105,7 +108,7 @@ export default function FinalQuizPage() {
               >
                 <p className="text-sm text-gray-300">
                   ⚠️ Vous devez obtenir au minimum{' '}
-                  <span className="font-bold" style={{ color: domain.color }}>
+                  <span className="font-bold" style={{ color: readable(domain.color) }}>
                     {finalQuiz.passingScore}%
                   </span>{' '}
                   pour débloquer le badge et maîtriser ce domaine.
@@ -123,7 +126,7 @@ export default function FinalQuizPage() {
                     className="pb-8 border-b border-gray-700 last:border-b-0"
                   >
                     <h4 className="text-lg font-semibold text-white mb-4">
-                      <span style={{ color: domain.color }}>Question {idx + 1}:</span>{' '}
+                      <span style={{ color: readable(domain.color) }}>Question {idx + 1}:</span>{' '}
                       {question.text}
                     </h4>
 
@@ -250,7 +253,7 @@ export default function FinalQuizPage() {
                         className="px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-2"
                         style={{
                           borderColor: domain.color,
-                          color: domain.color,
+                          color: readable(domain.color),
                         }}
                         onMouseEnter={(e) => {
                           e.target.style.background = `${domain.color}15`;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AppShell from '@/app/components/shell/AppShell';
 
 export default function LoanSimulator1Page() {
   const router = useRouter();
@@ -21,9 +22,8 @@ export default function LoanSimulator1Page() {
   }
 
   return (
+    <AppShell>
     <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
       padding: 'clamp(16px, 4vw, 24px)',
     }}>
       <div style={{
@@ -41,7 +41,7 @@ export default function LoanSimulator1Page() {
           <h1 style={{
             fontSize: 'clamp(20px, 6vw, 28px)',
             fontWeight: '800',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -53,9 +53,9 @@ export default function LoanSimulator1Page() {
             onClick={() => router.back()}
             style={{
               padding: 'clamp(8px, 2vw, 10px) clamp(12px, 4vw, 20px)',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: 'white',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+              color: 'var(--ik-text)',
+              border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
               borderRadius: '8px',
               cursor: 'pointer',
               fontSize: 'clamp(12px, 3vw, 14px)',
@@ -64,10 +64,10 @@ export default function LoanSimulator1Page() {
               whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.target.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
             }}
           >
             ← Retour
@@ -87,5 +87,6 @@ export default function LoanSimulator1Page() {
         />
       </div>
     </div>
+    </AppShell>
   );
 }

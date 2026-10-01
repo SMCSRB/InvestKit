@@ -38,7 +38,7 @@ def color(kind, name, shade, alpha):
             return base
         if kind == 'border': return mix('var(--ik-text)', 16 if a is None or a >= 50 else 10)
     v = TOKEN[fam]
-    if kind == 'text': return f"var({TEXT_ACCENT.get(fam, v)})"
+    if kind == 'text': return f"color-mix(in srgb, var({TEXT_ACCENT.get(fam, v)}) 78%, var(--ik-text))"
     if kind == 'border': return mix(f"var({v})", a if a is not None else 60)
     if sh >= 800 or (a is not None and a <= 40): return mix(f"var({v})", max(8, min(a if a is not None else 100, 100)) if a is not None and a > 20 else 16)
     return mix(f"var({v})", a) if a is not None else f"var({v})"
@@ -123,6 +123,7 @@ for c in sorted(used):
 
 out = ['/* GÉNÉRÉ par scripts/gen-utilities.py : ne pas modifier à la main. Utilitaires (sous-ensemble) aux couleurs du thème. */', '@layer utilities {']
 base = [r for r in rules if not r[0]]
+out.append('  .border,.border-2,.border-t,.border-b,.border-b-2{border-color:var(--ik-border-strong)}')
 out += [f"  {s}{{{d}}}" for _, s, d in base]
 # texte blanc sur fonds pleins : texte « sur primaire / positif / négatif » (jamais blanc sur blanc en mode clair)
 out += ['  :is(.bg-blue-500,.bg-blue-600,.bg-purple-600,.hover\\:bg-blue-600,.hover\\:bg-blue-700,.hover\\:bg-purple-700).text-white{color:var(--ik-text-on-primary)}',

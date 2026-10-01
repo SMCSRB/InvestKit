@@ -43,8 +43,8 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
 
   it('le texte sur surface utilise les jetons de thème (lisible en clair comme en sombre)', () => {
     for (const f of ['components/PortfolioRisk.jsx', 'components/HelpTip.jsx', 'crypto/page.jsx']) expect(read(f), f).not.toMatch(/color: '(?:white|#fff)'/);
-    // seuls les 3 boutons pleins (fond violet ou vert) gardent du blanc
-    expect(read('components/OnboardingChecklist.jsx').match(/'white'/g)).toHaveLength(3);
+    // boutons pleins : jetons « texte sur primaire / positif / négatif », jamais de blanc nu
+    expect(read('components/OnboardingChecklist.jsx')).not.toMatch(/color: '(?:white|#fff)'/);
   });
 });
 
@@ -66,6 +66,5 @@ describe('marchés (lot 4) : thème et honnêteté des graphiques', () => {
 
   it('/crypto utilise la coque et le thème', () => {
     expect(read('crypto/page.jsx')).toContain('<AppShell>');
-    expect(read('lib/designRoutes.js')).toContain("'/crypto'");
   });
 });

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import PublicShell from '@/app/components/landing/PublicShell';
 
 const SIMULATORS = [
   { key: 'pea', label: '📊 PEA', src: '/simulateur-pea.html' },
@@ -14,13 +15,14 @@ const SIMULATORS = [
 export default function DemoPage() {
   const [active, setActive] = useState(SIMULATORS[0]);
   return (
-    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)', padding: 'clamp(16px, 4vw, 24px)', color: '#e2e8f0' }}>
+    <PublicShell>
+    <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-        <Link href="/" style={{ color: '#93c5fd', textDecoration: 'none' }}>← Accueil</Link>
+        <Link href="/" style={{ color: 'var(--ik-accent)', textDecoration: 'none' }}>← Accueil</Link>
         <h1 style={{ fontSize: 'clamp(22px, 6vw, 30px)', margin: '12px 0 4px' }}>Essayer les simulateurs</h1>
-        <p style={{ color: '#94a3b8', marginTop: 0 }}>
+        <p style={{ color: 'var(--ik-text-3)', marginTop: 0 }}>
           Démonstration gratuite, sans compte. Simulations pédagogiques : ce ne sont pas des conseils en investissement.
-          {' '}<Link href="/signup" style={{ color: '#93c5fd' }}>Créer un compte</Link> pour le jeu complet (Bourse, Crypto, Immobilier, Banque).
+          {' '}<Link href="/signup" style={{ color: 'var(--ik-accent)' }}>Créer un compte</Link> pour le jeu complet (Bourse, Crypto, Immobilier, Banque).
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0' }}>
           {SIMULATORS.map((s) => (
@@ -29,9 +31,9 @@ export default function DemoPage() {
               onClick={() => setActive(s)}
               aria-pressed={active.key === s.key}
               style={{
-                padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: 'white',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: active.key === s.key ? '#2563eb' : 'rgba(255,255,255,0.08)',
+                padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: active.key === s.key ? 'var(--ik-text-on-primary)' : 'var(--ik-text)',
+                border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                background: active.key === s.key ? 'var(--ik-primary)' : 'color-mix(in srgb, var(--ik-text) 8%, transparent)',
               }}
             >
               {s.label}
@@ -45,6 +47,7 @@ export default function DemoPage() {
           style={{ width: '100%', height: 'calc(100vh - 260px)', minHeight: 500, border: 'none', borderRadius: 16 }}
         />
       </div>
-    </main>
+    </div>
+    </PublicShell>
   );
 }

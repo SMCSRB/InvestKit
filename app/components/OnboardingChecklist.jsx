@@ -56,7 +56,7 @@ export default function OnboardingChecklist() {
     <section style={card} aria-label="Premiers pas">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <h2 style={{ margin: 0, fontSize: 17, color: 'var(--ik-text)' }}>🚀 Tes premiers pas {allDone && '— terminés, bravo !'}</h2>
-        <div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)' }}>{data.doneCount} / {data.total} étapes</div>
+        <div style={{ fontSize: 13, color: 'var(--ik-text-2)' }}>{data.doneCount} / {data.total} étapes</div>
       </div>
       <div style={{ height: 8, background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)', borderRadius: 6, margin: '12px 0' }} role="progressbar" aria-label="Avancement des premiers pas" aria-valuenow={data.doneCount} aria-valuemin={0} aria-valuemax={data.total}>
         <div style={{ width: `${(data.doneCount / data.total) * 100}%`, height: 8, borderRadius: 6, background: 'linear-gradient(90deg, var(--ik-primary), var(--ik-positive))' }} />
@@ -65,14 +65,14 @@ export default function OnboardingChecklist() {
       {suggestion && (
         <div style={{ background: 'color-mix(in srgb, var(--ik-positive) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-positive) 40%, transparent)', borderRadius: 12, padding: 12, margin: '8px 0 14px', color: 'var(--ik-text)', fontSize: 14 }}>
           <strong>{suggestion.headline}</strong>
-          <ul style={{ margin: '6px 0 0', paddingLeft: 18, color: 'color-mix(in srgb, var(--ik-text) 80%, transparent)' }}>{suggestion.steps.map((t) => <li key={t}>{t}</li>)}</ul>
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18, color: 'var(--ik-text-2)' }}>{suggestion.steps.map((t) => <li key={t}>{t}</li>)}</ul>
         </div>
       )}
 
       {data.nextStep && !allDone && (
         <div style={{ background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-primary) 40%, transparent)', borderRadius: 12, padding: 12, marginBottom: 12, display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ color: 'var(--ik-text)', fontSize: 14 }}><strong>Prochaine étape :</strong> {data.nextStep.title}<div style={{ fontSize: 12, color: 'color-mix(in srgb, var(--ik-text) 65%, transparent)' }}>{data.nextStep.description}</div></div>
-          <button onClick={() => openStep(data.nextStep)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-primary)', color: 'white', fontWeight: 700, cursor: 'pointer' }}>C'est parti →</button>
+          <div style={{ color: 'var(--ik-text)', fontSize: 14 }}><strong>Prochaine étape :</strong> {data.nextStep.title}<div style={{ fontSize: 12, color: 'var(--ik-text-2)' }}>{data.nextStep.description}</div></div>
+          <button onClick={() => openStep(data.nextStep)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-primary)', color: 'var(--ik-text-on-primary)', fontWeight: 700, cursor: 'pointer' }}>C'est parti →</button>
         </div>
       )}
 
@@ -88,19 +88,19 @@ export default function OnboardingChecklist() {
       </ul>
 
       {data.claimableCoins > 0 && (
-        <button onClick={claim} style={{ marginTop: 14, padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-positive)', color: 'white', fontWeight: 700, cursor: 'pointer' }}>Récupérer mes {data.claimableCoins} 🪙</button>
+        <button onClick={claim} style={{ marginTop: 14, padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-positive)', color: 'var(--ik-text-on-positive)', fontWeight: 700, cursor: 'pointer' }}>Récupérer mes {data.claimableCoins} 🪙</button>
       )}
       {msg && <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ik-positive)' }}>{msg}</p>}
 
       {showProfile && (
         <form onSubmit={saveProfile} style={{ marginTop: 16, padding: 16, borderRadius: 12, background: 'color-mix(in srgb, var(--ik-text) 6%, transparent)', display: 'grid', gap: 14 }} aria-label="Profil d'investisseur">
           <strong style={{ color: 'var(--ik-text)' }}>Ton profil d'investisseur</strong>
-          <div><div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', marginBottom: 6 }}>Ton niveau</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.experience).map(([k, v]) => <button type="button" key={k} style={chip(form.experience === k)} onClick={() => setForm({ ...form, experience: k })} aria-pressed={form.experience === k}>{v}</button>)}</div></div>
-          <div><div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', marginBottom: 6 }}>Face à une baisse de 30 % de ton portefeuille, tu es plutôt…</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.riskTolerance).map(([k, v]) => <button type="button" key={k} style={chip(form.riskTolerance === k)} onClick={() => setForm({ ...form, riskTolerance: k })} aria-pressed={form.riskTolerance === k}>{v}</button>)}</div></div>
-          <div><div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', marginBottom: 6 }}>Tes objectifs (un ou plusieurs)</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.goals).map(([k, v]) => <button type="button" key={k} style={chip(form.goals.includes(k))} onClick={() => toggle('goals', k, 5)} aria-pressed={form.goals.includes(k)}>{v}</button>)}</div></div>
-          <div><div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--ik-text) 70%, transparent)', marginBottom: 6 }}>Ce qui t'attire (un ou plusieurs)</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.markets).map(([k, v]) => <button type="button" key={k} style={chip(form.markets.includes(k))} onClick={() => toggle('markets', k, 4)} aria-pressed={form.markets.includes(k)}>{v}</button>)}</div></div>
+          <div><div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginBottom: 6 }}>Ton niveau</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.experience).map(([k, v]) => <button type="button" key={k} style={chip(form.experience === k)} onClick={() => setForm({ ...form, experience: k })} aria-pressed={form.experience === k}>{v}</button>)}</div></div>
+          <div><div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginBottom: 6 }}>Face à une baisse de 30 % de ton portefeuille, tu es plutôt…</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.riskTolerance).map(([k, v]) => <button type="button" key={k} style={chip(form.riskTolerance === k)} onClick={() => setForm({ ...form, riskTolerance: k })} aria-pressed={form.riskTolerance === k}>{v}</button>)}</div></div>
+          <div><div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginBottom: 6 }}>Tes objectifs (un ou plusieurs)</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.goals).map(([k, v]) => <button type="button" key={k} style={chip(form.goals.includes(k))} onClick={() => toggle('goals', k, 5)} aria-pressed={form.goals.includes(k)}>{v}</button>)}</div></div>
+          <div><div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginBottom: 6 }}>Ce qui t'attire (un ou plusieurs)</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{Object.entries(LABELS.markets).map(([k, v]) => <button type="button" key={k} style={chip(form.markets.includes(k))} onClick={() => toggle('markets', k, 4)} aria-pressed={form.markets.includes(k)}>{v}</button>)}</div></div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="submit" disabled={!form.goals.length || !form.markets.length} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: form.goals.length && form.markets.length ? 'var(--ik-primary)' : 'var(--ik-text-3)', color: 'white', fontWeight: 700, cursor: 'pointer' }}>Enregistrer</button>
+            <button type="submit" disabled={!form.goals.length || !form.markets.length} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: form.goals.length && form.markets.length ? 'var(--ik-primary)' : 'var(--ik-text-3)', color: 'var(--ik-text-on-primary)', fontWeight: 700, cursor: 'pointer' }}>Enregistrer</button>
             <button type="button" onClick={() => setShowProfile(false)} style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 25%, transparent)', background: 'transparent', color: 'var(--ik-text)', cursor: 'pointer' }}>Annuler</button>
           </div>
         </form>
