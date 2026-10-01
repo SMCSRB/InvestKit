@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createChart, AreaSeries, CrosshairMode } from 'lightweight-charts';
+import { createChart, AreaSeries, CrosshairMode, TickMarkType } from 'lightweight-charts';
 import { useChartTheme, withAlpha } from '@/app/lib/chartTheme';
 
 // Historique d'un titre de la Bourse (cours de clôture annuels du jeu de données simplifié).
@@ -10,7 +10,7 @@ import { useChartTheme, withAlpha } from '@/app/lib/chartTheme';
 const API = process.env.NEXT_PUBLIC_API_URL;
 const fr = (n) => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
 
-export default function HistoryChart({ domain, symbol, simulatedYear }) {
+export default function HistoryChart({ domain, symbol, simulatedYear, enabled = true }) {
   const theme = useChartTheme();
   const boxRef = useRef(null);
   const chartRef = useRef(null);
@@ -21,14 +21,14 @@ export default function HistoryChart({ domain, symbol, simulatedYear }) {
 
   useEffect(() => {
     let off = false;
-    setError(''); setData(null);
-    if (!symbol) return undefined;
+    setError(''); setData(null); setHover(null);
+    if (!symbol || !enabled) return undefined;
     fetch(`${API}/trading/history?domain=${encodeURIComponent(domain)}&symbol=${encodeURIComponent(symbol)}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }, credentials: 'include' })
       .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
       .then(({ ok, j }) => { if (off) return; if (!ok) setError(j.error || 'Historique indisponible'); else setData(j); })
       .catch(() => { if (!off) setError('Historique indisponible'); });
     return () => { off = true; };
-  }, [domain, symbol, simulatedYear]);
+  }, [domain, symbol, simulatedYear, enabled]);
 
   useEffect(() => {
     if (!boxRef.current || (data?.points?.length ?? 0) < 2) return undefined;
@@ -38,7 +38,7 @@ export default function HistoryChart({ domain, symbol, simulatedYear }) {
       grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
       crosshair: { mode: CrosshairMode.Magnet },
       rightPriceScale: { borderColor: theme.border },
-      timeScale: { borderColor: theme.border, tickMarkFormatter: (t) => String(new Date(t * 1000).getUTCFullYear()) },
+      timeScale: { borderColor: theme.border, tickMarkFormatter: (t, type) => (type === TickMarkType.Year ? String(new Date(t * 1000).getUTCFullYear()) : '') },
       localization: { locale: 'fr-FR', timeFormatter: (t) => String(new Date(t * 1000).getUTCFullYear()) },
       handleScroll: false, handleScale: false,
     });

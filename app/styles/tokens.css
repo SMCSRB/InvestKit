@@ -26,6 +26,8 @@
   --ik-text-2: #b7b2d3;
   --ik-text-3: #908ab0;
   --ik-text-on-primary: #ffffff;
+  --ik-text-on-positive: #07130d;
+  --ik-text-on-negative: #1a0509;
 
   /* Marque : violet plus orchidée que bleu */
   --ik-primary: #6d4ff0;
@@ -79,6 +81,8 @@
   --ik-text-2: #4f476e;
   --ik-text-3: #675f87;
   --ik-text-on-primary: #ffffff;
+  --ik-text-on-positive: #ffffff;
+  --ik-text-on-negative: #ffffff;
 
   --ik-primary: #5b3fe0;
   --ik-primary-hover: #4a30c8;

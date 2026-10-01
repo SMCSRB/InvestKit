@@ -49,4 +49,4 @@ export const getPriceAtYear = (symbol: string, year: number): number | null => {
   return series[clampedYear - MIN_YEAR] ?? null;
 };
 
-export const isValidSymbol = (symbol: string): boolean => symbol in PRICE_SERIES;
+export const isValidSymbol = (symbol: string): boolean => Object.prototype.hasOwnProperty.call(PRICE_SERIES, symbol);

@@ -48,4 +48,4 @@ export const getCryptoPriceAtYear = (symbol: string, year: number): number | nul
   return series[clampedYear] ?? null;
 };
 
-export const isValidCryptoSymbol = (symbol: string): boolean => symbol in CRYPTO_SERIES;
+export const isValidCryptoSymbol = (symbol: string): boolean => Object.prototype.hasOwnProperty.call(CRYPTO_SERIES, symbol);

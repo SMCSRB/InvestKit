@@ -25,3 +25,23 @@ describe.skipIf(!hasDb)('historique d\'un titre : jamais de données postérieur
     await expect(tradingService.history(u, 'nimporte', 'TTE')).rejects.toBeInstanceOf(TradingError);
   });
 });
+
+describe.skipIf(!hasDb)('historique : clés inattendues et lecture seule', () => {
+  beforeAll(async () => { await setupDb(); });
+  afterAll(async () => { await teardownDb(); });
+
+  it('« constructor », « toString » : refusés proprement (jamais une erreur 500)', async () => {
+    const u = await createUser({ balance: 500 });
+    for (const d of ['constructor', '__proto__', 'toString']) await expect(tradingService.history(u, d, 'TTE')).rejects.toBeInstanceOf(TradingError);
+    for (const s of ['constructor', 'toString', '__proto__']) await expect(tradingService.history(u, 'stocks', s)).rejects.toBeInstanceOf(TradingError);
+  });
+
+  it('une simple consultation ne crée aucun portefeuille', async () => {
+    const { query } = await import('../src/utils/db');
+    const u = await createUser({ balance: 500 });
+    const h = await tradingService.history(u, 'crypto', 'BTC').catch(() => null);
+    const n = (await query('SELECT COUNT(*)::int AS n FROM virtual_portfolios WHERE user_id = $1', [u])).rows[0].n;
+    expect(n).toBe(0);
+    if (h) expect(h.points.length).toBeLessThanOrEqual(1);
+  });
+});

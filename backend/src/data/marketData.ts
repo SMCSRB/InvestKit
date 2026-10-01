@@ -51,5 +51,5 @@ export const DEFAULT_DOMAIN = 'stocks';
 
 export const getDomain = (id: unknown): DomainConfig | null => {
   const key = typeof id === 'string' && id ? id : DEFAULT_DOMAIN;
-  return DOMAINS[key] ?? null;
+  return Object.prototype.hasOwnProperty.call(DOMAINS, key) ? DOMAINS[key] : null;
 };

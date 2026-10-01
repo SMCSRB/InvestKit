@@ -89,7 +89,7 @@ function OrderTicket({ symbol, asset, onDone }) {
     } catch (e) { setMsg({ ok: false, text: e.message }); setOrderId(uid()); }
     setBusy(false);
   };
-  const tab = (active, color) => ({ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14, color: 'var(--ik-text)', background: active ? color : 'var(--ik-surface-2)', opacity: active ? 1 : 0.6 });
+  const tab = (active, color) => ({ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14, color: active ? (color === 'var(--ik-positive)' ? 'var(--ik-text-on-positive)' : 'var(--ik-text-on-negative)') : 'var(--ik-text)', background: active ? color : 'var(--ik-surface-2)', opacity: active ? 1 : 0.6 });
   return (
     <div style={card} data-testid="order-ticket">
       <h3 style={{ margin: '0 0 10px', color: 'var(--ik-text)', fontSize: 16 }}>Passer un ordre — {symbol}<HelpTip term="ordre-marche" /></h3>
@@ -118,7 +118,7 @@ function OrderTicket({ symbol, asset, onDone }) {
         </div>
       )}
       {side === 'sell' && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ik-text-3)' }}>Stop-loss<HelpTip term="stop-loss" /> · Take-profit<HelpTip term="take-profit" /> · Ordre limite<HelpTip term="ordre-limite" /><br />Une vente est imposée si tes cessions de l&apos;année dépassent le seuil de la flat tax (barème de jeu, à reconfirmer).</div>}
-      <button data-testid="submit-order" style={{ ...btn(true), width: '100%', marginTop: 12, background: side === 'buy' ? 'var(--ik-positive)' : 'var(--ik-negative)' }} disabled={busy} onClick={submit}>{side === 'buy' ? 'Acheter' : 'Vendre'} {symbol}</button>
+      <button data-testid="submit-order" style={{ ...btn(true), width: '100%', marginTop: 12, background: side === 'buy' ? 'var(--ik-positive)' : 'var(--ik-negative)', color: side === 'buy' ? 'var(--ik-text-on-positive)' : 'var(--ik-text-on-negative)' }} disabled={busy} onClick={submit}>{side === 'buy' ? 'Acheter' : 'Vendre'} {symbol}</button>
       {msg && <div role="status" data-testid="order-msg" style={{ marginTop: 10, fontSize: 13, color: msg.ok ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>{msg.text}</div>}
     </div>
   );
@@ -524,7 +524,7 @@ export default function CryptoPage() {
             {[['day', '+1 jour'], ['week', '+1 semaine'], ['month', '+1 mois']].map(([id, l]) => <button key={id} data-testid={`adv-${id}`} style={btn(true)} disabled={busy || !state.account.canAdvance} onClick={() => advance(id)}>{l}</button>)}
             {!state.account.canAdvance && <span style={{ color: 'var(--ik-text-3)', fontSize: 12 }}>Fin des données disponibles.</span>}
           </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
             {[['market', 'Marché'], ['portfolio', 'Mon portefeuille'], ['bank', 'Banque'], ['board', 'Classement'], ['journal', 'Journal du marché']].map(([id, l]) => <button key={id} data-testid={`tab-${id}`} onClick={() => { setTab(id); setSelected(null); }} style={{ ...btn(tab === id), background: tab === id ? 'var(--ik-primary)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)' }}>{l}</button>)}
           </div>
           {tab === 'journal' ? <JournalView simulatedAt={simulatedAt} refreshKey={refreshKey} />

@@ -37,8 +37,10 @@ export const readChartTheme = () => {
 export function useChartTheme() {
   const [theme, setTheme] = useState(readChartTheme);
   useEffect(() => {
-    setTheme(readChartTheme());
-    const mo = new MutationObserver(() => setTheme(readChartTheme()));
+    // On ne remplace l'objet que si une couleur a réellement changé (sinon chaque graphique serait recréé pour rien).
+    const refresh = () => setTheme((prev) => { const next = readChartTheme(); return JSON.stringify(prev) === JSON.stringify(next) ? prev : next; });
+    refresh();
+    const mo = new MutationObserver(refresh);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     return () => mo.disconnect();
   }, []);
