@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../src/app';
 import { generateToken } from '../src/utils/jwt';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId, ledgerSum } from './helpers';
 import { query } from '../src/utils/db';
 import { importDemo } from '../src/services/crypto/importer';
 import { cryptoDataService } from '../src/services/crypto/dataService';
@@ -69,7 +69,7 @@ describe.skipIf(!hasDb)('Trading Crypto : exécution côté serveur (base réell
   const fills = async (user: string) => (await query('SELECT * FROM crypto_fills WHERE user_id = $1 ORDER BY id', [user])).rows;
   const closeAt = async (sym: string, ts: number) => Number((await query(`SELECT c FROM crypto_candles cc JOIN crypto_assets a ON a.id = cc.asset_id WHERE a.symbol = $1 AND cc.tf = '1d' AND cc.ts = to_timestamp($2::float8/1000.0)`, [sym, ts])).rows[0].c);
   const order = (user: string, o: any) => svc.placeOrder(user, { clientOrderId: cid(), ...o });
-  const newPlayer = async (balance = 100_000, opts: any = {}) => { const id = await createUser({ balance, tier: 'pro', ...opts }); await clockService.create(id, 'y2020'); return id; };
+  const newPlayer = async (balance = 100_000, opts: any = {}) => { const id = await createUser({ id: calmUserId(), balance, tier: 'pro', ...opts }); await clockService.create(id, 'y2020'); return id; };
 
   beforeAll(async () => {
     await setupDb();

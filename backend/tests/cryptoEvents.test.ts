@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId } from './helpers';
 import { query } from '../src/utils/db';
 import { importDemo } from '../src/services/crypto/importer';
 import { clockService } from '../src/services/crypto/clockService';
@@ -74,7 +74,7 @@ describe('temps réel : architecture (cache, repli, refus des prix périmés)', 
 
 describe.skipIf(!hasDb)('Crypto : impôt à la sortie, échanges, événements (base réelle)', () => {
   const start = utc('2020-01-01');
-  const newPlayer = async (balance = 200_000, opts: any = {}) => { const id = await createUser({ balance, tier: 'pro', ...opts }); await clockService.create(id, 'y2020'); return id; };
+  const newPlayer = async (balance = 200_000, opts: any = {}) => { const id = await createUser({ id: calmUserId(), balance, tier: 'pro', ...opts }); await clockService.create(id, 'y2020'); return id; };
   const order = (u: string, o: any) => svc.placeOrder(u, { clientOrderId: cid(), ...o });
   const fee = async (u: string) => Number((await query(`SELECT COALESCE(SUM(fee_coins),0)::int AS f FROM crypto_fills WHERE user_id = $1`, [u])).rows[0].f);
 
