@@ -23,12 +23,25 @@ jobs:
       - uses: github/codeql-action/analyze@v3
 
   secrets:
-    name: Recherche de secrets dans le dépôt
+    name: Recherche de secrets (gitleaks, version fixée)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: gitleaks
+      - name: gitleaks (tout l'historique)
         run: |
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source=/repo --redact --no-banner
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.21.2 detect --source=/repo --redact --no-banner --exit-code 1
+
+  secrets-script:
+    name: Recherche de secrets (script du dépôt, fichiers et historique)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Anti-secrets
+        run: node scripts/check-secrets.mjs
