@@ -98,7 +98,7 @@ export const authController = {
           // remplace le mot de passe et envoie un nouveau code. Seul le propriétaire de la boîte mail peut l'utiliser.
           const code = generateVerificationCode();
           await userRepository.restartPendingRegistration(existingUser.id, hashedPassword, code, new Date(Date.now() + 15 * 60 * 1000));
-          void Promise.resolve(sendVerificationEmail(existingUser.email, 'User', code)).catch((e) => console.error('Email sending error:', e));
+          void Promise.resolve(sendVerificationEmail(existingUser.email, existingUser.username, code)).catch((e) => console.error('Email sending error:', e));
         } else if (allowMail('account-exists', existingUser.email, MAIL_THROTTLE.accountExists.max, MAIL_THROTTLE.accountExists.windowMs)) {
           // Compte actif : aucune erreur à l'écran. Le propriétaire est prévenu par e-mail (non bloquant, au plus 1 par heure et par adresse).
           void sendAccountExistsEmail(existingUser.email, `${base}/login`, `${base}/forgot-password`).catch(() => undefined);
@@ -163,7 +163,7 @@ export const authController = {
       }
 
       // Envoi de l'e-mail de vérification sans attendre (durée de réponse constante) ; en cas d'échec, « Renvoyer le code » existe.
-      void Promise.resolve(sendVerificationEmail(email, 'User', verificationCode)).catch((emailError) => console.error('Email sending error:', emailError));
+      void Promise.resolve(sendVerificationEmail(email, null, verificationCode)).catch((emailError) => console.error('Email sending error:', emailError));
 
       await padResponse(startedAt);
       res.status(200).json({
@@ -266,7 +266,7 @@ export const authController = {
 
       await userRepository.updateVerificationCode(user.id, newCode, expiresAt);
 
-      void Promise.resolve(sendVerificationEmail(email, user.first_name, newCode)).catch((emailError) => console.error('Email sending error:', emailError));
+      void Promise.resolve(sendVerificationEmail(email, user.username, newCode)).catch((emailError) => console.error('Email sending error:', emailError));
 
       await padResponse(startedAt);
       res.json({ ...neutral, verificationCode: env.isDev ? newCode : undefined });

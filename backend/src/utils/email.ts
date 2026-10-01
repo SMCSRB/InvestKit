@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { env } from '../config/env';
+import { renderMail, MailContent } from './emailTemplate';
 
 let transporter: any = null;
 let resendClient: any = null;
@@ -83,45 +84,8 @@ export const initEmailTransporter = async () => {
   return transporter;
 };
 
-const generateVerificationEmailHTML = (firstName: string, verificationCode: string) => `
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 30px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-        .content { background: #f8fafc; padding: 30px; border-radius: 8px; }
-        .code-box { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; font-size: 32px; font-weight: bold; letter-spacing: 4px; }
-        .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 20px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1 style="margin: 0; font-size: 28px;">💎 InvestKit</h1>
-        </div>
-        <div class="content">
-          <h2 style="color: #0f172a; margin-top: 0;">Bienvenue sur InvestKit!</h2>
-          <p style="color: #475569; font-size: 16px;">Bonjour ${firstName},</p>
-          <p style="color: #475569; font-size: 16px;">Pour compléter votre inscription, veuillez entrer le code de vérification ci-dessous:</p>
-          <div class="code-box">${verificationCode}</div>
-          <p style="color: #64748b; font-size: 14px;">⏰ Ce code expire dans <strong>15 minutes</strong>.</p>
-          <p style="color: #64748b; font-size: 14px;">Si vous n'avez pas créé de compte, ignorez ce message.</p>
-        </div>
-        <div class="footer">
-          <p style="margin: 0;">© 2026 InvestKit - Plateforme d'investissement</p>
-          <p style="margin: 5px 0 0 0;">Tous les droits réservés</p>
-        </div>
-      </div>
-    </body>
-  </html>
-`;
-
 // Envoi générique (Resend, SMTP ou Ethereal selon la configuration). Ne lève jamais : l'échec est journalisé et renvoyé.
-export const deliverEmail = async (to: string, subject: string, html: string) => {
+export const deliverEmail = async (to: string, subject: string, html: string, text?: string) => {
   try {
     await initEmailTransporter(); // Initialize first
     const provider = getEmailProvider();
@@ -130,7 +94,7 @@ export const deliverEmail = async (to: string, subject: string, html: string) =>
     if (provider === 'resend' && resendClient) {
       console.log(`📨 Sending email via Resend to ${to}...`);
       try {
-        const result = await resendClient.emails.send({ from: 'onboarding@resend.dev', to, subject, html });
+        const result = await resendClient.emails.send({ from: 'onboarding@resend.dev', to, subject, html, ...(text ? { text } : {}) });
         console.log(`✅ Email sent successfully to ${to}`);
         return result;
       } catch (resendError: any) {
@@ -141,7 +105,7 @@ export const deliverEmail = async (to: string, subject: string, html: string) =>
     // Send via Nodemailer (Ethereal or SMTP)
     const transporter = await initEmailTransporter();
     console.log(`📨 Sending email to ${to}...`);
-    const info = await transporter.sendMail({ from: '"InvestKit" <noreply@investkit.com>', to, subject, html });
+    const info = await transporter.sendMail({ from: '"InvestKit" <noreply@investkit.com>', to, subject, html, ...(text ? { text } : {}) });
     console.log(`✅ Email sent successfully to ${to}`);
 
     // For testing with Ethereal, log the preview URL if available
@@ -162,47 +126,70 @@ export const deliverEmail = async (to: string, subject: string, html: string) =>
   }
 };
 
-export const sendVerificationEmail = async (
-  email: string,
-  firstName: string,
-  verificationCode: string
-) => deliverEmail(email, 'Vérifiez votre adresse email - InvestKit', generateVerificationEmailHTML(firstName, verificationCode));
+// Contenus des e-mails (un seul gabarit : utils/emailTemplate.ts). Fonctions pures, réutilisées par l'aperçu (npm run mail:preview).
+export const verificationMail = (name: string | null | undefined, code: string, verifyUrl: string): MailContent => ({
+  subject: 'Ton code de vérification InvestKit',
+  preheader: `Ton code : ${code}. Il est valable 15 minutes.`,
+  title: 'Vérifie ton adresse e-mail',
+  greetingName: name,
+  hero: 'coin',
+  paragraphs: ['Bienvenue sur InvestKit ! Plus qu\'une étape : confirme ton adresse e-mail pour commencer à investir en simulation.'],
+  code: { value: code, caption: 'Ton code de vérification' },
+  button: { label: 'Vérifier mon e-mail', url: verifyUrl },
+  notes: ['Ce code expire dans 15 minutes.', 'Tu n\'as pas créé de compte ? Ignore ce message, il ne se passera rien.'],
+});
 
-const generatePasswordResetEmailHTML = (link: string) => `
-  <!DOCTYPE html>
-  <html>
-    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f8fafc; margin:0; padding:20px;">
-      <div style="max-width:600px; margin:0 auto;">
-        <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color:white; padding:24px; border-radius:8px; text-align:center;">
-          <h1 style="margin:0; font-size:26px;">💎 InvestKit</h1>
-        </div>
-        <div style="background:white; padding:28px; border-radius:8px; margin-top:16px;">
-          <h2 style="color:#0f172a; margin-top:0;">Réinitialisation du mot de passe</h2>
-          <p style="color:#475569; font-size:16px;">Vous avez demandé à changer votre mot de passe. Ce lien est valable <strong>1 heure</strong> et ne peut servir qu'une fois :</p>
-          <p style="text-align:center; margin:28px 0;"><a href="${link}" style="background:#3b82f6; color:white; padding:14px 26px; border-radius:8px; text-decoration:none; font-weight:700;">Choisir un nouveau mot de passe</a></p>
-          <p style="color:#64748b; font-size:14px;">Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe ne change pas.</p>
-        </div>
-      </div>
-    </body>
-  </html>
-`;
+export const passwordResetMail = (name: string | null | undefined, link: string): MailContent => ({
+  subject: 'Choisis un nouveau mot de passe InvestKit',
+  preheader: 'Ce lien est valable 1 heure et ne sert qu\'une fois.',
+  title: 'Nouveau mot de passe',
+  greetingName: name,
+  hero: 'shield',
+  paragraphs: ['Tu as demandé à changer ton mot de passe. Clique sur le bouton pour en choisir un nouveau.'],
+  button: { label: 'Choisir un nouveau mot de passe', url: link },
+  notes: ['Ce lien est valable 1 heure et ne peut servir qu\'une fois.', 'Ce n\'est pas toi ? Ignore ce message : ton mot de passe ne change pas.'],
+});
 
-export const sendPasswordResetEmail = async (email: string, link: string) =>
-  deliverEmail(email, 'Réinitialisation de votre mot de passe - InvestKit', generatePasswordResetEmailHTML(link));
+export const accountExistsMail = (loginUrl: string, resetUrl: string): MailContent => ({
+  subject: 'Quelqu\'un a essayé de créer un compte avec ton adresse',
+  preheader: 'Ton compte existe déjà : rien n\'a été modifié.',
+  title: 'Ton compte existe déjà',
+  hero: 'shield',
+  paragraphs: [
+    'Quelqu\'un a essayé de créer un compte InvestKit avec cette adresse e-mail. Elle a déjà un compte : si c\'est toi, connecte-toi.',
+    'Si tu as oublié ton mot de passe, tu peux en choisir un nouveau. Si ce n\'est pas toi, ignore ce message : ton compte n\'a pas été modifié.',
+  ],
+  button: { label: 'Me connecter', url: loginUrl },
+  notes: [`Mot de passe oublié ? Choisis-en un nouveau sur ${resetUrl}`],
+});
+
+export const welcomeMail = (name: string | null | undefined, appUrl: string): MailContent => ({
+  subject: 'Bienvenue sur InvestKit',
+  preheader: 'Ton compte est prêt : viens découvrir ton portefeuille.',
+  title: 'Bienvenue à bord !',
+  greetingName: name,
+  hero: 'chart',
+  paragraphs: ['Ton compte est prêt. Tu peux investir en Bourse, en immobilier et en crypto avec des InvestCoins, la monnaie du jeu, et apprendre à ton rythme grâce aux cours et aux quiz.'],
+  button: { label: 'Ouvrir InvestKit', url: appUrl },
+});
+
+const sendMail = (to: string, c: MailContent) => {
+  const { subject, html, text } = renderMail(c);
+  return deliverEmail(to, subject, html, text);
+};
+
+export const sendVerificationEmail = async (email: string, name: string | null | undefined, verificationCode: string) => {
+  const base = env.frontendUrl.replace(/\/$/, '');
+  return sendMail(email, verificationMail(name, verificationCode, `${base}/verify-email?email=${encodeURIComponent(email)}`));
+};
+
+export const sendPasswordResetEmail = async (email: string, link: string, name?: string | null) =>
+  sendMail(email, passwordResetMail(name, link));
 
 // Envoyé quand quelqu'un tente de s'inscrire avec une adresse qui a déjà un compte : le site répond pareil à l'écran (aucune fuite),
 // et le vrai propriétaire de l'adresse est prévenu ici, dans sa boîte.
 export const sendAccountExistsEmail = async (email: string, loginUrl: string, resetUrl: string) =>
-  deliverEmail(email, 'Tentative d\'inscription avec votre adresse - InvestKit', `
-  <!DOCTYPE html>
-  <html>
-    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f8fafc; margin:0; padding:20px;">
-      <div style="max-width:600px; margin:0 auto; background:#fff; padding:24px; border-radius:8px;">
-        <h2 style="margin-top:0">Quelqu'un a essayé de créer un compte avec cette adresse</h2>
-        <p>Cette adresse e-mail a déjà un compte InvestKit. Si c'est toi, tu n'as rien à faire de plus : <a href="${loginUrl}">connecte-toi</a>, ou <a href="${resetUrl}">choisis un nouveau mot de passe</a> si tu l'as oublié.</p>
-        <p>Si ce n'est pas toi, ignore ce message : ton compte n'a pas été modifié.</p>
-      </div>
-    </body>
-  </html>`);
+  sendMail(email, accountExistsMail(loginUrl, resetUrl));
+
+export const sendWelcomeEmail = async (email: string, name?: string | null) =>
+  sendMail(email, welcomeMail(name, env.frontendUrl.replace(/\/$/, '') + '/dashboard'));

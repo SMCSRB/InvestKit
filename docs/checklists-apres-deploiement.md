@@ -564,3 +564,14 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 11. 390 px : « Filtres » = tiroir plein écran, bascule Liste/Carte, fiche en pleine page avec barre « Simuler et acheter » collante, aucun défilement horizontal.
 12. Clavier : Tab jusqu'au titre d'une annonce, Entrée ouvre la fiche. Réglage « Animations : Non » : plus aucun mouvement.
 13. Parkings et immeubles n'apparaissent pas dans les filtres (ils n'existent pas dans le catalogue) : c'est voulu et expliqué sous « Type de bien ».
+
+## Étape 1 — e-mails (pseudo, nouveau design)
+
+1. Crée un compte avec une adresse à toi : le mail « Ton code de vérification InvestKit » arrive, avec l'en-tête animé, la pièce, le grand code et le bouton « Vérifier mon e-mail ».
+2. Il dit « Bonjour, » (pas de pseudo avant l'onboarding) et jamais « Bonjour User ».
+3. Clique sur le bouton : la page de vérification s'ouvre avec ton adresse déjà remplie.
+4. Ouvre le mail sur Gmail (ordinateur et téléphone), Outlook et en mode sombre : bouton visible, code lisible, rien ne déborde.
+5. Désactive l'affichage des images : le mail reste lisible (textes, code et bouton).
+6. « Mot de passe oublié » : le mail « Nouveau mot de passe » arrive avec son bouton et la mention « valable 1 heure ».
+7. Aperçu sans envoi : `cd backend && npm run mail:preview` crée 4 fichiers HTML à ouvrir ; ajoute `-- --send ta-boite-de-test@…` pour les recevoir.
+8. Les images viennent de `<FRONTEND_URL>/mail/…` : vérifie que cette adresse s'ouvre sur ton serveur après déploiement.

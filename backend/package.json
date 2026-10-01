@@ -13,6 +13,7 @@
     "crypto:import": "ts-node scripts/crypto-import.ts",
     "invite": "ts-node scripts/invite.ts",
     "coins-stats": "ts-node scripts/coins-stats.ts",
+    "mail:preview": "ts-node scripts/mail-preview.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
     "encrypt-totp": "ts-node scripts/encrypt-totp-secrets.ts",

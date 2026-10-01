@@ -24,7 +24,12 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     let mail = null;
-    try { mail = sessionStorage.getItem('verificationEmail'); } catch { /* ignore */ }
+    // Le bouton du mail ouvre /verify-email?email=… : on l'accepte s'il ressemble à une adresse (le serveur revérifie tout).
+    try {
+      const fromLink = new URLSearchParams(window.location.search).get('email');
+      if (fromLink && /^[^\s@]{1,64}@[^\s@]{1,255}$/.test(fromLink)) { mail = fromLink; sessionStorage.setItem('verificationEmail', fromLink); }
+    } catch { /* ignore */ }
+    if (!mail) { try { mail = sessionStorage.getItem('verificationEmail'); } catch { /* ignore */ } }
     if (!mail) router.push('/signup'); else setEmail(mail);
     return () => clearTimeout(redirect.current);
   }, [router]);

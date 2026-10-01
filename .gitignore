@@ -49,3 +49,4 @@ backups/
 .env.*.local
 start-dev.sh
 *.secret
+backend/mail-preview/

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d4ff0"/><stop offset="1" stop-color="#2a1a78"/></linearGradient>
+    <linearGradient id="r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a893ff"/><stop offset="1" stop-color="#4b32b8"/></linearGradient>
+    <linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9ccff"/><stop offset="1" stop-color="#a893ff"/></linearGradient>
+    <linearGradient id="l2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b32b8"/><stop offset="1" stop-color="#1d1252"/></linearGradient>
+    <linearGradient id="r2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b6cff"/><stop offset="1" stop-color="#3a2490"/></linearGradient>
+    <radialGradient id="shadow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#8b6cff" stop-opacity=".4"/><stop offset="1" stop-color="#8b6cff" stop-opacity="0"/></radialGradient>
+    <pattern id="winL" width="16" height="20" patternUnits="userSpaceOnUse" patternTransform="skewY(26)"><rect x="3" y="4" width="9" height="11" rx="1.5" fill="#ffe9a0" fill-opacity=".85"/></pattern>
+    <pattern id="winR" width="16" height="20" patternUnits="userSpaceOnUse" patternTransform="skewY(-26)"><rect x="3" y="4" width="9" height="11" rx="1.5" fill="#fff6d2" fill-opacity=".75"/></pattern>
+  </defs>
+  <ellipse cx="120" cy="214" rx="96" ry="14" fill="url(#shadow)"/>
+  <circle cx="120" cy="120" r="112" fill="url(#glow)"/>
+  <!-- grand immeuble -->
+  <polygon points="52,90 112,120 112,206 52,176" fill="url(#l)"/>
+  <polygon points="112,120 172,90 172,176 112,206" fill="url(#r)"/>
+  <polygon points="52,90 112,60 172,90 112,120" fill="url(#t)"/>
+  <polygon points="58,110 106,134 106,198 58,174" fill="url(#winL)"/>
+  <polygon points="118,134 166,110 166,174 118,198" fill="url(#winR)"/>
+  <!-- petit bâtiment -->
+  <polygon points="150,140 190,160 190,206 150,186" fill="url(#l2)"/>
+  <polygon points="190,160 214,148 214,194 190,206" fill="url(#r2)"/>
+  <polygon points="150,140 174,128 214,148 190,160" fill="url(#t)" fill-opacity=".9"/>
+  <polygon points="196,170 210,163 210,190 196,197" fill="#fff6d2" fill-opacity=".6"/>
+</svg>
