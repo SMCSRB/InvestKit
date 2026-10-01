@@ -15,7 +15,8 @@ export default function AuthScene({ lite = false, animated = true }) {
   const ref = useRef(null);
 
   useEffect(() => {
-    const el = ref.current;
+    const scene = ref.current;
+    const el = scene?.closest('.au'); // les variables --mx / --my sont posées sur toute la page : le fond ET la scène 3D les lisent
     if (!el || !animated || lite) return undefined;
     // Parallaxe : souris seulement (pas d'écran tactile), jamais plus d'une mise à jour par image.
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return undefined;

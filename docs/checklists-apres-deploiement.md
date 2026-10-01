@@ -535,7 +535,7 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 10. `/forgot-password`, `/reset-password` (lien reçu par e-mail), `/nexistepas` (page 404) : même fond et mêmes composants ; une erreur forcée affiche la page « Quelque chose s'est mal passé ».
 
 **Fond, accessibilité, mobile**
-11. Le fond bouge lentement (aurore, halos, courbes) et suit un peu la souris. Dans Profil → Apparence → Animations = « Non » (ou réglage « réduire les animations » du téléphone) : fond **fixe**. Onglet en arrière-plan : le CPU retombe.
+11. Sur ordinateur, la scène de gauche est vivante : le mot du titre change, les bougies se dessinent, la pièce tourne, les cartes flottent et suivent un peu la souris ; la carte du formulaire a une bordure lumineuse qui tourne. Sur téléphone : un bandeau compact au-dessus du formulaire. Le fond bouge lentement (aurore, halos, courbes). Dans Profil → Apparence → Animations = « Non » (ou réglage « réduire les animations » du téléphone) : fond **fixe**. Onglet en arrière-plan : le CPU retombe.
 12. Plus d'en-tête au milieu de la carte ; « Aller au contenu » n'apparaît qu'en appuyant sur Tab. Plus de badge rouge « Issue » en mode développement sur ces pages.
 13. Mobile 390 px : formulaire seul, pas de défilement horizontal, clair et sombre lisibles ; tout se fait au clavier (Tab, Entrée).
 14. La bascule de langue FR/EN/ES a disparu (traductions incomplètes) ; tout est tutoyé.

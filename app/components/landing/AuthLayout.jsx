@@ -27,11 +27,11 @@ export function useAuthMotion() {
   return { animated: motionEnabled, paused, lite };
 }
 
-export function AuthFrame({ children, minimal = false, footer = true }) {
+export function AuthFrame({ children, minimal = false, footer = true, mode = 'signup' }) {
   const { theme, toggleTheme } = useTheme();
   const { animated, paused, lite } = useAuthMotion();
   return (
-    <div className="au" data-anim={animated ? 'on' : 'off'} data-paused={paused ? 'true' : 'false'}>
+    <div className="au" data-anim={animated ? 'on' : 'off'} data-paused={paused ? 'true' : 'false'} data-lite={lite ? 'true' : 'false'}>
       <AuthScene lite={lite} animated={animated} />
       <a href="#au-main" className="ik-skip-link">Aller au contenu</a>
       <header className="au-top">
@@ -42,7 +42,7 @@ export function AuthFrame({ children, minimal = false, footer = true }) {
         </div>
       </header>
       <main id="au-main" className="au-main">
-        {minimal ? null : <AuthVisual />}
+        {minimal ? null : <AuthVisual mode={mode} />}
         {children}
       </main>
       {footer && (
@@ -54,9 +54,9 @@ export function AuthFrame({ children, minimal = false, footer = true }) {
   );
 }
 
-export default function AuthLayout({ children }) {
+export default function AuthLayout({ children, mode }) {
   return (
-    <AuthFrame>
+    <AuthFrame mode={mode}>
       <div className="au-card-wrap"><div className="au-card">{children}</div></div>
     </AuthFrame>
   );

@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   if (done) {
     return (
-      <AuthLayout>
+      <AuthLayout mode="login">
         <Confetti run={motionEnabled} />
         <div className="au-success" role="status"><SuccessMark /><h1 style={{ margin: 0, fontSize: 'var(--ik-fs-xl)' }}>Connexion réussie</h1><p className="ik-muted" style={{ margin: 0 }}>On t’emmène sur ton tableau de bord…</p></div>
       </AuthLayout>
@@ -70,7 +70,7 @@ export default function LoginPage() {
 
   if (tempToken) {
     return (
-      <AuthLayout>
+      <AuthLayout mode="login">
         <AuthHeader icon={<AuthBadge name="shield" />} title="Double authentification" subtitle={backup ? 'Entre l’un de tes codes de secours.' : 'Entre le code à 6 chiffres de ton application d’authentification.'} />
         <form className="au-form" onSubmit={(e) => { e.preventDefault(); submitCode(); }}>
           {backup ? (
@@ -94,7 +94,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout mode="login">
       <AuthHeader icon={<div style={{ display: 'grid', placeItems: 'center', marginBottom: 14 }}><LogoMark size={52} /></div>} title="Content de te revoir" subtitle="Connecte-toi pour retrouver ton portefeuille." />
       <form className="au-form" onSubmit={submitPassword}>
         <div className="ik-field">
