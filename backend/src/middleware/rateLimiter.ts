@@ -28,11 +28,11 @@ export const accountLimiter = rateLimit({
   message: { error: 'Trop de demandes. Réessayez dans une heure.' },
 });
 
-// Vérification d'un code d'invitation avant la fin de l'inscription : 15 par 15 min et par IP (un code se devine très difficilement,
+// Vérification d'un code d'invitation avant la fin de l'inscription : 30 par 15 min et par IP (un code se devine très difficilement,
 // mais on évite quand même qu'un robot les essaie en masse).
 export const inviteCheckLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 15,
+  limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de vérifications. Réessayez dans 15 minutes.' },

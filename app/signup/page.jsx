@@ -36,6 +36,7 @@ function SignupForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [checkedInvite, setCheckedInvite] = useState(''); // dernier code validé par le serveur : on ne le revalide pas en revenant sur l'étape
   const captchaRef = useRef(null);
   const redirectRef = useRef(null);
 
@@ -63,10 +64,11 @@ function SignupForm() {
     if (inviteOnly && !invite.trim()) { setError('Entre ton code d’invitation (le site est en phase de test sur invitation).'); return; }
     if (!emailOk) { setError('Entre une adresse e-mail valide.'); return; }
     setBusy(true); setError('');
-    if (inviteOnly) {
+    if (inviteOnly && invite.trim() !== checkedInvite) {
       const r = await authPost('validate-invite', { code: invite });
-      if (r.status === 429) { setBusy(false); setError(errorText(r)); return; }
+      if (r.status === 0 || r.status === 429 || r.status >= 500) { setBusy(false); setError(errorText(r, 'Le serveur ne répond pas. Réessaie dans un instant.')); return; }
       if (!r.ok || !r.data.valid) { setBusy(false); setError('Ce code n’est pas reconnu ou n’est plus valable.'); return; }
+      setCheckedInvite(invite.trim());
     }
     setBusy(false); go(1);
   };

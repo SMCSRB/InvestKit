@@ -79,24 +79,35 @@ export function PasswordField({ label, value, onChange, autoComplete = 'new-pass
 }
 
 // Code à N chiffres en cases séparées : saisie qui avance seule, retour arrière, flèches, collage du code entier.
+// Chaque case garde sa place (tableau de longueur fixe) : taper ou effacer au milieu ne décale pas les autres chiffres.
+// `disabled` met les cases en lecture seule (et non « désactivées ») pour ne pas perdre le focus clavier.
 export function CodeInput({ length = 6, value, onChange, onComplete, label, status, disabled, autoFocus = true }) {
   const refs = useRef([]);
-  const digits = Array.from({ length }, (_, i) => value[i] || '');
+  const [cells, setCells] = useState(() => Array.from({ length }, (_, i) => value[i] || ''));
   const focusAt = (i) => { const el = refs.current[Math.max(0, Math.min(length - 1, i))]; el?.focus(); el?.select?.(); };
   useEffect(() => { if (autoFocus) focusAt(0); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const commit = (next) => { onChange(next); if (next.length === length) onComplete?.(next); };
+  // Le parent a vidé ou remplacé le code (échec, nouvel essai) : on s'aligne, et on redonne le focus à la 1re case après un échec.
+  useEffect(() => {
+    if (value === cells.join('')) return;
+    setCells(Array.from({ length }, (_, i) => value[i] || ''));
+    if (value === '') focusAt(0);
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  const commit = (next) => {
+    setCells(next);
+    onChange(next.join(''));
+    if (next.every(Boolean)) onComplete?.(next.join(''));
+  };
   const handleChange = (i, raw) => {
     const clean = raw.replace(/\D/g, '');
-    if (!clean) { commit(digits.map((d, k) => (k === i ? '' : d)).join('').replace(/\s/g, '')); return; }
-    const arr = [...digits];
-    // Plusieurs chiffres d'un coup (collage, saisie automatique du SMS) : on les répartit à partir de la case courante.
-    clean.split('').slice(0, length - i).forEach((c, k) => { arr[i + k] = c; });
-    const next = arr.join('');
+    const next = [...cells];
+    if (!clean) { next[i] = ''; commit(next); return; }
+    // Plusieurs chiffres d'un coup (collage, saisie automatique du SMS) : répartis à partir de la case courante.
+    clean.split('').slice(0, length - i).forEach((c, k) => { next[i + k] = c; });
     commit(next);
     focusAt(Math.min(i + clean.length, length - 1));
   };
   const onKeyDown = (i, e) => {
-    if (e.key === 'Backspace' && !digits[i] && i > 0) { e.preventDefault(); commit(digits.slice(0, i - 1).join('')); focusAt(i - 1); }
+    if (e.key === 'Backspace' && !cells[i] && i > 0) { e.preventDefault(); const next = [...cells]; next[i - 1] = ''; commit(next); focusAt(i - 1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); focusAt(i - 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); focusAt(i + 1); }
   };
@@ -104,14 +115,14 @@ export function CodeInput({ length = 6, value, onChange, onComplete, label, stat
     const text = (e.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, length);
     if (!text) return;
     e.preventDefault();
-    commit(text);
+    commit(Array.from({ length }, (_, i) => text[i] || ''));
     focusAt(text.length >= length ? length - 1 : text.length);
   };
   return (
-    <div role="group" aria-label={label} className="au-code">
-      {digits.map((d, i) => (
+    <div role="group" aria-label={label} aria-busy={disabled || undefined} className="au-code">
+      {cells.map((d, i) => (
         <input key={i} ref={(el) => { refs.current[i] = el; }} className={`ik-input ${d ? 'is-filled' : ''} ${status === 'ok' ? 'is-ok' : ''}`}
-          type="text" inputMode="numeric" pattern="[0-9]*" maxLength={length} value={d} disabled={disabled}
+          type="text" inputMode="numeric" pattern="[0-9]*" maxLength={length} value={d} readOnly={disabled}
           autoComplete={i === 0 ? 'one-time-code' : 'off'} aria-label={`Chiffre ${i + 1} sur ${length}`}
           aria-invalid={status === 'error' ? 'true' : undefined}
           onChange={(e) => handleChange(i, e.target.value)} onKeyDown={(e) => onKeyDown(i, e)} onPaste={onPaste} onFocus={(e) => e.target.select()} />

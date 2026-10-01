@@ -8,6 +8,8 @@ import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail, sendPasswordResetEmail, sendAccountExistsEmail } from '../utils/email';
 import { padResponse } from '../utils/timing';
+import { allowMail } from '../utils/mailThrottle';
+import { MAIL_THROTTLE } from '../config/securityRules';
 import { verifyCaptcha } from '../utils/captcha';
 import { notify } from '../services/notificationService';
 import { query } from '../utils/db';
@@ -89,9 +91,17 @@ export const authController = {
 
       const existingUser = await userRepository.findByEmail(email);
       if (existingUser) {
-        // Aucune erreur à l'écran. Le propriétaire de l'adresse est prévenu par e-mail (envoi non bloquant, pour ne pas allonger la réponse).
         const base = env.frontendUrl.replace(/\/$/, '');
-        void sendAccountExistsEmail(existingUser.email, `${base}/login`, `${base}/forgot-password`).catch(() => undefined);
+        if (!existingUser.verified) {
+          // Compte jamais vérifié (inscription abandonnée, ou adresse « réservée » par quelqu'un d'autre) : la nouvelle inscription
+          // remplace le mot de passe et envoie un nouveau code. Seul le propriétaire de la boîte mail peut l'utiliser.
+          const code = generateVerificationCode();
+          await userRepository.restartPendingRegistration(existingUser.id, hashedPassword, code, new Date(Date.now() + 15 * 60 * 1000));
+          void Promise.resolve(sendVerificationEmail(existingUser.email, 'User', code)).catch((e) => console.error('Email sending error:', e));
+        } else if (allowMail('account-exists', existingUser.email, MAIL_THROTTLE.accountExists.max, MAIL_THROTTLE.accountExists.windowMs)) {
+          // Compte actif : aucune erreur à l'écran. Le propriétaire est prévenu par e-mail (non bloquant, au plus 1 par heure et par adresse).
+          void sendAccountExistsEmail(existingUser.email, `${base}/login`, `${base}/forgot-password`).catch(() => undefined);
+        }
         await padResponse(startedAt);
         res.status(200).json(neutral);
         return;
@@ -141,7 +151,7 @@ export const authController = {
       } catch (txError: any) {
         await client.query('ROLLBACK');
         // Deux inscriptions simultanées avec la même adresse : la seconde reçoit la même réponse neutre.
-        if (txError?.code === '23505') {
+        if (txError?.code === '23505' && /email/i.test(String(txError?.constraint ?? txError?.detail ?? ''))) {
           await padResponse(startedAt);
           res.status(200).json(neutral);
           return;
@@ -393,7 +403,7 @@ export const authController = {
     try {
       const { email } = req.body;
 
-      if (!email) {
+      if (!email || typeof email !== 'string') {
         res.status(400).json({ error: 'Email requis' });
         return;
       }
@@ -414,7 +424,8 @@ export const authController = {
       await auditLog({ userId: user.id, action: 'password_reset_requested', entityType: 'user', entityId: user.id, ip: req.ip });
 
       const link = `${env.frontendUrl.replace(/\/$/, '')}/reset-password?token=${resetToken}`;
-      void Promise.resolve(sendPasswordResetEmail(user.email, link)).catch(() => undefined); // non bloquant : durée identique à « compte inconnu »
+      // non bloquant (durée identique à « compte inconnu ») et plafonné par adresse (anti-harcèlement)
+      if (allowMail('password-reset', user.email, MAIL_THROTTLE.passwordReset.max, MAIL_THROTTLE.passwordReset.windowMs)) void Promise.resolve(sendPasswordResetEmail(user.email, link)).catch(() => undefined);
       await padResponse(startedAt);
 
       // Jamais en production : uniquement pour les tests automatisés (variable explicite).

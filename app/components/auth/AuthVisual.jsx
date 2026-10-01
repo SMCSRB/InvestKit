@@ -8,8 +8,9 @@ import { AVAILABLE_DOMAINS, STARTING_COINS } from '@/app/lib/siteFacts';
 
 // Panneau de gauche (ordinateur) : accroche, mini graphique qui se trace, compteur d'InvestCoins et cartes qui défilent doucement.
 // Tout est illustratif et le dit : aucun cours réel ni promesse de gain n'est affiché.
+// Quatre cartes au plus : le défilement CSS (20 s, 5 s par carte) est calé sur ce nombre.
 const CARDS = [
-  ...AVAILABLE_DOMAINS.map((d) => ({ icon: d.icon, title: d.name, text: d.sub })),
+  ...AVAILABLE_DOMAINS.slice(0, 3).map((d) => ({ icon: d.icon, title: d.name, text: d.sub })),
   { icon: 'bookOpen', title: 'Cours et quiz', text: 'Chaque notion expliquée avant que tu t’en serves.' },
 ];
 const LINE = 'M0,100 C30,96 45,84 70,88 S110,64 140,70 S185,44 215,50 S262,22 290,28 S312,14 320,10';

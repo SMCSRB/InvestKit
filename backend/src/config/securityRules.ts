@@ -15,7 +15,14 @@ export const PASSWORD_POLICY = {
 };
 
 // Réponses d'authentification à durée minimale constante : la durée ne doit pas révéler si une adresse a déjà un compte.
-// VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (réglable par AUTH_MIN_RESPONSE_MS ; 0 en test).
-export const AUTH_MIN_RESPONSE_MS = Number.isFinite(Number(process.env.AUTH_MIN_RESPONSE_MS)) && process.env.AUTH_MIN_RESPONSE_MS !== undefined && process.env.AUTH_MIN_RESPONSE_MS !== ''
-  ? Number(process.env.AUTH_MIN_RESPONSE_MS)
-  : 700;
+// VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (réglable par AUTH_MIN_RESPONSE_MS, bornée entre 0 et 3000 ms ; 0 en test).
+export const AUTH_RESPONSE_LIMITS = { defaultMs: 700, maxMs: 3000 };
+export const authMinResponseMs = (): number => {
+  const raw = process.env.AUTH_MIN_RESPONSE_MS;
+  const n = raw === undefined || raw === '' ? NaN : Number(raw);
+  if (!Number.isFinite(n)) return AUTH_RESPONSE_LIMITS.defaultMs;
+  return Math.min(AUTH_RESPONSE_LIMITS.maxMs, Math.max(0, n));
+};
+
+// Plafond d'e-mails automatiques par adresse (anti-harcèlement par boîte mail) : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
+export const MAIL_THROTTLE = { accountExists: { max: 1, windowMs: 60 * 60 * 1000 }, passwordReset: { max: 3, windowMs: 60 * 60 * 1000 } };
