@@ -9,6 +9,7 @@
 @import './styles/shell.css';
 @import './styles/landing.css';
 @import './styles/dashboard.css';
+@import './styles/utilities.css';
 
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-30px); }

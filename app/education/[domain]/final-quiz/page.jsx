@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
+import AppShell from '@/app/components/shell/AppShell';
 
 export default function FinalQuizPage() {
   const router = useRouter();
@@ -30,13 +31,13 @@ export default function FinalQuizPage() {
 
   if (isLoading || !domain || !finalQuiz) {
     return (
-      <PageWrapper>
-        <div className="min-h-screen pt-32 pb-20 px-6">
+      <AppShell><PageWrapper>
+        <div className="pb-12 px-6">
           <div className="animate-pulse">
             <div className="h-12 bg-gray-700 rounded w-64 mb-4" />
           </div>
         </div>
-      </PageWrapper>
+      </PageWrapper></AppShell>
     );
   }
 
@@ -70,8 +71,8 @@ export default function FinalQuizPage() {
   };
 
   return (
-    <PageWrapper animation="fade-in-up">
-      <div className="min-h-screen pt-32 pb-20 px-6 lg:px-12">
+    <AppShell><PageWrapper animation="fade-in-up">
+      <div className="pb-12 px-6 lg:px-12">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <Link
@@ -84,8 +85,8 @@ export default function FinalQuizPage() {
           <div className="mb-12">
             <div className="flex items-center gap-4 mb-6">
               <div className="text-6xl">🏆</div>
-              <div>
-                <h1 className="text-4xl font-bold text-white">
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h1 className="text-4xl font-bold text-white" style={{ overflowWrap: 'anywhere', fontSize: 'clamp(24px, 7vw, 36px)' }}>
                   Quiz Final - {domain.name}
                 </h1>
                 <p className="text-gray-400 mt-2">
@@ -135,7 +136,7 @@ export default function FinalQuizPage() {
                             borderColor:
                               quizAnswers[question.id] === optionIdx
                                 ? domain.color
-                                : 'rgba(107, 114, 128, 0.3)',
+                                : 'color-mix(in srgb, var(--ik-text) 15%, transparent)',
                             backgroundColor:
                               quizAnswers[question.id] === optionIdx
                                 ? `${domain.color}15`
@@ -265,7 +266,7 @@ export default function FinalQuizPage() {
                 </div>
               ) : (
                 <div>
-                  <div className="text-6xl mb-8" style={{ color: '#ef4444' }}>
+                  <div className="text-6xl mb-8" style={{ color: 'var(--ik-negative)' }}>
                     ✗
                   </div>
 
@@ -319,6 +320,6 @@ export default function FinalQuizPage() {
           }
         }
       `}</style>
-    </PageWrapper>
+    </PageWrapper></AppShell>
   );
 }

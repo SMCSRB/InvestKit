@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
+import AppShell from '@/app/components/shell/AppShell';
 
 export default function EducationPage() {
   const router = useRouter();
@@ -20,8 +21,8 @@ export default function EducationPage() {
 
   if (isLoading) {
     return (
-      <PageWrapper>
-        <div className="min-h-screen pt-32 pb-20 px-6 lg:px-12">
+      <AppShell><PageWrapper>
+        <div className="pb-12 px-6 lg:px-12">
           <div className="max-w-6xl mx-auto">
             <div className="text-center animate-pulse">
               <div className="h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded w-64 mx-auto mb-4" />
@@ -29,7 +30,7 @@ export default function EducationPage() {
             </div>
           </div>
         </div>
-      </PageWrapper>
+      </PageWrapper></AppShell>
     );
   }
 
@@ -37,8 +38,8 @@ export default function EducationPage() {
   const totalDomainsCount = educationDomains.length;
 
   return (
-    <PageWrapper animation="fade-in-up">
-      <div className="min-h-screen pt-32 pb-20 px-6 lg:px-12">
+    <AppShell><PageWrapper animation="fade-in-up">
+      <div className="pb-12 px-6 lg:px-12">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-16 stagger-container">
@@ -47,7 +48,7 @@ export default function EducationPage() {
                 fontSize: 'clamp(32px, 8vw, 64px)',
                 fontWeight: 'bold',
                 marginBottom: '24px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+                background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 50%, var(--ik-series-4) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -65,16 +66,16 @@ export default function EducationPage() {
             <div
               className="p-6 rounded-2xl border border-blue-500/20"
               style={{
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)',
                 transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.borderColor = '#3b82f6';
+                e.currentTarget.style.borderColor = 'var(--ik-primary)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
               }}
             >
               <div className="text-4xl font-bold text-blue-400 mb-2">
@@ -89,16 +90,16 @@ export default function EducationPage() {
             <div
               className="p-6 rounded-2xl border border-purple-500/20"
               style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-series-4) 10%, transparent) 100%)',
                 transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.borderColor = '#8b5cf6';
+                e.currentTarget.style.borderColor = 'var(--ik-orchid)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)';
               }}
             >
               <div className="text-4xl font-bold text-purple-400 mb-2">
@@ -113,16 +114,16 @@ export default function EducationPage() {
             <div
               className="p-6 rounded-2xl border border-pink-500/20"
               style={{
-                background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-series-4) 10%, transparent) 0%, color-mix(in srgb, var(--ik-primary) 10%, transparent) 100%)',
                 transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.borderColor = '#ec4899';
+                e.currentTarget.style.borderColor = 'var(--ik-series-4)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.2)';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-series-4) 20%, transparent)';
               }}
             >
               <div className="text-4xl font-bold text-pink-400 mb-2">
@@ -141,7 +142,7 @@ export default function EducationPage() {
               fontSize: 'clamp(24px, 6vw, 32px)',
               fontWeight: 'bold',
               marginBottom: '32px',
-              color: 'white',
+              color: 'var(--ik-text)',
             }}>
               Mes Domaines
             </h2>
@@ -170,7 +171,7 @@ export default function EducationPage() {
                       `}
                       style={{
                         background: isLocked
-                          ? 'rgba(30, 30, 30, 0.4)'
+                          ? 'color-mix(in srgb, var(--ik-text) 8%, transparent)'
                           : `linear-gradient(135deg, ${domain.color}15 0%, ${domain.color}05 100%)`,
                         transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       }}
@@ -295,6 +296,6 @@ export default function EducationPage() {
           )}
         </div>
       </div>
-    </PageWrapper>
+    </PageWrapper></AppShell>
   );
 }

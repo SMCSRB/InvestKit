@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { spawnSync } from 'child_process';
 // @ts-expect-error module JavaScript du frontend
 import { THEMED_PREFIXES } from '../../app/lib/designRoutes.js';
 
@@ -11,7 +12,10 @@ const read = (p: string) => readFileSync(join(APP, p), 'utf8');
 const MIGRATED: Record<string, string> = {
   '/immobilier': 'immobilier/page.jsx',
   '/banque': 'banque/page.jsx',
+  '/glossaire': 'glossaire/page.jsx',
+  '/friends': 'friends/page.jsx',
 };
+const EDUCATION = ['education/page.jsx', 'education/[domain]/page.jsx', 'education/[domain]/[chapter]/page.jsx', 'education/[domain]/final-quiz/page.jsx'];
 
 describe('pages migrées vers le nouveau design', () => {
   for (const [route, file] of Object.entries(MIGRATED)) {
@@ -26,4 +30,26 @@ describe('pages migrées vers le nouveau design', () => {
       expect(src).not.toMatch(/#(?:0f172a|1e293b|94a3b8|cbd5e1|e2e8f0|64748b|60a5fa)\b/i);
     });
   }
+
+  it('/education : toutes les pages dans la coque, sans couleurs d\'origine', () => {
+    expect(THEMED_PREFIXES).toContain('/education');
+    for (const f of EDUCATION) {
+      const src = read(f);
+      expect(src, f).toContain('<AppShell>');
+      expect(src, f).not.toMatch(/minHeight: '100vh'/);
+      expect(src, f).not.toMatch(/#(?:0f172a|1e293b|94a3b8|cbd5e1|e2e8f0|64748b|60a5fa|3b82f6|8b5cf6)\b/i);
+    }
+  });
+
+  it('utilities.css est à jour avec le générateur (python3 scripts/gen-utilities.py)', () => {
+    const r = spawnSync('python3', ['scripts/gen-utilities.py', '--check'], { cwd: join(__dirname, '../..') });
+    expect(r.status, 'relancer : python3 scripts/gen-utilities.py').toBe(0);
+  });
+
+  it('utilitaires de mise en page : Tailwind n\'est pas installé, le sous-ensemble généré couvre les classes utilisées', () => {
+    const css = read('styles/utilities.css');
+    for (const c of ['.max-w-6xl', '.grid-cols-1', '.text-gray-400', '.bg-slate-800\\/50', '.md\\:grid-cols-2']) expect(css, c).toContain(c);
+    expect(css).toMatch(/var\(--ik-text-3\)/); // couleurs du thème, pas de gris fixes
+    expect(css).not.toMatch(/#(?:94a3b8|1e293b|0f172a)/i);
+  });
 });
