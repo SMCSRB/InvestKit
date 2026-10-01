@@ -381,3 +381,22 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 11. Bascule Mode clair/sombre : texte lisible partout (checklist, risque, info-bulles « ? »).
 12. Mobile (390 px) : pas de défilement horizontal ; la barre d'onglets défile sur le côté.
 13. Aucune erreur rouge dans la console (F12). Note : en développement, recharger la page très souvent peut déclencher « Trop de requêtes » (limite de 300 requêtes par 15 minutes) : attendre ou relancer le serveur.
+
+## PR Design 4 — Marché Crypto et graphiques (lot 4/6)
+
+À fusionner **après** la PR « Design 3 ». Connecte-toi avec ton compte de test.
+
+**Marché Crypto (`/crypto`)**
+1. La page s'ouvre dans la même coque que le reste du site (menu à gauche, barre du haut, bandeau de cours). Le bouton soleil/lune passe en clair : tout reste lisible (tableaux, cartes, bandeaux d'avertissement).
+2. Si tu n'as pas encore de compte Crypto, tu choisis une date de départ ; les dates sans données importées sont grisées avec la mention « données pas encore importées ».
+3. Ouvre un actif : le graphique pro s'affiche (bougies, ligne, aire ; échelle linéaire/log/% ; indicateurs ; lignes à tracer). Passe de sombre à clair **sans recharger** : les couleurs du graphique suivent. Le logo TradingView reste affiché.
+4. Les vrais achats/ventes, ordres limite/stop, portefeuille, banque, classement, journal fonctionnent comme avant (rien n'a été retiré). Les données de test restent étiquetées « fictif ».
+
+**Bourse (Tableau de bord → Simulateur)**
+5. Une carte « Historique · LVMH » (ou le titre choisi dans « Acheter ») montre la courbe des cours de clôture **annuels**, étiquetée « Données illustratives » : ce ne sont pas de vrais cours. Au début (année 2010) un seul point existe : un message l'explique ; après « Avancer d'un an », la courbe se dessine.
+6. La courbe s'arrête **toujours à ton année simulée** (jamais de futur, même si tu modifies l'adresse). « Voir les valeurs (tableau) » donne les mêmes chiffres en liste.
+7. Change de titre dans « Acheter » : la courbe suit. En mode clair, le texte des cartes du simulateur (Année simulée, Solde…) est lisible et le bouton « Avancer d'un an » a un texte clair sur fond violet.
+
+**Partout**
+8. Mobile (390 px) : pas de défilement horizontal sur `/crypto` ni sur le Simulateur ; le graphique se zoome au doigt.
+9. Aucune erreur rouge dans la console (F12).

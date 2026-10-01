@@ -7,6 +7,7 @@ export const tradingRoutes = Router();
 tradingRoutes.get('/domains', authMiddleware, tradingController.getDomains);
 tradingRoutes.get('/assets', authMiddleware, tradingController.getAssets);
 tradingRoutes.get('/portfolio', authMiddleware, tradingController.getPortfolio);
+tradingRoutes.get('/history', authMiddleware, tradingController.history);
 tradingRoutes.post('/buy', authMiddleware, tradingController.buy);
 tradingRoutes.post('/sell', authMiddleware, tradingController.sell);
 tradingRoutes.post('/quote', authMiddleware, tradingController.quote);

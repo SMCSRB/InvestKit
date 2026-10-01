@@ -21,6 +21,7 @@ describe.skipIf(!hasDb)('classement : les ex æquo ne dépassent jamais la taill
     expect(board.entries).toHaveLength(5);
     expect(board.entries.every((e) => e.rank === 1)).toBe(true);
     expect(board.totalRanked).toBe(30);
+    expect(board.entries.some((e) => e.isMe)).toBe(true); // l'appelant passe en tête de son groupe d'ex æquo
     expect(board.me?.rank).toBe(1);
   });
 });

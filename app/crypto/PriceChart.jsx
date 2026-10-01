@@ -7,20 +7,19 @@ import {
 } from 'lightweight-charts';
 import { INDICATORS, computeIndicator } from '../lib/indicators';
 import HelpTip from '../components/HelpTip';
+import { useChartTheme, withAlpha } from '../lib/chartTheme';
 
 // Graphique professionnel basé sur TradingView Lightweight Charts™ (Apache 2.0) — le logo d'attribution reste affiché.
 // Toutes les données viennent du serveur, déjà bornées à la date simulée : ce composant ne choisit jamais une date.
 
-const COLORS = { up: '#22c55e', down: '#ef4444', grid: 'rgba(148,163,184,0.12)', text: '#94a3b8', line: '#60a5fa' };
-const IND_COLORS = ['#f59e0b', '#a78bfa', '#22d3ee', '#f472b6', '#84cc16', '#fb923c'];
 const IND_TIP = { sma: 'moyenne-mobile', ema: 'moyenne-mobile', bollinger: 'bollinger', rsi: 'rsi', macd: 'macd' };
 const SCALES = [['linear', 'Linéaire'], ['log', 'Log'], ['percent', '%']];
 const SCALE_MODE = { linear: PriceScaleMode.Normal, log: PriceScaleMode.Logarithmic, percent: PriceScaleMode.Percentage };
 const TYPES = [['candles', 'Bougies'], ['line', 'Ligne'], ['area', 'Aire']];
 const LOAD_MORE_BEFORE = 15;
 
-const btn = (active) => ({ padding: '6px 10px', borderRadius: 8, border: `1px solid ${active ? 'rgba(96,165,250,0.8)' : 'rgba(148,163,184,0.3)'}`, background: active ? 'rgba(59,130,246,0.3)' : 'rgba(15,23,42,0.6)', color: active ? '#bfdbfe' : '#cbd5e1', fontSize: 12, fontWeight: 700, cursor: 'pointer' });
-const smallInput = { width: 56, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(148,163,184,0.4)', background: 'rgba(15,23,42,0.8)', color: '#fff', fontSize: 12 };
+const btn = (active) => ({ padding: '6px 10px', borderRadius: 8, border: `1px solid ${active ? 'color-mix(in srgb, var(--ik-primary) 80%, transparent)' : 'color-mix(in srgb, var(--ik-text) 18%, transparent)'}`, background: active ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'var(--ik-surface-2)', color: active ? 'var(--ik-accent)' : 'var(--ik-text-2)', fontSize: 12, fontWeight: 700, cursor: 'pointer' });
+const smallInput = { width: 56, padding: '4px 6px', borderRadius: 6, border: '1px solid color-mix(in srgb, var(--ik-text) 24%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: 12 };
 
 const precisionFor = (p) => (p >= 100 ? 2 : p >= 1 ? 3 : p >= 0.01 ? 5 : 8);
 const fmt = (p) => (p == null ? '—' : Number(p).toLocaleString('fr-FR', { maximumFractionDigits: precisionFor(Math.abs(p)) }));
@@ -33,6 +32,7 @@ const loadTools = (symbol) => {
 const saveTools = (symbol, tools) => { try { localStorage.setItem(`ik_crypto_tools_${symbol}`, JSON.stringify(tools)); } catch { /* ignore */ } };
 
 export default function PriceChart({ symbol, tf, candleLoader, refreshKey, markers, levels }) {
+  const theme = useChartTheme();
   const boxRef = useRef(null);
   const chartRef = useRef(null);
   const mainRef = useRef(null);
@@ -64,11 +64,11 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
   useEffect(() => {
     const chart = createChart(boxRef.current, {
       autoSize: true,
-      layout: { background: { color: 'transparent' }, textColor: COLORS.text, fontFamily: 'inherit', attributionLogo: true, panes: { separatorColor: 'rgba(148,163,184,0.25)' } },
-      grid: { vertLines: { color: COLORS.grid }, horzLines: { color: COLORS.grid } },
+      layout: { background: { color: 'transparent' }, textColor: theme.text, fontFamily: 'inherit', attributionLogo: true, panes: { separatorColor: theme.border } },
+      grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: 'rgba(148,163,184,0.25)' },
-      timeScale: { borderColor: 'rgba(148,163,184,0.25)', timeVisible: true, secondsVisible: false, rightOffset: 4 },
+      rightPriceScale: { borderColor: theme.border },
+      timeScale: { borderColor: theme.border, timeVisible: true, secondsVisible: false, rightOffset: 4 },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
       localization: { locale: 'fr-FR' },
@@ -76,6 +76,16 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
     chartRef.current = chart;
     return () => { chart.remove(); chartRef.current = null; mainRef.current = null; volRef.current = null; indSeriesRef.current = []; toolSeriesRef.current = []; priceLinesRef.current = []; markersApiRef.current = null; };
   }, []);
+
+  // Changement de thème (clair/sombre) : on réapplique les couleurs du cadre sans recréer le graphique.
+  useEffect(() => {
+    chartRef.current?.applyOptions({
+      layout: { textColor: theme.text, panes: { separatorColor: theme.border } },
+      grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+      rightPriceScale: { borderColor: theme.border },
+      timeScale: { borderColor: theme.border },
+    });
+  }, [theme]);
 
   // Chargement initial / changement d'actif ou d'unité de temps / avance du temps.
   useEffect(() => {
@@ -132,13 +142,13 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
     const priceFormat = { type: 'price', precision: precisionFor(last), minMove: 10 ** -precisionFor(last) };
     let main;
     if (type === 'candles') {
-      main = chart.addSeries(CandlestickSeries, { upColor: COLORS.up, downColor: COLORS.down, borderVisible: false, wickUpColor: COLORS.up, wickDownColor: COLORS.down, priceFormat }, 0);
+      main = chart.addSeries(CandlestickSeries, { upColor: theme.up, downColor: theme.down, borderVisible: false, wickUpColor: theme.up, wickDownColor: theme.down, priceFormat }, 0);
       main.setData(candles.map(toBar));
     } else if (type === 'line') {
-      main = chart.addSeries(LineSeries, { color: COLORS.line, lineWidth: 2, priceFormat }, 0);
+      main = chart.addSeries(LineSeries, { color: theme.line, lineWidth: 2, priceFormat }, 0);
       main.setData(candles.map((c) => ({ time: Math.floor(c.ts / 1000), value: c.c })));
     } else {
-      main = chart.addSeries(AreaSeries, { lineColor: COLORS.line, topColor: 'rgba(96,165,250,0.35)', bottomColor: 'rgba(96,165,250,0.02)', lineWidth: 2, priceFormat }, 0);
+      main = chart.addSeries(AreaSeries, { lineColor: theme.line, topColor: withAlpha(theme.line, 0.35), bottomColor: withAlpha(theme.line, 0.02), lineWidth: 2, priceFormat }, 0);
       main.setData(candles.map((c) => ({ time: Math.floor(c.ts / 1000), value: c.c })));
     }
     mainRef.current = main;
@@ -146,7 +156,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
     // Volume (histogramme en bas du panneau principal)
     const vol = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: 'vol', lastValueVisible: false, priceLineVisible: false }, 0);
     vol.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-    vol.setData(candles.map((c) => ({ time: Math.floor(c.ts / 1000), value: c.volume, color: c.c >= c.o ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)' })));
+    vol.setData(candles.map((c) => ({ time: Math.floor(c.ts / 1000), value: c.volume, color: c.c >= c.o ? withAlpha(theme.up, 0.35) : withAlpha(theme.down, 0.35) })));
     volRef.current = vol;
     // Indicateurs
     let pane = 1;
@@ -154,7 +164,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
       const def = INDICATORS[ind.type];
       if (!def) return;
       const res = computeIndicator(candles, ind);
-      const color = IND_COLORS[idx % IND_COLORS.length];
+      const color = theme.ind[idx % theme.ind.length];
       const opt = (extra = {}) => ({ color, lineWidth: 1, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, ...extra });
       if (def.pane === 'price') {
         res.lines.forEach((l) => { const s = chart.addSeries(LineSeries, opt(l.key === 'mid' ? { lineStyle: LineStyle.Dashed } : {}), 0); s.setData(l.points); indSeriesRef.current.push(s); });
@@ -164,38 +174,38 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
         const p = pane++;
         if (ind.type === 'macd') {
           const h = chart.addSeries(HistogramSeries, { lastValueVisible: false, priceLineVisible: false }, p);
-          h.setData(res.hist.map((x) => ({ ...x, color: x.value >= 0 ? 'rgba(34,197,94,0.55)' : 'rgba(239,68,68,0.55)' })));
+          h.setData(res.hist.map((x) => ({ ...x, color: x.value >= 0 ? withAlpha(theme.up, 0.55) : withAlpha(theme.down, 0.55) })));
           indSeriesRef.current.push(h);
-          res.lines.forEach((l, i) => { const s = chart.addSeries(LineSeries, opt({ color: i ? '#f59e0b' : '#60a5fa' }), p); s.setData(l.points); indSeriesRef.current.push(s); });
+          res.lines.forEach((l, i) => { const s = chart.addSeries(LineSeries, opt({ color: i ? theme.warning : theme.line }), p); s.setData(l.points); indSeriesRef.current.push(s); });
         } else {
           res.lines.forEach((l) => {
             const s = chart.addSeries(LineSeries, opt({ lineWidth: 2 }), p); s.setData(l.points); indSeriesRef.current.push(s);
-            if (ind.type === 'rsi') { s.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.6)', lineStyle: LineStyle.Dotted, lineWidth: 1, axisLabelVisible: false }); s.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.6)', lineStyle: LineStyle.Dotted, lineWidth: 1, axisLabelVisible: false }); }
+            if (ind.type === 'rsi') { s.createPriceLine({ price: 70, color: withAlpha(theme.down, 0.6), lineStyle: LineStyle.Dotted, lineWidth: 1, axisLabelVisible: false }); s.createPriceLine({ price: 30, color: withAlpha(theme.up, 0.6), lineStyle: LineStyle.Dotted, lineWidth: 1, axisLabelVisible: false }); }
           });
         }
         chart.panes()[p]?.setHeight?.(110);
       }
     });
     // Outils de dessin enregistrés
-    tools.h.forEach((price) => { priceLinesRef.current.push(main.createPriceLine({ price, color: '#fbbf24', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'ligne' })); });
+    tools.h.forEach((price) => { priceLinesRef.current.push(main.createPriceLine({ price, color: theme.warning, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'ligne' })); });
     tools.t.forEach((t) => {
-      const s = chart.addSeries(LineSeries, { color: '#fbbf24', lineWidth: 2, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, priceFormat }, 0);
+      const s = chart.addSeries(LineSeries, { color: theme.warning, lineWidth: 2, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, priceFormat }, 0);
       s.setData([{ time: t.t1, value: t.p1 }, { time: t.t2, value: t.p2 }].sort((a, b) => a.time - b.time));
       toolSeriesRef.current.push(s);
     });
     // Niveaux du joueur : prix de revient moyen, ordres en attente
-    (levels || []).forEach((l) => { priceLinesRef.current.push(main.createPriceLine({ price: l.price, color: l.color, lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: true, title: l.title })); });
+    (levels || []).forEach((l) => { priceLinesRef.current.push(main.createPriceLine({ price: l.price, color: theme[l.color] || l.color, lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: true, title: l.title })); });
     // Repères d'ordres (achats / ventes du joueur) : accrochés à la bougie qui contient l'exécution
     if (markers?.length) {
       const first = candles[0].ts;
       const mk = markers.filter((m) => m.ts >= first).map((m) => {
         let lo = 0; let hi = candles.length - 1;
         while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (candles[mid].ts <= m.ts) lo = mid; else hi = mid - 1; }
-        return { time: Math.floor(candles[lo].ts / 1000), position: m.side === 'buy' ? 'belowBar' : 'aboveBar', color: m.side === 'buy' ? '#22c55e' : '#ef4444', shape: m.side === 'buy' ? 'arrowUp' : 'arrowDown', text: m.text };
+        return { time: Math.floor(candles[lo].ts / 1000), position: m.side === 'buy' ? 'belowBar' : 'aboveBar', color: m.side === 'buy' ? theme.up : theme.down, shape: m.side === 'buy' ? 'arrowUp' : 'arrowDown', text: m.text };
       }).sort((a, b) => a.time - b.time);
       markersApiRef.current = createSeriesMarkers(main, mk);
     }
-  }, [version, type, scale, indicators, tools, markers, levels]);
+  }, [version, type, scale, indicators, tools, markers, levels, theme]);
 
   // Infobulle OHLC au survol + outils de dessin (clic)
   useEffect(() => {
@@ -252,16 +262,16 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
         <button style={btn(drawMode === 'trend')} onClick={() => setDrawMode(drawMode === 'trend' ? 'none' : 'trend')} title="Clique deux points sur le graphique">╱ Ligne de tendance</button>
         {(tools.h.length > 0 || tools.t.length > 0) && <button style={btn(false)} onClick={clearTools}>Effacer mes tracés</button>}
       </div>
-      {drawMode !== 'none' && <div style={{ fontSize: 12, color: '#fbbf24', marginBottom: 6 }}>{drawMode === 'hline' ? 'Clique sur le graphique à la hauteur voulue.' : 'Clique le premier point, puis le second.'}</div>}
+      {drawMode !== 'none' && <div style={{ fontSize: 12, color: 'var(--ik-warning)', marginBottom: 6 }}>{drawMode === 'hline' ? 'Clique sur le graphique à la hauteur voulue.' : 'Clique le premier point, puis le second.'}</div>}
 
       {showInd && (
-        <div style={{ border: '1px solid rgba(148,163,184,0.25)', borderRadius: 10, padding: 10, marginBottom: 8, background: 'rgba(15,23,42,0.6)' }}>
+        <div style={{ border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', borderRadius: 10, padding: 10, marginBottom: 8, background: 'var(--ik-surface-2)' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {Object.entries(INDICATORS).map(([t, d]) => <button key={t} style={btn(false)} onClick={() => addIndicator(t)}>+ {d.label}</button>)}
           </div>
           {indicators.map((ind, idx) => (
-            <div key={ind.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 8, fontSize: 12, color: '#cbd5e1' }}>
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: IND_COLORS[idx % IND_COLORS.length], display: 'inline-block' }} />
+            <div key={ind.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: 8, fontSize: 12, color: 'var(--ik-text-2)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: 2, background: theme.ind[idx % theme.ind.length], display: 'inline-block' }} />
               <strong>{INDICATORS[ind.type].label}</strong>{IND_TIP[ind.type] && <HelpTip term={IND_TIP[ind.type]} />}
               {Object.entries(ind.params).map(([k, v]) => (
                 <label key={k} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -276,22 +286,22 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
         </div>
       )}
 
-      <div style={{ position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(148,163,184,0.2)', background: 'rgba(2,6,23,0.6)' }}>
-        <div data-testid="chart-legend" style={{ position: 'absolute', zIndex: 3, top: 6, left: 10, right: 60, fontSize: 12, color: '#cbd5e1', pointerEvents: 'none', display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
-          <strong style={{ color: '#fff' }}>{symbol} · {tf}</strong>
+      <div style={{ position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', background: 'color-mix(in srgb, var(--ik-bg) 60%, transparent)' }}>
+        <div data-testid="chart-legend" style={{ position: 'absolute', zIndex: 3, top: 6, left: 10, right: 60, fontSize: 12, color: 'var(--ik-text-2)', pointerEvents: 'none', display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
+          <strong style={{ color: 'var(--ik-text)' }}>{symbol} · {tf}</strong>
           {shown && <>
             <span>O <b>{fmt(shown.o)}</b></span><span>H <b>{fmt(shown.h)}</b></span><span>L <b>{fmt(shown.l)}</b></span><span>C <b>{fmt(shown.c)}</b></span>
-            {pct !== null && <span style={{ color: pct >= 0 ? COLORS.up : COLORS.down }}>{pct >= 0 ? '+' : ''}{pct.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %</span>}
+            {pct !== null && <span style={{ color: pct >= 0 ? theme.up : theme.down }}>{pct >= 0 ? '+' : ''}{pct.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %</span>}
             <span>Vol <b>{Number(shown.v).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} $</b></span>
-            {shown.partial && <span style={{ color: '#fbbf24' }}>bougie en cours</span>}
+            {shown.partial && <span style={{ color: 'var(--ik-warning)' }}>bougie en cours</span>}
           </>}
         </div>
         <div ref={boxRef} data-testid="chart-box" style={{ width: '100%', height: indicators.some((i) => INDICATORS[i.type]?.pane === 'own') ? 560 : 400, touchAction: 'pan-y' }} />
-        {loading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: 'rgba(2,6,23,0.4)' }}>Chargement…</div>}
-        {error && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fca5a5', padding: 16, textAlign: 'center' }}>{error}</div>}
+        {loading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ik-text-3)', background: 'color-mix(in srgb, var(--ik-bg) 40%, transparent)' }}>Chargement…</div>}
+        {error && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ik-negative)', padding: 16, textAlign: 'center' }}>{error}</div>}
       </div>
-      <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>
-        Graphique : <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer" style={{ color: '#64748b' }}>TradingView Lightweight Charts™</a> (licence Apache 2.0). Les bougies sont calculées sur les données connues à ta date simulée ; la dernière peut être incomplète.
+      <div style={{ fontSize: 11, color: 'var(--ik-text-3)', marginTop: 6 }}>
+        Graphique : <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ik-text-3)' }}>TradingView Lightweight Charts™</a> (licence Apache 2.0). Les bougies sont calculées sur les données connues à ta date simulée ; la dernière peut être incomplète.
       </div>
     </div>
   );
@@ -299,32 +309,33 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
 
 // Comparaison de 2 à 4 actifs rebasés à 100 (une seule échelle : jamais deux axes différents).
 export function CompareChart({ data }) {
+  const theme = useChartTheme();
   const boxRef = useRef(null);
   useEffect(() => {
     if (!boxRef.current || !data?.points?.length) return undefined;
     const chart = createChart(boxRef.current, {
       autoSize: true,
-      layout: { background: { color: 'transparent' }, textColor: COLORS.text, attributionLogo: true },
-      grid: { vertLines: { color: COLORS.grid }, horzLines: { color: COLORS.grid } },
-      rightPriceScale: { borderColor: 'rgba(148,163,184,0.25)' },
-      timeScale: { borderColor: 'rgba(148,163,184,0.25)', timeVisible: true },
+      layout: { background: { color: 'transparent' }, textColor: theme.text, attributionLogo: true },
+      grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+      rightPriceScale: { borderColor: theme.border },
+      timeScale: { borderColor: theme.border, timeVisible: true },
       localization: { locale: 'fr-FR' },
     });
     data.series.forEach((s, i) => {
-      const line = chart.addSeries(LineSeries, { color: IND_COLORS[i % IND_COLORS.length], lineWidth: 2, title: s.symbol, priceFormat: { type: 'price', precision: 1, minMove: 0.1 } });
+      const line = chart.addSeries(LineSeries, { color: theme.ind[i % theme.ind.length], lineWidth: 2, title: s.symbol, priceFormat: { type: 'price', precision: 1, minMove: 0.1 } });
       line.setData(data.points.map((p, k) => ({ time: Math.floor(p.ts / 1000), value: s.values[k] })));
     });
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [data]);
-  if (!data?.points?.length) return <div style={{ color: '#94a3b8', fontSize: 13 }}>{data?.note || 'Pas assez de données communes.'}</div>;
+  }, [data, theme]);
+  if (!data?.points?.length) return <div style={{ color: 'var(--ik-text-3)', fontSize: 13 }}>{data?.note || 'Pas assez de données communes.'}</div>;
   return (
     <div style={{ minWidth: 0 }}>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, marginBottom: 6 }}>
-        {data.series.map((s, i) => <span key={s.symbol} style={{ color: '#cbd5e1' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: IND_COLORS[i % IND_COLORS.length], marginRight: 4 }} />{s.symbol} ({s.values.length ? `${s.values[s.values.length - 1].toFixed(1)}` : '—'})</span>)}
+        {data.series.map((s, i) => <span key={s.symbol} style={{ color: 'var(--ik-text-2)' }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: theme.ind[i % theme.ind.length], marginRight: 4 }} />{s.symbol} ({s.values.length ? `${s.values[s.values.length - 1].toFixed(1)}` : '—'})</span>)}
       </div>
-      <div ref={boxRef} style={{ width: '100%', height: 320, overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(148,163,184,0.2)', background: 'rgba(2,6,23,0.6)' }} />
-      <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>Base 100 à la première date commune : on compare des évolutions, pas des prix.</div>
+      <div ref={boxRef} style={{ width: '100%', height: 320, overflow: 'hidden', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', background: 'color-mix(in srgb, var(--ik-bg) 60%, transparent)' }} />
+      <div style={{ fontSize: 11, color: 'var(--ik-text-3)', marginTop: 6 }}>Base 100 à la première date commune : on compare des évolutions, pas des prix.</div>
     </div>
   );
 }

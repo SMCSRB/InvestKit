@@ -154,6 +154,25 @@ const accessFor = (user: Awaited<ReturnType<typeof loadUser>>, domainId: string)
   getBuyAccess(user, domainId);
 
 export const tradingService = {
+  // Historique d'un titre, BORNÉ à l'année simulée du joueur : aucune année postérieure n'est jamais renvoyée.
+  // Cours de clôture annuels du jeu de données simplifié (illustratifs, pas des cours réels).
+  async history(userId: string, domainId: unknown, rawSymbol: unknown) {
+    const domain = resolveDomainOrThrow(domainId);
+    if (typeof rawSymbol !== 'string' || !rawSymbol || !domain.isValidSymbol(rawSymbol)) {
+      throw new TradingError('INVALID_INPUT', 'Symbole invalide');
+    }
+    await loadUser(userId);
+    // Lecture seule : aucun portefeuille n'est créé par une simple consultation.
+    const row = (await query('SELECT simulated_year FROM virtual_portfolios WHERE user_id = $1 AND mode = $2 AND domain = $3', [userId, MODE, domain.id])).rows[0];
+    const simulatedYear: number = row ? Number(row.simulated_year) : domain.minYear;
+    const points: { year: number; close: number }[] = [];
+    for (let y = domain.minYear; y <= simulatedYear; y++) {
+      const close = domain.getPrice(rawSymbol, y);
+      if (close !== null) points.push({ year: y, close });
+    }
+    return { symbol: rawSymbol, domain: domain.id, simulatedYear, illustrative: true, points };
+  },
+
   async getPortfolioView(userId: string, domainId: unknown) {
     const domain = resolveDomainOrThrow(domainId);
     const user = await loadUser(userId);

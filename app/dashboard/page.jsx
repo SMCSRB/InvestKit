@@ -5,6 +5,7 @@ import { Button, EmptyState, Tabs } from '@/app/components/ui/primitives';
 import { useTheme } from '@/app/context/ThemeContext';
 import OverviewTab from './OverviewTab';
 import MarketTab from './MarketTab';
+import HistoryChart from '@/app/components/HistoryChart';
 
 import { PRICES, formatEuro } from '@/app/lib/plans';
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
@@ -1699,7 +1700,7 @@ function DashboardContent() {
                       padding: '16px',
                     }}>
                       <p style={{ fontSize: '11px', color: 'color-mix(in srgb, var(--ik-text) 50%, transparent)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
-                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'white', margin: 0 }}>{stat.value}</p>
+                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'var(--ik-text)', margin: 0 }}>{stat.value}</p>
                     </div>
                   ))}
                 </div>
@@ -1714,7 +1715,7 @@ function DashboardContent() {
                     background: tradingPortfolio?.simulatedYear >= tradingPortfolio?.maxYear
                       ? 'color-mix(in srgb, var(--ik-text) 10%, transparent)'
                       : 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
-                    color: 'var(--ik-text)',
+                    color: 'var(--ik-text-on-primary)',
                     fontWeight: '700',
                     fontSize: '13px',
                     cursor: tradingLoading ? 'wait' : 'pointer',
@@ -1776,6 +1777,8 @@ function DashboardContent() {
                   </div>
                 )}
 
+                <HistoryChart domain={tradingDomain} symbol={tradingSelectedAsset} simulatedYear={tradingPortfolio?.simulatedYear} enabled={!!tradingPortfolio && tradingAssets.some((a) => a.symbol === tradingSelectedAsset)} />
+
                 {/* Achat */}
                 <div style={{
                   background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
@@ -1835,7 +1838,7 @@ function DashboardContent() {
                       disabled={tradingLoading || tradingPortfolio?.access?.canBuy === false}
                       style={{
                         padding: '10px 20px', borderRadius: '8px', border: 'none',
-                        background: 'var(--ik-positive)', color: 'white', fontWeight: '700', fontSize: '13px',
+                        background: 'var(--ik-positive)', color: 'var(--ik-text-on-positive)', fontWeight: '700', fontSize: '13px',
                         opacity: tradingPortfolio?.access?.canBuy === false ? 0.4 : 1,
                         cursor: tradingLoading ? 'wait' : 'pointer',
                       }}
@@ -1911,7 +1914,7 @@ function DashboardContent() {
                     {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} 🪙</strong>.
                     {tradingQuote.note && <div style={{ marginTop: 6, color: 'color-mix(in srgb, var(--ik-text) 65%, transparent)' }}>{tradingQuote.note}</div>}
                     <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-negative)', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
+                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-negative)', color: 'var(--ik-text-on-negative)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
                       <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'transparent', color: 'var(--ik-text)', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
                     </div>
                   </div>
