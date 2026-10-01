@@ -176,7 +176,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
       </div>
 
       <div className="ik-grid dash-two">
-        <Reveal index={0}>
+        <Reveal index={0} data-tilt="">
           <ProgressCard />
         </Reveal>
         <Reveal index={1}>

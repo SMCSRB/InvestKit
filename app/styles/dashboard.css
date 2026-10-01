@@ -197,40 +197,59 @@
    Uniquement transform et opacity ; tout est coupé par « Animations : Non » et « réduire les animations ».
    ========================================================================== */
 
-/* Aurore : deux halos très lents derrière le contenu */
+/* Aurore : deux halos très lents derrière le contenu (élément dédié, rogné dans sa boîte : ni défilement horizontal, ni contexte d'empilement autour des fenêtres) */
 .dash-layout {
   position: relative;
-  isolation: isolate;
 }
-.dash-layout::before,
-.dash-layout::after {
-  content: '';
+.dash-aurora {
   position: absolute;
-  z-index: -1;
-  width: min(520px, 100%);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.5;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
   pointer-events: none;
 }
-.dash-layout::before {
-  top: -140px;
+.dash-aurora::before,
+.dash-aurora::after {
+  content: '';
+  position: absolute;
+  width: min(460px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(56px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.dash-aurora::before {
+  top: -120px;
   left: 0;
   background: radial-gradient(circle, var(--ik-primary-soft), transparent 68%);
   animation: dh-drift-a 22s ease-in-out infinite alternate;
 }
-.dash-layout::after {
+.dash-aurora::after {
   top: 220px;
   right: 0;
   background: radial-gradient(circle, rgba(193, 91, 240, 0.22), transparent 68%);
   animation: dh-drift-b 26s ease-in-out infinite alternate;
+}
+.dash-main {
+  position: relative;
+  z-index: 1;
 }
 @keyframes dh-drift-a {
   to { transform: translate3d(0, 90px, 0) scale(1.1); }
 }
 @keyframes dh-drift-b {
   to { transform: translate3d(0, 70px, 0) scale(1.05); }
+}
+
+/* Cartes inclinables : reflet aux coins arrondis de la carte, carte survolée au-dessus de ses voisines (info-bulles visibles) */
+.dash-overview [data-tilt],
+.dh-actions [data-tilt] {
+  border-radius: var(--ik-radius-lg);
+}
+.dash-overview [data-tilt][data-active],
+.dh-actions [data-tilt][data-active] {
+  z-index: 3;
 }
 
 /* Accueil */
@@ -470,7 +489,7 @@
 .dash-tabs .ik-tab { transition: color var(--ik-dur-fast) var(--ik-ease), transform var(--ik-dur-fast) var(--ik-ease); }
 .dash-tabs .ik-tab:hover { transform: translate3d(0, -1px, 0); }
 .dash-tabs .ik-tab[aria-selected='true']::after { animation: ik-grow-x var(--ik-dur) var(--ik-ease); transform-origin: left; }
-.dash-tabpanel { animation: ik-rise var(--ik-dur-slow) var(--ik-ease) backwards; }
+.dash-tabpanel { animation: ik-fade var(--ik-dur-slow) var(--ik-ease) backwards; } /* fondu seul : aucune transformation autour des fenêtres fixes */
 .dash-domain:hover .lp-domain__icon { transform: translate3d(0, -3px, 0) rotate(-6deg); }
 .dash-domain .lp-domain__icon { transition: transform var(--ik-dur) var(--ik-ease); }
 
@@ -480,30 +499,12 @@
   .dh__layer--glass { display: none; }
 }
 
-/* Animations coupées (réglage ou préférence système) : tout reste immobile */
-:root[data-motion='off'] .dh__float,
-:root[data-motion='off'] .dh__wave,
-:root[data-motion='off'] .dh__chip svg,
-:root[data-motion='off'] .dh__chip--claim,
-:root[data-motion='off'] .dash-layout::before,
-:root[data-motion='off'] .dash-layout::after,
-:root[data-motion='off'] .dh-ring__bar {
-  animation: none;
-}
+/* Animations coupées (réglage ou préférence système) : base.css arrête déjà toute animation ; ici on remet en place les couches de parallaxe */
 :root[data-motion='off'] .dh__layer,
 :root[data-motion='off'] .dh__orb {
   transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='on']) .dh__float,
-  :root:not([data-motion='on']) .dh__wave,
-  :root:not([data-motion='on']) .dh__chip svg,
-  :root:not([data-motion='on']) .dh__chip--claim,
-  :root:not([data-motion='on']) .dash-layout::before,
-  :root:not([data-motion='on']) .dash-layout::after,
-  :root:not([data-motion='on']) .dh-ring__bar {
-    animation: none;
-  }
   :root:not([data-motion='on']) .dh__layer,
   :root:not([data-motion='on']) .dh__orb {
     transform: none;

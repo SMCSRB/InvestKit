@@ -72,12 +72,10 @@ describe('marchés (lot 4) : thème et honnêteté des graphiques', () => {
 describe('vie du tableau de bord (lot 8) : mouvement honnête et respectueux', () => {
   const css = read('styles/dashboard.css');
 
-  it('chaque animation du lot est coupée par « Animations : Non » et par « réduire les animations »', () => {
-    for (const k of ['.dh__float', '.dh__wave', '.dash-layout::before', '.dh-ring__bar']) {
-      expect(css, `${k} / data-motion=off`).toContain(`:root[data-motion='off'] ${k}`);
-      expect(css, `${k} / prefers-reduced-motion`).toContain(`:root:not([data-motion='on']) ${k}`);
-    }
+  it('les couches de parallaxe reviennent à plat avec « Animations : Non » et « réduire les animations »', () => {
     expect(css).toMatch(/:root\[data-motion='off'\] \.dh__layer/);
+    expect(css).toMatch(/:root:not\(\[data-motion='on'\]\) \.dh__layer/);
+    expect(read('styles/base.css')).toMatch(/data-motion='off'\] \*/); // coupure globale de toute animation
   });
 
   it('uniquement transform et opacity pour animer (aucune propriété qui force la mise en page)', () => {
@@ -88,15 +86,23 @@ describe('vie du tableau de bord (lot 8) : mouvement honnête et respectueux', (
 
   it('l\'accueil n\'affiche que des données réelles (nom, série, patrimoine du serveur) et rien d\'inventé', () => {
     const hero = read('dashboard/DashHero.jsx');
-    expect(hero).toContain('/economy/balance');
+    expect(hero).toContain('shell?.wallet'); // série et récompense : données partagées de la coque (/economy/balance)
     expect(hero).toMatch(/streak > 0/);                 // pas de série affichée tant qu'elle n'existe pas
     expect(hero).toMatch(/Number\.isFinite\(patrimoine\)/);
     const prog = read('dashboard/ProgressCard.jsx');
     expect(prog).toContain('useEducationProgress');     // niveau et XP réels
   });
 
-  it('la récompense du jour passe par le même bouton que la barre du haut (une seule logique)', () => {
-    expect(read('dashboard/DashHero.jsx')).toContain(".ik-rewardbtn");
-    expect(read('components/shell/Topbar.jsx')).toContain('ik-rewardbtn');
+  it('la récompense du jour utilise les données partagées de la coque (même fonction serveur que le bouton cadeau)', () => {
+    const hero = read('dashboard/DashHero.jsx');
+    expect(hero).toContain('useShell');
+    expect(hero).toContain('shell.claimDaily');
+    expect(hero).not.toContain("querySelector('.ik-rewardbtn')");
+    expect(read('components/shell/AppShell.jsx')).toContain('ShellDataContext.Provider');
+  });
+
+  it('la règle de niveau (500 XP) existe une seule fois', () => {
+    expect(read('context/EducationContext.jsx')).toContain('export const XP_PER_LEVEL = 500');
+    expect(read('dashboard/ProgressCard.jsx')).not.toMatch(/=\s*500\b/);
   });
 });

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '@/app/context/ThemeContext';
 import CommandPalette from './CommandPalette';
 import TiltScope from '@/app/components/landing/TiltScope';
+import { ShellDataContext } from './ShellContext';
 import Sidebar from './Sidebar';
 import TickerBar from './TickerBar';
 import Topbar from './Topbar';
@@ -72,6 +73,7 @@ export default function AppShell({ children }) {
   ], [theme, toggleTheme, router]);
 
   return (
+    <ShellDataContext.Provider value={data}>
     <div className="ik-app" data-collapsed={collapsed} data-open={menuOpen}>
       <a href="#ik-main" className="ik-skip-link">Aller au contenu</a>
       <Suspense fallback={null}><SearchSync onChange={setSearch} /></Suspense>
@@ -97,6 +99,7 @@ export default function AppShell({ children }) {
       </div>
       <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} actions={actions} />
     </div>
+    </ShellDataContext.Provider>
   );
 }
 

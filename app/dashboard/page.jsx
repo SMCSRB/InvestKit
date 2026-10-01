@@ -1437,6 +1437,7 @@ function DashboardContent() {
   return (
     <AppShell>
     <div className="dash-layout">
+      <div className="dash-aurora" aria-hidden="true" />
       <style>{`
         @keyframes slideInUp {
           from { opacity: 0; transform: translateY(20px); }

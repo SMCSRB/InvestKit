@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/app/components/ui/Icon';
 import { Coin3D } from '@/app/components/landing/Stage3D';
-import { AnimatedNumber, Reveal } from '@/app/components/ui/motion';
+import { AnimatedNumber, Reveal, burstCoins } from '@/app/components/ui/motion';
 import { useTheme } from '@/app/context/ThemeContext';
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
+import { useShell } from '@/app/components/shell/ShellContext';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -26,15 +25,13 @@ const ACTIONS = [
 export default function DashHero({ username, patrimoine, loading }) {
   const ref = useRef(null);
   const { motionEnabled } = useTheme();
-  const [wallet, setWallet] = useState(null);
+  const shell = useShell();
+  const wallet = shell?.wallet ?? null;
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
   const [hello, setHello] = useState('Bonjour');
 
   useEffect(() => { setHello(greeting()); }, []);
-  useEffect(() => {
-    let off = false;
-    fetch(`${API}/economy/balance`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (!off && d) setWallet(d); }).catch(() => {});
-    return () => { off = true; };
-  }, []);
 
   // Parallaxe : la souris décale chaque couche selon sa profondeur (--px / --py entre -1 et 1). Uniquement transform.
   useEffect(() => {
@@ -55,7 +52,21 @@ export default function DashHero({ username, patrimoine, loading }) {
 
   const streak = wallet?.dailyStreak ?? 0;
   const ready = !!wallet?.canClaimToday;
-  const claim = () => document.querySelector('.ik-rewardbtn')?.click(); // même action que le bouton cadeau de la barre du haut
+  // Même action que le bouton cadeau de la barre du haut (même fonction du serveur, mêmes données partagées)
+  const chipRef = useRef(null);
+  const claim = async () => {
+    if (!shell || busy) return;
+    setBusy(true); setMsg('');
+    try {
+      const r = await shell.claimDaily();
+      if (motionEnabled) burstCoins(chipRef.current, document.querySelector('.ik-balance'));
+      setMsg(`+${r.reward} InvestCoins ! Série : ${r.newStreak} jour${r.newStreak > 1 ? 's' : ''}.`);
+    } catch (e) {
+      setMsg(e.message || 'Récompense indisponible pour le moment.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <>
@@ -67,7 +78,8 @@ export default function DashHero({ username, patrimoine, loading }) {
             <p className="dh__sub">Voici où en est ton parcours. Choisis une action pour continuer.</p>
             <div className="dh__chips">
               {streak > 0 && <span className="dh__chip dh__chip--flame"><Icon name="flame" size={16} /> Série de {streak} jour{streak > 1 ? 's' : ''}</span>}
-              {ready && <button type="button" className="dh__chip dh__chip--claim" onClick={claim}><Icon name="gift" size={16} /> Récupérer ma récompense du jour</button>}
+              {ready && <button ref={chipRef} type="button" className="dh__chip dh__chip--claim" onClick={claim} disabled={busy}><Icon name="gift" size={16} /> Récupérer ma récompense du jour</button>}
+              {msg && <span className="dh__chip" role="status">{msg}</span>}
             </div>
           </div>
           <div className="dh__scene" aria-hidden="true">

@@ -2,6 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+// Règle de niveau unique : 500 XP par niveau (utilisée aussi par le tableau de bord).
+export const XP_PER_LEVEL = 500;
+export const levelFromXp = (xp) => Math.floor(xp / XP_PER_LEVEL) + 1;
+
 const EducationContext = createContext();
 
 const DEFAULT_PROGRESS = {
@@ -111,7 +115,7 @@ export function EducationProvider({ children }) {
           },
         ],
         totalXP: prev.totalXP + totalXPEarned,
-        userLevel: Math.floor((prev.totalXP + totalXPEarned) / 500) + 1,
+        userLevel: levelFromXp(prev.totalXP + totalXPEarned),
         streak: newStreak,
         maxStreak: newMaxStreak,
         badges: newBadges,
@@ -145,7 +149,7 @@ export function EducationProvider({ children }) {
           },
         ],
         totalXP: prev.totalXP + xpEarned,
-        userLevel: Math.floor((prev.totalXP + xpEarned) / 500) + 1,
+        userLevel: levelFromXp(prev.totalXP + xpEarned),
       };
     });
   };
