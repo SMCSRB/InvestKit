@@ -85,3 +85,15 @@ export const watchLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop d\'actions sur tes favoris. Réessaie dans quelques minutes.' },
 });
+
+// Soumission d'un quiz d'éducation : 20 par 10 minutes et PAR JOUEUR (jeton déjà vérifié avant ce limiteur). Une tentative refusée compte aussi :
+// on ne peut pas deviner les réponses à coups de tentatives. (La récompense, elle, n'est de toute façon donnée qu'une fois par chapitre.)
+export const quizLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 20,
+  keyGenerator: (req) => `quiz:${(req as any).user?.userId ?? req.ip}`,
+  validate: { keyGeneratorIpFallback: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives de quiz en peu de temps. Relis le chapitre et réessaie dans quelques minutes.' },
+});

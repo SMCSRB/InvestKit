@@ -11,6 +11,15 @@ export const educationProgressRepository = {
     return result.rows.length > 0;
   },
 
+  // Identifiants des chapitres de ce domaine déjà validés par ce joueur (hors marqueur de fin de domaine).
+  async completedChapterIds(userId: string, domainId: string): Promise<string[]> {
+    const result = await query(
+      'SELECT chapter_id FROM education_progress WHERE user_id = $1 AND domain_id = $2 AND chapter_id <> $3',
+      [userId, domainId, DOMAIN_COMPLETE_MARKER]
+    );
+    return result.rows.map((r: any) => String(r.chapter_id));
+  },
+
   // Insère la complétion si elle n'existe pas déjà (idempotent - la
   // contrainte UNIQUE empêche un double-enregistrement en cas de course).
   // Renvoie true si c'est une PREMIÈRE complétion (donc à récompenser).

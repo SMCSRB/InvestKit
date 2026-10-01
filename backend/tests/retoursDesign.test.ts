@@ -93,3 +93,37 @@ describe('Photo de profil : modifiable dans la page Profil', () => {
     expect(read('app/components/shell/Topbar.jsx')).toContain('readPhoto');
   });
 });
+
+describe('Classements : une page, trois onglets (Monde, Amis, Guilde) et une entrée de menu', () => {
+  const page = read('app/classements/page.jsx');
+  it('le menu principal mène à /classements', () => {
+    expect(read('app/components/shell/nav.js')).toContain("href: '/classements'");
+  });
+  it('trois onglets ; Monde regroupe les trois domaines avec les routes de classement existantes', () => {
+    for (const t of ["'monde'", "'amis'", "'guilde'"]) expect(page).toContain(t);
+    for (const path of ['/trading/leaderboard?domain=stocks', '/crypto/leaderboard', '/realestate/leaderboard', '/social/friends/ranking', '/social/guild']) expect(page).toContain(path);
+  });
+  it('un domaine pas encore commencé donne un message clair, pas une erreur brute', () => {
+    expect(page).toMatch(/\[403, 404, 409\]\.includes\(error\.status\)/);
+    expect(page).toContain('pas encore commencé');
+  });
+  it('la page exige d\'être connecté et utilise la coque commune', () => {
+    expect(page).toContain("router.push('/login')");
+    expect(page).toContain('AppShell');
+  });
+});
+
+describe('Immobilier : tout ce que les composants importent de « bits » existe', () => {
+  it('chaque nom importé depuis ./bits (ou immo/bits) est bien exporté', () => {
+    const bits = read('app/components/immo/bits.jsx');
+    const exported = new Set([...bits.matchAll(/export (?:function|const) (\w+)/g)].map((m) => m[1]));
+    const files = [...walk(join(APP, 'components/immo')), join(APP, 'immobilier/page.jsx')];
+    const missing: string[] = [];
+    for (const f of files) {
+      for (const m of readFileSync(f, 'utf8').matchAll(/import \{([^}]+)\} from '(?:\.\/bits|@\/app\/components\/immo\/bits)'/g)) {
+        for (const name of m[1].split(',').map((x) => x.trim().split(/\s+as\s+/)[0]).filter(Boolean)) if (!exported.has(name)) missing.push(`${relative(ROOT, f)} : ${name}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+});

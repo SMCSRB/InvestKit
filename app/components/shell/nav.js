@@ -17,6 +17,7 @@ export const NAV_MAIN = [
   { id: 'banque', label: 'Banque et InvestCoins', href: '/banque', icon: 'bank' },
   { id: 'education', label: 'Éducation', href: '/education', icon: 'book' },
   { id: 'glossaire', label: 'Glossaire', href: '/glossaire', icon: 'bookOpen' },
+  { id: 'classements', label: 'Classements', href: '/classements', icon: 'trophy' },
   { id: 'amis', label: 'Amis', href: '/friends', icon: 'users' },
   // Communauté : visible seulement si le lien Discord est renseigné (app/lib/siteInfo.js)
   ...(SITE_INFO.discordUrl ? [{ id: 'communaute', label: 'Communauté', href: SITE_INFO.discordUrl, icon: 'globe', external: true }] : []),

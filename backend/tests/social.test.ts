@@ -271,3 +271,31 @@ describe.skipIf(!hasDb)('social : durcissement (revue de code)', () => {
     expect((await query('SELECT 1 FROM notifications WHERE user_id = $1 AND kind = \'friend_request\'', [b])).rowCount).toBe(1);
   });
 });
+
+describe.skipIf(!hasDb)('classement entre amis', () => {
+  beforeAll(async () => { await setupDb(); });
+  afterAll(async () => { await teardownDb(); });
+
+  it('moi + amis acceptés, classés par XP (ex æquo = même rang), sans autre donnée ; ni inconnus, ni demandes en attente', async () => {
+    const [me, a, b, stranger, pending] = [await createUser(), await createUser(), await createUser(), await createUser(), await createUser()];
+    await query('INSERT INTO education_progress (user_id, domain_id, chapter_id, xp_earned) VALUES ($1,\'d\',\'c1\',300),($2,\'d\',\'c1\',300),($3,\'d\',\'c1\',500),($4,\'d\',\'c1\',5000),($5,\'d\',\'c1\',5000)', [me, a, b, stranger, pending]);
+    for (const f of [a, b]) { await svc.sendRequest(me, `#${await code(f)}`); await svc.respond(f, (await svc.requests(f)).incoming[0].id, 'accept'); }
+    await svc.sendRequest(me, `#${await code(pending)}`);                           // demande non acceptée : pas dans le classement
+    const r = await svc.friendsRanking(me);
+    expect(r.entries.map((e) => e.userId)).not.toContain(stranger);
+    expect(r.entries.map((e) => e.userId)).not.toContain(pending);
+    expect(r.entries.map((e) => [e.xp, e.rank])).toEqual([[500, 1], [300, 2], [300, 2]]);   // ex æquo : rang 2 pour les deux
+    expect(r.entries.find((e) => e.isMe)?.userId).toBe(me);
+    expect(Object.keys(r.entries[0]).sort()).toEqual(['isMe', 'level', 'name', 'rank', 'userId', 'xp']);
+    expect(r.friendsCount).toBe(2);
+    const http = await request(app).get('/api/v1/social/friends/ranking').set('Authorization', `Bearer ${generateToken(me, `${me}@test.local`)}`);
+    expect(http.status).toBe(200); expect(http.body.entries).toHaveLength(3);
+    expect((await request(app).get('/api/v1/social/friends/ranking')).status).toBe(401);
+  });
+
+  it('sans ami : seulement moi, au rang 1', async () => {
+    const solo = await createUser();
+    const r = await svc.friendsRanking(solo);
+    expect(r.entries).toHaveLength(1); expect(r.entries[0]).toMatchObject({ isMe: true, rank: 1 }); expect(r.friendsCount).toBe(0);
+  });
+});

@@ -30,3 +30,14 @@ export function Heart({ on, onClick, label }) {
   );
 }
 
+export function Row({ label, children, help }) {
+  return <div className="rp-row"><dt>{label}{help}</dt><dd>{children}</dd></div>;
+}
+
+// Éléments « plein écran » (signature, tiroir de filtres, barre d'achat) : posés directement sur <body>. Dans la page, un parent animé
+// (transform) ferait « fixed » se comporter comme « absolute » et décalerait ces éléments.
+export function Portal({ children }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => { setReady(true); }, []);
+  return ready ? createPortal(<div className="rp-portal">{children}</div>, document.body) : null;
+}

@@ -21,20 +21,13 @@ describe.skipIf(!hasDb)('éducation : récompenses', () => {
   afterAll(async () => { await teardownDb(); });
   const auth = (id: string) => `Bearer ${generateToken(id, `${id}@test.local`)}`;
 
-  it('un chapitre ou un domaine inventé ne rapporte ni pièces ni XP ; l\'XP vient du serveur, pas du client', async () => {
+  it('les anciennes routes « j\'ai fini » ne récompensent plus rien (410) : plus de pièces sans preuve', async () => {
     const u = await createUser({ balance: 0 });
-    const before = await balanceOf(u);
-    for (const body of [{ domainId: 'inventé', chapterId: '1' }, { domainId: 'crypto', chapterId: '9999' }, { domainId: '__proto__', chapterId: '1' }, { domainId: 'constructor', chapterId: '1' }]) {
-      const r = await request(app).post('/api/v1/education/complete-chapter').set('Authorization', auth(u)).send({ ...body, xpEarned: 2000000000 });
-      expect(r.status).toBe(400);
+    for (const path of ['complete-chapter', 'complete-domain']) {
+      const r = await request(app).post(`/api/v1/education/${path}`).set('Authorization', auth(u)).send({ domainId: 'crypto', chapterId: 1, score: 100, xpEarned: 2000000000 });
+      expect(r.status).toBe(410);
     }
-    expect((await request(app).post('/api/v1/education/complete-domain').set('Authorization', auth(u)).send({ domainId: 'nope', xpEarned: 99999 })).status).toBe(400);
-    expect(await balanceOf(u)).toBe(before);
-    const ok = await request(app).post('/api/v1/education/complete-chapter').set('Authorization', auth(u)).send({ domainId: 'crypto', chapterId: 1, score: 90, xpEarned: 2000000000 });
-    expect(ok.status).toBe(200);
-    const row = (await query('SELECT xp_earned FROM education_progress WHERE user_id = $1', [u])).rows[0];
-    expect(row.xp_earned).toBe(100);                         // fixée par le serveur
-    const again = await request(app).post('/api/v1/education/complete-chapter').set('Authorization', auth(u)).send({ domainId: 'crypto', chapterId: 1 });
-    expect(again.body.rewarded).toBe(false);                  // idempotent
+    expect(await balanceOf(u)).toBe(0);
+    expect((await query('SELECT COUNT(*)::int AS n FROM education_progress WHERE user_id = $1', [u])).rows[0].n).toBe(0);
   });
 });

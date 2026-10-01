@@ -87,6 +87,10 @@ Pour chaque page, regarde en **clair et en sombre** (réglage Apparence dans `/p
 | `/simulateurs` | Calculs, bouton Imprimer / PDF |
 | `/friends`, `/guild` | Listes lisibles |
 | `/profile` | Réglages Apparence (thème, animations) |
+| `/profile` → « Modifier le profil » | Photo de profil : choisir (JPG/PNG/WebP), changer, retirer ; elle s'affiche aussi dans le menu du haut. Elle reste sur ton navigateur |
+| `/classements` | Trois onglets : **Monde** (Bourse, Crypto, Immobilier ; message clair si tu n'as pas commencé le domaine), **Amis** (toi + tes amis par XP), **Guilde** (membres par XP) |
+| `/education` et un chapitre | L'académie s'ouvre ; ordre des réponses mélangé à chaque tentative ; correction par le serveur (voir `docs/quiz-serveur.md`, section « À tester chez toi ») |
+| Tableau de bord, retour depuis Amis | Aucun badge « débloqué » qui réapparaît à chaque retour (une seule annonce par badge) |
 | `/admin` | Accessible seulement avec un compte admin |
 | `/privacy`, `/conditions`, `/cookies`, `/legal` | Texte lisible ; « [à compléter] » tant que `siteInfo.js` n'est pas rempli |
 

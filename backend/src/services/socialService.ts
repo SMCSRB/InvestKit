@@ -101,6 +101,23 @@ export const socialService = {
     return { friends };
   },
 
+  // Classement entre amis : moi + mes amis acceptés, par XP d'éducation (les mêmes valeurs serveur que la liste d'amis : nom, niveau, XP).
+  // Les ex æquo partagent le même rang. Rien d'autre n'est exposé.
+  async friendsRanking(userId: string) {
+    const rows = (await query(
+      `SELECT user_low, user_high FROM friendships WHERE status = 'accepted' AND (user_low = $1 OR user_high = $1)`, [userId])).rows;
+    const ids = [userId, ...rows.map((r: any) => (r.user_low === userId ? r.user_high : r.user_low))];
+    const cards = await cardsFor(ids);
+    const list = ids.map((id) => cards.get(id)).filter((c): c is { userId: string; name: string; level: number; xp: number } => !!c)
+      .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name));
+    let rank = 0;
+    const entries = list.map((c, i) => {
+      if (i === 0 || c.xp !== list[i - 1].xp) rank = i + 1;
+      return { rank, userId: c.userId, name: c.name, level: c.level, xp: c.xp, isMe: c.userId === userId };
+    });
+    return { entries, total: entries.length, friendsCount: Math.max(0, entries.length - 1) };
+  },
+
   async requests(userId: string) {
     const rows = (await query(
       `SELECT id, user_low, user_high, requested_by, created_at FROM friendships WHERE status = 'pending' AND (user_low = $1 OR user_high = $1) ORDER BY id DESC`, [userId])).rows;

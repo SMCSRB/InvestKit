@@ -18,6 +18,7 @@ const handle = (fallback: string, fn: (req: AuthRequest, uid: string) => Promise
 export const socialController = {
   me: handle('Erreur lors de la lecture de ton profil social', (_r, u) => socialService.me(u)),
   friends: handle('Erreur lors de la lecture des amis', (_r, u) => socialService.friends(u)),
+  friendsRanking: handle('Erreur lors de la lecture du classement des amis', (_r, u) => socialService.friendsRanking(u)),
   requests: handle('Erreur lors de la lecture des demandes', (_r, u) => socialService.requests(u)),
   sendRequest: handle('Erreur lors de l\'envoi de la demande', (r, u) => socialService.sendRequest(u, r.body?.friendCode, r.ip)),
   accept: handle('Erreur lors de la réponse', (r, u) => socialService.respond(u, String(r.params.id), 'accept')),

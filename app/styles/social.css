@@ -127,3 +127,10 @@
   .soc-row { flex-wrap: wrap; }
   .soc-row__actions { width: 100%; justify-content: flex-start; padding-left: 54px; }
 }
+
+/* Page Classements : tableaux de rangs (Monde, Amis, Guilde). */
+.cl-table { width: 100%; border-collapse: collapse; font-size: var(--ik-fs-sm); min-width: 320px; }
+.cl-table th, .cl-table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--ik-border); }
+.cl-table th[scope='col'] { color: var(--ik-text-3); font-weight: 700; }
+.cl-table .ik-num { text-align: right; }
+.cl-table tr.is-me { background: var(--ik-primary-soft); font-weight: 700; }

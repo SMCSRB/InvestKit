@@ -7,6 +7,7 @@ export const socialRoutes = Router();
 
 socialRoutes.get('/me', authMiddleware, c.me);
 socialRoutes.get('/friends', authMiddleware, c.friends);
+socialRoutes.get('/friends/ranking', authMiddleware, c.friendsRanking);
 socialRoutes.get('/requests', authMiddleware, c.requests);
 socialRoutes.post('/requests', authMiddleware, socialWriteLimiter, c.sendRequest);
 socialRoutes.post('/requests/:id/accept', authMiddleware, socialWriteLimiter, c.accept);
