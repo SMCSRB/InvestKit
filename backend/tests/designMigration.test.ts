@@ -56,7 +56,7 @@ describe('pages migrées vers le nouveau design', () => {
     if (statSync(join(APP, rel)).isDirectory()) return pages(rel);
     return e === 'page.jsx' ? [rel] : [];
   });
-  const SHELLS = ['AppShell', 'PublicShell', 'AuthLayout', 'LegalPage', 'DesignSystemClient', 'redirect', 'SupportRedirect'];
+  const SHELLS = ['AppShell', 'PublicShell', 'AuthLayout', 'LegalPage', 'DesignSystemClient', 'redirect', 'SupportRedirect', 'SimFrame'];
 
   it('chaque page du site est dans une coque (menu connecté ou en-tête public) : plus aucune page à l\'ancien habillage', () => {
     const sans = pages().filter((f) => !SHELLS.some((k) => read(f).includes(k)));
