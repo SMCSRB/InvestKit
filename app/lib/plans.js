@@ -17,8 +17,7 @@ export const PLANS = [
     tagline: 'Pour apprendre et t\'entraîner sur un domaine.',
     features: [
       'Éducation sur tous les domaines (cours, glossaire, quiz)',
-      'Un domaine de simulation au choix, avec tableau de bord complet',
-      'Export PDF basique',
+      'Un domaine de simulation au choix, avec tableau de bord et impression PDF des simulateurs',
       'Capital de départ en InvestCoins',
     ],
   },
@@ -29,10 +28,8 @@ export const PLANS = [
     highlight: true,
     features: [
       'Tous les domaines de simulation (accès multi-domaines)',
-      'Portefeuille global',
-      'Projets illimités',
-      'Export PDF complet',
-      'Alertes personnalisées',
+      'Vue d\'ensemble de tous les domaines sur le tableau de bord',
+      'Changement de domaine sans limite (un seul changement en Gratuit)',
       'Capital de départ plus élevé',
     ],
   },

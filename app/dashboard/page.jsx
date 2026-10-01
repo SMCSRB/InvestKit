@@ -2109,7 +2109,6 @@ function DashboardContent() {
                 { id: 'general', label: '🎨 Affichage', icon: '🎨' },
                 { id: 'profile', label: '👤 Profil', icon: '👤' },
                 { id: 'security', label: '🔐 Sécurité', icon: '🔐' },
-                { id: 'alerts', label: '🔔 Alertes', icon: '🔔' },
                 { id: 'privacy', label: '📊 Données', icon: '📊' },
                 { id: 'billing', label: '💳 Abonnement', icon: '💳' },
               ].map((tab) => (
@@ -2868,59 +2867,6 @@ function DashboardContent() {
                     <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
                       Gérez vos sessions de connexion
                     </p>
-                  </div>
-                </div>
-              )}
-
-              {/* ALERTES TAB */}
-              {settingsTab === 'alerts' && (
-                <div style={{ display: 'grid', gap: '20px' }}>
-                  <h3 style={{
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: currentTheme.text,
-                    margin: 0,
-                  }}>
-                    🔔 Seuils d'Alertes Personnalisées
-                  </h3>
-
-                  <p style={{
-                    fontSize: '13px',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 12px 0',
-                  }}>
-                    Créez des alertes personnalisées basées sur vos critères
-                  </p>
-
-                  <button style={{
-                    padding: '12px 20px',
-                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 20%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)',
-                    border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
-                    borderRadius: '8px',
-                    color: currentTheme.accent,
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 20%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 20%, transparent) 100%)';
-                  }}
-                  >
-                    + Créer une alerte
-                  </button>
-
-                  <div style={{
-                    marginTop: '16px',
-                    paddingTop: '16px',
-                    borderTop: `1px solid ${currentTheme.border}`,
-                    color: currentTheme.textSecondary,
-                    fontSize: '12px',
-                  }}>
-                    Exemples: "Si Bitcoin +20%", "Si portefeuille baisse de 10%", "Si dividende reçu"
                   </div>
                 </div>
               )}
