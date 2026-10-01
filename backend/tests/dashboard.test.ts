@@ -19,6 +19,7 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
 
   it('les contenus d\'exemple du réseau social sont annoncés comme tels', () => {
     expect(page).toMatch(/dash-demo-note/);
+    expect(page).not.toContain('dash-rail');
     expect(page).toMatch(/profils d&apos;exemple/);
   });
 

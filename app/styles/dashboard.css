@@ -2,7 +2,7 @@
 
 .dash-layout {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--ik-space-5);
   align-items: start;
 }

@@ -54,7 +54,8 @@ Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les i
 
 ## Tableau de bord (lot 3)
 
-- `app/dashboard/page.jsx` garde tous ses systèmes (amis, guildes, simulateur, éducation, paramètres…) ; seule la coque a changé (`AppShell`, `PageHeader`, `Tabs`) et les couleurs codées en dur sont devenues des jetons (`var(--ik-…)`, `color-mix`, helper `alpha()`), donc clair et sombre fonctionnent.
+- Le rail profil (avatar, badges, niveau) a été retiré à la demande du propriétaire.
+- `app/dashboard/page.jsx` garde ses autres systèmes (amis, guildes, simulateur, éducation, paramètres…) ; seule la coque a changé (`AppShell`, `PageHeader`, `Tabs`) et les couleurs codées en dur sont devenues des jetons (`var(--ik-…)`, `color-mix`, helper `alpha()`), donc clair et sombre fonctionnent.
 - Vue d'ensemble : `app/dashboard/OverviewTab.jsx` (données du serveur uniquement) ; Marché : `MarketTab.jsx` (cours Crypto simulés réels). Styles : `app/styles/dashboard.css` (préfixe `dash-`).
 - Les cartes chargées ont des emplacements réservés (skeleton à la hauteur mesurée) : pas de saut de mise en page (CLS mobile 0,38 → 0,001).
 - Contenus d'exemple restants (amis, guildes, messages) : annoncés par `.dash-demo-note` tant que le réseau social n'est pas réel.

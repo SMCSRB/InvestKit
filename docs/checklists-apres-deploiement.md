@@ -360,7 +360,7 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 À fusionner **après** la PR « Design 2 ». Connecte-toi avec ton compte de test.
 
 **Coque et navigation**
-1. `/dashboard` : menu latéral à gauche, barre du haut avec ton solde d'InvestCoins (réel), ta série de jours, tes notifications. La petite carte profil (avatar, badges, niveau) reste à gauche ; sur téléphone elle passe au-dessus du contenu.
+1. `/dashboard` : menu latéral à gauche, barre du haut avec ton solde d'InvestCoins (réel), ta série de jours, tes notifications.
 2. Les onglets sont : Vue d'ensemble, Marché, Simulateur, Académie, Amis, Notifications, Activité, Paramètres. Les anciens onglets « Projets » et « Risques » (qui n'affichaient que « Section en développement ») sont masqués ; un ancien lien `?tab=risk` ouvre l'analyse de risque réelle (dans le Simulateur).
 3. Clique chaque onglet : l'adresse change (`?tab=…`), F5 te remet sur le même onglet. Les liens du menu latéral (Bourse et PEA, Éducation, Amis, Paramètres…) ouvrent le bon onglet.
 
