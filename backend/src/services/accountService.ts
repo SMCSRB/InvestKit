@@ -22,7 +22,7 @@ export class AccountError extends Error {
 export const DELETE_CONFIRM_PHRASE = 'SUPPRIMER';
 
 const USER_FIELDS = `id, email, first_name, last_name, username, role, subscription_tier, free_domain, pro_override, account_type, interests, language,
-  enable_2fa, daily_streak, last_daily_claim_at, referral_code, referred_by_user_id, verified, created_at, last_login_at`;
+  enable_2fa, daily_streak, last_daily_claim_at, referral_code, referred_by_user_id, verified, created_at, last_login_at, friend_code`;
 
 export const exportUserData = async (userId: string) => {
   const one = async (sql: string, params: any[] = [userId]) => (await query(sql, params)).rows;
@@ -45,6 +45,13 @@ export const exportUserData = async (userId: string) => {
     portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
     leaderboard: await one('SELECT mode, domain, period, performance_pct, capital_committed, leverage, computed_at FROM leaderboard_rankings WHERE user_id = $1'),
     projects: { projects, riskAnalyses: projects.length ? await one('SELECT * FROM risk_analysis WHERE project_id = ANY($1)', [projects.map((p: any) => p.id)]) : [] },
+    social: {
+      friendCode: user?.friend_code ?? null,
+      // amitiés : seulement l'identifiant de l'autre joueur et l'état (aucune donnée personnelle d'un tiers)
+      friendships: await one('SELECT CASE WHEN user_low = $1 THEN user_high ELSE user_low END AS other_user_id, status, requested_by = $1 AS sent_by_me, created_at, responded_at FROM friendships WHERE user_low = $1 OR user_high = $1'),
+      blocks: await one('SELECT blocked AS other_user_id, created_at FROM user_blocks WHERE blocker = $1'),
+      guild: (await one('SELECT g.name, g.description, m.role, m.joined_at FROM guild_members m JOIN guilds g ON g.id = m.guild_id WHERE m.user_id = $1'))[0] ?? null,
+    },
     investorProfile: await one('SELECT * FROM investor_profiles WHERE user_id = $1'),
     subscriptions: await one('SELECT tier, status, payment_provider, started_at, current_period_end, canceled_at FROM subscriptions WHERE user_id = $1'),
     quota: { quota: await one('SELECT * FROM api_quota WHERE user_id = $1'), transactions: await one('SELECT * FROM quota_transactions WHERE user_id = $1') },

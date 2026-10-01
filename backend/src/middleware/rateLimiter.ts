@@ -66,3 +66,12 @@ export const cryptoOrderLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop d\'ordres en peu de temps. Réessaie dans une minute.' },
 });
+
+// Actions sociales (demandes d'amis, guildes) : 40 par 10 minutes et par IP, contre l'envoi en masse de demandes.
+export const socialWriteLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'actions sociales. Réessaie dans quelques minutes.' },
+});
