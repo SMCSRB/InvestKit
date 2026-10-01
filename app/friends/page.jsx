@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/app/context/UserContext';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import Link from 'next/link';
+import AppShell from '@/app/components/shell/AppShell';
 
 export default function FriendsPage() {
   const { user, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend, cancelFriendRequest, blockUser, unblockUser } = useUser();
@@ -56,7 +57,7 @@ export default function FriendsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-4 md:p-8">
+    <AppShell><div>
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -342,6 +343,6 @@ export default function FriendsPage() {
           )}
         </div>
       </div>
-    </div>
+    </div></AppShell>
   );
 }

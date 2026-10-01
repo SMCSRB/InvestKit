@@ -71,6 +71,10 @@ Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les i
 
 Méthode : le `<main>` plein écran d'origine devient `<AppShell>` ; les couleurs d'origine sont remplacées par les jetons (script de migration jetable, relu à la main) ; la route est ajoutée à `THEMED_PREFIXES`. `backend/tests/designMigration.test.ts` liste les pages migrées et vérifie : coque, route thémée, aucune couleur d'origine ni texte blanc nu. Texte sur boutons pleins : `--ik-text-on-primary|positive|negative`.
 
+## Classes utilitaires (Tailwind absent)
+
+Plusieurs pages (amis, profil, quiz final…) utilisaient des classes de type Tailwind (`flex`, `p-4`, `text-gray-400`…) alors que **Tailwind n'est pas installé** : ces classes ne faisaient rien. `scripts/gen-utilities.py` génère `app/styles/utilities.css` : un sous-ensemble de ces utilitaires, **limité aux classes réellement utilisées**, avec des couleurs du thème (clair/sombre). Après avoir ajouté une classe dans une de ces pages : `python3 scripts/gen-utilities.py`. Pour une page neuve, préférer les composants du design system.
+
 ## Voir les composants
 
 En développement uniquement : `/design-system` (renvoie 404 en production).

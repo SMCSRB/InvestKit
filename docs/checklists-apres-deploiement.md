@@ -417,3 +417,22 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 **Partout**
 6. Mobile (390 px) : pas de défilement horizontal sur les deux pages.
 7. Aucune erreur rouge dans la console (F12).
+
+## PR Design 6 — Éducation, Glossaire, Amis (lot 6/6, première partie)
+
+À fusionner **après** la PR « Design 5 ». Connecte-toi avec ton compte de test.
+
+**Éducation**
+1. `/education` ouvre l'onglet Académie du tableau de bord (comme avant). Ouvre un domaine (ex. `/education/crypto`) : titre, progression, recommandations, chapitres (verrouillés tant que le précédent n'est pas fini), quiz final. Passe en mode clair : tout reste lisible.
+2. Ouvre un chapitre : le cours s'affiche, les « mots à retenir » mènent au glossaire, le quiz de fin de chapitre se valide et débloque le suivant.
+3. Quiz final (quand tous les chapitres sont terminés) : réponds, valide, le score et le badge s'affichent.
+
+**Glossaire (`/glossaire`)**
+4. La recherche filtre les mots ; un lien `/glossaire#cash-flow` ouvre le bon mot ; « Teste-toi » mène au chapitre lié.
+
+**Amis (`/friends`)**
+5. **Cette page n'avait plus de mise en forme** (elle utilisait des classes Tailwind alors que Tailwind n'est pas installé : tout s'affichait en texte brut). Elle est maintenant stylée : ton code d'ami + « Copier », onglets Amis / Demandes / Ajouter / Bloqués, listes lisibles en clair et en sombre. Teste l'ajout d'un ami avec un 2e compte de test.
+
+**Partout**
+6. Mobile (390 px) : pas de défilement horizontal.
+7. Aucune erreur rouge dans la console (F12).
