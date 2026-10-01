@@ -5,7 +5,7 @@ import { userRepository } from '../repositories/userRepository';
 import { getBuyAccess } from '../utils/entitlements';
 import { getRealEstateDataSource, Listing } from '../data/realEstate';
 import {
-  BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT,
+  BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT, SUGGESTED_DOWN_PAYMENT_PCT,
   loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
 } from '../config/immoRules';
 import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees } from '../engine/immo';
@@ -277,6 +277,7 @@ export const realEstateService = {
     const exp = await query('SELECT real_works, hidden_defects FROM re_expertises WHERE game_id = $1 AND listing_id = $2 AND year = $3', [game.id, id, game.simulated_year]);
     return {
       listing: decorateListing(listing), economics: listingEconomics(listing), city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
+      suggestedDownPaymentCoins: Math.ceil((listing.price * SUGGESTED_DOWN_PAYMENT_PCT) / 100 / EUROS_PER_COIN),
       expertiseCostCoins: coinsFor(expertiseCostEuros(listing.price)),
       expertise: exp.rows[0] ? { realWorks: Number(exp.rows[0].real_works), hiddenDefects: exp.rows[0].hidden_defects } : null,
     };

@@ -36,7 +36,7 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
         <Heart on={favorite} onClick={() => onFavorite(l.id)} label={favorite ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`} />
       </div>
       <div className="rp-card__body">
-        <div className="rp-card__price"><strong>{eur(l.price)}</strong><span title="Prix en InvestCoins (1 🪙 = 20 €)">≈ {coins(l.price / (eurosPerCoin || 20))}</span></div>
+        <div className="rp-card__price"><strong>{eur(l.price)}</strong><span title={eurosPerCoin ? `Prix en InvestCoins (1 🪙 = ${eurosPerCoin} €)` : 'Prix en InvestCoins'}>≈ {coins(l.priceCoins)}</span></div>
         <h3 className="rp-card__title"><button type="button" onClick={() => onOpen(l.id)}>{TYPE_LABEL[l.type]} · {l.neighborhoodName}</button></h3>
         <p className="rp-card__meta">{l.surfaceSqm} m² · {l.rooms} pièce{l.rooms > 1 ? 's' : ''} · {city?.name ?? l.cityId}</p>
         <p className="rp-card__meta rp-card__meta--soft">{eur(l.pricePerSqm)}/m² · rendement brut {pct(l.grossYieldPct)} · {CONDITION_LABEL[l.condition]}</p>
@@ -88,8 +88,8 @@ function FilterPanel({ f, set, onClose, count, onReset }) {
         </fieldset>
         <fieldset><legend>Options</legend>
           <div className="rp-switches">
-            <Switch checked={f.urgentOnly === true} onChange={(v) => set({ urgentOnly: v })} label="Ventes pressées seulement" />
-            <Switch checked={f.worksOnly === true} onChange={(v) => set({ worksOnly: v })} label="Travaux à prévoir" />
+            <div className="rp-switch"><Switch checked={f.urgentOnly === true} onChange={(v) => set({ urgentOnly: v })} label="Ventes pressées seulement" /><span>Ventes pressées seulement</span></div>
+            <div className="rp-switch"><Switch checked={f.worksOnly === true} onChange={(v) => set({ worksOnly: v })} label="Travaux à prévoir" /><span>Travaux à prévoir</span></div>
           </div>
         </fieldset>
       </div>
@@ -129,7 +129,17 @@ export default function Search({ state, setState, onOpen, notify, game }) {
   const [activeId, setActiveId] = useState(null);
   const [mobileMap, setMobileMap] = useState(false);
   const [qText, setQText] = useState(filters.q ?? '');
+  const [filterError, setFilterError] = useState('');
   const reqRef = useRef(0);
+  const savedRef = useRef(null);
+  // Menu « Mes recherches » : se ferme avec Échap ou en cliquant ailleurs.
+  useEffect(() => {
+    if (!savedOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setSavedOpen(false); };
+    const onDown = (e) => { if (savedRef.current && !savedRef.current.contains(e.target)) setSavedOpen(false); };
+    document.addEventListener('keydown', onKey); document.addEventListener('mousedown', onDown);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
+  }, [savedOpen]);
   const set = (patch) => setState((s) => ({ ...s, filters: { ...s.filters, ...patch } }));
 
   // Recherche texte : la saisie est déportée de 300 ms pour ne pas interroger le serveur à chaque lettre.
@@ -140,13 +150,17 @@ export default function Search({ state, setState, onOpen, notify, game }) {
     setLoading(true);
     try {
       const r = await call(`/listings?${toQuery(filters, sort)}`);
-      if (id === reqRef.current) setData(r);
-    } catch (e) { if (id === reqRef.current) notify(e.message, true); }
+      if (id === reqRef.current) { setData(r); setFilterError(''); }
+    } catch (e) {
+      // Saisie en cours (ex. budget minimum > maximum) : message discret sur place, pas de fenêtre d'erreur à chaque touche.
+      if (id === reqRef.current) { if (e.status === 400) setFilterError(e.message); else notify(e.message, true); }
+    }
     if (id === reqRef.current) setLoading(false);
   }, [filters, sort, notify]);
   useEffect(() => { const t = setTimeout(load, 120); return () => clearTimeout(t); }, [load, game.year]);
 
-  useEffect(() => { call('/listings').then((r) => setAll(r.listings)).catch(() => {}); }, [game.year]);
+  // Toutes les annonces de l'année ne servent qu'à la carte (teinte des quartiers, archipel) : on ne les charge que dans cette vue.
+  useEffect(() => { if (view === 'map') call('/listings').then((r) => setAll(r.listings)).catch(() => {}); }, [view, game.year]);
   const loadWatch = useCallback(async () => {
     try { const [f, s] = await Promise.all([call('/favorites'), call('/saved-searches')]); setFavIds(new Set(f.ids)); setSaved(s.searches); } catch { /* non bloquant */ }
   }, []);
@@ -219,6 +233,7 @@ export default function Search({ state, setState, onOpen, notify, game }) {
         </Portal>
       )}
 
+      {filterError && <p className="ik-error" role="status">Ces filtres ne vont pas ensemble ({filterError}). Les résultats affichés sont ceux de la recherche précédente.</p>}
       {labels.length > 0 && (
         <ul className="rp-active" aria-label="Filtres actifs">
           {labels.map(([k, label]) => <li key={k}><button type="button" onClick={() => removeFilter(k)} aria-label={`Retirer le filtre ${label}`}>{label} <span aria-hidden="true">×</span></button></li>)}
@@ -229,7 +244,7 @@ export default function Search({ state, setState, onOpen, notify, game }) {
       <div className="rp-toolbar">
         <p className="rp-count" aria-live="polite">{loading && !data ? 'Recherche…' : `${shown.length} annonce${shown.length > 1 ? 's' : ''}${data && data.total !== shown.length ? ` sur ${data.total}` : ''}`}</p>
         <div className="rp-toolbar__right">
-          <div className="rp-saved">
+          <div className="rp-saved" ref={savedRef}>
             <Button size="sm" icon="bell" onClick={() => setSavedOpen((o) => !o)} aria-expanded={savedOpen}>Mes recherches{newTotal > 0 && <span className="rp-badge" aria-label={`${newTotal} nouvelle${newTotal > 1 ? 's' : ''} annonce${newTotal > 1 ? 's' : ''}`}>{newTotal}</span>}</Button>
             {savedOpen && (
               <div className="rp-saved__menu" role="group" aria-label="Mes recherches enregistrées">
@@ -237,7 +252,7 @@ export default function Search({ state, setState, onOpen, notify, game }) {
                 {saved.length === 0 && <p className="rp-hint">Aucune recherche enregistrée. Enregistre-en une pour être prévenu des nouvelles annonces (au changement d’année de jeu).</p>}
                 {saved.map((s) => (
                   <div className="rp-saved__item" key={s.id}>
-                    <button type="button" onClick={() => applySaved(s)}><strong>{s.name}</strong><span>{s.count} annonce{s.count > 1 ? 's' : ''}{s.newCount > 0 && <em> · {s.newCount} nouvelle{s.newCount > 1 ? 's' : ''}</em>}</span></button>
+                    <button type="button" onClick={() => applySaved(s)}><strong>{s.name}</strong><span>{s.invalid ? 'Filtres obsolètes : supprime cette recherche' : <>{s.count} annonce{s.count > 1 ? 's' : ''}</>}{s.newCount > 0 && <em> · {s.newCount} nouvelle{s.newCount > 1 ? 's' : ''}</em>}</span></button>
                     <Button size="sm" variant="ghost" icon="trash" aria-label={`Supprimer la recherche ${s.name}`} onClick={() => removeSaved(s.id)} />
                   </div>
                 ))}

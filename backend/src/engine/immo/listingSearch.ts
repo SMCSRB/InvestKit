@@ -62,15 +62,17 @@ export const parseSearch = (raw: Record<string, unknown> = {}): SearchParams => 
     p.cityId = raw.cityId;
   }
   // Compatibilité : l'ancien paramètre « type » (un seul type) reste accepté.
-  if (!empty(raw.type)) p.types = list(raw.type, 'type', SEARCH_TYPES);
-  if (!empty(raw.types)) p.types = list(raw.types, 'types', SEARCH_TYPES);
+  // Une liste vide veut dire « pas de filtre » (jamais « rien ne correspond »).
+  const nonEmpty = (v: string[]) => (v.length ? v : undefined);
+  if (!empty(raw.type)) p.types = nonEmpty(list(raw.type, 'type', SEARCH_TYPES));
+  if (!empty(raw.types)) p.types = nonEmpty(list(raw.types, 'types', SEARCH_TYPES));
   if (!empty(raw.maxPrice)) p.maxPrice = num(raw.maxPrice, 'maxPrice', { min: 1 });
   if (!empty(raw.minPrice)) p.minPrice = num(raw.minPrice, 'minPrice');
   if (!empty(raw.minSurface)) p.minSurface = num(raw.minSurface, 'minSurface');
   if (!empty(raw.maxSurface)) p.maxSurface = num(raw.maxSurface, 'maxSurface', { min: 1 });
   if (!empty(raw.minRooms)) p.minRooms = num(raw.minRooms, 'minRooms', { max: 50 });
-  if (!empty(raw.conditions)) p.conditions = list(raw.conditions, 'conditions', SEARCH_CONDITIONS);
-  if (!empty(raw.energy)) p.energy = list(raw.energy, 'energy', SEARCH_ENERGY);
+  if (!empty(raw.conditions)) p.conditions = nonEmpty(list(raw.conditions, 'conditions', SEARCH_CONDITIONS));
+  if (!empty(raw.energy)) p.energy = nonEmpty(list(raw.energy, 'energy', SEARCH_ENERGY));
   if (!empty(raw.minYieldPct)) p.minYieldPct = num(raw.minYieldPct, 'minYieldPct', { max: 100 });
   const flag = (v: unknown, name: string) => { if (v === true || v === 'true' || v === '1') return true; if (v === false || v === 'false' || v === '0') return false; throw new SearchInputError(`${name} invalide`); };
   if (!empty(raw.urgentOnly)) p.urgentOnly = flag(raw.urgentOnly, 'urgentOnly');

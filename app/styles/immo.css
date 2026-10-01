@@ -84,6 +84,7 @@
 .rp-field__box input { padding-right: 36px; }
 .rp-field--inline { display: inline-grid; margin: 8px 0; }
 .rp-switches { display: grid; gap: 8px; }
+.rp-switch { display: flex; align-items: center; gap: 10px; }
 
 /* ----- Cartes d'annonces ----- */
 .rp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }

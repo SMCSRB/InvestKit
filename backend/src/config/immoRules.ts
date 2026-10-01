@@ -255,3 +255,6 @@ export const greenValueFactor = (type: 'studio' | 'apartment' | 'house', energyC
   if (f === undefined) throw new RangeError(`Classe énergie inconnue : ${energyClass}`);
   return f;
 };
+
+// Apport proposé par défaut dans la simulation d'achat (part du prix). VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : simple suggestion de départ, modifiable par le joueur.
+export const SUGGESTED_DOWN_PAYMENT_PCT = 30;

@@ -78,9 +78,12 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
   const [sign, setSign] = useState(null);       // { phase, error }
   const seq = useRef(0);
 
+  // notify / onBack changent à chaque affichage du parent : on les lit par référence pour ne PAS recharger la fiche à chaque fois.
+  const cb = useRef({ notify, onBack });
+  cb.current = { notify, onBack };
   const load = useCallback(async () => {
-    try { setD(await call(`/listings/${encodeURIComponent(listingId)}`)); } catch (e) { notify(e.message, true); onBack(); }
-  }, [listingId, notify, onBack]);
+    try { setD(await call(`/listings/${encodeURIComponent(listingId)}`)); } catch (e) { cb.current.notify(e.message, true); cb.current.onBack(); }
+  }, [listingId]);
   useEffect(() => { load(); call('/favorites').then((f) => setFav(f.ids.includes(listingId))).catch(() => {}); }, [load, listingId]);
 
   const simulate = useCallback(async (p) => {
@@ -92,8 +95,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
   useEffect(() => {
     if (!d) return;
-    const suggested = Math.ceil((d.listing.price * 0.3) / (eurosPerCoin || 20));
-    const p = { down: String(suggested), months: 300 };
+    const p = { down: String(d.suggestedDownPaymentCoins), months: 300 };   // apport proposé par le serveur
     setPlan(p); simulate(p);
   }, [d?.listing.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!d) return undefined; const t = setTimeout(() => simulate(plan), 350); return () => clearTimeout(t); }, [plan.down, plan.months]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -214,7 +216,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           <Card className="rp-finance" flat id="rp-finance">
             <h2>Simuler mon financement</h2>
             <div className="rp-finance__fields">
-              <label className="rp-field"><span>Apport (🪙, 1 🪙 = {eurosPerCoin} €)<HelpTip term="apport" /></span>
+              <label className="rp-field"><span>Apport (🪙{eurosPerCoin ? `, 1 🪙 = ${eurosPerCoin} €` : ''})<HelpTip term="apport" /></span>
                 <span className="rp-field__box"><input className="ik-input" type="number" min="0" inputMode="numeric" value={plan.down} onChange={(e) => setPlan({ ...plan, down: e.target.value })} /><em>🪙</em></span></label>
               <label className="rp-field"><span>Durée du prêt</span>
                 <select className="ik-select" value={plan.months} onChange={(e) => setPlan({ ...plan, months: e.target.value })}>{[120, 180, 240, 300, 360].map((m) => <option key={m} value={m}>{m / 12} ans</option>)}</select></label>

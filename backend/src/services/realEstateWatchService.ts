@@ -37,17 +37,20 @@ export const realEstateWatchService = {
   async listFavorites(userId: string) {
     const game = await requireGame(userId);
     const rows = (await query('SELECT listing_id, year FROM re_favorites WHERE user_id = $1 ORDER BY created_at DESC', [userId])).rows;
-    const current = rows.filter((r: any) => r.year === game.simulated_year);
-    const listings = [];
-    for (const r of current) { const l = await source().getListing(r.listing_id, game.simulated_year); if (l) listings.push(decorateListing(l)); }
-    return { year: game.simulated_year, ids: listings.map((l) => l.id), listings, pastCount: rows.length - current.length };
+    const current = new Set(rows.filter((r: any) => r.year === game.simulated_year).map((r: any) => r.listing_id));
+    // Un seul passage dans le catalogue ; on écarte les biens déjà possédés (ils ne sont plus dans les résultats de recherche).
+    const owned = new Set((await query(`SELECT listing_id FROM re_properties WHERE game_id = $1 AND status <> 'sold'`, [game.id])).rows.map((r: any) => r.listing_id));
+    const byId = new Map((await source().listListings(game.simulated_year)).map((l) => [l.id, l]));
+    const order = rows.filter((r: any) => r.year === game.simulated_year).map((r: any) => r.listing_id);
+    const listings = order.filter((id: string) => current.has(id) && !owned.has(id) && byId.has(id)).map((id: string) => decorateListing(byId.get(id)!));
+    return { year: game.simulated_year, ids: listings.map((l) => l.id), listings, pastCount: rows.length - current.size };
   },
 
   async addFavorite(userId: string, listingIdRaw: unknown) {
     const id = checkId(listingIdRaw);
     const game = await requireGame(userId);
     if (!(await source().getListing(id, game.simulated_year))) throw new RealEstateError('UNKNOWN_LISTING', 'Bien introuvable');
-    const count = Number((await query('SELECT COUNT(*) AS n FROM re_favorites WHERE user_id = $1', [userId])).rows[0].n);
+    const count = Number((await query('SELECT COUNT(*) AS n FROM re_favorites WHERE user_id = $1 AND year = $2', [userId, game.simulated_year])).rows[0].n);
     const res = await query('INSERT INTO re_favorites (user_id, listing_id, year) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING listing_id', [userId, id, game.simulated_year]);
     if (res.rows.length === 0) return { favorite: true, already: true };
     if (count >= WATCH_LIMITS.favorites) {
@@ -76,7 +79,9 @@ export const realEstateWatchService = {
     return {
       year: game.simulated_year,
       searches: rows.map((r: any) => {
-        const matching = searchListings(available, parseSearch(r.filters), places);
+        // Des filtres enregistrés autrefois peuvent ne plus être acceptés (règles resserrées) : la recherche est signalée, pas toute la liste.
+        let params; try { params = parseSearch(r.filters); } catch { return { id: r.id, name: r.name, filters: r.filters, count: 0, newCount: 0, invalid: true, createdAt: r.created_at }; }
+        const matching = searchListings(available, params, places);
         const seen = new Set(r.seen_year === game.simulated_year ? r.seen_ids : []);
         return { id: r.id, name: r.name, filters: r.filters, count: matching.length, newCount: matching.filter((l) => !seen.has(l.id)).length, createdAt: r.created_at };
       }),
@@ -105,7 +110,8 @@ export const realEstateWatchService = {
     const row = (await query('SELECT filters FROM re_saved_searches WHERE id = $1 AND user_id = $2', [id, userId])).rows[0];
     if (!row) throw new RealEstateError('NOT_FOUND', 'Recherche introuvable');
     const all = await source().listListings(game.simulated_year);
-    const seenIds = searchListings(all, parseSearch(row.filters), await placesOf()).map((l) => l.id);
+    let params; try { params = parseSearch(row.filters); } catch { return { ok: true, invalid: true }; }
+    const seenIds = searchListings(all, params, await placesOf()).map((l) => l.id);
     await query('UPDATE re_saved_searches SET seen_year = $3, seen_ids = $4 WHERE id = $1 AND user_id = $2', [id, userId, game.simulated_year, seenIds]);
     return { ok: true };
   },

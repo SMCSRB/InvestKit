@@ -21,6 +21,13 @@ describe('recherche d\'annonces : validation, filtres, tri (moteur pur)', () => 
     }
   });
 
+  it('une liste vide (types, états, DPE) veut dire « pas de filtre »', () => {
+    const p = parseSearch({ types: [], conditions: '', energy: [] } as any);
+    expect(p.types).toBeUndefined(); expect(p.energy).toBeUndefined(); expect(p.conditions).toBeUndefined();
+    const q = parseSearch({ types: [] } as any);
+    expect(searchListings(all, q)).toHaveLength(all.length);
+  });
+
   it('accepte l\'ancien format (type, maxPrice, cityId) et normalise', () => {
     const p = parseSearch({ cityId: 'marvelle', type: 'studio', maxPrice: '90000' });
     expect(p).toMatchObject({ cityId: 'marvelle', types: ['studio'], maxPrice: 90000, sort: 'relevance' });
@@ -122,6 +129,7 @@ describe.skipIf(!hasDb)('API Immobilier : filtres via le service, favoris et rec
     expect(d.economics.annualCharges).toBeCloseTo(charges, 2);
     expect(d.economics.totalInvestment).toBeCloseTo(l.price + d.economics.notaryFees + l.advertisedWorks, 2);
     expect(d.economics.netYieldPct).toBeCloseTo(((l.marketRentMonthly * 12 * (1 - l.vacancyPct / 100) - charges) / d.economics.totalInvestment) * 100, 1);
+    expect(d.suggestedDownPaymentCoins).toBeGreaterThan(0);
     expect(d.economics.grossYieldPct).toBeLessThan(l.grossYieldPct);   // sur le coût total (notaire compris) : plus bas que sur le seul prix
   });
 
@@ -135,6 +143,7 @@ describe.skipIf(!hasDb)('API Immobilier : filtres via le service, favoris et rec
     expect((await watch.listFavorites(b)).ids).toEqual([]);              // les favoris de A ne sont pas ceux de B
     await watch.removeFavorite(b, id);                                   // B ne peut pas retirer le favori de A
     expect((await watch.listFavorites(a)).ids).toEqual([id]);
+    expect((await watch.listFavorites(a)).listings[0].priceCoins).toBeGreaterThan(0);
     await watch.removeFavorite(a, id);
     expect((await watch.listFavorites(a)).ids).toEqual([]);
   });
@@ -180,6 +189,28 @@ describe.skipIf(!hasDb)('API Immobilier : filtres via le service, favoris et rec
     expect(data.realEstate.favorites.map((f: any) => f.listing_id)).toEqual([id]);
     expect(data.realEstate.savedSearches).toHaveLength(1);
     expect(JSON.stringify(data.realEstate.savedSearches)).not.toContain(other);
+  });
+
+  it('favoris : seuls ceux de l\'année en cours comptent pour la limite ; un bien déjà possédé n\'est plus listé', async () => {
+    const u = await createUser({ balance: 200000, freeDomain: 'real_estate' }); await svc.startGame(u, 'executive');
+    const ls = (await svc.listListings(u, { sort: 'price_asc' })).listings;
+    await watch.addFavorite(u, ls[0].id); await watch.addFavorite(u, ls[1].id);
+    for (let i = 0; i < 3; i++) await query('INSERT INTO re_favorites (user_id, listing_id, year) VALUES ($1, $2, 2009)', [u, `ancien-${i}`]);   // années passées
+    expect((await watch.listFavorites(u)).pastCount).toBe(3);
+    expect((await watch.addFavorite(u, ls[2].id)).favorite).toBe(true);                                         // pas bloqué par les anciens
+    const game = (await query('SELECT id FROM re_games WHERE user_id = $1', [u])).rows[0];
+    await query(`INSERT INTO re_properties (game_id, listing_id, city_id, neighborhood_id, title, property_type, surface_sqm, age, energy_class, condition, purchase_year, purchase_month, purchase_price, notary_fees, down_payment, status)
+                 VALUES ($1, $2, $3, $4, 't', $5, 20, 'old', 'C', 'good', 2010, 1, 1000, 10, 100, 'vacant')`, [game.id, ls[0].id, ls[0].cityId, ls[0].neighborhoodId, ls[0].type]);
+    expect((await watch.listFavorites(u)).ids).not.toContain(ls[0].id);
+  });
+
+  it('une recherche enregistrée devenue invalide ne casse pas la liste', async () => {
+    const u = await createUser({ balance: 1000, freeDomain: 'real_estate' }); await svc.startGame(u, 'employee');
+    await watch.saveSearch(u, { name: 'ok', filters: { maxPrice: 100000 } });
+    await query(`INSERT INTO re_saved_searches (user_id, name, filters) VALUES ($1, 'vieille', '{"energy":["Z"]}'::jsonb)`, [u]);
+    const r = (await watch.listSavedSearches(u)).searches;
+    expect(r).toHaveLength(2);
+    expect(r.find((x: any) => x.name === 'vieille')).toMatchObject({ invalid: true, count: 0, newCount: 0 });
   });
 
   it('les favoris d\'une année passée ne sont pas présentés comme disponibles', async () => {
