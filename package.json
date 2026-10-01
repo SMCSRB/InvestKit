@@ -11,7 +11,9 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
-    "check:site-info": "node scripts/check-site-info.mjs"
+    "check:site-info": "node scripts/check-site-info.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "setup:hooks": "git config core.hooksPath scripts/git-hooks && echo \"Hook anti-secrets activé.\""
   },
   "repository": {
     "type": "git",
