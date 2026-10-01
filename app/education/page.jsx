@@ -48,7 +48,7 @@ export default function EducationPage() {
                 fontSize: 'clamp(32px, 8vw, 64px)',
                 fontWeight: 'bold',
                 marginBottom: '24px',
-                background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 50%, var(--ik-orchid) 100%)',
+                background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 50%, var(--ik-series-4) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -90,7 +90,7 @@ export default function EducationPage() {
             <div
               className="p-6 rounded-2xl border border-purple-500/20"
               style={{
-                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-series-4) 10%, transparent) 100%)',
                 transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
               onMouseEnter={(e) => {
@@ -114,16 +114,16 @@ export default function EducationPage() {
             <div
               className="p-6 rounded-2xl border border-pink-500/20"
               style={{
-                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-primary) 10%, transparent) 100%)',
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-series-4) 10%, transparent) 0%, color-mix(in srgb, var(--ik-primary) 10%, transparent) 100%)',
                 transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.borderColor = 'var(--ik-orchid)';
+                e.currentTarget.style.borderColor = 'var(--ik-series-4)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-series-4) 20%, transparent)';
               }}
             >
               <div className="text-4xl font-bold text-pink-400 mb-2">

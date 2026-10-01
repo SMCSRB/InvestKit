@@ -36,7 +36,7 @@ export default function GlossairePage() {
           <section key={g.key} style={{ marginBottom: 28 }}>
             <h2 style={{ fontSize: 18, color: 'var(--ik-accent)', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)', paddingBottom: 6 }}>{g.label}</h2>
             {g.items.map((it) => (
-              <article key={it.id} id={it.id} style={{ padding: '14px 0', borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 9%, transparent)', scrollMarginTop: 20 }}>
+              <article key={it.id} id={it.id} style={{ padding: '14px 0', borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 9%, transparent)', scrollMarginTop: 'calc(var(--ik-banner-h, 0px) + var(--ik-topbar-h) + var(--ik-ticker-h, 0px) + 16px)' }}>
                 <h3 style={{ margin: '0 0 4px', fontSize: 17, color: 'var(--ik-text)' }}>{it.term}</h3>
                 <p style={{ margin: '0 0 6px', fontWeight: 600 }}>{it.short}</p>
                 <p style={{ margin: 0, color: 'var(--ik-text-2)', lineHeight: 1.6 }}>{it.long}</p>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { spawnSync } from 'child_process';
 // @ts-expect-error module JavaScript du frontend
 import { THEMED_PREFIXES } from '../../app/lib/designRoutes.js';
 
@@ -24,7 +25,7 @@ describe('pages migrées vers le nouveau design', () => {
       expect(src).toContain('<AppShell>');
       expect(src, 'plus de <main> plein écran avec dégradé').not.toMatch(/minHeight: '100vh'/);
       // texte blanc codé en dur seulement sur boutons pleins (jetons text-on-*), jamais « white » / « #fff » nus
-      if (!route.startsWith('/education')) expect(src).not.toMatch(/color: '(?:white|#fff|#ffffff)'/);
+      expect(src).not.toMatch(/color: '(?:white|#fff|#ffffff)'/);
       // anciens gris-bleus de la palette d'origine
       expect(src).not.toMatch(/#(?:0f172a|1e293b|94a3b8|cbd5e1|e2e8f0|64748b|60a5fa)\b/i);
     });
@@ -35,8 +36,14 @@ describe('pages migrées vers le nouveau design', () => {
     for (const f of EDUCATION) {
       const src = read(f);
       expect(src, f).toContain('<AppShell>');
+      expect(src, f).not.toMatch(/minHeight: '100vh'/);
       expect(src, f).not.toMatch(/#(?:0f172a|1e293b|94a3b8|cbd5e1|e2e8f0|64748b|60a5fa|3b82f6|8b5cf6)\b/i);
     }
+  });
+
+  it('utilities.css est à jour avec le générateur (python3 scripts/gen-utilities.py)', () => {
+    const r = spawnSync('python3', ['scripts/gen-utilities.py', '--check'], { cwd: join(__dirname, '../..') });
+    expect(r.status, 'relancer : python3 scripts/gen-utilities.py').toBe(0);
   });
 
   it('utilitaires de mise en page : Tailwind n\'est pas installé, le sous-ensemble généré couvre les classes utilisées', () => {

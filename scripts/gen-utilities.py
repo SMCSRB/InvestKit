@@ -127,7 +127,8 @@ out += [f"  {s}{{{d}}}" for _, s, d in base]
 # texte blanc sur fonds pleins : texte « sur primaire / positif / négatif » (jamais blanc sur blanc en mode clair)
 out += ['  :is(.bg-blue-500,.bg-blue-600,.bg-purple-600,.hover\\:bg-blue-600,.hover\\:bg-blue-700,.hover\\:bg-purple-700).text-white{color:var(--ik-text-on-primary)}',
         '  :is(.bg-green-500,.bg-green-600,.hover\\:bg-green-600,.hover\\:bg-green-700).text-white{color:var(--ik-text-on-positive)}',
-        '  :is(.bg-red-500).text-white{color:var(--ik-text-on-negative)}']
+        '  :is(.bg-red-500).text-white{color:var(--ik-text-on-negative)}',
+        '  :is(.bg-gradient-to-r,.bg-gradient-to-br).text-white{color:#fff}']
 for bp in ('sm', 'md', 'lg'):
     rs = [r for r in rules if r[0] == [bp]]
     if rs:
@@ -135,5 +136,9 @@ for bp in ('sm', 'md', 'lg'):
         out += [f"    {s}{{{d}}}" for _, s, d in rs]
         out.append('  }')
 out.append('}')
-open('app/styles/utilities.css', 'w', encoding='utf-8').write('\n'.join(out) + '\n')
+text = '\n'.join(out) + '\n'
+if '--check' in sys.argv:
+    # Vérification (utilisée par les tests) : le fichier committé doit être identique à la sortie du générateur
+    sys.exit(0 if open('app/styles/utilities.css', encoding='utf-8').read() == text else 1)
+open('app/styles/utilities.css', 'w', encoding='utf-8').write(text)
 print('classes', len(used), 'règles', len(rules), 'non couvertes', sorted(set(miss)))

@@ -89,9 +89,8 @@ export default function DomainPage() {
   return (
     <AppShell><PageWrapper animation="fade-in-up">
       <div style={{
-        minHeight: '100vh',
-        paddingTop: '80px',
-        paddingBottom: '80px',
+        paddingTop: '8px',
+        paddingBottom: '48px',
         paddingLeft: '24px',
         paddingRight: '24px',
       }}>
@@ -110,8 +109,8 @@ export default function DomainPage() {
               cursor: 'pointer',
               transition: 'color 0.3s ease',
             }}
-            onMouseEnter={(e) => e.target.style.color = 'var(--ik-accent)'}
-            onMouseLeave={(e) => e.target.style.color = 'var(--ik-accent)'}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--ik-text)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--ik-accent)'; }}
             >
               ← Retour
             </span>

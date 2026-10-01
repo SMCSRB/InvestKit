@@ -146,6 +146,7 @@
   .p-4{padding:1rem}
   .p-6{padding:1.5rem}
   .p-8{padding:2rem}
+  .pb-12{padding-bottom:3rem}
   .pb-20{padding-bottom:5rem}
   .pb-8{padding-bottom:2rem}
   .placeholder-gray-400::placeholder{color:var(--ik-text-3)}
@@ -205,7 +206,6 @@
   .text-yellow-400{color:var(--ik-warning)}
   .to-amber-800\/20{--tw-to:color-mix(in srgb, var(--ik-warning) 16%, transparent)}
   .to-blue-400{--tw-to:var(--ik-primary)}
-  .to-blue-900{--tw-to:color-mix(in srgb, var(--ik-primary) 16%, transparent)}
   .to-green-400{--tw-to:var(--ik-positive)}
   .to-purple-400{--tw-to:var(--ik-orchid)}
   .to-purple-500{--tw-to:var(--ik-orchid)}
@@ -215,7 +215,6 @@
   .top-1{top:.25rem}
   .transition{transition:all var(--ik-dur-fast) var(--ik-ease)}
   .transition-all{transition:all var(--ik-dur-fast) var(--ik-ease)}
-  .via-slate-800{--tw-via:var(--ik-surface-2)}
   .w-12{width:3rem}
   .w-14{width:3.5rem}
   .w-6{width:1.5rem}
@@ -226,6 +225,7 @@
   :is(.bg-blue-500,.bg-blue-600,.bg-purple-600,.hover\:bg-blue-600,.hover\:bg-blue-700,.hover\:bg-purple-700).text-white{color:var(--ik-text-on-primary)}
   :is(.bg-green-500,.bg-green-600,.hover\:bg-green-600,.hover\:bg-green-700).text-white{color:var(--ik-text-on-positive)}
   :is(.bg-red-500).text-white{color:var(--ik-text-on-negative)}
+  :is(.bg-gradient-to-r,.bg-gradient-to-br).text-white{color:#fff}
   @media (min-width:640px){
     .sm\:flex-row{flex-direction:row}
   }
@@ -236,7 +236,6 @@
     .md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
     .md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
     .md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    .md\:p-8{padding:2rem}
   }
   @media (min-width:1024px){
     .lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
