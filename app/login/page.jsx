@@ -1,116 +1,117 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { markLoggedIn } from '@/app/lib/session';
-import AuthLayout, { AuthHeader } from '@/app/components/landing/AuthLayout';
+import AuthLayout, { AuthBadge, AuthHeader } from '@/app/components/landing/AuthLayout';
 import { LogoMark } from '@/app/components/ui/Logo';
-import Icon from '@/app/components/ui/Icon';
 import { Button } from '@/app/components/ui/primitives';
+import { useTheme } from '@/app/context/ThemeContext';
+import { CodeInput, Confetti, Notice, PasswordField, SuccessMark } from '@/app/components/auth/fields';
+import { authPost, errorText } from '@/app/lib/authApi';
 
+// Connexion. Le message d'erreur est volontairement le même pour « adresse inconnue » et « mauvais mot de passe » (aucune fuite sur l'existence d'un compte).
 export default function LoginPage() {
   const router = useRouter();
+  const { motionEnabled } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null); // { kind: 'success' | 'danger' | 'info', text }
-  const [tempToken, setTempToken] = useState(null); // connexion en attente du code 2FA
+  const [error, setError] = useState('');
+  const [tempToken, setTempToken] = useState(null); // mot de passe validé, code 2FA attendu
   const [code, setCode] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [redirecting, setRedirecting] = useState(false); // connexion réussie : le bouton reste bloqué jusqu'à la redirection
-  const redirectTimer = useRef(null);
-  useEffect(() => () => clearTimeout(redirectTimer.current), []);
+  const [backup, setBackup] = useState(false);       // saisie d'un code de secours (texte) plutôt que des 6 cases
+  const [done, setDone] = useState(false);
+  const timer = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/dashboard');
-    }
+    try { if (localStorage.getItem('token')) router.push('/dashboard'); } catch { /* ignore */ }
+    return () => clearTimeout(timer.current);
   }, [router]);
 
-  const finishLogin = () => {
-    setMessage({ kind: 'success', text: 'Connexion réussie !' });
+  const finish = () => {
     markLoggedIn(); // le vrai jeton est dans un cookie httpOnly posé par le serveur
-    setRedirecting(true);
-    redirectTimer.current = setTimeout(() => router.push('/dashboard'), 1500);
+    setDone(true);
+    timer.current = setTimeout(() => router.push('/dashboard'), motionEnabled ? 1200 : 300);
   };
 
-  const handleSubmit = async (e) => {
+  const submitPassword = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/${tempToken ? '2fa/login-verify' : 'login'}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(tempToken ? { tempToken, code: code.trim() } : { email, password }),
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok && data.requires2FA) {
-        setTempToken(data.tempToken);
-        setMessage({ kind: 'info', text: 'Entre le code à 6 chiffres de ton application d\'authentification (ou un code de secours).' });
-      } else if (response.ok) {
-        finishLogin();
-      } else {
-        if (tempToken && response.status === 401 && /expir/i.test(data.error || '')) { setTempToken(null); setCode(''); }
-        setMessage({ kind: 'danger', text: data.error || 'Email ou mot de passe incorrect' });
-      }
-    } catch (error) {
-      setMessage({ kind: 'danger', text: 'Erreur de connexion au serveur' });
-    } finally {
-      setLoading(false);
-    }
+    if (loading) return;
+    setLoading(true); setError('');
+    const r = await authPost('login', { email: email.trim(), password });
+    setLoading(false);
+    if (r.ok && r.data.requires2FA) { setTempToken(r.data.tempToken); setCode(''); setBackup(false); return; }
+    if (r.ok) { finish(); return; }
+    setError(errorText(r, 'E-mail ou mot de passe incorrect.'));
   };
+
+  const submitCode = async (value) => {
+    const c = (value ?? code).trim();
+    if (loading || !c) return;
+    setLoading(true); setError('');
+    const r = await authPost('2fa/login-verify', { tempToken, code: c });
+    setLoading(false);
+    if (r.ok) { finish(); return; }
+    if (r.status === 401 && /expir/i.test(r.data?.error || '')) { setTempToken(null); setCode(''); setError('La vérification a expiré. Reconnecte-toi.'); return; }
+    setCode('');
+    setError(errorText(r, 'Code incorrect.'));
+  };
+
+  if (done) {
+    return (
+      <AuthLayout>
+        <Confetti run={motionEnabled} />
+        <div className="au-success" role="status"><SuccessMark /><h1 style={{ margin: 0, fontSize: 'var(--ik-fs-xl)' }}>Connexion réussie</h1><p className="ik-muted" style={{ margin: 0 }}>On t’emmène sur ton tableau de bord…</p></div>
+      </AuthLayout>
+    );
+  }
+
+  if (tempToken) {
+    return (
+      <AuthLayout>
+        <AuthHeader icon={<AuthBadge name="shield" />} title="Double authentification" subtitle={backup ? 'Entre l’un de tes codes de secours.' : 'Entre le code à 6 chiffres de ton application d’authentification.'} />
+        <form className="au-form" onSubmit={(e) => { e.preventDefault(); submitCode(); }}>
+          {backup ? (
+            <div className="ik-field">
+              <label className="ik-label" htmlFor="login-backup">Code de secours</label>
+              <input id="login-backup" className="ik-input" type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} autoFocus placeholder="XXXX-XXXX" />
+              <p className="au-hint">Chaque code de secours ne marche qu’une fois.</p>
+            </div>
+          ) : (
+            <CodeInput label="Code de double authentification" value={code} onChange={setCode} onComplete={submitCode} disabled={loading} status={error ? 'error' : undefined} />
+          )}
+          {error && <Notice>{error}</Notice>}
+          <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || (backup ? !code.trim() : code.length !== 6)}>{loading ? 'Vérification…' : 'Valider'}</Button>
+          <div className="au-row">
+            <button type="button" className="ik-link au-link-btn" onClick={() => { setBackup((b) => !b); setCode(''); setError(''); }}>{backup ? 'Utiliser le code à 6 chiffres' : 'Utiliser un code de secours'}</button>
+            <button type="button" className="ik-link au-link-btn" onClick={() => { setTempToken(null); setCode(''); setError(''); }}>← Retour</button>
+          </div>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>
-      <AuthHeader icon={<div style={{ display: 'grid', placeItems: 'center', marginBottom: 14 }}><LogoMark size={52} /></div>} title="Connexion" subtitle="Accède à ton compte InvestKit" />
-
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 16 }}>
+      <AuthHeader icon={<div style={{ display: 'grid', placeItems: 'center', marginBottom: 14 }}><LogoMark size={52} /></div>} title="Content de te revoir" subtitle="Connecte-toi pour retrouver ton portefeuille." />
+      <form className="au-form" onSubmit={submitPassword}>
         <div className="ik-field">
-          <label className="ik-label" htmlFor="login-email">Email</label>
-          <input id="login-email" className="ik-input" type="email" autoComplete="email" placeholder="toi@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label className="ik-label" htmlFor="login-email">Adresse e-mail</label>
+          <input id="login-email" name="username" className="ik-input" type="email" inputMode="email" autoComplete="username" placeholder="toi@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} autoCapitalize="none" spellCheck={false} required />
         </div>
-
-        <div className="ik-field">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <label className="ik-label" htmlFor="login-password">Mot de passe</label>
+        <div>
+          <div className="au-row" style={{ marginBottom: 6 }}>
+            <span />
             <Link href="/forgot-password" className="ik-link">Mot de passe oublié ?</Link>
           </div>
-          <div className="ik-input-wrap">
-            <input id="login-password" className="ik-input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <Button variant="ghost" size="sm" icon={showPassword ? 'eyeOff' : 'eye'} className="ik-input-wrap__btn" onClick={() => setShowPassword((s) => !s)} aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} />
-          </div>
+          <PasswordField id="login-password" name="password" label="Mot de passe" autoComplete="current-password" placeholder="" value={password} onChange={setPassword} />
         </div>
-
-        {tempToken && (
-          <div className="ik-field">
-            <label className="ik-label" htmlFor="code2fa">Code de double authentification</label>
-            <input id="code2fa" className="ik-input" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} autoFocus required />
-          </div>
-        )}
-
-        {message && (
-          <div className={`ik-notice ik-notice--${message.kind}`} role={message.kind === 'danger' ? 'alert' : 'status'} style={{ margin: 0 }}>
-            <Icon name={message.kind === 'success' ? 'check' : message.kind === 'danger' ? 'alert' : 'shield'} size={20} />
-            <p>{message.text}</p>
-          </div>
-        )}
-
-        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || redirecting || !email || !password}>
-          {loading || redirecting ? 'Connexion…' : 'Se connecter'}
-        </Button>
+        {error && <Notice>{error}</Notice>}
+        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || !email || !password}>{loading ? 'Connexion…' : 'Se connecter'}</Button>
       </form>
-
-      <p className="ik-muted" style={{ margin: '20px 0 0', textAlign: 'center', paddingTop: 16, borderTop: '1px solid var(--ik-border)' }}>
-        Pas encore de compte ? <Link href="/signup" className="ik-link">Créer un compte</Link>
-      </p>
+      <p className="au-alt">Pas encore de compte ? <Link href="/signup" className="ik-link">Créer un compte</Link></p>
     </AuthLayout>
   );
 }

@@ -12,6 +12,7 @@
 @import './styles/utilities.css';
 @import './styles/social.css';
 @import './styles/sim.css';
+@import './styles/auth.css';
 
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-30px); }
