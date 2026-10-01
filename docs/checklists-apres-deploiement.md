@@ -501,3 +501,15 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 
 12. **Éducation (correctif de sécurité)** : termine un vrai chapitre : tu gagnes toujours 20 🪙 et 100 XP une seule fois. Avant ce lot, un identifiant de chapitre inventé rapportait aussi des pièces : ce n'est plus possible (le serveur répond « Chapitre inconnu »).
 13. Dans une guilde où quelqu'un t'a bloqué (ou que tu as bloqué), il apparaît « Joueur masqué ». Quand le chef retire un membre, le code d'invitation change.
+
+## PR Design 10 — Les trois simulateurs
+
+À fusionner **après** la PR « Design 9 ». Aucune migration. Les pages sont publiques : teste aussi déconnecté.
+
+1. `/demo` : trois cartes (PEA, crédit immobilier, investissement locatif) qui ouvrent chacune la bonne page. Plus d'écran intégré ni de faux « temps réel ».
+2. **Crédit immobilier** : avec 220 000 €, 30 000 € d'apport, 3,5 % sur 20 ans, la mensualité s'affiche, avec l'assurance comptée **une seule fois**. Les onglets Amortissement (le capital restant finit à 0), Capacité, Remboursement anticipé (choisir « durée plus courte » ou « mensualité plus basse ») et Comparer fonctionnent. Les icônes « ? » ouvrent le glossaire.
+3. **PEA** : changer le versement, la durée, les frais met les chiffres à jour ; l'onglet Frais montre ce que les frais te coûtent ; Scénarios montre prudent / central / optimiste ; Fiscalité distingue PEA (après 5 ans) et compte-titres ; Risque affiche une simulation (peut afficher « trop de requêtes » après 40 essais en 15 min).
+4. **Locatif** : comparer les trois régimes (micro-foncier, réel, meublé) ; cash-flow avant/après impôt ; projection ; mettre un loyer à 0 ne casse rien.
+5. « Copier le lien » puis ouvrir le lien dans une fenêtre privée : mêmes valeurs. « Réinitialiser » remet les valeurs de départ. « Imprimer / PDF » ouvre l'impression.
+6. Connecté : la page est dans la coque du site (menu à gauche). Déconnecté : en-tête public. Clair et sombre lisibles ; mobile 390 px sans défilement horizontal.
+7. Les hypothèses fiscales affichées (17,2 %, 12,8 %, 5 ans, 35 %…) sont à **reconfirmer** sur les sources officielles avant l'ouverture au public.
