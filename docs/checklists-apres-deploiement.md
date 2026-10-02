@@ -310,3 +310,10 @@ Voir `docs/crypto-banque-classement.md` (section « À tester chez moi »).
 
 ## PR Crypto — éducation (glossaire, quiz, « ? »)
 Voir `docs/crypto-education.md` (section « À tester chez moi »).
+
+## Mise à jour de sécurité : postcss et uuid (npm overrides)
+
+1. Après déploiement, le site se construit sans erreur (`npm run build`) et s'ouvre normalement.
+2. Sur le serveur, `npm audit --omit=dev` affiche « found 0 vulnerabilities » (site et `backend/`).
+3. L'API démarre et la connexion fonctionne comme avant.
+4. Ordre de fusion : indépendante des autres PR. Choisir « Create a merge commit ».
