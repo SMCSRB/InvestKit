@@ -1,5 +1,6 @@
 'use client';
 
+import { markLoggedIn } from '@/app/lib/session';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -70,6 +71,8 @@ export default function VerifyEmailPage() {
       const data = await response.json();
       if (response.ok) {
         setMessage('✅ Email vérifiée!');
+        // Le serveur vient d'ouvrir la session (cookie httpOnly) : le code reçu par e-mail est la preuve.
+        markLoggedIn();
         sessionStorage.setItem('userEmail', email);
         setTimeout(() => router.push('/onboarding'), 1500);
       } else {

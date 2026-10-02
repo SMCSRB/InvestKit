@@ -310,3 +310,12 @@ Voir `docs/crypto-banque-classement.md` (section « À tester chez moi »).
 
 ## PR Crypto — éducation (glossaire, quiz, « ? »)
 Voir `docs/crypto-education.md` (section « À tester chez moi »).
+
+## Sécurité : session ouverte seulement sur preuve
+
+1. Inscris un compte de test : le code arrive par e-mail ; tape-le sur la page de vérification, puis tu arrives sur « Choisis ton pseudo » **déjà connecté**.
+2. Termine l'onboarding : pseudo enregistré, tu arrives sur le tableau de bord.
+3. Avec un mauvais code (8 fois), la page refuse puis dit « Trop d'essais ».
+4. Dans un navigateur sans session, ouvre `/onboarding` et valide : message d'erreur, aucune connexion.
+5. Après déploiement : lance `ops/sql/detecter-session-sans-preuve.sql` (voir `docs/faille-session-sans-preuve.md`) et envisage de changer `JWT_SECRET`.
+6. Déploie le site et l'API ensemble.
