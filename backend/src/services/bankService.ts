@@ -94,7 +94,7 @@ export const assertCanBorrow = async (db: Db, userId: string, principalCoins: nu
   }
   const debt = await outstandingCoins(db, userId);
   if (debt + principalCoins > BANK_LIMITS.maxOutstandingPrincipalCoins) {
-    throw new BankError('LIMIT_REACHED', `Dette totale limitée à ${fr(BANK_LIMITS.maxOutstandingPrincipalCoins)} 🪙 (tu dois déjà ${fr(debt)} 🪙).`);
+    throw new BankError('LIMIT_REACHED', `Dette totale limitée à ${fr(BANK_LIMITS.maxOutstandingPrincipalCoins)} InvestCoins (tu dois déjà ${fr(debt)} InvestCoins).`);
   }
 };
 
@@ -118,7 +118,7 @@ export const originateLoan = async (db: Db, o: OriginateInput): Promise<{ loanId
     await q(db, `INSERT INTO bank_credit_balances (user_id, domain, coins) VALUES ($1,$2,$3)
                  ON CONFLICT (user_id, domain) DO UPDATE SET coins = bank_credit_balances.coins + EXCLUDED.coins`, [o.userId, o.domain, o.principalCoins]);
   }
-  await logBankEvent(db, o.userId, loanId, 'loan_opened', `Prêt accordé : ${fr(o.principalCoins)} 🪙 à ${o.annualRatePct.toFixed(2).replace('.', ',')} % sur ${o.months} mois.`, { product: o.product, domain: o.domain });
+  await logBankEvent(db, o.userId, loanId, 'loan_opened', `Prêt accordé : ${fr(o.principalCoins)} InvestCoins à ${o.annualRatePct.toFixed(2).replace('.', ',')} % sur ${o.months} mois.`, { product: o.product, domain: o.domain });
   return { loanId };
 };
 
@@ -149,13 +149,13 @@ export const settleMonth = async (db: Db, userId: string, domain: string, clockT
         balanceH -= dueP; paidP += dueP; paidI += dueI; remainder = conv.remainderCents; dueP = 0; dueI = 0; missed = 0;
       } else {
         missed += 1;
-        const msg = `Échéance impayée (${fr(coinsOfH(dueP + dueI))} 🪙 dus) : solde insuffisant. ${missed} échéance(s) impayée(s) de suite.`;
+        const msg = `Échéance impayée (${fr(coinsOfH(dueP + dueI))} InvestCoins dus) : solde insuffisant. ${missed} échéance(s) impayée(s) de suite.`;
         await logBankEvent(db, userId, loan.id, 'instalment_missed', msg, { missed });
         events.push({ loanId: loan.id, kind: 'instalment_missed', message: msg });
         if (missed >= BANK_LIMITS.missedInstalmentsBeforeDefault) {
           status = 'defaulted';
           await q(db, `UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'default', blocked_at = NOW(), defaults = defaults + 1 WHERE user_id = $1`, [userId]);
-          const dmsg = `Défaut de paiement : ${missed} échéances impayées de suite. La dette de ${fr(coinsOfH(balanceH))} 🪙 reste due, et tu ne peux plus emprunter tant qu'elle n'est pas réglée.`;
+          const dmsg = `Défaut de paiement : ${missed} échéances impayées de suite. La dette de ${fr(coinsOfH(balanceH))} InvestCoins reste due, et tu ne peux plus emprunter tant qu'elle n'est pas réglée.`;
           await logBankEvent(db, userId, loan.id, 'loan_defaulted', dmsg, {});
           events.push({ loanId: loan.id, kind: 'loan_defaulted', message: dmsg });
         }
@@ -199,13 +199,13 @@ export const bankService = {
       try {
         if (debit > 0) await investcoinsRepository.applyTransaction(userId, -debit, 'bank_repayment', { domain: loan.domain, loanId: loan.id, principalH: balanceH, interestH: dueI + penaltyH, early: true }, c as any);
       } catch (e) {
-        if (e instanceof InsufficientFundsError) throw new BankError('INSUFFICIENT_FUNDS', `Solde insuffisant : il faut ${debit} 🪙 pour solder ce prêt.`, { needed: debit });
+        if (e instanceof InsufficientFundsError) throw new BankError('INSUFFICIENT_FUNDS', `Solde insuffisant : il faut ${debit} InvestCoins pour solder ce prêt.`, { needed: debit });
         throw e;
       }
       await q(c, `UPDATE bank_loans SET status = 'repaid', balance_h = 0, due_principal_h = 0, due_interest_h = 0, missed_instalments = 0, remainder_h = $2,
                     principal_paid_h = principal_paid_h + $3, interest_paid_h = interest_paid_h + $4, closed_at = NOW() WHERE id = $1`,
         [loan.id, conv.remainderCents, balanceH, dueI + penaltyH]);
-      const message = `Prêt soldé par anticipation : ${fr(debit)} 🪙 (capital ${fr(coinsOfH(balanceH))}, indemnité ${fr(coinsOfH(penaltyH))}).`;
+      const message = `Prêt soldé par anticipation : ${fr(debit)} InvestCoins (capital ${fr(coinsOfH(balanceH))}, indemnité ${fr(coinsOfH(penaltyH))}).`;
       await logBankEvent(c, userId, loan.id, 'loan_repaid_early', message, { debit, penaltyH });
       await unblockIfClean(c, userId);
       return { loanId: loan.id, coinsPaid: debit, penaltyCoins: coinsOfH(penaltyH), message };

@@ -39,8 +39,7 @@ export default function PrivacyPage() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             margin: '0 0 12px 0',
-          }}>
-            🔒 Politique de Confidentialité
+          }}> Politique de Confidentialité
           </h1>
           <p style={{
             fontSize: '13px',

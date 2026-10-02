@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Icon from '@/app/components/ui/Icon';
 
 export default function OptimizedFooter() {
   return (
@@ -37,8 +38,7 @@ export default function OptimizedFooter() {
               marginBottom: '16px',
               transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
-          >
-            💎 InvestKit
+          > InvestKit
           </h3>
           <p
             style={{
@@ -166,7 +166,7 @@ export default function OptimizedFooter() {
           <div style={{ display: 'flex', gap: '12px' }}>
             {/* Pas de faux liens : seuls les réseaux renseignés dans app/lib/siteInfo.js s'affichent. */}
             {[
-              { icon: '💬', label: 'Discord', url: SITE_INFO.discordUrl },
+              { icon: 'messageCircle', label: 'Discord', url: SITE_INFO.discordUrl },
             ].filter((social) => social.url).map((social) => (
               <a
                 key={social.label}
@@ -200,7 +200,7 @@ export default function OptimizedFooter() {
                   e.target.style.transform = 'translateY(0)';
                 }}
               >
-                {social.icon}
+                <Icon name={social.icon} size={18} />
               </a>
             ))}
           </div>

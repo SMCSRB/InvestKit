@@ -9,6 +9,7 @@ import { useTheme } from '@/app/context/ThemeContext';
 import { useShell } from '@/app/components/shell/ShellContext';
 import PlanBadge from '@/app/components/plan/PlanBadge';
 import { planLine } from '@/app/lib/plan';
+import Coin from '@/app/components/ui/Coin';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -76,7 +77,7 @@ export default function DashHero({ username, patrimoine, loading }) {
         <section ref={ref} className="dh" aria-label="Accueil du tableau de bord">
           <div className="dh__copy">
             <p className="dh__eyebrow">{hello}{username ? ',' : ''}</p>
-            <h2 className="dh__title">{username || 'Investisseur'}<span className="dh__wave" aria-hidden="true"> 👋</span> <PlanBadge plan={shell?.user?.plan} /></h2>
+            <h2 className="dh__title">{username || 'Investisseur'}<PlanBadge plan={shell?.user?.plan} /></h2>
             {shell?.user?.plan?.isPro && <p className="dh__plan" data-testid="plan-line">{planLine(shell.user.plan)}</p>}
             <p className="dh__sub">Voici où en est ton parcours. Choisis une action pour continuer.</p>
             <div className="dh__chips">
@@ -95,7 +96,7 @@ export default function DashHero({ username, patrimoine, loading }) {
               <div className="dh__layer dh__layer--glass" style={{ '--d': 2.2 }}>
                 <div className="dh__glass">
                   <span>Patrimoine</span>
-                  <strong className="ik-num"><AnimatedNumber value={patrimoine} /> 🪙</strong>
+                  <strong className="ik-num"><AnimatedNumber value={patrimoine} /> <Coin /></strong>
                 </div>
               </div>
             )}

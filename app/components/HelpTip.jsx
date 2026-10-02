@@ -54,8 +54,7 @@ export default function HelpTip({ term, label }) {
             Voir l&apos;explication complète →
           </Link>
           {entry.quiz && (
-            <Link href={`/education/${entry.quiz.domain}/${entry.quiz.chapter}`} style={{ display: 'block', marginTop: 4, color: 'var(--ik-accent)', fontSize: 12 }}>
-              📝 Teste-toi : quiz lié →
+            <Link href={`/education/${entry.quiz.domain}/${entry.quiz.chapter}`} style={{ display: 'block', marginTop: 4, color: 'var(--ik-accent)', fontSize: 12 }}> Teste-toi : quiz lié →
             </Link>
           )}
         </span>

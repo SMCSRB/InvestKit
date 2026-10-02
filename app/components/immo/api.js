@@ -1,6 +1,8 @@
 // Outils communs de l'écran Immobilier : appels à l'API, formats, libellés, annonces rédigées.
 // RIEN ici ne calcule de règle du jeu : les calculs viennent du serveur. Les textes d'annonce sont rédigés à partir des champs réels
 // de l'annonce (type, quartier, état, DPE, charges, tension) : aucune donnée n'est inventée pour l'affichage.
+import { createElement, Fragment } from 'react';
+import Coin from '@/app/components/ui/Coin';
 const API = `${process.env.NEXT_PUBLIC_API_URL}/realestate`;
 
 export async function call(path, method = 'GET', body) {
@@ -18,7 +20,10 @@ export const clean = (n) => (Math.abs(Number(n ?? 0)) < 0.005 ? 0 : Number(n ?? 
 export const eur = (n) => `${clean(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
 export const eur2 = (n) => `${clean(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 export const pct = (n, d = 1) => `${Number(n ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d })} %`;
-export const coins = (n) => `${Math.round(Number(n ?? 0)).toLocaleString('fr-FR')} 🪙`;
+const coinNumber = (n) => Math.round(Number(n ?? 0)).toLocaleString('fr-FR');
+// Montant en InvestCoins : élément avec l'icône de pièce (à placer dans du JSX) ; coinsText pour une chaîne (info-bulle, message).
+export const coins = (n) => createElement(Fragment, null, coinNumber(n), ' ', createElement(Coin));
+export const coinsText = (n) => `${coinNumber(n)} InvestCoins`;
 export const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
 export const TYPE_LABEL = { studio: 'Studio', apartment: 'Appartement', house: 'Maison' };

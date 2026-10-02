@@ -4,6 +4,7 @@ import { markLoggedIn } from '@/app/lib/session';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PublicShell from '@/app/components/landing/PublicShell';
+import Icon, { Glyph } from '@/app/components/ui/Icon';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -15,36 +16,37 @@ export default function OnboardingPage() {
   const [enable2FA, setEnable2FA] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageOk, setMessageOk] = useState(false);
 
   const investmentInterests = [
-    { id: 'stocks', label: '📈 Bourse', emoji: '📈' },
-    { id: 'crypto', label: '₿ Crypto', emoji: '₿' },
-    { id: 'realestate', label: '🏠 Immobilier', emoji: '🏠' },
-    { id: 'bonds', label: '💰 Obligations', emoji: '💰' },
-    { id: 'pea', label: '📊 PEA', emoji: '📊' },
-    { id: 'commodities', label: '⚡ Matières', emoji: '⚡' },
-    { id: 'startup', label: '🚀 Startups', emoji: '🚀' },
-    { id: 'forex', label: '💱 Forex', emoji: '💱' },
+    { id: 'stocks', label: 'Bourse', emoji: 'trendingUp' },
+    { id: 'crypto', label: 'Crypto', emoji: 'coins' },
+    { id: 'realestate', label: 'Immobilier', emoji: 'house' },
+    { id: 'bonds', label: 'Obligations', emoji: 'banknote' },
+    { id: 'pea', label: 'PEA', emoji: 'chartColumn' },
+    { id: 'commodities', label: 'Matières', emoji: 'zap' },
+    { id: 'startup', label: 'Startups', emoji: 'rocket' },
+    { id: 'forex', label: 'Forex', emoji: 'arrowLeftRight' },
   ];
 
   const accountTypes = [
     {
       id: 'beginner',
-      label: '📚 Débutant',
+      label: 'Débutant',
       description: 'Éducation et simulateurs',
-      icon: '📚'
+      icon: 'bookOpen'
     },
     {
       id: 'intermediate',
-      label: '📈 Intermédiaire',
+      label: 'Intermédiaire',
       description: 'Outils avancés',
-      icon: '📈'
+      icon: 'trendingUp'
     },
     {
       id: 'pro',
-      label: '🏆 Pro',
+      label: 'Pro',
       description: 'Accès complet + API',
-      icon: '🏆'
+      icon: 'trophy'
     },
   ];
 
@@ -69,15 +71,16 @@ export default function OnboardingPage() {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setMessageOk(false);
 
     if (!username.trim()) {
-      setMessage('❌ Veuillez entrer votre pseudo');
+      setMessage('Veuillez entrer votre pseudo');
       setLoading(false);
       return;
     }
 
     if (!accountType) {
-      setMessage('❌ Veuillez sélectionner un type de compte');
+      setMessage('Veuillez sélectionner un type de compte');
       setLoading(false);
       return;
     }
@@ -98,15 +101,16 @@ export default function OnboardingPage() {
 
       const data = await response.json();
       if (response.ok) {
-        setMessage('✅ Préférences enregistrées!');
+        setMessage('Préférences enregistrées!');
+        setMessageOk(true);
         markLoggedIn();
         sessionStorage.removeItem('userEmail');
         setTimeout(() => router.push('/dashboard'), 1500);
       } else {
-        setMessage(`❌ ${data.error || 'Erreur lors de l\'enregistrement'}`);
+        setMessage(`${data.error || 'Erreur lors de l\'enregistrement'}`);
       }
     } catch (error) {
-      setMessage('❌ Erreur de connexion au serveur');
+      setMessage('Erreur de connexion au serveur');
     } finally {
       setLoading(false);
     }
@@ -215,7 +219,7 @@ export default function OnboardingPage() {
             animation: 'floatGradient 3s ease-in-out infinite',
             boxShadow: '0 10px 30px color-mix(in srgb, var(--ik-primary) 30%, transparent)',
           }}>
-            🎯
+            <Icon name="target" size={18} />
           </div>
           <h1 style={{
             margin: '0 0 6px 0',
@@ -248,7 +252,7 @@ export default function OnboardingPage() {
               marginBottom: '8px',
               letterSpacing: '0.3px',
             }}>
-              0️⃣ Votre Pseudo
+              1. Votre pseudo
             </label>
             <input
               type="text"
@@ -299,7 +303,7 @@ export default function OnboardingPage() {
               marginBottom: '10px',
               letterSpacing: '0.3px',
             }}>
-              1️⃣ Type de compte
+              2. Type de compte
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {accountTypes.map(type => (
@@ -335,7 +339,7 @@ export default function OnboardingPage() {
                     }
                   }}
                 >
-                  <span style={{ fontSize: '24px' }}>{type.icon}</span>
+                  <span style={{ fontSize: '24px' }}><Glyph g={type.icon} size={24} /></span>
                   <div style={{ flex: 1 }}>
                     <p style={{ margin: '0', fontWeight: '700', color: 'var(--ik-text)', fontSize: '13px' }}>
                       {type.label}
@@ -345,7 +349,7 @@ export default function OnboardingPage() {
                     </p>
                   </div>
                   {accountType === type.id && (
-                    <span style={{ fontSize: '16px', marginLeft: 'auto' }}>✅</span>
+                    <span style={{ fontSize: '16px', marginLeft: 'auto' }}><Icon name="circleCheck" size={18} /></span>
                   )}
                 </button>
               ))}
@@ -362,7 +366,7 @@ export default function OnboardingPage() {
               marginBottom: '8px',
               letterSpacing: '0.3px',
             }}>
-              2️⃣ Domaines d'intérêt
+              3. Domaines d'intérêt
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
               {investmentInterests.map(interest => (
@@ -398,7 +402,7 @@ export default function OnboardingPage() {
                     }
                   }}
                 >
-                  {interest.emoji} {interest.label}
+                  <Glyph g={interest.emoji} size={16} /> {interest.label}
                   {interests.includes(interest.id) && ' ✓'}
                 </button>
               ))}
@@ -415,7 +419,7 @@ export default function OnboardingPage() {
               marginBottom: '6px',
               letterSpacing: '0.3px',
             }}>
-              3️⃣ Langue
+              4. Langue
             </label>
             <select
               value={language}
@@ -444,10 +448,10 @@ export default function OnboardingPage() {
                 e.target.style.backgroundColor = 'var(--ik-surface-2)';
               }}
             >
-              <option value="fr">🇫🇷 Français</option>
-              <option value="en">🇬🇧 English</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="de">🇩🇪 Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="de">Deutsch</option>
             </select>
           </div>
 
@@ -482,8 +486,7 @@ export default function OnboardingPage() {
               cursor: 'pointer',
               flex: 1,
               fontWeight: '500',
-            }}>
-              🔐 Activer 2FA
+            }}> Activer 2FA
             </label>
           </div>
 
@@ -491,12 +494,12 @@ export default function OnboardingPage() {
           {message && (
             <div style={{
               padding: '10px 12px',
-              background: message.includes('✅')
+              background: messageOk
                 ? 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 10%, transparent), color-mix(in srgb, var(--ik-positive) 5%, transparent))'
                 : 'linear-gradient(135deg, color-mix(in srgb, var(--ik-negative) 10%, transparent), color-mix(in srgb, var(--ik-negative) 5%, transparent))',
-              border: `1px solid ${message.includes('✅') ? '#d1fae5' : '#fee2e2'}`,
+              border: `1px solid ${messageOk ? '#d1fae5' : '#fee2e2'}`,
               borderRadius: '10px',
-              color: message.includes('✅') ? '#065f46' : '#991b1b',
+              color: messageOk ? '#065f46' : '#991b1b',
               fontSize: '12px',
               fontWeight: '600',
               textAlign: 'center',
@@ -531,8 +534,7 @@ export default function OnboardingPage() {
                 e.target.style.background = 'white';
                 e.target.style.transform = 'translateY(0)';
               }}
-            >
-              ⏭️ Passer
+            > Passer
             </button>
             <button
               type="submit"
@@ -567,7 +569,7 @@ export default function OnboardingPage() {
                 }
               }}
             >
-              {loading ? '⏳ Enregistrement...' : '✨ Continuer'}
+              {loading ? 'Enregistrement...' : 'Continuer'}
             </button>
           </div>
         </form>

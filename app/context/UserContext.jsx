@@ -12,7 +12,7 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState({
     friendCode: '', // le vrai code ami vient du serveur (/api/v1/social/me)
     fullName: '',
-    bio: 'Investisseur Premium 🚀',
+    bio: 'Investisseur Premium',
     profilePhoto: '',
     friends: [], // { userId, friendCode, name, status: 'confirmed', addedDate }
     friendRequests: {
@@ -86,7 +86,7 @@ export function UserProvider({ children }) {
         ...prev,
         friendCode: '', // le vrai code ami vient du serveur (/api/v1/social/me)
         fullName: '',
-        bio: 'Investisseur Premium 🚀',
+        bio: 'Investisseur Premium',
       }));
     }
   };

@@ -104,7 +104,7 @@ export const RENT_TAX_RATE_BY_PROFILE: Record<ProfileId, number> = {
   executive: INCOME_TAX_MARGINAL_PCT_BY_PROFILE.executive + SOCIAL_CHARGES_ON_RENT_PCT,
 };
 
-// Conversion de jeu : 1 🪙 = 20 € en Immobilier (décision produit).
+// Conversion de jeu : 1 InvestCoin = 20 € en Immobilier (décision produit).
 export const EUROS_PER_COIN = 20;
 
 // ─────────────────────────────────────────────────────────────────────────

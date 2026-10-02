@@ -113,8 +113,8 @@ const evaluateBorrow = async (db: Db, userId: string, domainId: unknown, amountR
   const ratePct = bankProductRatePct('portfolio', year);
   const reasons: { code: string; message: string }[] = [];
   if (limits.value <= 0) reasons.push({ code: 'NO_COLLATERAL', message: 'Ton portefeuille est vide : il faut des titres à mettre en garantie.' });
-  if (amountRaw < LOMBARD.minPrincipalCoins) reasons.push({ code: 'TOO_SMALL', message: `Montant minimum : ${LOMBARD.minPrincipalCoins} 🪙.` });
-  if (amountRaw > capacity) reasons.push({ code: 'OVER_CAPACITY', message: `Tu peux emprunter au plus ${fr(capacity)} 🪙 sur ce portefeuille (50 % des actions, 30 % de la crypto).` });
+  if (amountRaw < LOMBARD.minPrincipalCoins) reasons.push({ code: 'TOO_SMALL', message: `Montant minimum : ${LOMBARD.minPrincipalCoins} InvestCoins.` });
+  if (amountRaw > capacity) reasons.push({ code: 'OVER_CAPACITY', message: `Tu peux emprunter au plus ${fr(capacity)} InvestCoins sur ce portefeuille (50 % des actions, 30 % de la crypto).` });
   if (await activeLoan(db, userId, domain.id)) reasons.push({ code: 'ALREADY_HAVE_ONE', message: 'Tu as déjà un prêt sur portefeuille dans ce domaine : rembourse-le d\'abord (un seul à la fois, pour éviter les boucles de levier).' });
   const sameYear = Number((await q(db, `SELECT COUNT(*) AS n FROM bank_loans WHERE user_id = $1 AND domain = $2 AND product = 'portfolio' AND opened_clock_total = $3`, [userId, domain.id, year])).rows[0].n);
   if (sameYear > 0) reasons.push({ code: 'ONE_PER_YEAR', message: 'Un seul prêt sur portefeuille par année de jeu : avance d\'une année.' });
@@ -151,7 +151,7 @@ export const bankPortfolioService = {
       });
       return {
         loanId, amountCoins: e.amount, annualRatePct: e.ratePct,
-        message: `Prêt sur portefeuille accordé : ${fr(e.amount)} 🪙 à ${fr(e.ratePct)} % (taux variable, intérêts payés à chaque passage d'année). Ces pièces ne servent que dans ${domain.label}. Tes titres sont mis en garantie.`,
+        message: `Prêt sur portefeuille accordé : ${fr(e.amount)} InvestCoins à ${fr(e.ratePct)} % (taux variable, intérêts payés à chaque passage d'année). Ces pièces ne servent que dans ${domain.label}. Tes titres sont mis en garantie.`,
       };
     });
   },
@@ -164,7 +164,7 @@ export const bankPortfolioService = {
     if (!head) throw new BankError('NOT_FOUND', 'Prêt introuvable');
     if (head.domain === 'crypto_market') {   // prêt du marché Crypto : même règle de remboursement, horloge du joueur Crypto
       const { cryptoLoanService } = await import('./crypto/loanService');
-      try { const r = await cryptoLoanService.repay(userId, loanIdRaw, coinsRaw); return { ...r, marginState: 'ok', message: r.repaid ? 'Prêt Crypto soldé : tes cryptos ne sont plus en garantie.' : `Remboursement effectué : il reste ${fr(r.remainingCoins)} 🪙 à rembourser.` }; }
+      try { const r = await cryptoLoanService.repay(userId, loanIdRaw, coinsRaw); return { ...r, marginState: 'ok', message: r.repaid ? 'Prêt Crypto soldé : tes cryptos ne sont plus en garantie.' : `Remboursement effectué : il reste ${fr(r.remainingCoins)} InvestCoins à rembourser.` }; }
       catch (e: any) { throw e?.name === 'CryptoDataError' ? new BankError('INVALID_INPUT', e.message) : e; }
     }
     const domain = domainOrThrow(head.domain);
@@ -173,15 +173,15 @@ export const bankPortfolioService = {
       if (!loan || (loan.status !== 'active' && loan.status !== 'defaulted')) throw new BankError('INVALID_INPUT', 'Ce prêt est déjà clos');
       const owedH = Number(loan.balance_h) + Number(loan.due_interest_h);
       const maxCoins = Math.ceil(owedH / 100);
-      if (coinsRaw > maxCoins) throw new BankError('INVALID_INPUT', `Il ne reste que ${maxCoins} 🪙 à rembourser`, { maxCoins });
+      if (coinsRaw > maxCoins) throw new BankError('INVALID_INPUT', `Il ne reste que ${maxCoins} InvestCoins à rembourser`, { maxCoins });
       const balance = await investcoinsRepository.getBalance(userId, tx);
-      if (balance < coinsRaw) throw new BankError('INSUFFICIENT_FUNDS', `Solde insuffisant : ${coinsRaw} 🪙 nécessaires.`);
+      if (balance < coinsRaw) throw new BankError('INSUFFICIENT_FUNDS', `Solde insuffisant : ${coinsRaw} InvestCoins nécessaires.`);
       const r = await applyPayment(tx as any, userId, loan, coinsRaw);
       const view = await portfolioLoanView(tx as any, userId, domain, portfolio.positions, portfolio.simulated_year);
       if (!r.repaid && view.loan && view.loan.state === 'ok') await setMargin(tx as any, loan.id, null);
-      await logBankEvent(tx as any, userId, loan.id, 'loan_repayment', `Remboursement de ${coinsRaw} 🪙 sur le prêt sur portefeuille.`, { coins: coinsRaw });
+      await logBankEvent(tx as any, userId, loan.id, 'loan_repayment', `Remboursement de ${coinsRaw} InvestCoins sur le prêt sur portefeuille.`, { coins: coinsRaw });
       return { loanId: loan.id, coinsPaid: coinsRaw, repaid: r.repaid, remainingCoins: (r.balanceH + r.dueH) / 100, marginState: view.loan?.state ?? 'ok',
-        message: r.repaid ? 'Prêt sur portefeuille soldé : tes titres ne sont plus en garantie.' : `Remboursement effectué : il reste ${fr((r.balanceH + r.dueH) / 100)} 🪙 à rembourser.` };
+        message: r.repaid ? 'Prêt sur portefeuille soldé : tes titres ne sont plus en garantie.' : `Remboursement effectué : il reste ${fr((r.balanceH + r.dueH) / 100)} InvestCoins à rembourser.` };
     });
   },
 
@@ -196,10 +196,10 @@ export const bankPortfolioService = {
     if (need <= 0) return { autoRepaid: 0, message: null };
     const pay = Math.ceil(need);
     if (pay > proceedsCoins) {
-      throw new BankError('NOT_ALLOWED', `Cette vente laisserait ton prêt sans garantie suffisante : il faudrait en rembourser ${fr(pay)} 🪙, mais la vente ne rapporte que ${fr(proceedsCoins)} 🪙. Rembourse d'abord une partie du prêt, ou vends moins.`, { needCoins: pay, proceedsCoins });
+      throw new BankError('NOT_ALLOWED', `Cette vente laisserait ton prêt sans garantie suffisante : il faudrait en rembourser ${fr(pay)} InvestCoins, mais la vente ne rapporte que ${fr(proceedsCoins)} InvestCoins. Rembourse d'abord une partie du prêt, ou vends moins.`, { needCoins: pay, proceedsCoins });
     }
     await applyPayment(tx, userId, loan, Math.min(pay, Math.ceil(debt)), { autoRepay: true });
-    const message = `Une partie du produit de la vente (${fr(pay)} 🪙) a servi à rembourser ton prêt sur portefeuille, car les titres vendus étaient en garantie.`;
+    const message = `Une partie du produit de la vente (${fr(pay)} InvestCoins) a servi à rembourser ton prêt sur portefeuille, car les titres vendus étaient en garantie.`;
     await logBankEvent(tx, userId, loan.id, 'auto_repay', message, { coins: pay });
     return { autoRepaid: pay, message };
   },
@@ -225,7 +225,7 @@ export const bankPortfolioService = {
       paidI += dueH; remainder = conv.remainderCents; dueH = 0; missed = 0;
     } else if (dueH > 0) {
       missed += 1;
-      await emit('interest_unpaid', `Intérêts de l'année impayés (${fr(dueH / 100)} 🪙) : solde insuffisant. Ils s'ajoutent à ta dette.`, { missed });
+      await emit('interest_unpaid', `Intérêts de l'année impayés (${fr(dueH / 100)} InvestCoins) : solde insuffisant. Ils s'ajoutent à ta dette.`, { missed });
     }
     const newRate = bankProductRatePct('portfolio', newYear);
     let status: string = loan.status;
@@ -248,7 +248,7 @@ export const bankPortfolioService = {
       if (pending) { await setMargin(tx, loan.id, null); await emit('margin_cleared', 'Appel de marge levé : ta garantie est de nouveau suffisante.'); }
     } else if (state === 'call') {
       await setMargin(tx, loan.id, { sinceYear: newYear, debtCoins: debt, collateralCoins: limits.value });
-      await emit('margin_call', `APPEL DE MARGE : ta dette (${fr(debt)} 🪙) dépasse ${fr(limits.callLimit)} 🪙, le seuil d'appel de ta garantie (valeur ${fr(limits.value)} 🪙). Avant le prochain passage d'année, rembourse une partie du prêt ou achète des titres ; sinon tes titres seront vendus de force. ${LOMBARD_SIMPLIFICATION}`, { debt, callLimit: limits.callLimit });
+      await emit('margin_call', `APPEL DE MARGE : ta dette (${fr(debt)} InvestCoins) dépasse ${fr(limits.callLimit)} InvestCoins, le seuil d'appel de ta garantie (valeur ${fr(limits.value)} InvestCoins). Avant le prochain passage d'année, rembourse une partie du prêt ou achète des titres ; sinon tes titres seront vendus de force. ${LOMBARD_SIMPLIFICATION}`, { debt, callLimit: limits.callLimit });
     } else {
       // Vente forcée, proportionnelle, jusqu'à ramener la dette sous le plafond à l'ouverture.
       const f = liquidationFraction(debt, limits.value, limits.maxLimit, LOMBARD.haircutPct);
@@ -270,12 +270,12 @@ export const bankPortfolioService = {
       if (positions.length === 0 && left > 0) {
         await q(tx, `UPDATE bank_loans SET status = 'defaulted' WHERE id = $1`, [loan.id]);
         await q(tx, `UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'default', blocked_at = NOW(), defaults = defaults + 1 WHERE user_id = $1`, [userId]);
-        await emit('liquidation', `VENTE FORCÉE : tous tes titres ont été vendus (${fr(proceeds)} 🪙 après décote de ${LOMBARD.haircutPct} %), mais il reste ${fr(left)} 🪙 de dette. Elle reste due et tu ne peux plus emprunter tant qu'elle n'est pas soldée. ${LOMBARD_SIMPLIFICATION}`, { proceeds, left });
+        await emit('liquidation', `VENTE FORCÉE : tous tes titres ont été vendus (${fr(proceeds)} InvestCoins après décote de ${LOMBARD.haircutPct} %), mais il reste ${fr(left)} InvestCoins de dette. Elle reste due et tu ne peux plus emprunter tant qu'elle n'est pas soldée. ${LOMBARD_SIMPLIFICATION}`, { proceeds, left });
       } else if (r.repaid) {
         await q(tx, `UPDATE bank_loans SET status = 'liquidated' WHERE id = $1`, [loan.id]);
-        await emit('liquidation', `VENTE FORCÉE : ${Math.round(f * 100)} % de ton portefeuille a été vendu (${fr(proceeds)} 🪙 après décote de ${LOMBARD.haircutPct} %) et le prêt est soldé. ${LOMBARD_SIMPLIFICATION}`, { proceeds });
+        await emit('liquidation', `VENTE FORCÉE : ${Math.round(f * 100)} % de ton portefeuille a été vendu (${fr(proceeds)} InvestCoins après décote de ${LOMBARD.haircutPct} %) et le prêt est soldé. ${LOMBARD_SIMPLIFICATION}`, { proceeds });
       } else {
-        await emit('liquidation', `VENTE FORCÉE : ${Math.round(f * 100)} % de ton portefeuille a été vendu (${fr(proceeds)} 🪙 après décote de ${LOMBARD.haircutPct} %) pour ramener ta dette à ${fr(left)} 🪙. ${LOMBARD_SIMPLIFICATION}`, { proceeds, left });
+        await emit('liquidation', `VENTE FORCÉE : ${Math.round(f * 100)} % de ton portefeuille a été vendu (${fr(proceeds)} InvestCoins après décote de ${LOMBARD.haircutPct} %) pour ramener ta dette à ${fr(left)} InvestCoins. ${LOMBARD_SIMPLIFICATION}`, { proceeds, left });
       }
     }
     return { positions, proceedsCoins: proceedsTotal, events, changed: proceedsTotal > 0 };

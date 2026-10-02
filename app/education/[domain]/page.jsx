@@ -6,6 +6,7 @@ import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
+import Icon, { Glyph } from '@/app/components/ui/Icon';
 
 // Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
 const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
@@ -136,7 +137,7 @@ export default function DomainPage() {
                 lineHeight: '1',
                 filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))',
               }}>
-                {domain.icon}
+                <Glyph g={domain.icon} size={32} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <h1 style={{
@@ -181,8 +182,7 @@ export default function DomainPage() {
                     fontWeight: '600',
                     color: 'var(--ik-text)',
                     margin: '0 0 4px 0',
-                  }}>
-                    📊 Progression
+                  }}> Progression
                   </h3>
                   <p style={{
                     fontSize: '14px',
@@ -237,8 +237,7 @@ export default function DomainPage() {
                     fontWeight: '600',
                     fontSize: '14px',
                     margin: '0',
-                  }}>
-                    ✨ Domaine Maîtrisé ! Vous avez déverrouillé le badge {domain.badge}
+                  }}> Domaine Maîtrisé ! Vous avez déverrouillé le badge <Glyph g={domain.badge} size={18} />
                   </p>
                 </div>
               )}
@@ -255,8 +254,7 @@ export default function DomainPage() {
                 fontWeight: 'bold',
                 color: 'var(--ik-text)',
                 marginBottom: '16px',
-              }}>
-                💡 Recommandations Personnalisées
+              }}> Recommandations Personnalisées
               </h2>
               <div style={{
                 display: 'grid',
@@ -300,7 +298,7 @@ export default function DomainPage() {
                         <span style={{
                           fontSize: '20px',
                         }}>
-                          {rec.type === 'continue' ? '🚀' : '📈'}
+                          <Icon name={rec.type === 'continue' ? 'rocket' : 'trendingUp'} size={18} />
                         </span>
                         <span style={{
                           fontSize: '12px',
@@ -341,8 +339,7 @@ export default function DomainPage() {
               color: 'var(--ik-text)',
               marginBottom: '24px',
               margin: '0 0 24px 0',
-            }}>
-              📚 Chapitres du Domaine
+            }}> Chapitres du Domaine
             </h2>
 
             <div style={{
@@ -403,7 +400,7 @@ export default function DomainPage() {
                         <div style={{
                           fontSize: '32px',
                         }}>
-                          {isCompleted ? '✅' : isUnlocked ? '▶️' : '🔒'}
+                          <Icon name={isCompleted ? 'circleCheck' : isUnlocked ? 'chevronRight' : 'lock'} size={20} />
                         </div>
                         {isCompleted && (
                           <div style={{
@@ -411,7 +408,7 @@ export default function DomainPage() {
                             animation: 'bounce 2s infinite',
                             animationDelay: `${idx * 0.1}s`,
                           }}>
-                            ⭐
+                            <Icon name="star" size={18} />
                           </div>
                         )}
                       </div>
@@ -461,7 +458,7 @@ export default function DomainPage() {
                           fontSize: '13px',
                           color: 'var(--ik-text-3)',
                         }}>
-                          ⏱️ {chapter.duration}
+                          <Icon name="timer" size={18} /> {chapter.duration}
                         </div>
 
                         {isCompleted && score && (
@@ -469,8 +466,7 @@ export default function DomainPage() {
                             fontSize: '13px',
                             fontWeight: '600',
                             color: 'var(--ik-positive)',
-                          }}>
-                            ✨ Score: {score}%
+                          }}> Score: {score}%
                           </div>
                         )}
 
@@ -479,8 +475,7 @@ export default function DomainPage() {
                             fontSize: '13px',
                             color: 'var(--ik-negative)',
                             fontWeight: '500',
-                          }}>
-                            🔓 Complétez le chapitre {chapter.id - 1}
+                          }}> Complétez le chapitre {chapter.id - 1}
                           </div>
                         )}
                       </div>
@@ -503,8 +498,7 @@ export default function DomainPage() {
               color: 'var(--ik-text)',
               marginBottom: '24px',
               margin: '0 0 24px 0',
-            }}>
-              🏆 Quiz Final du Domaine
+            }}> Quiz Final du Domaine
             </h2>
 
             <div
@@ -548,14 +542,13 @@ export default function DomainPage() {
                     alignItems: 'center',
                     gap: '6px',
                   }}>
-                    📋 {domain.finalQuiz.questions.length} questions
+                    <Icon name="clipboardList" size={18} /> {domain.finalQuiz.questions.length} questions
                   </div>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                  }}>
-                    ⭐ Score requis: {domain.finalQuiz.passingScore}%
+                  }}> Score requis: {domain.finalQuiz.passingScore}%
                   </div>
                 </div>
               </div>
@@ -602,8 +595,7 @@ export default function DomainPage() {
                     cursor: 'not-allowed',
                     whiteSpace: 'nowrap',
                   }}
-                >
-                  🔒 Complétez tous les chapitres
+                > Complétez tous les chapitres
                 </button>
               )}
             </div>

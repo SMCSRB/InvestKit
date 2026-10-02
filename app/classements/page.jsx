@@ -6,6 +6,8 @@ import Link from 'next/link';
 import AppShell, { PageHeader } from '@/app/components/shell/AppShell';
 import { Button, Card, CardHead, EmptyState, Skeleton, Tabs } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
+import Coin from '@/app/components/ui/Coin';
+import Icon, { Medal } from '@/app/components/ui/Icon';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 const TABS = ['monde', 'amis', 'guilde'];
@@ -14,7 +16,6 @@ const DOMAINES = {
   crypto: { label: 'Crypto', path: '/crypto/leaderboard', go: '/crypto', goLabel: 'Ouvrir le marché Crypto' },
   immobilier: { label: 'Immobilier', path: '/realestate/leaderboard', go: '/immobilier', goLabel: 'Ouvrir l’Immobilier' },
 };
-const MEDALS = ['🥇', '🥈', '🥉'];
 const fr = (n) => Number(n).toLocaleString('fr-FR');
 const pct = (n) => `${n > 0 ? '+' : ''}${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} %`;
 
@@ -38,7 +39,7 @@ function useApi(path) {
   return state;
 }
 
-const Rank = ({ rank }) => <span aria-label={`Rang ${rank}`}>{MEDALS[rank - 1] || rank}</span>;
+const Rank = ({ rank }) => <span aria-label={`Rang ${rank}`}><Medal rank={rank} /></span>;
 
 function Loading() { return <Skeleton height={220} style={{ borderRadius: 16 }} />; }
 
@@ -65,7 +66,7 @@ function Monde({ domaine, onDomaine }) {
         <Card>
           <CardHead title={`Classement ${d.label} · ${data.period ? `mois ${data.period}` : `année ${data.year}`}`} icon="trophy" help={<HelpTip term="performance" />} />
           <p className="ik-muted" style={{ margin: '0 0 12px', fontSize: 'var(--ik-fs-sm)' }}>
-            Les joueurs sont comparés à la même date de jeu, en pourcentage et net de dettes. Il faut avoir engagé au moins {fr(data.minCapital ?? data.mine?.minCapitalCoins ?? 100)} 🪙 pour être classé.
+            Les joueurs sont comparés à la même date de jeu, en pourcentage et net de dettes. Il faut avoir engagé au moins {fr(data.minCapital ?? data.mine?.minCapitalCoins ?? 100)} <Coin /> pour être classé.
           </p>
           {data.me
             ? <p data-testid="mon-rang"><strong>Ton rang : n°{data.me.rank}</strong> sur {fr(data.totalRanked)} · {pct(data.me.performancePct)}</p>
@@ -135,7 +136,7 @@ function Guilde() {
           <caption className="ik-sr-only">Classement de la guilde {g.name}</caption>
           <thead><tr><th scope="col">Rang</th><th scope="col">Joueur</th><th scope="col" className="ik-num">Niveau</th><th scope="col" className="ik-num">XP</th></tr></thead>
           <tbody>{g.members.map((m) => (
-            <tr key={m.userId} className={m.isMe ? 'is-me' : ''}><td><Rank rank={m.rank} /></td><td>{m.name}{m.isMe ? ' (toi)' : ''}{m.role === 'owner' ? ' 👑' : ''}</td><td className="ik-num">{m.level ?? '—'}</td><td className="ik-num">{m.xp === undefined ? '—' : fr(m.xp)}</td></tr>
+            <tr key={m.userId} className={m.isMe ? 'is-me' : ''}><td><Rank rank={m.rank} /></td><td>{m.name}{m.isMe ? ' (toi)' : ''}{m.role === 'owner' ? <> <Icon name="crown" size={14} label="Chef de la guilde" /></> : null}</td><td className="ik-num">{m.level ?? '—'}</td><td className="ik-num">{m.xp === undefined ? '—' : fr(m.xp)}</td></tr>
           ))}</tbody>
         </table>
       </div>

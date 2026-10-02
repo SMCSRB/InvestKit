@@ -1,4 +1,8 @@
 // Jeu d'icônes SVG maison (trait 1,8, 24x24). Remplace les emojis dans l'interface.
+import { LUCIDE } from './lucideIcons';
+import Coin from './Coin';
+import { EMOJI_ICON } from './emojiMap';
+
 const P = {
   dashboard: 'M4 4h7v9H4z M13 4h7v5h-7z M13 11h7v9h-7z M4 15h7v5H4z',
   chart: 'M4 19V5 M4 19h16 M8 15l3-4 3 2 5-7',
@@ -70,7 +74,8 @@ const P = {
 };
 
 export default function Icon({ name, size = 20, className = '', label, strokeWidth, ...rest }) {
-  const d = P[name];
+  if (name === 'coin') return <Coin size={size} label={label ?? 'InvestCoins'} className={className} />;
+  const d = P[name] ?? LUCIDE[name];
   if (!d) return null;
   return (
     <svg
@@ -84,10 +89,37 @@ export default function Icon({ name, size = 20, className = '', label, strokeWid
       aria-hidden={label ? undefined : true}
       focusable="false"
       {...rest}
+      style={size > 24 ? { width: size, height: size, ...(rest.style || {}) } : rest.style}
     >
-      <path d={d} />
+      {Array.isArray(d) ? d.map((x, i) => <path key={i} d={x} />) : <path d={d} />}
     </svg>
   );
 }
 
-export const ICON_NAMES = Object.keys(P);
+export const ICON_NAMES = [...Object.keys(P), ...Object.keys(LUCIDE).filter((k) => !(k in P))];
+
+// Icône décrite par une donnée (domaine, badge, thème, avatar…) : nom d'icône, ou ancienne valeur « emoji » déjà enregistrée.
+export function Glyph({ g, size = 20, label, className = '' }) {
+  const key = String(g ?? '').replace(/\uFE0F/g, '');
+  const name = (P[key] || LUCIDE[key] || key === 'coin') ? key : EMOJI_ICON[key];
+  return name ? <Icon name={name} size={size} label={label} className={className} /> : null;
+}
+
+// Médaille de classement : or, argent, bronze (rang 1 à 3) ; au-delà, le numéro.
+const MEDAL_COLOR = ['#e6a817', '#9aa5b4', '#b8742f'];
+const MEDAL_LABEL = ['1re place', '2e place', '3e place'];
+export function Medal({ rank, size = 18 }) {
+  if (rank >= 1 && rank <= 3) return <span style={{ color: MEDAL_COLOR[rank - 1], display: 'inline-flex' }}><Icon name="medal" size={size} label={MEDAL_LABEL[rank - 1]} /></span>;
+  return <>{rank}</>;
+}
+
+// Pastille de badge (récompense) : l'icône dans un médaillon dont la couleur suit la rareté.
+const RARITY = { common: '#8b93a7', rare: '#4f9cf9', very_rare: '#b36cff', unique: '#f0b429' };
+export function BadgeMedal({ icon, rarity = 'rare', size = 44, label }) {
+  const c = RARITY[rarity] ?? '#8b5cf6';
+  return (
+    <span className="ik-badgemedal" style={{ width: size, height: size, color: c, background: `color-mix(in srgb, ${c} 16%, transparent)`, boxShadow: `0 0 0 1.5px color-mix(in srgb, ${c} 55%, transparent)` }}>
+      <Glyph g={icon} size={Math.round(size * 0.55)} label={label} />
+    </span>
+  );
+}

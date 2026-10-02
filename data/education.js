@@ -5,9 +5,9 @@ const baseEducationDomains = [
     id: 'crypto',
     name: 'Cryptomonnaies',
     description: 'Maîtriser Bitcoin, Ethereum et DeFi',
-    icon: '₿',
+    icon: 'bitcoin',
     color: '#F7931A',
-    badge: '🪙',
+    badge: 'coin',
     totalChapters: 10,
     chapters: [
       {
@@ -1856,24 +1856,24 @@ Checklist d'évaluation :
 
 ## Red Flags Avancés
 
-🚩 Tokenomics
+Tokenomics
 - Inflation très élevée (>50% annuel)
 - Distribution centralisée
 - Vesting court pour fondateurs
 
-🚩 Technique
+Technique
 - Code non audité
 - Pas de mise à jour depuis longtemps
 - Bugs de sécurité reportés
 - Forks constants
 
-🚩 Marché
+Marché
 - Pump & dump patterns
 - Washtrading apparent
 - Liquidité illusoire
 - Dominance d'une adresse
 
-🚩 Équipe
+Équipe
 - Développeurs anonymes
 - Pas de track record
 - Communication défensive

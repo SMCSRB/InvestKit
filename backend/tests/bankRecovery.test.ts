@@ -28,7 +28,7 @@ describe.skipIf(!hasDb)('procédure de rétablissement après défaut', () => {
   const defaultedStocksPlayer = async (balance = 300) => {
     const uid = await createUser({ balance, freeDomain: 'stocks' });
     await trading.getPortfolioView(uid, 'stocks');
-    await trading.buy(uid, 'stocks', 'LVMH', 2);                                      // 240 🪙 de titres
+    await trading.buy(uid, 'stocks', 'LVMH', 2);                                      // 240  InvestCoins de titres
     const { loanId } = await withTx((c) => originateLoan(c, { userId: uid, product: 'portfolio', domain: 'stocks', principalCoins: 600, annualRatePct: 3, months: 1, clockTotal: 2010, repaymentType: 'interest_only' }));
     await query(`UPDATE bank_loans SET status = 'defaulted', missed_instalments = 3 WHERE id = $1`, [loanId]);
     await query(`UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'default', defaults = 1 WHERE user_id = $1`, [uid]);
@@ -44,7 +44,7 @@ describe.skipIf(!hasDb)('procédure de rétablissement après défaut', () => {
     expect(pv.willLose.rank).toBe(true);
     expect(pv.willLose.badges).toContain('navigateur');
     expect(pv.willHappen.debtWrittenOffCoins).toBe(600);
-    expect(pv.willHappen.borrowedCoinsSeized).toBe(600);                              // les 600 🪙 empruntés, non dépensés
+    expect(pv.willHappen.borrowedCoinsSeized).toBe(600);                              // les 600  InvestCoins empruntés, non dépensés
     expect(pv.willHappen.baseCapitalTopUpCoins).toBe(RECOVERY.baseCapitalCoins - (before - 600));
     expect(pv.confirmPhrase).toBe('RETABLISSEMENT');
     expect(await balanceOf(uid)).toBe(before);                                        // simple aperçu

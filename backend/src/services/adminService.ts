@@ -99,7 +99,7 @@ export const adminService = {
       await client.query('BEGIN');
       const balance = await investcoinsRepository.applyTransaction(id, amountRaw, 'admin_adjustment', { adminId, reason }, client);
       await auditLog({ userId: adminId, action: 'admin_adjust_coins', entityType: 'user', entityId: id, metadata: { amount: amountRaw, reason }, ip }, client);
-      await notify(client, id, { kind: 'admin_coins', title: amountRaw > 0 ? `+${amountRaw} 🪙 offerts` : `${amountRaw} 🪙 retirés`, body: `Ajustement de ton solde par l'équipe : ${reason}` });
+      await notify(client, id, { kind: 'admin_coins', title: amountRaw > 0 ? `+${amountRaw} InvestCoins offerts` : `${amountRaw} InvestCoins retirés`, body: `Ajustement de ton solde par l'équipe : ${reason}` });
       await client.query('COMMIT');
       return { success: true, balance };
     } catch (e) {

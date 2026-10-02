@@ -14,7 +14,7 @@ describe.skipIf(!hasDb)('faille éducation : détection et correction des compte
   const realDomain = Object.keys(EDUCATION_CATALOG)[0];
   const realChapter = EDUCATION_CATALOG[realDomain][0];
 
-  // Un abuseur : 1 vrai chapitre (légitime) + 5 chapitres inventés (20 🪙 chacun) + 1 domaine inventé (100 🪙).
+  // Un abuseur : 1 vrai chapitre (légitime) + 5 chapitres inventés (20  InvestCoins chacun) + 1 domaine inventé (100  InvestCoins).
   const abuser = async (balanceAfter?: number) => {
     const u = await createUser({ balance: 0 });
     await addRow(u, realDomain, realChapter, 20, 100); await investcoinsRepository.applyTransaction(u, 20, 'quiz_chapter', { domainId: realDomain });

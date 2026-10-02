@@ -40,8 +40,8 @@ export default function GlossairePage() {
                 <h3 style={{ margin: '0 0 4px', fontSize: 17, color: 'var(--ik-text)' }}>{it.term}</h3>
                 <p style={{ margin: '0 0 6px', fontWeight: 600 }}>{it.short}</p>
                 <p style={{ margin: 0, color: 'var(--ik-text-2)', lineHeight: 1.6 }}>{it.long}</p>
-                {it.inGame && <p style={{ margin: '8px 0 0', color: 'var(--ik-accent)', fontSize: 14 }}>🎮 Dans le jeu : {it.inGame}</p>}
-                {it.quiz && <p style={{ margin: '8px 0 0', fontSize: 14 }}><Link href={`/education/${it.quiz.domain}/${it.quiz.chapter}`} style={{ color: 'var(--ik-accent)' }}>📝 Teste-toi : chapitre et quiz liés →</Link></p>}
+                {it.inGame && <p style={{ margin: '8px 0 0', color: 'var(--ik-accent)', fontSize: 14 }}>Dans le jeu : {it.inGame}</p>}
+                {it.quiz && <p style={{ margin: '8px 0 0', fontSize: 14 }}><Link href={`/education/${it.quiz.domain}/${it.quiz.chapter}`} style={{ color: 'var(--ik-accent)' }}>Teste-toi : chapitre et quiz liés →</Link></p>}
               </article>
             ))}
           </section>

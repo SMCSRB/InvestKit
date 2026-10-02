@@ -209,14 +209,14 @@ describe('impôt annuel sur les loyers : base réelle simplifiée, réglé en d�
 describe('conversion euros → InvestCoins : ni perte ni création', () => {
   const C = EUROS_PER_COIN; // 20 €
   it('exemples chiffrés', () => {
-    expect(convertEurosToCoins(0, toCents(25), C)).toEqual({ coins: 1, remainderCents: 500 });   // 25 € = 1 🪙 + 5 € en attente
+    expect(convertEurosToCoins(0, toCents(25), C)).toEqual({ coins: 1, remainderCents: 500 });   // 25 € = 1 InvestCoin + 5 € en attente
     expect(convertEurosToCoins(1500, toCents(6), C)).toEqual({ coins: 1, remainderCents: 100 });  // 15 + 6 = 21 €
     expect(convertEurosToCoins(1999, 1, C)).toEqual({ coins: 1, remainderCents: 0 });            // pile 20 €
     expect(convertEurosToCoins(0, toCents(19.99), C)).toEqual({ coins: 0, remainderCents: 1999 });
     expect(convertEurosToCoins(0, toCents(100), C)).toEqual({ coins: 5, remainderCents: 0 });
   });
   it('déficit : arrondi contre le joueur (jamais de débit « offert »)', () => {
-    expect(convertEurosToCoins(0, toCents(-5), C)).toEqual({ coins: -1, remainderCents: 1500 });  // −5 € débite 1 🪙, 15 € de crédit en attente
+    expect(convertEurosToCoins(0, toCents(-5), C)).toEqual({ coins: -1, remainderCents: 1500 });  // −5 € débite 1 InvestCoin, 15 € de crédit en attente
     expect(convertEurosToCoins(500, toCents(-25), C)).toEqual({ coins: -1, remainderCents: 0 });
     expect(convertEurosToCoins(500, toCents(-21), C)).toEqual({ coins: -1, remainderCents: 400 });
   });

@@ -67,8 +67,7 @@ export default function OptimizedHeader() {
           }}
           onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
           onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-        >
-          💎 InvestKit
+        > InvestKit
         </Link>
 
         <div style={{
@@ -123,8 +122,7 @@ export default function OptimizedHeader() {
                 }}
                 onMouseEnter={(e) => e.target.style.color = '#3b82f6'}
                 onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
-              >
-                📊 Dashboard
+              > Dashboard
               </Link>
               <button
                 onClick={handleLogout}

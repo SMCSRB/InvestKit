@@ -189,7 +189,7 @@ export const buildOpenApiSpec = () => {
     info: {
       title: 'InvestKit API',
       version: '1.0.0',
-      description: 'API de la plateforme InvestKit. Les pièces (🪙) sont une monnaie de jeu : ni boutique, ni retrait, ni achat en argent réel.',
+      description: 'API de la plateforme InvestKit. Les pièces (InvestCoins) sont une monnaie de jeu : ni boutique, ni retrait, ni achat en argent réel.',
     },
     servers: [{ url: '/' }],
     security: [{ bearerAuth: [] }],

@@ -14,7 +14,7 @@ export default function ChangelogPage() {
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <Link href="/" style={{ color: 'var(--ik-accent)', textDecoration: 'none' }}>← Accueil</Link>
-        <h1 style={{ fontSize: 'clamp(24px, 6vw, 32px)', margin: '16px 0 24px' }}>🆕 Nouveautés</h1>
+        <h1 style={{ fontSize: 'clamp(24px, 6vw, 32px)', margin: '16px 0 24px' }}>Nouveautés</h1>
         <LiveEntries />
         {CHANGELOG.map((entry) => (
           <section key={entry.title} style={{ background: 'color-mix(in srgb, var(--ik-text) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', borderRadius: 12, padding: 20, marginBottom: 16 }}>

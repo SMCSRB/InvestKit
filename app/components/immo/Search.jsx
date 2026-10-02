@@ -36,7 +36,7 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
         <Heart on={favorite} onClick={() => onFavorite(l.id)} label={favorite ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`} />
       </div>
       <div className="rp-card__body">
-        <div className="rp-card__price"><strong>{eur(l.price)}</strong><span title={eurosPerCoin ? `Prix en InvestCoins (1 🪙 = ${eurosPerCoin} €)` : 'Prix en InvestCoins'}>≈ {coins(l.priceCoins)}</span></div>
+        <div className="rp-card__price"><strong>{eur(l.price)}</strong><span title={eurosPerCoin ? `Prix en InvestCoins (1 InvestCoin = ${eurosPerCoin} €)` : 'Prix en InvestCoins'}>≈ {coins(l.priceCoins)}</span></div>
         <h3 className="rp-card__title"><button type="button" onClick={() => onOpen(l.id)}>{TYPE_LABEL[l.type]} · {l.neighborhoodName}</button></h3>
         <p className="rp-card__meta">{l.surfaceSqm} m² · {l.rooms} pièce{l.rooms > 1 ? 's' : ''} · {city?.name ?? l.cityId}</p>
         <p className="rp-card__meta rp-card__meta--soft">{eur(l.pricePerSqm)}/m² · rendement brut {pct(l.grossYieldPct)} · {CONDITION_LABEL[l.condition]}</p>

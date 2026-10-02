@@ -90,7 +90,7 @@ export const onboardingService = {
       const coins = won.length * CHECKLIST_REWARD_COINS;
       if (coins > 0) {
         balance = await investcoinsRepository.applyTransaction(userId, coins, 'checklist_reward', { steps: won }, client as any);
-        await notify(client as any, userId, { kind: 'onboarding_reward', title: `+${coins} 🪙 pour ta progression`, body: `Étapes validées : ${won.map((k) => STEPS.find((s) => s.key === k)!.title).join(' · ')}`, link: '/dashboard' });
+        await notify(client as any, userId, { kind: 'onboarding_reward', title: `+${coins} InvestCoins pour ta progression`, body: `Étapes validées : ${won.map((k) => STEPS.find((s) => s.key === k)!.title).join(' · ')}`, link: '/dashboard' });
       }
       await client.query('COMMIT');
       return { success: true, coins, steps: won, balance };

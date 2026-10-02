@@ -597,6 +597,9 @@
   stroke-linejoin: round;
 }
 
+/* Médaillon de badge */
+.ik-badgemedal { display: inline-grid; place-items: center; border-radius: 14px; flex: none; }
+
 /* ---------- Pièces InvestCoins qui s'envolent (récompense) ---------- */
 .ik-coin-fx {
   position: fixed;

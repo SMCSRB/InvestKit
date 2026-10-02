@@ -61,7 +61,7 @@ describe.skipIf(!hasDb)('Prêt sur portefeuille Crypto, classement, contrôles (
   it('accès et devis : 30 % de la valeur, refus sans garantie, un seul prêt, droits du domaine', async () => {
     const { id } = await player();
     await expect(loans.quote(id, 1000)).resolves.toMatchObject({ approved: false, reasons: [{ code: 'NO_COLLATERAL' }, { code: 'OVER_CAPACITY' }] });
-    await buy(id, 'LNCALM', '100');                           // ≈ 10 000 🪙 de garantie
+    await buy(id, 'LNCALM', '100');                           // ≈ 10 000  InvestCoins de garantie
     const v = await loans.view(id);
     expect(v.capacityCoins).toBe(Math.floor(v.limits.value * 0.3));
     expect(v.ltv).toMatchObject({ max: 30, call: 65, liquidation: 80 });

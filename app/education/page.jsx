@@ -7,6 +7,7 @@ import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
+import { Glyph } from '@/app/components/ui/Icon';
 
 // Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
 const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
@@ -56,8 +57,7 @@ export default function EducationPage() {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}
-            >
-              📚 Académie InvestKit
+            > Académie InvestKit
             </h1>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
               Maîtrisez l'investissement avec nos formations complètes. Obtenez des badges pour chaque domaine maîtrisé.
@@ -190,14 +190,14 @@ export default function EducationPage() {
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="text-4xl">{domain.icon}</div>
+                          <div className="text-4xl"><Glyph g={domain.icon} size={36} /></div>
                           <div>
                             <h3 className="text-xl font-bold text-white">{domain.name}</h3>
                             <p className="text-sm text-gray-400">{domain.description}</p>
                           </div>
                         </div>
                         <div className="text-3xl">
-                          {isCompleted ? domain.badge : '🔒'}
+                          <Glyph g={isCompleted ? domain.badge : 'lock'} size={28} />
                         </div>
                       </div>
 
@@ -281,7 +281,7 @@ export default function EducationPage() {
                         e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
                       }}
                     >
-                      <div className="text-5xl mb-2">{domain.badge}</div>
+                      <div className="text-5xl mb-2"><Glyph g={domain.badge} size={44} /></div>
                       <h4 className="font-bold text-white mb-1">
                         Maître {domain.name}
                       </h4>

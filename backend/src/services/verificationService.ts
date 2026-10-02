@@ -20,7 +20,7 @@ export const grantProStartingCapital = async (userId: string, db: Queryable): Pr
   );
   if (marked.rows.length === 0) return 0;
   await investcoinsRepository.applyTransaction(userId, bonus, 'pro_starting_bonus', undefined, db);
-  await notify(db, userId, { kind: 'pro_bonus', title: 'Bienvenue dans Pro', body: `${bonus} 🪙 de capital de départ supplémentaire t'ont été versés.` });
+  await notify(db, userId, { kind: 'pro_bonus', title: 'Bienvenue dans Pro', body: `${bonus} InvestCoins de capital de départ supplémentaire t'ont été versés.` });
   return bonus;
 };
 

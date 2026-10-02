@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { isLoggedIn } from '@/app/lib/session';
 import AppShell from '@/app/components/shell/AppShell';
+import Coin from '@/app/components/ui/Coin';
+import Icon from '@/app/components/ui/Icon';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -26,7 +28,7 @@ const btn = (variant = 'default') => ({ padding: '8px 14px', borderRadius: 8, bo
 const input = { width: 'auto', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: 13 };
 const fr = (n) => Number(n ?? 0).toLocaleString('fr-FR');
 const date = (d) => (d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
-const LEVEL = { critique: { c: C.bad, i: '⛔' }, attention: { c: C.warn, i: '⚠️' }, info: { c: C.accent, i: 'ℹ️' } };
+const LEVEL = { critique: { c: C.bad, i: 'ban' }, attention: { c: C.warn, i: 'triangleAlert' }, info: { c: C.accent, i: 'info' } };
 
 function Stat({ label, value, sub }) {
   return (
@@ -74,10 +76,10 @@ function Overview() {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <section aria-label="Alertes" style={{ display: 'grid', gap: 8 }}>
-        {alerts?.length === 0 && <div style={{ ...card, borderColor: 'color-mix(in srgb, var(--ik-positive) 40%, transparent)' }}>✅ Aucune alerte.</div>}
+        {alerts?.length === 0 && <div style={{ ...card, borderColor: 'color-mix(in srgb, var(--ik-positive) 40%, transparent)' }}>Aucune alerte.</div>}
         {alerts?.map((a) => (
           <div key={a.code} style={{ ...card, borderColor: LEVEL[a.level].c }}>
-            <strong>{LEVEL[a.level].i} {a.title}</strong>
+            <strong><Icon name={LEVEL[a.level].i} size={16} /> {a.title}</strong>
             <div style={{ fontSize: 13, color: 'var(--ik-text-2)', marginTop: 4 }}>{a.detail}</div>
           </div>
         ))}
@@ -87,7 +89,7 @@ function Overview() {
         <Stat label="Actifs (24 h / 7 j / 30 j)" value={`${fr(u.active_1d)} / ${fr(u.active_7d)} / ${fr(u.active_30d)}`} />
         <Stat label="Abonnés Pro" value={fr(u.pro)} sub={`${u.total ? Math.round((u.pro / u.total) * 100) : 0} % des comptes`} />
         <Stat label="Avec 2FA" value={fr(u.with_2fa)} sub={`${fr(u.disabled)} compte(s) suspendu(s)`} />
-        <Stat label="Pièces en circulation" value={`🪙 ${fr(stats.coins.inCirculation)}`} />
+        <Stat label="Pièces en circulation" value={`${fr(stats.coins.inCirculation)} InvestCoins`} />
       </div>
       <div style={card}>
         <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Inscriptions — 30 derniers jours</h3>
@@ -134,17 +136,17 @@ function UserDetail({ id, onClose, onChanged }) {
         <div>
           <h3 style={{ margin: 0, color: 'var(--ik-text)' }}>{u.email}</h3>
           <div style={{ fontSize: 12, color: C.muted }}>{u.username || '(pas de pseudo)'} · {isAdmin ? 'administrateur' : 'utilisateur'} · {(u.pro_override || u.subscription_tier === 'pro') ? 'Pro' : 'gratuit'}{u.pro_override ? ' (manuel)' : ''} · 2FA {u.enable_2fa ? 'oui' : 'non'} · {u.verified ? 'e-mail vérifié' : 'non vérifié'}</div>
-          <div style={{ fontSize: 12, color: C.muted }}>Inscrit le {date(u.created_at)} · dernière connexion {date(u.last_login_at)} · solde 🪙 {fr(u.balance)}</div>
-          {u.disabled_at && <div style={{ color: C.bad, fontSize: 13, marginTop: 4 }}>⛔ Suspendu le {date(u.disabled_at)} — {u.disabled_reason}</div>}
+          <div style={{ fontSize: 12, color: C.muted }}>Inscrit le {date(u.created_at)} · dernière connexion {date(u.last_login_at)} · solde <Coin /> {fr(u.balance)}</div>
+          {u.disabled_at && <div style={{ color: C.bad, fontSize: 13, marginTop: 4 }}>Suspendu le {date(u.disabled_at)} — {u.disabled_reason}</div>}
         </div>
         <button style={btn()} onClick={onClose}>Fermer</button>
       </div>
       {err && <p role="alert" style={{ color: C.bad, fontSize: 13 }}>{err}</p>}
-      {msg && <p role="status" style={{ color: C.good, fontSize: 13 }}>✅ {msg}</p>}
+      {msg && <p role="status" style={{ color: C.good, fontSize: 13 }}><Icon name="circleCheck" size={18} /> {msg}</p>}
       {!isAdmin && (
         <div style={{ display: 'grid', gap: 12, marginTop: 12 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <button style={btn()} onClick={() => { if (confirm(`Voir le site comme ${u.email} ? Lecture seule, 15 minutes, action tracée.`)) act(async () => { await api(`/users/${id}/impersonate`, { method: 'POST' }); window.location.href = '/dashboard'; }, 'Impersonation démarrée'); }}>👁️ Voir comme cet utilisateur</button>
+            <button style={btn()} onClick={() => { if (confirm(`Voir le site comme ${u.email} ? Lecture seule, 15 minutes, action tracée.`)) act(async () => { await api(`/users/${id}/impersonate`, { method: 'POST' }); window.location.href = '/dashboard'; }, 'Impersonation démarrée'); }}>Voir comme cet utilisateur</button>
             <button style={btn()} onClick={() => act(() => api(`/users/${id}/pro`, { method: 'POST', body: { proOverride: !u.pro_override } }), u.pro_override ? 'Statut Pro manuel retiré' : 'Statut Pro manuel accordé')}>
               {u.pro_override ? 'Retirer le Pro manuel' : 'Accorder le Pro manuel'}
             </button>
@@ -158,7 +160,7 @@ function UserDetail({ id, onClose, onChanged }) {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <input aria-label="Montant en pièces" type="number" placeholder="± pièces" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ ...input, width: 120 }} />
             <span style={{ fontSize: 12, color: C.muted }}>utilise le motif ci-dessus · max ±100 000 · inscrit au registre</span>
-            <button style={btn('primary')} onClick={() => { if (confirm(`Ajuster de ${amount} 🪙 ?`)) act(() => api(`/users/${id}/coins`, { method: 'POST', body: { amount: Number(amount), reason } }), 'Pièces ajustées'); }} disabled={!amount || Number(amount) === 0}>Ajuster</button>
+            <button style={btn('primary')} onClick={() => { if (confirm(`Ajuster de ${amount} InvestCoins ?`)) act(() => api(`/users/${id}/coins`, { method: 'POST', body: { amount: Number(amount), reason } }), 'Pièces ajustées'); }} disabled={!amount || Number(amount) === 0}>Ajuster</button>
           </div>
         </div>
       )}
@@ -210,9 +212,9 @@ function Users() {
                 <td style={{ padding: '10px 12px' }}>{u.email}</td>
                 <td style={{ padding: '10px 12px' }}>{u.username || '—'}</td>
                 <td style={{ padding: '10px 12px' }}>{(u.pro_override || u.subscription_tier === 'pro') ? 'Pro' : 'Gratuit'}</td>
-                <td style={{ padding: '10px 12px' }}>🪙 {fr(u.balance)}</td>
+                <td style={{ padding: '10px 12px' }}><Coin /> {fr(u.balance)}</td>
                 <td style={{ padding: '10px 12px' }}>{date(u.created_at)}</td>
-                <td style={{ padding: '10px 12px' }}>{u.disabled_at ? '⛔ suspendu' : u.role === 'admin' ? '🛡️ admin' : u.verified ? '' : 'non vérifié'}</td>
+                <td style={{ padding: '10px 12px' }}>{u.disabled_at ? 'suspendu' : u.role === 'admin' ? 'admin' : u.verified ? '' : 'non vérifié'}</td>
               </tr>
             ))}
             {data && data.users.length === 0 && <tr><td colSpan="6" style={{ padding: 16, color: C.muted }}>Aucun résultat.</td></tr>}
@@ -315,16 +317,16 @@ function Feedback() {
   const setSt = async (id, st) => { try { await api(`/feedback/${id}`, { method: 'POST', body: { status: st } }); load(); } catch (e) { setErr(e.message); } };
   return (
     <div style={{ display: 'grid', gap: 12 }}>
-      {data && <div style={{ ...card, fontSize: 13 }}>👍 {data.thumbs.up} · 👎 {data.thumbs.down} · {data.summary.filter((s) => s.kind !== 'thumb').map((s) => `${s.kind === 'bug' ? 'bugs' : 'idées'} ${FB_STATUS[s.status].toLowerCase()} : ${s.n}`).join(' · ') || 'aucun bug ni idée'}</div>}
+      {data && <div style={{ ...card, fontSize: 13 }}><Icon name="thumbsUp" size={18} /> {data.thumbs.up} ·{data.thumbs.down} · {data.summary.filter((s) => s.kind !== 'thumb').map((s) => `${s.kind === 'bug' ? 'bugs' : 'idées'} ${FB_STATUS[s.status].toLowerCase()} : ${s.n}`).join(' · ') || 'aucun bug ni idée'}</div>}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <select aria-label="Statut" value={status} onChange={(e) => setStatus(e.target.value)} style={input}><option value="">Tous les statuts</option>{Object.entries(FB_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} style={input}><option value="">Tous les types</option><option value="bug">Bugs</option><option value="idea">Idées</option><option value="thumb">👍 / 👎</option></select>
+        <select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} style={input}><option value="">Tous les types</option><option value="bug">Bugs</option><option value="idea">Idées</option><option value="thumb">/</option></select>
       </div>
       {err && <p role="alert" style={{ color: C.bad }}>{err}</p>}
       {data?.feedback.map((f) => (
         <div key={f.id} style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', fontSize: 12, color: C.muted }}>
-            <span>{f.kind === 'bug' ? '🐞 Bug' : f.kind === 'idea' ? '💡 Idée' : f.rating === 1 ? '👍' : '👎'} · {f.user_email || 'compte supprimé'} · {f.page || ''} · {date(f.created_at)}</span>
+            <span>{f.kind === 'bug' ? 'Bug' : f.kind === 'idea' ? 'Idée' : f.rating === 1 ? 'Utile' : 'Pas utile'} · {f.user_email || 'compte supprimé'} · {f.page || ''} · {date(f.created_at)}</span>
             <span>{FB_STATUS[f.status]}</span>
           </div>
           {f.message && <p style={{ margin: '8px 0', fontSize: 14, whiteSpace: 'pre-wrap' }}>{f.message}</p>}
@@ -336,7 +338,7 @@ function Feedback() {
   );
 }
 
-const KINDS = { info: 'ℹ️ Information', new: '🆕 Nouveauté (page des nouveautés)', maintenance: '🔧 Maintenance' };
+const KINDS = { info: 'Information', new: 'Nouveauté (page des nouveautés)', maintenance: 'Maintenance' };
 
 function Announcements() {
   const [list, setList] = useState([]);
@@ -388,7 +390,7 @@ function Billing() {
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <div style={{ ...card, fontSize: 13 }}>
-        Stripe : {d.stripeConfigured ? '✅ configuré' : '⚠️ non configuré'} · {d.summary.map((s) => `${s.status} : ${s.n}`).join(' · ') || 'aucun abonnement'}
+        Stripe : {d.stripeConfigured ? 'configuré' : 'non configuré'} · {d.summary.map((s) => `${s.status} : ${s.n}`).join(' · ') || 'aucun abonnement'}
         <div style={{ color: C.muted, marginTop: 4 }}>Remboursements et factures : dans le tableau de bord Stripe (dashboard.stripe.com).</div>
       </div>
       <div style={{ ...card, overflowX: 'auto', padding: 0 }}>
@@ -412,7 +414,7 @@ function System() {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
-        <Stat label="Base de données" value={d.database.ok ? '✅ OK' : '⛔ Hors service'} sub={`${d.database.pingMs} ms · connexions ${d.database.pool.total} (${d.database.pool.waiting} en attente)`} />
+        <Stat label="Base de données" value={d.database.ok ? 'OK' : 'Hors service'} sub={`${d.database.pingMs} ms · connexions ${d.database.pool.total} (${d.database.pool.waiting} en attente)`} />
         <Stat label="En marche depuis" value={`${h} h ${m} min`} sub={`Node ${d.node} · ${d.environment}`} />
         <Stat label="Mémoire de l'API" value={`${d.memory.rssMb} Mo`} sub={`Système : ${fr(d.memory.systemFreeMb)} libres / ${fr(d.memory.systemTotalMb)} Mo`} />
         <Stat label="Charge (1 / 5 / 15 min)" value={d.loadAverage.join(' / ')} sub={`${d.cpus} processeur(s)`} />
@@ -421,7 +423,7 @@ function System() {
         <h3 style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--ik-text)' }}>Contrôles de configuration</h3>
         {d.config.map((c) => (
           <div key={c.key} style={{ fontSize: 13, padding: '4px 0' }}>
-            {c.status === 'ok' ? '✅' : c.status === 'ko' ? '⚠️' : 'ℹ️'} {c.label}
+            <Icon name={c.status === 'ok' ? 'circleCheck' : c.status === 'ko' ? 'triangleAlert' : 'info'} size={16} /> {c.label}
             {c.status === 'ko' && <span style={{ color: C.muted }}> — {c.hint}</span>}
           </div>
         ))}
@@ -431,14 +433,14 @@ function System() {
 }
 
 const TABS = [
-  { id: 'overview', label: '📊 Vue d\'ensemble', C: Overview },
-  { id: 'users', label: '👥 Utilisateurs', C: Users },
-  { id: 'audit', label: '🧾 Journal', C: Audit },
-  { id: 'feedback', label: '💬 Retours', C: Feedback },
-  { id: 'announcements', label: '📣 Annonces', C: Announcements },
-  { id: 'flags', label: '🚩 Drapeaux', C: Flags },
-  { id: 'billing', label: '💳 Facturation', C: Billing },
-  { id: 'system', label: '🖥️ Système', C: System },
+  { id: 'overview', label: 'Vue d\'ensemble', C: Overview },
+  { id: 'users', label: 'Utilisateurs', C: Users },
+  { id: 'audit', label: 'Journal', C: Audit },
+  { id: 'feedback', label: 'Retours', C: Feedback },
+  { id: 'announcements', label: 'Annonces', C: Announcements },
+  { id: 'flags', label: 'Drapeaux', C: Flags },
+  { id: 'billing', label: 'Facturation', C: Billing },
+  { id: 'system', label: 'Système', C: System },
 ];
 
 export default function AdminPage() {
@@ -459,7 +461,7 @@ export default function AdminPage() {
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 26px)', color: 'var(--ik-text)' }}>🛡️ Administration</h1>
+          <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 26px)', color: 'var(--ik-text)' }}>Administration</h1>
           <Link href="/dashboard" style={{ color: 'var(--ik-accent)', textDecoration: 'none', fontSize: 14 }}>← Retour au site</Link>
         </div>
         {state === 'checking' && <p style={{ color: C.muted }}>Vérification des droits…</p>}

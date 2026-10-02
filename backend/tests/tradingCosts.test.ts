@@ -10,7 +10,7 @@ beforeEach(() => { TRADING_COSTS.enabled = true; TRADING_TAX.enabled = true; });
 const ts = () => emptyTaxState();
 
 describe('courtage', () => {
-  it('0,5 % sur une action, minimum 1 🪙, arrondi vers le haut', () => {
+  it('0,5 % sur une action, minimum 1 InvestCoin, arrondi vers le haut', () => {
     expect(brokerageFee('stock', 1000)).toBe(5);
     expect(brokerageFee('stock', 50)).toBe(1);
     expect(brokerageFee('stock', 1001)).toBe(6);
@@ -44,7 +44,7 @@ describe('impôt sur la plus-value', () => {
     const never = saleTax({ account: 'pea', year: 2024, proceeds: 2000, basis: 1000, taxState: ts() });
     expect(never.incomeTax).toBe(128); // PEA jamais alimenté : pas d'exonération
   });
-  it('crypto : sous 305 🪙 de cessions dans l\'année, pas d\'impôt ; au-dessus, flat tax', () => {
+  it('crypto : sous 305  InvestCoins de cessions dans l\'année, pas d\'impôt ; au-dessus, flat tax', () => {
     const low = saleTax({ account: 'crypto', year: 2024, proceeds: 300, basis: 100, taxState: ts() });
     expect(low.total).toBe(0);
     const cumul = saleTax({ account: 'crypto', year: 2024, proceeds: 200, basis: 100, taxState: { ...ts(), cryptoSales: { '2024': 200 } } });
@@ -114,7 +114,7 @@ describe.skipIf(!hasDb)('achat / vente avec frais et impôts (base réelle)', ()
     await expect(tradingService.buy(uid, 'stocks', 'TTE', 1, 'livret')).rejects.toMatchObject({ code: 'INVALID_ACCOUNT' });
   });
 
-  it('crypto : imposée à la vente contre euros (2016 : 19 % + 15,5 %), seuil des 305 🪙 annuel', async () => {
+  it('crypto : imposée à la vente contre euros (2016 : 19 % + 15,5 %), seuil des 305  InvestCoins annuel', async () => {
     const uid = await createUser({ tier: 'pro', balance: 100000 });
     await tradingService.buy(uid, 'crypto', 'BTC', 1); // 2013 : 700
     await advance(uid, 'crypto', 3); // 2016 : 900
@@ -123,10 +123,10 @@ describe.skipIf(!hasDb)('achat / vente avec frais et impôts (base réelle)', ()
     await expect(tradingService.buy(uid, 'crypto', 'BTC', 1, 'pea')).rejects.toMatchObject({ code: 'INVALID_ACCOUNT' });
   });
 
-  it('crypto : petites cessions de l\'année (≤ 305 🪙) non imposées', async () => {
+  it('crypto : petites cessions de l\'année (≤ 305  InvestCoins) non imposées', async () => {
     const uid = await createUser({ tier: 'pro', balance: 100000 });
     await advance(uid, 'crypto', 2); // 2015 : l'ETH existe
-    await tradingService.buy(uid, 'crypto', 'ETH', 0.3); // 1 🪙
+    await tradingService.buy(uid, 'crypto', 'ETH', 0.3); // 1 InvestCoin
     await advance(uid, 'crypto', 2); // 2017 : 750
     const s = await tradingService.sell(uid, 'crypto', 'ETH', 0.3);
     expect(s.proceeds).toBe(225);

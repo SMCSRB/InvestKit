@@ -27,7 +27,7 @@ describe('banque : échéancier en pièces (centièmes entiers)', () => {
     expect(s.totalInterestH).toBe(0);
     expect(s.rows[0].paymentH).toBe(10000);
   });
-  it('cas de référence : 100 000 € (ici 100 000 🪙) à 3 % sur 20 ans ≈ 554,60 par mois', () => {
+  it('cas de référence : 100 000 € (ici 100 000  InvestCoins) à 3 % sur 20 ans ≈ 554,60 par mois', () => {
     const s = buildCoinSchedule({ principalCoins: 100000, annualRatePct: 3, months: 240 });
     expect(s.rows[0].paymentH / 100).toBeCloseTo(554.6, 1);
   });
