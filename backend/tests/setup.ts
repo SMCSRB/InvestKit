@@ -1,3 +1,4 @@
+process.env.AUTH_MIN_RESPONSE_MS = process.env.AUTH_MIN_RESPONSE_MS ?? '0'; // pas d'attente artificielle dans les tests (sauf ceux qui la testent)
 // Redirige l'application vers la base de TEST avant tout import de ../src.
 // Garde-fou : on refuse de tourner sur une base dont le nom ne contient pas
 // "test" (pour ne jamais effacer de vraies données par erreur).

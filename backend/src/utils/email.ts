@@ -190,3 +190,19 @@ const generatePasswordResetEmailHTML = (link: string) => `
 
 export const sendPasswordResetEmail = async (email: string, link: string) =>
   deliverEmail(email, 'Réinitialisation de votre mot de passe - InvestKit', generatePasswordResetEmailHTML(link));
+
+// Envoyé quand quelqu'un tente de s'inscrire avec une adresse qui a déjà un compte : le site répond pareil à l'écran (aucune fuite),
+// et le vrai propriétaire de l'adresse est prévenu ici, dans sa boîte.
+export const sendAccountExistsEmail = async (email: string, loginUrl: string, resetUrl: string) =>
+  deliverEmail(email, 'Tentative d\'inscription avec votre adresse - InvestKit', `
+  <!DOCTYPE html>
+  <html>
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f8fafc; margin:0; padding:20px;">
+      <div style="max-width:600px; margin:0 auto; background:#fff; padding:24px; border-radius:8px;">
+        <h2 style="margin-top:0">Quelqu'un a essayé de créer un compte avec cette adresse</h2>
+        <p>Cette adresse e-mail a déjà un compte InvestKit. Si c'est toi, tu n'as rien à faire de plus : <a href="${loginUrl}">connecte-toi</a>, ou <a href="${resetUrl}">choisis un nouveau mot de passe</a> si tu l'as oublié.</p>
+        <p>Si ce n'est pas toi, ignore ce message : ton compte n'a pas été modifié.</p>
+      </div>
+    </body>
+  </html>`);
