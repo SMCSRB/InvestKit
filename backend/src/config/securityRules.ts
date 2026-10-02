@@ -25,4 +25,5 @@ export const authMinResponseMs = (): number => {
 };
 
 // Plafond d'e-mails automatiques par adresse (anti-harcèlement par boîte mail) : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
-export const MAIL_THROTTLE = { accountExists: { max: 1, windowMs: 60 * 60 * 1000 }, passwordReset: { max: 3, windowMs: 60 * 60 * 1000 }, welcome: { max: 1, windowMs: 24 * 60 * 60 * 1000 } };
+export const MAIL_THROTTLE = { accountExists: { max: 1, windowMs: 60 * 60 * 1000 }, passwordReset: { max: 3, windowMs: 60 * 60 * 1000 }, welcome: { max: 1, windowMs: 24 * 60 * 60 * 1000, maxAttempts: 3, retryDelayMs: 5 * 60 * 1000 } };
+// Mail de bienvenue : un envoi réussi par adresse et par jour ; en cas d'échec, 3 essais au plus, espacés d'au moins 5 minutes. VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.

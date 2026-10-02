@@ -81,27 +81,69 @@ describe.skipIf(!hasDb)('mail de bienvenue : une seule fois, fin d\'onboarding (
     expect(sent).toHaveLength(0);
   });
 
-  it('si l\'envoi échoue, la réservation est rendue et le mail part à la validation suivante', async () => {
+  const ageLastAttempt = (id: string, minutes: number) =>
+    query(`UPDATE users SET welcome_email_last_attempt_at = NOW() - make_interval(mins => $2::int) WHERE id = $1`, [id, minutes]);
+
+  it('échec d\'envoi : réservation rendue, le joueur est réessayé au prochain appel légitime APRÈS le délai', async () => {
     const id = await newPlayer();
     failNext = true;
     await save(id, 'Reessai');
     await settle();
     expect(sent).toHaveLength(0);
-    expect((await query('SELECT welcome_email_sent_at FROM users WHERE id = $1', [id])).rows[0].welcome_email_sent_at).toBeNull();
-    resetMailThrottle();
+    const row = (await query('SELECT welcome_email_sent_at, welcome_email_attempts FROM users WHERE id = $1', [id])).rows[0];
+    expect(row.welcome_email_sent_at).toBeNull();
+    expect(row.welcome_email_attempts).toBe(1);
+
+    await save(id, 'Reessai'); // trop tôt : moins de 5 minutes depuis l'essai raté
+    await settle();
+    expect(sent).toHaveLength(0);
+
+    await ageLastAttempt(id, 6); // 6 minutes plus tard
     await save(id, 'Reessai');
     await settle();
     expect(sent).toHaveLength(1);
+    await ageLastAttempt(id, 60);
+    await save(id, 'Reessai');
+    await settle();
+    expect(sent).toHaveLength(1); // une fois réussi, plus jamais
   });
 
-  it('anti-abus : au plus un mail par adresse et par jour, même si la réservation est rendue puis reprise', async () => {
+  it('nombre d\'essais maximum : après 3 échecs, on n\'insiste plus', async () => {
+    const id = await newPlayer();
+    for (let i = 0; i < 3; i += 1) {
+      failNext = true;
+      await save(id, 'TropEssais');
+      await settle();
+      await ageLastAttempt(id, 10);
+    }
+    expect((await query('SELECT welcome_email_attempts FROM users WHERE id = $1', [id])).rows[0].welcome_email_attempts).toBe(3);
+    await save(id, 'TropEssais');
+    await settle();
+    expect(sent).toHaveLength(0);
+    expect((await query('SELECT welcome_email_attempts FROM users WHERE id = $1', [id])).rows[0].welcome_email_attempts).toBe(3);
+  });
+
+  it('le plafond par adresse ne compte que les envois RÉUSSIS (un échec ne consomme rien)', async () => {
+    const { mailAllowed, mailRecorded } = await import('../src/utils/mailThrottle');
+    const day = 24 * 3600 * 1000;
+    expect(mailAllowed('welcome', 'a@b.fr', 1, day)).toBe(true);
+    expect(mailAllowed('welcome', 'a@b.fr', 1, day)).toBe(true); // regarder ne compte pas
+    mailRecorded('welcome', 'a@b.fr', day);                      // un envoi réussi
+    expect(mailAllowed('welcome', 'a@b.fr', 1, day)).toBe(false);
+    expect(mailAllowed('welcome', 'a@b.fr', 1, day, Date.now() + day + 1000)).toBe(true); // le lendemain, c'est à nouveau permis
+
     const id = await newPlayer();
     failNext = true;
-    await save(id, 'Abus');
+    await save(id, 'PlafondOk');
     await settle();
-    await save(id, 'Abus'); // plafond par adresse déjà consommé par la première tentative
+    const { MAIL_THROTTLE } = await import('../src/config/securityRules');
+    const email = `${id}@test.local`;
+    expect(mailAllowed('welcome', email, MAIL_THROTTLE.welcome.max, MAIL_THROTTLE.welcome.windowMs)).toBe(true); // l'échec n'a rien consommé
+    await ageLastAttempt(id, 10);
+    await save(id, 'PlafondOk');
     await settle();
-    expect(sent.length).toBeLessThanOrEqual(1);
+    expect(sent).toHaveLength(1);
+    expect(mailAllowed('welcome', email, MAIL_THROTTLE.welcome.max, MAIL_THROTTLE.welcome.windowMs)).toBe(false); // le succès, lui, compte
   });
 
   it('migration : les comptes existants sont marqués à la création de la colonne, et JAMAIS aux redémarrages suivants', async () => {

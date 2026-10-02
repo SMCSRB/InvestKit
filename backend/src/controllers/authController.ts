@@ -8,7 +8,7 @@ import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
 import { sendVerificationEmail, sendPasswordResetEmail, sendAccountExistsEmail, sendWelcomeEmail } from '../utils/email';
 import { padResponse } from '../utils/timing';
-import { allowMail } from '../utils/mailThrottle';
+import { allowMail, mailAllowed, mailRecorded } from '../utils/mailThrottle';
 import { MAIL_THROTTLE } from '../config/securityRules';
 import { verifyCaptcha } from '../utils/captcha';
 import { notify } from '../services/notificationService';
@@ -43,14 +43,21 @@ const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate', 'crypto_mark
 // Faux hash bcrypt (coût 10) pour égaliser le temps de réponse quand le compte n'existe pas.
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);
 
-// Mail de bienvenue : réservé en base AVANT l'envoi (donc jamais deux fois, même avec deux requêtes simultanées) et plafonné par adresse.
-// Si l'envoi échoue, la réservation est rendue : le joueur le recevra à une prochaine validation de son profil.
+// Mail de bienvenue : réservé en base AVANT l'envoi (donc jamais deux fois, même avec deux requêtes simultanées).
+// Seuls les envois RÉUSSIS comptent pour le plafond par adresse. En cas d'échec la réservation est rendue ; le joueur est réessayé
+// au prochain appel légitime (validation du profil), après un délai et dans la limite d'un nombre d'essais (securityRules).
 const sendWelcomeOnce = async (userId: string): Promise<void> => {
-  const claimed = await userRepository.claimWelcomeEmail(userId);
+  const rule = MAIL_THROTTLE.welcome;
+  const claimed = await userRepository.claimWelcomeEmail(userId, rule);
   if (!claimed) return;
-  if (!allowMail('welcome', claimed.email, MAIL_THROTTLE.welcome.max, MAIL_THROTTLE.welcome.windowMs)) return;
-  const result: any = await sendWelcomeEmail(claimed.email, claimed.username);
-  if (result?.error) await userRepository.releaseWelcomeEmail(userId);
+  if (!mailAllowed('welcome', claimed.email, rule.max, rule.windowMs)) { await userRepository.releaseWelcomeEmail(userId); return; }
+  let ok = false;
+  try {
+    const result: any = await sendWelcomeEmail(claimed.email, claimed.username);
+    ok = !result?.error;
+  } catch { ok = false; }
+  if (ok) mailRecorded('welcome', claimed.email, rule.windowMs);
+  else await userRepository.releaseWelcomeEmail(userId);
 };
 
 // Comparaison de codes en temps constant (pas d'indice sur le nombre de chiffres justes).
