@@ -86,8 +86,8 @@ export default function OnboardingPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/save-preferences`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // L'identité vient de la session ouverte par la vérification de l'e-mail : on n'envoie plus d'adresse.
         body: JSON.stringify({
-          email,
           username: username.trim(),
           accountType,
           interests,

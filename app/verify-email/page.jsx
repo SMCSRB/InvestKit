@@ -8,6 +8,7 @@ import { Button } from '@/app/components/ui/primitives';
 import { useTheme } from '@/app/context/ThemeContext';
 import { CodeInput, Confetti, Notice, SuccessMark } from '@/app/components/auth/fields';
 import { authPost, errorText } from '@/app/lib/authApi';
+import { markLoggedIn } from '@/app/lib/session';
 
 // Vérification de l'e-mail : code à 6 chiffres en cases séparées (collage accepté), envoi automatique à la saisie du 6e chiffre.
 // Les messages restent neutres : on ne dit jamais si l'adresse existe.
@@ -47,6 +48,7 @@ export default function VerifyEmailPage() {
     const r = await authPost('verify-email', { email, code: c });
     setLoading(false);
     if (r.ok) {
+      markLoggedIn(); // le serveur vient d'ouvrir la session (cookie httpOnly) : le code reçu par e-mail est la preuve
       try { sessionStorage.setItem('userEmail', email); } catch { /* ignore */ }
       setDone(true);
       redirect.current = setTimeout(() => router.push('/onboarding'), motionEnabled ? 1500 : 400);

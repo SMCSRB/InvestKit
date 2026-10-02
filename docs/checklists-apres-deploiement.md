@@ -575,3 +575,11 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 6. « Mot de passe oublié » : le mail « Nouveau mot de passe » arrive avec son bouton et la mention « valable 1 heure ».
 7. Aperçu sans envoi : `cd backend && npm run mail:preview` crée 4 fichiers HTML à ouvrir ; ajoute `-- --send ta-boite-de-test@…` pour les recevoir.
 8. Les images viennent de `<FRONTEND_URL>/mail/…` : vérifie que cette adresse s'ouvre sur ton serveur après déploiement.
+## Sécurité : session ouverte seulement sur preuve
+
+1. Inscris un compte de test : le code arrive par e-mail ; tape-le sur la page de vérification, puis tu arrives sur « Choisis ton pseudo » **déjà connecté**.
+2. Termine l'onboarding : pseudo enregistré, tu arrives sur le tableau de bord.
+3. Avec un mauvais code (8 fois), la page refuse puis dit « Trop d'essais ».
+4. Dans un navigateur sans session, ouvre `/onboarding` et valide : message d'erreur, aucune connexion.
+5. Après déploiement : lance `ops/sql/detecter-session-sans-preuve.sql` (voir `docs/faille-session-sans-preuve.md`) et envisage de changer `JWT_SECRET`.
+6. Déploie le site et l'API ensemble.
