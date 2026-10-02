@@ -6,7 +6,7 @@ import { setSessionCookies, clearSessionCookies, tokenInBody, readCookie, ADMIN_
 import { AuthRequest } from '../middleware/auth';
 import { userRepository } from '../repositories/userRepository';
 import { env } from '../config/env';
-import { sendVerificationEmail, sendPasswordResetEmail, sendAccountExistsEmail } from '../utils/email';
+import { sendVerificationEmail, sendPasswordResetEmail, sendAccountExistsEmail, sendWelcomeEmail } from '../utils/email';
 import { padResponse } from '../utils/timing';
 import { allowMail } from '../utils/mailThrottle';
 import { MAIL_THROTTLE } from '../config/securityRules';
@@ -42,6 +42,16 @@ const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate', 'crypto_mark
 
 // Faux hash bcrypt (coût 10) pour égaliser le temps de réponse quand le compte n'existe pas.
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);
+
+// Mail de bienvenue : réservé en base AVANT l'envoi (donc jamais deux fois, même avec deux requêtes simultanées) et plafonné par adresse.
+// Si l'envoi échoue, la réservation est rendue : le joueur le recevra à une prochaine validation de son profil.
+const sendWelcomeOnce = async (userId: string): Promise<void> => {
+  const claimed = await userRepository.claimWelcomeEmail(userId);
+  if (!claimed) return;
+  if (!allowMail('welcome', claimed.email, MAIL_THROTTLE.welcome.max, MAIL_THROTTLE.welcome.windowMs)) return;
+  const result: any = await sendWelcomeEmail(claimed.email, claimed.username);
+  if (result?.error) await userRepository.releaseWelcomeEmail(userId);
+};
 
 // Comparaison de codes en temps constant (pas d'indice sur le nombre de chiffres justes).
 const safeEqual = (a: string, b: string): boolean => {
@@ -334,6 +344,9 @@ export const authController = {
         language: typeof language === 'string' && language.length <= 10 ? language : 'fr',
       });
       await auditLog({ userId: user.id, action: 'profile_setup', entityType: 'user', entityId: user.id, ip: req.ip });
+
+      // Mail de bienvenue : une seule fois par compte (réservation atomique en base), sans bloquer la réponse.
+      void sendWelcomeOnce(user.id).catch((e) => console.error('Welcome email error:', e));
 
       res.json({
         success: true,

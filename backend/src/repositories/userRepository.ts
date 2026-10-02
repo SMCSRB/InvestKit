@@ -107,6 +107,23 @@ export const userRepository = {
     return result.rows.length === 1;
   },
 
+  // Réserve l'envoi du mail de bienvenue (une seule fois par compte, même si deux requêtes arrivent en même temps).
+  // Renvoie l'adresse et le pseudo si CET appel a gagné, sinon null. Il faut un e-mail vérifié ET un pseudo.
+  async claimWelcomeEmail(id: string, db: Queryable = { query }): Promise<{ email: string; username: string } | null> {
+    const r = await db.query(
+      `UPDATE users SET welcome_email_sent_at = NOW()
+       WHERE id = $1 AND welcome_email_sent_at IS NULL AND verified = TRUE AND username IS NOT NULL
+       RETURNING email, username`,
+      [id]
+    );
+    return r.rows[0] ?? null;
+  },
+
+  // Rend la réservation si l'envoi a échoué (le joueur pourra recevoir le mail plus tard).
+  async releaseWelcomeEmail(id: string, db: Queryable = { query }): Promise<void> {
+    await db.query('UPDATE users SET welcome_email_sent_at = NULL WHERE id = $1', [id]);
+  },
+
   async updateLastLogin(id: string): Promise<void> {
     await query(
       `UPDATE users
