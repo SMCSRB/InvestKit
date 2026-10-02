@@ -5,6 +5,8 @@ import { Button, Card, CardHead, EmptyState, Modal, Skeleton, Tabs } from '@/app
 import Icon from '@/app/components/ui/Icon';
 import { Reveal } from '@/app/components/ui/motion';
 import { copyText, social } from '@/app/lib/social';
+import PlayerName from '@/app/components/social/PlayerName';
+import TagEditor from '@/app/components/social/TagEditor';
 
 const fr = (n) => Number(n ?? 0).toLocaleString('fr-FR');
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -18,7 +20,7 @@ function Person({ p, children, rank }) {
       {rank ? <span className="soc-rank" aria-label={`Rang ${rank}`}>{MEDALS[rank - 1] || rank}</span> : null}
       <Avatar name={p.name} />
       <div className="soc-row__main">
-        <strong className="soc-row__name">{p.name}{p.isMe ? ' (toi)' : ''}</strong>
+        <strong className="soc-row__name"><PlayerName name={p.name} tag={p.tag} pro={p.pro} isMe={p.isMe} /></strong>
         {p.level !== undefined && <span className="ik-muted">Niveau {p.level} · <span className="ik-num">{fr(p.xp)}</span> XP</span>}
       </div>
       {p.role === 'owner' && <span className="ik-chip"><Icon name="crown" size={13} />Chef</span>}
@@ -43,6 +45,7 @@ export default function SocialHub({ tab, onTab }) {
   const [gDesc, setGDesc] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState('');
+  const [tagOpen, setTagOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     try {
@@ -78,17 +81,27 @@ export default function SocialHub({ tab, onTab }) {
   return (
     <div className="soc">
       <Reveal>
-        <Card hero className="soc-code">
+        <Card hero className="soc-id">
           <div>
-            <p className="soc-code__label">Ton code ami</p>
-            <p className="soc-code__value ik-num" aria-live="polite">{me ? me.friendCode : '········'}</p>
-            <p className="soc-code__hint">Donne-le à quelqu'un pour qu'il t'ajoute. Personne ne peut te trouver sans lui.</p>
+            <p className="soc-code__label">Ton identifiant</p>
+            <p className="soc-id__value" aria-live="polite">
+              {me?.identity ? <PlayerName name={me.identity.username} tag={me.identity.tag} pro={me.identity.isPro} showTag={false} className="soc-id__name" /> : '········'}
+              {me?.identity?.tag ? <span className="soc-id__tag">#{me.identity.tag}</span> : null}
+            </p>
+            <p className="soc-id__sub">Donne ton identifiant ou ton code ami <strong className="ik-num">{me ? me.friendCode : '········'}</strong> : personne ne peut te trouver sans l'un des deux.</p>
           </div>
-          <Button icon={copied === 'code' ? 'check' : 'copy'} disabled={!me} onClick={() => copy('code', me.friendCode)} style={{ background: '#fff', color: '#2c1d7a', border: 0 }}>
-            {copied === 'code' ? 'Copié !' : 'Copier mon code'}
-          </Button>
+          <div className="soc-id__actions">
+            <Button icon={copied === 'code' ? 'check' : 'copy'} disabled={!me?.identity?.identity} onClick={() => copy('code', me.identity.identity)} style={{ background: '#fff', color: '#2c1d7a', border: 0 }}>
+              {copied === 'code' ? 'Copié !' : 'Copier mon identifiant'}
+            </Button>
+            <Button variant="ghost" disabled={!me?.identity} onClick={() => setTagOpen(true)} style={{ color: '#fff', borderColor: 'rgba(255,255,255,.45)' }}>
+              {me?.identity?.canCustomize ? 'Choisir mon #' : 'Mon # (Pro)'}
+            </Button>
+          </div>
         </Card>
       </Reveal>
+
+      <TagEditor open={tagOpen} onClose={() => setTagOpen(false)} me={me?.identity} onChanged={loadAll} />
 
       <Tabs ariaLabel="Amis et guilde" value={tab} onChange={onTab} tabs={tabs} />
       <div role="status" aria-live="polite" className={msg.text ? `soc-msg ${msg.bad ? 'soc-msg--bad' : ''}` : 'ik-sr-only'}>{msg.text}</div>
@@ -136,12 +149,12 @@ export default function SocialHub({ tab, onTab }) {
         {tab === 'add' && (
           <Card><CardHead title="Ajouter un ami" icon="plus" />
             <form className="soc-form" onSubmit={(e) => { e.preventDefault(); if (!code.trim()) return; act(async () => { const r = await social.sendRequest(code.trim()); setCode(''); return r; }, (r) => (r.status === 'accepted' ? `Vous êtes maintenant amis avec ${r.name} !` : `Demande envoyée à ${r.name}.`)); }}>
-              <label htmlFor="soc-code" className="ik-muted">Code ami de la personne</label>
+              <label htmlFor="soc-code" className="ik-muted">Identifiant (Pseudo#1234) ou code ami de la personne</label>
               <div className="soc-form__row">
-                <input id="soc-code" className="ik-input ik-num" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ex. K7M2QX9P" maxLength={11} autoComplete="off" spellCheck={false} />
+                <input id="soc-code" className="ik-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="ex. Camille#4821 ou K7M2QX9P" maxLength={44} autoComplete="off" spellCheck={false} />
                 <Button variant="primary" type="submit" loading={busy} disabled={!code.trim()}>Envoyer la demande</Button>
               </div>
-              <p className="ik-muted" style={{ margin: 0, fontSize: 'var(--ik-fs-sm)' }}>On ne trouve quelqu'un qu'avec son code exact : il n'existe pas de liste de joueurs à parcourir.</p>
+              <p className="ik-muted" style={{ margin: 0, fontSize: 'var(--ik-fs-sm)' }}>On ne trouve quelqu'un qu'avec son identifiant exact ou son code ami : il n'existe pas de liste de joueurs à parcourir.</p>
             </form>
           </Card>
         )}

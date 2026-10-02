@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AppShell, { PageHeader } from '@/app/components/shell/AppShell';
 import { Button, Card, CardHead, EmptyState, Skeleton, Tabs } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
+import PlayerName from '@/app/components/social/PlayerName';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 const TABS = ['monde', 'amis', 'guilde'];
@@ -80,7 +81,7 @@ function Monde({ domaine, onDomaine }) {
                   <tbody>{data.entries.map((e) => (
                     <tr key={`${e.rank}-${e.username}`} className={e.isMe ? 'is-me' : ''}>
                       <td><Rank rank={e.rank} /></td>
-                      <td>{e.username}{e.isMe ? ' (toi)' : ''}</td>
+                      <td><PlayerName name={e.username} pro={e.pro} isMe={e.isMe} showTag={false} /></td>
                       <td className="ik-num">{e.leverage && e.leverage > 1 ? `×${Number(e.leverage).toLocaleString('fr-FR')}` : '—'}</td>
                       <td className="ik-num" style={{ color: e.performancePct >= 0 ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>{pct(e.performancePct)}</td>
                     </tr>
@@ -111,7 +112,7 @@ function Amis() {
           <caption className="ik-sr-only">Classement entre amis</caption>
           <thead><tr><th scope="col">Rang</th><th scope="col">Joueur</th><th scope="col" className="ik-num">Niveau</th><th scope="col" className="ik-num">XP</th></tr></thead>
           <tbody>{data.entries.map((e) => (
-            <tr key={e.userId} className={e.isMe ? 'is-me' : ''}><td><Rank rank={e.rank} /></td><td>{e.name}{e.isMe ? ' (toi)' : ''}</td><td className="ik-num">{e.level}</td><td className="ik-num">{fr(e.xp)}</td></tr>
+            <tr key={e.userId} className={e.isMe ? 'is-me' : ''}><td><Rank rank={e.rank} /></td><td><PlayerName name={e.name} tag={e.tag} pro={e.pro} isMe={e.isMe} /></td><td className="ik-num">{e.level}</td><td className="ik-num">{fr(e.xp)}</td></tr>
           ))}</tbody>
         </table>
       </div>
@@ -135,7 +136,7 @@ function Guilde() {
           <caption className="ik-sr-only">Classement de la guilde {g.name}</caption>
           <thead><tr><th scope="col">Rang</th><th scope="col">Joueur</th><th scope="col" className="ik-num">Niveau</th><th scope="col" className="ik-num">XP</th></tr></thead>
           <tbody>{g.members.map((m) => (
-            <tr key={m.userId} className={m.isMe ? 'is-me' : ''}><td><Rank rank={m.rank} /></td><td>{m.name}{m.isMe ? ' (toi)' : ''}{m.role === 'owner' ? ' 👑' : ''}</td><td className="ik-num">{m.level ?? '—'}</td><td className="ik-num">{m.xp === undefined ? '—' : fr(m.xp)}</td></tr>
+            <tr key={m.userId} className={m.isMe ? 'is-me' : ''}><td><Rank rank={m.rank} /></td><td><PlayerName name={m.name} tag={m.tag} pro={m.pro} isMe={m.isMe} />{m.role === 'owner' ? ' 👑' : ''}</td><td className="ik-num">{m.level ?? '—'}</td><td className="ik-num">{m.xp === undefined ? '—' : fr(m.xp)}</td></tr>
           ))}</tbody>
         </table>
       </div>

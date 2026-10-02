@@ -134,3 +134,31 @@
 .cl-table th[scope='col'] { color: var(--ik-text-3); font-weight: 700; }
 .cl-table .ik-num { text-align: right; }
 .cl-table tr.is-me { background: var(--ik-primary-soft); font-weight: 700; }
+
+/* ---------- Pseudo#tag et couronne Pro ---------- */
+.ik-pname { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.ik-pname__n { font-weight: 700; overflow-wrap: anywhere; }
+.ik-pname__t { color: var(--ik-text-3); font: 600 0.82em / 1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ik-pname__me { color: var(--ik-text-2); font-weight: 500; }
+.ik-promark { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 4px; cursor: help; vertical-align: middle; }
+.ik-promark svg { display: block; filter: drop-shadow(0 1px 2px rgba(138, 83, 0, 0.35)); }
+.ik-promark:focus-visible { outline: 2px solid var(--ik-focus, var(--ik-primary)); outline-offset: 2px; }
+.ik-promark[data-tip]:hover::after, .ik-promark[data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 80; white-space: nowrap;
+  padding: 4px 8px; border-radius: 6px; background: var(--ik-surface-3, #1d1636); color: var(--ik-text); font: 600 12px / 1.2 var(--ik-font);
+  border: 1px solid var(--ik-border); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); pointer-events: none;
+}
+
+/* Identité (Pseudo#tag) en tête de la page Amis */
+.soc-id { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ik-space-4); }
+.soc-id__value { margin: 4px 0; font: 800 clamp(1.4rem, 5.5vw, 2.1rem) / 1.15 var(--ik-font); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.soc-id__tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; opacity: 0.92; }
+.soc-id__sub { margin: 0; color: rgba(255, 255, 255, 0.85); font-size: var(--ik-fs-sm); }
+.soc-id__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.tg-form { display: grid; gap: 12px; }
+.tg-input { display: flex; align-items: center; gap: 8px; }
+.tg-input__prefix { color: var(--ik-text-2); font-weight: 700; white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+.tg-hint { margin: 0; color: var(--ik-text-2); font-size: var(--ik-fs-sm); }
+.tg-err { margin: 0; color: var(--ik-negative); font-size: var(--ik-fs-sm); font-weight: 600; }
+.tg-hist { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: var(--ik-fs-sm); color: var(--ik-text-2); }
+.tg-switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

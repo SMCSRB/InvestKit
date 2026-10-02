@@ -34,6 +34,7 @@ import {
 import { generateVerificationCode } from '../utils/verificationCode';
 import { decryptField } from '../utils/fieldCrypto';
 import { auditLog } from '../services/auditService';
+import { playerTagService } from '../services/playerTagService';
 
 // Domaines pouvant être choisis comme domaine gratuit. L'interface garde
 // Immobilier grisé tant que ses écrans (étape 7) n'existent pas, pour ne pas
@@ -334,6 +335,8 @@ export const authController = {
         language: typeof language === 'string' && language.length <= 10 ? language : 'fr',
       });
       await auditLog({ userId: user.id, action: 'profile_setup', entityType: 'user', entityId: user.id, ip: req.ip });
+      // # automatique (Pseudo#1234) dès que le pseudo existe.
+      void playerTagService.ensureTag(user.id).catch(() => undefined);
 
       res.json({
         success: true,

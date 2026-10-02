@@ -54,7 +54,7 @@ describe('statut Pro : lu depuis le serveur, jamais depuis le navigateur', () =>
     expect(card).toMatch(/if \(!plan \|\| plan\.isPro \|\| hidden\) return null/);
   });
   it('l\'onglet Abonnement des paramètres utilise le plan du serveur (Pro manuel compris)', () => {
-    expect(read('app/dashboard/page.jsx')).toContain('shell?.user?.plan?.isPro');
+    expect(read('app/dashboard/page.jsx')).toContain('plan?.isPro ?? userData?.subscriptionTier');
   });
 });
 
@@ -62,7 +62,7 @@ describe('menu du profil : accessible au clavier et sur mobile', () => {
   const top = read('app/components/shell/Topbar.jsx');
   const prim = read('app/components/ui/primitives.jsx');
   it('contient Mon profil, Paramètres, Abonnement, Aide, Se déconnecter ; Administration seulement pour un administrateur', () => {
-    for (const label of ['Mon profil', 'Paramètres', 'Abonnement', 'Aide', 'Se déconnecter']) expect(top).toContain(label);
+    for (const label of ['Mon profil', 'Paramètres', 'Gérer mon abonnement', 'Voir les offres', 'Aide', 'Se déconnecter']) expect(top).toContain(label);
     expect(top).toMatch(/\{isAdmin && <Link href="\/admin"/);
   });
   it('vrai menu : rôles, flèches, Début/Fin, Échap avec retour du focus, Tab ferme, clic extérieur ferme', () => {
