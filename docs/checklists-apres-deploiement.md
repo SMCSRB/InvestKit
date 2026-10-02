@@ -597,3 +597,7 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 9. Menu du profil (en haut à droite) : « Gérer mon abonnement » si Pro, « Voir les offres » sinon.
 10. Fin d'abonnement (à simuler en base de test) : la couronne disparaît tout de suite ; le # choisi reste 30 jours puis revient à un # automatique ; un réabonnement dans les 90 jours le rend.
 11. Après déploiement (migration 041) : tous les joueurs qui ont un pseudo reçoivent un # automatique, sans doublon (vérifie : `SELECT username, player_tag FROM users WHERE username IS NOT NULL LIMIT 10;`).
+
+## À faire AVANT l'ouverture au public : liste d'insultes des # personnalisés
+
+La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.ts`, champ `insults`) est volontairement **courte** : elle ne contient que des mots sans ambiguïté. À compléter par la modération (et à relire régulièrement) avant d'ouvrir l'inscription à tous. Les mots réservés (admin, support, investkit…) sont déjà en place.
