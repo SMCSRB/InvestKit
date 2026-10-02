@@ -1,4 +1,6 @@
+import localFont from 'next/font/local';
 import './globals.css';
+import { themeInitScript } from '@/app/lib/designRoutes';
 import ClientLayoutWrapper from '@/app/components/ClientLayoutWrapper';
 
 const jsonLd = {
@@ -9,6 +11,15 @@ const jsonLd = {
   inLanguage: 'fr',
   ...(process.env.NEXT_PUBLIC_SITE_URL ? { url: process.env.NEXT_PUBLIC_SITE_URL } : {}),
 };
+
+// Police auto-hébergée (licence OFL) : préchargée, affichage immédiat avec une police de secours ajustée (pas de saut de mise en page).
+const jakarta = localFont({
+  src: './fonts/plus-jakarta-sans-latin-wght-normal.woff2',
+  variable: '--font-jakarta',
+  weight: '200 800',
+  display: 'swap',
+  adjustFontFallback: 'Arial',
+});
 
 export const metadata = {
   title: 'InvestKit - Investissez Intelligemment',
@@ -27,26 +38,18 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" data-theme="dark" className={jakarta.variable} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <meta name="theme-color" content="#0f172a" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
         {/* Performance & Optimization */}
         <meta httpEquiv="X-UA-Compatible" content="ie=edge" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* DNS Prefetch */}
-        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-
-        {/* CSS Stylesheets */}
-        <link rel="stylesheet" href="/css/global.css" />
-        <link rel="stylesheet" href="/css/design-system.css" />
-        <link rel="stylesheet" href="/css/performance-optimizations.css" />
       </head>
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

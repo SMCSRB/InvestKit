@@ -5,13 +5,18 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
+import { shuffleOptions } from '@/app/lib/quiz';
 import PageWrapper from '@/app/components/PageWrapper';
+import AppShell from '@/app/components/shell/AppShell';
+
+// Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
+const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
 
 export default function FinalQuizPage() {
   const router = useRouter();
   const params = useParams();
   const domainId = params.domain;
-  const { completeDomain, isDomainCompleted, isLoading } = useEducationProgress();
+  const { submitQuiz, isLoading } = useEducationProgress();
 
   const domain = educationDomains.find((d) => d.id === domainId);
   const finalQuiz = domain?.finalQuiz;
@@ -20,6 +25,13 @@ export default function FinalQuizPage() {
   const [showResults, setShowResults] = useState(false);
   const [quizScore, setQuizScore] = useState(null);
   const [badgeUnlocked, setBadgeUnlocked] = useState(false);
+  const [orders, setOrders] = useState(null);      // ordre des options mélangé (une fois monté, et à chaque nouvelle tentative)
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (domain && finalQuiz && orders === null) setOrders(shuffleOptions(domain.id, 'final', finalQuiz.questions));
+  }, [domain, finalQuiz, orders]);
 
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
@@ -30,48 +42,39 @@ export default function FinalQuizPage() {
 
   if (isLoading || !domain || !finalQuiz) {
     return (
-      <PageWrapper>
-        <div className="min-h-screen pt-32 pb-20 px-6">
+      <AppShell><PageWrapper>
+        <div className="pb-12 px-6">
           <div className="animate-pulse">
             <div className="h-12 bg-gray-700 rounded w-64 mb-4" />
           </div>
         </div>
-      </PageWrapper>
+      </PageWrapper></AppShell>
     );
   }
 
-  const handleQuizAnswer = (questionId, answerIndex) => {
-    setQuizAnswers((prev) => ({
-      ...prev,
-      [questionId]: answerIndex,
-    }));
+  const handleQuizAnswer = (questionId, optionId) => {
+    setQuizAnswers((prev) => ({ ...prev, [questionId]: optionId }));
   };
 
-  const handleSubmitQuiz = () => {
-    const questions = finalQuiz.questions;
-    let correctCount = 0;
-
-    questions.forEach((q) => {
-      const userAnswer = quizAnswers[q.id];
-      if (userAnswer === q.correct) {
-        correctCount++;
-      }
-    });
-
-    const score = Math.round((correctCount / questions.length) * 100);
-    setQuizScore(score);
-
-    if (score >= finalQuiz.passingScore) {
-      completeDomain(domain.id, score, 500);
-      setBadgeUnlocked(true);
+  // Le navigateur ne corrige pas : le serveur reçoit les identifiants choisis, calcule le score et décide de la récompense.
+  const handleSubmitQuiz = async () => {
+    if (busy) return;
+    setBusy(true); setError('');
+    try {
+      const data = await submitQuiz(domain.id, 'final', quizAnswers);
+      setQuizScore(data.score);
+      setBadgeUnlocked(Boolean(data.passed));
+      setShowResults(true);
+    } catch (e) {
+      setError(e.message);
     }
-
-    setShowResults(true);
+    setBusy(false);
   };
+  const allAnswered = Object.keys(quizAnswers).length >= finalQuiz.questions.length;
 
   return (
-    <PageWrapper animation="fade-in-up">
-      <div className="min-h-screen pt-32 pb-20 px-6 lg:px-12">
+    <AppShell><PageWrapper animation="fade-in-up">
+      <div className="pb-12 px-6 lg:px-12">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <Link
@@ -84,8 +87,8 @@ export default function FinalQuizPage() {
           <div className="mb-12">
             <div className="flex items-center gap-4 mb-6">
               <div className="text-6xl">🏆</div>
-              <div>
-                <h1 className="text-4xl font-bold text-white">
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h1 className="text-4xl font-bold text-white" style={{ overflowWrap: 'anywhere', fontSize: 'clamp(24px, 7vw, 36px)' }}>
                   Quiz Final - {domain.name}
                 </h1>
                 <p className="text-gray-400 mt-2">
@@ -104,7 +107,7 @@ export default function FinalQuizPage() {
               >
                 <p className="text-sm text-gray-300">
                   ⚠️ Vous devez obtenir au minimum{' '}
-                  <span className="font-bold" style={{ color: domain.color }}>
+                  <span className="font-bold" style={{ color: readable(domain.color) }}>
                     {finalQuiz.passingScore}%
                   </span>{' '}
                   pour débloquer le badge et maîtriser ce domaine.
@@ -122,22 +125,22 @@ export default function FinalQuizPage() {
                     className="pb-8 border-b border-gray-700 last:border-b-0"
                   >
                     <h4 className="text-lg font-semibold text-white mb-4">
-                      <span style={{ color: domain.color }}>Question {idx + 1}:</span>{' '}
+                      <span style={{ color: readable(domain.color) }}>Question {idx + 1}:</span>{' '}
                       {question.text}
                     </h4>
 
                     <div className="space-y-3">
-                      {question.options.map((option, optionIdx) => (
+                      {(orders ? orders[question.id] : []).map((option) => (
                         <label
-                          key={optionIdx}
+                          key={option.id}
                           className="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-300"
                           style={{
                             borderColor:
-                              quizAnswers[question.id] === optionIdx
+                              quizAnswers[question.id] === option.id
                                 ? domain.color
-                                : 'rgba(107, 114, 128, 0.3)',
+                                : 'color-mix(in srgb, var(--ik-text) 15%, transparent)',
                             backgroundColor:
-                              quizAnswers[question.id] === optionIdx
+                              quizAnswers[question.id] === option.id
                                 ? `${domain.color}15`
                                 : 'transparent',
                           }}
@@ -145,15 +148,16 @@ export default function FinalQuizPage() {
                           <input
                             type="radio"
                             name={`question-${question.id}`}
-                            value={optionIdx}
-                            checked={quizAnswers[question.id] === optionIdx}
-                            onChange={() => handleQuizAnswer(question.id, optionIdx)}
+                            value={option.id}
+                            checked={quizAnswers[question.id] === option.id}
+                            disabled={busy}
+                            onChange={() => handleQuizAnswer(question.id, option.id)}
                             className="mr-3"
                             style={{
                               accentColor: domain.color,
                             }}
                           />
-                          <span className="text-gray-300">{option}</span>
+                          <span className="text-gray-300">{option.text}</span>
                         </label>
                       ))}
                     </div>
@@ -162,12 +166,15 @@ export default function FinalQuizPage() {
               </div>
 
               <div className="mt-8">
+                {error && <p role="alert" style={{ color: 'var(--ik-negative)', fontWeight: 600, marginBottom: 12 }}>{error}</p>}
                 <button
                   onClick={handleSubmitQuiz}
+                  disabled={busy || !allAnswered}
                   className="px-8 py-3 rounded-lg font-semibold transition-all duration-300 w-full"
                   style={{
                     background: `linear-gradient(135deg, ${domain.color}, ${domain.color}dd)`,
                     color: 'white',
+                    opacity: busy || !allAnswered ? 0.5 : 1,
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'scale(1.02)';
@@ -176,7 +183,7 @@ export default function FinalQuizPage() {
                     e.target.style.transform = 'scale(1)';
                   }}
                 >
-                  Soumettre et Obtenir le Badge 🏆
+                  {busy ? 'Correction…' : 'Soumettre et Obtenir le Badge 🏆'}
                 </button>
               </div>
             </div>
@@ -249,7 +256,7 @@ export default function FinalQuizPage() {
                         className="px-8 py-3 rounded-lg font-semibold transition-all duration-300 border-2"
                         style={{
                           borderColor: domain.color,
-                          color: domain.color,
+                          color: readable(domain.color),
                         }}
                         onMouseEnter={(e) => {
                           e.target.style.background = `${domain.color}15`;
@@ -265,7 +272,7 @@ export default function FinalQuizPage() {
                 </div>
               ) : (
                 <div>
-                  <div className="text-6xl mb-8" style={{ color: '#ef4444' }}>
+                  <div className="text-6xl mb-8" style={{ color: 'var(--ik-negative)' }}>
                     ✗
                   </div>
 
@@ -287,6 +294,8 @@ export default function FinalQuizPage() {
                       setShowResults(false);
                       setQuizAnswers({});
                       setQuizScore(null);
+                      setError('');
+                      setOrders(null);
                     }}
                     className="px-8 py-3 rounded-lg font-semibold transition-all duration-300"
                     style={{
@@ -319,6 +328,6 @@ export default function FinalQuizPage() {
           }
         }
       `}</style>
-    </PageWrapper>
+    </PageWrapper></AppShell>
   );
 }

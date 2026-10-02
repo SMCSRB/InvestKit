@@ -2,6 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+// Règle de niveau unique : 500 XP par niveau (utilisée aussi par le tableau de bord).
+export const XP_PER_LEVEL = 500;
+export const levelFromXp = (xp) => Math.floor(xp / XP_PER_LEVEL) + 1;
+
 const EducationContext = createContext();
 
 const DEFAULT_PROGRESS = {
@@ -45,24 +49,29 @@ export function EducationProvider({ children }) {
     }
   }, [progress, isLoading]);
 
-  const notifyBackendCompletion = (endpoint, body) => {
+  // Envoie les réponses d'un quiz au SERVEUR, qui les corrige (par identifiant d'option) et décide de la récompense.
+  // Le progrès local (niveau, badges…) n'est mis à jour que si le serveur a validé le quiz.
+  const submitQuiz = async (domainId, scope, answers) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/education/${endpoint}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/education/submit-quiz`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body),
-    }).catch((error) => console.error(`Erreur notification ${endpoint}:`, error));
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ domainId, scope: String(scope), answers }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const e = new Error(data.error || 'Le serveur n\'a pas pu corriger le quiz. Réessaie dans un instant.');
+      e.status = res.status; e.code = data.code; e.missing = data.missing;
+      throw e;
+    }
+    if (data.passed) {
+      if (String(scope) === 'final') completeDomain(domainId, data.score);
+      else completeChapter(domainId, Number(scope), data.score, 100);
+    }
+    return data;
   };
 
   const completeChapter = (domainId, chapterId, score, xpEarned = 100) => {
-    const alreadyCompletedBefore = progress.completedChapters.some(
-      (c) => c.domainId === domainId && c.chapterId === chapterId
-    );
-    if (!alreadyCompletedBefore) {
-      notifyBackendCompletion('complete-chapter', { domainId, chapterId, score, xpEarned });
-    }
-
     setProgress((prev) => {
       const alreadyCompleted = prev.completedChapters.some(
         (c) => c.domainId === domainId && c.chapterId === chapterId
@@ -111,7 +120,7 @@ export function EducationProvider({ children }) {
           },
         ],
         totalXP: prev.totalXP + totalXPEarned,
-        userLevel: Math.floor((prev.totalXP + totalXPEarned) / 500) + 1,
+        userLevel: levelFromXp(prev.totalXP + totalXPEarned),
         streak: newStreak,
         maxStreak: newMaxStreak,
         badges: newBadges,
@@ -124,11 +133,6 @@ export function EducationProvider({ children }) {
   };
 
   const completeDomain = (domainId, finalScore, xpEarned = 500) => {
-    const alreadyCompletedBefore = progress.completedDomains.some((d) => d.domainId === domainId);
-    if (!alreadyCompletedBefore) {
-      notifyBackendCompletion('complete-domain', { domainId, score: finalScore, xpEarned });
-    }
-
     setProgress((prev) => {
       const alreadyCompleted = prev.completedDomains.some((d) => d.domainId === domainId);
 
@@ -145,7 +149,7 @@ export function EducationProvider({ children }) {
           },
         ],
         totalXP: prev.totalXP + xpEarned,
-        userLevel: Math.floor((prev.totalXP + xpEarned) / 500) + 1,
+        userLevel: levelFromXp(prev.totalXP + xpEarned),
       };
     });
   };
@@ -241,6 +245,7 @@ export function EducationProvider({ children }) {
     progress,
     completeChapter,
     completeDomain,
+    submitQuiz,
     isChapterUnlocked,
     isChapterCompleted,
     isDomainCompleted,

@@ -56,6 +56,7 @@ export interface Listing {
   age: PropertyAge;
   energyClass: EnergyClass;
   condition: Condition;           // état affiché dans l'annonce
+  urgentSale: boolean;            // « vente pressée » : annonce sous le prix du marché (CATALOG_CALIBRATION.urgentSaleFactor) ; n'influence aucun calcul
   price: number;                  // prix net vendeur (€)
   advertisedWorks: number;        // travaux annoncés (€)
   rentPerSqm: number;             // loyer au m² retenu (quartier, taille, état, énergie)

@@ -243,6 +243,7 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     year,
     type: t.type,
     title: urgent ? `${t.title} (vente pressée)` : t.title,
+    urgentSale: urgent !== undefined,
     surfaceSqm: t.surfaceSqm,
     rooms: t.rooms,
     age: t.age,

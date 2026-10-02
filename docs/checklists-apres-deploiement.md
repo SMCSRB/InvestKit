@@ -311,6 +311,270 @@ Voir `docs/crypto-banque-classement.md` (section « À tester chez moi »).
 ## PR Crypto — éducation (glossaire, quiz, « ? »)
 Voir `docs/crypto-education.md` (section « À tester chez moi »).
 
+## PR Design 1 — Socle du nouveau design (variables, composants, coque)
+
+Cette PR ne change pas encore l'apparence des pages existantes (elles restent comme avant, en sombre). Elle pose les fondations : variables de design, composants,
+menu latéral, barre supérieure, recherche. Elle change aussi, pour TOUT le site : la police (Plus Jakarta Sans), le fond de page, l'ancien CSS passé en « priorité basse »,
+les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les messages de confirmation (toasts).
+
+1. Ouvre le site en navigation privée, connecte-toi, parcours **Tableau de bord, Immobilier, Crypto, Banque, Éducation, Glossaire, Profil** : les pages marchent comme avant (pas de texte coupé, pas de boutons déformés). La police a changé (plus arrondie), c'est normal.
+2. En bas à droite, le bouton **« Un retour ? »** s'ouvre : choisis « Avis », clique « Utile » : un message de remerciement s'affiche. Essaie aussi « Bug » avec un texte de plus de 5 caractères.
+3. Sur téléphone (ou fenêtre étroite, 390 px) : aucune page n'a de barre de défilement horizontale.
+4. **Zoom** : tu peux maintenant zoomer avec deux doigts sur téléphone (avant, c'était bloqué).
+5. Si une annonce « info » ou « maintenance » est publiée depuis l'administration, le bandeau s'affiche en haut (violet ou ocre), avec un bouton « Fermer » qui marche.
+6. En tant qu'administrateur, **Voir comme** un utilisateur : le bandeau rouge « Lecture seule » s'affiche et « Quitter » te ramène à l'administration.
+7. Un compte **administrateur** : `GET /api/v1/auth/me` contient maintenant `isAdmin: true` ; pour un joueur normal, `false`.
+8. `/design-system` : **404 en production** (la page de démonstration n'existe qu'en développement). Normal.
+9. Aucune erreur rouge dans la console du navigateur (touche F12) sur les pages ci-dessus.
+
+## PR Design 2 — Nouvelle page d'accueil, connexion et inscription (lot 2/6)
+
+À fusionner **après** la PR « Design 1 ». Ouvre le site en navigation privée (tu n'es pas connecté).
+
+**Accueil (`/`)**
+1. L'accroche montre « Apprends à investir, sans risquer un centime », trois pastilles **Immobilier / Crypto / Bourse et PEA** avec un point vert « disponible », et une pastille « Bientôt ».
+2. Bouge la souris sur l'aperçu : il s'incline en 3D, la pièce tourne, les pastilles flottent. Sur téléphone, il se balance doucement tout seul.
+3. Descends : la bande « 3 domaines disponibles aujourd'hui · d'autres arrivent », puis les étapes, les domaines (badge « Disponible »), les fonctionnalités, l'éducation, la sécurité, les tarifs, la FAQ. Les cartes arrivent en profondeur et s'inclinent vers le curseur.
+4. **Quiz d'exemple** (section Éducation) : clique une mauvaise réponse, puis « Recommencer », puis la bonne : l'explication s'affiche.
+5. **Tarifs** : bascule Mensuel / Annuel ; le prix passe de 7,99 € / mois à 79 € / an. Le bouton Pro affiche « Bientôt disponible » tant que le paiement n'est pas branché (aucun faux paiement).
+6. **Bouton principal** : « Rejoindre avec un code d'invitation » tant que l'inscription est sur invitation ; « Créer mon compte » si tu ouvres l'inscription (`INVITE_ONLY=false`). Connecté, il devient « Reprendre là où j'en étais ».
+7. Menu : Domaines, Fonctionnalités, Éducation, Tarifs, FAQ font défiler jusqu'à la bonne section ; le bouton soleil/lune bascule sombre/clair ; sur téléphone, le menu (burger) s'ouvre et se ferme.
+8. Il n'y a **aucun faux chiffre** (plus de « 10K+ investisseurs » ni de « 99,9 % ») ; les chiffres affichés sont réels (110 actifs, 110 termes du glossaire). Le graphique est étiqueté « données d'exemple ».
+9. Pied de page : liens légaux, contact, glossaire ; le lien Discord n'apparaît que si `siteInfo.js` le renseigne.
+10. Menu « Animations : Non » (dans `/design-system` en développement, ou `localStorage.ik-motion = off`) : tout reste immobile et à plat.
+
+**Connexion (`/login`)**
+11. Connecte-toi avec ton compte : tu arrives sur le tableau de bord. Un mauvais mot de passe affiche un message d'erreur rouge. Le bouton œil affiche/masque le mot de passe. Un compte avec 2FA demande le code à 6 chiffres.
+12. « Mot de passe oublié ? » mène à la demande de lien ; le lien reçu mène à « Nouveau mot de passe ».
+
+**Inscription (`/signup`)**
+13. Avec un code d'invitation valide : e-mail (vérifié automatiquement : « Email disponible »), mot de passe (les exigences se cochent, la force s'affiche), confirmation, case RGPD, captcha, puis « S'inscrire » : un code arrive par e-mail et la page « Vérifie ton email » s'ouvre (6 cases, saisie chiffre par chiffre, « Renvoyer le code » avec compte à rebours).
+14. Les boutons FR / EN / ES changent la langue ; « Voir les détails RGPD » ouvre une fenêtre qui se ferme avec Échap.
+15. Le texte ne parle plus de « milliers d'investisseurs » (c'était faux).
+
+**Partout**
+16. Mobile (390 px) : pas de défilement horizontal sur l'accueil, la connexion et l'inscription. Mode clair : tout reste lisible.
+
+## PR Design 3 — Tableau de bord (lot 3/6)
+
+À fusionner **après** la PR « Design 2 ». Connecte-toi avec ton compte de test.
+
+**Coque et navigation**
+1. `/dashboard` : menu latéral à gauche, barre du haut avec ton solde d'InvestCoins (réel), ta série de jours, tes notifications.
+2. Les onglets sont : Vue d'ensemble, Marché, Simulateur, Académie, Amis, Notifications, Activité, Paramètres. Les anciens onglets « Projets » et « Risques » (qui n'affichaient que « Section en développement ») sont masqués ; un ancien lien `?tab=risk` ouvre l'analyse de risque réelle (dans le Simulateur).
+3. Clique chaque onglet : l'adresse change (`?tab=…`), F5 te remet sur le même onglet. Les liens du menu latéral (Bourse et PEA, Éducation, Amis, Paramètres…) ouvrent le bon onglet.
+
+**Vue d'ensemble (chiffres réels uniquement)**
+4. Quatre cartes : Patrimoine, Liquidités, Titres, Dette bancaire ; répartition (anneau + barre) ; risque du portefeuille ; trois cartes de domaine Bourse / Crypto / Immobilier ; synthèse. Compare avec ton solde en haut : mêmes valeurs.
+5. Compte **gratuit** : les domaines non choisis sont floutés avec « Voir l'offre Pro » (mène à Paramètres). Compte Pro : tout est visible.
+6. « Tes premiers pas » : la checklist affiche tes étapes réelles ; « C'est parti » ouvre la bonne page.
+7. « Ouvrir l'analyse » / « Voir l'analyse » ouvrent l'analyse de risque (onglet Simulateur), pas une page vide.
+
+**Marché**
+8. L'onglet Marché n'affiche plus de faux cours (CAC 40, BTC…). Il montre les vrais cours du marché Crypto simulé (8 actifs, mini-courbes) s'il est activé sur ton compte, sinon un message honnête et un bouton vers `/crypto`.
+
+**Données d'exemple signalées**
+9. Onglet Amis : un bandeau « Exemple » rappelle que les amis/guildes/messages sont des profils d'exemple (réseau social pas encore connecté). Onglet Activité : plus de personnes inventées, message « Pas encore d'activité ».
+10. Simulateur → Classement : **20 lignes au maximum** (avant, des centaines de joueurs à égalité pouvaient s'afficher).
+
+**Partout**
+11. Bascule Mode clair/sombre : texte lisible partout (checklist, risque, info-bulles « ? »).
+12. Mobile (390 px) : pas de défilement horizontal ; la barre d'onglets défile sur le côté.
+13. Aucune erreur rouge dans la console (F12). Note : en développement, recharger la page très souvent peut déclencher « Trop de requêtes » (limite de 300 requêtes par 15 minutes) : attendre ou relancer le serveur.
+
+## PR Design 4 — Marché Crypto et graphiques (lot 4/6)
+
+À fusionner **après** la PR « Design 3 ». Connecte-toi avec ton compte de test.
+
+**Marché Crypto (`/crypto`)**
+1. La page s'ouvre dans la même coque que le reste du site (menu à gauche, barre du haut, bandeau de cours). Le bouton soleil/lune passe en clair : tout reste lisible (tableaux, cartes, bandeaux d'avertissement).
+2. Si tu n'as pas encore de compte Crypto, tu choisis une date de départ ; les dates sans données importées sont grisées avec la mention « données pas encore importées ».
+3. Ouvre un actif : le graphique pro s'affiche (bougies, ligne, aire ; échelle linéaire/log/% ; indicateurs ; lignes à tracer). Passe de sombre à clair **sans recharger** : les couleurs du graphique suivent. Le logo TradingView reste affiché.
+4. Les vrais achats/ventes, ordres limite/stop, portefeuille, banque, classement, journal fonctionnent comme avant (rien n'a été retiré). Les données de test restent étiquetées « fictif ».
+
+**Bourse (Tableau de bord → Simulateur)**
+5. Une carte « Historique · LVMH » (ou le titre choisi dans « Acheter ») montre la courbe des cours de clôture **annuels**, étiquetée « Données illustratives » : ce ne sont pas de vrais cours. Au début (année 2010) un seul point existe : un message l'explique ; après « Avancer d'un an », la courbe se dessine.
+6. La courbe s'arrête **toujours à ton année simulée** (jamais de futur, même si tu modifies l'adresse). « Voir les valeurs (tableau) » donne les mêmes chiffres en liste.
+7. Change de titre dans « Acheter » : la courbe suit. En mode clair, le texte des cartes du simulateur (Année simulée, Solde…) est lisible et le bouton « Avancer d'un an » a un texte clair sur fond violet.
+
+**Partout**
+8. Mobile (390 px) : pas de défilement horizontal sur `/crypto` ni sur le Simulateur ; le graphique se zoome au doigt.
+9. Aucune erreur rouge dans la console (F12).
+
+## PR Design 5 — Immobilier et Banque (lot 5/6)
+
+À fusionner **après** la PR « Design 4 ». Connecte-toi avec ton compte de test.
+
+**Immobilier (`/immobilier`)**
+1. La page s'ouvre dans la coque du site (menu, barre du haut). Bascule clair/sombre : annonces, cartes, bandeaux et boutons restent lisibles.
+2. Parcours complet comme avant : filtrer les annonces (ville, type, prix max), ouvrir une annonce, acheter (si domaine gratuit/Pro), « Avancer d'un mois / d'un an », « Mon portefeuille », « Bilan du mois », « Classement », vente, travaux, locataires. Rien n'a été retiré.
+3. Si Immobilier n'est pas ton domaine gratuit, le bandeau « Tu peux consulter… l'achat demande… » s'affiche et les achats sont refusés comme avant.
+
+**Banque (`/banque`)**
+4. Même coque. Les cartes « Dette en cours » et « Crédit fléché non dépensé » affichent tes vraies valeurs (compare avec le Tableau de bord).
+5. « Simuler » un prêt personnel et un prêt sur portefeuille : le résultat s'affiche, la confirmation demande bien l'accord ; « Mes prêts » liste tes prêts ; la procédure de recours (bouton rouge) est lisible en clair comme en sombre.
+
+**Partout**
+6. Mobile (390 px) : pas de défilement horizontal sur les deux pages.
+7. Aucune erreur rouge dans la console (F12).
+
+## PR Design 6 — Éducation, Glossaire, Amis (lot 6/6, première partie)
+
+À fusionner **après** la PR « Design 5 ». Connecte-toi avec ton compte de test.
+
+**Éducation**
+1. `/education` ouvre l'onglet Académie du tableau de bord (comme avant). Ouvre un domaine (ex. `/education/crypto`) : titre, progression, recommandations, chapitres (verrouillés tant que le précédent n'est pas fini), quiz final. Passe en mode clair : tout reste lisible.
+2. Ouvre un chapitre : le cours s'affiche, les « mots à retenir » mènent au glossaire, le quiz de fin de chapitre se valide et débloque le suivant.
+3. Quiz final (quand tous les chapitres sont terminés) : réponds, valide, le score et le badge s'affichent.
+
+**Glossaire (`/glossaire`)**
+4. La recherche filtre les mots ; un lien `/glossaire#cash-flow` ouvre le bon mot ; « Teste-toi » mène au chapitre lié.
+
+**Amis (`/friends`)**
+5. **Cette page n'avait plus de mise en forme** (elle utilisait des classes Tailwind alors que Tailwind n'est pas installé : tout s'affichait en texte brut). Elle est maintenant stylée : ton code d'ami + « Copier », onglets Amis / Demandes / Ajouter / Bloqués, listes lisibles en clair et en sombre. Teste l'ajout d'un ami avec un 2e compte de test.
+
+**Partout**
+6. Mobile (390 px) : pas de défilement horizontal.
+7. Aucune erreur rouge dans la console (F12).
+
+## PR Design 7 — Paramètres, légal, administration, états d'erreur (lot 7, fin de la refonte)
+
+À fusionner **après** la PR « Design 6 ». C'est la dernière : à partir d'ici **toutes** les pages suivent le thème clair/sombre (plus aucune page n'est forcée en sombre).
+
+**Paramètres (`/profile`)**
+1. Nouvelle carte **Apparence** : Thème Sombre/Clair et **Animations Auto / Oui / Non**. Choisis « Non » : plus aucun mouvement sur le site ; « Auto » suit le réglage de ton appareil. Les choix restent après rechargement (sur cet appareil).
+2. L'interrupteur « Mode Sombre » de l'onglet Affichage change maintenant vraiment le thème (avant, il ne faisait rien). Les « Thèmes Disponibles » (déblocables par XP) restent affichés comme avant.
+3. La page était mal mise en forme (classes Tailwind sans Tailwind) : elle est maintenant lisible en clair et en sombre, sans défilement horizontal à 390 px.
+
+**Pages légales et publiques**
+4. `/privacy`, `/conditions`, `/cookies`, `/legal`, `/contact`, `/changelog`, `/demo` ont l'en-tête et le pied de page du site (même habillage que l'accueil), une carte lisible en clair et en sombre. **Le texte juridique n'a pas été modifié** (il reste à faire valider).
+
+**Pages internes**
+5. `/mes-donnees` (export / suppression RGPD), `/simulateurs/pea|loan1|loan2`, `/guild/<id>` (guilde d'exemple), `/admin` (si ton compte est administrateur avec 2FA) sont dans la coque et lisibles en clair/sombre. Fonctionnement inchangé.
+
+**États d'erreur**
+6. Une adresse inexistante (ex. `/nimportequoi`) affiche une page « Cette page n'existe pas » avec les boutons « Retour à l'accueil » / « Mon tableau de bord » (statut 404, non indexée).
+7. En cas d'erreur inattendue, une page claire avec « Réessayer » s'affiche (aucun détail technique).
+
+**Partout**
+8. Mobile (390 px) : pas de défilement horizontal ; le bouton « Mon tableau de bord » de l'en-tête public passe dans le menu burger quand tu es connecté.
+9. Aucune erreur rouge dans la console (F12).
+
+**Contrastes (ajouté après la revue du lot 7)**
+10. En mode clair, les textes « atténués » (libellés, heures, mentions) sont plus foncés qu'avant, les couleurs vert/rouge/orange/violet de texte ont été légèrement assombries en clair : vérifie que rien n'est devenu illisible sur le Tableau de bord, Crypto, Immobilier, Banque, Profil, Éducation. (Contrôle automatique fait : plus aucun texte sous 4,5:1 en clair ni en sombre sur ces pages, sauf pastilles décoratives.)
+
+## PR Design 8 — Un tableau de bord vivant (3D et mouvement)
+
+À fusionner **après** la PR « Design 7 ». Ouvre `/dashboard` (Vue d'ensemble).
+
+1. **Accueil** : un grand bandeau violet te salue (« Bonjour/Bon après-midi/Bonsoir, <ton nom> »). Bouge la souris dessus : la pièce 3D, les petites pièces, les sphères et la carte « Patrimoine » se décalent à des profondeurs différentes (parallaxe) et flottent doucement. Sur téléphone : pas de suivi de souris, la scène flotte seulement.
+2. **Série de jours** : la pastille « Série de N jours » n'apparaît que si ta série est réelle (> 0). Si ta récompense du jour est disponible, un bouton blanc « Récupérer ma récompense du jour » pulse ; il fait exactement la même chose que le bouton cadeau de la barre du haut (compare ton solde avant/après).
+3. **Raccourcis** (Bourse et PEA, Crypto, Immobilier, Apprendre) : les cartes s'inclinent vers le curseur avec un reflet, l'icône se soulève au survol. Chaque carte ouvre la bonne page.
+4. **Cartes de chiffres** (Patrimoine, Liquidités, Titres, Dette) : même inclinaison ; les chiffres s'animent jusqu'à leur valeur réelle.
+5. **Ma progression** : un anneau se remplit jusqu'à ton avancement vers le niveau suivant ; niveau et XP viennent de ta progression d'éducation (compare avec l'onglet Académie). « Continuer à apprendre » ouvre `/education`.
+6. **Fond** : deux halos de lumière dérivent très lentement derrière la page ; à chaque changement d'onglet, le contenu glisse doucement en place ; les boutons ont un petit effet « pressé ».
+7. **Animations : Non** (carte Apparence de `/profile`) : tout devient immobile et à plat (pas de flottement, pas d'inclinaison, pas de halo qui bouge). « Auto » respecte le réglage « réduire les animations » de ton appareil.
+8. Mobile (390 px) : pas de défilement horizontal, la scène passe au-dessus du texte.
+
+## PR Design 9 — Amis et guildes réels
+
+À fusionner **après** la PR « Design 8 ». Il te faut **deux comptes de test** (A et B). La migration 037 s'applique toute seule au démarrage de l'API.
+
+**Code ami et demandes**
+1. `/friends` (ou « Amis » dans le menu) : un bandeau affiche **ton code ami** (8 caractères). « Copier mon code » le copie (« Copié ! »).
+2. Avec le compte B : onglet « Ajouter », colle le code de A, « Envoyer la demande » → « Demande envoyée à … ». Un code faux affiche « Aucun joueur avec ce code ». Écrire ton propre code ou renvoyer une demande donne un message clair.
+3. Avec A : une notification « Nouvelle demande d'ami » arrive ; onglet « Demandes (1) » → « Accepter ». A et B apparaissent dans « Amis » avec **leur niveau et leur XP** (compare avec leur onglet Académie). « Refuser » / « Annuler » effacent la demande.
+4. « Retirer » (avec confirmation) supprime l'amitié des deux côtés. « Bloquer » la supprime aussi : B ne peut plus renvoyer de demande à A et **ne voit pas qu'il est bloqué** (même message que pour un code inconnu). « Débloquer » dans l'onglet « Bloqués ».
+
+**Guildes**
+5. Onglet « Guilde » : « Créer ma guilde » (nom 3 à 24 caractères). Le nom est refusé s'il existe déjà (même avec d'autres majuscules ou accents) ou contient des caractères spéciaux.
+6. Le chef voit un **code d'invitation** : avec B, « Rejoindre » + ce code. Le classement de la guilde montre les membres par XP (🥇🥈🥉). « Changer le code » rend l'ancien code inutilisable.
+7. Le chef peut « Retirer » (le membre reçoit une notification), « Passer chef », « Dissoudre » (confirmation à chaque fois). Un membre ne voit aucun de ces boutons et ne voit pas le code. « Quitter la guilde » fonctionne ; si le chef part, le membre le plus ancien devient chef.
+
+**Tableau de bord**
+8. L'onglet **Amis** du tableau de bord affiche la même chose (plus aucun profil d'exemple : Alice, Bob… ont disparu). L'onglet « Activité » (fil inventé) n'existe plus. `/guild/<n'importe quoi>` redirige vers l'onglet Guilde.
+
+**Vie privée**
+9. Seuls le nom de joueur, le niveau et l'XP sont visibles par les amis et la guilde — jamais l'e-mail ni le vrai nom. Il n'existe aucune liste de joueurs à parcourir.
+10. Mon compte → export de mes données : une rubrique « social » contient mon code ami, mes amitiés et ma guilde. La suppression du compte retire tout.
+11. Mobile (390 px) : pas de défilement horizontal ; clair et sombre lisibles.
+
+12. **Éducation (correctif de sécurité)** : termine un vrai chapitre : tu gagnes toujours 20 🪙 et 100 XP une seule fois. Avant ce lot, un identifiant de chapitre inventé rapportait aussi des pièces : ce n'est plus possible (le serveur répond « Chapitre inconnu »).
+13. Dans une guilde où quelqu'un t'a bloqué (ou que tu as bloqué), il apparaît « Joueur masqué ». Quand le chef retire un membre, le code d'invitation change.
+
+## PR Design 10 — Les trois simulateurs
+
+À fusionner **après** la PR « Design 9 ». Aucune migration. Les pages sont publiques : teste aussi déconnecté.
+
+1. `/demo` : trois cartes (PEA, crédit immobilier, investissement locatif) qui ouvrent chacune la bonne page. Plus d'écran intégré ni de faux « temps réel ».
+2. **Crédit immobilier** : avec 220 000 €, 30 000 € d'apport, 3,5 % sur 20 ans, la mensualité s'affiche, avec l'assurance comptée **une seule fois**. Les onglets Amortissement (le capital restant finit à 0), Capacité, Remboursement anticipé (choisir « durée plus courte » ou « mensualité plus basse ») et Comparer fonctionnent. Les icônes « ? » ouvrent le glossaire.
+3. **PEA** : changer le versement, la durée, les frais met les chiffres à jour ; l'onglet Frais montre ce que les frais te coûtent ; Scénarios montre prudent / central / optimiste ; Fiscalité distingue PEA (après 5 ans) et compte-titres ; Risque affiche une simulation (peut afficher « trop de requêtes » après 40 essais en 15 min).
+4. **Locatif** : comparer les trois régimes (micro-foncier, réel, meublé) ; cash-flow avant/après impôt ; projection ; mettre un loyer à 0 ne casse rien.
+5. « Copier le lien » puis ouvrir le lien dans une fenêtre privée : mêmes valeurs. « Réinitialiser » remet les valeurs de départ. « Imprimer / PDF » ouvre l'impression.
+6. Connecté : la page est dans la coque du site (menu à gauche). Déconnecté : en-tête public. Clair et sombre lisibles ; mobile 390 px sans défilement horizontal.
+7. Les hypothèses fiscales affichées (17,2 %, 12,8 %, 5 ans, 35 %…) sont à **reconfirmer** sur les sources officielles avant l'ouverture au public.
+
+## PR Design 11 — Inscription, connexion et pages liées
+
+À fusionner **après** la PR « Design 10 ». Aucune migration. Variable facultative : `AUTH_MIN_RESPONSE_MS` (durée minimale des réponses d'inscription, 700 par défaut).
+
+**Sécurité (le plus important)**
+1. Inscris-toi avec une adresse **déjà utilisée** (avec un code d'invitation valable) : tu vois exactement le même écran « C'est presque fini » qu'avec une adresse neuve, sans aucune erreur. La boîte mail de l'adresse existante reçoit « Quelqu'un a essayé de créer un compte… ». Le code d'invitation n'est **pas** consommé (`npm run invite -- list`).
+2. Dans le champ e-mail, plus aucun message « Email disponible » ni requête en direct.
+3. Connexion : un e-mail inconnu et un mauvais mot de passe affichent **le même message**. Mot de passe oublié : même écran pour une adresse connue ou non. Vérification du code : un code faux et un code périmé donnent « Code invalide ou expiré ».
+
+**Inscription (3 étapes)**
+4. `/signup` : le code d'invitation est le **premier** champ. Un faux code → « Ce code n'est pas reconnu ou n'est plus valable ». L'indicateur en haut montre l'étape réelle (1, 2, 3) et se remplit en vert au fur et à mesure.
+5. Étape 2 : les règles s'affichent pendant la saisie et **se replient** quand tout est bon ; une seule barre de force ; la confirmation réagit à chaque lettre ; l'œil affiche/masque ; ton gestionnaire de mots de passe propose d'enregistrer le mot de passe.
+6. Étape 3 : deux cases séparées (conditions, confidentialité) avec des liens qui ouvrent les vraies pages ; le bouton reste grisé tant qu'elles ne sont pas cochées. Pas de case « Je suis un humain » : le captcha est invisible. Succès animé (coche et confettis), puis la page du code.
+7. Un compte neuf reçoit bien son e-mail avec le code ; « Renvoyer le code » fonctionne.
+
+**Code, connexion, 2FA**
+8. `/verify-email` : 6 cases, **coller** le code entier remplit tout et valide tout seul ; un mauvais code affiche une erreur et vide les cases.
+9. `/login` : connexion normale ; avec la 2FA, 6 cases de code (validation automatique au 6e chiffre) et le lien « Utiliser un code de secours ».
+10. `/forgot-password`, `/reset-password` (lien reçu par e-mail), `/nexistepas` (page 404) : même fond et mêmes composants ; une erreur forcée affiche la page « Quelque chose s'est mal passé ».
+
+**Fond, accessibilité, mobile**
+11. Sur ordinateur, la scène de gauche est vivante : le mot du titre change, les bougies se dessinent, la pièce tourne, les cartes flottent et suivent un peu la souris ; la carte du formulaire a une bordure lumineuse qui tourne. Sur téléphone : un bandeau compact au-dessus du formulaire. Le fond bouge lentement (aurore, halos, courbes). Dans Profil → Apparence → Animations = « Non » (ou réglage « réduire les animations » du téléphone) : fond **fixe**. Onglet en arrière-plan : le CPU retombe.
+12. Plus d'en-tête au milieu de la carte ; « Aller au contenu » n'apparaît qu'en appuyant sur Tab. Plus de badge rouge « Issue » en mode développement sur ces pages.
+13. Mobile 390 px : formulaire seul, pas de défilement horizontal, clair et sombre lisibles ; tout se fait au clavier (Tab, Entrée).
+14. La bascule de langue FR/EN/ES a disparu (traductions incomplètes) ; tout est tutoyé.
+
+## PR Design 12 — Immobilier façon portail d'annonces
+
+À fusionner **après** la PR « Design 11 » (#75). **Une migration** (`038`, s'applique toute seule au démarrage de l'API). Il te faut un compte avec le domaine Immobilier (gratuit ou Pro) et des InvestCoins.
+
+**Chercher**
+1. `/immobilier` : bandeau « Annonces fictives, simulation à but éducatif » ; barre de recherche, filtres, cartes avec image, prix en € **et** en 🪙, pastille DPE, pastilles « Vente pressée » et « Travaux à prévoir », ♥.
+2. Tape « Valcourt » : seules les annonces de Valcourt restent. « Filtres » : type, budget, surface, pièces, état, DPE, rendement, options → les pastilles de filtres actifs se retirent d'un clic. Tri par prix, prix au m², rendement.
+3. Grille / Liste / Carte : sur la carte, choisis une ville ; chaque annonce a une pastille de prix ; survol d'une pastille = carte de la liste mise en évidence ; clic = fiche. Les quartiers sont teintés selon le prix au m² réel des annonces.
+4. ♥ : le favori reste après rechargement et « Favoris (n) » filtre la liste. « Mes recherches » → « Enregistrer cette recherche » ; après « Avancer d'un an », une pastille indique les nouvelles annonces.
+
+**Fiche et achat**
+5. Fiche : galerie (façade, séjour, cuisine, plan), description, diagnostics (échelle DPE), charges, quartier (tension locative), loyer estimé, rendements brut et net. Les images sont des **illustrations** (mention visible).
+6. « Simuler mon financement » : change l'apport et la durée → mensualité et décision de la banque expliquée ; apport très bas = refus expliqué et « Acheter » bloqué. Mode **Avancé** (en haut à droite) : TAEG, intérêts, assurance, frais. Mode Simple par défaut.
+7. « Faire expertiser » affiche les défauts cachés. « Acheter ce bien » → confirmation → animation de **signature chez le notaire** → « Clés remises » → « Voir mes biens ».
+
+**Mes biens, bilan, classement**
+8. Mes biens : carte du bien (statut, loyer, prochaine échéance, alertes). « Mettre en location », « Payer les travaux » sur la carte ; « Gérer le bien » ouvre la fiche avec vente (85–110 %), rénovation (devis), assurance loyers, selon la situation.
+9. « Avancer d'un mois » plusieurs fois : Bilan du mois (tableau, enveloppe « Courrier du mois » qui s'ouvre, journal des événements). Classement inchangé.
+10. Aucun chiffre ne doit avoir changé par rapport à avant : mêmes prix, mensualités, loyers, décisions de la banque.
+
+**Mobile et accessibilité**
+11. 390 px : « Filtres » = tiroir plein écran, bascule Liste/Carte, fiche en pleine page avec barre « Simuler et acheter » collante, aucun défilement horizontal.
+12. Clavier : Tab jusqu'au titre d'une annonce, Entrée ouvre la fiche. Réglage « Animations : Non » : plus aucun mouvement.
+13. Parkings et immeubles n'apparaissent pas dans les filtres (ils n'existent pas dans le catalogue) : c'est voulu et expliqué sous « Type de bien ».
+
+## Étape 1 — e-mails (pseudo, nouveau design)
+
+1. Crée un compte avec une adresse à toi : le mail « Ton code de vérification InvestKit » arrive, avec l'en-tête animé, la pièce, le grand code et le bouton « Vérifier mon e-mail ».
+2. Il dit « Bonjour, » (pas de pseudo avant l'onboarding) et jamais « Bonjour User ».
+3. Clique sur le bouton : la page de vérification s'ouvre avec ton adresse déjà remplie.
+4. Ouvre le mail sur Gmail (ordinateur et téléphone), Outlook et en mode sombre : bouton visible, code lisible, rien ne déborde.
+5. Désactive l'affichage des images : le mail reste lisible (textes, code et bouton).
+6. « Mot de passe oublié » : le mail « Nouveau mot de passe » arrive avec son bouton et la mention « valable 1 heure ».
+7. Aperçu sans envoi : `cd backend && npm run mail:preview` crée 4 fichiers HTML à ouvrir ; ajoute `-- --send ta-boite-de-test@…` pour les recevoir.
+8. Les images viennent de `<FRONTEND_URL>/mail/…` : vérifie que cette adresse s'ouvre sur ton serveur après déploiement.
 ## Sécurité : session ouverte seulement sur preuve
 
 1. Inscris un compte de test : le code arrive par e-mail ; tape-le sur la page de vérification, puis tu arrives sur « Choisis ton pseudo » **déjà connecté**.

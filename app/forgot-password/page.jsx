@@ -2,54 +2,49 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import AuthLayout, { AuthBadge, AuthHeader } from '@/app/components/landing/AuthLayout';
+import { Button } from '@/app/components/ui/primitives';
+import { Notice, SuccessMark } from '@/app/components/auth/fields';
+import { authPost, errorText } from '@/app/lib/authApi';
 
-const box = { maxWidth: 420, width: '100%', background: 'rgba(255,255,255,0.97)', borderRadius: 24, padding: '28px 28px', boxShadow: '0 25px 60px rgba(0,0,0,0.25)' };
-const input = { width: '100%', padding: '11px 14px', border: '2px solid #e2e8f0', borderRadius: 12, fontSize: 14, boxSizing: 'border-box', background: '#f8fafc' };
-
+// Mot de passe oublié : la réponse est la même que l'adresse ait un compte ou non (le serveur et cet écran ne le révèlent jamais).
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (res.ok) { setSent(true); setMessage(data.message); }
-      else setMessage(data.error || 'Une erreur est survenue');
-    } catch {
-      setMessage('Erreur de connexion au serveur');
-    } finally {
-      setLoading(false);
-    }
+    if (loading) return;
+    setLoading(true); setError('');
+    const r = await authPost('forgot-password', { email: email.trim() });
+    setLoading(false);
+    if (r.ok) setSent(true); else setError(errorText(r, 'Une erreur est survenue. Réessaie dans un instant.'));
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={box}>
-        <h1 style={{ margin: '0 0 6px', fontSize: 22, color: '#0f172a' }}>🔑 Mot de passe oublié</h1>
-        <p style={{ margin: '0 0 18px', fontSize: 13, color: '#64748b' }}>Entre l'adresse e-mail de ton compte : nous t'envoyons un lien pour choisir un nouveau mot de passe (valable 1 heure).</p>
-        {sent ? (
-          <p role="status" style={{ padding: 12, background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, color: '#065f46', fontSize: 13 }}>✅ {message}</p>
-        ) : (
-          <form onSubmit={submit} style={{ display: 'grid', gap: 14 }}>
-            <input type="email" required placeholder="votre@email.com" value={email} onChange={(e) => setEmail(e.target.value)} style={input} aria-label="Adresse e-mail" />
-            {message && <p role="alert" style={{ margin: 0, fontSize: 12, color: '#991b1b' }}>❌ {message}</p>}
-            <button type="submit" disabled={loading || !email} style={{ padding: '12px', borderRadius: 12, border: 'none', background: '#3b82f6', color: 'white', fontWeight: 700, cursor: 'pointer' }}>
-              {loading ? 'Envoi…' : 'Envoyer le lien'}
-            </button>
+    <AuthLayout>
+      {sent ? (
+        <div className="au-success" role="status">
+          <SuccessMark />
+          <h1 style={{ margin: 0, fontSize: 'var(--ik-fs-xl)' }}>Vérifie ta boîte mail</h1>
+          <p className="ik-muted" style={{ margin: 0 }}>Si un compte correspond à cette adresse, un lien pour choisir un nouveau mot de passe vient d’être envoyé (valable 1 heure). Pense à regarder tes courriers indésirables.</p>
+        </div>
+      ) : (
+        <>
+          <AuthHeader icon={<AuthBadge name="lock" />} title="Mot de passe oublié" subtitle="Entre l’adresse e-mail de ton compte : on t’envoie un lien pour en choisir un nouveau." />
+          <form className="au-form" onSubmit={submit}>
+            <div className="ik-field">
+              <label className="ik-label" htmlFor="fp-email">Adresse e-mail</label>
+              <input id="fp-email" className="ik-input" type="email" inputMode="email" autoComplete="email" required placeholder="toi@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} autoCapitalize="none" spellCheck={false} autoFocus />
+            </div>
+            {error && <Notice>{error}</Notice>}
+            <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || !email}>{loading ? 'Envoi…' : 'Envoyer le lien'}</Button>
           </form>
-        )}
-        <p style={{ marginTop: 18, fontSize: 13 }}><Link href="/login" style={{ color: '#3b82f6' }}>← Retour à la connexion</Link></p>
-      </div>
-    </main>
+        </>
+      )}
+      <p className="au-alt"><Link href="/login" className="ik-link">← Retour à la connexion</Link></p>
+    </AuthLayout>
   );
 }

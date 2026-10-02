@@ -16,6 +16,7 @@ import { toolsRoutes, riskRoutes } from './routes/risk';
 import { notificationRoutes } from './routes/notifications';
 import { onboardingRoutes, overviewRoutes } from './routes/onboarding';
 import { cryptoRoutes } from './routes/crypto';
+import { socialRoutes } from './routes/social';
 import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -95,6 +96,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/overview', overviewRoutes);
 app.use('/api/v1/crypto', cryptoRoutes);
+app.use('/api/v1/social', socialRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

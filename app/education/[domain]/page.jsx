@@ -5,6 +5,10 @@ import { useParams } from 'next/navigation';
 import { educationDomains } from '@/data/education';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
+import AppShell from '@/app/components/shell/AppShell';
+
+// Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
+const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
 
 export default function DomainPage() {
   const params = useParams();
@@ -16,20 +20,20 @@ export default function DomainPage() {
 
   if (!domainId || isLoading) {
     return (
-      <PageWrapper>
-        <div className="min-h-screen pt-32 pb-20 px-6">
+      <AppShell><PageWrapper>
+        <div className="pb-12 px-6">
           <div className="max-w-4xl mx-auto">
             <div className="h-12 bg-gray-700 rounded w-64 mb-4 animate-pulse" />
           </div>
         </div>
-      </PageWrapper>
+      </PageWrapper></AppShell>
     );
   }
 
   if (!domain) {
     return (
-      <PageWrapper>
-        <div className="min-h-screen pt-32 pb-20 px-6">
+      <AppShell><PageWrapper>
+        <div className="pb-12 px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-2xl font-bold text-red-400">Domaine non trouvé</h1>
             <Link href="/education" className="text-blue-400 hover:text-blue-300 mt-4 inline-block">
@@ -37,7 +41,7 @@ export default function DomainPage() {
             </Link>
           </div>
         </div>
-      </PageWrapper>
+      </PageWrapper></AppShell>
     );
   }
 
@@ -48,24 +52,24 @@ export default function DomainPage() {
   const progressPercent = Math.round((completedChaptersCount / domain.chapters.length) * 100);
   const isDomainDone = isDomainCompleted(domain.id);
 
-  // Calcular recomendaciones
+  // Calcul des recommandations
   const getRecommendations = () => {
     const recommendations = [];
 
-    // Buscar el primer capítulo no completado desbloqueado
+    // Premier chapitre non terminé et débloqué
     for (let i = 0; i < domain.chapters.length; i++) {
       const chapter = domain.chapters[i];
       if (!isChapterCompleted(domain.id, chapter.id) && isChapterUnlocked(domain.id, chapter.id)) {
         recommendations.push({
           type: 'continue',
           chapter,
-          reason: 'Continuar desde aquí'
+          reason: 'Reprendre là où tu t\'es arrêté'
         });
         break;
       }
     }
 
-    // Buscar capítulos completados con baja puntuación (< 85%)
+    // Chapitres terminés avec un score inférieur à 85 %
     domain.chapters.forEach((chapter) => {
       if (isChapterCompleted(domain.id, chapter.id)) {
         const score = getChapterScore(domain.id, chapter.id);
@@ -74,26 +78,24 @@ export default function DomainPage() {
             type: 'improve',
             chapter,
             score,
-            reason: `Mejorar tu puntuación (${score}%)`
+            reason: `Améliorer ton score (${score} %)`
           });
         }
       }
     });
 
-    return recommendations.slice(0, 2); // Solo 2 recomendaciones
+    return recommendations.slice(0, 2); // 2 recommandations au maximum
   };
 
   const recommendations = getRecommendations();
 
   return (
-    <PageWrapper animation="fade-in-up">
+    <AppShell><PageWrapper animation="fade-in-up">
       <div style={{
-        minHeight: '100vh',
-        paddingTop: '80px',
-        paddingBottom: '80px',
+        paddingTop: '8px',
+        paddingBottom: '48px',
         paddingLeft: '24px',
         paddingRight: '24px',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           {/* Back Link */}
@@ -102,7 +104,7 @@ export default function DomainPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              color: '#60a5fa',
+              color: 'var(--ik-accent)',
               textDecoration: 'none',
               marginBottom: '32px',
               fontSize: '16px',
@@ -110,8 +112,8 @@ export default function DomainPage() {
               cursor: 'pointer',
               transition: 'color 0.3s ease',
             }}
-            onMouseEnter={(e) => e.target.style.color = '#93c5fd'}
-            onMouseLeave={(e) => e.target.style.color = '#60a5fa'}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--ik-text)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--ik-accent)'; }}
             >
               ← Retour
             </span>
@@ -121,7 +123,7 @@ export default function DomainPage() {
           <div style={{
             marginBottom: '48px',
             paddingBottom: '32px',
-            borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: '2px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
           }}>
             <div style={{
               display: 'flex',
@@ -130,18 +132,19 @@ export default function DomainPage() {
               marginBottom: '24px',
             }}>
               <div style={{
-                fontSize: '72px',
+                fontSize: 'clamp(44px, 14vw, 72px)',
                 lineHeight: '1',
                 filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))',
               }}>
                 {domain.icon}
               </div>
-              <div>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <h1 style={{
-                  fontSize: '48px',
+                  fontSize: 'clamp(26px, 8vw, 48px)',
+                  overflowWrap: 'anywhere',
                   fontWeight: 'bold',
                   margin: '0 0 8px 0',
-                  background: `linear-gradient(135deg, white, ${domain.color})`,
+                  background: `linear-gradient(135deg, var(--ik-text), ${domain.color})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -150,7 +153,7 @@ export default function DomainPage() {
                 </h1>
                 <p style={{
                   fontSize: '18px',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--ik-text-3)',
                   margin: '0',
                 }}>
                   {domain.description}
@@ -160,7 +163,7 @@ export default function DomainPage() {
 
             {/* Progress Card */}
             <div style={{
-              background: `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.1) 0%, rgba(30, 30, 30, 0.3) 100%)`,
+              background: `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.1) 0%, color-mix(in srgb, var(--ik-text) 4%, transparent) 100%)`,
               backdropFilter: 'blur(20px)',
               border: `1px solid ${domain.color}30`,
               borderRadius: '20px',
@@ -176,14 +179,14 @@ export default function DomainPage() {
                   <h3 style={{
                     fontSize: '16px',
                     fontWeight: '600',
-                    color: 'white',
+                    color: 'var(--ik-text)',
                     margin: '0 0 4px 0',
                   }}>
                     📊 Progression
                   </h3>
                   <p style={{
                     fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: 'var(--ik-text-3)',
                     margin: '0',
                   }}>
                     {completedChaptersCount} / {domain.chapters.length} chapitres complétés
@@ -195,7 +198,7 @@ export default function DomainPage() {
                   <div style={{
                     fontSize: '36px',
                     fontWeight: 'bold',
-                    color: domain.color,
+                    color: readable(domain.color),
                   }}>
                     {progressPercent}%
                   </div>
@@ -206,7 +209,7 @@ export default function DomainPage() {
               <div style={{
                 width: '100%',
                 height: '8px',
-                background: 'rgba(255, 255, 255, 0.1)',
+                background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
                 borderRadius: '10px',
                 overflow: 'hidden',
                 marginBottom: '16px',
@@ -223,14 +226,14 @@ export default function DomainPage() {
 
               {isDomainDone && (
                 <div style={{
-                  background: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  background: 'color-mix(in srgb, var(--ik-positive) 10%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-positive) 30%, transparent)',
                   borderRadius: '12px',
                   padding: '12px 16px',
                   marginTop: '12px',
                 }}>
                   <p style={{
-                    color: '#86efac',
+                    color: 'var(--ik-positive)',
                     fontWeight: '600',
                     fontSize: '14px',
                     margin: '0',
@@ -250,7 +253,7 @@ export default function DomainPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: 'bold',
-                color: 'white',
+                color: 'var(--ik-text)',
                 marginBottom: '16px',
               }}>
                 💡 Recommandations Personnalisées
@@ -268,7 +271,7 @@ export default function DomainPage() {
                   >
                     <div
                       style={{
-                        background: `linear-gradient(135deg, ${domain.color}15 0%, rgba(30, 30, 30, 0.2) 100%)`,
+                        background: `linear-gradient(135deg, ${domain.color}15 0%, color-mix(in srgb, var(--ik-text) 5%, transparent) 100%)`,
                         backdropFilter: 'blur(20px)',
                         border: `2px solid ${domain.color}60`,
                         borderRadius: '12px',
@@ -302,7 +305,7 @@ export default function DomainPage() {
                         <span style={{
                           fontSize: '12px',
                           fontWeight: '600',
-                          color: domain.color,
+                          color: readable(domain.color),
                           textTransform: 'uppercase',
                         }}>
                           {rec.reason}
@@ -311,14 +314,14 @@ export default function DomainPage() {
                       <h4 style={{
                         fontSize: '16px',
                         fontWeight: '600',
-                        color: 'white',
+                        color: 'var(--ik-text)',
                         margin: '0 0 4px 0',
                       }}>
                         Chapitre {rec.chapter.id}: {rec.chapter.title}
                       </h4>
                       <p style={{
                         fontSize: '13px',
-                        color: 'rgba(255, 255, 255, 0.6)',
+                        color: 'var(--ik-text-3)',
                         margin: '0',
                       }}>
                         {rec.chapter.description}
@@ -335,7 +338,7 @@ export default function DomainPage() {
             <h2 style={{
               fontSize: '28px',
               fontWeight: 'bold',
-              color: 'white',
+              color: 'var(--ik-text)',
               marginBottom: '24px',
               margin: '0 0 24px 0',
             }}>
@@ -365,10 +368,10 @@ export default function DomainPage() {
                     <div
                       style={{
                         background: isUnlocked
-                          ? `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.08) 0%, rgba(30, 30, 30, 0.3) 100%)`
-                          : 'rgba(15, 23, 42, 0.4)',
+                          ? `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.08) 0%, color-mix(in srgb, var(--ik-text) 4%, transparent) 100%)`
+                          : 'var(--ik-surface-2)',
                         backdropFilter: 'blur(20px)',
-                        border: isUnlocked ? `1.5px solid ${domain.color}40` : '1.5px solid rgba(255, 255, 255, 0.1)',
+                        border: isUnlocked ? `1.5px solid ${domain.color}40` : '1.5px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                         borderRadius: '16px',
                         padding: '24px',
                         cursor: isUnlocked ? 'pointer' : 'not-allowed',
@@ -417,7 +420,7 @@ export default function DomainPage() {
                       <h3 style={{
                         fontSize: '18px',
                         fontWeight: '700',
-                        color: 'white',
+                        color: 'var(--ik-text)',
                         margin: '0 0 8px 0',
                         lineHeight: '1.3',
                       }}>
@@ -427,7 +430,7 @@ export default function DomainPage() {
                       <h4 style={{
                         fontSize: '16px',
                         fontWeight: '600',
-                        color: domain.color,
+                        color: readable(domain.color),
                         margin: '0 0 8px 0',
                       }}>
                         {chapter.title}
@@ -436,7 +439,7 @@ export default function DomainPage() {
                       {/* Description */}
                       <p style={{
                         fontSize: '14px',
-                        color: 'rgba(255, 255, 255, 0.6)',
+                        color: 'var(--ik-text-3)',
                         margin: '0 0 16px 0',
                         flex: '1',
                       }}>
@@ -449,14 +452,14 @@ export default function DomainPage() {
                         flexDirection: 'column',
                         gap: '8px',
                         paddingTop: '12px',
-                        borderTop: 'rgba(255, 255, 255, 0.1) 1px solid',
+                        borderTop: 'color-mix(in srgb, var(--ik-text) 10%, transparent) 1px solid',
                       }}>
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: 'var(--ik-text-3)',
                         }}>
                           ⏱️ {chapter.duration}
                         </div>
@@ -465,7 +468,7 @@ export default function DomainPage() {
                           <div style={{
                             fontSize: '13px',
                             fontWeight: '600',
-                            color: '#86efac',
+                            color: 'var(--ik-positive)',
                           }}>
                             ✨ Score: {score}%
                           </div>
@@ -474,7 +477,7 @@ export default function DomainPage() {
                         {!isUnlocked && (
                           <div style={{
                             fontSize: '13px',
-                            color: '#fca5a5',
+                            color: 'var(--ik-negative)',
                             fontWeight: '500',
                           }}>
                             🔓 Complétez le chapitre {chapter.id - 1}
@@ -492,12 +495,12 @@ export default function DomainPage() {
           <div style={{
             marginTop: '48px',
             paddingTop: '48px',
-            borderTop: '2px solid rgba(255, 255, 255, 0.1)',
+            borderTop: '2px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
           }}>
             <h2 style={{
               fontSize: '28px',
               fontWeight: 'bold',
-              color: 'white',
+              color: 'var(--ik-text)',
               marginBottom: '24px',
               margin: '0 0 24px 0',
             }}>
@@ -506,7 +509,7 @@ export default function DomainPage() {
 
             <div
               style={{
-                background: `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.12) 0%, rgba(30, 30, 30, 0.3) 100%)`,
+                background: `linear-gradient(135deg, rgba(${parseInt(domain.color.slice(1,3), 16)}, ${parseInt(domain.color.slice(3,5), 16)}, ${parseInt(domain.color.slice(5,7), 16)}, 0.12) 0%, color-mix(in srgb, var(--ik-text) 4%, transparent) 100%)`,
                 backdropFilter: 'blur(20px)',
                 border: `2px solid ${domain.color}50`,
                 borderRadius: '20px',
@@ -521,14 +524,14 @@ export default function DomainPage() {
                 <h3 style={{
                   fontSize: '24px',
                   fontWeight: '700',
-                  color: 'white',
+                  color: 'var(--ik-text)',
                   margin: '0 0 12px 0',
                 }}>
                   Testez Vos Connaissances
                 </h3>
                 <p style={{
                   fontSize: '16px',
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: 'var(--ik-text-2)',
                   margin: '0 0 16px 0',
                   lineHeight: '1.5',
                 }}>
@@ -538,7 +541,7 @@ export default function DomainPage() {
                   display: 'flex',
                   gap: '16px',
                   fontSize: '14px',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--ik-text-3)',
                 }}>
                   <div style={{
                     display: 'flex',
@@ -589,9 +592,9 @@ export default function DomainPage() {
                 <button
                   disabled
                   style={{
-                    background: 'rgba(100, 116, 139, 0.3)',
-                    color: 'rgba(255, 255, 255, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'color-mix(in srgb, var(--ik-text) 15%, transparent)',
+                    color: 'var(--ik-text-3)',
+                    border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                     padding: '16px 32px',
                     borderRadius: '12px',
                     fontSize: '16px',
@@ -607,6 +610,6 @@ export default function DomainPage() {
           </div>
         </div>
       </div>
-    </PageWrapper>
+    </PageWrapper></AppShell>
   );
 }

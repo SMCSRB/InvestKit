@@ -2,15 +2,12 @@
 
 import { SITE_INFO } from '../lib/siteInfo';
 import TestPhaseNotice from '../components/TestPhaseNotice';
+import PublicShell from '@/app/components/landing/PublicShell';
 
 export default function PrivacyPage() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      padding: 'clamp(30px, 8vw, 40px) clamp(16px, 4vw, 24px) clamp(40px, 10vw, 60px)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    }}>
+    <PublicShell>
+    <div style={{ padding: 'clamp(24px, 6vw, 48px) clamp(16px, 4vw, 24px)' }}>
       <style>{`
         @keyframes slideInUp {
           from { opacity: 0; transform: translateY(30px); }
@@ -25,11 +22,11 @@ export default function PrivacyPage() {
       <div className="privacy-container" style={{
         maxWidth: '900px',
         margin: '0 auto',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
+        background: 'var(--ik-surface-card)',
         borderRadius: '28px',
         padding: 'clamp(30px, 6vw, 48px) clamp(20px, 5vw, 40px)',
-        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: 'var(--ik-shadow-card)',
+        border: '1px solid var(--ik-border)',
         backdropFilter: 'blur(20px)',
       }}>
         {/* Header */}
@@ -37,7 +34,7 @@ export default function PrivacyPage() {
           <h1 style={{
             fontSize: 'clamp(24px, 7vw, 36px)',
             fontWeight: '800',
-            background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, var(--ik-text) 0%, var(--ik-primary) 50%, var(--ik-orchid) 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -47,7 +44,7 @@ export default function PrivacyPage() {
           </h1>
           <p style={{
             fontSize: '13px',
-            color: '#64748b',
+            color: 'var(--ik-text-3)',
             margin: 0,
             fontWeight: '500',
           }}>
@@ -140,14 +137,14 @@ export default function PrivacyPage() {
           <section key={idx} style={{
             marginBottom: '28px',
             paddingBottom: '28px',
-            borderBottom: idx < 9 ? '1px solid rgba(59, 130, 246, 0.1)' : 'none',
+            borderBottom: idx < 9 ? '1px solid color-mix(in srgb, var(--ik-primary) 10%, transparent)' : 'none',
           }}>
             <h2 style={{
               fontSize: '18px',
               fontWeight: '700',
-              color: '#0f172a',
+              color: 'var(--ik-text-on-primary)',
               margin: '0 0 12px 0',
-              background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 100%)',
+              background: 'linear-gradient(135deg, var(--ik-text) 0%, var(--ik-primary) 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -156,7 +153,7 @@ export default function PrivacyPage() {
             </h2>
             <p style={{
               fontSize: '14px',
-              color: '#475569',
+              color: 'var(--ik-text-2)',
               margin: '0 0 12px 0',
               lineHeight: '1.6',
             }}>
@@ -172,13 +169,13 @@ export default function PrivacyPage() {
                 {section.list.map((item, i) => (
                   <li key={i} style={{
                     fontSize: '13px',
-                    color: '#475569',
+                    color: 'var(--ik-text-2)',
                     marginBottom: '8px',
                     lineHeight: '1.5',
                   }}>
                     {item.label ? (
                       <>
-                        <strong style={{ color: '#0f172a' }}>{item.label}</strong> {item.text}
+                        <strong style={{ color: 'var(--ik-text)' }}>{item.label}</strong> {item.text}
                       </>
                     ) : (
                       item.text
@@ -191,7 +188,7 @@ export default function PrivacyPage() {
             {section.footer && (
               <p style={{
                 fontSize: '13px',
-                color: '#475569',
+                color: 'var(--ik-text-2)',
                 margin: '12px 0 0 0',
                 lineHeight: '1.5',
               }}>
@@ -202,17 +199,17 @@ export default function PrivacyPage() {
             {section.email && (
               <p style={{
                 fontSize: '14px',
-                color: '#475569',
+                color: 'var(--ik-text-2)',
                 margin: '12px 0 0 0',
               }}>
                 Email: <a href={section.email.includes('@') ? `mailto:${section.email}` : undefined} style={{
-                  color: '#3b82f6',
+                  color: 'var(--ik-accent)',
                   textDecoration: 'none',
                   fontWeight: '600',
                   transition: 'color 0.2s',
                 }}
-                onMouseEnter={(e) => e.target.style.color = '#8b5cf6'}
-                onMouseLeave={(e) => e.target.style.color = '#3b82f6'}
+                onMouseEnter={(e) => e.target.style.color = 'var(--ik-orchid)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--ik-primary)'}
                 >
                   {section.email}
                 </a>
@@ -225,22 +222,22 @@ export default function PrivacyPage() {
         <div style={{
           marginTop: '32px',
           paddingTop: '24px',
-          borderTop: '1px solid rgba(59, 130, 246, 0.1)',
+          borderTop: '1px solid color-mix(in srgb, var(--ik-primary) 10%, transparent)',
         }}>
           <a href="/signup" style={{
             fontSize: '13px',
-            color: '#3b82f6',
+            color: 'var(--ik-accent)',
             textDecoration: 'none',
             fontWeight: '600',
             transition: 'all 0.2s',
             display: 'inline-block',
           }}
           onMouseEnter={(e) => {
-            e.target.style.color = '#8b5cf6';
+            e.target.style.color = 'var(--ik-orchid)';
             e.target.style.transform = 'translateX(-4px)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.color = '#3b82f6';
+            e.target.style.color = 'var(--ik-primary)';
             e.target.style.transform = 'translateX(0)';
           }}
           >
@@ -249,5 +246,6 @@ export default function PrivacyPage() {
         </div>
       </div>
     </div>
+    </PublicShell>
   );
 }

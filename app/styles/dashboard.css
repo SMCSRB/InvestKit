@@ -1,0 +1,512 @@
+/* Tableau de bord : disposition (rail profil + contenu), vue d'ensemble. Préfixe dash-. */
+
+.dash-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ik-space-5);
+  align-items: start;
+}
+.dash-rail {
+  position: sticky;
+  top: calc(var(--ik-banner-h, 0px) + var(--ik-sticky-offset, calc(var(--ik-topbar-h) + var(--ik-ticker-h))) + 16px);
+  max-height: calc(100vh - var(--ik-sticky-offset, calc(var(--ik-topbar-h) + var(--ik-ticker-h))) - 40px);
+  overflow-y: auto;
+  padding: 18px 16px;
+  border-radius: var(--ik-radius-lg);
+  background: var(--ik-surface-card);
+  border: 1px solid var(--ik-border);
+  box-shadow: var(--ik-shadow-card);
+  color: var(--ik-text);
+}
+.dash-main {
+  min-width: 0;
+}
+.dash-tabs {
+  margin-bottom: var(--ik-space-5);
+}
+.dash-tabs .ik-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.dash-overview {
+  display: grid;
+  gap: var(--ik-space-4);
+}
+.dash-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.dash-dist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+.dash-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ik-border);
+  font-size: var(--ik-fs-sm);
+  color: var(--ik-text-2);
+}
+.dash-line:last-child {
+  border-bottom: 0;
+}
+.dash-line strong {
+  color: var(--ik-text);
+  font-weight: 800;
+  text-align: right;
+}
+.dash-domains {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ik-space-4);
+}
+.dash-domain {
+  display: grid;
+  gap: 14px;
+  height: 100%;
+  align-content: start;
+}
+.dash-domain__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dash-domain__head h3 {
+  margin: 0;
+  font-size: var(--ik-fs-md);
+  flex: 1;
+}
+.dash-blur {
+  filter: blur(6px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+.dash-domain .ik-btn {
+  justify-self: start;
+}
+@media (max-width: 1200px) {
+  .dash-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dash-rail {
+    position: static;
+    max-height: none;
+    order: 2;
+  }
+  .dash-main {
+    order: 1;
+  }
+  .dash-domains {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .dash-two,
+  .dash-domains {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Onglet Marché */
+.dash-market {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.dash-market__item {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--ik-radius);
+  background: var(--ik-surface-2);
+  border: 1px solid var(--ik-border);
+  color: var(--ik-text);
+  text-decoration: none;
+  transition: transform var(--ik-dur-fast) var(--ik-ease), border-color var(--ik-dur-fast) var(--ik-ease);
+}
+.dash-market__item:hover {
+  transform: translateY(-2px);
+  border-color: var(--ik-border-strong);
+}
+.dash-market__head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: var(--ik-fs-sm);
+}
+.dash-market__price {
+  font-size: var(--ik-fs-xl, 1.4rem);
+  font-weight: 800;
+}
+.dash-market__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Barre d'onglets : on passe à la ligne au lieu de déborder */
+.dash-tabs .ik-tabs {
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  overflow: visible;
+}
+
+@media (max-width: 760px) {
+  .dash-tabs .ik-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+}
+
+/* Mention honnête sur les contenus d'exemple (aucune donnée fictive présentée comme réelle) */
+.dash-demo-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: var(--ik-radius);
+  background: var(--ik-primary-soft);
+  border: 1px dashed var(--ik-border-strong);
+  color: var(--ik-text-2);
+  font-size: var(--ik-fs-sm);
+}
+
+/* Emplacement de la checklist pendant son chargement (hauteur mesurée de la carte chargée) */
+.dash-onb-skel {
+  height: 504px;
+  margin-bottom: 24px;
+  border-radius: 16px;
+}
+@media (max-width: 760px) {
+  .dash-onb-skel {
+    height: 637px;
+  }
+}
+
+/* ==========================================================================
+   Vie du tableau de bord (lot 8) : accueil 3D, raccourcis, anneau de niveau, aurore, micro-interactions.
+   Uniquement transform et opacity ; tout est coupé par « Animations : Non » et « réduire les animations ».
+   ========================================================================== */
+
+/* Aurore : deux halos très lents derrière le contenu (élément dédié, rogné dans sa boîte : ni défilement horizontal, ni contexte d'empilement autour des fenêtres) */
+.dash-layout {
+  position: relative;
+}
+.dash-aurora {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dash-aurora::before,
+.dash-aurora::after {
+  content: '';
+  position: absolute;
+  width: min(460px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(56px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.dash-aurora::before {
+  top: -120px;
+  left: 0;
+  background: radial-gradient(circle, var(--ik-primary-soft), transparent 68%);
+  animation: dh-drift-a 22s ease-in-out infinite alternate;
+}
+.dash-aurora::after {
+  top: 220px;
+  right: 0;
+  background: radial-gradient(circle, rgba(193, 91, 240, 0.22), transparent 68%);
+  animation: dh-drift-b 26s ease-in-out infinite alternate;
+}
+.dash-main {
+  position: relative;
+  z-index: 1;
+}
+@keyframes dh-drift-a {
+  to { transform: translate3d(0, 90px, 0) scale(1.1); }
+}
+@keyframes dh-drift-b {
+  to { transform: translate3d(0, 70px, 0) scale(1.05); }
+}
+
+/* Cartes inclinables : reflet aux coins arrondis de la carte, carte survolée au-dessus de ses voisines (info-bulles visibles) */
+.dash-overview [data-tilt],
+.dh-actions [data-tilt] {
+  border-radius: var(--ik-radius-lg);
+}
+.dash-overview [data-tilt][data-active],
+.dh-actions [data-tilt][data-active] {
+  z-index: 3;
+}
+
+/* Accueil */
+.dh {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+  align-items: center;
+  gap: var(--ik-space-4);
+  min-height: 230px;
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: var(--ik-radius-lg);
+  background: var(--ik-surface-hero);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: var(--ik-glow);
+}
+.dh::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(520px 220px at calc(70% + var(--px) * 40px) calc(20% + var(--py) * 30px), rgba(255, 255, 255, 0.22), transparent 70%),
+    radial-gradient(380px 200px at 10% 110%, rgba(255, 255, 255, 0.12), transparent 70%);
+  pointer-events: none;
+}
+.dh__copy {
+  position: relative;
+  z-index: 1;
+}
+.dh__eyebrow {
+  margin: 0 0 4px;
+  font-size: var(--ik-fs-md);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+.dh__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  line-height: 1.1;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.dh__wave {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: dh-wave 2.6s ease-in-out 1s 2;
+}
+@keyframes dh-wave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(16deg); }
+  20%, 40% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+.dh__sub {
+  margin: 10px 0 16px;
+  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.5;
+}
+.dh__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dh__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font: 700 var(--ik-fs-sm) / 1 var(--ik-font);
+  backdrop-filter: blur(6px);
+}
+.dh__chip--flame svg {
+  color: #ffc14d;
+  animation: dh-flicker 1.6s ease-in-out infinite;
+}
+@keyframes dh-flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.18) rotate(-6deg); }
+}
+.dh__chip--claim {
+  cursor: pointer;
+  background: #fff;
+  color: #2c1d7a;
+  animation: ik-pulse-ring 1.8s var(--ik-ease) infinite;
+}
+.dh__chip--claim:hover {
+  transform: translate3d(0, -2px, 0);
+}
+
+/* Scène 3D : couches décalées par la souris selon leur profondeur (--d) */
+.dh__scene {
+  position: relative;
+  z-index: 1;
+  height: 200px;
+  perspective: 800px;
+}
+.dh__layer,
+.dh__orb {
+  position: absolute;
+  transform: translate3d(calc(var(--px) * var(--d) * 14px), calc(var(--py) * var(--d) * 10px), 0);
+  transition: transform 220ms var(--ik-ease);
+}
+.dh__layer--coin { left: 50%; top: 50%; margin: -52px 0 0 -52px; }
+.dh__layer--mini1 { left: 12%; top: 14%; }
+.dh__layer--mini2 { right: 14%; bottom: 10%; }
+.dh__layer--glass { right: 0; top: 4%; }
+.dh__float {
+  animation: dh-float 5s ease-in-out infinite;
+}
+.dh__float--slow { animation-duration: 6.5s; animation-delay: -2s; }
+.dh__float--slower { animation-duration: 8s; animation-delay: -4s; }
+@keyframes dh-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -12px, 0); }
+}
+.dh__orb {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05) 70%);
+}
+.dh__orb--a { width: 90px; height: 90px; left: 6%; bottom: 6%; }
+.dh__orb--b { width: 54px; height: 54px; right: 26%; top: 0; }
+.dh__glass {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.5);
+  font-size: var(--ik-fs-sm);
+}
+.dh__glass span { color: rgba(255, 255, 255, 0.85); }
+.dh__glass strong { font-size: var(--ik-fs-lg); }
+
+/* Raccourcis : « que veux-tu faire ? » */
+.dh-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--ik-space-3);
+}
+.dh-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--ik-radius-lg);
+  background: var(--ik-surface-card);
+  border: 1px solid var(--ik-border);
+  color: var(--ik-text);
+  text-decoration: none;
+  box-shadow: var(--ik-shadow-card);
+  transition: border-color var(--ik-dur-fast) var(--ik-ease), box-shadow var(--ik-dur-fast) var(--ik-ease);
+}
+.dh-action:hover {
+  border-color: var(--ik-primary);
+  box-shadow: var(--ik-glow-soft), var(--ik-shadow-card);
+}
+.dh-action:active {
+  transform: scale(0.98);
+}
+.dh-action__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  background: var(--ik-grad-brand);
+  color: #fff;
+  box-shadow: 0 10px 22px -10px var(--ik-primary);
+  transition: transform var(--ik-dur) var(--ik-ease);
+}
+.dh-action:hover .dh-action__icon {
+  transform: translate3d(0, -3px, 0) rotate(-6deg) scale(1.06);
+}
+.dh-action__txt {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.dh-action__txt span {
+  color: var(--ik-text-3);
+  font-size: var(--ik-fs-sm);
+}
+.dh-action__go {
+  margin-left: auto;
+  color: var(--ik-text-3);
+  transition: transform var(--ik-dur-fast) var(--ik-ease), color var(--ik-dur-fast) var(--ik-ease);
+}
+.dh-action:hover .dh-action__go {
+  color: var(--ik-primary);
+  transform: translate3d(3px, -3px, 0);
+}
+
+/* Anneau de niveau */
+.dh-ring-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+}
+.dh-ring {
+  position: relative;
+  flex: none;
+  width: 116px;
+  height: 116px;
+}
+.dh-ring__bar {
+  stroke-dashoffset: var(--to);
+  animation: dh-ring-fill 1.4s var(--ik-ease) 0.2s backwards;
+}
+@keyframes dh-ring-fill {
+  from { stroke-dashoffset: var(--c); }
+}
+.dh-ring__lvl {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+.dh-ring__lvl span { color: var(--ik-text-3); font-size: var(--ik-fs-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.dh-ring__lvl strong { font-size: 1.9rem; line-height: 1; }
+.dh-ring__side { flex: 1 1 160px; min-width: 0; }
+
+/* Micro-interactions */
+.ik-btn:active { transform: scale(0.97); }
+.dash-tabs .ik-tab { transition: color var(--ik-dur-fast) var(--ik-ease), transform var(--ik-dur-fast) var(--ik-ease); }
+.dash-tabs .ik-tab:hover { transform: translate3d(0, -1px, 0); }
+.dash-tabs .ik-tab[aria-selected='true']::after { animation: ik-grow-x var(--ik-dur) var(--ik-ease); transform-origin: left; }
+.dash-tabpanel { animation: ik-fade var(--ik-dur-slow) var(--ik-ease) backwards; } /* fondu seul : aucune transformation autour des fenêtres fixes */
+.dash-domain:hover .lp-domain__icon { transform: translate3d(0, -3px, 0) rotate(-6deg); }
+.dash-domain .lp-domain__icon { transition: transform var(--ik-dur) var(--ik-ease); }
+
+@media (max-width: 760px) {
+  .dh { grid-template-columns: minmax(0, 1fr); }
+  .dh__scene { height: 150px; order: -1; }
+  .dh__layer--glass { display: none; }
+}
+
+/* Animations coupées (réglage ou préférence système) : base.css arrête déjà toute animation ; ici on remet en place les couches de parallaxe */
+:root[data-motion='off'] .dh__layer,
+:root[data-motion='off'] .dh__orb {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) .dh__layer,
+  :root:not([data-motion='on']) .dh__orb {
+    transform: none;
+  }
+}

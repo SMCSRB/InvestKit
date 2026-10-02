@@ -1,0 +1,181 @@
+/* ==========================================================================
+   InvestKit : variables de design (UNIQUE source de vérité)
+   Pour changer l'apparence du site, on ne touche qu'à ce fichier.
+   Thème sombre par défaut ; le thème clair s'active avec <html data-theme="light">.
+   ========================================================================== */
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --ik-bg: #090812;
+  --ik-bg-glow-1: rgba(109, 79, 240, 0.22);
+  --ik-bg-glow-2: rgba(180, 92, 240, 0.12);
+  --ik-surface-1: #12101f;
+  --ik-surface-2: #181529;
+  --ik-surface-3: #211d38;
+  --ik-surface-card: linear-gradient(160deg, #181430 0%, #100e1d 70%);
+  --ik-surface-hero: linear-gradient(150deg, #3a2a8f 0%, #5b34c9 45%, #9a4fe0 100%);
+  --ik-overlay: rgba(6, 5, 14, 0.72);
+  --ik-border: rgba(255, 255, 255, 0.07);
+  --ik-border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Texte (contrastes AA vérifiés sur --ik-surface-1) */
+  --ik-text: #f4f2ff;
+  --ik-text-2: #b7b2d3;
+  --ik-text-3: #908ab0;
+  --ik-text-on-primary: #ffffff;
+  --ik-text-on-positive: #07130d;
+  --ik-text-on-negative: #1a0509;
+
+  /* Marque : violet plus orchidée que bleu */
+  --ik-primary: #6d4ff0;
+  --ik-primary-hover: #7d61f5;
+  --ik-primary-soft: rgba(109, 79, 240, 0.18);
+  --ik-accent: #a893ff;
+  --ik-orchid: #c15bf0;
+  --ik-grad-brand: linear-gradient(135deg, #6d4ff0 0%, #b45cf0 100%);
+
+  /* États */
+  --ik-positive: #3ddc97;
+  --ik-positive-soft: rgba(61, 220, 151, 0.14);
+  --ik-negative: #ff6b81;
+  --ik-negative-soft: rgba(255, 107, 129, 0.14);
+  --ik-warning: #ffc14d;
+  --ik-warning-soft: rgba(255, 193, 77, 0.14);
+  --ik-info: #5cc8ff;
+
+  /* Séries de graphique (ordre fixe, jamais cyclé) : validées avec le script du skill dataviz (clair et sombre). L'écart daltonien côté sombre est juste suffisant : toujours ajouter légende ou étiquette directe. */
+  --ik-series-1: #7a5cf0;
+  --ik-series-2: #1a9fbf;
+  --ik-series-3: #cf7a22;
+  --ik-series-4: #d6509a;
+  --ik-series-5: #27a865;
+  --ik-grid: rgba(255, 255, 255, 0.06);
+
+  /* Ombres et lueurs */
+  --ik-shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 40px -24px rgba(0, 0, 0, 0.8);
+  --ik-shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --ik-glow: 0 0 0 1px rgba(139, 108, 255, 0.28), 0 14px 44px -14px rgba(109, 79, 240, 0.55);
+  --ik-glow-soft: 0 10px 40px -18px rgba(109, 79, 240, 0.45);
+  --ik-focus: #c7b9ff;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --ik-bg: #f4f3fb;
+  --ik-bg-glow-1: rgba(109, 79, 240, 0.12);
+  --ik-bg-glow-2: rgba(180, 92, 240, 0.08);
+  --ik-surface-1: #ffffff;
+  --ik-surface-2: #f0eef9;
+  --ik-surface-3: #e6e2f5;
+  --ik-surface-card: linear-gradient(160deg, #ffffff 0%, #f7f5ff 100%);
+  --ik-surface-hero: linear-gradient(150deg, #4b34c4 0%, #6a3fd6 50%, #a24fe0 100%);
+  --ik-overlay: rgba(30, 22, 70, 0.45);
+  --ik-border: rgba(30, 22, 70, 0.1);
+  --ik-border-strong: rgba(30, 22, 70, 0.22);
+
+  --ik-text: #171431;
+  --ik-text-2: #4f476e;
+  --ik-text-3: #675f87;
+  --ik-text-on-primary: #ffffff;
+  --ik-text-on-positive: #ffffff;
+  --ik-text-on-negative: #ffffff;
+
+  --ik-primary: #5b3fe0;
+  --ik-primary-hover: #4a30c8;
+  --ik-primary-soft: rgba(91, 63, 224, 0.1);
+  --ik-accent: #4d31d1;
+  --ik-orchid: #a93fd6;
+  --ik-grad-brand: linear-gradient(135deg, #5b3fe0 0%, #a04ad8 100%);
+
+  --ik-positive: #08683f;
+  --ik-positive-soft: rgba(10, 116, 72, 0.1);
+  --ik-negative: #b5203d;
+  --ik-negative-soft: rgba(198, 43, 72, 0.1);
+  --ik-warning: #7a5000;
+  --ik-warning-soft: rgba(138, 90, 0, 0.1);
+  --ik-info: #075f94;
+
+  --ik-series-1: #5b3fe0;
+  --ik-series-2: #0a8ca8;
+  --ik-series-3: #b86a14;
+  --ik-series-4: #b8337f;
+  --ik-series-5: #1d8a52;
+  --ik-grid: rgba(30, 22, 70, 0.08);
+
+  --ik-shadow-card: 0 1px 2px rgba(30, 22, 70, 0.06), 0 14px 34px -22px rgba(30, 22, 70, 0.25);
+  --ik-shadow-pop: 0 24px 60px -24px rgba(30, 22, 70, 0.4), 0 0 0 1px rgba(30, 22, 70, 0.08);
+  --ik-glow: 0 0 0 1px rgba(91, 63, 224, 0.3), 0 12px 34px -16px rgba(91, 63, 224, 0.4);
+  --ik-glow-soft: 0 10px 30px -18px rgba(91, 63, 224, 0.3);
+  --ik-focus: #5b3fe0;
+}
+
+:root {
+  /* Typographie */
+  --ik-font: var(--font-jakarta), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ik-fs-xs: 0.75rem;
+  --ik-fs-sm: 0.84rem;
+  --ik-fs-base: 0.94rem;
+  --ik-fs-md: 1.06rem;
+  --ik-fs-lg: 1.25rem;
+  --ik-fs-xl: 1.6rem;
+  --ik-fs-2xl: 2.1rem;
+  --ik-fs-3xl: clamp(2.3rem, 4.6vw, 3.2rem);
+  --ik-fs-hero: clamp(2.3rem, 4.6vw, 3.7rem);
+
+  /* Espacements, rayons */
+  --ik-space-1: 4px;
+  --ik-space-2: 8px;
+  --ik-space-3: 12px;
+  --ik-space-4: 16px;
+  --ik-space-5: 24px;
+  --ik-space-6: 32px;
+  --ik-space-7: 48px;
+  --ik-space-8: 72px;
+  --ik-radius-sm: 10px;
+  --ik-radius: 16px;
+  --ik-radius-lg: 22px;
+  --ik-radius-pill: 999px;
+
+  /* Mise en page de la coque */
+  --ik-sidebar-w: 264px;
+  --ik-sidebar-w-collapsed: 76px;
+  --ik-topbar-h: 68px;
+  --ik-ticker-h: 40px;
+  --ik-content-max: 1360px;
+
+  /* Mouvement : définis une fois, utilisés partout */
+  --ik-dur-fast: 150ms;
+  --ik-dur: 240ms;
+  --ik-dur-slow: 420ms;
+  --ik-dur-chart: 900ms;
+  --ik-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ik-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ik-stagger: 60ms;
+
+  --ik-z-sidebar: 40;
+  --ik-z-topbar: 50;
+  --ik-z-menu: 70;
+  --ik-z-modal: 90;
+}
+
+/* « Animations : non » (réglage utilisateur) et « réduire les animations » (système) */
+:root[data-motion='off'] {
+  --ik-dur-fast: 0.01ms;
+  --ik-dur: 0.01ms;
+  --ik-dur-slow: 0.01ms;
+  --ik-dur-chart: 0.01ms;
+  --ik-stagger: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) {
+    --ik-dur-fast: 0.01ms;
+    --ik-dur: 0.01ms;
+    --ik-dur-slow: 0.01ms;
+    --ik-dur-chart: 0.01ms;
+    --ik-stagger: 0ms;
+  }
+}

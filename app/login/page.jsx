@@ -1,371 +1,117 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { markLoggedIn } from '@/app/lib/session';
+import AuthLayout, { AuthBadge, AuthHeader } from '@/app/components/landing/AuthLayout';
+import { LogoMark } from '@/app/components/ui/Logo';
+import { Button } from '@/app/components/ui/primitives';
+import { useTheme } from '@/app/context/ThemeContext';
+import { CodeInput, Confetti, Notice, PasswordField, SuccessMark } from '@/app/components/auth/fields';
+import { authPost, errorText } from '@/app/lib/authApi';
 
+// Connexion. Le message d'erreur est volontairement le même pour « adresse inconnue » et « mauvais mot de passe » (aucune fuite sur l'existence d'un compte).
 export default function LoginPage() {
   const router = useRouter();
+  const { motionEnabled } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [tempToken, setTempToken] = useState(null); // connexion en attente du code 2FA
+  const [error, setError] = useState('');
+  const [tempToken, setTempToken] = useState(null); // mot de passe validé, code 2FA attendu
   const [code, setCode] = useState('');
+  const [backup, setBackup] = useState(false);       // saisie d'un code de secours (texte) plutôt que des 6 cases
+  const [done, setDone] = useState(false);
+  const timer = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/dashboard');
-    }
+    try { if (localStorage.getItem('token')) router.push('/dashboard'); } catch { /* ignore */ }
+    return () => clearTimeout(timer.current);
   }, [router]);
 
-  const finishLogin = () => {
-    setMessage('✅ Connexion réussie!');
+  const finish = () => {
     markLoggedIn(); // le vrai jeton est dans un cookie httpOnly posé par le serveur
-    setTimeout(() => router.push('/dashboard'), 1500);
+    setDone(true);
+    timer.current = setTimeout(() => router.push('/dashboard'), motionEnabled ? 1200 : 300);
   };
 
-  const handleSubmit = async (e) => {
+  const submitPassword = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage('');
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/${tempToken ? '2fa/login-verify' : 'login'}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(tempToken ? { tempToken, code: code.trim() } : { email, password }),
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok && data.requires2FA) {
-        setTempToken(data.tempToken);
-        setMessage('🔐 Entre le code à 6 chiffres de ton application d\'authentification (ou un code de secours).');
-      } else if (response.ok) {
-        finishLogin();
-      } else {
-        if (tempToken && response.status === 401 && /expir/i.test(data.error || '')) { setTempToken(null); setCode(''); }
-        setMessage(`❌ ${data.error || 'Email ou mot de passe incorrect'}`);
-      }
-    } catch (error) {
-      setMessage('❌ Erreur de connexion au serveur');
-    } finally {
-      setLoading(false);
-    }
+    if (loading) return;
+    setLoading(true); setError('');
+    const r = await authPost('login', { email: email.trim(), password });
+    setLoading(false);
+    if (r.ok && r.data.requires2FA) { setTempToken(r.data.tempToken); setCode(''); setBackup(false); return; }
+    if (r.ok) { finish(); return; }
+    setError(errorText(r, 'E-mail ou mot de passe incorrect.'));
   };
+
+  const submitCode = async (value) => {
+    const c = (value ?? code).trim();
+    if (loading || !c) return;
+    setLoading(true); setError('');
+    const r = await authPost('2fa/login-verify', { tempToken, code: c });
+    setLoading(false);
+    if (r.ok) { finish(); return; }
+    if (r.status === 401 && /expir/i.test(r.data?.error || '')) { setTempToken(null); setCode(''); setError('La vérification a expiré. Reconnecte-toi.'); return; }
+    setCode('');
+    setError(errorText(r, 'Code incorrect.'));
+  };
+
+  if (done) {
+    return (
+      <AuthLayout mode="login">
+        <Confetti run={motionEnabled} />
+        <div className="au-success" role="status"><SuccessMark /><h1 style={{ margin: 0, fontSize: 'var(--ik-fs-xl)' }}>Connexion réussie</h1><p className="ik-muted" style={{ margin: 0 }}>On t’emmène sur ton tableau de bord…</p></div>
+      </AuthLayout>
+    );
+  }
+
+  if (tempToken) {
+    return (
+      <AuthLayout mode="login">
+        <AuthHeader icon={<AuthBadge name="shield" />} title="Double authentification" subtitle={backup ? 'Entre l’un de tes codes de secours.' : 'Entre le code à 6 chiffres de ton application d’authentification.'} />
+        <form className="au-form" onSubmit={(e) => { e.preventDefault(); submitCode(); }}>
+          {backup ? (
+            <div className="ik-field">
+              <label className="ik-label" htmlFor="login-backup">Code de secours</label>
+              <input id="login-backup" className="ik-input" type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} autoFocus placeholder="XXXX-XXXX" />
+              <p className="au-hint">Chaque code de secours ne marche qu’une fois.</p>
+            </div>
+          ) : (
+            <CodeInput label="Code de double authentification" value={code} onChange={setCode} onComplete={submitCode} disabled={loading} status={error ? 'error' : undefined} />
+          )}
+          {error && <Notice>{error}</Notice>}
+          <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || (backup ? !code.trim() : code.length !== 6)}>{loading ? 'Vérification…' : 'Valider'}</Button>
+          <div className="au-row">
+            <button type="button" className="ik-link au-link-btn" onClick={() => { setBackup((b) => !b); setCode(''); setError(''); }}>{backup ? 'Utiliser le code à 6 chiffres' : 'Utiliser un code de secours'}</button>
+            <button type="button" className="ik-link au-link-btn" onClick={() => { setTempToken(null); setCode(''); setError(''); }}>← Retour</button>
+          </div>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '20px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <style>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(-25px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes floatGradient {
-          0%, 100% { transform: translateY(0px) scale(1); }
-          50% { transform: translateY(-10px) scale(1.05); }
-        }
-
-        .form-container {
-          animation: slideIn 0.6s ease-out;
-        }
-      `}</style>
-
-      {/* Background Decorative Elements */}
-      <div style={{
-        position: 'absolute',
-        top: '-50%',
-        right: '-10%',
-        width: '500px',
-        height: '500px',
-        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-        borderRadius: '50%',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '-30%',
-        left: '-5%',
-        width: '400px',
-        height: '400px',
-        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%)',
-        borderRadius: '50%',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Main Form Container */}
-      <div className="form-container" style={{
-        maxWidth: '420px',
-        width: '100%',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(248,250,252,0.97) 100%)',
-        borderRadius: '28px',
-        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.25), 0 0 120px rgba(59, 130, 246, 0.15)',
-        padding: 'clamp(20px, 5vw, 28px) clamp(20px, 6vw, 32px)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        position: 'relative',
-        zIndex: 10,
-      }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '28px',
-            margin: '0 auto 12px',
-            animation: 'floatGradient 3s ease-in-out infinite',
-            boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
-          }}>
-            🔐
-          </div>
-          <h1 style={{
-            margin: '0 0 6px 0',
-            fontSize: 'clamp(18px, 5vw, 24px)',
-            fontWeight: '700',
-            background: 'linear-gradient(135deg, #0f172a 0%, #3b82f6 50%, #8b5cf6 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}>
-            Connexion
-          </h1>
-          <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-            Accédez à votre compte InvestKit
-          </p>
+    <AuthLayout mode="login">
+      <AuthHeader icon={<div style={{ display: 'grid', placeItems: 'center', marginBottom: 14 }}><LogoMark size={52} /></div>} title="Content de te revoir" subtitle="Connecte-toi pour retrouver ton portefeuille." />
+      <form className="au-form" onSubmit={submitPassword}>
+        <div className="ik-field">
+          <label className="ik-label" htmlFor="login-email">Adresse e-mail</label>
+          <input id="login-email" name="username" className="ik-input" type="email" inputMode="email" autoComplete="username" placeholder="toi@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} autoCapitalize="none" spellCheck={false} required />
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Email */}
-          <div>
-            <label style={{
-              fontSize: '12px',
-              fontWeight: '700',
-              color: '#1e293b',
-              display: 'block',
-              marginBottom: '8px',
-              letterSpacing: '0.3px',
-            }}>
-              📧 Email
-            </label>
-            <input
-              type="email"
-              placeholder="votre@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '11px 14px',
-                border: '2px solid #e2e8f0',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                outline: 'none',
-                boxSizing: 'border-box',
-                backgroundColor: '#f8fafc',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'none';
-                e.target.style.backgroundColor = '#f8fafc';
-              }}
-              required
-            />
+        <div>
+          <div className="au-row" style={{ marginBottom: 6 }}>
+            <span />
+            <Link href="/forgot-password" className="ik-link">Mot de passe oublié ?</Link>
           </div>
-
-          {/* Password */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={{
-                fontSize: '12px',
-                fontWeight: '700',
-                color: '#1e293b',
-                letterSpacing: '0.3px',
-              }}>
-                🔒 Mot de passe
-              </label>
-              <a href="/forgot-password" style={{
-                fontSize: '11px',
-                color: '#3b82f6',
-                textDecoration: 'none',
-                fontWeight: '600',
-                transition: 'color 0.2s',
-              }}
-              onMouseOver={(e) => e.target.style.color = '#8b5cf6'}
-              onMouseOut={(e) => e.target.style.color = '#3b82f6'}
-              >
-                Oublié?
-              </a>
-            </div>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '11px 14px',
-                border: '2px solid #e2e8f0',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                outline: 'none',
-                boxSizing: 'border-box',
-                backgroundColor: '#f8fafc',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = 'none';
-                e.target.style.backgroundColor = '#f8fafc';
-              }}
-              required
-            />
-          </div>
-
-          {tempToken && (
-            <div>
-              <label htmlFor="code2fa" style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', display: 'block', marginBottom: '8px' }}>🔐 Code de double authentification</label>
-              <input
-                id="code2fa"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                autoFocus
-                required
-                style={{ width: '100%', padding: '11px 14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: '#f8fafc' }}
-              />
-            </div>
-          )}
-
-          {/* Message */}
-          {message && (
-            <div style={{
-              padding: '10px 12px',
-              background: message.includes('✅')
-                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))'
-                : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(185, 28, 28, 0.05))',
-              border: `1px solid ${message.includes('✅') ? '#d1fae5' : '#fee2e2'}`,
-              borderRadius: '10px',
-              color: message.includes('✅') ? '#065f46' : '#991b1b',
-              fontSize: '12px',
-              fontWeight: '600',
-              textAlign: 'center',
-            }}>
-              {message}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading || !email || !password}
-            style={{
-              padding: '11px 14px',
-              background: !loading && email && password
-                ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)'
-                : '#cbd5e1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '700',
-              cursor: !loading && email && password ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              opacity: loading ? 0.9 : 1,
-              letterSpacing: '0.3px',
-              boxShadow: !loading && email && password ? '0 10px 30px rgba(59, 130, 246, 0.3)' : 'none',
-            }}
-            onMouseOver={(e) => {
-              if (!loading && email && password) {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!loading && email && password) {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3)';
-              }
-            }}
-          >
-            {loading ? '⏳ Connexion...' : '✨ Se connecter'}
-          </button>
-        </form>
-
-        {/* Footer Link */}
-        <div style={{
-          marginTop: '14px',
-          textAlign: 'center',
-          paddingTop: '12px',
-          borderTop: '1px solid #e2e8f0',
-        }}>
-          <p style={{
-            fontSize: '12px',
-            color: '#64748b',
-            margin: '0 0 8px 0',
-            fontWeight: '500',
-          }}>
-            Pas de compte?
-          </p>
-          <a
-            href="/signup"
-            style={{
-              fontSize: '12px',
-              color: '#3b82f6',
-              textDecoration: 'none',
-              fontWeight: '600',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.textDecoration = 'underline';
-              e.target.style.color = '#8b5cf6';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.textDecoration = 'none';
-              e.target.style.color = '#3b82f6';
-            }}
-          >
-            Créer un compte →
-          </a>
+          <PasswordField id="login-password" name="password" label="Mot de passe" autoComplete="current-password" placeholder="" value={password} onChange={setPassword} />
         </div>
-      </div>
-    </div>
+        {error && <Notice>{error}</Notice>}
+        <Button type="submit" variant="primary" size="lg" block loading={loading} disabled={loading || !email || !password}>{loading ? 'Connexion…' : 'Se connecter'}</Button>
+      </form>
+      <p className="au-alt">Pas encore de compte ? <Link href="/signup" className="ik-link">Créer un compte</Link></p>
+    </AuthLayout>
   );
 }

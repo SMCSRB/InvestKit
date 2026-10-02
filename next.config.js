@@ -1,6 +1,6 @@
 // Politique de sécurité du contenu (anti-XSS, anti-clickjacking). Les scripts et styles « inline » restent autorisés (Next.js
-// injecte des scripts en ligne, et les simulateurs HTML ont des gestionnaires onclick) ; les ORIGINES sont en revanche limitées :
-// plus aucun script d'un CDN tiers (Chart.js et html2pdf sont hébergés dans /public/vendor), seulement hCaptcha pour l'inscription.
+// injecte des scripts en ligne) ; les ORIGINES sont en revanche limitées :
+// plus aucun script d'un CDN tiers (les simulateurs sont des pages natives, sans iframe ni bibliothèque externe), seulement hCaptcha pour l'inscription.
 const isDev = process.env.NODE_ENV !== 'production';
 const apiOrigin = (() => {
   try { return new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').origin; } catch { return ''; }
@@ -77,10 +77,6 @@ const nextConfig = {
         ],
       },
       {
-        source: '/vendor/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-      {
         source: '/fonts/:path*',
         headers: [
           {
@@ -115,11 +111,6 @@ const nextConfig = {
     return [
       {
         source: '/outils',
-        destination: '/dashboard',
-        permanent: false,
-      },
-      {
-        source: '/education',
         destination: '/dashboard',
         permanent: false,
       },

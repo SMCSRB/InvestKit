@@ -118,7 +118,6 @@ export const register = async (
     }
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('pendingUserId', data.userId);
       localStorage.setItem('pendingEmail', email);
     }
 

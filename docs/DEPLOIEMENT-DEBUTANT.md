@@ -144,6 +144,17 @@ NEXT_PUBLIC_API_URL=https://solomili.duckdns.org/api/v1 NEXT_PUBLIC_HCAPTCHA_SIT
 sudo systemctl restart <nom-du-service-site>       # (ou : pm2 restart <nom>)
 ```
 
+### Si tu n'as ni systemd ni pm2 (API lancée par `backend/start-dev.sh`) : le script `ops/stack.sh`
+Il démarre, arrête et surveille l'API (port 5000) et le site (port 3000). **L'arrêt se fait par port** : le script retrouve le vrai processus qui écoute. (L'ancienne méthode, qui arrêtait « le numéro écrit dans un fichier .pid », ne marchait pas : ce fichier contenait le lanceur, pas le processus qui écoute.)
+```bash
+cd <dossier-du-projet>
+./ops/stack.sh status            # qui tourne ? (✓ en marche / ✗ arrêté, avec le numéro de processus)
+./ops/stack.sh restart api       # arrête puis relance l'API ; les journaux sont dans ~/investkit-api.log
+./ops/stack.sh restart site      # idem pour le site (après « npm run build »)
+./ops/stack.sh stop              # arrête les deux ; « start » les relance
+```
+Tu dois voir `✓ API : démarré sur le port 5000`. Si le démarrage échoue, le script affiche les 15 dernières lignes du journal. Tes secrets restent dans `backend/start-dev.sh` ou `backend/.env.local` : le script n'en contient aucun. Ports ou dossiers différents : voir l'en-tête du script (`API_PORT`, `SITE_PORT`, `API_START`, `LOG_DIR`…).
+
 ## Étape 8 — Vérifications après (en navigation privée)
 | Où | Ce que tu dois voir |
 |---|---|
@@ -171,14 +182,14 @@ Utilise le commit noté à l'étape 2.
 cd <dossier-du-projet>
 git checkout <ancien-commit>
 cd backend && npm ci && npm run build && cd ..
-sudo systemctl restart <nom-du-service-api>
-# reconstruire le site comme à l'étape 7, puis redémarrer son service
+sudo systemctl restart <nom-du-service-api>        # sans systemd : ./ops/stack.sh restart api
+# reconstruire le site comme à l'étape 7, puis le redémarrer (sans systemd : ./ops/stack.sh restart site)
 ```
 Les nouvelles tables sont ajoutées **à côté** des anciennes : l'ancien code fonctionne avec la base mise à jour (les anciennes sessions par jeton continuent de marcher). **Restaure la base seulement si tu constates un problème de données** :
 ```bash
-sudo systemctl stop <nom-du-service-api>
+sudo systemctl stop <nom-du-service-api>           # sans systemd : ./ops/stack.sh stop api
 pg_restore --clean --if-exists --no-owner --dbname="$DATABASE_URL" ~/sauvegardes-investkit/<fichier>.dump
-sudo systemctl start <nom-du-service-api>
+sudo systemctl start <nom-du-service-api>          # sans systemd : ./ops/stack.sh start api
 ```
 (Les sauvegardes chiffrées se déchiffrent d'abord : `docs/sauvegardes.md`.) Une restauration te fait perdre ce qui s'est passé APRÈS la sauvegarde.
 

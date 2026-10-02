@@ -1,27 +1,70 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import AppShell, { PageHeader } from '@/app/components/shell/AppShell';
+import { Button, EmptyState } from '@/app/components/ui/primitives';
+import { useTheme } from '@/app/context/ThemeContext';
+import OverviewTab from './OverviewTab';
+import MarketTab from './MarketTab';
+import HistoryChart from '@/app/components/HistoryChart';
+import SocialHub from '@/app/components/social/SocialHub';
+
+import { PRICES, formatEuro } from '@/app/lib/plans';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import HelpTip from '@/app/components/HelpTip';
 import PortfolioRisk from '@/app/components/PortfolioRisk';
 import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
+import { useShell } from '@/app/components/shell/ShellContext';
+import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
 
+// Transparence d'une couleur quelconque (hexadécimale ou variable de design).
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
+// useSearchParams exige une limite Suspense (lecture de ?tab=…).
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
   const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
+  const shell = useShell();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTabState] = useState('overview');
+  const [socialTab, setSocialTab] = useState('friends');
+  const setActiveTab = useCallback((t) => {
+    setActiveTabState(t);
+    try { window.history.replaceState(null, '', t === 'overview' ? '/dashboard' : `/dashboard?tab=${t}`); } catch { /* ignore */ }
+  }, []);
+  // Les liens du menu latéral (?tab=trading, ?tab=settings…) ouvrent l'onglet demandé, y compris quand le tableau de bord est déjà ouvert.
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  useEffect(() => {
+    // « risk » (ancien onglet vide) mène à l'analyse de risque réelle, qui vit dans le simulateur.
+    const target = tabParam === 'risk' ? 'trading' : tabParam === 'activity' ? 'friends' : (tabParam || 'overview');
+    if (['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'settings'].includes(target)) setActiveTabState(target);
+  }, [tabParam]);
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);
   const [newsModalTab, setNewsModalTab] = useState('news');
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { theme: globalTheme, toggleTheme: toggleGlobalTheme } = useTheme();
+  const isDarkMode = globalTheme === 'dark';
   const [settingsTab, setSettingsTab] = useState('general');
+  // ?section=billing (menu du profil, « Abonnement ») ouvre directement la bonne partie des paramètres.
+  const sectionParam = searchParams.get('section');
+  useEffect(() => {
+    if (['general', 'profile', 'security', 'privacy', 'billing'].includes(sectionParam)) setSettingsTab(sectionParam);
+  }, [sectionParam]);
   // 2FA - configuration réelle (backend TOTP)
   const [twoFAModal, setTwoFAModal] = useState(null); // null | 'setup' | 'verify' | 'backup-codes' | 'disable'
   const [twoFAQrCode, setTwoFAQrCode] = useState('');
@@ -88,48 +131,7 @@ export default function DashboardPage() {
   const [leaderboardLevel, setLeaderboardLevel] = useState('all'); // Niveau : all, 1-3, 4-6, 7-9, 10+
   const [selectedLeaderboardUser, setSelectedLeaderboardUser] = useState(null); // Utilisateur du classement sélectionné
   const [selectedLeaderboardGuild, setSelectedLeaderboardGuild] = useState(null); // Guilde du classement sélectionnée
-  const [guildes, setGuildes] = useState([
-    {
-      id: 1,
-      name: '₿ Crypto Traders',
-      emoji: '₿',
-      description: 'Groupe pour les traders crypto',
-      level: 8,
-      totalXP: 4200,
-      restrictions: { minLevel: 5, requiredBadges: ['crypto_master'] },
-      membersList: [
-        { id: 0, name: 'SMC.SRB', level: 20, role: 'Leader', joinedDate: '2026-01-01' },
-        { id: 1, name: 'Alice Dupont', level: 5, role: 'Co-leader', joinedDate: '2026-01-15' },
-        { id: 2, name: 'Bob Martin', level: 8, role: 'Elder', joinedDate: '2026-02-10' },
-        { id: 3, name: 'David Lemoine', level: 6, role: 'Member', joinedDate: '2026-03-05' },
-        { id: 4, name: 'Emma Leclerc', level: 9, role: 'Member', joinedDate: '2026-03-20' },
-        { id: 5, name: 'Clara Rousseau', level: 3, role: 'Member', joinedDate: '2026-04-01' },
-      ],
-      chat: [
-        { id: 1, author: 'Alice Dupont', message: 'Bienvenue à tous!', timestamp: '2026-09-20 10:15' },
-        { id: 2, author: 'Bob Martin', message: 'Complétez vos domaines pour débloquer les perks!', timestamp: '2026-09-20 11:30' },
-        { id: 3, author: 'David Lemoine', message: 'Qui veut participer à la quête cette semaine?', timestamp: '2026-09-20 14:45' },
-      ]
-    },
-    {
-      id: 2,
-      name: '📈 Stock Masters',
-      emoji: '📈',
-      description: 'Investisseurs en bourse',
-      level: 5,
-      totalXP: 2800,
-      restrictions: { minLevel: 4, minStocksProgress: 60 },
-      membersList: [
-        { id: 6, name: 'Emma Leclerc', level: 9, role: 'Leader', joinedDate: '2026-02-01' },
-        { id: 2, name: 'Bob Martin', level: 8, role: 'Member', joinedDate: '2026-02-15' },
-        { id: 3, name: 'David Lemoine', level: 6, role: 'Member', joinedDate: '2026-03-01' },
-      ],
-      chat: [
-        { id: 1, author: 'Emma Leclerc', message: 'Bienvenue!', timestamp: '2026-09-20 09:00' },
-        { id: 2, author: 'Bob Martin', message: 'Analyse tech du jour?', timestamp: '2026-09-20 13:20' },
-      ]
-    },
-  ]);
+  const [guildes, setGuildes] = useState([]);
   const [showCreateGuilde, setShowCreateGuilde] = useState(false);
   const [newGuildeName, setNewGuildeName] = useState('');
   const [newGuildeDesc, setNewGuildeDesc] = useState('');
@@ -149,13 +151,9 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState('dashboard'); // dashboard, notifications, activity
   // Notifications RÉELLES du serveur (événements de la banque, de l'immobilier, de la sécurité du compte…) ; voir loadNotifications.
   const [notifications, setNotifications] = useState([]);
-  const [activityFeed, setActivityFeed] = useState([
-    { id: 1, type: 'level_up', user: 'Alice Dupont', avatar: '👩‍💼', detail: 'a atteint le niveau 8', timestamp: new Date(Date.now() - 1800000) },
-    { id: 2, type: 'achievement', user: 'Bob Martin', avatar: '👨‍💻', detail: 'a déverrouillé "Investisseur Crypto"', timestamp: new Date(Date.now() - 3600000) },
-    { id: 3, type: 'guild_join', user: 'Charlie Dubois', avatar: '🎯', detail: 'a rejoint "Immobilier Pro"', timestamp: new Date(Date.now() - 5400000) },
-    { id: 4, type: 'leaderboard', user: 'Diana Laurent', avatar: '💪', detail: 'a atteint le top 10 du classement', timestamp: new Date(Date.now() - 7200000) },
-    { id: 5, type: 'investment', user: 'Eve Martin', avatar: '📈', detail: 'a acheté 0.5 BTC', timestamp: new Date(Date.now() - 9000000) },
-  ]);
+  // Fil d'activité : aucune donnée fictive. Il se remplira quand les amis auront des événements réels côté serveur.
+  const [activityFeed, setActivityFeed] = useState([]);
+
   const [activityFilter, setActivityFilter] = useState('all'); // all, level_up, achievement, guild, leaderboard, investment
 
   // Guild Events & Announcements
@@ -166,70 +164,21 @@ export default function DashboardPage() {
     { id: 4, guildId: 'crypto-masters', title: '📊 Analyse Technique Marathon', description: 'Analysez les patterns sur 5 paires différentes et partagez vos prédictions', startDate: new Date(Date.now() + 345600000), endDate: new Date(Date.now() + 432000000), participants: 18, reward: '750 XP' },
     { id: 5, guildId: 'immobilier-pro', title: '🔍 Visite Virtuelle d\'Immeubles', description: 'Tour virtuel de 10 propriétés prestigieuses et évaluation de leur potentiel', startDate: new Date(Date.now() + 259200000), endDate: new Date(Date.now() + 604800000), participants: 22, reward: '600 XP' },
   ]);
-  const [guildAnnouncements, setGuildAnnouncements] = useState([
-    { id: 1, guildId: 'crypto-masters', author: 'Alice Dupont', avatar: '👩‍💼', title: 'Nouvelle stratégie DCA', content: 'On lance une nouvelle stratégie de Dollar-Cost Averaging pour BTC', timestamp: new Date(Date.now() - 3600000) },
-    { id: 2, guildId: 'immobilier-pro', author: 'Bob Martin', avatar: '👨‍💻', title: 'Réunion en direct vendredi', content: 'Rdv zoom pour discuter des opportunités immobilières', timestamp: new Date(Date.now() - 7200000) },
-    { id: 3, guildId: 'crypto-masters', author: 'Emma Leclerc', avatar: '👩‍💰', title: 'Résultats du Challenge Portefeuille', content: 'Félicitations à tous les participants! Les gagnants seront annoncés demain.', timestamp: new Date(Date.now() - 10800000) },
-    { id: 4, guildId: 'immobilier-pro', author: 'David Lemoine', avatar: '👨‍🎯', title: 'Nouvelle ressource disponible', content: 'Guide complet: Comment évaluer le ROI d\'un investissement immobilier', timestamp: new Date(Date.now() - 14400000) },
-  ]);
+  const [guildAnnouncements, setGuildAnnouncements] = useState([]);
 
   // 5. LEADERBOARD GUILDES - Ranking des membres
-  const [guildLeaderboards, setGuildLeaderboards] = useState({
-    'crypto-masters': [
-      { rank: 1, name: 'Alice Dupont', xp: 5000, contribution: 85, avatar: '👩‍💼' },
-      { rank: 2, name: 'Bob Martin', xp: 4200, contribution: 72, avatar: '👨‍💻' },
-      { rank: 3, name: 'You', xp: 3500, contribution: 60, avatar: '👤' },
-    ],
-    'immobilier-pro': [
-      { rank: 1, name: 'Diana Laurent', xp: 6000, contribution: 90, avatar: '💪' },
-      { rank: 2, name: 'You', xp: 4800, contribution: 75, avatar: '👤' },
-    ]
-  });
+  const [guildLeaderboards, setGuildLeaderboards] = useState({});
 
   // 6. SYSTÈME DE POINTS GUILDE - Trésor/points partagés
-  const [guildTreasures, setGuildTreasures] = useState({
-    'crypto-masters': {
-      totalPoints: 2500,
-      members: 35,
-      level: 3,
-      nextLevel: 3500,
-      recentContributions: [
-        { member: 'Alice', points: 100, action: 'Partage stratégie' },
-        { member: 'Bob', points: 75, action: 'Analyse technique' },
-        { member: 'You', points: 50, action: 'Participation défi' },
-        { member: 'Emma', points: 120, action: 'Animation community' },
-      ]
-    },
-    'immobilier-pro': {
-      totalPoints: 1800,
-      members: 18,
-      level: 2,
-      nextLevel: 2000,
-      recentContributions: [
-        { member: 'Diana', points: 80, action: 'Mentor newbie' },
-        { member: 'You', points: 60, action: 'Visite immeuble' },
-        { member: 'David', points: 95, action: 'Guide ROI' },
-      ]
-    },
-  });
+  const [guildTreasures, setGuildTreasures] = useState({});
 
   // 1. REAL-TIME NOTIFICATIONS - Système en temps réel
-  const [realtimeNotifications, setRealtimeNotifications] = useState([
-    { id: 1, type: 'new_follow', user: 'Alice Dupont', message: 'a commencé à vous suivre', timestamp: Date.now(), read: false, isNew: true }
-  ]);
+  const [realtimeNotifications, setRealtimeNotifications] = useState([]);
   const notificationIntervalRef = useRef(null);
 
   // 2. CHAT GUILDES AMÉLIORÉ - Sidebar chat intégré
   const [selectedGuildChat, setSelectedGuildChat] = useState(null);
-  const [guildChatMessages, setGuildChatMessages] = useState({
-    'crypto-masters': [
-      { id: 1, author: 'Alice', avatar: '👩‍💼', message: 'Qui pense que le BTC va atteindre 100k?', timestamp: new Date(Date.now() - 1800000) },
-      { id: 2, author: 'Bob', avatar: '👨‍💻', message: 'Possible d\'ici 2025!', timestamp: new Date(Date.now() - 1500000) },
-    ],
-    'immobilier-pro': [
-      { id: 1, author: 'Charlie', avatar: '🎯', message: 'Quelqu\'un a des sources de crédit immo?', timestamp: new Date(Date.now() - 3600000) },
-    ]
-  });
+  const [guildChatMessages, setGuildChatMessages] = useState({});
 
   // 3. SYSTÈME DE NOTIFICATIONS PUSH - Alertes pop-up
   const [pushNotifications, setPushNotifications] = useState([]);
@@ -262,7 +211,7 @@ export default function DashboardPage() {
   const [userBadges, setUserBadges] = useState([]);
   const [isPremium, setIsPremium] = useState(true);
   const [selectedDisplayBadges, setSelectedDisplayBadges] = useState(['first_step', 'crypto_novice']); // Max 3 badges to display
-  const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)');
+  const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)');
   const [userBio, setUserBio] = useState('Investisseur passionné en crypto et finance');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
@@ -281,6 +230,10 @@ export default function DashboardPage() {
   const [badgeUnlockToasts, setBadgeUnlockToasts] = useState([]); // Toast notifications for new badges
   const [badgeConfetti, setBadgeConfetti] = useState([]); // Confetti particles for celebrations
   const [badgeDateObtained, setBadgeDateObtained] = useState({}); // { badgeId: timestamp }
+  // Annonce des badges : un badge n'est « annoncé » (pop-up + confettis) qu'UNE SEULE FOIS, puis marqué comme vu (enregistré dans le navigateur).
+  const [badgesHydrated, setBadgesHydrated] = useState(false);   // vrai quand l'état enregistré a été relu : avant, on n'attribue ni n'annonce rien
+  const [announcedBadges, setAnnouncedBadges] = useState([]);
+  const announcedRef = useRef(new Set());
   const [badgeUnlockProgress, setBadgeUnlockProgress] = useState({}); // Progress for near-unlock badges
   const [showBadgeAlbum, setShowBadgeAlbum] = useState(false); // Badge collection album modal
   const [badgeAlbumFilter, setBadgeAlbumFilter] = useState('all'); // all, obtained, locked, seasonal, secret
@@ -649,7 +602,7 @@ export default function DashboardPage() {
       left: Math.random() * 100,
       delay: Math.random() * 0.3,
       duration: 2 + Math.random() * 1,
-      color: ['#fbbf24', '#f59e0b', '#d97706', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)],
+      color: ['var(--ik-warning)', 'var(--ik-warning)', 'var(--ik-warning)', '#ec4899', 'var(--ik-orchid)'][Math.floor(Math.random() * 5)],
     }));
     setBadgeConfetti(prev => [...prev, ...confettiPieces]);
     setTimeout(() => {
@@ -681,17 +634,10 @@ export default function DashboardPage() {
     }, 4000);
   }, [badgeDefinitions, playSound, createConfetti]);
 
-  // Unlock a new badge with all animations and effects
+  // Débloque un badge. L'annonce (pop-up) est faite une seule fois par l'effet « annonce des badges » plus bas.
   const unlockBadge = useCallback((badgeId) => {
-    if (userBadges.includes(badgeId)) return;
-
-    setUserBadges(prev => [...prev, badgeId]);
-    setBadgeDateObtained(prev => ({
-      ...prev,
-      [badgeId]: new Date().toISOString(),
-    }));
-    showBadgeToast(badgeId);
-  }, [userBadges, showBadgeToast]);
+    setUserBadges(prev => (prev.includes(badgeId) ? prev : [...prev, badgeId]));
+  }, []);
 
   // Calculate progress for near-unlock badges
   const calculateBadgeProgress = useCallback(() => {
@@ -737,9 +683,9 @@ export default function DashboardPage() {
   const getBadgeRarityColor = (rarity) => {
     const colors = {
       common: 'rgba(156, 163, 175, 0.2)',
-      rare: 'rgba(59, 130, 246, 0.2)',
-      very_rare: 'rgba(168, 85, 247, 0.2)',
-      unique: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%)',
+      rare: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+      very_rare: 'color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
+      unique: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)',
     };
     return colors[rarity] || colors.common;
   };
@@ -748,9 +694,9 @@ export default function DashboardPage() {
   const getBadgeRarityBorder = (rarity) => {
     const borders = {
       common: '1px solid rgba(156, 163, 175, 0.3)',
-      rare: '1px solid rgba(59, 130, 246, 0.5)',
-      very_rare: '2px solid rgba(168, 85, 247, 0.6)',
-      unique: '2px solid rgba(251, 191, 36, 0.8)',
+      rare: '1px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
+      very_rare: '2px solid color-mix(in srgb, var(--ik-orchid) 60%, transparent)',
+      unique: '2px solid color-mix(in srgb, var(--ik-warning) 80%, transparent)',
     };
     return borders[rarity] || borders.common;
   };
@@ -798,10 +744,8 @@ export default function DashboardPage() {
   // 4. PERSISTANCE DES DONNÉES - LocalStorage
   useEffect(() => {
     try {
-      const savedActivity = localStorage.getItem('investkit_activity');
-      if (savedActivity) {
-        setActivityFeed(JSON.parse(savedActivity));
-      }
+      // L'ancien fil « d'exemple » enregistré par les versions précédentes est ignoré et supprimé.
+      localStorage.removeItem('investkit_activity');
       const savedLeaderboards = localStorage.getItem('investkit_leaderboards');
       if (savedLeaderboards) {
         setGuildLeaderboards(JSON.parse(savedLeaderboards));
@@ -855,14 +799,24 @@ export default function DashboardPage() {
       if (savedBadgeAuras) {
         setBadgeAuraColors(JSON.parse(savedBadgeAuras));
       }
+      // Badges déjà annoncés. Pour un navigateur qui a déjà des badges (avant cette correction), tout badge connu est considéré comme déjà annoncé.
+      const known = new Set();
+      try { JSON.parse(localStorage.getItem('investkit_badges_announced') || '[]').forEach((id) => known.add(id)); } catch { /* ignore */ }
+      try { JSON.parse(localStorage.getItem('investkit_badges') || '[]').forEach((id) => known.add(id)); } catch { /* ignore */ }
+      try { Object.keys(JSON.parse(localStorage.getItem('investkit_badge_dates') || '{}')).forEach((id) => known.add(id)); } catch { /* ignore */ }
+      announcedRef.current = known;
+      setAnnouncedBadges([...known]);
     } catch (e) {
       console.log('LocalStorage not available');
     }
+    setBadgesHydrated(true);
   }, []);
 
   useEffect(() => {
+    // Tant que l'état enregistré n'est pas relu, on n'écrit rien : sinon les valeurs vides de départ écraseraient les badges déjà obtenus.
+    if (!badgesHydrated) return;
     try {
-      localStorage.setItem('investkit_activity', JSON.stringify(activityFeed));
+      localStorage.setItem('investkit_badges_announced', JSON.stringify(announcedBadges));
       localStorage.setItem('investkit_leaderboards', JSON.stringify(guildLeaderboards));
       localStorage.setItem('investkit_treasures', JSON.stringify(guildTreasures));
       localStorage.setItem('investkit_badges', JSON.stringify(userBadges));
@@ -879,13 +833,13 @@ export default function DashboardPage() {
     } catch (e) {
       console.log('Could not save data to localStorage');
     }
-  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress, pinnedBadges, badgeCustomTitles, badgeAuraColors]);
+  }, [notifications, activityFeed, guildLeaderboards, guildTreasures, userBadges, selectedDisplayBadges, badgeBackgroundColor, userBio, userLevel, badgeDateObtained, badgeUnlockProgress, pinnedBadges, badgeCustomTitles, badgeAuraColors, badgesHydrated, announcedBadges]);
 
-  // Auto-award badges based on level progression
+  // Attribution automatique des badges de niveau et de cours (seulement une fois l'état enregistré relu).
   useEffect(() => {
+    if (!badgesHydrated) return;
     const currentLevel = userLevel || 1;
-    const newBadges = [...userBadges];
-    let badgesAwarded = false;
+    const wanted = [];
 
     // Level-based badges
     const levelBadges = {
@@ -895,12 +849,8 @@ export default function DashboardPage() {
       20: 'portfolio_genius',
       50: 'legend',
     };
-
     Object.entries(levelBadges).forEach(([level, badgeId]) => {
-      if (currentLevel >= parseInt(level) && !newBadges.includes(badgeId)) {
-        newBadges.push(badgeId);
-        badgesAwarded = true;
-      }
+      if (currentLevel >= parseInt(level)) wanted.push(badgeId);
     });
 
     // Course completion badges
@@ -910,37 +860,38 @@ export default function DashboardPage() {
       'stocks': 'stock_master',
       'realestate': 'real_estate_pro',
     };
-
     Object.entries(courseBadges).forEach(([course, badgeId]) => {
-      if (completedCourses.includes(course) && !newBadges.includes(badgeId)) {
-        newBadges.push(badgeId);
-        badgesAwarded = true;
-      }
+      if (completedCourses.includes(course)) wanted.push(badgeId);
     });
 
-    if (badgesAwarded) {
-      setUserBadges(newBadges);
+    if (wanted.length) {
+      setUserBadges(prev => {
+        const add = wanted.filter((id) => !prev.includes(id));
+        return add.length ? [...prev, ...add] : prev;
+      });
     }
-  }, [userLevel, progress?.completedDomains]);
+  }, [badgesHydrated, userLevel, progress?.completedDomains]);
 
-  // Calculate badge unlock progress and trigger toasts for newly unlocked badges
+  // Annonce des badges : pop-up + date d'obtention, UNE SEULE FOIS par badge (puis marqué comme vu, enregistré dans le navigateur).
   useEffect(() => {
+    if (!badgesHydrated) return;
     calculateBadgeProgress();
 
-    // Check for newly unlocked badges and show toasts
-    userBadges.forEach(badgeId => {
-      if (!badgeDateObtained[badgeId] && !badgeUnlockToasts.some(t => t.badgeId === badgeId)) {
-        showBadgeToast(badgeId);
-        setBadgeDateObtained(prev => ({
-          ...prev,
-          [badgeId]: new Date().toISOString(),
-        }));
-      }
+    const fresh = userBadges.filter((id) => !announcedRef.current.has(id));
+    if (!fresh.length) return;
+    fresh.forEach((id) => announcedRef.current.add(id));   // marqué tout de suite : aucun second affichage possible
+    setAnnouncedBadges([...announcedRef.current]);
+    setBadgeDateObtained(prev => {
+      const next = { ...prev };
+      fresh.forEach((id) => { if (!next[id]) next[id] = new Date().toISOString(); });
+      return next;
     });
-  }, [userLevel, userBadges, isDomainCompleted]);
+    fresh.forEach((id) => showBadgeToast(id));
+  }, [badgesHydrated, userLevel, userBadges, isDomainCompleted]);
 
-  // Auto-unlock seasonal badges based on current month
+  // Badge de saison : attribué une fois (il reste dans la liste des badges, il n'est donc plus jamais ré-annoncé).
   useEffect(() => {
+    if (!badgesHydrated) return;
     const currentMonth = new Date().getMonth();
     let seasonalBadgeId = null;
 
@@ -954,21 +905,19 @@ export default function DashboardPage() {
       seasonalBadgeId = 'winter_champion';
     }
 
-    if (seasonalBadgeId && !userBadges.includes(seasonalBadgeId)) {
-      unlockBadge(seasonalBadgeId);
-    }
-  }, []);
+    if (seasonalBadgeId) unlockBadge(seasonalBadgeId);
+  }, [badgesHydrated, unlockBadge]);
 
-  // Random secret badge unlock chance (1% per mount)
+  // Badge secret : 1 chance sur 100, tirée une seule fois par visite de la page.
+  const secretRolled = useRef(false);
   useEffect(() => {
+    if (!badgesHydrated || secretRolled.current) return;
+    secretRolled.current = true;
     if (Math.random() < 0.01) {
       const secretBadges = ['night_trader', 'lucky_seven', 'speedster', 'million_club'];
-      const randomSecret = secretBadges[Math.floor(Math.random() * secretBadges.length)];
-      if (!userBadges.includes(randomSecret)) {
-        unlockBadge(randomSecret);
-      }
+      unlockBadge(secretBadges[Math.floor(Math.random() * secretBadges.length)]);
     }
-  }, [userBadges, unlockBadge]);
+  }, [badgesHydrated, unlockBadge]);
 
   // Notifications réelles : chargées au démarrage puis toutes les 60 s. Une nouvelle notification non lue déclenche une pastille (pop-up) de quelques secondes.
   const NOTIF_ICONS = { bank: '🏦', re: '🏠', security: '🔐', admin: '🎁', pro: '⭐' };
@@ -1004,39 +953,8 @@ export default function DashboardPage() {
     } catch { /* l'état local reste à jour ; la synchronisation se fera au prochain chargement */ }
   };
 
-  // Mock users database with detailed profiles
-  const [availableUsers] = useState([
-    {
-      friendCode: '#ABC123', name: 'Alice Dupont', level: 5, xp: 2500, avatar: '👩‍💼',
-      completedDomains: ['crypto', 'stocks'], domainsProgress: { crypto: 100, stocks: 60, realestate: 30 },
-      badges: ['first_blood', 'perfect', 'no_mistakes'],
-      portfolio: 15000, bio: 'Investisseuse en crypto passionnée'
-    },
-    {
-      friendCode: '#XYZ789', name: 'Bob Martin', level: 8, xp: 4200, avatar: '👨‍💻',
-      completedDomains: ['crypto', 'stocks', 'bonds'], domainsProgress: { crypto: 100, stocks: 100, bonds: 75, realestate: 40 },
-      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master'],
-      portfolio: 32000, bio: 'Trader expérimenté, focus sur l\'analyse technique'
-    },
-    {
-      friendCode: '#DEF456', name: 'Clara Rousseau', level: 3, xp: 1500, avatar: '👩‍🎓',
-      completedDomains: ['crypto'], domainsProgress: { crypto: 45, stocks: 10 },
-      badges: ['first_blood'],
-      portfolio: 5000, bio: 'Débutante mais motivée !'
-    },
-    {
-      friendCode: '#GHI321', name: 'David Lemoine', level: 6, xp: 3100, avatar: '👨‍🎯',
-      completedDomains: ['crypto', 'realestate'], domainsProgress: { crypto: 100, realestate: 85, stocks: 50 },
-      badges: ['first_blood', 'perfect'],
-      portfolio: 28000, bio: 'Spécialiste en immobilier'
-    },
-    {
-      friendCode: '#JKL654', name: 'Emma Leclerc', level: 9, xp: 5000, avatar: '👩‍💰',
-      completedDomains: ['crypto', 'stocks', 'bonds', 'realestate'], domainsProgress: { crypto: 100, stocks: 100, bonds: 100, realestate: 95 },
-      badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
-      portfolio: 55000, bio: 'Expert en gestion de portefeuille diversifié'
-    },
-  ]);
+  // (Les anciens profils d'exemple ont été supprimés : amis et guildes sont réels, voir SocialHub.)
+  const [availableUsers] = useState([]);
 
   const searchUsers = availableUsers.filter(
     (user) =>
@@ -1244,36 +1162,29 @@ export default function DashboardPage() {
     }
   };
 
-  const theme = {
-    dark: {
-      bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-      cardBg: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-      text: '#ffffff',
-      textSecondary: 'rgba(255, 255, 255, 0.6)',
-      textTertiary: 'rgba(255, 255, 255, 0.5)',
-      border: 'rgba(255, 255, 255, 0.1)',
-      accent: '#3b82f6',
-    },
-    light: {
-      bg: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f0f4f8 100%)',
-      cardBg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)',
-      text: '#1e293b',
-      textSecondary: 'rgba(30, 41, 59, 0.6)',
-      textTertiary: 'rgba(30, 41, 59, 0.5)',
-      border: 'rgba(30, 41, 59, 0.1)',
-      accent: '#2563eb',
-    },
+  // La palette vient des variables de design communes (app/styles/tokens.css) : clair et sombre suivent le thème du site.
+  const tokens = {
+    bg: 'var(--ik-surface-1)',
+    cardBg: 'var(--ik-surface-card)',
+    text: 'var(--ik-text)',
+    textSecondary: 'var(--ik-text-2)',
+    textTertiary: 'var(--ik-text-3)',
+    border: 'var(--ik-border-strong)',
+    accent: 'var(--ik-accent)',
+    sidebar: 'var(--ik-surface-1)',
   };
+  const theme = { dark: tokens, light: tokens };
 
   const currentTheme = isDarkMode ? theme.dark : theme.light;
 
   // Vue d'ensemble RÉELLE (serveur) : pièces, Bourse, Crypto, Immobilier, dette, risque. Aucune valeur de démonstration.
   const [overview, setOverview] = useState(null);
+  const [overviewFailed, setOverviewFailed] = useState(false);
   const loadOverview = useCallback(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/overview`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setOverview(d); })
-      .catch(() => {});
+      .then((d) => { if (d) { setOverview(d); setOverviewFailed(false); } else setOverviewFailed(true); })
+      .catch(() => setOverviewFailed(true));
   }, []);
   const n0 = (v) => Number(v ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
   const signed = (v) => `${Number(v) > 0 ? '+' : ''}${n0(v)}`;
@@ -1323,25 +1234,12 @@ export default function DashboardPage() {
   // Projets : fonctionnalité pas encore branchée au serveur. Les anciens projets de démonstration (valeurs inventées) ne sont plus affichés.
   const [projects] = useState([]);
 
-  const [marketData] = useState([
-    { name: 'CAC 40', value: 7425.38, change: 0.75 },
-    { name: 'BTC/EUR', value: 68450.50, change: 3.53 },
-    { name: 'ETH/EUR', value: 2850.75, change: 5.36 },
-    { name: 'Or ($/oz)', value: 2095.30, change: 1.72 },
-  ]);
-
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
-    }
-
-    // Load theme preference
-    const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') : null;
-    if (savedTheme === 'light') {
-      setIsDarkMode(false);
     }
 
     // Load profile photo
@@ -1421,32 +1319,17 @@ export default function DashboardPage() {
     alert('Profil mis à jour avec succès!');
   };
 
-  // Save theme preference
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-    }
-  };
+  // Le thème est désormais commun à tout le site (bascule dans le menu latéral, le profil et ici).
+  const toggleTheme = () => toggleGlobalTheme();
 
   if (!isAuthenticated) {
     return null;
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: currentTheme.bg,
-      color: currentTheme.text,
-      display: 'grid',
-      gridTemplateColumns: sidebarOpen ? '280px 1fr' : '1fr',
-      gap: '24px',
-      padding: '24px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      position: 'relative',
-      transition: 'background 0.3s ease, color 0.3s ease',
-    }}>
+    <AppShell>
+    <div className="dash-layout">
+      <div className="dash-aurora" aria-hidden="true" />
       <style>{`
         @keyframes slideInUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -1461,13 +1344,13 @@ export default function DashboardPage() {
           to { opacity: 1; }
         }
         @keyframes badgePulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 8px 16px rgba(245, 158, 11, 0.4); }
-          50% { transform: scale(1.05); box-shadow: 0 12px 24px rgba(245, 158, 11, 0.6); }
+          0%, 100% { transform: scale(1); box-shadow: 0 8px 16px color-mix(in srgb, var(--ik-warning) 40%, transparent); }
+          50% { transform: scale(1.05); box-shadow: 0 12px 24px color-mix(in srgb, var(--ik-warning) 60%, transparent); }
         }
         @keyframes badgeGlow {
-          0% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
-          50% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.8)); }
-          100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+          0% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ik-warning) 60%, transparent)); }
+          50% { filter: drop-shadow(0 0 16px color-mix(in srgb, var(--ik-warning) 80%, transparent)); }
+          100% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--ik-warning) 60%, transparent)); }
         }
         @keyframes levelUpBurst {
           0% { transform: scale(0.8); opacity: 1; }
@@ -1573,7 +1456,7 @@ export default function DashboardPage() {
           animation: badgeFlip 0.6s ease-in-out;
         }
         .badge-shimmer {
-          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+          background: linear-gradient(90deg, color-mix(in srgb, var(--ik-text) 0%, transparent) 0%, color-mix(in srgb, var(--ik-text) 30%, transparent) 50%, color-mix(in srgb, var(--ik-text) 0%, transparent) 100%);
           background-size: 1000px 100%;
           animation: shimmer 2s infinite;
         }
@@ -1593,7 +1476,7 @@ export default function DashboardPage() {
         .badge-very-rare { filter: drop-shadow(0 0 12px rgba(218, 165, 32, 0.8)); }
         .badge-unique { filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1)); animation: rainbowShift 3s linear infinite; }
         .profile-section {
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: 1px solid color-mix(in srgb, var(--ik-text) 10%, transparent);
           padding-top: 16px;
           margin-top: 16px;
         }
@@ -1604,1841 +1487,35 @@ export default function DashboardPage() {
         }
       `}</style>
 
-      {/* SIDEBAR TOGGLE BUTTON */}
-      {!sidebarOpen && (
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
-          position: 'fixed',
-          top: '24px',
-          left: '24px',
-          zIndex: 40,
-          background: 'rgba(59, 130, 246, 0.2)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          borderRadius: '10px',
-          padding: '10px 14px',
-          color: '#60a5fa',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px',
-          transition: 'all 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-          e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-          e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-        }}
-        >
-          ☰
-        </button>
-      )}
-
-      {/* LEFT SIDEBAR */}
-      {sidebarOpen && <div style={{
-        borderRight: `1px solid ${currentTheme.border}`,
-        paddingRight: '24px',
-        maxHeight: 'calc(100vh - 60px)',
-        overflowY: 'auto',
-        paddingTop: '24px',
-        paddingBottom: '24px',
-      }}>
-        {/* InvestKit Branding */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '32px',
-          paddingLeft: '8px',
-          cursor: 'pointer',
-          transition: 'opacity 0.3s ease',
-        }}
-        onClick={() => router.push('/')}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.opacity = '0.8';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.opacity = '1';
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            borderRadius: '8px',
-            flexShrink: 0,
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
-          }}>
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Upward arrow representing growth */}
-              <path d="M14 22V6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M8 12L14 6L20 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-
-              {/* Chart bars */}
-              <rect x="4" y="16" width="2.5" height="6" fill="white" opacity="0.8" rx="1" />
-              <rect x="8.5" y="14" width="2.5" height="8" fill="white" opacity="0.9" rx="1" />
-              <rect x="13" y="12" width="2.5" height="10" fill="white" rx="1" />
-              <rect x="17.5" y="14" width="2.5" height="8" fill="white" opacity="0.9" rx="1" />
-              <rect x="22" y="16" width="2.5" height="6" fill="white" opacity="0.8" rx="1" />
-            </svg>
-          </div>
-          <div>
-            <h2 style={{
-              margin: '0',
-              fontSize: '18px',
-              fontWeight: '900',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-0.5px',
-            }}>
-              InvestKit
-            </h2>
-            <p style={{
-              margin: '2px 0 0 0',
-              fontSize: '10px',
-              color: 'rgba(255, 255, 255, 0.5)',
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              Investissez Intelligemment
-            </p>
-          </div>
-        </div>
-
-        {/* User Profile - PREMIUM */}
-        <div style={{
-          marginBottom: '40px',
-          padding: '24px',
-          background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)`,
-          borderRadius: '16px',
-          border: '1.5px solid rgba(59, 130, 246, 0.2)',
-          backdropFilter: 'blur(10px)',
-          position: 'relative',
-          overflow: 'hidden',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-        }}
-        onClick={() => setActiveTab('settings')}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-4px)';
-          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
-          e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}>
-          {/* Decorative gradient background */}
-          <div style={{
-            position: 'absolute',
-            top: '-50%',
-            right: '-50%',
-            width: '200px',
-            height: '200px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
-            borderRadius: '50%',
-            pointerEvents: 'none',
-          }} />
-
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Avatar Container with Premium Frame */}
-            <div style={{
-              position: 'relative',
-              width: '80px',
-              height: '80px',
-              marginBottom: '16px',
-              cursor: 'pointer',
-            }}
-            onClick={() => setShowProfileMenu(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}>
-              {/* Outer ring with gradient */}
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                borderRadius: '16px',
-                padding: '3px',
-                boxShadow: '0 12px 32px rgba(59, 130, 246, 0.3)',
-                transition: 'all 0.3s ease',
-              }}>
-                {/* Inner avatar container */}
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  background: photoPreview ? 'transparent' : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                  borderRadius: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '36px',
-                  overflow: 'hidden',
-                }}>
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Profile" style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }} />
-                  ) : (
-                    '👤'
-                  )}
-                </div>
-              </div>
-
-              {/* Badge Album Button */}
-              <button
-                onClick={() => setShowBadgeAlbum(true)}
-                style={{
-                  position: 'absolute',
-                  top: '-50px',
-                  right: '0',
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
-                  border: '2px solid rgba(251, 191, 36, 0.3)',
-                  borderRadius: '12px',
-                  padding: '8px 12px',
-                  color: '#f59e0b',
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.6)';
-                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(251, 191, 36, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.3)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                📖 Album ({userBadges.length}/{Object.keys(badgeDefinitions).length})
-              </button>
-
-              {/* Badge Showcase - Display Pinned Badges */}
-              {pinnedBadges.length > 0 && (
-                <div className="profile-section" style={{
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(236, 72, 153, 0.1) 100%)',
-                  border: '2px solid rgba(251, 191, 36, 0.3)',
-                  borderRadius: '14px',
-                  padding: '14px',
-                  marginBottom: '12px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  backdropFilter: 'blur(8px)',
-                }}>
-                  <div style={{
-                    position: 'relative',
-                    zIndex: 1,
-                  }}>
-                    <div style={{
-                      fontSize: '12px',
-                      fontWeight: '800',
-                      color: '#fbbf24',
-                      marginBottom: '10px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}>
-                      <span>⭐</span>
-                      <span>Mes Favoris</span>
-                      <span style={{
-                        marginLeft: 'auto',
-                        background: 'rgba(251, 191, 36, 0.2)',
-                        padding: '2px 8px',
-                        borderRadius: '6px',
-                        fontSize: '10px',
-                        fontWeight: '700',
-                      }}>
-                        {pinnedBadges.length}/3
-                      </span>
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      gap: '10px',
-                      flexWrap: 'wrap',
-                    }}>
-                      {pinnedBadges.map((badgeId, idx) => {
-                        const badge = badgeDefinitions[badgeId];
-                        const rarityGlow = {
-                          common: '#64748b',
-                          rare: '#3b82f6',
-                          very_rare: '#a855f7',
-                          unique: '#fbbf24',
-                        };
-                        return (
-                          <div key={badgeId} style={{
-                            background: getBadgeRarityColor(badge.rarity),
-                            border: getBadgeRarityBorder(badge.rarity),
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            position: 'relative',
-                            boxShadow: `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${rarityGlow[badge.rarity]}66`,
-                            flex: idx === 0 ? '1' : 'auto',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
-                            e.currentTarget.style.boxShadow = `0 12px 24px rgba(0, 0, 0, 0.3), 0 0 20px ${rarityGlow[badge.rarity]}`;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                            e.currentTarget.style.boxShadow = `0 8px 16px rgba(0, 0, 0, 0.2), 0 0 12px ${rarityGlow[badge.rarity]}66`;
-                          }}
-                          title={`${badge.name}\n${badge.description}\nClique pour débloquer`}
-                          onClick={() => togglePinnedBadge(badgeId)}
-                          >
-                            <span style={{
-                              fontSize: '20px',
-                              filter: `drop-shadow(0 0 6px ${rarityGlow[badge.rarity]})`,
-                            }}>
-                              {badge.emoji}
-                            </span>
-                            <div style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '2px',
-                            }}>
-                              <span style={{ fontSize: '12px', fontWeight: '800' }}>
-                                {badge.name}
-                              </span>
-                              <span style={{
-                                fontSize: '9px',
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                fontWeight: '600',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                              }}>
-                                {badge.rarity.replace('_', ' ')} • {badge.xp} XP
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Badges Stack - Display Selected Badges with Enhanced Animations */}
-              <div className="profile-section" style={{ display: selectedDisplayBadges.length > 0 ? 'block' : 'none' }}>
-              {selectedDisplayBadges.length > 0 && selectedDisplayBadges.map((badgeId, index) => {
-                const badge = badgeDefinitions[badgeId];
-                if (!badge) return null;
-                const rarityColors = {
-                  common: { bg: 'linear-gradient(135deg, #64748b 0%, #475569 100%)', glow: '#64748b', shadow: 'rgba(100, 112, 139, 0.5)' },
-                  rare: { bg: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', glow: '#3b82f6', shadow: 'rgba(59, 130, 246, 0.6)' },
-                  very_rare: { bg: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', glow: '#a855f7', shadow: 'rgba(168, 85, 247, 0.6)' },
-                  unique: { bg: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', glow: '#fbbf24', shadow: 'rgba(251, 191, 36, 0.7)' },
-                };
-                const rarity = rarityColors[badge.rarity];
-                const isFirstBadge = index === 0;
-                const isUnique = badge.rarity === 'unique';
-
-                const generateParticles = (e) => {
-                  if (!isUnique) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const newParticles = Array.from({ length: 8 }).map((_, i) => ({
-                    id: Math.random(),
-                    angle: (i / 8) * Math.PI * 2,
-                    distance: 50 + Math.random() * 30,
-                  }));
-                  setParticles(newParticles);
-                  setTimeout(() => setParticles([]), 800);
-                };
-
-                return (
-                  <div key={badgeId} style={{ position: 'relative' }}>
-                    {/* Badge Circle */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: `-4px`,
-                        right: `${-4 + (index * 24)}px`,
-                        width: '40px',
-                        height: '40px',
-                        background: rarity.bg,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '20px',
-                        border: `3px solid ${currentTheme.sidebar}`,
-                        boxShadow: `0 8px 16px ${rarity.shadow}`,
-                        zIndex: selectedDisplayBadges.length - index,
-                        cursor: 'help',
-                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        animation: isFirstBadge ? `badgePulse 2s ease-in-out infinite, ${isUnique ? 'glowPulse 2s ease-in-out infinite' : 'none'}` : 'none',
-                        filter: isUnique ? `drop-shadow(0 0 12px ${rarity.glow})` : 'none',
-                        transformOrigin: 'center',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = `scale(1.2) ${isUnique ? 'rotateZ(8deg)' : ''}`;
-                        e.currentTarget.style.boxShadow = `0 16px 32px ${rarity.shadow}, 0 0 24px ${rarity.glow}`;
-                        generateParticles(e);
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1) rotateZ(0deg)';
-                        e.currentTarget.style.boxShadow = `0 8px 16px ${rarity.shadow}`;
-                      }}
-                    >
-                      {badge.emoji}
-                    </div>
-
-                    {/* Advanced Tooltip */}
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '55px',
-                      right: `${index * 24}px`,
-                      background: 'rgba(0, 0, 0, 0.95)',
-                      border: `2px solid ${rarity.glow}`,
-                      borderRadius: '12px',
-                      padding: '12px 16px',
-                      minWidth: '240px',
-                      zIndex: 10001,
-                      opacity: 0,
-                      pointerEvents: 'none',
-                      transition: 'opacity 0.2s ease',
-                      backdropFilter: 'blur(10px)',
-                    }}
-                    onMouseEnter={(e) => { e.parentElement.style.opacity = '1'; }}
-                    onMouseLeave={(e) => { e.parentElement.style.opacity = '0'; }}>
-                      <div style={{
-                        color: rarity.glow,
-                        fontWeight: '700',
-                        fontSize: '13px',
-                        marginBottom: '8px',
-                      }}>
-                        {badge.emoji} {badge.name}
-                      </div>
-                      <div style={{
-                        fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        marginBottom: '8px',
-                      }}>
-                        {badge.description}
-                      </div>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '8px',
-                        fontSize: '10px',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                        paddingTop: '8px',
-                      }}>
-                        <div>
-                          <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Rareté</div>
-                          <div style={{ color: rarity.glow, fontWeight: '600' }}>
-                            {badge.rarity.replace('_', ' ').toUpperCase()} ({badge.rarity_percent}%)
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>XP</div>
-                          <div style={{ color: '#fbbf24', fontWeight: '600' }}>+{badge.xp} XP</div>
-                        </div>
-                        {badgeDateObtained[badgeId] && (
-                          <div style={{ gridColumn: '1 / -1' }}>
-                            <div style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Obtenu</div>
-                            <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                              {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Particle Effects pour Unique */}
-                    {isUnique && particles.length > 0 && particles.map((particle) => (
-                      <div
-                        key={particle.id}
-                        style={{
-                          position: 'absolute',
-                          width: '6px',
-                          height: '6px',
-                          background: rarity.glow,
-                          borderRadius: '50%',
-                          pointerEvents: 'none',
-                          '--tx': `${Math.cos(particle.angle) * particle.distance}px`,
-                          '--ty': `${Math.sin(particle.angle) * particle.distance}px`,
-                          animation: 'particleFloat 0.8s ease-out forwards',
-                          boxShadow: `0 0 4px ${rarity.glow}`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
-              </div>
-            </div>
-
-            {/* Nearly Unlocked Badges Progress */}
-            {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
-              progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
-            ).length > 0 && (
-              <div className="profile-section" style={{
-                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%)',
-                border: '2px solid rgba(168, 85, 247, 0.3)',
-                borderRadius: '14px',
-                padding: '14px',
-                marginTop: '12px',
-                position: 'relative',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  position: 'relative',
-                  zIndex: 1,
-                }}>
-                  <div style={{
-                    fontSize: '12px',
-                    fontWeight: '800',
-                    color: '#a855f7',
-                    marginBottom: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}>
-                    <span>🎯</span>
-                    <span>Presque Débloqués</span>
-                    <span style={{
-                      marginLeft: 'auto',
-                      background: 'rgba(168, 85, 247, 0.3)',
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                      fontSize: '10px',
-                      fontWeight: '700',
-                    }}>
-                      {Object.values(badgeUnlockProgress).filter(p => p.percent > 0 && p.percent < 100).length} badges
-                    </span>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                  }}>
-                    {Object.entries(badgeUnlockProgress).filter(([id, progress]) =>
-                      progress.percent > 0 && progress.percent < 100 && !userBadges.includes(id)
-                    ).slice(0, 3).map(([badgeId, progress]) => {
-                      const badge = badgeDefinitions[badgeId];
-                      return (
-                        <div key={badgeId} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          fontSize: '12px',
-                          padding: '8px',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(168, 85, 247, 0.15)',
-                          transition: 'all 0.3s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(168, 85, 247, 0.08)';
-                          e.currentTarget.style.border = '1px solid rgba(168, 85, 247, 0.3)';
-                          e.currentTarget.style.transform = 'translateX(4px)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                          e.currentTarget.style.border = '1px solid rgba(168, 85, 247, 0.15)';
-                          e.currentTarget.style.transform = 'translateX(0)';
-                        }}>
-                          <span style={{
-                            fontSize: '18px',
-                            filter: `drop-shadow(0 0 4px rgba(168, 85, 247, 0.6))`,
-                          }}>
-                            {badge.emoji}
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              color: '#fff',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              marginBottom: '4px',
-                            }}>
-                              {badge.name}
-                            </div>
-                            <div style={{
-                              background: 'rgba(255, 255, 255, 0.08)',
-                              borderRadius: '6px',
-                              height: '6px',
-                              overflow: 'hidden',
-                              position: 'relative',
-                              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
-                            }}>
-                              <div style={{
-                                background: `linear-gradient(90deg, #a855f7 0%, #ec4899 ${progress.percent}%, rgba(168, 85, 247, 0.2) ${progress.percent}%, rgba(168, 85, 247, 0.2) 100%)`,
-                                height: '100%',
-                                width: '100%',
-                                transition: 'background 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                borderRadius: '6px',
-                                boxShadow: `0 0 8px rgba(236, 72, 153, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2)`,
-                              }} />
-                            </div>
-                          </div>
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '2px',
-                          }}>
-                            <span style={{
-                              fontSize: '11px',
-                              color: '#a855f7',
-                              fontWeight: '700',
-                            }}>
-                              {progress.percent}%
-                            </span>
-                            <span style={{
-                              fontSize: '8px',
-                              color: 'rgba(255, 255, 255, 0.4)',
-                              fontWeight: '600',
-                            }}>
-                              {progress.current}/{progress.required}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* User Info */}
-            <div className="profile-section">
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '4px',
-                flexWrap: 'wrap',
-              }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: '900',
-                  color: currentTheme.text,
-                  margin: 0,
-                  letterSpacing: '-0.5px',
-                }}>
-                  {fullName}
-                </h3>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}>
-                  <code style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: '#60a5fa',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    userSelect: 'none',
-                  }}
-                  onClick={() => {
-                    const copyToClipboardFallback = (text) => {
-                      const textarea = document.createElement('textarea');
-                      textarea.value = text;
-                      textarea.style.position = 'fixed';
-                      textarea.style.opacity = '0';
-                      document.body.appendChild(textarea);
-                      textarea.select();
-                      try {
-                        document.execCommand('copy');
-                        return true;
-                      } catch (err) {
-                        return false;
-                      } finally {
-                        document.body.removeChild(textarea);
-                      }
-                    };
-
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                      navigator.clipboard.writeText(userData.friendCode).then(() => {
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      });
-                    } else {
-                      copyToClipboardFallback(userData.friendCode);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                  }}
-                  title="Cliquez pour copier">
-                    #{userData.friendCode}
-                  </code>
-                  {copied && (
-                    <span style={{
-                      fontSize: '12px',
-                      color: '#10b981',
-                      fontWeight: '600',
-                      animation: 'fadeInUp 0.3s ease-out',
-                    }}>
-                      ✓ Copié
-                    </span>
-                  )}
-                </div>
-              </div>
-              <p style={{
-                fontSize: '12px',
-                color: '#f59e0b',
-                margin: '0 0 8px 0',
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}>
-                ⭐ Investisseur Premium
-              </p>
-              <div style={{
-                display: 'flex',
-                gap: '12px',
-                alignItems: 'center',
-              }}>
-                {/* Circular Progress + Level Display */}
-                <div style={{
-                  position: 'relative',
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  {/* Outer ring - background */}
-                  <svg width="44" height="44" style={{ position: 'absolute' }}>
-                    <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="2" />
-                  </svg>
-
-                  {/* Progress ring */}
-                  <svg width="44" height="44" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      fill="none"
-                      stroke={isMilestone ? '#fbbf24' : '#f59e0b'}
-                      strokeWidth="2"
-                      strokeDasharray={`${(((userLevel || 1) % 10) / 10) * 113.1} 113.1`}
-                      strokeLinecap="round"
-                      style={{
-                        transition: 'stroke-dasharray 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        filter: isMilestone ? 'drop-shadow(0 0 4px #fbbf24)' : 'none',
-                      }}
-                    />
-                  </svg>
-
-                  {/* Center text - Level */}
-                  <div style={{
-                    position: 'absolute',
-                    textAlign: 'center',
-                    zIndex: 1,
-                  }}>
-                    <div style={{
-                      fontSize: '18px',
-                      fontWeight: '900',
-                      color: isMilestone ? '#fbbf24' : '#f59e0b',
-                      lineHeight: '1',
-                    }}>
-                      {userLevel || 1}
-                    </div>
-                    <div style={{
-                      fontSize: '8px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      fontWeight: '600',
-                      marginTop: '2px',
-                    }}>
-                      LEVEL
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    height: '18px',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    borderRadius: '9px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}>
-                    {/* Fill */}
-                    <div style={{
-                      height: '100%',
-                      width: `${((userLevel || 1) % 10) * 10}%`,
-                      background: isMilestone ? 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
-                      transition: 'width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      boxShadow: isMilestone ? 'inset 0 0 8px rgba(251, 191, 36, 0.4)' : 'inset 0 0 8px rgba(245, 158, 11, 0.3)',
-                      position: 'relative',
-                    }}>
-                      {/* Animated shimmer */}
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
-                        animation: 'slideInUp 2s ease-in-out infinite',
-                      }} />
-                    </div>
-                  </div>
-
-                  {/* Tier progress text */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '4px',
-                  }}>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      fontWeight: '600',
-                    }}>
-                      Tier {Math.floor((userLevel || 1) / 10) + 1}
-                    </span>
-                    <span style={{
-                      fontSize: '11px',
-                      color: isMilestone ? '#fbbf24' : 'rgba(255, 255, 255, 0.6)',
-                      fontWeight: isMilestone ? '700' : '600',
-                      animation: isMilestone ? 'milestoneCelebrate 0.6s ease-in-out' : 'none',
-                    }}>
-                      {((userLevel || 1) % 10)}/10 {isMilestone ? '🎯' : ''}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div style={{ marginBottom: '40px' }}>
-          <p style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            color: 'rgba(255, 255, 255, 0.5)',
-            margin: '0 0 12px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            Aperçu
-          </p>
-          {[
-            { label: 'Pièces + titres', value: ovTot ? '🪙 ' + n0(ovTot.coinsAndTrading) : '…', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-            { label: 'Perf. Bourse / Crypto', value: ovTot ? (ovTot.invested > 0 ? signed(ovTot.performancePct) + ' %' : '—') : '…', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-            { label: 'Biens immobiliers', value: overview ? overview.realEstate.properties ?? 0 : '…', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
-          ].map((stat, idx) => (
-            <div key={idx} style={{
-              padding: '16px',
-              background: stat.bg,
-              borderRadius: '12px',
-              marginBottom: '12px',
-              borderLeft: `3px solid ${stat.color}`,
-            }}>
-              <p style={{
-                fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.6)',
-                margin: '0 0 4px 0',
-                fontWeight: '600',
-              }}>
-                {stat.label}
-              </p>
-              <p style={{
-                fontSize: '20px',
-                fontWeight: '900',
-                color: stat.color,
-                margin: 0,
-              }}>
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Navigation */}
-        <div style={{ marginBottom: '40px' }}>
-          <p style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            color: 'rgba(255, 255, 255, 0.5)',
-            margin: '0 0 12px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            Menu
-          </p>
-          <div style={{ display: 'grid', gap: '8px' }}>
-            {[
-              { id: 'overview', label: '📊 Vue d\'ensemble' },
-              { id: 'projects', label: '🎯 Projets' },
-              { id: 'market', label: '💹 Marché' },
-              { id: 'trading', label: '📈 Simulateur' },
-              { id: 'education', label: '📚 Académie' },
-              { id: 'friends', label: `👥 Amis (${userData.friends.length})` },
-              { id: 'notifications', label: `🔔 Notifications ${notifications.filter(n => !n.read).length > 0 ? `(${notifications.filter(n => !n.read).length})` : ''}` },
-              { id: 'activity', label: '📈 Activité' },
-              { id: 'risk', label: '⚠️ Risques' },
-              { id: 'settings', label: '⚙️ Paramètres' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                  background: activeTab === item.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: 'none',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  color: activeTab === item.id ? '#3b82f6' : 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '14px',
-                  fontWeight: activeTab === item.id ? '700' : '500',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== item.id) {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.8)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== item.id) {
-                    e.target.style.background = 'transparent';
-                    e.target.style.color = 'rgba(255, 255, 255, 0.6)';
-                  }
-                }}
-              >
-                <span>{item.label}</span>
-                {item.id === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
-                  <span style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '20px',
-                    height: '20px',
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    borderRadius: '50%',
-                    fontSize: '10px',
-                    fontWeight: '700',
-                    color: '#fff',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
-                  }}>
-                    {notifications.filter(n => !n.read).length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* User Info */}
-        <div style={{
-          padding: '16px',
-          background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(30, 41, 59, 0.05)',
-          borderRadius: '12px',
-          borderTop: `1px solid ${currentTheme.border}`,
-        }}>
-          <p style={{
-            fontSize: '11px',
-            color: currentTheme.textTertiary,
-            margin: '0 0 8px 0',
-            fontWeight: '600',
-          }}>
-            Membre depuis
-          </p>
-          <p style={{
-            fontSize: '13px',
-            color: currentTheme.textSecondary,
-            margin: '0 0 12px 0',
-            fontWeight: '700',
-          }}>
-            {overview?.memberSince ? new Date(overview.memberSince).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : '…'}
-          </p>
-          <div style={{
-            padding: '8px 12px',
-            background: 'rgba(16, 185, 129, 0.15)',
-            borderRadius: '8px',
-            borderLeft: '2px solid #10b981',
-          }}>
-            <p style={{
-              fontSize: '11px',
-              color: '#10b981',
-              margin: 0,
-              fontWeight: '700',
-            }}>
-              ✓ E-mail vérifié
-            </p>
-          </div>
-        </div>
-
-        {/* Close Sidebar Button */}
-        <div style={{
-          marginTop: '24px',
-          paddingTop: '16px',
-          borderTop: `1px solid ${currentTheme.border}`,
-        }}>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: `1px solid rgba(59, 130, 246, 0.2)`,
-              borderRadius: '10px',
-              color: '#60a5fa',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
-            }}
-          >
-            ✕ Fermer
-          </button>
-        </div>
-      </div>}
+      {/* Le rail profil (avatar, badges, niveau) a été retiré du tableau de bord à la demande du propriétaire. */}
 
       {/* MAIN CONTENT - CENTER COLUMN */}
-      <div className="dashboard-content" style={{}}>
-        {/* HEADER */}
-        <div style={{
-          marginBottom: '40px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: '900',
-              color: currentTheme.text,
-              margin: '0 0 8px 0',
-              letterSpacing: '-0.5px',
-            }}>
-              Votre Portefeuille
-            </h1>
-            <p style={{
-              color: currentTheme.textSecondary,
-              margin: 0,
-              fontSize: '14px',
-            }}>
-              Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
-            </p>
-          </div>
+      <div className="dash-main">
+        <PageHeader
+          title="Tableau de bord"
+          subtitle="Ton patrimoine et tes domaines, en un coup d'œil."
+          actions={<Button icon="file" onClick={() => setNewsModalOpen(true)}>Actualités</Button>}
+        />
+        {/* Plus de barre d'onglets ici : la navigation est UNIQUE (menu principal à gauche). Les sections restent joignables par ?tab=… depuis ce menu. */}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* InvestCoins Wallet */}
-            {coinsBalance !== null && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 16px',
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: '12px',
-              }}>
-                <span style={{ fontSize: '14px', fontWeight: '700', color: '#f59e0b', whiteSpace: 'nowrap' }}>
-                  🪙 {coinsBalance.toLocaleString('fr-FR')}
-                </span>
-                {coinsStreak > 0 && (
-                  <span style={{ fontSize: '11px', color: currentTheme.textSecondary, whiteSpace: 'nowrap' }}>
-                    🔥 {coinsStreak}j
-                  </span>
-                )}
-                {canClaimDaily && (
-                  <button
-                    onClick={claimDailyCoins}
-                    disabled={claimingDaily}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: '#f59e0b',
-                      color: '#1a1a2e',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      cursor: claimingDaily ? 'wait' : 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {claimingDaily ? '...' : '+ Réclamer'}
-                  </button>
-                )}
-              </div>
-            )}
+        <div key={activeTab} className="dash-tabpanel">
+        {activeTab === 'overview' && <OverviewTab overview={overview} failed={overviewFailed} onRetry={() => { setOverviewFailed(false); loadOverview(); }} onOpenTab={setActiveTab} />}
 
-          {/* News Modal Button */}
-          <button onClick={() => setNewsModalOpen(true)} style={{
-            padding: '12px 20px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
-            borderRadius: '12px',
-            color: '#60a5fa',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
-            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)';
-            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-          }}
-          >
-            📰 Actualités
-          </button>
-          </div>
-        </div>
-
-        {/* MAIN PORTFOLIO CARD - BANK CARD STYLE */}
-        {activeTab === 'overview' && (
-          <>
-            <OnboardingChecklist />
-            <div className="metric-card" style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-              borderRadius: '24px',
-              padding: '0',
-              marginBottom: '32px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 20px 60px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-              position: 'relative',
-              overflow: 'hidden',
-              height: '320px',
-              display: 'flex',
-              flexDirection: 'column',
-              maxWidth: '500px',
-              aspectRatio: '1.7',
-            }}>
-              {/* Card Background Effects */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
-                pointerEvents: 'none',
-              }} />
-
-              {/* Decorative Elements */}
-              <div style={{
-                position: 'absolute',
-                top: '-50px',
-                right: '-50px',
-                width: '200px',
-                height: '200px',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
-                borderRadius: '50%',
-                pointerEvents: 'none',
-              }} />
-
-              {/* Card Content */}
-              <div style={{
-                position: 'relative',
-                zIndex: 1,
-                padding: '32px 28px',
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                justifyContent: 'space-between',
-              }}>
-                {/* Top Section - Card Type & Logo */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'start',
-                  marginBottom: '20px',
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      margin: 0,
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                    }}>
-                      {overview?.tier === 'pro' ? 'INVESTKIT PRO' : 'INVESTKIT'}
-                    </p>
-                  </div>
-                  <div style={{
-                    fontSize: '28px',
-                    fontWeight: '900',
-                  }}>
-                    💳
-                  </div>
-                </div>
-
-                {/* Middle Section - Card Number Placeholder */}
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  margin: '20px 0',
-                  fontSize: '18px',
-                  fontWeight: '700',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  letterSpacing: '3px',
-                  fontFamily: 'monospace',
-                }}>
-                  <span>••••</span>
-                  <span>••••</span>
-                  <span>••••</span>
-                  <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>2024</span>
-                </div>
-
-                {/* Bottom Section - Holder & Date */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-end',
-                  marginTop: 'auto',
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '9px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      margin: '0 0 4px 0',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      CARDHOLDER
-                    </p>
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'white',
-                      margin: 0,
-                      fontWeight: '700',
-                      letterSpacing: '0.5px',
-                    }}>
-                      {fullName.toUpperCase()}
-                    </p>
-                  </div>
-                  <div style={{
-                    textAlign: 'right',
-                  }}>
-                    <p style={{
-                      fontSize: '9px',
-                      color: 'rgba(255, 255, 255, 0.6)',
-                      margin: '0 0 4px 0',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      Valid Thru
-                    </p>
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'white',
-                      margin: 0,
-                      fontWeight: '700',
-                      fontFamily: 'monospace',
-                    }}>
-                      12/26
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PORTFOLIO STATS BELOW CARD */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px',
-              marginBottom: '32px',
-            }}>
-              {/* Total Balance */}
-              <div className="metric-card" style={{
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                backdropFilter: 'blur(20px)',
-              }}>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  Solde Total
-                </p>
-                <p style={{
-                  fontSize: '32px',
-                  fontWeight: '900',
-                  color: '#60a5fa',
-                  margin: '0 0 12px 0',
-                }}>
-                  🪙 {ovTot ? n0(ovTot.coinsAndTrading) : '…'}
-                </p>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}>
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                  }}>
-                    dont 🪙 {n0(overview?.coins)} de liquidités et 🪙 {n0(ovTot?.tradingValue)} de titres (Bourse + Crypto)
-                  </span>
-                </div>
-              </div>
-
-              {/* Available Balance */}
-              <div className="metric-card" style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                backdropFilter: 'blur(20px)',
-              }}>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  Performance (Bourse + Crypto)
-                </p>
-                <p style={{
-                  fontSize: '32px',
-                  fontWeight: '900',
-                  color: '#86efac',
-                  margin: '0 0 12px 0',
-                }}>
-                  {ovTot && ovTot.invested > 0 ? `${signed(ovTot.performancePct)} %` : '—'}
-                </p>
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: 0,
-                }}>
-                  {ovTot && ovTot.invested > 0 ? `🪙 ${signed(ovTot.gain)} de gain ou perte (latent + réalisé)` : 'Achète un premier titre dans le Simulateur'}
-                </p>
-              </div>
-
-              {/* Performance */}
-              <div className="metric-card" style={{
-                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
-                backdropFilter: 'blur(20px)',
-              }}>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  margin: '0 0 8px 0',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  Performance
-                </p>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '16px',
-                  marginTop: '12px',
-                }}>
-                  <div>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      margin: 0,
-                      fontWeight: '600',
-                    }}>
-                      Positions ouvertes
-                    </p>
-                    <p style={{
-                      fontSize: '18px',
-                      fontWeight: '900',
-                      color: '#a78bfa',
-                      margin: '4px 0 0 0',
-                    }}>
-                      {overview ? (overview.trading.stocks.positions + overview.trading.crypto.positions) : '…'}
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      margin: 0,
-                      fontWeight: '600',
-                    }}>
-                      Capital
-                    </p>
-                    <p style={{
-                      fontSize: '18px',
-                      fontWeight: '900',
-                      color: '#c4b5fd',
-                      margin: '4px 0 0 0',
-                    }}>
-                      🪙 {n0(ovTot?.invested)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PROJECTS SECTION (masquée tant qu'aucun vrai projet n'existe) */}
-            <div style={{ marginBottom: '32px', display: projects.length ? 'block' : 'none' }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 16px 0',
-              }}>
-                🎯 Vos Projets
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '16px',
-              }}>
-                {projects.map((project) => (
-                  <div key={project.id} className="metric-card" style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(20px)',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)';
-                    e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  >
-                    <div style={{ marginBottom: '16px' }}>
-                      <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        color: 'white',
-                        margin: '0 0 4px 0',
-                      }}>
-                        {project.name}
-                      </h3>
-                      <p style={{
-                        fontSize: '12px',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        margin: 0,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.3px',
-                        fontWeight: '600',
-                      }}>
-                        {project.type} • {project.allocation} allocation
-                      </p>
-                    </div>
-
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '16px',
-                      marginBottom: '16px',
-                      paddingBottom: '16px',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: '0 0 4px 0',
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Valeur
-                        </p>
-                        <p style={{
-                          fontSize: '18px',
-                          fontWeight: '800',
-                          color: '#60a5fa',
-                          margin: 0,
-                        }}>
-                          €{(project.currentValue / 1000).toFixed(0)}k
-                        </p>
-                      </div>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: '0 0 4px 0',
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Gain Annuel
-                        </p>
-                        <p style={{
-                          fontSize: '18px',
-                          fontWeight: '800',
-                          color: '#86efac',
-                          margin: 0,
-                        }}>
-                          +€{(project.yearGain / 1000).toFixed(1)}k
-                        </p>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: 0,
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Risque
-                        </p>
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          color: project.riskLevel === 'élevé' ? '#f43f5e' : project.riskLevel === 'modéré' ? '#f59e0b' : '#10b981',
-                          margin: '2px 0 0 0',
-                        }}>
-                          {project.riskLevel}
-                        </p>
-                      </div>
-                      <div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          margin: 0,
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                        }}>
-                          Retour
-                        </p>
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          color: '#a78bfa',
-                          margin: '2px 0 0 0',
-                        }}>
-                          {project.projectedReturn}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ANALYSIS SECTION */}
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{
-                fontSize: '18px',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 16px 0',
-              }}>
-                📊 Analyse Détaillée
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '16px',
-              }}>
-                {/* Risk Metrics */}
-                <div className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <h4 style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    margin: '0 0 16px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    ⚖️ Risque
-                  </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { label: 'Score de risque', value: overview?.risk ? `${overview.risk.score} / 100 · ${overview.risk.label}` : '—', color: '#10b981' },
-                      { label: 'Volatilité estimée', value: overview?.risk ? overview.risk.volatilityPct + ' %' : '—', color: '#f59e0b' },
-                      { label: 'Pire crise historique', value: overview?.risk ? overview.risk.worstCrisis.lossPct + ' %' : '—', color: '#f43f5e' },
-                    ].map((m, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingBottom: idx < 2 ? '12px' : 0,
-                        borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontWeight: '600',
-                        }}>
-                          {m.label}
-                        </span>
-                        <span style={{
-                          fontSize: '16px',
-                          fontWeight: '900',
-                          color: m.color,
-                        }}>
-                          {m.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Advanced Metrics */}
-                <div className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <h4 style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    margin: '0 0 16px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    🏦 Dettes & immobilier
-                  </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { label: 'Dette bancaire', value: overview ? '🪙 ' + n0(overview.bank.debtCoins) : '…', color: '#3b82f6' },
-                      { label: 'Biens immobiliers', value: overview?.realEstate?.started ? overview.realEstate.properties : '—', color: '#8b5cf6' },
-                      { label: 'Patrimoine immo net', value: overview?.realEstate?.started ? '€ ' + n0(overview.realEstate.equityEuros) : '—', color: '#a78bfa' },
-                    ].map((m, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingBottom: idx < 2 ? '12px' : 0,
-                        borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontWeight: '600',
-                        }}>
-                          {m.label}
-                        </span>
-                        <span style={{
-                          fontSize: '16px',
-                          fontWeight: '900',
-                          color: m.color,
-                        }}>
-                          {m.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Financial Summary */}
-                <div className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <h4 style={{
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    margin: '0 0 16px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    💰 Synthèse
-                  </h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { label: 'Capital investi', value: ovTot ? '🪙 ' + n0(ovTot.invested) : '…', color: '#3b82f6' },
-                      { label: 'Gain / perte (latent + réalisé)', value: ovTot ? '🪙 ' + signed(ovTot.gain) : '…', color: '#10b981' },
-                      { label: 'Frais et impôts payés', value: ovTot ? '🪙 ' + n0(ovTot.feesPaid + ovTot.taxPaid) : '…', color: '#a78bfa' },
-                    ].map((m, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingBottom: idx < 2 ? '12px' : 0,
-                        borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontWeight: '600',
-                        }}>
-                          {m.label}
-                        </span>
-                        <span style={{
-                          fontSize: '16px',
-                          fontWeight: '900',
-                          color: m.color,
-                        }}>
-                          {m.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* MARKET TAB */}
-        {activeTab === 'market' && (
-          <div style={{ marginTop: '20px' }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: '800',
-              color: 'white',
-              margin: '0 0 24px 0',
-            }}>
-              💹 Marché
-            </h2>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px',
-            }}>
-              {marketData.map((item, idx) => (
-                <div key={idx} className="metric-card" style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                }}>
-                  <p style={{
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: 'white',
-                    margin: '0 0 12px 0',
-                  }}>
-                    {item.name}
-                  </p>
-                  <p style={{
-                    fontSize: '28px',
-                    fontWeight: '900',
-                    color: '#60a5fa',
-                    margin: '0 0 8px 0',
-                  }}>
-                    {item.value.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}
-                  </p>
-                  <p style={{
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: item.change > 0 ? '#10b981' : '#f43f5e',
-                    margin: 0,
-                  }}>
-                    {item.change > 0 ? '↑' : '↓'} {Math.abs(item.change)}%
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* MARKET TAB : cours réels du marché simulé, aucune valeur en dur */}
+        {activeTab === 'market' && <MarketTab />}
 
         {/* TRADING TAB - Simulateur Bourse (mode accéléré) */}
         {activeTab === 'trading' && (
           <div style={{ marginTop: '20px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'white', margin: '0 0 8px 0' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>
               📈 Simulateur — Mode Accéléré
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: '0 0 24px 0' }}>
+            <p style={{ color: 'var(--ik-text-3)', fontSize: '13px', margin: '0 0 24px 0' }}>
               Achète et vends avec tes InvestCoins sur des données historiques simplifiées (illustratives, pas de vrais cours).
             </p>
 
             {!tradingLoaded ? (
-              <p style={{ color: 'rgba(255,255,255,0.6)' }}>Chargement...</p>
+              <p style={{ color: 'var(--ik-text-3)' }}>Chargement...</p>
             ) : (
               <>
                 {/* Sélecteur de domaine */}
@@ -3451,9 +1528,9 @@ export default function DashboardPage() {
                       style={{
                         padding: '8px 18px',
                         borderRadius: '20px',
-                        border: `1px solid ${tradingDomain === d.id ? 'rgba(96,165,250,0.6)' : 'rgba(255,255,255,0.15)'}`,
-                        background: tradingDomain === d.id ? 'rgba(59,130,246,0.25)' : 'transparent',
-                        color: tradingDomain === d.id ? '#60a5fa' : 'rgba(255,255,255,0.7)',
+                        border: `1px solid ${tradingDomain === d.id ? 'rgba(96,165,250,0.6)' : 'color-mix(in srgb, var(--ik-text) 15%, transparent)'}`,
+                        background: tradingDomain === d.id ? 'color-mix(in srgb, var(--ik-primary) 25%, transparent)' : 'transparent',
+                        color: tradingDomain === d.id ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
                         fontWeight: '700',
                         fontSize: '13px',
                         cursor: 'pointer',
@@ -3464,13 +1541,13 @@ export default function DashboardPage() {
                   ))}
                   <button
                     onClick={() => router.push('/immobilier')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                   >
                     🏠 Immobilier →
                   </button>
                   <button
                     onClick={() => router.push('/crypto')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
                   >
                     ₿ Marché Crypto →
                   </button>
@@ -3491,17 +1568,17 @@ export default function DashboardPage() {
                       label: 'Performance',
                       tip: 'performance-portefeuille',
                       value: `${tradingPortfolio?.performancePct >= 0 ? '+' : ''}${tradingPortfolio?.performancePct?.toFixed(1)}%`,
-                      color: tradingPortfolio?.performancePct >= 0 ? '#10b981' : '#f43f5e',
+                      color: tradingPortfolio?.performancePct >= 0 ? 'var(--ik-positive)' : 'var(--ik-negative)',
                     },
                   ].map((stat, idx) => (
                     <div key={idx} style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                       borderRadius: '12px',
                       padding: '16px',
                     }}>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
-                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'white', margin: 0 }}>{stat.value}</p>
+                      <p style={{ fontSize: '11px', color: 'var(--ik-text-3)', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{stat.label}{stat.tip && <HelpTip term={stat.tip} />}</p>
+                      <p style={{ fontSize: '18px', fontWeight: '800', color: stat.color || 'var(--ik-text)', margin: 0 }}>{stat.value}</p>
                     </div>
                   ))}
                 </div>
@@ -3514,9 +1591,9 @@ export default function DashboardPage() {
                     borderRadius: '10px',
                     border: 'none',
                     background: tradingPortfolio?.simulatedYear >= tradingPortfolio?.maxYear
-                      ? 'rgba(255,255,255,0.1)'
-                      : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                    color: 'white',
+                      ? 'color-mix(in srgb, var(--ik-text) 10%, transparent)'
+                      : 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
+                    color: 'var(--ik-text-on-primary)',
                     fontWeight: '700',
                     fontSize: '13px',
                     cursor: tradingLoading ? 'wait' : 'pointer',
@@ -3527,29 +1604,29 @@ export default function DashboardPage() {
                 </button>
 
                 {tradingError && (
-                  <p style={{ color: '#f43f5e', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
+                  <p style={{ color: 'var(--ik-negative)', fontSize: '13px', marginBottom: '16px' }}>{tradingError}</p>
                 )}
 
                 {/* Prêt sur portefeuille en cours : rapport prêt/valeur et appel de marge (calculés par le serveur) */}
                 {tradingPortfolio?.bank?.loan && (
-                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(59,130,246,0.12)' : 'rgba(245,158,11,0.15)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'rgba(245,158,11,0.6)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'rgba(255,255,255,0.85)', fontSize: '13px' }}>
+                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'color-mix(in srgb, var(--ik-primary) 12%, transparent)' : 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'color-mix(in srgb, var(--ik-warning) 60%, transparent)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'var(--ik-text)', fontSize: '13px' }}>
                     🏦 Prêt sur portefeuille : dette {tradingPortfolio.bank.loan.debtCoins} 🪙 · rapport prêt/valeur {tradingPortfolio.bank.loan.ltvPct} %.
-                    {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: '#fbbf24' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
-                    <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
+                    {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: 'var(--ik-warning)' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
+                    <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
                   </div>
                 )}
 
                 {/* Accès : domaine gratuit / Pro (vérifié côté serveur) */}
                 {(tradingPortfolio?.access?.reason === 'FREE_DOMAIN_NOT_CHOSEN' || showDomainChooser) && (
-                  <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 8px 0' }}>{showDomainChooser ? 'Change ton domaine gratuit (une seule fois)' : 'Choisis ton domaine gratuit'}</h3>
-                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: '0 0 14px 0' }}>
-                      Le plan gratuit débloque l'achat dans UN domaine. {showDomainChooser ? 'Ce changement est le dernier : ensuite le choix sera définitif.' : 'Ce choix est définitif (le plan Pro débloque tous les domaines).'} (Le plan Pro débloque tous les domaines.) Tu peux vendre partout à tout moment.
+                  <div style={{ background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>{showDomainChooser ? 'Change ton domaine gratuit (une seule fois)' : 'Choisis ton domaine gratuit'}</h3>
+                    <p style={{ color: 'var(--ik-text-2)', fontSize: '13px', margin: '0 0 14px 0' }}>
+                      Le plan gratuit débloque l'achat dans UN domaine. {showDomainChooser ? 'Ce changement est le dernier : ensuite le choix sera définitif.' : 'Ce choix est définitif (le plan Pro débloque tous les domaines).'} Tu peux vendre partout à tout moment.
                     </p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       {tradingDomains.map((d) => (
                         <button key={d.id} onClick={() => chooseFreeDomain(d.id)} disabled={tradingLoading || d.id === tradingPortfolio?.freeDomain}
-                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: d.id === tradingPortfolio?.freeDomain ? 0.4 : 1 }}>
+                          style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'color-mix(in srgb, var(--ik-primary) 25%, transparent)', color: 'var(--ik-accent)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: d.id === tradingPortfolio?.freeDomain ? 0.4 : 1 }}>
                           {d.label}{d.id === tradingPortfolio?.freeDomain ? ' (actuel)' : ''}
                         </button>
                       ))}
@@ -3560,40 +1637,42 @@ export default function DashboardPage() {
                           router.push('/immobilier');
                         }}
                         disabled={tradingLoading || tradingPortfolio?.freeDomain === 'real_estate'}
-                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'rgba(59,130,246,0.25)', color: '#60a5fa', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}>
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'color-mix(in srgb, var(--ik-primary) 25%, transparent)', color: 'var(--ik-accent)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}>
                         🏠 Immobilier{tradingPortfolio?.freeDomain === 'real_estate' ? ' (actuel)' : ''}
                       </button>
                       {showDomainChooser && (
-                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
+                        <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'var(--ik-text-3)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
                       )}
                     </div>
                   </div>
                 )}
                 {tradingPortfolio?.access?.reason === 'DOMAIN_LOCKED' && (
-                  <div style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: '#fbbf24', fontSize: '13px' }}>
+                  <div style={{ background: 'color-mix(in srgb, var(--ik-warning) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-warning) 40%, transparent)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: 'var(--ik-warning)', fontSize: '13px' }}>
                     🔒 Ce domaine n'est pas ton domaine gratuit : l'achat nécessite le plan Pro. Tu peux toujours vendre tes positions.
                     {tradingPortfolio?.canChangeFreeDomain && (
-                      <button onClick={() => setShowDomainChooser(true)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#60a5fa', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Changer mon domaine gratuit (1 fois)</button>
+                      <button onClick={() => setShowDomainChooser(true)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Changer mon domaine gratuit (1 fois)</button>
                     )}
                   </div>
                 )}
 
+                <HistoryChart domain={tradingDomain} symbol={tradingSelectedAsset} simulatedYear={tradingPortfolio?.simulatedYear} enabled={!!tradingPortfolio && tradingAssets.some((a) => a.symbol === tradingSelectedAsset)} />
+
                 {/* Achat */}
                 <div style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                   borderRadius: '16px',
                   padding: '20px',
                   marginBottom: '24px',
                 }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 16px 0' }}>Acheter</h3>
+                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 16px 0' }}>Acheter</h3>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <select
                       value={tradingSelectedAsset}
                       onChange={(e) => setTradingSelectedAsset(e.target.value)}
                       style={{
-                        padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)',
-                        background: '#1a1a2e', color: 'white', fontSize: '13px',
+                        padding: '10px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                        background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px',
                       }}
                     >
                       {tradingAssets.map((a) => {
@@ -3612,8 +1691,8 @@ export default function DashboardPage() {
                       value={tradingQuantity}
                       onChange={(e) => setTradingQuantity(e.target.value)}
                       style={{
-                        width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)',
-                        background: '#1a1a2e', color: 'white', fontSize: '13px',
+                        width: '80px', padding: '10px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                        background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px',
                       }}
                     />
                     {tradingDomain !== 'crypto' && (
@@ -3621,13 +1700,13 @@ export default function DashboardPage() {
                         value={tradingAccount}
                         onChange={(e) => setTradingAccount(e.target.value)}
                         aria-label="Enveloppe"
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: '13px' }}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px' }}
                       >
                         <option value="pea">PEA</option>
                         <option value="cto">Compte-titres</option>
                       </select>
                     )}
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>
                       ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} 🪙
                       {' '}+ courtage (~{tradingPortfolio?.costs?.brokeragePct?.[tradingAssets.find((a) => a.symbol === tradingSelectedAsset)?.type ?? 'stock'] ?? 0} %)
                       <HelpTip term="courtage" />
@@ -3637,7 +1716,7 @@ export default function DashboardPage() {
                       disabled={tradingLoading || tradingPortfolio?.access?.canBuy === false}
                       style={{
                         padding: '10px 20px', borderRadius: '8px', border: 'none',
-                        background: '#10b981', color: 'white', fontWeight: '700', fontSize: '13px',
+                        background: 'var(--ik-positive)', color: 'var(--ik-text-on-positive)', fontWeight: '700', fontSize: '13px',
                         opacity: tradingPortfolio?.access?.canBuy === false ? 0.4 : 1,
                         cursor: tradingLoading ? 'wait' : 'pointer',
                       }}
@@ -3646,7 +1725,7 @@ export default function DashboardPage() {
                     </button>
                   </div>
                   {tradingDomain === 'stocks' && tradingPortfolio?.costs?.pea && (
-                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       {tradingAccount === 'pea'
                         ? (tradingPortfolio.costs.pea.openedYear
                           ? `PEA ouvert en ${tradingPortfolio.costs.pea.openedYear} : exonéré d'impôt sur le revenu à partir de ${tradingPortfolio.costs.pea.exemptFromYear}. Versé : ${tradingPortfolio.costs.pea.deposits.toLocaleString('fr-FR')} / ${tradingPortfolio.costs.pea.depositCeiling.toLocaleString('fr-FR')} 🪙.`
@@ -3656,22 +1735,22 @@ export default function DashboardPage() {
                     </p>
                   )}
                   {tradingDomain === 'crypto' && tradingPortfolio?.costs && (
-                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                    <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       Crypto : impôt uniquement à la vente contre euros. Cessions de l'année : {(tradingPortfolio.costs.cryptoDisposalsThisYear ?? 0).toLocaleString('fr-FR')} 🪙 (aucun impôt tant que le total reste sous {tradingPortfolio.costs.cryptoThreshold} 🪙).
                       <HelpTip term="impot-crypto" />
                     </p>
                   )}
                   {tradingPortfolio?.costs && (tradingPortfolio.costs.feesPaid > 0 || tradingPortfolio.costs.taxPaid > 0) && (
-                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       Payé depuis le début : {tradingPortfolio.costs.feesPaid.toLocaleString('fr-FR')} 🪙 de courtage, {tradingPortfolio.costs.taxPaid.toLocaleString('fr-FR')} 🪙 d'impôts.
                     </p>
                   )}
                 </div>
 
                 {/* Positions */}
-                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '0 0 16px 0' }}>Mes positions</h3>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '0 0 16px 0' }}>Mes positions</h3>
                 {tradingPortfolio?.positions?.length === 0 ? (
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
+                  <p style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>Aucune position — achète ton premier titre ci-dessus.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '10px' }}>
                     {tradingPortfolio?.positions?.map((pos) => (
@@ -3679,14 +1758,14 @@ export default function DashboardPage() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                         borderRadius: '10px',
                         padding: '14px 18px',
                       }}>
                         <div>
-                          <p style={{ color: 'white', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
-                          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: 0 }}>
+                          <p style={{ color: 'var(--ik-text)', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
+                          <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: 0 }}>
                             {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}€
                           </p>
                         </div>
@@ -3694,8 +1773,8 @@ export default function DashboardPage() {
                           onClick={() => tradingPreviewSell(pos)}
                           disabled={tradingLoading}
                           style={{
-                            padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(244, 63, 94, 0.4)',
-                            background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontWeight: '700', fontSize: '12px',
+                            padding: '8px 16px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-negative) 40%, transparent)',
+                            background: 'color-mix(in srgb, var(--ik-negative) 15%, transparent)', color: 'var(--ik-negative)', fontWeight: '700', fontSize: '12px',
                             cursor: tradingLoading ? 'wait' : 'pointer',
                           }}
                         >
@@ -3707,14 +1786,14 @@ export default function DashboardPage() {
                 )}
 
                 {tradingQuote && (
-                  <div style={{ marginTop: 14, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
+                  <div style={{ marginTop: 14, background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'var(--ik-text)', fontSize: 13 }}>
                     <strong>Vente de {Number(tradingQuote.quantity.toFixed(6))} {tradingQuote.symbol}</strong> : produit {tradingQuote.amount.toLocaleString('fr-FR')} 🪙,
                     courtage {tradingQuote.fee.toLocaleString('fr-FR')} 🪙, impôt sur la plus-value {tradingQuote.tax.toLocaleString('fr-FR')} 🪙
                     {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} 🪙</strong>.
-                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.65)' }}>{tradingQuote.note}</div>}
+                    {tradingQuote.note && <div style={{ marginTop: 6, color: 'var(--ik-text-2)' }}>{tradingQuote.note}</div>}
                     <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#f43f5e', color: 'white', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
-                      <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'white', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
+                      <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-negative)', color: 'var(--ik-text-on-negative)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
+                      <button onClick={() => setTradingQuote(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'transparent', color: 'var(--ik-text)', fontSize: 12, cursor: 'pointer' }}>Annuler</button>
                     </div>
                   </div>
                 )}
@@ -3722,15 +1801,15 @@ export default function DashboardPage() {
                 <PortfolioRisk domain={tradingDomain} refreshKey={`${tradingPortfolio?.simulatedYear}-${tradingPortfolio?.positions?.length}-${tradingPortfolio?.cashBalance}-${tradingPortfolio?.marketValue}`} />
 
                 {/* Classement (comparaison à année simulée égale) */}
-                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'white', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: '0 0 12px 0' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
+                <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: '0 0 12px 0' }}>
                   Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} 🪙 pour être classé.
                 </p>
                 <div style={{ marginBottom: '12px' }}>
                   <select
                     value={tradingBoard?.year ?? ''}
                     onChange={(e) => { setTradingBoardYear(e.target.value); loadTradingBoard(tradingDomain, e.target.value); }}
-                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1a1a2e', color: 'white', fontSize: '13px' }}
+                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)', background: 'var(--ik-surface-2)', color: 'var(--ik-text)', fontSize: '13px' }}
                   >
                     {tradingPortfolio && Array.from({ length: tradingPortfolio.maxYear - tradingPortfolio.minYear + 1 }, (_, i) => tradingPortfolio.minYear + i).map((y) => (
                       <option key={y} value={y}>Année {y}</option>
@@ -3738,18 +1817,18 @@ export default function DashboardPage() {
                   </select>
                 </div>
                 {!tradingBoard || tradingBoard.entries.length === 0 ? (
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
+                  <p style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>Personne n'est encore classé pour cette année.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '6px' }}>
-                    {tradingBoard.entries.map((e) => (
-                      <div key={e.rank + e.username} style={{
+                    {tradingBoard.entries.map((e, i) => (
+                      <div key={`${e.rank}-${e.username}-${i}`} style={{
                         display: 'flex', justifyContent: 'space-between', padding: '10px 16px', borderRadius: '10px',
-                        background: e.isMe ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${e.isMe ? 'rgba(96,165,250,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                        color: 'white', fontSize: '13px',
+                        background: e.isMe ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                        border: `1px solid ${e.isMe ? 'rgba(96,165,250,0.5)' : 'color-mix(in srgb, var(--ik-text) 10%, transparent)'}`,
+                        color: 'var(--ik-text)', fontSize: '13px',
                       }}>
                         <span>#{e.rank} {e.username}{e.isMe ? ' (toi)' : ''}</span>
-                        <span style={{ color: e.performancePct >= 0 ? '#10b981' : '#f43f5e', fontWeight: '700' }}>
+                        <span style={{ color: e.performancePct >= 0 ? 'var(--ik-positive)' : 'var(--ik-negative)', fontWeight: '700' }}>
                           {e.performancePct >= 0 ? '+' : ''}{e.performancePct.toFixed(1)}%
                         </span>
                       </div>
@@ -3757,7 +1836,7 @@ export default function DashboardPage() {
                   </div>
                 )}
                 {tradingBoard && !tradingBoard.entries.some((e) => e.isMe) && (
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', marginTop: '10px' }}>
+                  <p style={{ color: 'var(--ik-text-3)', fontSize: '13px', marginTop: '10px' }}>
                     {tradingBoard.me
                       ? `Ton rang : #${tradingBoard.me.rank} sur ${tradingBoard.totalRanked} (${tradingBoard.me.performancePct.toFixed(1)}%)`
                       : 'Non classé pour cette année (capital engagé insuffisant ou aucun achat).'}
@@ -3799,12 +1878,12 @@ export default function DashboardPage() {
                     ⭐ {progress.totalXP} XP
                   </span>
                   {progress.streak > 0 && (
-                    <span style={{ color: '#f59e0b' }}>
+                    <span style={{ color: 'var(--ik-warning)' }}>
                       🔥 Racha: {progress.streak}
                     </span>
                   )}
                   {progress.badges && progress.badges.length > 0 && (
-                    <span style={{ color: '#a78bfa' }}>
+                    <span style={{ color: 'var(--ik-accent)' }}>
                       ✨ {progress.badges.length} Badges
                     </span>
                   )}
@@ -3815,8 +1894,8 @@ export default function DashboardPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 20px',
-                background: 'rgba(59, 130, 246, 0.2)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                 borderRadius: '10px',
                 color: currentTheme.accent,
                 textDecoration: 'none',
@@ -3914,7 +1993,7 @@ export default function DashboardPage() {
                         <div style={{
                           width: `${progressPercent}%`,
                           height: '100%',
-                          background: `linear-gradient(90deg, ${domain.color}, ${domain.color}80)`,
+                          background: `linear-gradient(90deg, ${domain.color}, ${alpha(domain.color, 50)})`,
                           transition: 'width 0.3s ease',
                         }} />
                       </div>
@@ -3927,7 +2006,7 @@ export default function DashboardPage() {
                         color: currentTheme.textTertiary,
                       }}>
                         {isCompleted ? (
-                          <span style={{ color: '#10b981', fontWeight: '600' }}>✓ Maîtrisé</span>
+                          <span style={{ color: 'var(--ik-positive)', fontWeight: '600' }}>✓ Maîtrisé</span>
                         ) : progressPercent > 0 ? (
                           <span style={{ color: currentTheme.accent }}>En cours...</span>
                         ) : (
@@ -3964,7 +2043,7 @@ export default function DashboardPage() {
                           padding: '12px',
                           background: currentTheme.cardBg,
                           borderRadius: '12px',
-                          border: `2px solid ${domain.color}40`,
+                          border: `2px solid ${alpha(domain.color, 25)}`,
                           textAlign: 'center',
                           transition: 'all 0.3s ease',
                           cursor: 'pointer',
@@ -3975,7 +2054,7 @@ export default function DashboardPage() {
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.borderColor = `${domain.color}40`;
+                          e.currentTarget.style.borderColor = `${alpha(domain.color, 25)}`;
                         }}
                       >
                         <div style={{
@@ -4000,4719 +2079,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* FRIENDS TAB */}
-        {activeTab === 'friends' && (
-          <div style={{ marginTop: '20px' }}>
-            {/* Friends Header */}
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{
-                fontSize: '28px',
-                fontWeight: '800',
-                color: currentTheme.text,
-                margin: '0 0 24px 0',
-              }}>
-                👥 Mes Amis
-              </h2>
-
-              {/* Main Tabs */}
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                marginBottom: '24px',
-                borderBottom: `1px solid ${currentTheme.border}`,
-                paddingBottom: '12px',
-              }}>
-                {[
-                  { id: 'friends', label: `👫 Amis (${userData.friends.length})` },
-                  { id: 'leaderboard', label: '🏆 Classement' },
-                  { id: 'guildes', label: '👥 Guildes' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      if (tab.id === 'friends') setFriendsTab('friends');
-                      else setFriendsTab(tab.id);
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      background: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? 'rgba(59, 130, 246, 0.1)' : friendsTab === tab.id ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                      border: 'none',
-                      borderBottom: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? `2px solid ${currentTheme.accent}` : friendsTab === tab.id ? `2px solid ${currentTheme.accent}` : 'none',
-                      color: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? currentTheme.accent : friendsTab === tab.id ? currentTheme.accent : currentTheme.textSecondary,
-                      fontWeight: ['friends', 'messages', 'search', 'pending'].includes(friendsTab) && tab.id === 'friends' ? '700' : friendsTab === tab.id ? '700' : '500',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Sub-tabs for Friends */}
-              {['friends', 'messages', 'search', 'pending'].includes(friendsTab) && (
-                <div style={{
-                  display: 'flex',
-                  gap: '10px',
-                  marginBottom: '24px',
-                  flexWrap: 'wrap',
-                }}>
-                  {[
-                    { id: 'friends', label: '👫 Liste d\'amis', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.2)' },
-                    { id: 'pending', label: `📬 Demandes (${userData.friendRequests.received.length})`, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.2)' },
-                    { id: 'search', label: '🔍 Chercher', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.2)' },
-                    { id: 'messages', label: '💬 Messages', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.2)' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setFriendsTab(tab.id)}
-                      style={{
-                        padding: '10px 16px',
-                        background: friendsTab === tab.id ? `linear-gradient(135deg, ${tab.bgColor} 0%, ${tab.bgColor.replace('0.15', '0.05')} 100%)` : 'transparent',
-                        border: `1.5px solid ${friendsTab === tab.id ? tab.borderColor : currentTheme.border}`,
-                        borderRadius: '10px',
-                        color: friendsTab === tab.id ? tab.color : currentTheme.textSecondary,
-                        fontWeight: friendsTab === tab.id ? '600' : '500',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        backdropFilter: friendsTab === tab.id ? 'blur(10px)' : 'none',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (friendsTab !== tab.id) {
-                          e.currentTarget.style.borderColor = tab.borderColor;
-                          e.currentTarget.style.color = tab.color;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (friendsTab !== tab.id) {
-                          e.currentTarget.style.borderColor = currentTheme.border;
-                          e.currentTarget.style.color = currentTheme.textSecondary;
-                        }
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Friend Code Card */}
-            </div>
-
-            {/* Leaderboard Section - ULTRA PREMIUM */}
-            {friendsTab === 'leaderboard' && (
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '28px',
-                }}>
-                  <h3 style={{
-                    fontSize: '24px',
-                    fontWeight: '900',
-                    color: currentTheme.text,
-                    margin: 0,
-                    letterSpacing: '-0.5px',
-                  }}>
-                    🏆 Classements
-                  </h3>
-                </div>
-
-                {/* Leaderboard Tabs */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '12px',
-                  marginBottom: '28px',
-                }}>
-                  {[
-                    { id: 'global-guilds', label: 'Guildes Mondiales', icon: '🏛️' },
-                    { id: 'global-users', label: 'Utilisateurs Mondiaux', icon: '🌍' },
-                    { id: 'friends', label: 'Mes Amis', icon: '👥' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setLeaderboardTab(tab.id)}
-                      style={{
-                        padding: '16px',
-                        background: leaderboardTab === tab.id
-                          ? `linear-gradient(135deg, #f59e0b 0%, #d97706 100%)`
-                          : currentTheme.cardBg,
-                        border: leaderboardTab === tab.id
-                          ? '2px solid rgba(255, 255, 255, 0.4)'
-                          : `1.5px solid ${currentTheme.border}`,
-                        borderRadius: '14px',
-                        color: leaderboardTab === tab.id ? '#fff' : currentTheme.text,
-                        fontWeight: leaderboardTab === tab.id ? '800' : '700',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        boxShadow: leaderboardTab === tab.id
-                          ? '0 12px 32px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                          : '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        transform: leaderboardTab === tab.id ? 'translateY(-4px)' : 'translateY(0)',
-                        backdropFilter: 'blur(12px)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (leaderboardTab !== tab.id) {
-                          e.currentTarget.style.background = `rgba(245, 158, 11, 0.15)`;
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.borderColor = '#f59e0b';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (leaderboardTab !== tab.id) {
-                          e.currentTarget.style.background = currentTheme.cardBg;
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.borderColor = currentTheme.border;
-                        }
-                      }}
-                    >
-                      <span style={{ fontSize: '20px' }}>{tab.icon}</span>
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Filters Section - Afficher uniquement pour les onglets utilisateurs */}
-                {(leaderboardTab === 'global-users' || leaderboardTab === 'friends') && (
-                  <div style={{ marginBottom: '24px' }}>
-                    {/* Période */}
-                    <div style={{ marginBottom: '16px' }}>
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        margin: '0 0 8px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        📅 Période
-                      </p>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {[
-                          { id: 'week', label: 'Cette semaine' },
-                          { id: 'month', label: 'Ce mois' },
-                          { id: 'all-time', label: 'Tous les temps' },
-                        ].map((period) => (
-                          <button
-                            key={period.id}
-                            onClick={() => setLeaderboardPeriod(period.id)}
-                            style={{
-                              padding: '8px 14px',
-                              background: leaderboardPeriod === period.id
-                                ? '#f59e0b'
-                                : currentTheme.cardBg,
-                              border: leaderboardPeriod === period.id
-                                ? '2px solid #d97706'
-                                : `1.5px solid ${currentTheme.border}`,
-                              borderRadius: '8px',
-                              color: leaderboardPeriod === period.id ? '#fff' : currentTheme.text,
-                              fontWeight: '600',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                            {period.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Domaine */}
-                    <div style={{ marginBottom: '16px' }}>
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        margin: '0 0 8px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        🎯 Domaine
-                      </p>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {[
-                          { id: 'all', label: 'Tous' },
-                          { id: 'crypto', label: '₿ Crypto' },
-                          { id: 'stocks', label: '📈 Bourse' },
-                          { id: 'realestate', label: '🏠 Immobilier' },
-                          { id: 'bonds', label: '💼 Obligations' },
-                        ].map((domain) => (
-                          <button
-                            key={domain.id}
-                            onClick={() => setLeaderboardDomain(domain.id)}
-                            style={{
-                              padding: '8px 14px',
-                              background: leaderboardDomain === domain.id
-                                ? '#f59e0b'
-                                : currentTheme.cardBg,
-                              border: leaderboardDomain === domain.id
-                                ? '2px solid #d97706'
-                                : `1.5px solid ${currentTheme.border}`,
-                              borderRadius: '8px',
-                              color: leaderboardDomain === domain.id ? '#fff' : currentTheme.text,
-                              fontWeight: '600',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                            {domain.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Niveau */}
-                    <div>
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        margin: '0 0 8px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        ⭐ Niveau
-                      </p>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {[
-                          { id: 'all', label: 'Tous' },
-                          { id: '1-3', label: '1-3 (Débutant)' },
-                          { id: '4-6', label: '4-6 (Intermédiaire)' },
-                          { id: '7-9', label: '7-9 (Avancé)' },
-                          { id: '10+', label: '10+ (Expert)' },
-                        ].map((level) => (
-                          <button
-                            key={level.id}
-                            onClick={() => setLeaderboardLevel(level.id)}
-                            style={{
-                              padding: '8px 14px',
-                              background: leaderboardLevel === level.id
-                                ? '#f59e0b'
-                                : currentTheme.cardBg,
-                              border: leaderboardLevel === level.id
-                                ? '2px solid #d97706'
-                                : `1.5px solid ${currentTheme.border}`,
-                              borderRadius: '8px',
-                              color: leaderboardLevel === level.id ? '#fff' : currentTheme.text,
-                              fontWeight: '600',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                            {level.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div style={{
-                      height: '1.5px',
-                      background: `linear-gradient(90deg, transparent, ${currentTheme.border}, transparent)`,
-                      margin: '20px 0',
-                    }} />
-                  </div>
-                )}
-
-                {/* Guildes Leaderboard */}
-                {leaderboardTab === 'global-guilds' && (
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { rank: 1, name: 'Crypto Traders', members: 12, xp: 5400, level: 15, medal: '🥇', emoji: '₿', description: 'Les meilleurs traders en crypto de la plateforme', joinedMembers: 3 },
-                      { rank: 2, name: 'Stock Masters', members: 8, xp: 4800, level: 14, medal: '🥈', emoji: '📈', description: 'Experts de la bourse et des actions', joinedMembers: 2 },
-                      { rank: 3, name: 'Invest Elite', members: 10, xp: 4200, level: 13, medal: '🥉', emoji: '💎', description: 'Une élite d\'investisseurs avertis', joinedMembers: 1 },
-                      { rank: 4, name: 'Finance Fighters', members: 6, xp: 3800, level: 12, medal: '#4', emoji: '⚔️', description: 'Combattants de la finance moderne', joinedMembers: 0 },
-                      { rank: 5, name: 'Wealth Warriors', members: 9, xp: 3400, level: 11, medal: '#5', emoji: '🛡️', description: 'Guerriers de la richesse et la prospérité', joinedMembers: 0 },
-                    ].map((guild, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => setSelectedLeaderboardGuild(guild)}
-                        style={{
-                          padding: '18px 20px',
-                          background: `linear-gradient(135deg, rgba(245, 158, 11, ${0.15 - idx * 0.02}) 0%, rgba(245, 158, 11, ${0.08 - idx * 0.01}) 100%)`,
-                          border: `1.5px solid rgba(245, 158, 11, ${0.3 - idx * 0.04})`,
-                          borderRadius: '16px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          boxShadow: `0 4px 12px rgba(0, 0, 0, 0.1)`,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 12px 28px rgba(245, 158, 11, 0.2)`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateX(0) translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                        }}
-                      >
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
-                          <div style={{
-                            fontSize: '32px',
-                            fontWeight: '900',
-                            minWidth: '50px',
-                            textAlign: 'center',
-                            animation: idx < 3 ? 'pulse 2s ease-in-out infinite' : 'none',
-                          }}>
-                            {guild.medal}
-                          </div>
-                          <div>
-                            <p style={{
-                              color: currentTheme.text,
-                              fontWeight: '800',
-                              margin: '0 0 4px 0',
-                              fontSize: '15px',
-                              letterSpacing: '-0.3px',
-                            }}>
-                              {guild.name}
-                            </p>
-                            <p style={{
-                              color: currentTheme.textSecondary,
-                              fontSize: '12px',
-                              margin: 0,
-                              fontWeight: '500',
-                            }}>
-                              👥 {guild.members} membres • Lvl {guild.level}
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <p style={{
-                            fontSize: '18px',
-                            fontWeight: '900',
-                            color: '#f59e0b',
-                            margin: 0,
-                            letterSpacing: '-0.5px',
-                          }}>
-                            {guild.xp.toLocaleString()}
-                          </p>
-                          <p style={{
-                            fontSize: '11px',
-                            color: currentTheme.textSecondary,
-                            margin: '4px 0 0 0',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                          }}>
-                            XP Total
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Utilisateurs Leaderboard */}
-                {leaderboardTab === 'global-users' && (
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {(() => {
-                      // Mock filtered users data with full profiles
-                      let users = [
-                        {
-                          rank: 1, name: 'AlexInvestor', level: 20, xp: 8900, medal: '🥇', vs: '+1200 XP',
-                          avatar: '👨‍💼', bio: 'Trader expérimenté & coach d\'investissement',
-                          badges: ['first_blood', 'perfect', 'no_mistakes', 'crypto_master', 'stocks_master'],
-                          completedDomains: ['crypto', 'stocks', 'bonds', 'realestate'],
-                          portfolio: 125000, friendCode: '#LEA001'
-                        },
-                        {
-                          rank: 2, name: 'CryptoKing', level: 19, xp: 7800, medal: '🥈', vs: '+500 XP',
-                          avatar: '👨‍💻', bio: 'Spécialiste crypto & blockchain enthusiast',
-                          badges: ['first_blood', 'perfect', 'crypto_master'],
-                          completedDomains: ['crypto', 'bonds'],
-                          portfolio: 95000, friendCode: '#CRK002'
-                        },
-                        {
-                          rank: 3, name: 'StockQueen', level: 19, xp: 7200, medal: '🥉', vs: '-100 XP',
-                          avatar: '👩‍💰', bio: 'Reine du marché boursier, analyse technique PRO',
-                          badges: ['first_blood', 'perfect', 'stocks_master'],
-                          completedDomains: ['stocks', 'crypto'],
-                          portfolio: 87000, friendCode: '#SQN003'
-                        },
-                        {
-                          rank: 4, name: 'BondMaster', level: 18, xp: 6500, medal: '#4', vs: '-800 XP',
-                          avatar: '👨‍🎯', bio: 'Maître des obligations et revenus passifs',
-                          badges: ['first_blood'],
-                          completedDomains: ['bonds', 'realestate'],
-                          portfolio: 72000, friendCode: '#BDM004'
-                        },
-                        {
-                          rank: 5, name: 'FinanceGuru', level: 17, xp: 5900, medal: '#5', vs: '-1500 XP',
-                          avatar: '🧑‍🏫', bio: 'Gourou de la finance personnelle & diversification',
-                          badges: ['first_blood'],
-                          completedDomains: ['crypto', 'stocks'],
-                          portfolio: 65000, friendCode: '#FGU005'
-                        },
-                      ];
-
-                      // Filtrer par niveau si nécessaire
-                      if (leaderboardLevel !== 'all') {
-                        users = users.filter(u => {
-                          if (leaderboardLevel === '1-3') return u.level <= 3;
-                          if (leaderboardLevel === '4-6') return u.level >= 4 && u.level <= 6;
-                          if (leaderboardLevel === '7-9') return u.level >= 7 && u.level <= 9;
-                          if (leaderboardLevel === '10+') return u.level >= 10;
-                          return true;
-                        });
-                      }
-
-                      // Filtrer par période (simulation)
-                      if (leaderboardPeriod === 'week') {
-                        users = users.map(u => ({ ...u, xp: Math.floor(u.xp * 0.2) }));
-                      } else if (leaderboardPeriod === 'month') {
-                        users = users.map(u => ({ ...u, xp: Math.floor(u.xp * 0.5) }));
-                      }
-
-                      // Réordonner selon XP filtré
-                      users = users.sort((a, b) => b.xp - a.xp).map((u, idx) => ({
-                        ...u,
-                        rank: idx + 1,
-                        medal: idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`
-                      }));
-
-                      return users;
-                    })().map((user, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => setSelectedLeaderboardUser(user)}
-                        style={{
-                          padding: '18px 20px',
-                          background: `linear-gradient(135deg, rgba(59, 130, 246, ${0.12 - idx * 0.02}) 0%, rgba(59, 130, 246, ${0.06 - idx * 0.01}) 100%)`,
-                          border: `1.5px solid rgba(59, 130, 246, ${0.25 - idx * 0.04})`,
-                          borderRadius: '16px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 12px 28px rgba(59, 130, 246, 0.2)`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateX(0) translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                        }}
-                      >
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
-                          <div style={{
-                            fontSize: '32px',
-                            fontWeight: '900',
-                            minWidth: '50px',
-                            textAlign: 'center',
-                            animation: idx < 3 ? 'pulse 2s ease-in-out infinite' : 'none',
-                          }}>
-                            {user.medal}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                              <p style={{
-                                color: currentTheme.text,
-                                fontWeight: '800',
-                                margin: 0,
-                                fontSize: '15px',
-                                letterSpacing: '-0.3px',
-                              }}>
-                                {user.name}
-                              </p>
-                              {/* Récompenses pour top 3 */}
-                              {idx === 0 && (
-                                <span style={{
-                                  padding: '2px 8px',
-                                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                                  borderRadius: '12px',
-                                  fontSize: '10px',
-                                  fontWeight: '700',
-                                  color: '#000',
-                                  border: '1px solid #f59e0b',
-                                }}>
-                                  🏆 Champion
-                                </span>
-                              )}
-                              {idx === 1 && (
-                                <span style={{
-                                  padding: '2px 8px',
-                                  background: 'rgba(192, 192, 192, 0.2)',
-                                  borderRadius: '12px',
-                                  fontSize: '10px',
-                                  fontWeight: '700',
-                                  color: '#c0c0c0',
-                                  border: '1px solid #c0c0c0',
-                                }}>
-                                  🥈 Finaliste
-                                </span>
-                              )}
-                              {idx === 2 && (
-                                <span style={{
-                                  padding: '2px 8px',
-                                  background: 'rgba(205, 127, 50, 0.2)',
-                                  borderRadius: '12px',
-                                  fontSize: '10px',
-                                  fontWeight: '700',
-                                  color: '#cd7f32',
-                                  border: '1px solid #cd7f32',
-                                }}>
-                                  🥉 Podium
-                                </span>
-                              )}
-                              {idx >= 3 && idx < 10 && (
-                                <span style={{
-                                  padding: '2px 8px',
-                                  background: 'rgba(99, 102, 241, 0.15)',
-                                  borderRadius: '12px',
-                                  fontSize: '10px',
-                                  fontWeight: '700',
-                                  color: '#6366f1',
-                                  border: '1px solid #6366f1',
-                                }}>
-                                  ⭐ Top 10
-                                </span>
-                              )}
-                            </div>
-                            <p style={{
-                              color: currentTheme.textSecondary,
-                              fontSize: '12px',
-                              margin: 0,
-                              fontWeight: '500',
-                            }}>
-                              Niveau {user.level}
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                          <div>
-                            <p style={{
-                              fontSize: '18px',
-                              fontWeight: '900',
-                              color: '#3b82f6',
-                              margin: 0,
-                              letterSpacing: '-0.5px',
-                            }}>
-                              {user.xp.toLocaleString()}
-                            </p>
-                            <p style={{
-                              fontSize: '11px',
-                              color: user.vs.includes('-') ? '#ef4444' : '#10b981',
-                              margin: '4px 0 0 0',
-                              fontWeight: '600',
-                            }}>
-                              {user.vs}
-                            </p>
-                          </div>
-                          {/* Share buttons for top 3 */}
-                          {idx < 3 && (
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button
-                                onClick={() => {
-                                  const text = `🏆 Je suis ${user.medal} au classement ! ${user.name} avec ${user.xp.toLocaleString()} XP sur InvestKit`;
-                                  navigator.clipboard.writeText(text);
-                                  alert('Copié !');
-                                }}
-                                style={{
-                                  padding: '4px 8px',
-                                  background: 'rgba(59, 130, 246, 0.2)',
-                                  border: '1px solid #3b82f6',
-                                  borderRadius: '6px',
-                                  color: '#3b82f6',
-                                  fontSize: '10px',
-                                  fontWeight: '600',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                                }}
-                              >
-                                📤 Partager
-                              </button>
-                              <button
-                                onClick={() => {
-                                  const certificatText = `${user.medal} ${user.medal === '🥇' ? 'CHAMPION' : user.medal === '🥈' ? 'FINALISTE' : 'PODIUM'}\n\n${user.name}\nNiveau ${user.level} • ${user.xp.toLocaleString()} XP\n\nClassement InvestKit`;
-                                  navigator.clipboard.writeText(certificatText);
-                                  alert('Certificat copié !');
-                                }}
-                                style={{
-                                  padding: '4px 8px',
-                                  background: 'rgba(245, 158, 11, 0.2)',
-                                  border: '1px solid #f59e0b',
-                                  borderRadius: '6px',
-                                  color: '#f59e0b',
-                                  fontSize: '10px',
-                                  fontWeight: '600',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'rgba(245, 158, 11, 0.3)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(245, 158, 11, 0.2)';
-                                }}
-                              >
-                                🎖️ Certificat
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Friends Leaderboard */}
-                {leaderboardTab === 'friends' && (
-                  userData.friends.length === 0 ? (
-                    <div style={{
-                      padding: '60px 40px',
-                      textAlign: 'center',
-                      background: currentTheme.cardBg,
-                      borderRadius: '18px',
-                      border: `1.5px solid ${currentTheme.border}`,
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                    }}>
-                      <p style={{
-                        fontSize: '16px',
-                        color: currentTheme.textSecondary,
-                        margin: 0,
-                        fontWeight: '500',
-                      }}>
-                        👥 Ajoute des amis pour voir le classement!
-                      </p>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'grid', gap: '12px' }}>
-                      {(() => {
-                        let friends = [...userData.friends]
-                          .sort((a, b) => {
-                            const aXP = availableUsers.find(u => u.friendCode === a.friendCode)?.xp || 0;
-                            const bXP = availableUsers.find(u => u.friendCode === b.friendCode)?.xp || 0;
-                            return bXP - aXP;
-                          })
-                          .map((friend, idx) => {
-                            const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
-                            return { ...friend, friendData, idx };
-                          });
-
-                        // Appliquer les filtres
-                        if (leaderboardLevel !== 'all') {
-                          friends = friends.filter(f => {
-                            const level = f.friendData?.level || 0;
-                            if (leaderboardLevel === '1-3') return level <= 3;
-                            if (leaderboardLevel === '4-6') return level >= 4 && level <= 6;
-                            if (leaderboardLevel === '7-9') return level >= 7 && level <= 9;
-                            if (leaderboardLevel === '10+') return level >= 10;
-                            return true;
-                          });
-                        }
-
-                        return friends;
-                      })().map((item, idx) => {
-                          const friend = item;
-                          const friendData = friend.friendData;
-                          const myXP = progress.totalXP || 0;
-                          const diff = (friendData?.xp || 0) - myXP;
-                          const getMedal = (index) => index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-
-                          return (
-                            <div
-                              key={friend.userId}
-                              onClick={() => setSelectedFriendProfile(friendData)}
-                              style={{
-                                padding: '18px 20px',
-                                background: `linear-gradient(135deg, rgba(139, 92, 246, ${0.12 - idx * 0.02}) 0%, rgba(139, 92, 246, ${0.06 - idx * 0.01}) 100%)`,
-                                border: `1.5px solid rgba(139, 92, 246, ${0.25 - idx * 0.04})`,
-                                borderRadius: '16px',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateX(8px) translateY(-2px)';
-                                e.currentTarget.style.boxShadow = `0 12px 28px rgba(139, 92, 246, 0.2)`;
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateX(0) translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                              }}
-                            >
-                              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1 }}>
-                                <div style={{
-                                  fontSize: '32px',
-                                  fontWeight: '900',
-                                  minWidth: '50px',
-                                  textAlign: 'center',
-                                  animation: idx < 3 ? 'pulse 2s ease-in-out infinite' : 'none',
-                                }}>
-                                  {getMedal(idx)}
-                                </div>
-                                <div>
-                                  <p style={{
-                                    color: currentTheme.text,
-                                    fontWeight: '800',
-                                    margin: '0 0 4px 0',
-                                    fontSize: '15px',
-                                    letterSpacing: '-0.3px',
-                                  }}>
-                                    {friendData?.name}
-                                  </p>
-                                  <p style={{
-                                    color: currentTheme.textSecondary,
-                                    fontSize: '12px',
-                                    margin: 0,
-                                    fontWeight: '500',
-                                  }}>
-                                    Niveau {friendData?.level}
-                                  </p>
-                                </div>
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                                <div>
-                                  <p style={{
-                                    fontSize: '18px',
-                                    fontWeight: '900',
-                                    color: '#8b5cf6',
-                                    margin: 0,
-                                    letterSpacing: '-0.5px',
-                                  }}>
-                                    {friendData?.xp.toLocaleString()}
-                                  </p>
-                                  <p style={{
-                                    fontSize: '11px',
-                                    color: diff > 0 ? '#f59e0b' : diff < 0 ? '#10b981' : currentTheme.textSecondary,
-                                    margin: '4px 0 0 0',
-                                    fontWeight: '600',
-                                  }}>
-                                    {diff > 0 ? `↑ +${diff.toLocaleString()}` : diff < 0 ? `↓ ${diff.toLocaleString()}` : 'Égalité'}
-                                  </p>
-                                </div>
-                                {/* Share buttons for top 3 friends */}
-                                {idx < 3 && (
-                                  <button
-                                    onClick={() => {
-                                      const medal = getMedal(idx);
-                                      const text = `${medal} Mon ami ${friendData?.name} est ${medal} dans le classement ! ${friendData?.xp.toLocaleString()} XP sur InvestKit`;
-                                      navigator.clipboard.writeText(text);
-                                      alert('Copié !');
-                                    }}
-                                    style={{
-                                      padding: '4px 8px',
-                                      background: 'rgba(139, 92, 246, 0.2)',
-                                      border: '1px solid #8b5cf6',
-                                      borderRadius: '6px',
-                                      color: '#8b5cf6',
-                                      fontSize: '10px',
-                                      fontWeight: '600',
-                                      cursor: 'pointer',
-                                      transition: 'all 0.2s ease',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
-                                    }}
-                                  >
-                                    📤 Partager
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-
-            {/* Leaderboard User Profile Modal - Premium Design */}
-            {selectedLeaderboardUser && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 1000,
-                padding: '20px',
-                backdropFilter: 'blur(8px)',
-              }}
-              onClick={() => setSelectedLeaderboardUser(null)}
-              >
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
-                    borderRadius: '28px',
-                    padding: '0',
-                    maxWidth: '520px',
-                    width: '100%',
-                    maxHeight: '90vh',
-                    overflowY: 'auto',
-                    border: `1.5px solid rgba(255, 255, 255, 0.1)`,
-                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(59, 130, 246, 0.15)',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Header Background Gradient */}
-                  <div style={{
-                    height: '120px',
-                    background: `linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)`,
-                    position: 'relative',
-                  }}>
-                    <button
-                      onClick={() => setSelectedLeaderboardUser(null)}
-                      style={{
-                        position: 'absolute',
-                        top: '16px',
-                        right: '16px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
-                        fontSize: '20px',
-                        cursor: 'pointer',
-                        color: currentTheme.text,
-                        fontWeight: '700',
-                        transition: 'all 0.3s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                        e.currentTarget.style.transform = 'scale(1.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Main Content */}
-                  <div style={{ padding: '0 28px 28px 28px', marginTop: '-60px', position: 'relative', zIndex: 10 }}>
-                    {/* Avatar & Rank */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                      <div style={{
-                        width: '100px',
-                        height: '100px',
-                        borderRadius: '24px',
-                        background: `linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)`,
-                        border: '3px solid rgba(255, 255, 255, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '54px',
-                        boxShadow: '0 12px 40px rgba(59, 130, 246, 0.2)',
-                      }}>
-                        {selectedLeaderboardUser.avatar}
-                      </div>
-                      <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                        <div style={{
-                          fontSize: '48px',
-                          marginBottom: '4px',
-                          textShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-                        }}>
-                          {selectedLeaderboardUser.medal}
-                        </div>
-                        <div style={{
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          color: '#fff',
-                          padding: '6px 12px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                        }}>
-                          Rang #{selectedLeaderboardUser.rank}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Name & Bio */}
-                    <div style={{ marginBottom: '24px' }}>
-                      <h2 style={{
-                        color: currentTheme.text,
-                        margin: '0 0 8px 0',
-                        fontSize: '28px',
-                        fontWeight: '900',
-                        letterSpacing: '-0.5px',
-                      }}>
-                        {selectedLeaderboardUser.name}
-                      </h2>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '14px',
-                        margin: 0,
-                        fontStyle: 'italic',
-                        lineHeight: '1.5',
-                      }}>
-                        "{selectedLeaderboardUser.bio}"
-                      </p>
-                    </div>
-
-                    {/* Divider */}
-                    <div style={{
-                      height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
-                      marginBottom: '24px',
-                    }} />
-
-                    {/* Stats Grid - Premium */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: '14px',
-                      marginBottom: '28px',
-                    }}>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(59, 130, 246, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                        transition: 'all 0.3s ease',
-                      }}>
-                        <p style={{
-                          color: '#3b82f6',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          ⭐ Niveau
-                        </p>
-                        <p style={{
-                          color: currentTheme.text,
-                          fontSize: '28px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {selectedLeaderboardUser.level}
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                        transition: 'all 0.3s ease',
-                      }}>
-                        <p style={{
-                          color: '#f59e0b',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          ⚡ XP Total
-                        </p>
-                        <p style={{
-                          color: '#f59e0b',
-                          fontSize: '26px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {(selectedLeaderboardUser.xp / 1000).toFixed(1)}K
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(139, 92, 246, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                        transition: 'all 0.3s ease',
-                      }}>
-                        <p style={{
-                          color: '#8b5cf6',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          📚 Domaines
-                        </p>
-                        <p style={{
-                          color: currentTheme.text,
-                          fontSize: '28px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {selectedLeaderboardUser.completedDomains.length}/4
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(16, 185, 129, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                        transition: 'all 0.3s ease',
-                      }}>
-                        <p style={{
-                          color: '#10b981',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          💰 Portefeuille
-                        </p>
-                        <p style={{
-                          color: '#10b981',
-                          fontSize: '26px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          ${(selectedLeaderboardUser.portfolio / 1000).toFixed(0)}K
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Badges Section */}
-                    {selectedLeaderboardUser.badges.length > 0 && (
-                      <>
-                        <div style={{
-                          height: '1px',
-                          background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
-                          marginBottom: '20px',
-                        }} />
-                        <div style={{ marginBottom: '24px' }}>
-                          <h3 style={{
-                            color: currentTheme.text,
-                            fontSize: '13px',
-                            fontWeight: '800',
-                            margin: '0 0 14px 0',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
-                          }}>
-                            🏆 Badges ({selectedLeaderboardUser.badges.length})
-                          </h3>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-                            gap: '10px',
-                          }}>
-                            {selectedLeaderboardUser.badges.map((badge) => {
-                              const badgeData = {
-                                first_blood: { emoji: '🩸', label: 'Premier Sang', color: '#ef4444' },
-                                perfect: { emoji: '💯', label: 'Parfait', color: '#ec4899' },
-                                no_mistakes: { emoji: '✅', label: 'Sans Erreur', color: '#10b981' },
-                                crypto_master: { emoji: '₿', label: 'Maître Crypto', color: '#f59e0b' },
-                                stocks_master: { emoji: '📈', label: 'Maître Bourse', color: '#3b82f6' },
-                              };
-                              const data = badgeData[badge] || { emoji: '⭐', label: badge, color: '#8b5cf6' };
-                              return (
-                                <div
-                                  key={badge}
-                                  style={{
-                                    padding: '12px',
-                                    background: `rgba(${parseInt(data.color.slice(1,3), 16)}, ${parseInt(data.color.slice(3,5), 16)}, ${parseInt(data.color.slice(5,7), 16)}, 0.15)`,
-                                    border: `2px solid ${data.color}`,
-                                    borderRadius: '14px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px',
-                                    transition: 'all 0.3s ease',
-                                    cursor: 'default',
-                                  }}
-                                >
-                                  <span style={{ fontSize: '22px' }}>{data.emoji}</span>
-                                  <span style={{
-                                    fontSize: '10px',
-                                    fontWeight: '700',
-                                    color: data.color,
-                                    textAlign: 'center',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px',
-                                  }}>
-                                    {data.label}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Domains */}
-                    <div style={{
-                      height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
-                      marginBottom: '20px',
-                    }} />
-                    <div style={{ marginBottom: '28px' }}>
-                      <h3 style={{
-                        color: currentTheme.text,
-                        fontSize: '13px',
-                        fontWeight: '800',
-                        margin: '0 0 14px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                      }}>
-                        📚 Domaines Complétés
-                      </h3>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                        gap: '10px',
-                      }}>
-                        {selectedLeaderboardUser.completedDomains.map((domain) => {
-                          const domainInfo = {
-                            crypto: { emoji: '₿', label: 'Crypto', color: '#f59e0b' },
-                            stocks: { emoji: '📈', label: 'Bourse', color: '#3b82f6' },
-                            realestate: { emoji: '🏠', label: 'Immobilier', color: '#ec4899' },
-                            bonds: { emoji: '💼', label: 'Obligations', color: '#10b981' },
-                          };
-                          const info = domainInfo[domain] || { emoji: '📚', label: domain, color: '#8b5cf6' };
-                          return (
-                            <div
-                              key={domain}
-                              style={{
-                                padding: '12px',
-                                background: `rgba(${parseInt(info.color.slice(1,3), 16)}, ${parseInt(info.color.slice(3,5), 16)}, ${parseInt(info.color.slice(5,7), 16)}, 0.15)`,
-                                border: `2px solid ${info.color}`,
-                                borderRadius: '14px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                transition: 'all 0.3s ease',
-                                cursor: 'default',
-                              }}
-                            >
-                              <span style={{ fontSize: '24px' }}>{info.emoji}</span>
-                              <span style={{
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                color: info.color,
-                                textAlign: 'center',
-                              }}>
-                                {info.label}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{
-                      height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
-                      marginBottom: '20px',
-                    }} />
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '12px',
-                    }}>
-                      <button
-                        onClick={() => {
-                          setSelectedChatFriend(selectedLeaderboardUser);
-                          setSelectedLeaderboardUser(null);
-                          setFriendsTab('messages');
-                        }}
-                        style={{
-                          padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          border: '2px solid rgba(59, 130, 246, 0.5)',
-                          borderRadius: '12px',
-                          color: '#fff',
-                          fontWeight: '800',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(59, 130, 246, 0.2)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
-                        }}
-                      >
-                        💬 Message
-                      </button>
-                      <button
-                        onClick={() => {
-                          const isFriend = userData.friends.some(f => f.friendCode === selectedLeaderboardUser.friendCode);
-                          const hasSentRequest = userData.friendRequests?.sent?.some(
-                            (req) => req.friendCode === selectedLeaderboardUser.friendCode
-                          );
-                          if (!isFriend && !hasSentRequest) {
-                            sendFriendRequest(selectedLeaderboardUser.friendCode, selectedLeaderboardUser.name);
-                            alert('Demande d\'ami envoyée ! 🎉');
-                          } else if (isFriend) {
-                            alert('Vous êtes déjà amis ! 👋');
-                          } else {
-                            alert('Demande d\'ami déjà envoyée ! ⏳');
-                          }
-                          setSelectedLeaderboardUser(null);
-                        }}
-                        style={{
-                          padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          border: '2px solid rgba(245, 158, 11, 0.5)',
-                          borderRadius: '12px',
-                          color: '#fff',
-                          fontWeight: '800',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(245, 158, 11, 0.2)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.2)';
-                        }}
-                      >
-                        👥 Ajouter Ami
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Guild Profile Modal - Premium Design */}
-            {selectedLeaderboardGuild && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 1000,
-                padding: '20px',
-                backdropFilter: 'blur(8px)',
-              }}
-              onClick={() => setSelectedLeaderboardGuild(null)}
-              >
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    background: `linear-gradient(135deg, ${currentTheme.cardBg} 0%, rgba(30, 41, 59, 0.9) 100%)`,
-                    borderRadius: '28px',
-                    padding: '0',
-                    maxWidth: '520px',
-                    width: '100%',
-                    maxHeight: '90vh',
-                    overflowY: 'auto',
-                    border: `1.5px solid rgba(255, 255, 255, 0.1)`,
-                    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(245, 158, 11, 0.15)',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Header Background */}
-                  <div style={{
-                    height: '120px',
-                    background: `linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%)`,
-                    position: 'relative',
-                  }}>
-                    <button
-                      onClick={() => setSelectedLeaderboardGuild(null)}
-                      style={{
-                        position: 'absolute',
-                        top: '16px',
-                        right: '16px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
-                        fontSize: '20px',
-                        cursor: 'pointer',
-                        color: currentTheme.text,
-                        fontWeight: '700',
-                        transition: 'all 0.3s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                        e.currentTarget.style.transform = 'scale(1.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Main Content */}
-                  <div style={{ padding: '0 28px 28px 28px', marginTop: '-60px', position: 'relative', zIndex: 10 }}>
-                    {/* Guild Logo & Rank */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                      <div style={{
-                        width: '100px',
-                        height: '100px',
-                        borderRadius: '24px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.2) 100%)`,
-                        border: '3px solid rgba(255, 255, 255, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '54px',
-                        boxShadow: '0 12px 40px rgba(245, 158, 11, 0.2)',
-                      }}>
-                        {selectedLeaderboardGuild.emoji}
-                      </div>
-                      <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                        <div style={{
-                          fontSize: '48px',
-                          marginBottom: '4px',
-                          textShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-                        }}>
-                          {selectedLeaderboardGuild.medal}
-                        </div>
-                        <div style={{
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          color: '#fff',
-                          padding: '6px 12px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                        }}>
-                          Rang #{selectedLeaderboardGuild.rank}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Guild Name & Description */}
-                    <div style={{ marginBottom: '24px' }}>
-                      <h2 style={{
-                        color: currentTheme.text,
-                        margin: '0 0 8px 0',
-                        fontSize: '28px',
-                        fontWeight: '900',
-                        letterSpacing: '-0.5px',
-                      }}>
-                        {selectedLeaderboardGuild.name}
-                      </h2>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '14px',
-                        margin: 0,
-                        fontStyle: 'italic',
-                        lineHeight: '1.5',
-                      }}>
-                        "{selectedLeaderboardGuild.description}"
-                      </p>
-                    </div>
-
-                    {/* Divider */}
-                    <div style={{
-                      height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
-                      marginBottom: '24px',
-                    }} />
-
-                    {/* Stats Grid */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: '14px',
-                      marginBottom: '28px',
-                    }}>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                      }}>
-                        <p style={{
-                          color: '#f59e0b',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          👥 Membres
-                        </p>
-                        <p style={{
-                          color: currentTheme.text,
-                          fontSize: '28px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {selectedLeaderboardGuild.members}
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                      }}>
-                        <p style={{
-                          color: '#f59e0b',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          ⭐ Niveau
-                        </p>
-                        <p style={{
-                          color: currentTheme.text,
-                          fontSize: '28px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {selectedLeaderboardGuild.level}
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(245, 158, 11, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                      }}>
-                        <p style={{
-                          color: '#f59e0b',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          ⚡ XP Total
-                        </p>
-                        <p style={{
-                          color: '#f59e0b',
-                          fontSize: '26px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {(selectedLeaderboardGuild.xp / 1000).toFixed(1)}K
-                        </p>
-                      </div>
-                      <div style={{
-                        padding: '18px',
-                        background: `linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)`,
-                        borderRadius: '16px',
-                        border: '1.5px solid rgba(16, 185, 129, 0.2)',
-                        backdropFilter: 'blur(10px)',
-                      }}>
-                        <p style={{
-                          color: '#10b981',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                        }}>
-                          ✨ Vos Amis
-                        </p>
-                        <p style={{
-                          color: '#10b981',
-                          fontSize: '26px',
-                          fontWeight: '900',
-                          margin: 0,
-                        }}>
-                          {selectedLeaderboardGuild.joinedMembers}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{
-                      height: '1px',
-                      background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)`,
-                      marginBottom: '20px',
-                    }} />
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '12px',
-                    }}>
-                      <button
-                        onClick={() => {
-                          alert(`Vous avez rejoint ${selectedLeaderboardGuild.name}! 🎉`);
-                          setSelectedLeaderboardGuild(null);
-                        }}
-                        style={{
-                          padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          border: '2px solid rgba(245, 158, 11, 0.5)',
-                          borderRadius: '12px',
-                          color: '#fff',
-                          fontWeight: '800',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(245, 158, 11, 0.2)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(245, 158, 11, 0.2)';
-                        }}
-                      >
-                        🏛️ Rejoindre
-                      </button>
-                      <button
-                        onClick={() => {
-                          alert(`Message envoyé au leader de ${selectedLeaderboardGuild.name}!`);
-                          setSelectedLeaderboardGuild(null);
-                        }}
-                        style={{
-                          padding: '14px 16px',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          border: '2px solid rgba(59, 130, 246, 0.5)',
-                          borderRadius: '12px',
-                          color: '#fff',
-                          fontWeight: '800',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          boxShadow: '0 8px 20px rgba(59, 130, 246, 0.2)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
-                        }}
-                      >
-                        💬 Leader
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Messages Section */}
-            {friendsTab === 'messages' && (
-              <div style={{ marginBottom: '32px' }}>
-                {!selectedChatFriend ? (
-                  <>
-                    <h3 style={{
-                      fontSize: '20px',
-                      fontWeight: '700',
-                      color: currentTheme.text,
-                      margin: '0 0 20px 0',
-                    }}>
-                      💬 Messages
-                    </h3>
-                    {userData.friends.length === 0 ? (
-                      <div style={{
-                        padding: '40px',
-                        textAlign: 'center',
-                        background: currentTheme.cardBg,
-                        borderRadius: '16px',
-                        border: `1px solid ${currentTheme.border}`,
-                      }}>
-                        <p style={{
-                          fontSize: '16px',
-                          color: currentTheme.textSecondary,
-                          margin: 0,
-                        }}>
-                          Ajoute des amis pour commencer à discuter !
-                        </p>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'grid', gap: '10px' }}>
-                        {userData.friends.map((friend) => {
-                          const friendData = availableUsers.find(u => u.friendCode === friend.friendCode);
-                          const unreadCount = Math.random() > 0.6 ? Math.floor(Math.random() * 5) + 1 : 0;
-                          return (
-                            <div
-                              key={friend.userId}
-                              onClick={() => setSelectedChatFriend(friend)}
-                              style={{
-                                padding: '14px',
-                                background: currentTheme.cardBg,
-                                borderRadius: '12px',
-                                border: `1px solid ${currentTheme.border}`,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-                                e.currentTarget.style.borderColor = currentTheme.accent;
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = currentTheme.cardBg;
-                                e.currentTarget.style.borderColor = currentTheme.border;
-                              }}
-                            >
-                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                                <div style={{
-                                  width: '40px',
-                                  height: '40px',
-                                  borderRadius: '50%',
-                                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '18px',
-                                }}>
-                                  {friendData?.avatar}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                  <p style={{
-                                    color: currentTheme.text,
-                                    fontWeight: '600',
-                                    margin: '0 0 2px 0',
-                                    fontSize: '14px',
-                                  }}>
-                                    {friendData?.name}
-                                  </p>
-                                  <p style={{
-                                    color: currentTheme.textSecondary,
-                                    fontSize: '11px',
-                                    margin: 0,
-                                  }}>
-                                    Clique pour discuter
-                                  </p>
-                                </div>
-                              </div>
-                              {unreadCount > 0 && (
-                                <div style={{
-                                  background: '#ef4444',
-                                  color: '#fff',
-                                  borderRadius: '50%',
-                                  width: '24px',
-                                  height: '24px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '12px',
-                                  fontWeight: '700',
-                                }}>
-                                  {unreadCount}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Chat Header - Premium */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '16px',
-                      padding: '16px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.08) 100%)`,
-                      borderRadius: '14px',
-                      border: '1.5px solid rgba(59, 130, 246, 0.2)',
-                      backdropFilter: 'blur(10px)',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button
-                          onClick={() => setSelectedChatFriend(null)}
-                          style={{
-                            background: 'rgba(59, 130, 246, 0.2)',
-                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                            borderRadius: '8px',
-                            color: currentTheme.text,
-                            fontSize: '18px',
-                            cursor: 'pointer',
-                            padding: '6px 10px',
-                            transition: 'all 0.2s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                          }}
-                        >
-                          ←
-                        </button>
-                        <div style={{
-                          width: '44px',
-                          height: '44px',
-                          borderRadius: '50%',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '20px',
-                          boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
-                        }}>
-                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
-                        </div>
-                        <div>
-                          <p style={{
-                            color: currentTheme.text,
-                            fontWeight: '700',
-                            margin: '0 0 4px 0',
-                            fontSize: '14px',
-                          }}>
-                            {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.name}
-                          </p>
-                          <p style={{
-                            color: '#10b981',
-                            fontSize: '11px',
-                            margin: 0,
-                            fontWeight: '600',
-                          }}>
-                            🟢 En ligne
-                          </p>
-                        </div>
-                      </div>
-                      <button style={{
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        borderRadius: '8px',
-                        color: currentTheme.text,
-                        fontSize: '18px',
-                        cursor: 'pointer',
-                        padding: '6px 10px',
-                        transition: 'all 0.2s ease',
-                      }}>
-                        ⓘ
-                      </button>
-                    </div>
-
-                    {/* Chat Messages - Premium */}
-                    <div style={{
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%)`,
-                      borderRadius: '14px',
-                      padding: '16px',
-                      height: '350px',
-                      overflowY: 'auto',
-                      marginBottom: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      border: '1.5px solid rgba(59, 130, 246, 0.15)',
-                    }}>
-                      {/* Message du friend */}
-                      <div style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignSelf: 'flex-start',
-                      }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '16px',
-                          flexShrink: 0,
-                        }}>
-                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{
-                            maxWidth: '70%',
-                            padding: '12px 14px',
-                            background: currentTheme.cardBg,
-                            borderRadius: '14px',
-                            border: `1px solid ${currentTheme.border}`,
-                            borderTopLeftRadius: '4px',
-                          }}>
-                            <p style={{ color: currentTheme.text, margin: 0, fontSize: '14px' }}>
-                              Salut ! Comment ça va ? 👋
-                            </p>
-                          </div>
-                          <p style={{ color: currentTheme.textSecondary, fontSize: '10px', margin: '4px 0 0 0' }}>
-                            14:35
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Mon message */}
-                      <div style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignSelf: 'flex-end',
-                        justifyContent: 'flex-end',
-                      }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{
-                            maxWidth: '70%',
-                            marginLeft: 'auto',
-                            padding: '12px 14px',
-                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #0ea5e9 100%)`,
-                            borderRadius: '14px',
-                            borderTopRightRadius: '4px',
-                            color: '#fff',
-                          }}>
-                            <p style={{ color: '#fff', margin: 0, fontSize: '14px' }}>
-                              Bien ! On travaille sur InvestKit 🚀
-                            </p>
-                          </div>
-                          <p style={{ color: currentTheme.textSecondary, fontSize: '10px', margin: '4px 0 0 0', textAlign: 'right' }}>
-                            14:38 ✓✓
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Message ami 2 */}
-                      <div style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignSelf: 'flex-start',
-                      }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '16px',
-                          flexShrink: 0,
-                        }}>
-                          {availableUsers.find(u => u.friendCode === selectedChatFriend.friendCode)?.avatar}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{
-                            maxWidth: '70%',
-                            padding: '12px 14px',
-                            background: currentTheme.cardBg,
-                            borderRadius: '14px',
-                            border: `1px solid ${currentTheme.border}`,
-                            borderTopLeftRadius: '4px',
-                          }}>
-                            <p style={{ color: currentTheme.text, margin: 0, fontSize: '14px' }}>
-                              C'est awesome ! 💪
-                            </p>
-                          </div>
-                          <p style={{ color: currentTheme.textSecondary, fontSize: '10px', margin: '4px 0 0 0' }}>
-                            14:41
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Indicateur "en train de taper" */}
-                      <div style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignSelf: 'flex-start',
-                        padding: '8px 12px',
-                        opacity: 0.6,
-                      }}>
-                        <span style={{ fontSize: '12px' }}>✏️ En train de taper</span>
-                        <span style={{
-                          display: 'inline-block',
-                          animation: 'pulse 1s infinite',
-                        }}>
-                          ...
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Chat Input - Premium */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '10px',
-                      alignItems: 'center',
-                      padding: '12px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
-                      borderRadius: '14px',
-                      border: '1.5px solid rgba(59, 130, 246, 0.15)',
-                      backdropFilter: 'blur(10px)',
-                    }}>
-                      <button style={{
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        borderRadius: '8px',
-                        color: currentTheme.text,
-                        fontSize: '16px',
-                        cursor: 'pointer',
-                        padding: '8px 10px',
-                        transition: 'all 0.2s ease',
-                      }}>
-                        +
-                      </button>
-                      <input
-                        type="text"
-                        placeholder="Écris un message..."
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: '10px 14px',
-                          background: currentTheme.cardBg,
-                          border: `1.5px solid ${currentTheme.border}`,
-                          borderRadius: '10px',
-                          color: currentTheme.text,
-                          fontSize: '13px',
-                          outline: 'none',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = currentTheme.accent;
-                          e.currentTarget.style.boxShadow = `0 0 10px rgba(59, 130, 246, 0.2)`;
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = currentTheme.border;
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && messageInput.trim()) {
-                            setMessageInput('');
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() => setMessageInput('')}
-                        style={{
-                          padding: '10px 14px',
-                          background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #0ea5e9 100%)`,
-                          border: 'none',
-                          borderRadius: '10px',
-                          color: '#fff',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          fontSize: '16px',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                        }}
-                      >
-                        Envoyer
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Guildes Section */}
-            {friendsTab === 'guildes' && (
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px',
-                }}>
-                  <h3 style={{
-                    fontSize: '20px',
-                    fontWeight: '700',
-                    color: currentTheme.text,
-                    margin: 0,
-                  }}>
-                    👥 Guildes & Groupes
-                  </h3>
-                  {progress.userLevel >= 7 ? (
-                    <button
-                      onClick={() => setShowCreateGuilde(!showCreateGuilde)}
-                      style={{
-                        padding: '8px 16px',
-                        background: currentTheme.accent,
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: '#fff',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                      }}
-                    >
-                      {showCreateGuilde ? '✕' : '➕'} Créer
-                    </button>
-                  ) : (
-                    <div style={{
-                      padding: '8px 16px',
-                      background: 'rgba(239, 68, 68, 0.2)',
-                      border: '1px solid rgba(239, 68, 68, 0.5)',
-                      borderRadius: '8px',
-                      color: '#fca5a5',
-                      fontWeight: '600',
-                      fontSize: '12px',
-                      cursor: 'not-allowed',
-                    }}>
-                      🔒 Niveau 7+ requis
-                    </div>
-                  )}
-                </div>
-
-                {/* Search & Filter Section */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '12px',
-                  marginBottom: '20px',
-                }}>
-                  <input
-                    type="text"
-                    placeholder="🔍 Chercher une guilde..."
-                    value={guildeSearchQuery}
-                    onChange={(e) => setGuildeSearchQuery(e.target.value)}
-                    style={{
-                      padding: '10px 12px',
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s ease',
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = currentTheme.accent}
-                    onBlur={(e) => e.target.style.borderColor = currentTheme.border}
-                  />
-                  <select
-                    value={guildeFilterMinLevel}
-                    onChange={(e) => setGuildeFilterMinLevel(Number(e.target.value))}
-                    style={{
-                      padding: '10px 12px',
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      outline: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option value={0}>📊 Tous les niveaux</option>
-                    <option value={1}>Niveau 1+</option>
-                    <option value={5}>Niveau 5+</option>
-                    <option value={7}>Niveau 7+</option>
-                    <option value={10}>Niveau 10+</option>
-                    <option value={15}>Niveau 15+</option>
-                    <option value={20}>Niveau 20+</option>
-                  </select>
-                  <select
-                    value={guildeFilterDomain}
-                    onChange={(e) => setGuildeFilterDomain(e.target.value)}
-                    style={{
-                      padding: '10px 12px',
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      outline: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option value="all">📚 Tous les domaines</option>
-                    <option value="crypto">₿ Crypto</option>
-                    <option value="stocks">📈 Bourse</option>
-                    <option value="bonds">📋 Obligations</option>
-                    <option value="realestate">🏠 Immobilier</option>
-                  </select>
-                </div>
-
-                {/* My Guild Section */}
-                {userGuildes.length > 0 && (
-                  <div style={{ marginBottom: '24px' }}>
-                    <h4 style={{
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      color: currentTheme.accent,
-                      margin: '0 0 12px 0',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      ⭐ Ma Guilde Actuelle
-                    </h4>
-                    {guildes.filter(g => userGuildes.includes(g.id)).map((myGuilde) => (
-                      <div
-                        key={myGuilde.id}
-                        onClick={() => setSelectedGuilde(myGuilde)}
-                        style={{
-                          padding: '16px',
-                          background: `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)`,
-                          borderRadius: '12px',
-                          border: `2px solid ${currentTheme.accent}`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = `linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%)`;
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)`;
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'start',
-                          marginBottom: '12px',
-                        }}>
-                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                            <div style={{
-                              width: '48px',
-                              height: '48px',
-                              borderRadius: '10px',
-                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '24px',
-                            }}>
-                              {myGuilde.emoji}
-                            </div>
-                            <div>
-                              <p style={{
-                                color: currentTheme.text,
-                                fontWeight: '700',
-                                margin: '0 0 2px 0',
-                                fontSize: '16px',
-                              }}>
-                                {myGuilde.name}
-                              </p>
-                              <p style={{
-                                color: currentTheme.textSecondary,
-                                fontSize: '12px',
-                                margin: 0,
-                              }}>
-                                👥 {myGuilde.membersList?.length || 0} membre{(myGuilde.membersList?.length || 0) > 1 ? 's' : ''} • Niveau {myGuilde.level}
-                              </p>
-                            </div>
-                          </div>
-                          <Link
-                            href={`/guild/${myGuilde.id}`}
-                            style={{
-                              padding: '8px 16px',
-                              background: currentTheme.accent,
-                              border: 'none',
-                              borderRadius: '6px',
-                              color: '#fff',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              transition: 'all 0.2s ease',
-                              textDecoration: 'none',
-                              display: 'inline-block',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.opacity = '0.9';
-                              e.target.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.opacity = '1';
-                              e.target.style.transform = 'scale(1)';
-                            }}
-                          >
-                            📋 Voir Détails
-                          </Link>
-                        </div>
-                        <p style={{
-                          color: currentTheme.textSecondary,
-                          fontSize: '12px',
-                          margin: 0,
-                          lineHeight: '1.5',
-                        }}>
-                          {myGuilde.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Divider */}
-                {userGuildes.length > 0 && (
-                  <div style={{
-                    height: '1px',
-                    background: `linear-gradient(90deg, transparent, ${currentTheme.border}, transparent)`,
-                    margin: '20px 0',
-                  }} />
-                )}
-
-                {/* Discover Guildes Section */}
-                <h4 style={{
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  color: currentTheme.textSecondary,
-                  margin: userGuildes.length > 0 ? '0 0 12px 0' : 'none',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  {userGuildes.length > 0 ? '🔍 Découvrir d\'autres Guildes' : '🔍 Toutes les Guildes'}
-                </h4>
-
-                {showCreateGuilde && progress.userLevel >= 7 && (
-                  <div style={{
-                    padding: '20px',
-                    background: currentTheme.cardBg,
-                    borderRadius: '12px',
-                    border: `1px solid ${currentTheme.border}`,
-                    marginBottom: '20px',
-                    display: 'grid',
-                    gap: '20px',
-                  }}>
-                    {/* Section 1: Basic Info */}
-                    <div style={{
-                      padding: '16px',
-                      background: 'rgba(59, 130, 246, 0.08)',
-                      borderRadius: '10px',
-                      border: `1px solid rgba(59, 130, 246, 0.2)`,
-                    }}>
-                      <h3 style={{
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: currentTheme.accent,
-                        margin: '0 0 12px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        📝 Informations de Base
-                      </h3>
-
-                      <div style={{ marginBottom: '12px' }}>
-                        <label style={{
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.text,
-                          display: 'block',
-                          marginBottom: '6px',
-                        }}>
-                          Nom de la guilde
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="ex: Crypto Traders, Stock Masters..."
-                          value={newGuildeName}
-                          onChange={(e) => setNewGuildeName(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            background: 'rgba(0, 0, 0, 0.2)',
-                            border: `1px solid ${currentTheme.border}`,
-                            borderRadius: '8px',
-                            color: currentTheme.text,
-                            fontSize: '13px',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                          }}
-                        />
-                        <p style={{
-                          fontSize: '11px',
-                          color: currentTheme.textSecondary,
-                          margin: '4px 0 0 0',
-                        }}>
-                          💡 Choisir un nom unique et mémorable
-                        </p>
-                      </div>
-
-                      <div>
-                        <label style={{
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.text,
-                          display: 'block',
-                          marginBottom: '6px',
-                        }}>
-                          Description
-                        </label>
-                        <textarea
-                          placeholder="Décris les buts de ta guilde, le style de jeu, etc..."
-                          value={newGuildeDesc}
-                          onChange={(e) => setNewGuildeDesc(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            background: 'rgba(0, 0, 0, 0.2)',
-                            border: `1px solid ${currentTheme.border}`,
-                            borderRadius: '8px',
-                            color: currentTheme.text,
-                            fontSize: '13px',
-                            outline: 'none',
-                            minHeight: '70px',
-                            boxSizing: 'border-box',
-                            fontFamily: 'inherit',
-                            resize: 'vertical',
-                          }}
-                        />
-                        <p style={{
-                          fontSize: '11px',
-                          color: currentTheme.textSecondary,
-                          margin: '4px 0 0 0',
-                        }}>
-                          💡 Une bonne description attire les meilleurs membres!
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Section 2: Restrictions */}
-                    <div style={{
-                      padding: '16px',
-                      background: 'rgba(168, 85, 247, 0.08)',
-                      borderRadius: '10px',
-                      border: `1px solid rgba(168, 85, 247, 0.2)`,
-                    }}>
-                      <h3 style={{
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: '#a855f7',
-                        margin: '0 0 4px 0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        🔐 Restrictions (Optionnel)
-                      </h3>
-                      <p style={{
-                        fontSize: '11px',
-                        color: currentTheme.textSecondary,
-                        margin: '0 0 12px 0',
-                      }}>
-                        Laisse les champs à 0 pour accepter tous les niveaux/progressions
-                      </p>
-
-                      {/* Min Level */}
-                      <div style={{ marginBottom: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                          <label style={{
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            color: currentTheme.text,
-                          }}>
-                            Niveau minimum requis
-                          </label>
-                          <span style={{
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            color: currentTheme.accent,
-                            background: 'rgba(59, 130, 246, 0.2)',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                          }}>
-                            Niveau {guildeRestrictions.minLevel}
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min="1"
-                          max="20"
-                          value={guildeRestrictions.minLevel}
-                          onChange={(e) => setGuildeRestrictions({
-                            ...guildeRestrictions,
-                            minLevel: parseInt(e.target.value) || 1
-                          })}
-                          style={{
-                            width: '100%',
-                            cursor: 'pointer',
-                          }}
-                        />
-                        <p style={{
-                          fontSize: '11px',
-                          color: currentTheme.textSecondary,
-                          margin: '4px 0 0 0',
-                        }}>
-                          1 = Tous les niveaux | 7+ = Joueurs expérimentés
-                        </p>
-                      </div>
-
-                      {/* Domain Requirements */}
-                      <div>
-                        <label style={{
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.text,
-                          display: 'block',
-                          marginBottom: '10px',
-                        }}>
-                          Progression domaine minimum
-                        </label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                          {[
-                            { key: 'crypto', label: 'Crypto', icon: '🪙' },
-                            { key: 'stocks', label: 'Bourse', icon: '📈' },
-                            { key: 'realestate', label: 'Immobilier', icon: '🏠' },
-                            { key: 'bonds', label: 'Obligations', icon: '📋' },
-                          ].map((domain) => (
-                            <div key={domain.key} style={{
-                              padding: '10px',
-                              background: 'rgba(0, 0, 0, 0.2)',
-                              borderRadius: '8px',
-                              border: `1px solid ${currentTheme.border}`,
-                            }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  color: currentTheme.text,
-                                }}>
-                                  {domain.icon} {domain.label}
-                                </span>
-                                <span style={{
-                                  fontSize: '11px',
-                                  fontWeight: '700',
-                                  color: guildeRestrictions.domainRequirements[domain.key] > 0 ? currentTheme.accent : currentTheme.textSecondary,
-                                }}>
-                                  {guildeRestrictions.domainRequirements[domain.key] || 0}%
-                                </span>
-                              </div>
-                              <input
-                                type="range"
-                                min="0"
-                                max="100"
-                                step="10"
-                                value={guildeRestrictions.domainRequirements[domain.key] || 0}
-                                onChange={(e) => setGuildeRestrictions({
-                                  ...guildeRestrictions,
-                                  domainRequirements: {
-                                    ...guildeRestrictions.domainRequirements,
-                                    [domain.key]: parseInt(e.target.value) || 0
-                                  }
-                                })}
-                                style={{
-                                  width: '100%',
-                                  cursor: 'pointer',
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                        <p style={{
-                          fontSize: '11px',
-                          color: currentTheme.textSecondary,
-                          margin: '8px 0 0 0',
-                        }}>
-                          💡 0% = Pas de restriction | 100% = Domaine complété requis
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Create Button */}
-                    <button
-                      disabled={!newGuildeName.trim()}
-                      onClick={() => {
-                        if (!newGuildeName.trim()) {
-                          setGuildMessage({
-                            type: 'error',
-                            text: '❌ Le nom de la guilde est obligatoire.\n\nVeuillez entrer un nom avant de créer.'
-                          });
-                          setTimeout(() => setGuildMessage(null), 3000);
-                        } else if (userGuildes.length > 0) {
-                          // Utilisateur déjà dans une guilde
-                          const currentGuilde = guildes.find(g => g.id === userGuildes[0]);
-                          setGuildMessage({
-                            type: 'error',
-                            text: `🚫 Tu ne peux créer qu'une seule guilde.\n\nTu es actuellement leader de: ${currentGuilde?.name || 'une guilde'}\n\nQuitte ou supprime d'abord cette guilde pour en créer une autre.`
-                          });
-                          setTimeout(() => setGuildMessage(null), 5000);
-                        } else if (progress.userLevel < 7) {
-                          setGuildMessage({
-                            type: 'error',
-                            text: `❌ Tu dois être niveau 7+ pour créer une guilde.\n\nNiveau actuel: ${progress.userLevel}\nNiveau requis: 7`
-                          });
-                          setTimeout(() => setGuildMessage(null), 5000);
-                        } else {
-                          const newCount = guildesCreatedCount + 1;
-                          const newGuildeId = guildes.length + 1;
-                          setGuildesCreatedCount(newCount);
-                          setGuildes([...guildes, {
-                            id: newGuildeId,
-                            name: newGuildeName,
-                            emoji: '✨',
-                            description: newGuildeDesc,
-                            level: 1,
-                            totalXP: 0,
-                            restrictions: guildeRestrictions,
-                            membersList: [
-                              { id: 0, name: 'SMC.SRB', level: 20, role: 'Leader', joinedDate: new Date().toISOString().split('T')[0] }
-                            ],
-                            chat: []
-                          }]);
-                          setUserGuildes([newGuildeId]);
-                          setNewGuildeName('');
-                          setNewGuildeDesc('');
-                          setGuildeRestrictions({
-                            minLevel: 1,
-                            domainRequirements: {},
-                          });
-                          setShowCreateGuilde(false);
-                          setGuildMessage({
-                            type: 'success',
-                            text: '✓ Guilde créée avec succès! Elle est maintenant visible pour tous.'
-                          });
-                          setTimeout(() => setGuildMessage(null), 4000);
-
-                          // Débloquer achievement à la première guilde
-                          if (newCount === 1) {
-                            unlockAchievement('guild_master', {
-                              title: 'Guild Master',
-                              description: 'Tu as créé ta première guilde!',
-                              icon: '🏰',
-                              reward: '+500 XP'
-                            });
-                          }
-                        }
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '14px',
-                        background: !newGuildeName.trim()
-                          ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4))'
-                          : `linear-gradient(135deg, ${currentTheme.accent}, #8b5cf6)`,
-                        border: 'none',
-                        borderRadius: '10px',
-                        color: !newGuildeName.trim() ? 'rgba(255, 255, 255, 0.5)' : '#fff',
-                        fontWeight: '700',
-                        cursor: !newGuildeName.trim() ? 'not-allowed' : 'pointer',
-                        fontSize: '14px',
-                        transition: 'all 0.3s ease',
-                        boxShadow: !newGuildeName.trim()
-                          ? 'none'
-                          : `0 4px 12px ${currentTheme.accent}40`,
-                        opacity: !newGuildeName.trim() ? 0.6 : 1,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (newGuildeName.trim()) {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = `0 6px 16px ${currentTheme.accent}60`;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (newGuildeName.trim()) {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = `0 4px 12px ${currentTheme.accent}40`;
-                        }
-                      }}
-                    >
-                      ✨ Créer la Guilde
-                    </button>
-                  </div>
-                )}
-
-                {/* Results Count */}
-                {filteredGuildes.length === 0 && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    color: currentTheme.textSecondary,
-                  }}>
-                    <p style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 8px 0' }}>🔍 Aucune guilde trouvée</p>
-                    <p style={{ fontSize: '13px', margin: 0 }}>
-                      {guildeSearchQuery || guildeFilterMinLevel > 0 || guildeFilterDomain !== 'all'
-                        ? 'Essaie de modifier tes filtres'
-                        : 'Commence par créer une guilde!'}
-                    </p>
-                  </div>
-                )}
-
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {filteredGuildes.map((guilde) => (
-                    <div
-                      key={guilde.id}
-                      style={{
-                        padding: '16px',
-                        background: currentTheme.cardBg,
-                        borderRadius: '12px',
-                        border: `1px solid ${currentTheme.border}`,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onClick={() => setSelectedGuilde(guilde)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = currentTheme.cardBg;
-                        e.currentTarget.style.borderColor = currentTheme.border;
-                      }}
-                    >
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'start',
-                        marginBottom: '8px',
-                      }}>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                          <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '8px',
-                            background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '20px',
-                          }}>
-                            {guilde.emoji}
-                          </div>
-                          <div>
-                            <p style={{
-                              color: currentTheme.text,
-                              fontWeight: '700',
-                              margin: '0 0 2px 0',
-                              fontSize: '14px',
-                            }}>
-                              {guilde.name}
-                            </p>
-                            <p style={{
-                              color: currentTheme.textSecondary,
-                              fontSize: '11px',
-                              margin: 0,
-                            }}>
-                              👥 {guilde.membersList?.length || 0} membre{(guilde.membersList?.length || 0) > 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (userGuildes.includes(guilde.id)) {
-                              setSelectedGuilde(guilde);
-                            } else {
-                              handleJoinGuilde(guilde);
-                            }
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            background: userGuildes.includes(guilde.id) ? 'rgba(74, 222, 128, 0.3)' : currentTheme.accent,
-                            border: 'none',
-                            borderRadius: '6px',
-                            color: userGuildes.includes(guilde.id) ? '#4ade80' : '#fff',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            transition: 'all 0.2s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!userGuildes.includes(guilde.id)) {
-                              e.target.style.opacity = '0.9';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.opacity = '1';
-                          }}
-                        >
-                          {userGuildes.includes(guilde.id) ? '✓ Membre' : '➕ Rejoindre'}
-                        </button>
-                      </div>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '12px',
-                        margin: '0 0 10px 0',
-                      }}>
-                        {guilde.description}
-                      </p>
-
-                      {/* Requirements */}
-                      {guilde.restrictions && (
-                        <div style={{
-                          padding: '10px',
-                          background: 'rgba(59, 130, 246, 0.1)',
-                          borderRadius: '6px',
-                          border: `1px solid rgba(59, 130, 246, 0.2)`,
-                          marginBottom: '10px',
-                        }}>
-                          <p style={{
-                            fontSize: '10px',
-                            fontWeight: '700',
-                            color: currentTheme.textSecondary,
-                            margin: '0 0 6px 0',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                          }}>
-                            🔒 Conditions d'accès
-                          </p>
-                          <div style={{ fontSize: '11px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
-                            {guilde.restrictions.minLevel > 1 && (
-                              <div style={{ marginBottom: '3px' }}>
-                                📊 Niveau: {guilde.restrictions.minLevel}+ {progress.userLevel >= guilde.restrictions.minLevel ? '✓' : '✗'}
-                              </div>
-                            )}
-                            {Object.entries(guilde.restrictions.domainRequirements || {}).map(([domain, requirement]) => {
-                              if (requirement > 0) {
-                                const domainLabel = domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto';
-                                const userProgress = progress.domainsProgress?.[domain] || 0;
-                                return (
-                                  <div key={domain} style={{ marginBottom: '2px' }}>
-                                    📈 {domainLabel}: {requirement}% {userProgress >= requirement ? '✓' : '✗'}
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Status */}
-                      {guilde.restrictions && (
-                        <div style={{ marginTop: '8px', fontSize: '11px' }}>
-                          {(() => {
-                            const levelOk = !guilde.restrictions.minLevel || progress.userLevel >= guilde.restrictions.minLevel;
-                            const domainsOk = Object.entries(guilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
-                              if (requirement === 0) return true;
-                              const userProgress = progress.domainsProgress?.[domain] || 0;
-                              return userProgress >= requirement;
-                            });
-                            const canJoin = levelOk && domainsOk;
-                            return canJoin ? (
-                              <span style={{ color: '#4ade80', fontWeight: '600' }}>✓ Conditions remplies</span>
-                            ) : (
-                              <span style={{ color: '#f87171', fontWeight: '600' }}>✗ Conditions non remplies</span>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Search Section */}
-            {friendsTab === 'search' && (
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  marginBottom: '20px',
-                }}>
-                  <input
-                    type="text"
-                    placeholder="Cherche par #ID ou nom (ex: #ABC123 ou Alice)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: '12px 16px',
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '12px',
-                      color: currentTheme.text,
-                      fontSize: '14px',
-                      outline: 'none',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = currentTheme.accent;
-                      e.target.style.boxShadow = `0 0 0 3px ${currentTheme.accent}22`;
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = currentTheme.border;
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-
-                {searchQuery.length === 0 ? (
-                  <div style={{
-                    padding: '40px',
-                    textAlign: 'center',
-                    background: currentTheme.cardBg,
-                    borderRadius: '16px',
-                    border: `1px solid ${currentTheme.border}`,
-                  }}>
-                    <p style={{
-                      fontSize: '16px',
-                      color: currentTheme.textSecondary,
-                      margin: 0,
-                    }}>
-                      Rentre un #ID ou un nom pour chercher des utilisateurs
-                    </p>
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div style={{
-                    padding: '40px',
-                    textAlign: 'center',
-                    background: currentTheme.cardBg,
-                    borderRadius: '16px',
-                    border: `1px solid ${currentTheme.border}`,
-                  }}>
-                    <p style={{
-                      fontSize: '16px',
-                      color: currentTheme.textSecondary,
-                      margin: 0,
-                    }}>
-                      Aucun utilisateur trouvé
-                    </p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {searchResults.map((user) => {
-                      const isFriend = userData.friends.some((f) => f.friendCode === user.friendCode);
-                      const hasSentRequest = userData.friendRequests.sent.some(
-                        (req) => req.friendCode === user.friendCode
-                      );
-
-                      return (
-                        <div
-                          key={user.friendCode}
-                          style={{
-                            padding: '16px',
-                            background: currentTheme.cardBg,
-                            borderRadius: '12px',
-                            border: `1px solid ${currentTheme.border}`,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
-                            <div style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '50%',
-                              background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '24px',
-                            }}>
-                              {user.avatar}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{
-                                color: currentTheme.text,
-                                fontWeight: '600',
-                                margin: '0 0 4px 0',
-                                fontSize: '15px',
-                              }}>
-                                {user.name}
-                              </p>
-                              <p style={{
-                                color: currentTheme.textSecondary,
-                                fontSize: '12px',
-                                margin: 0,
-                                fontFamily: 'monospace',
-                              }}>
-                                {user.friendCode} • Niveau {user.level}
-                              </p>
-                            </div>
-                          </div>
-                          {isFriend ? (
-                            <span style={{
-                              color: '#10b981',
-                              fontWeight: '600',
-                              fontSize: '13px',
-                            }}>
-                              ✓ Ami
-                            </span>
-                          ) : hasSentRequest ? (
-                            <span style={{
-                              color: currentTheme.accent,
-                              fontWeight: '600',
-                              fontSize: '13px',
-                            }}>
-                              ⏳ Demande envoyée
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => sendFriendRequest(user.friendCode, user.name)}
-                              style={{
-                                padding: '8px 16px',
-                                background: currentTheme.accent,
-                                border: 'none',
-                                borderRadius: '8px',
-                                color: '#fff',
-                                fontWeight: '600',
-                                fontSize: '13px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.target.style.background = 'rgba(59, 130, 246, 0.8)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.background = currentTheme.accent;
-                              }}
-                            >
-                              ➕ Ajouter
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Friends Stats and List - Show only when on friends tab */}
-            {friendsTab === 'friends' && (
-            <>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              marginBottom: '32px',
-            }}>
-              {[
-                { label: 'Amis', value: userData.friends.length, icon: '👫', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.2)' },
-                { label: 'Demandes reçues', value: userData.friendRequests.received.length, icon: '📬', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.2)' },
-                { label: 'Demandes envoyées', value: userData.friendRequests.sent.length, icon: '📤', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.2)' },
-                { label: 'Bloqués', value: userData.blockedUsers.length, icon: '🚫', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.2)' },
-              ].map((stat, idx) => (
-                <div key={idx} style={{
-                  padding: '24px',
-                  background: `linear-gradient(135deg, ${stat.bgColor} 0%, ${stat.bgColor.replace('0.15', '0.05')} 100%)`,
-                  borderRadius: '16px',
-                  border: `1.5px solid ${stat.borderColor}`,
-                  textAlign: 'center',
-                  backdropFilter: 'blur(10px)',
-                  transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  cursor: 'pointer',
-                  animation: `fadeInUp 0.5s ease-out ${idx * 0.1}s both`,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-                  e.currentTarget.style.borderColor = stat.color;
-                  e.currentTarget.style.boxShadow = `0 20px 40px ${stat.color}30`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.borderColor = stat.borderColor;
-                  e.currentTarget.style.boxShadow = 'none';
-                }}>
-                  <p style={{
-                    fontSize: '32px',
-                    margin: '0 0 12px 0',
-                    transition: 'transform 0.3s ease',
-                  }}>
-                    {stat.icon}
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    color: stat.color,
-                    margin: '0 0 8px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.8px',
-                  }}>
-                    {stat.label}
-                  </p>
-                  <p style={{
-                    fontSize: '36px',
-                    fontWeight: '900',
-                    color: stat.color,
-                    margin: 0,
-                  }}>
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Friends List */}
-            <div>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: '700',
-                color: currentTheme.text,
-                margin: '0 0 16px 0',
-                letterSpacing: '-0.5px',
-              }}>
-                {userData.friends.length > 0 ? '👥 Mes Amis' : '👥 Aucun ami pour le moment'}
-              </h3>
-
-              {userData.friends.length === 0 ? (
-                <div style={{
-                  padding: '48px 32px',
-                  textAlign: 'center',
-                  background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
-                  borderRadius: '16px',
-                  border: `1.5px solid rgba(139, 92, 246, 0.2)`,
-                  backdropFilter: 'blur(10px)',
-                  animation: 'fadeInUp 0.5s ease-out',
-                }}>
-                  <p style={{
-                    fontSize: '42px',
-                    margin: '0 0 16px 0',
-                  }}>
-                    🤝
-                  </p>
-                  <p style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: currentTheme.text,
-                    margin: '0 0 8px 0',
-                  }}>
-                    Invite tes amis à rejoindre !
-                  </p>
-                  <p style={{
-                    fontSize: '14px',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 20px 0',
-                  }}>
-                    Partage ton code ami unique
-                  </p>
-                  <div style={{
-                    background: `rgba(139, 92, 246, 0.2)`,
-                    border: `1.5px solid rgba(139, 92, 246, 0.4)`,
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    display: 'inline-block',
-                    fontFamily: 'monospace',
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: '#8b5cf6',
-                    letterSpacing: '1px',
-                  }}>
-                    #{userData.friendCode}
-                  </div>
-                </div>
-              ) : (
-                <div style={{
-                  display: 'grid',
-                  gap: '12px',
-                }}>
-                  {userData.friends.map((friend, idx) => (
-                    <div key={friend.userId} style={{
-                      padding: '18px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
-                      borderRadius: '14px',
-                      border: `1.5px solid rgba(59, 130, 246, 0.15)`,
-                      backdropFilter: 'blur(10px)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
-                      animation: `fadeInUp 0.5s ease-out ${(4 + idx) * 0.08}s both`,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateX(8px)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateX(0)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.15)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}>
-                      <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flex: 1 }}>
-                        <div style={{
-                          width: '44px',
-                          height: '44px',
-                          borderRadius: '12px',
-                          background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#fff',
-                          fontWeight: '700',
-                          fontSize: '18px',
-                          flexShrink: 0,
-                          boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
-                        }}>
-                          #{idx + 1}
-                        </div>
-                        <div>
-                          <p style={{
-                            color: currentTheme.text,
-                            fontWeight: '600',
-                            margin: '0 0 4px 0',
-                            fontSize: '14px',
-                          }}>
-                            {friend.name}
-                          </p>
-                          <p style={{
-                            color: currentTheme.textSecondary,
-                            fontSize: '12px',
-                            margin: 0,
-                          }}>
-                            Ami depuis récemment
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{
-                        fontSize: '20px',
-                        cursor: 'pointer',
-                        opacity: 0.7,
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.transform = 'scale(1.2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '0.7';
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}>
-                        💬
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            </>
-            )}
-
-            {/* Pending Requests */}
-            {friendsTab === 'pending' && (
-            <>
-            {(userData.friendRequests.received.length > 0 || userData.friendRequests.sent.length > 0) && (
-              <div style={{ marginTop: '32px' }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: '700',
-                  color: currentTheme.text,
-                  margin: '0 0 16px 0',
-                }}>
-                  📩 Demandes d'Ami
-                </h3>
-
-                {userData.friendRequests.received.length > 0 && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <p style={{
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: currentTheme.textSecondary,
-                      margin: '0 0 12px 0',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      À Accepter ({userData.friendRequests.received.length})
-                    </p>
-                    <div style={{ display: 'grid', gap: '10px' }}>
-                      {userData.friendRequests.received.map((req) => (
-                        <div key={req.userId} style={{
-                          padding: '12px',
-                          background: currentTheme.cardBg,
-                          borderRadius: '10px',
-                          border: `1px solid ${currentTheme.border}`,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}>
-                          <div>
-                            <p style={{ color: currentTheme.text, margin: '0 0 2px 0', fontWeight: '600' }}>
-                              {req.name}
-                            </p>
-                            <p style={{ color: currentTheme.textSecondary, fontSize: '11px', margin: 0 }}>
-                              {req.friendCode}
-                            </p>
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                              onClick={() => acceptFriendRequest(req.friendCode, req.name)}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#10b981',
-                                border: 'none',
-                                borderRadius: '8px',
-                                color: '#fff',
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              ✓
-                            </button>
-                            <button
-                              onClick={() => rejectFriendRequest(req.friendCode)}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#ef4444',
-                                border: 'none',
-                                borderRadius: '8px',
-                                color: '#fff',
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            </>
-            )}
-            {userData.friendRequests.received.length === 0 && userData.friendRequests.sent.length === 0 && friendsTab === 'pending' && (
-              <div style={{
-                padding: '40px',
-                textAlign: 'center',
-                background: currentTheme.cardBg,
-                borderRadius: '16px',
-                border: `1px solid ${currentTheme.border}`,
-              }}>
-                <p style={{
-                  fontSize: '16px',
-                  color: currentTheme.textSecondary,
-                  margin: 0,
-                }}>
-                  Aucune demande pour le moment
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Friend Profile Modal */}
-        {selectedFriendProfile && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}>
-            <div style={{
-              background: currentTheme.cardBg,
-              borderRadius: '20px',
-              border: `1px solid ${currentTheme.border}`,
-              padding: '32px',
-              maxWidth: '500px',
-              width: '100%',
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              position: 'relative',
-            }}>
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedFriendProfile(null)}
-                style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  background: 'none',
-                  border: 'none',
-                  color: currentTheme.text,
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                }}
-              >
-                ✕
-              </button>
-
-              {/* Profile Header */}
-              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '40px',
-                  margin: '0 auto 16px',
-                }}>
-                  {selectedFriendProfile.avatar}
-                </div>
-                <h2 style={{
-                  fontSize: '24px',
-                  fontWeight: '800',
-                  color: currentTheme.text,
-                  margin: '0 0 4px 0',
-                }}>
-                  {selectedFriendProfile.name}
-                </h2>
-                <p style={{
-                  fontSize: '14px',
-                  color: currentTheme.textSecondary,
-                  margin: 0,
-                  fontStyle: 'italic',
-                }}>
-                  {selectedFriendProfile.bio}
-                </p>
-              </div>
-
-              {/* Stats Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-                marginBottom: '24px',
-              }}>
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(59, 130, 246, 0.1)',
-                  borderRadius: '12px',
-                  border: `1px solid ${currentTheme.border}`,
-                  textAlign: 'center',
-                }}>
-                  <p style={{
-                    fontSize: '28px',
-                    fontWeight: '900',
-                    color: currentTheme.accent,
-                    margin: '0 0 4px 0',
-                  }}>
-                    {selectedFriendProfile.level}
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: currentTheme.textSecondary,
-                    margin: 0,
-                    textTransform: 'uppercase',
-                    fontWeight: '600',
-                  }}>
-                    Niveau
-                  </p>
-                </div>
-                <div style={{
-                  padding: '16px',
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  borderRadius: '12px',
-                  border: `1px solid ${currentTheme.border}`,
-                  textAlign: 'center',
-                }}>
-                  <p style={{
-                    fontSize: '28px',
-                    fontWeight: '900',
-                    color: '#8b5cf6',
-                    margin: '0 0 4px 0',
-                  }}>
-                    {selectedFriendProfile.xp}
-                  </p>
-                  <p style={{
-                    fontSize: '11px',
-                    color: currentTheme.textSecondary,
-                    margin: 0,
-                    textTransform: 'uppercase',
-                    fontWeight: '600',
-                  }}>
-                    XP Total
-                  </p>
-                </div>
-              </div>
-
-              {/* Domains Progress */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  color: currentTheme.text,
-                  margin: '0 0 12px 0',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  📚 Progression Académie
-                </h3>
-                {Object.entries(selectedFriendProfile.domainsProgress).map(([domain, progress]) => (
-                  <div key={domain} style={{ marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.text,
-                        margin: 0,
-                        textTransform: 'capitalize',
-                      }}>
-                        {domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto'}
-                      </p>
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        color: currentTheme.accent,
-                        margin: 0,
-                      }}>
-                        {progress}%
-                      </p>
-                    </div>
-                    <div style={{
-                      width: '100%',
-                      height: '6px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: '3px',
-                      overflow: 'hidden',
-                    }}>
-                      <div style={{
-                        width: `${progress}%`,
-                        height: '100%',
-                        background: `linear-gradient(90deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                        transition: 'width 0.3s ease',
-                      }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Badges */}
-              {selectedFriendProfile.badges.length > 0 && (
-                <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: currentTheme.text,
-                    margin: '0 0 12px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    🏅 Badges
-                  </h3>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(50px, 1fr))',
-                    gap: '8px',
-                  }}>
-                    {selectedFriendProfile.badges.map((badge, idx) => {
-                      const badgeEmojis = {
-                        first_blood: '🩸',
-                        perfect: '💯',
-                        no_mistakes: '🎯',
-                        crypto_master: '₿',
-                        stocks_master: '📈',
-                      };
-                      return (
-                        <div
-                          key={idx}
-                          style={{
-                            padding: '12px',
-                            background: 'rgba(245, 158, 11, 0.1)',
-                            borderRadius: '8px',
-                            border: `1px solid rgba(245, 158, 11, 0.3)`,
-                            textAlign: 'center',
-                            fontSize: '24px',
-                          }}
-                          title={badge}
-                        >
-                          {badgeEmojis[badge] || '⭐'}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
-                <button
-                  style={{
-                    padding: '12px 16px',
-                    background: currentTheme.accent,
-                    border: 'none',
-                    borderRadius: '10px',
-                    color: '#fff',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.8)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = currentTheme.accent;
-                  }}
-                >
-                  💬 Message
-                </button>
-                <button
-                  style={{
-                    padding: '12px 16px',
-                    background: 'rgba(59, 130, 246, 0.2)',
-                    border: `1px solid ${currentTheme.accent}`,
-                    borderRadius: '10px',
-                    color: currentTheme.accent,
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                  }}
-                >
-                  🎯 Défi
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* GUILD DETAILS MODAL */}
-        {selectedGuilde && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}>
-            <div style={{
-              background: currentTheme.cardBg,
-              borderRadius: '20px',
-              border: `1px solid ${currentTheme.border}`,
-              padding: '32px',
-              maxWidth: '550px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              position: 'relative',
-            }}>
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedGuilde(null)}
-                style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  background: 'none',
-                  border: 'none',
-                  color: currentTheme.text,
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                }}
-              >
-                ✕
-              </button>
-
-              {/* Guild Header */}
-              <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${currentTheme.accent} 0%, #8b5cf6 100%)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '40px',
-                  margin: '0 auto 16px',
-                }}>
-                  {selectedGuilde.emoji}
-                </div>
-                <h2 style={{
-                  fontSize: '26px',
-                  fontWeight: '800',
-                  color: currentTheme.text,
-                  margin: '0 0 8px 0',
-                }}>
-                  {selectedGuilde.name}
-                </h2>
-                <p style={{
-                  fontSize: '13px',
-                  color: currentTheme.textSecondary,
-                  margin: 0,
-                }}>
-                  👥 {selectedGuilde.members} membre{selectedGuilde.members > 1 ? 's' : ''}
-                </p>
-              </div>
-
-              {/* Tabs */}
-              <div style={{
-                display: 'flex',
-                gap: '0',
-                marginBottom: '20px',
-                overflowX: 'auto',
-                borderBottom: `2px solid ${currentTheme.border}`,
-              }}>
-                {['info', 'leaderboard', 'treasure', 'events', 'announcements', 'members', 'chat'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setSelectedGuildeTab(tab)}
-                    style={{
-                      padding: '10px 14px',
-                      background: selectedGuildeTab === tab ? `linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)` : 'transparent',
-                      border: 'none',
-                      color: selectedGuildeTab === tab ? currentTheme.accent : currentTheme.textSecondary,
-                      fontWeight: selectedGuildeTab === tab ? '700' : '500',
-                      cursor: 'pointer',
-                      borderBottom: selectedGuildeTab === tab ? `3px solid ${currentTheme.accent}` : 'none',
-                      fontSize: '12px',
-                      transition: 'all 0.2s ease',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {tab === 'info' && 'ℹ️ Info'}
-                    {tab === 'leaderboard' && '🏆 Ranking'}
-                    {tab === 'treasure' && '💰 Trésor'}
-                    {tab === 'events' && '🎯 Événements'}
-                    {tab === 'announcements' && '📢 Annonces'}
-                    {tab === 'members' && '👥 Membres'}
-                    {tab === 'chat' && '💬 Chat'}
-                  </button>
-                ))}
-              </div>
-
-              {/* TAB: Info */}
-              {selectedGuildeTab === 'info' && (
-                <>
-              {/* Description */}
-              <div style={{ marginBottom: '24px' }}>
-                <p style={{
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  color: currentTheme.textSecondary,
-                  margin: '0 0 8px 0',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  À propos
-                </p>
-                <p style={{
-                  fontSize: '14px',
-                  color: currentTheme.text,
-                  margin: 0,
-                  lineHeight: '1.6',
-                }}>
-                  {selectedGuilde.description}
-                </p>
-              </div>
-
-              {/* Access Conditions */}
-              {selectedGuilde.restrictions && (
-                <div style={{
-                  padding: '12px',
-                  background: 'rgba(59, 130, 246, 0.1)',
-                  borderRadius: '10px',
-                  border: `1px solid rgba(59, 130, 246, 0.3)`,
-                  marginBottom: '24px',
-                }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 10px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    🔒 Conditions d'accès
-                  </p>
-                  <div style={{ fontSize: '12px', color: currentTheme.text, lineHeight: '1.6' }}>
-                    {selectedGuilde.restrictions.minLevel > 1 && (
-                      <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>📊 Niveau minimum</span>
-                        <span style={{ fontWeight: '600' }}>{selectedGuilde.restrictions.minLevel} {progress.userLevel >= selectedGuilde.restrictions.minLevel ? '✓' : '✗'}</span>
-                      </div>
-                    )}
-                    {Object.entries(selectedGuilde.restrictions.domainRequirements || {}).map(([domain, requirement]) => {
-                      if (requirement > 0) {
-                        const domainLabel = domain === 'realestate' ? 'Immobilier' : domain === 'stocks' ? 'Bourse' : domain === 'bonds' ? 'Obligations' : 'Crypto';
-                        const userProgress = progress.domainsProgress?.[domain] || 0;
-                        return (
-                          <div key={domain} style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span>📈 {domainLabel}</span>
-                            <span style={{ fontWeight: '600' }}>{requirement}% {userProgress >= requirement ? '✓' : '✗'}</span>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Guild Level & XP */}
-              <div style={{ marginBottom: '24px' }}>
-                <p style={{
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  color: currentTheme.textSecondary,
-                  margin: '0 0 10px 0',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}>
-                  ⬆️ Progression de Guilde
-                </p>
-                <div style={{
-                  padding: '12px',
-                  background: 'rgba(59, 130, 246, 0.1)',
-                  borderRadius: '8px',
-                  border: `1px solid rgba(59, 130, 246, 0.3)`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: currentTheme.text, fontWeight: '600' }}>Niveau {selectedGuilde.level}</span>
-                    <span style={{ color: currentTheme.textSecondary, fontSize: '12px' }}>{selectedGuilde.totalXP} XP</span>
-                  </div>
-                  <div style={{
-                    width: '100%',
-                    height: '8px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      width: `${(selectedGuilde.level / 20) * 100}%`,
-                      height: '100%',
-                      background: `linear-gradient(90deg, ${currentTheme.accent}, #8b5cf6)`,
-                      transition: 'width 0.3s ease',
-                    }} />
-                  </div>
-                  <p style={{
-                    fontSize: '11px',
-                    color: currentTheme.textSecondary,
-                    margin: '8px 0 0 0',
-                  }}>
-                    Niveau max: 20
-                  </p>
-                </div>
-              </div>
-
-              {/* Leave Guild Button */}
-              <button
-                onClick={() => handleLeaveGuilde(selectedGuilde.id)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  borderRadius: '8px',
-                  color: '#ef4444',
-                  fontWeight: '600',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.3)';
-                  e.target.style.borderColor = 'rgba(239, 68, 68, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(239, 68, 68, 0.2)';
-                  e.target.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-                }}
-              >
-                👋 Quitter la Guilde
-              </button>
-              </>
-              )}
-
-              {/* TAB: Leaderboard - Ranking des membres */}
-              {selectedGuildeTab === 'leaderboard' && (
-                <div>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 12px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    🏆 Ranking des Membres
-                  </p>
-                  <div style={{ display: 'grid', gap: '10px' }}>
-                    {guildLeaderboards[selectedGuilde.id]?.map((member) => (
-                      <div
-                        key={member.rank}
-                        style={{
-                          padding: '12px',
-                          background: member.rank === 1 ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%)' :
-                                      member.rank === 2 ? 'linear-gradient(135deg, rgba(107, 114, 128, 0.15) 0%, rgba(75, 85, 99, 0.05) 100%)' :
-                                      member.rank === 3 ? 'linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(161, 98, 7, 0.05) 100%)' :
-                                      'rgba(59, 130, 246, 0.08)',
-                          borderRadius: '10px',
-                          border: `1.5px solid ${
-                            member.rank === 1 ? 'rgba(245, 158, 11, 0.3)' :
-                            member.rank === 2 ? 'rgba(107, 114, 128, 0.3)' :
-                            member.rank === 3 ? 'rgba(217, 119, 6, 0.3)' :
-                            'rgba(59, 130, 246, 0.2)'
-                          }`,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '50%',
-                            background: member.rank === 1 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
-                                        member.rank === 2 ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)' :
-                                        member.rank === 3 ? 'linear-gradient(135deg, #d97706 0%, #a16207 100%)' :
-                                        'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: '700',
-                            color: '#fff',
-                            fontSize: '14px',
-                            flexShrink: 0,
-                          }}>
-                            {member.rank === 1 ? '🥇' : member.rank === 2 ? '🥈' : member.rank === 3 ? '🥉' : member.rank}
-                          </div>
-                          <div>
-                            <p style={{
-                              margin: '0 0 2px 0',
-                              fontSize: '13px',
-                              fontWeight: '700',
-                              color: currentTheme.text,
-                            }}>
-                              {member.name}
-                            </p>
-                            <p style={{
-                              margin: 0,
-                              fontSize: '11px',
-                              color: currentTheme.textSecondary,
-                            }}>
-                              {member.xp} XP
-                            </p>
-                          </div>
-                        </div>
-                        <div style={{
-                          textAlign: 'right',
-                        }}>
-                          <p style={{
-                            margin: '0 0 2px 0',
-                            fontSize: '13px',
-                            fontWeight: '700',
-                            color: '#3b82f6',
-                          }}>
-                            {member.contribution}%
-                          </p>
-                          <p style={{
-                            margin: 0,
-                            fontSize: '10px',
-                            color: currentTheme.textSecondary,
-                          }}>
-                            contribution
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Trésor - Système de points partagés */}
-              {selectedGuildeTab === 'treasure' && (
-                <div>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 12px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    💰 Trésor de Guilde
-                  </p>
-
-                  {guildTreasures[selectedGuilde.id] && (
-                    <div style={{ display: 'grid', gap: '12px' }}>
-                      {/* Treasury Stats */}
-                      <div style={{
-                        padding: '14px',
-                        background: `linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(74, 222, 128, 0.05) 100%)`,
-                        borderRadius: '10px',
-                        border: '1.5px solid rgba(34, 197, 94, 0.3)',
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Points Totaux</span>
-                          <span style={{ fontSize: '14px', fontWeight: '700', color: '#22c55e' }}>
-                            {guildTreasures[selectedGuilde.id].totalPoints}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Niveau</span>
-                          <span style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text }}>
-                            Niveau {guildTreasures[selectedGuilde.id].level}
-                          </span>
-                        </div>
-                        <div style={{
-                          height: '6px',
-                          background: 'rgba(34, 197, 94, 0.2)',
-                          borderRadius: '3px',
-                          overflow: 'hidden',
-                        }}>
-                          <div style={{
-                            height: '100%',
-                            width: `${(guildTreasures[selectedGuilde.id].totalPoints / guildTreasures[selectedGuilde.id].nextLevel) * 100}%`,
-                            background: 'linear-gradient(90deg, #22c55e 0%, #10b981 100%)',
-                            transition: 'width 0.5s ease',
-                          }} />
-                        </div>
-                        <p style={{
-                          fontSize: '10px',
-                          color: currentTheme.textSecondary,
-                          margin: '6px 0 0 0',
-                        }}>
-                          {guildTreasures[selectedGuilde.id].totalPoints} / {guildTreasures[selectedGuilde.id].nextLevel} pour le prochain niveau
-                        </p>
-                      </div>
-
-                      {/* Guild Stats */}
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '10px',
-                      }}>
-                        <div style={{
-                          padding: '12px',
-                          background: 'rgba(59, 130, 246, 0.1)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(59, 130, 246, 0.2)',
-                          textAlign: 'center',
-                        }}>
-                          <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: currentTheme.textSecondary }}>Membres</p>
-                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: currentTheme.accent }}>
-                            {guildTreasures[selectedGuilde.id].members}
-                          </p>
-                        </div>
-                        <div style={{
-                          padding: '12px',
-                          background: 'rgba(139, 92, 246, 0.1)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(139, 92, 246, 0.2)',
-                          textAlign: 'center',
-                        }}>
-                          <p style={{ margin: '0 0 4px 0', fontSize: '11px', color: currentTheme.textSecondary }}>Moy. par membre</p>
-                          <p style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#8b5cf6' }}>
-                            {Math.round(guildTreasures[selectedGuilde.id].totalPoints / guildTreasures[selectedGuilde.id].members)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Recent Contributions */}
-                      <div>
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          color: currentTheme.textSecondary,
-                          margin: '0 0 8px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                        }}>
-                          📈 Contributions Récentes
-                        </p>
-                        <div style={{ display: 'grid', gap: '8px' }}>
-                          {guildTreasures[selectedGuilde.id].recentContributions?.map((contrib, idx) => (
-                            <div
-                              key={idx}
-                              style={{
-                                padding: '10px',
-                                background: 'rgba(245, 158, 11, 0.08)',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(245, 158, 11, 0.15)',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                              }}
-                            >
-                              <div>
-                                <p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: currentTheme.text }}>
-                                  {contrib.member}
-                                </p>
-                                <p style={{ margin: 0, fontSize: '11px', color: currentTheme.textSecondary }}>
-                                  {contrib.action}
-                                </p>
-                              </div>
-                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#f59e0b' }}>
-                                +{contrib.points}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB: Events */}
-              {selectedGuildeTab === 'events' && (
-                <div>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 12px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    🎯 Événements en Cours
-                  </p>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {guildEvents.filter(e => e.guildId === selectedGuilde.id).length === 0 ? (
-                      <p style={{ color: currentTheme.textSecondary, fontSize: '12px', textAlign: 'center', padding: '20px 0' }}>
-                        Aucun événement pour le moment
-                      </p>
-                    ) : (
-                      guildEvents.filter(e => e.guildId === selectedGuilde.id).map((event) => (
-                        <div
-                          key={event.id}
-                          style={{
-                            padding: '12px',
-                            background: `linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%)`,
-                            borderRadius: '10px',
-                            border: `1.5px solid rgba(245, 158, 11, 0.2)`,
-                            transition: 'all 0.2s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.4)';
-                            e.currentTarget.style.transform = 'translateX(4px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.2)';
-                            e.currentTarget.style.transform = 'translateX(0)';
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                            <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: currentTheme.text }}>
-                              {event.title}
-                            </h4>
-                            <span style={{ fontSize: '11px', background: 'rgba(245, 158, 11, 0.2)', padding: '2px 8px', borderRadius: '4px', color: '#f59e0b', fontWeight: '600' }}>
-                              {event.reward}
-                            </span>
-                          </div>
-                          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
-                            {event.description}
-                          </p>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: currentTheme.textSecondary }}>
-                            <span>👥 {event.participants} participants</span>
-                            <span>📅 {event.startDate.toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Announcements */}
-              {selectedGuildeTab === 'announcements' && (
-                <div>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 12px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    📢 Annonces
-                  </p>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {guildAnnouncements.filter(a => a.guildId === selectedGuilde.id).length === 0 ? (
-                      <p style={{ color: currentTheme.textSecondary, fontSize: '12px', textAlign: 'center', padding: '20px 0' }}>
-                        Aucune annonce pour le moment
-                      </p>
-                    ) : (
-                      guildAnnouncements.filter(a => a.guildId === selectedGuilde.id).map((ann) => (
-                        <div
-                          key={ann.id}
-                          style={{
-                            padding: '12px',
-                            background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)`,
-                            borderRadius: '10px',
-                            border: `1.5px solid rgba(139, 92, 246, 0.2)`,
-                            transition: 'all 0.2s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
-                          }}
-                        >
-                          <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '16px',
-                              flexShrink: 0,
-                            }}>
-                              {ann.avatar}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '700', color: currentTheme.text }}>
-                                {ann.author}
-                              </p>
-                              <p style={{ margin: 0, fontSize: '10px', color: currentTheme.textSecondary }}>
-                                {formatRelativeTime(ann.timestamp)}
-                              </p>
-                            </div>
-                          </div>
-                          <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '700', color: currentTheme.text }}>
-                            {ann.title}
-                          </h4>
-                          <p style={{ margin: 0, fontSize: '12px', color: currentTheme.textSecondary, lineHeight: '1.4' }}>
-                            {ann.content}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Members List */}
-              {selectedGuildeTab === 'members' && (
-                <div style={{ marginBottom: '24px' }}>
-                  <p style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 10px 0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    👥 Membres ({selectedGuilde.membersList?.length || 0})
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {selectedGuilde.membersList?.map((member) => {
-                      const userCanManage = isUserGuildLeader(selectedGuilde) && member.name !== 'SMC.SRB';
-                      const isShowingActions = memberActionMenu?.guildId === selectedGuilde.id && memberActionMenu?.memberId === member.id;
-
-                      return (
-                        <div key={member.id} style={{ position: 'relative' }}>
-                          <div
-                            style={{
-                              padding: '10px',
-                              background: 'rgba(59, 130, 246, 0.05)',
-                              borderRadius: '8px',
-                              border: `1px solid ${currentTheme.border}`,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <div>
-                              <p style={{
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                color: currentTheme.text,
-                                margin: 0,
-                              }}>
-                                {member.name}
-                              </p>
-                              <p style={{
-                                fontSize: '11px',
-                                color: currentTheme.textSecondary,
-                                margin: '2px 0 0 0',
-                              }}>
-                                Niveau {member.level} • Rejoint: {member.joinedDate}
-                              </p>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <span style={{
-                                fontSize: '10px',
-                                fontWeight: '700',
-                                color: member.role === 'Leader' ? '#fbbf24' : member.role === 'Co-leader' ? '#60a5fa' : member.role === 'Elder' ? '#818cf8' : currentTheme.textSecondary,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                padding: '4px 8px',
-                                background: member.role === 'Leader' ? 'rgba(251, 191, 36, 0.1)' : member.role === 'Co-leader' ? 'rgba(96, 165, 250, 0.1)' : member.role === 'Elder' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(0,0,0,0.1)',
-                                borderRadius: '4px',
-                              }}>
-                                {member.role}
-                              </span>
-                              {userCanManage && (
-                                <button
-                                  onClick={() => setMemberActionMenu(isShowingActions ? null : { guildId: selectedGuilde.id, memberId: member.id })}
-                                  style={{
-                                    padding: '4px 8px',
-                                    background: 'rgba(59, 130, 246, 0.2)',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    color: currentTheme.accent,
-                                    fontSize: '12px',
-                                    cursor: 'pointer',
-                                    fontWeight: '600',
-                                  }}
-                                >
-                                  ⋮
-                                </button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Action Menu */}
-                          {isShowingActions && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                top: '100%',
-                                right: 0,
-                                marginTop: '4px',
-                                background: currentTheme.cardBg,
-                                border: `1px solid ${currentTheme.border}`,
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                zIndex: 100,
-                                minWidth: '200px',
-                              }}
-                            >
-                              {/* Change Role */}
-                              <button
-                                onClick={() => setRoleChangeMenu(
-                                  roleChangeMenu?.guildId === selectedGuilde.id && roleChangeMenu?.memberId === member.id
-                                    ? null
-                                    : { guildId: selectedGuilde.id, memberId: member.id }
-                                )}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px 12px',
-                                  background: 'none',
-                                  border: 'none',
-                                  borderBottom: `1px solid ${currentTheme.border}`,
-                                  color: currentTheme.text,
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                }}
-                              >
-                                👤 Changer le rôle
-                              </button>
-
-                              {/* Promote */}
-                              <button
-                                onClick={() => {
-                                  const roles = ['Member', 'Elder', 'Co-leader', 'Leader'];
-                                  const currentIdx = roles.indexOf(member.role);
-                                  if (currentIdx < roles.length - 1) {
-                                    handleChangeRole(selectedGuilde.id, member.id, roles[currentIdx + 1]);
-                                  }
-                                }}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px 12px',
-                                  background: 'none',
-                                  border: 'none',
-                                  borderBottom: `1px solid ${currentTheme.border}`,
-                                  color: '#86efac',
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                }}
-                              >
-                                ⬆️ Promouvoir
-                              </button>
-
-                              {/* Demote */}
-                              <button
-                                onClick={() => {
-                                  const roles = ['Member', 'Elder', 'Co-leader', 'Leader'];
-                                  const currentIdx = roles.indexOf(member.role);
-                                  if (currentIdx > 0) {
-                                    handleChangeRole(selectedGuilde.id, member.id, roles[currentIdx - 1]);
-                                  }
-                                }}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px 12px',
-                                  background: 'none',
-                                  border: 'none',
-                                  borderBottom: `1px solid ${currentTheme.border}`,
-                                  color: '#fca5a5',
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                }}
-                              >
-                                ⬇️ Rétrograder
-                              </button>
-
-                              {/* Kick */}
-                              <button
-                                onClick={() => handleKickMember(selectedGuilde.id, member.id)}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px 12px',
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#ef4444',
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                }}
-                              >
-                                🚫 Expulser
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Role Change Menu */}
-                          {roleChangeMenu?.guildId === selectedGuilde.id && roleChangeMenu?.memberId === member.id && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                top: '100%',
-                                right: '50px',
-                                marginTop: '4px',
-                                background: currentTheme.cardBg,
-                                border: `1px solid ${currentTheme.border}`,
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                zIndex: 101,
-                                minWidth: '150px',
-                              }}
-                            >
-                              {['Member', 'Elder', 'Co-leader', 'Leader'].map((role) => (
-                                <button
-                                  key={role}
-                                  onClick={() => handleChangeRole(selectedGuilde.id, member.id, role)}
-                                  style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    background: member.role === role ? 'rgba(59, 130, 246, 0.2)' : 'none',
-                                    border: 'none',
-                                    borderBottom: role !== 'Leader' ? `1px solid ${currentTheme.border}` : 'none',
-                                    color: member.role === role ? currentTheme.accent : currentTheme.text,
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                    fontSize: '12px',
-                                    fontWeight: member.role === role ? '600' : '400',
-                                  }}
-                                >
-                                  {member.role === role && '✓ '}{role}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Chat */}
-              {selectedGuildeTab === 'chat' && (
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    maxHeight: '250px',
-                    overflowY: 'auto',
-                    marginBottom: '12px',
-                  }}>
-                    {selectedGuilde.chat?.map((msg) => (
-                      <div
-                        key={msg.id}
-                        style={{
-                          padding: '8px 10px',
-                          background: 'rgba(59, 130, 246, 0.05)',
-                          borderRadius: '8px',
-                          border: `1px solid ${currentTheme.border}`,
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: '600', color: currentTheme.text }}>
-                            {msg.author}
-                          </span>
-                          <span style={{ fontSize: '10px', color: currentTheme.textSecondary }}>
-                            {msg.timestamp}
-                          </span>
-                        </div>
-                        <p style={{
-                          fontSize: '12px',
-                          color: currentTheme.text,
-                          margin: 0,
-                          wordBreak: 'break-word',
-                        }}>
-                          {msg.message}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {userGuildes.includes(selectedGuilde.id) && (
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input
-                        type="text"
-                        placeholder="Envoyer un message..."
-                        value={guildChatInput}
-                        onChange={(e) => setGuildChatInput(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && guildChatInput.trim()) {
-                            const newMessage = {
-                              id: selectedGuilde.chat.length + 1,
-                              author: 'SMC.SRB',
-                              message: guildChatInput,
-                              timestamp: new Date().toLocaleString(),
-                            };
-                            setGuildes(guildes.map(g =>
-                              g.id === selectedGuilde.id
-                                ? { ...g, chat: [...g.chat, newMessage] }
-                                : g
-                            ));
-                            setGuildChatInput('');
-                          }
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '8px 10px',
-                          background: 'rgba(0, 0, 0, 0.2)',
-                          border: `1px solid ${currentTheme.border}`,
-                          borderRadius: '6px',
-                          color: currentTheme.text,
-                          fontSize: '12px',
-                          outline: 'none',
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (guildChatInput.trim()) {
-                            const newMessage = {
-                              id: selectedGuilde.chat.length + 1,
-                              author: 'SMC.SRB',
-                              message: guildChatInput,
-                              timestamp: new Date().toLocaleString(),
-                            };
-                            setGuildes(guildes.map(g =>
-                              g.id === selectedGuilde.id
-                                ? { ...g, chat: [...g.chat, newMessage] }
-                                : g
-                            ));
-                            setGuildChatInput('');
-                          }
-                        }}
-                        style={{
-                          padding: '8px 12px',
-                          background: currentTheme.accent,
-                          border: 'none',
-                          borderRadius: '6px',
-                          color: '#fff',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                        }}
-                      >
-                        📤 Envoyer
-                      </button>
-                    </div>
-                  )}
-
-                  {!userGuildes.includes(selectedGuilde.id) && (
-                    <p style={{
-                      fontSize: '12px',
-                      color: currentTheme.textSecondary,
-                      textAlign: 'center',
-                      padding: '12px',
-                    }}>
-                      Rejoins la guilde pour participer au chat
-                    </p>
-                  )}
-                </div>
-              )}
-
-
-              {/* Eligibility Check */}
-              <div style={{
-                padding: '12px',
-                background: (() => {
-                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
-                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
-                    if (requirement === 0) return true;
-                    const userProgress = progress.domainsProgress?.[domain] || 0;
-                    return userProgress >= requirement;
-                  });
-                  return levelOk && domainsOk ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-                })(),
-                borderRadius: '10px',
-                border: (() => {
-                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
-                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
-                    if (requirement === 0) return true;
-                    const userProgress = progress.domainsProgress?.[domain] || 0;
-                    return userProgress >= requirement;
-                  });
-                  return levelOk && domainsOk ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)';
-                })(),
-                marginBottom: '20px',
-                textAlign: 'center',
-                whiteSpace: 'pre-wrap',
-              }}>
-                {(() => {
-                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
-                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
-                    if (requirement === 0) return true;
-                    const userProgress = progress.domainsProgress?.[domain] || 0;
-                    return userProgress >= requirement;
-                  });
-                  const canJoin = levelOk && domainsOk;
-                  return canJoin ? (
-                    <span style={{ color: '#22c55e', fontWeight: '600', fontSize: '13px' }}>✓ Tu peux rejoindre cette guilde!</span>
-                  ) : (
-                    <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '13px' }}>✗ Tu ne remplis pas les conditions</span>
-                  );
-                })()}
-              </div>
-
-              {/* Guild Message Display */}
-              {guildMessage && (
-                <div style={{
-                  padding: '12px',
-                  background: guildMessage.type === 'success' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  borderRadius: '10px',
-                  border: guildMessage.type === 'success' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
-                  marginBottom: '20px',
-                  whiteSpace: 'pre-wrap',
-                  fontSize: '12px',
-                  lineHeight: '1.6',
-                  color: guildMessage.type === 'success' ? '#86efac' : '#fca5a5',
-                }}>
-                  {guildMessage.text}
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
-                {(() => {
-                  const levelOk = !selectedGuilde.restrictions.minLevel || progress.userLevel >= selectedGuilde.restrictions.minLevel;
-                  const domainsOk = Object.entries(selectedGuilde.restrictions.domainRequirements || {}).every(([domain, requirement]) => {
-                    if (requirement === 0) return true;
-                    const userProgress = progress.domainsProgress?.[domain] || 0;
-                    return userProgress >= requirement;
-                  });
-                  const canJoin = levelOk && domainsOk;
-                  const alreadyMember = userGuildes.includes(selectedGuilde.id);
-
-                  return (
-                    <button
-                      onClick={() => {
-                        if (!alreadyMember) {
-                          handleJoinGuilde(selectedGuilde);
-                        }
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        background: alreadyMember ? 'rgba(34, 197, 94, 0.3)' : canJoin ? currentTheme.accent : 'rgba(107, 114, 128, 0.5)',
-                        border: alreadyMember ? '1px solid rgba(34, 197, 94, 0.5)' : 'none',
-                        borderRadius: '10px',
-                        color: alreadyMember ? '#86efac' : '#fff',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        opacity: canJoin && !alreadyMember ? 1 : 0.6,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (canJoin && !alreadyMember) {
-                          e.target.style.background = 'rgba(59, 130, 246, 0.8)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (canJoin && !alreadyMember) {
-                          e.target.style.background = currentTheme.accent;
-                        } else if (alreadyMember) {
-                          e.target.style.background = 'rgba(34, 197, 94, 0.3)';
-                        }
-                      }}
-                    >
-                      {alreadyMember ? '✓ Membre' : '➕ Rejoindre'}
-                    </button>
-                  );
-                })()}
-
-                <button
-                  onClick={() => setSelectedGuilde(null)}
-                  style={{
-                    padding: '12px 16px',
-                    background: 'rgba(59, 130, 246, 0.2)',
-                    border: `1px solid ${currentTheme.accent}`,
-                    borderRadius: '10px',
-                    color: currentTheme.accent,
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                  }}
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* AMIS ET GUILDES : réels (serveur), voir SocialHub */}
+        {activeTab === 'friends' && <SocialHub tab={socialTab} onTab={setSocialTab} />}
 
         {/* SETTINGS PAGE */}
         {activeTab === 'settings' && (
@@ -8737,7 +2105,6 @@ export default function DashboardPage() {
                 { id: 'general', label: '🎨 Affichage', icon: '🎨' },
                 { id: 'profile', label: '👤 Profil', icon: '👤' },
                 { id: 'security', label: '🔐 Sécurité', icon: '🔐' },
-                { id: 'alerts', label: '🔔 Alertes', icon: '🔔' },
                 { id: 'privacy', label: '📊 Données', icon: '📊' },
                 { id: 'billing', label: '💳 Abonnement', icon: '💳' },
               ].map((tab) => (
@@ -8747,10 +2114,10 @@ export default function DashboardPage() {
                   style={{
                     padding: '12px 16px',
                     background: settingsTab === tab.id
-                      ? 'rgba(59, 130, 246, 0.2)'
+                      ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'
                       : currentTheme.cardBg,
                     border: `1px solid ${settingsTab === tab.id
-                      ? 'rgba(59, 130, 246, 0.4)'
+                      ? 'color-mix(in srgb, var(--ik-primary) 40%, transparent)'
                       : currentTheme.border}`,
                     borderRadius: '10px',
                     color: settingsTab === tab.id ? currentTheme.accent : currentTheme.text,
@@ -8761,7 +2128,7 @@ export default function DashboardPage() {
                   }}
                   onMouseEnter={(e) => {
                     if (settingsTab !== tab.id) {
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 10%, transparent)';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -8813,8 +2180,8 @@ export default function DashboardPage() {
                     </div>
                     <button onClick={toggleTheme} style={{
                       padding: '8px 16px',
-                      background: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                      border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
+                      background: isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                      border: `1px solid ${isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 25%, transparent)'}`,
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -8822,8 +2189,8 @@ export default function DashboardPage() {
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)'; }}
                     >
                       {isDarkMode ? '🌙 Sombre' : '☀️ Clair'}
                     </button>
@@ -8908,8 +2275,8 @@ export default function DashboardPage() {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       textDecoration: 'none',
@@ -9078,15 +2445,15 @@ export default function DashboardPage() {
                   <button
                     onClick={saveProfileChanges}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                     }}
                     style={{
                       padding: '10px 20px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9121,7 +2488,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Niveau</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#3b82f6', margin: 0 }}>Lvl {progress.userLevel}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-accent)', margin: 0 }}>Lvl {progress.userLevel}</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -9129,7 +2496,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>XP Total</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b', margin: 0 }}>{progress.totalXP} XP</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}>{progress.totalXP} XP</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -9137,7 +2504,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Racha</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b', margin: 0 }}>🔥 {progress.streak}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}>🔥 {progress.streak}</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -9145,7 +2512,7 @@ export default function DashboardPage() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Badges</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: '#a78bfa', margin: 0 }}>{progress.badges?.length || 0}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-accent)', margin: 0 }}>{progress.badges?.length || 0}</p>
                       </div>
                     </div>
                   </div>
@@ -9222,7 +2589,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '24px',
                             borderRadius: '12px',
-                            background: hideStats ? '#3b82f6' : '#6b7280',
+                            background: hideStats ? 'var(--ik-primary)' : '#6b7280',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -9266,7 +2633,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '24px',
                             borderRadius: '12px',
-                            background: shareProgress ? '#3b82f6' : '#6b7280',
+                            background: shareProgress ? 'var(--ik-primary)' : '#6b7280',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -9390,7 +2757,7 @@ export default function DashboardPage() {
                             width: '40px',
                             height: '24px',
                             borderRadius: '12px',
-                            background: academyNotifications ? '#3b82f6' : '#6b7280',
+                            background: academyNotifications ? 'var(--ik-primary)' : '#6b7280',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -9443,8 +2810,8 @@ export default function DashboardPage() {
                     </div>
                     <button style={{
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9475,10 +2842,10 @@ export default function DashboardPage() {
                       disabled={twoFALoading}
                       style={{
                         padding: '8px 16px',
-                        background: userData?.enable2FA ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.2)',
-                        border: `1px solid ${userData?.enable2FA ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+                        background: userData?.enable2FA ? 'color-mix(in srgb, var(--ik-negative) 15%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                        border: `1px solid ${userData?.enable2FA ? 'color-mix(in srgb, var(--ik-negative) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 30%, transparent)'}`,
                         borderRadius: '8px',
-                        color: userData?.enable2FA ? '#ef4444' : currentTheme.accent,
+                        color: userData?.enable2FA ? 'var(--ik-negative)' : currentTheme.accent,
                         fontSize: '13px',
                         fontWeight: '600',
                         cursor: twoFALoading ? 'wait' : 'pointer',
@@ -9496,59 +2863,6 @@ export default function DashboardPage() {
                     <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
                       Gérez vos sessions de connexion
                     </p>
-                  </div>
-                </div>
-              )}
-
-              {/* ALERTES TAB */}
-              {settingsTab === 'alerts' && (
-                <div style={{ display: 'grid', gap: '20px' }}>
-                  <h3 style={{
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: currentTheme.text,
-                    margin: 0,
-                  }}>
-                    🔔 Seuils d'Alertes Personnalisées
-                  </h3>
-
-                  <p style={{
-                    fontSize: '13px',
-                    color: currentTheme.textSecondary,
-                    margin: '0 0 12px 0',
-                  }}>
-                    Créez des alertes personnalisées basées sur vos critères
-                  </p>
-
-                  <button style={{
-                    padding: '12px 20px',
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '8px',
-                    color: currentTheme.accent,
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)';
-                  }}
-                  >
-                    + Créer une alerte
-                  </button>
-
-                  <div style={{
-                    marginTop: '16px',
-                    paddingTop: '16px',
-                    borderTop: `1px solid ${currentTheme.border}`,
-                    color: currentTheme.textSecondary,
-                    fontSize: '12px',
-                  }}>
-                    Exemples: "Si Bitcoin +20%", "Si portefeuille baisse de 10%", "Si dividende reçu"
                   </div>
                 </div>
               )}
@@ -9582,8 +2896,8 @@ export default function DashboardPage() {
                     </div>
                     <button style={{
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9611,8 +2925,8 @@ export default function DashboardPage() {
                     </div>
                     <button style={{
                       padding: '8px 16px',
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                       borderRadius: '8px',
                       color: currentTheme.accent,
                       fontSize: '13px',
@@ -9624,15 +2938,15 @@ export default function DashboardPage() {
                   </div>
 
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#f43f5e', margin: '0 0 8px 0' }}>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ik-negative)', margin: '0 0 8px 0' }}>
                       ⚠️ Zone Danger
                     </p>
                     <button style={{
                       padding: '10px 20px',
-                      background: 'rgba(244, 63, 94, 0.15)',
-                      border: '1px solid rgba(244, 63, 94, 0.3)',
+                      background: 'color-mix(in srgb, var(--ik-negative) 15%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-negative) 30%, transparent)',
                       borderRadius: '8px',
-                      color: '#f43f5e',
+                      color: 'var(--ik-negative)',
                       fontSize: '13px',
                       fontWeight: '600',
                       cursor: 'pointer',
@@ -9651,22 +2965,22 @@ export default function DashboardPage() {
                   </h3>
 
                   {billingError && (
-                    <p style={{ color: '#ef4444', fontSize: '13px', margin: 0 }}>{billingError}</p>
+                    <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: 0 }}>{billingError}</p>
                   )}
 
-                  {userData?.subscriptionTier === 'pro' ? (
+                  {(shell?.user?.plan?.isPro ?? userData?.subscriptionTier === 'pro') ? (
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '16px',
                       borderRadius: '12px',
-                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)',
+                      border: '1px solid color-mix(in srgb, var(--ik-orchid) 30%, transparent)',
                     }}>
                       <div>
                         <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                          ✨ Abonnement Pro actif
+                          ✨ {planLine(shell?.user?.plan)}
                         </p>
                         <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
                           Tous les domaines et fonctionnalités débloqués
@@ -9678,8 +2992,8 @@ export default function DashboardPage() {
                         style={{
                           padding: '10px 18px',
                           borderRadius: '8px',
-                          border: '1px solid rgba(59, 130, 246, 0.3)',
-                          background: 'rgba(59, 130, 246, 0.2)',
+                          border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
+                          background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                           color: currentTheme.accent,
                           fontSize: '13px',
                           fontWeight: '600',
@@ -9704,7 +3018,7 @@ export default function DashboardPage() {
                           gap: '12px',
                         }}>
                           <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Mensuel</p>
-                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>7,99€<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/mois</span></p>
+                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>{formatEuro(PRICES.monthly)}<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/mois</span></p>
                           <button
                             onClick={() => startCheckout('monthly')}
                             disabled={billingLoading}
@@ -9724,8 +3038,8 @@ export default function DashboardPage() {
                         <div style={{
                           padding: '20px',
                           borderRadius: '12px',
-                          border: '1px solid rgba(139, 92, 246, 0.4)',
-                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                          border: '1px solid color-mix(in srgb, var(--ik-orchid) 40%, transparent)',
+                          background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 8%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 8%, transparent) 100%)',
                           display: 'grid',
                           gap: '12px',
                           position: 'relative',
@@ -9734,8 +3048,8 @@ export default function DashboardPage() {
                             position: 'absolute',
                             top: '-10px',
                             right: '16px',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                            color: '#fff',
+                            background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
+                            color: 'var(--ik-text-on-primary)',
                             fontSize: '11px',
                             fontWeight: '700',
                             padding: '4px 10px',
@@ -9744,7 +3058,7 @@ export default function DashboardPage() {
                             2 mois offerts
                           </span>
                           <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Annuel</p>
-                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>79€<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/an</span></p>
+                          <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>{formatEuro(PRICES.yearly)}<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/an</span></p>
                           <button
                             onClick={() => startCheckout('yearly')}
                             disabled={billingLoading}
@@ -9752,8 +3066,8 @@ export default function DashboardPage() {
                               padding: '10px',
                               borderRadius: '8px',
                               border: 'none',
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                              color: '#fff',
+                              background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
+                              color: 'var(--ik-text-on-primary)',
                               fontWeight: '600',
                               cursor: billingLoading ? 'wait' : 'pointer',
                             }}
@@ -9802,8 +3116,8 @@ export default function DashboardPage() {
                             padding: '10px 16px',
                             borderRadius: '8px',
                             border: 'none',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                            color: '#fff',
+                            background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
+                            color: 'var(--ik-text-on-primary)',
                             fontWeight: '600',
                             fontSize: '13px',
                             cursor: 'pointer',
@@ -9842,20 +3156,20 @@ export default function DashboardPage() {
                   }}
                   style={{
                     padding: '8px 16px',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                    border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
                     borderRadius: '8px',
-                    color: '#3b82f6',
+                    color: 'var(--ik-accent)',
                     fontSize: '12px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 25%, transparent)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 15%, transparent)';
                   }}
                 >
                   ✓ Marquer tout comme lu
@@ -9890,9 +3204,9 @@ export default function DashboardPage() {
                     }}
                     style={{
                       padding: '16px',
-                      background: notif.read ? 'transparent' : `linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)`,
+                      background: notif.read ? 'transparent' : `linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 5%, transparent) 100%)`,
                       borderRadius: '14px',
-                      border: `1.5px solid ${notif.read ? currentTheme.border : 'rgba(59, 130, 246, 0.2)'}`,
+                      border: `1.5px solid ${notif.read ? currentTheme.border : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'}`,
                       backdropFilter: notif.read ? 'none' : 'blur(10px)',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -9904,13 +3218,13 @@ export default function DashboardPage() {
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateX(8px)';
                       if (!notif.read) {
-                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                        e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 40%, transparent)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateX(0)';
                       if (!notif.read) {
-                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                        e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
                       }
                     }}
                   >
@@ -9919,13 +3233,13 @@ export default function DashboardPage() {
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
+                        background: `linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '20px',
                         flexShrink: 0,
-                        boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)',
+                        boxShadow: '0 8px 16px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       }}>
                         {notif.avatar}
                       </div>
@@ -9960,7 +3274,7 @@ export default function DashboardPage() {
                           width: '10px',
                           height: '10px',
                           borderRadius: '50%',
-                          background: '#3b82f6',
+                          background: 'var(--ik-primary)',
                           flexShrink: 0,
                         }} />
                       )}
@@ -9972,171 +3286,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ACTIVITY FEED SECTION */}
-        {activeTab === 'activity' && (
-          <div style={{ marginTop: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: '900',
-                color: currentTheme.text,
-                margin: 0,
-                letterSpacing: '-0.5px',
-              }}>
-                📈 Activité de Mes Amis
-              </h2>
-            </div>
-
-            {/* Filter Buttons */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
-              {[
-                { id: 'all', label: 'Tous', emoji: '📊' },
-                { id: 'level_up', label: 'Niveaux', emoji: '⭐' },
-                { id: 'achievement', label: 'Achievements', emoji: '🏆' },
-                { id: 'guild', label: 'Guildes', emoji: '👥' },
-                { id: 'leaderboard', label: 'Classement', emoji: '🎯' },
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setActivityFilter(filter.id)}
-                  style={{
-                    padding: '10px 16px',
-                    background: activityFilter === filter.id
-                      ? `linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)`
-                      : 'transparent',
-                    border: `1.5px solid ${activityFilter === filter.id ? 'rgba(59, 130, 246, 0.3)' : currentTheme.border}`,
-                    borderRadius: '10px',
-                    color: activityFilter === filter.id ? currentTheme.accent : currentTheme.textSecondary,
-                    fontWeight: activityFilter === filter.id ? '600' : '500',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (activityFilter !== filter.id) {
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                      e.currentTarget.style.color = currentTheme.accent;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activityFilter !== filter.id) {
-                      e.currentTarget.style.borderColor = currentTheme.border;
-                      e.currentTarget.style.color = currentTheme.textSecondary;
-                    }
-                  }}
-                >
-                  {filter.emoji} {filter.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Activity Timeline */}
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {activityFeed.map((activity, idx) => (
-                (activityFilter === 'all' || activityFilter === activity.type) && (
-                  <div
-                    key={activity.id}
-                    style={{
-                      padding: '16px',
-                      background: `linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%)`,
-                      borderRadius: '14px',
-                      border: `1.5px solid rgba(59, 130, 246, 0.15)`,
-                      backdropFilter: 'blur(10px)',
-                      display: 'flex',
-                      gap: '14px',
-                      transition: 'all 0.3s ease',
-                      animation: `fadeInUp 0.5s ease-out ${idx * 0.08}s both`,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateX(8px)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateX(0)';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.15)';
-                    }}
-                  >
-                    <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '50%',
-                      background: `linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '20px',
-                      flexShrink: 0,
-                      boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)',
-                    }}>
-                      {activity.avatar}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{
-                        color: currentTheme.text,
-                        fontWeight: '600',
-                        margin: '0 0 4px 0',
-                        fontSize: '14px',
-                      }}>
-                        {activity.user}
-                      </p>
-                      <p style={{
-                        color: currentTheme.textSecondary,
-                        fontSize: '13px',
-                        margin: 0,
-                      }}>
-                        {activity.detail}
-                      </p>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: currentTheme.textSecondary,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {formatRelativeTime(activity.timestamp)}
-                    </span>
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* PLACEHOLDERS FOR OTHER TABS */}
-        {(['projects', 'risk'].includes(activeTab)) && (
-          <div style={{
-            background: currentTheme.cardBg,
-            borderRadius: '16px',
-            padding: '60px 40px',
-            border: `1px solid ${currentTheme.border}`,
-            textAlign: 'center',
-            marginTop: '20px',
-            backdropFilter: 'blur(20px)',
-          }}>
-            <p style={{
-              fontSize: '36px',
-              margin: '0 0 16px 0',
-            }}>
-              {activeTab === 'projects' && '🎯'}
-              {activeTab === 'risk' && '⚠️'}
-            </p>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '800',
-              color: currentTheme.text,
-              margin: '0 0 12px 0',
-            }}>
-              {activeTab === 'projects' && 'Gestion des Projets'}
-              {activeTab === 'risk' && 'Analyse des Risques'}
-            </h3>
-            <p style={{
-              fontSize: '14px',
-              color: currentTheme.textSecondary,
-              margin: 0,
-            }}>
-              Section en développement
-            </p>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* NEWS FEED MODAL */}
@@ -10158,10 +3308,10 @@ export default function DashboardPage() {
         >
           <div style={{
             position: 'relative',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-text) 8%, transparent) 0%, color-mix(in srgb, var(--ik-text) 3%, transparent) 100%)',
             borderRadius: '48px',
             padding: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
             backdropFilter: 'blur(20px)',
             width: '100%',
             maxWidth: '600px',
@@ -10178,24 +3328,24 @@ export default function DashboardPage() {
               top: '20px',
               right: '20px',
               zIndex: 10,
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
               borderRadius: '10px',
               width: '40px',
               height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
+              color: 'var(--ik-text)',
               cursor: 'pointer',
               fontSize: '20px',
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
             }}
             >
               ✕
@@ -10203,14 +3353,14 @@ export default function DashboardPage() {
 
             {/* Tablet Bezel Top */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               borderRadius: '36px 36px 0 0',
               padding: '20px 24px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               fontSize: '13px',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'var(--ik-text-2)',
             }}>
               <span>9:41</span>
               <span style={{ fontWeight: '700' }}>InvestKit</span>
@@ -10219,21 +3369,21 @@ export default function DashboardPage() {
 
             {/* Modal Tabs */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               padding: '12px 20px',
               display: 'flex',
               gap: '12px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
             }}>
               <button
                 onClick={() => setNewsModalTab('news')}
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  background: newsModalTab === 'news' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: `1px solid ${newsModalTab === 'news' ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  background: newsModalTab === 'news' ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
+                  border: `1px solid ${newsModalTab === 'news' ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'transparent'}`,
                   borderRadius: '8px',
-                  color: newsModalTab === 'news' ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                  color: newsModalTab === 'news' ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -10247,10 +3397,10 @@ export default function DashboardPage() {
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  background: newsModalTab === 'tips' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  border: `1px solid ${newsModalTab === 'tips' ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  background: newsModalTab === 'tips' ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
+                  border: `1px solid ${newsModalTab === 'tips' ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'transparent'}`,
                   borderRadius: '8px',
-                  color: newsModalTab === 'tips' ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                  color: newsModalTab === 'tips' ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -10263,7 +3413,7 @@ export default function DashboardPage() {
 
             {/* Scrollable Content */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               flex: 1,
               overflowY: 'auto',
               padding: '20px',
@@ -10276,8 +3426,8 @@ export default function DashboardPage() {
                 <>
                   {/* News Item 1 */}
                   <div style={{
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    borderLeft: '4px solid #3b82f6',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-primary)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10293,14 +3443,14 @@ export default function DashboardPage() {
                         <p style={{
                           fontSize: '15px',
                           fontWeight: '700',
-                          color: '#60a5fa',
+                          color: 'var(--ik-accent)',
                           margin: '0 0 4px 0',
                         }}>
                           CAC 40 en hausse
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10310,7 +3460,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       À l'instant
                     </span>
@@ -10318,8 +3468,8 @@ export default function DashboardPage() {
 
                   {/* News Item 2 */}
                   <div style={{
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    borderLeft: '4px solid #10b981',
+                    background: 'color-mix(in srgb, var(--ik-positive) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-positive)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10342,7 +3492,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10352,7 +3502,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 2h
                     </span>
@@ -10360,8 +3510,8 @@ export default function DashboardPage() {
 
                   {/* News Item 3 */}
                   <div style={{
-                    background: 'rgba(168, 85, 247, 0.15)',
-                    borderLeft: '4px solid #a855f7',
+                    background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-orchid)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10384,7 +3534,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10394,7 +3544,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 5h
                     </span>
@@ -10402,8 +3552,8 @@ export default function DashboardPage() {
 
                   {/* News Item 4 */}
                   <div style={{
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    borderLeft: '4px solid #f59e0b',
+                    background: 'color-mix(in srgb, var(--ik-warning) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-warning)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10426,7 +3576,7 @@ export default function DashboardPage() {
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10436,7 +3586,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 1h
                     </span>
@@ -10444,8 +3594,8 @@ export default function DashboardPage() {
 
                   {/* News Item 5 */}
                   <div style={{
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    borderLeft: '4px solid #3b82f6',
+                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
+                    borderLeft: '4px solid var(--ik-primary)',
                     borderRadius: '16px',
                     padding: '18px',
                     flex: '0 0 auto',
@@ -10461,14 +3611,14 @@ export default function DashboardPage() {
                         <p style={{
                           fontSize: '15px',
                           fontWeight: '700',
-                          color: '#60a5fa',
+                          color: 'var(--ik-accent)',
                           margin: '0 0 4px 0',
                         }}>
                           Objectif atteint!
                         </p>
                         <p style={{
                           fontSize: '13px',
-                          color: 'rgba(255, 255, 255, 0.7)',
+                          color: 'var(--ik-text-2)',
                           margin: 0,
                           lineHeight: '1.4',
                         }}>
@@ -10478,7 +3628,7 @@ export default function DashboardPage() {
                     </div>
                     <span style={{
                       fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'var(--ik-text-3)',
                     }}>
                       Il y a 3h
                     </span>
@@ -10492,8 +3642,8 @@ export default function DashboardPage() {
                     <div
                       key={tip.id}
                       style={{
-                        background: 'rgba(168, 85, 247, 0.15)',
-                        borderLeft: '4px solid #a855f7',
+                        background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
+                        borderLeft: '4px solid var(--ik-orchid)',
                         borderRadius: '16px',
                         padding: '18px',
                         flex: '0 0 auto',
@@ -10519,7 +3669,7 @@ export default function DashboardPage() {
                           </p>
                           <p style={{
                             fontSize: '13px',
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: 'var(--ik-text-2)',
                             margin: 0,
                             lineHeight: '1.4',
                           }}>
@@ -10529,7 +3679,7 @@ export default function DashboardPage() {
                       </div>
                       <span style={{
                         fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.5)',
+                        color: 'var(--ik-text-3)',
                       }}>
                         Conseil quotidien
                       </span>
@@ -10541,7 +3691,7 @@ export default function DashboardPage() {
 
             {/* Tablet Bezel Bottom */}
             <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
               borderRadius: '0 0 36px 36px',
               padding: '12px',
               textAlign: 'center',
@@ -10549,7 +3699,7 @@ export default function DashboardPage() {
               <div style={{
                 width: '180px',
                 height: '5px',
-                background: 'rgba(255, 255, 255, 0.2)',
+                background: 'color-mix(in srgb, var(--ik-text) 20%, transparent)',
                 borderRadius: '2px',
                 margin: '0 auto',
               }} />
@@ -10576,10 +3726,10 @@ export default function DashboardPage() {
         onClick={() => setShowProfileMenu(false)}
         >
           <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 52, 96, 0.95) 100%)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-text) 95%, transparent) 0%, rgba(15, 52, 96, 0.95) 100%)',
             borderRadius: '20px',
             padding: '0',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
+            border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
             backdropFilter: 'blur(20px)',
             maxWidth: '600px',
             width: '90%',
@@ -10592,7 +3742,7 @@ export default function DashboardPage() {
             {/* Header */}
             <div style={{
               padding: '24px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -10600,7 +3750,7 @@ export default function DashboardPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: '900',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 margin: 0,
               }}>
                 Mon Profil
@@ -10608,24 +3758,24 @@ export default function DashboardPage() {
               <button
                 onClick={() => setShowProfileMenu(false)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                   borderRadius: '8px',
                   width: '36px',
                   height: '36px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#fff',
+                  color: 'var(--ik-text)',
                   cursor: 'pointer',
                   fontSize: '20px',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
                 }}
               >
                 ✕
@@ -10637,7 +3787,7 @@ export default function DashboardPage() {
               display: 'flex',
               gap: '0',
               padding: '0 24px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
               background: 'rgba(0, 0, 0, 0.2)',
             }}>
               {[
@@ -10650,10 +3800,10 @@ export default function DashboardPage() {
                   style={{
                     flex: 1,
                     padding: '16px',
-                    background: profileMenuTab === tab.id ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                    background: profileMenuTab === tab.id ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
                     border: 'none',
-                    borderBottom: profileMenuTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
-                    color: profileMenuTab === tab.id ? '#60a5fa' : 'rgba(255, 255, 255, 0.5)',
+                    borderBottom: profileMenuTab === tab.id ? '2px solid var(--ik-primary)' : '2px solid transparent',
+                    color: profileMenuTab === tab.id ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
                     fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
@@ -10661,12 +3811,12 @@ export default function DashboardPage() {
                   }}
                   onMouseEnter={(e) => {
                     if (profileMenuTab !== tab.id) {
-                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                      e.currentTarget.style.color = 'color-mix(in srgb, var(--ik-text) 70%, transparent)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (profileMenuTab !== tab.id) {
-                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)';
+                      e.currentTarget.style.color = 'color-mix(in srgb, var(--ik-text) 50%, transparent)';
                     }
                   }}
                 >
@@ -10684,7 +3834,7 @@ export default function DashboardPage() {
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: 'var(--ik-text-2)',
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -10698,12 +3848,12 @@ export default function DashboardPage() {
                       marginBottom: '16px',
                     }}>
                       {[
-                        { id: 'blue', name: 'Bleu', value: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)' },
-                        { id: 'purple', name: 'Violet', value: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)' },
-                        { id: 'gold', name: 'Or', value: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)' },
-                        { id: 'green', name: 'Vert', value: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)' },
-                        { id: 'pink', name: 'Rose', value: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(190, 24, 93, 0.1) 100%)' },
-                        { id: 'red', name: 'Rouge', value: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(190, 24, 93, 0.1) 100%)' },
+                        { id: 'blue', name: 'Bleu', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)' },
+                        { id: 'purple', name: 'Violet', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)' },
+                        { id: 'gold', name: 'Or', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 10%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 10%, transparent) 100%)' },
+                        { id: 'green', name: 'Vert', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 10%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 10%, transparent) 100%)' },
+                        { id: 'pink', name: 'Rose', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, rgba(190, 24, 93, 0.1) 100%)' },
+                        { id: 'red', name: 'Rouge', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-negative) 10%, transparent) 0%, rgba(190, 24, 93, 0.1) 100%)' },
                       ].map((color) => (
                         <button
                           key={color.id}
@@ -10711,9 +3861,9 @@ export default function DashboardPage() {
                           style={{
                             padding: '12px',
                             background: color.value,
-                            border: badgeBackgroundColor === color.value ? '2px solid #60a5fa' : '2px solid rgba(255, 255, 255, 0.2)',
+                            border: badgeBackgroundColor === color.value ? '2px solid var(--ik-accent)' : '2px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
                             borderRadius: '12px',
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: 'var(--ik-text-2)',
                             fontSize: '12px',
                             fontWeight: '600',
                             cursor: 'pointer',
@@ -10731,7 +3881,7 @@ export default function DashboardPage() {
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: '600',
-                      color: 'rgba(255, 255, 255, 0.7)',
+                      color: 'var(--ik-text-2)',
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -10748,10 +3898,10 @@ export default function DashboardPage() {
                         if (!badge) return null;
                         const isSelected = selectedDisplayBadges.includes(badgeId);
                         const rarityColors = {
-                          common: '#64748b',
-                          rare: '#3b82f6',
-                          very_rare: '#a855f7',
-                          unique: '#fbbf24',
+                          common: 'var(--ik-text-3)',
+                          rare: 'var(--ik-primary)',
+                          very_rare: 'var(--ik-orchid)',
+                          unique: 'var(--ik-warning)',
                         };
                         return (
                           <button
@@ -10765,8 +3915,8 @@ export default function DashboardPage() {
                             }}
                             style={{
                               padding: '12px',
-                              background: isSelected ? `${rarityColors[badge.rarity]}30` : 'rgba(255, 255, 255, 0.05)',
-                              border: `2px solid ${isSelected ? rarityColors[badge.rarity] : 'rgba(255, 255, 255, 0.1)'}`,
+                              background: isSelected ? `${alpha(rarityColors[badge.rarity], 19)}` : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                              border: `2px solid ${isSelected ? rarityColors[badge.rarity] : 'color-mix(in srgb, var(--ik-text) 10%, transparent)'}`,
                               borderRadius: '12px',
                               textAlign: 'center',
                               cursor: selectedDisplayBadges.length >= 3 && !isSelected ? 'not-allowed' : 'pointer',
@@ -10797,7 +3947,7 @@ export default function DashboardPage() {
                     display: 'block',
                     fontSize: '12px',
                     fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: 'var(--ik-text-2)',
                     marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -10810,10 +3960,10 @@ export default function DashboardPage() {
                     style={{
                       width: '100%',
                       padding: '12px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                       borderRadius: '12px',
-                      color: '#fff',
+                      color: 'var(--ik-text)',
                       fontSize: '14px',
                       fontFamily: 'inherit',
                       minHeight: '100px',
@@ -10823,18 +3973,18 @@ export default function DashboardPage() {
                       transition: 'all 0.2s ease',
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                      e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 5%, transparent)';
                     }}
                     onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
+                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 5%, transparent)';
                     }}
                     placeholder="Parlez-nous de vous..."
                   />
                   <p style={{
                     fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.5)',
+                    color: 'var(--ik-text-3)',
                     margin: '6px 0 0 0',
                   }}>
                     {bioEditInput.length}/150 caractères
@@ -10846,7 +3996,7 @@ export default function DashboardPage() {
             {/* Footer - Save Button */}
             <div style={{
               padding: '24px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              borderTop: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
               background: 'rgba(0, 0, 0, 0.2)',
               display: 'flex',
               gap: '12px',
@@ -10856,20 +4006,20 @@ export default function DashboardPage() {
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
                   borderRadius: '10px',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--ik-text-3)',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 5%, transparent)';
                 }}
               >
                 Annuler
@@ -10882,22 +4032,22 @@ export default function DashboardPage() {
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)',
-                  border: '2px solid rgba(59, 130, 246, 0.5)',
+                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)',
+                  border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
                   borderRadius: '10px',
-                  color: '#60a5fa',
+                  color: 'var(--ik-accent)',
                   fontSize: '14px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.4) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.7)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 40%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 40%, transparent) 100%)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 70%, transparent)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)';
-                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
                 }}
               >
                 ✓ Sauvegarder & Synchroniser
@@ -10919,7 +4069,7 @@ export default function DashboardPage() {
                 top: '-10px',
                 width: '10px',
                 height: '10px',
-                background: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 5)],
+                background: ['var(--ik-primary)', 'var(--ik-orchid)', '#ec4899', 'var(--ik-warning)', 'var(--ik-positive)'][Math.floor(Math.random() * 5)],
                 borderRadius: '50%',
                 animation: `fall 3s linear forwards`,
                 pointerEvents: 'none',
@@ -10951,11 +4101,11 @@ export default function DashboardPage() {
         >
           <div style={{
             padding: '20px 32px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 95%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 95%, transparent) 100%)',
             borderRadius: '12px',
-            border: '2px solid rgba(255, 255, 255, 0.3)',
+            border: '2px solid color-mix(in srgb, var(--ik-text) 30%, transparent)',
             backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
+            boxShadow: '0 8px 32px color-mix(in srgb, var(--ik-primary) 40%, transparent)',
             textAlign: 'center',
           }}>
             <div style={{
@@ -10968,7 +4118,7 @@ export default function DashboardPage() {
             <div style={{
               fontSize: '18px',
               fontWeight: '800',
-              color: '#fff',
+              color: 'var(--ik-text)',
               marginBottom: '4px',
               textTransform: 'uppercase',
               letterSpacing: '1px',
@@ -10977,7 +4127,7 @@ export default function DashboardPage() {
             </div>
             <div style={{
               fontSize: '13px',
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'var(--ik-text)',
               marginBottom: '8px',
             }}>
               {newAchievement.description}
@@ -10985,7 +4135,7 @@ export default function DashboardPage() {
             <div style={{
               fontSize: '14px',
               fontWeight: '700',
-              color: '#fbbf24',
+              color: 'var(--ik-warning)',
             }}>
               {newAchievement.reward}
             </div>
@@ -11039,24 +4189,24 @@ export default function DashboardPage() {
             style={{
               padding: '16px',
               background: `linear-gradient(135deg, ${
-                notif.type === 'success' ? 'rgba(16, 185, 129, 0.15)' :
-                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.15)' :
-                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.15)' :
-                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.15)' :
-                'rgba(59, 130, 246, 0.15)'
+                notif.type === 'success' ? 'color-mix(in srgb, var(--ik-positive) 15%, transparent)' :
+                notif.type === 'follow' ? 'color-mix(in srgb, var(--ik-primary) 15%, transparent)' :
+                notif.type === 'achievement' ? 'color-mix(in srgb, var(--ik-warning) 15%, transparent)' :
+                notif.type === 'guild_join' ? 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)' :
+                'color-mix(in srgb, var(--ik-primary) 15%, transparent)'
               } 0%, ${
-                notif.type === 'success' ? 'rgba(16, 185, 129, 0.05)' :
-                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.05)' :
-                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.05)' :
-                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.05)' :
-                'rgba(59, 130, 246, 0.05)'
+                notif.type === 'success' ? 'color-mix(in srgb, var(--ik-positive) 5%, transparent)' :
+                notif.type === 'follow' ? 'color-mix(in srgb, var(--ik-primary) 5%, transparent)' :
+                notif.type === 'achievement' ? 'color-mix(in srgb, var(--ik-warning) 5%, transparent)' :
+                notif.type === 'guild_join' ? 'color-mix(in srgb, var(--ik-orchid) 5%, transparent)' :
+                'color-mix(in srgb, var(--ik-primary) 5%, transparent)'
               } 100%)`,
               border: `1.5px solid ${
-                notif.type === 'success' ? 'rgba(16, 185, 129, 0.3)' :
-                notif.type === 'follow' ? 'rgba(59, 130, 246, 0.3)' :
-                notif.type === 'achievement' ? 'rgba(245, 158, 11, 0.3)' :
-                notif.type === 'guild_join' ? 'rgba(139, 92, 246, 0.3)' :
-                'rgba(59, 130, 246, 0.3)'
+                notif.type === 'success' ? 'color-mix(in srgb, var(--ik-positive) 30%, transparent)' :
+                notif.type === 'follow' ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' :
+                notif.type === 'achievement' ? 'color-mix(in srgb, var(--ik-warning) 30%, transparent)' :
+                notif.type === 'guild_join' ? 'color-mix(in srgb, var(--ik-orchid) 30%, transparent)' :
+                'color-mix(in srgb, var(--ik-primary) 30%, transparent)'
               }`,
               borderRadius: '14px',
               backdropFilter: 'blur(10px)',
@@ -11138,8 +4288,8 @@ export default function DashboardPage() {
       {/* NEW: Badge Unlock Toast Notifications */}
       <div style={{
         position: 'fixed',
-        bottom: '30px',
-        right: '30px',
+        bottom: '84px',
+        right: '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
@@ -11148,8 +4298,8 @@ export default function DashboardPage() {
       }}>
         {badgeUnlockToasts.map(toast => (
           <div key={toast.id} style={{
-            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(236, 72, 153, 0.95) 100%)',
-            border: '2px solid rgba(255, 255, 255, 0.3)',
+            background: 'var(--ik-surface-card)',
+            border: '1px solid var(--ik-primary)',
             borderRadius: '16px',
             padding: '16px 20px',
             display: 'flex',
@@ -11165,17 +4315,17 @@ export default function DashboardPage() {
               <div style={{
                 fontSize: '14px',
                 fontWeight: '700',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 marginBottom: '4px',
               }}>🎉 Nouveau Badge!</div>
               <div style={{
                 fontSize: '13px',
-                color: 'rgba(255, 255, 255, 0.9)',
+                color: 'var(--ik-text)',
                 marginBottom: '2px',
               }}>{toast.badgeName}</div>
               <div style={{
                 fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: 'var(--ik-text-2)',
               }}>+{toast.xp} XP • {toast.rarity.replace('_', ' ').toUpperCase()}</div>
             </div>
             <div style={{
@@ -11217,8 +4367,8 @@ export default function DashboardPage() {
           backdropFilter: 'blur(4px)',
         }} onClick={() => setShowBadgeAlbum(false)}>
           <div style={{
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            border: '2px solid rgba(255, 255, 255, 0.1)',
+            background: 'linear-gradient(135deg, var(--ik-surface-2) 0%, #16213e 100%)',
+            border: '2px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
             borderRadius: '20px',
             padding: '30px',
             maxWidth: '800px',
@@ -11234,7 +4384,7 @@ export default function DashboardPage() {
             }}>
               <h2 style={{
                 margin: 0,
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontSize: '24px',
                 fontWeight: '700',
               }}>
@@ -11243,7 +4393,7 @@ export default function DashboardPage() {
               <button onClick={() => setShowBadgeAlbum(false)} style={{
                 background: 'none',
                 border: 'none',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontSize: '24px',
                 cursor: 'pointer',
                 padding: 0,
@@ -11252,27 +4402,27 @@ export default function DashboardPage() {
 
             {/* Stats */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
               borderRadius: '12px',
               padding: '12px 16px',
               marginBottom: '20px',
               fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: 'var(--ik-text-2)',
             }}>
               <strong>{userBadges.length} / {Object.keys(badgeDefinitions).length}</strong> badges collectés ({Math.round((userBadges.length / Object.keys(badgeDefinitions).length) * 100)}%)
             </div>
 
             {/* Detailed Statistics Section */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%)',
-              border: '1px solid rgba(168, 85, 247, 0.2)',
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 10%, transparent) 100%)',
+              border: '1px solid color-mix(in srgb, var(--ik-orchid) 20%, transparent)',
               borderRadius: '12px',
               padding: '16px',
               marginBottom: '20px',
             }}>
               <h3 style={{
                 margin: '0 0 12px 0',
-                color: '#fff',
+                color: 'var(--ik-text)',
                 fontSize: '13px',
                 fontWeight: '700',
                 textTransform: 'uppercase',
@@ -11285,13 +4435,13 @@ export default function DashboardPage() {
                 gap: '12px',
               }}>
                 {[
-                  { label: 'Unique', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'unique').length, color: '#fbbf24' },
-                  { label: 'Très Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'very_rare').length, color: '#a855f7' },
-                  { label: 'Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'rare').length, color: '#3b82f6' },
-                  { label: 'Commun', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'common').length, color: '#64748b' },
+                  { label: 'Unique', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'unique').length, color: 'var(--ik-warning)' },
+                  { label: 'Très Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'very_rare').length, color: 'var(--ik-accent)' },
+                  { label: 'Rare', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'rare').length, color: 'var(--ik-accent)' },
+                  { label: 'Commun', count: userBadges.filter(id => badgeDefinitions[id]?.rarity === 'common').length, color: 'var(--ik-text-3)' },
                 ].map(stat => (
                   <div key={stat.label} style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
                     borderRadius: '8px',
                     padding: '10px',
                     textAlign: 'center',
@@ -11300,7 +4450,7 @@ export default function DashboardPage() {
                     <div style={{ fontSize: '18px', fontWeight: '700', color: stat.color }}>
                       {stat.count}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--ik-text-3)' }}>
                       {stat.label}
                     </div>
                   </div>
@@ -11319,9 +4469,9 @@ export default function DashboardPage() {
                 <button key={filter} onClick={() => setBadgeAlbumFilter(filter)} style={{
                   padding: '8px 14px',
                   borderRadius: '8px',
-                  border: badgeAlbumFilter === filter ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.2)',
-                  background: badgeAlbumFilter === filter ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  color: badgeAlbumFilter === filter ? '#f59e0b' : 'rgba(255, 255, 255, 0.6)',
+                  border: badgeAlbumFilter === filter ? '2px solid var(--ik-warning)' : '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                  background: badgeAlbumFilter === filter ? 'color-mix(in srgb, var(--ik-warning) 20%, transparent)' : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
+                  color: badgeAlbumFilter === filter ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 60%, transparent)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -11364,7 +4514,7 @@ export default function DashboardPage() {
                       opacity: isObtained ? 1 : 0.5,
                       transform: hoveredBadge === badgeId ? 'scale(1.08)' : 'scale(1)',
                       position: 'relative',
-                      boxShadow: isPinned ? `0 0 12px ${badgeDefinitions[badgeId]?.rarity === 'unique' ? '#fbbf24' : '#a855f7'}` : 'none',
+                      boxShadow: isPinned ? `0 0 12px ${badgeDefinitions[badgeId]?.rarity === 'unique' ? 'var(--ik-warning)' : 'var(--ik-orchid)'}` : 'none',
                     }}
                     onMouseEnter={() => setHoveredBadge(badgeId)}
                     onMouseLeave={() => setHoveredBadge(null)}>
@@ -11374,7 +4524,7 @@ export default function DashboardPage() {
                       <div style={{
                         fontSize: '11px',
                         fontWeight: '700',
-                        color: '#fff',
+                        color: 'var(--ik-text)',
                         marginBottom: '4px',
                       }}>
                         {badge.name}
@@ -11382,7 +4532,7 @@ export default function DashboardPage() {
                       <div style={{
                         fontSize: '8px',
                         fontWeight: '600',
-                        color: badge.rarity === 'unique' ? '#fbbf24' : badge.rarity === 'very_rare' ? '#a855f7' : badge.rarity === 'rare' ? '#3b82f6' : '#64748b',
+                        color: badge.rarity === 'unique' ? 'var(--ik-warning)' : badge.rarity === 'very_rare' ? 'var(--ik-orchid)' : badge.rarity === 'rare' ? 'var(--ik-primary)' : 'var(--ik-text-3)',
                         textTransform: 'uppercase',
                         marginBottom: '4px',
                       }}>
@@ -11391,7 +4541,7 @@ export default function DashboardPage() {
                       {!isObtained && badgeUnlockProgress[badgeId] && badgeUnlockProgress[badgeId].percent > 0 && (
                         <div style={{
                           fontSize: '9px',
-                          color: 'rgba(255, 255, 255, 0.6)',
+                          color: 'var(--ik-text-3)',
                           marginTop: '4px',
                         }}>
                           {badgeUnlockProgress[badgeId].percent}% progressé
@@ -11400,7 +4550,7 @@ export default function DashboardPage() {
                       {isObtained && badgeDateObtained[badgeId] && (
                         <div style={{
                           fontSize: '8px',
-                          color: 'rgba(255, 255, 255, 0.5)',
+                          color: 'var(--ik-text-3)',
                           marginTop: '4px',
                         }}>
                           {new Date(badgeDateObtained[badgeId]).toLocaleDateString('fr-FR')}
@@ -11419,8 +4569,8 @@ export default function DashboardPage() {
                           width: '28px',
                           height: '28px',
                           borderRadius: '50%',
-                          background: isPinned ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
-                          border: `2px solid ${isPinned ? '#f59e0b' : 'rgba(255, 255, 255, 0.4)'}`,
+                          background: isPinned ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 20%, transparent)',
+                          border: `2px solid ${isPinned ? 'var(--ik-warning)' : 'color-mix(in srgb, var(--ik-text) 40%, transparent)'}`,
                           color: isPinned ? '#000' : '#fff',
                           fontSize: '14px',
                           cursor: 'pointer',
@@ -11514,7 +4664,7 @@ export default function DashboardPage() {
                     boxSizing: 'border-box',
                   }}
                 />
-                {twoFAError && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
+                {twoFAError && <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={closeTwoFAModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${currentTheme.border}`, background: 'transparent', color: currentTheme.text, cursor: 'pointer' }}>
                     Annuler
@@ -11527,8 +4677,8 @@ export default function DashboardPage() {
                       padding: '10px',
                       borderRadius: '8px',
                       border: 'none',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                      color: '#fff',
+                      background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)',
+                      color: 'var(--ik-text-on-primary)',
                       fontWeight: 600,
                       cursor: twoFACodeInput.length === 6 ? 'pointer' : 'not-allowed',
                       opacity: twoFACodeInput.length === 6 ? 1 : 0.5,
@@ -11563,7 +4713,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={closeTwoFAModal}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, var(--ik-primary) 0%, var(--ik-orchid) 100%)', color: 'var(--ik-text-on-primary)', fontWeight: 600, cursor: 'pointer' }}
                 >
                   J'ai noté mes codes
                 </button>
@@ -11595,7 +4745,7 @@ export default function DashboardPage() {
                     boxSizing: 'border-box',
                   }}
                 />
-                {twoFAError && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
+                {twoFAError && <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: '0 0 12px' }}>{twoFAError}</p>}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={closeTwoFAModal} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${currentTheme.border}`, background: 'transparent', color: currentTheme.text, cursor: 'pointer' }}>
                     Annuler
@@ -11608,8 +4758,8 @@ export default function DashboardPage() {
                       padding: '10px',
                       borderRadius: '8px',
                       border: 'none',
-                      background: '#ef4444',
-                      color: '#fff',
+                      background: 'var(--ik-negative)',
+                      color: 'var(--ik-text-on-negative)',
                       fontWeight: 600,
                       cursor: twoFADisablePassword ? 'pointer' : 'not-allowed',
                       opacity: twoFADisablePassword ? 1 : 0.5,
@@ -11624,5 +4774,6 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+    </AppShell>
   );
 }

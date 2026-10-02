@@ -149,6 +149,17 @@ export const userRepository = {
     );
   },
 
+  // Inscription recommencée avec une adresse dont le compte n'a JAMAIS été vérifié : la dernière inscription remplace le mot de passe
+  // et le code. Ainsi, quelqu'un qui aurait réservé l'adresse d'un autre avec SON mot de passe ne peut pas garder le compte.
+  async restartPendingRegistration(id: string, passwordHash: string, code: string, expiresAt: Date): Promise<boolean> {
+    const r = await query(
+      `UPDATE users SET password_hash = $1, verification_code = $2, verification_code_expires_at = $3, updated_at = NOW()
+       WHERE id = $4 AND verified = FALSE RETURNING id`,
+      [passwordHash, code, expiresAt, id]
+    );
+    return r.rows.length === 1;
+  },
+
   async updateVerificationCode(
     id: string,
     code: string,

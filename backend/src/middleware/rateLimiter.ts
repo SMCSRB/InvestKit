@@ -28,10 +28,11 @@ export const accountLimiter = rateLimit({
   message: { error: 'Trop de demandes. Réessayez dans une heure.' },
 });
 
-// Vérification d'e-mail à l'inscription : évite de servir d'« oracle » pour lister les comptes existants (20 par 15 min et par IP).
-export const checkEmailLimiter = rateLimit({
+// Vérification d'un code d'invitation avant la fin de l'inscription : 30 par 15 min et par IP (un code se devine très difficilement,
+// mais on évite quand même qu'un robot les essaie en masse).
+export const inviteCheckLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 20,
+  limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de vérifications. Réessayez dans 15 minutes.' },
@@ -65,4 +66,34 @@ export const cryptoOrderLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop d\'ordres en peu de temps. Réessaie dans une minute.' },
+});
+
+// Actions sociales (demandes d'amis, guildes) : 40 par 10 minutes et par IP, contre l'envoi en masse de demandes.
+export const socialWriteLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'actions sociales. Réessaie dans quelques minutes.' },
+});
+
+// Favoris et recherches enregistrées (Immobilier) : 120 par 10 minutes et par IP (assez pour parcourir, pas pour martelage).
+export const watchLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'actions sur tes favoris. Réessaie dans quelques minutes.' },
+});
+
+// Soumission d'un quiz d'éducation : 20 par 10 minutes et PAR JOUEUR (jeton déjà vérifié avant ce limiteur). Une tentative refusée compte aussi :
+// on ne peut pas deviner les réponses à coups de tentatives. (La récompense, elle, n'est de toute façon donnée qu'une fois par chapitre.)
+export const quizLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 20,
+  keyGenerator: (req) => `quiz:${(req as any).user?.userId ?? req.ip}`,
+  validate: { keyGeneratorIpFallback: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives de quiz en peu de temps. Relis le chapitre et réessaie dans quelques minutes.' },
 });

@@ -1,0 +1,27 @@
+import { Router } from 'express';
+import { socialController as c } from '../controllers/socialController';
+import { authMiddleware } from '../middleware/auth';
+import { socialWriteLimiter } from '../middleware/rateLimiter';
+
+export const socialRoutes = Router();
+
+socialRoutes.get('/me', authMiddleware, c.me);
+socialRoutes.get('/friends', authMiddleware, c.friends);
+socialRoutes.get('/friends/ranking', authMiddleware, c.friendsRanking);
+socialRoutes.get('/requests', authMiddleware, c.requests);
+socialRoutes.post('/requests', authMiddleware, socialWriteLimiter, c.sendRequest);
+socialRoutes.post('/requests/:id/accept', authMiddleware, socialWriteLimiter, c.accept);
+socialRoutes.post('/requests/:id/decline', authMiddleware, socialWriteLimiter, c.decline);
+socialRoutes.delete('/requests/:id', authMiddleware, socialWriteLimiter, c.cancel);
+socialRoutes.delete('/friends/:userId', authMiddleware, socialWriteLimiter, c.removeFriend);
+socialRoutes.get('/blocks', authMiddleware, c.blocks);
+socialRoutes.post('/blocks', authMiddleware, socialWriteLimiter, c.block);
+socialRoutes.delete('/blocks/:userId', authMiddleware, socialWriteLimiter, c.unblock);
+socialRoutes.get('/guild', authMiddleware, c.guild);
+socialRoutes.post('/guilds', authMiddleware, socialWriteLimiter, c.createGuild);
+socialRoutes.post('/guilds/join', authMiddleware, socialWriteLimiter, c.joinGuild);
+socialRoutes.post('/guilds/leave', authMiddleware, socialWriteLimiter, c.leaveGuild);
+socialRoutes.post('/guilds/kick', authMiddleware, socialWriteLimiter, c.kick);
+socialRoutes.post('/guilds/transfer', authMiddleware, socialWriteLimiter, c.transfer);
+socialRoutes.post('/guilds/invite/regenerate', authMiddleware, socialWriteLimiter, c.regenerateInvite);
+socialRoutes.delete('/guilds', authMiddleware, socialWriteLimiter, c.disband);
