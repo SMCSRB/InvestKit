@@ -317,3 +317,11 @@ Voir `docs/crypto-education.md` (section « À tester chez moi »).
 2. Valide l'inscription avec une adresse qui a déjà un compte : tu arrives sur la page de vérification comme pour une nouvelle adresse (même écran, même durée).
 3. La personne propriétaire de l'adresse reçoit un e-mail « Quelqu'un a essayé de créer un compte avec ton adresse » (au plus un par heure).
 4. Vérifie qu'un mauvais code ou une adresse inconnue donnent le même message « Code invalide ou expiré ».
+## Sécurité : session ouverte seulement sur preuve
+
+1. Inscris un compte de test : le code arrive par e-mail ; tape-le sur la page de vérification, puis tu arrives sur « Choisis ton pseudo » **déjà connecté**.
+2. Termine l'onboarding : pseudo enregistré, tu arrives sur le tableau de bord.
+3. Avec un mauvais code (8 fois), la page refuse puis dit « Trop d'essais ».
+4. Dans un navigateur sans session, ouvre `/onboarding` et valide : message d'erreur, aucune connexion.
+5. Après déploiement : lance `ops/sql/detecter-session-sans-preuve.sql` (voir `docs/faille-session-sans-preuve.md`) et envisage de changer `JWT_SECRET`.
+6. Déploie le site et l'API ensemble.

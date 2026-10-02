@@ -40,6 +40,12 @@ const VALID_FREE_DOMAINS = [...Object.keys(DOMAINS), 'real_estate', 'crypto_mark
 // Faux hash bcrypt (coût 10) pour égaliser le temps de réponse quand le compte n'existe pas.
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 10);
 
+// Comparaison de codes en temps constant (pas d'indice sur le nombre de chiffres justes).
+const safeEqual = (a: string, b: string): boolean => {
+  const x = Buffer.from(a); const y = Buffer.from(b);
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+};
+
 export const authController = {
   register: async (req: AuthRequest, res: Response): Promise<void> => {
     const startedAt = Date.now();
@@ -199,8 +205,19 @@ export const authController = {
       }
 
       const user = await userRepository.findByEmail(email);
+      // Verrou PAR COMPTE (le code n'a que 6 chiffres : la limite par IP seule ne verrait pas une attaque répartie sur plusieurs IP).
+      // La clé est l'empreinte de l'adresse, y compris inconnue : même comportement, aucune fuite sur l'existence du compte.
+      const lockKey = `verify:${email}`;
+      const lock = await checkLock(lockKey);
+      if (lock.locked) {
+        res.setHeader('Retry-After', String(lock.retryAfterSeconds));
+        await padResponse(startedAt);
+        res.status(429).json({ error: 'Trop d\'essais. Réessaie plus tard ou demande un nouveau code.' });
+        return;
+      }
       const expired = !!user?.verification_code_expires_at && new Date() > user.verification_code_expires_at;
-      if (!user || user.verification_code !== code || expired) {
+      if (!user || !user.verification_code || !safeEqual(user.verification_code, code) || expired) {
+        await recordFailure(lockKey);
         await padResponse(startedAt);
         res.status(400).json(invalid);
         return;
@@ -215,9 +232,18 @@ export const authController = {
         return;
       }
 
+      // Le code reçu par e-mail est LA preuve de possession de la boîte : c'est ici (et seulement ici, avec la connexion par mot de
+      // passe et la 2FA) que la première session est ouverte. Le profil (pseudo…) se règle ensuite avec cette session.
+      await recordSuccess(lockKey);
+      const token = generateToken(user.id, user.email);
+      setSessionCookies(res, token);
+      await userRepository.updateLastLogin(user.id);
+      await auditLog({ userId: user.id, action: 'email_verified', entityType: 'user', entityId: user.id, metadata: { sessionOpened: true }, ip: req.ip });
+
       res.json({
         success: true,
         message: 'Email vérifié avec succès',
+        ...(tokenInBody() ? { token } : {}),
         user: {
           id: user.id,
           email: user.email,
@@ -265,43 +291,45 @@ export const authController = {
     }
   },
 
+  // Profil de fin d'inscription. Protégée : l'identité vient de la session (ouverte par verify-email), JAMAIS d'une adresse e-mail
+  // envoyée par le navigateur (l'ancienne version ouvrait une session pour n'importe quelle adresse : faille corrigée).
   savePreferences: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { email, username, accountType, interests, language } = req.body;
+      const { username, accountType, interests, language } = req.body ?? {};
 
-      if (!email || !username || !accountType) {
-        res.status(400).json({ error: 'Données manquantes' });
+      const pseudo = typeof username === 'string' ? username.trim() : '';
+      if (pseudo.length < 2 || pseudo.length > 30 || typeof accountType !== 'string' || !accountType || accountType.length > 30) {
+        res.status(400).json({ error: 'Pseudo (2 à 30 caractères) et type de compte requis' });
         return;
       }
 
-      const user = await userRepository.findByEmail(email);
+      const user = await userRepository.findById(req.user!.userId);
       if (!user) {
         res.status(404).json({ error: 'Utilisateur non trouvé' });
         return;
       }
+      if (!user.verified) {
+        res.status(403).json({ error: 'Vérifie d\'abord ton e-mail' });
+        return;
+      }
 
-      // Sauvegarder les préférences et le username
       // NB: la 2FA ne se règle plus ici - impossible de l'activer sans
       // avoir prouvé la possession d'un secret TOTP (voir /auth/2fa/*).
       await userRepository.updatePreferences(user.id, {
-        username: username.trim(),
+        username: pseudo,
         account_type: accountType,
-        interests: JSON.stringify(interests || []),
-        language: language || 'fr',
+        interests: JSON.stringify(Array.isArray(interests) ? interests.slice(0, 20) : []),
+        language: typeof language === 'string' && language.length <= 10 ? language : 'fr',
       });
-
-      // Générer un token JWT
-      const token = generateToken(user.id, user.email);
-      setSessionCookies(res, token);
+      await auditLog({ userId: user.id, action: 'profile_setup', entityType: 'user', entityId: user.id, ip: req.ip });
 
       res.json({
         success: true,
         message: 'Préférences sauvegardées',
-        ...(tokenInBody() ? { token } : {}),
         user: {
           id: user.id,
           email: user.email,
-          username: username.trim(),
+          username: pseudo,
           accountType,
         },
       });
