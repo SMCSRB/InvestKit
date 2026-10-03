@@ -834,3 +834,9 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 3. Rembourse le prêt personnel : le message n'en parle plus et la réserve compte tes vraies pièces.
 4. Un achat payé avec l'argent du prêt est refusé de la même façon ; aucune pièce n'est débitée.
 5. Prêt personnel avec très peu de pièces à toi : refusé pour réserve (message chiffré), comme avant.
+
+## Script « se donner des InvestCoins » (copie de test seulement)
+1. Sur ta copie de test, dossier `backend`, lance à la main : `npm run test:give-coins -- --user TEST --amount 1000`. Tu dois voir la base (finissant par `_test`), le solde avant, `+ 1000 InvestCoins (« don de test »…)` et le solde après.
+2. Dans l'application, le solde du compte a bien augmenté ; dans la Banque / l'historique InvestCoins, une ligne « test_gift » apparaît.
+3. Nom de compte inconnu : message d'erreur, rien de créé.
+4. Avec `DATABASE_URL` qui vise une base dont le nom ne finit pas par `_test` : « Refusé… », rien n'est modifié. (Ne le teste PAS sur le vrai site : fais-le avec une adresse de base inexistante.)
