@@ -11,6 +11,7 @@ import {
 import { EUROS_PER_COIN } from '../config/economy';
 import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees } from '../engine/immo';
 import { spendableCoins, monthlyInstalmentCoins } from './bankService';
+import { grantFirstInvestment } from './firstStepsService';
 
 export const RE_DOMAIN = 'real_estate';
 
@@ -338,6 +339,7 @@ export const realEstateService = {
         if (plan.coins.notary > 0) await investcoinsRepository.applyTransaction(userId, -plan.coins.notary, 're_notary_fees', meta, c);
         if (plan.coins.loanFees > 0) await investcoinsRepository.applyTransaction(userId, -plan.coins.loanFees, 're_loan_fees', meta, c);
         if (plan.coins.exchange > 0) await investcoinsRepository.applyTransaction(userId, -plan.coins.exchange, 're_exchange_down_payment', meta, c);
+        await grantFirstInvestment(userId, params.downPaymentCoins, c);   // bonus unique « premier investissement » (dans la même transaction)
 
         const e = plan.evaluation;
         let loanId: string | null = null;

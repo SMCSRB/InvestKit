@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import { requireAdmin } from '../middleware/admin';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { claimDailyReward } from '../services/dailyRewardService';
+import { firstStepsState } from '../services/firstStepsService';
 import { walletService } from '../services/walletService';
 
 
@@ -68,6 +69,17 @@ export const economyController = {
     } catch (error) {
       console.error('Claim daily reward error:', error);
       res.status(500).json({ error: 'Erreur lors de la réclamation de la récompense' });
+    }
+  },
+
+  // État des bonus « premiers pas » (acquis ou non, montants) : lu par l'interface, jamais décidé par elle.
+  getFirstSteps: async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) { res.status(401).json({ error: 'Non authentifié' }); return; }
+      res.json(await firstStepsState(req.user.userId));
+    } catch (error) {
+      console.error('Get first steps error:', error);
+      res.status(500).json({ error: 'Erreur lors de la lecture des premiers pas' });
     }
   },
 };

@@ -42,6 +42,20 @@ export const RECOVERY_BASE_CAPITAL = STARTING_CAPITAL;
 export const DAILY_REWARD_COINS = 10;
 export const DAILY_REWARD_MAX_DAYS_PER_WEEK = 3;
 
+// ── Bonus « premiers pas » ───────────────────────────────────────────────────
+// Trois bonus uniques par compte (environ 100 pièces au total), sans limite de temps, décidés et plafonnés par le serveur.
+// Chacun n'est versé qu'une fois (clé unique en base) et passe par le registre (motif « first_step_bonus »).
+// Les clés sont indépendantes de l'affichage : le futur guide « premiers pas » lira leur état (GET /economy/first-steps).
+export const FIRST_STEP_BONUSES = {
+  first_investment: 30,   // premier achat d'un titre, d'une crypto ou d'un bien (voir montant minimal ci-dessous)
+  first_lesson: 30,       // premier chapitre d'éducation validé par le serveur (quiz du chapitre réussi)
+  first_quiz: 40,         // premier quiz final de domaine réussi
+} as const;
+export type FirstStepKey = keyof typeof FIRST_STEP_BONUSES;
+export const FIRST_STEPS_TOTAL_COINS = Object.values(FIRST_STEP_BONUSES).reduce((a, b) => a + b, 0);
+// Montant minimal d'un premier investissement pour déclencher le bonus (évite un achat symbolique pour toucher la prime).
+export const FIRST_STEP_MIN_INVESTMENT_COINS = 100;
+
 // ── Récompenses d'éducation ──────────────────────────────────────────────────
 // Versées une seule fois par chapitre ou par domaine terminé, décidées par le serveur.
 export const EDUCATION_CHAPTER_COINS = 20;

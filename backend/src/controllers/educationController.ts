@@ -6,6 +6,7 @@ import { EDUCATION_CATALOG } from '../data/educationCatalog';
 import { EDUCATION_QUIZZES } from '../data/educationQuizzes';
 import { EDUCATION_CHAPTER_XP, EDUCATION_DOMAIN_XP } from '../config/game';
 import { EDUCATION_CHAPTER_COINS, EDUCATION_DOMAIN_COMPLETE_COINS } from '../config/economy';
+import { grantFirstStep } from '../services/firstStepsService';
 
 const CHAPTER_COINS = EDUCATION_CHAPTER_COINS;
 const DOMAIN_COMPLETE_COINS = EDUCATION_DOMAIN_COMPLETE_COINS;
@@ -64,10 +65,14 @@ export const educationController = {
 
       const first = await educationProgressRepository.recordCompletion(userId, domainId, chapterId, score, xp, coins);
       let balance: number | null = null;
+      let firstStepBonus = 0;
       if (first) {
         balance = await investcoinsRepository.applyTransaction(userId, coins, reason, isFinal ? { domainId } : { domainId, chapterId });
+        // Bonus uniques « premiers pas » : premier chapitre validé, premier quiz final réussi (versés une seule fois par compte).
+        firstStepBonus = await grantFirstStep(userId, isFinal ? 'first_quiz' : 'first_lesson');
+        if (firstStepBonus > 0) balance = await investcoinsRepository.getBalance(userId);
       }
-      res.json({ ...base, rewarded: first, coinsEarned: first ? coins : 0, xpEarned: first ? xp : 0, balance });
+      res.json({ ...base, rewarded: first, coinsEarned: first ? coins : 0, xpEarned: first ? xp : 0, firstStepBonus, balance });
     } catch (error) {
       console.error('Submit quiz error:', error);
       res.status(500).json({ error: 'Erreur lors de la correction du quiz' });

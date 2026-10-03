@@ -20,6 +20,7 @@ import {
   LEADERBOARD_SIZE,
 } from '../config/game';
 import { RANKING_MIN_INVESTED } from '../config/economy';
+import { grantFirstInvestment } from './firstStepsService';
 
 export const MODE = 'accelerated'; // seul mode disponible pour l'instant (décision produit)
 
@@ -295,6 +296,7 @@ export const tradingService = {
           };
           await virtualPortfolioRepository.save(tx, portfolio.id, { positions, ...totals, taxState: ts });
           await snapshot(tx, userId, domain, positions, totals, year);
+          await grantFirstInvestment(userId, cost, tx);   // bonus unique « premier investissement » (dans la même transaction)
 
           return { success: true, cost, fee, account, price, positions };
         }
