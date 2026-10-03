@@ -91,7 +91,9 @@ describe.skipIf(!hasDb)('un achat sur le nouveau marché Crypto est vu partout',
     const ov: any = await overviewService.get(u);
     expect(ov.trading.crypto.started).toBe(true);
     expect(ov.trading.crypto.positions).toBe(1);
-    expect(ov.trading.crypto.invested).toBe(paid);                                  // « Capital investi » = montant payé (prix + frais)
+    expect(ov.trading.crypto.invested).toBe(paid);                                  // « Total acheté (cumul) » = montant payé (prix + frais)
+    expect(ov.trading.crypto.investedNow).toBe(f.notionalCoins);                    // « Actuellement investi » = prix de revient des positions détenues
+    expect(ov.totals.investedNow).toBe(f.notionalCoins);
     expect(ov.trading.crypto.marketValue).toBeGreaterThan(0);
     expect(ov.trading.crypto.marketValue).toBeLessThanOrEqual(paid);
     expect(ov.trading.crypto.marketValue).toBeGreaterThanOrEqual(value - 2);
@@ -113,7 +115,7 @@ describe.skipIf(!hasDb)('un achat sur le nouveau marché Crypto est vu partout',
     expect((await onboardingService.get(u)).steps.find((s) => s.key === 'first_trade')!.done).toBe(true);
     // 5) classement Crypto : la progression « x / 2 500 investis » compte ce capital
     const board: any = await rankingService.board(u, undefined);
-    expect(board.progress.investedCoins).toBe(paid);
+    expect(board.progress.investedCoins).toBe(f.notionalCoins);                     // le seuil compte le montant ACTUELLEMENT investi
     expect(board.progress.minInvestedCoins).toBe(RANKING_MIN_INVESTED);
     expect(board.progress.ranked).toBe(false);                                      // 150 < 2 500
     expect(board.progress.activeDays).toBe(5);
@@ -135,7 +137,10 @@ describe.skipIf(!hasDb)('un achat sur le nouveau marché Crypto est vu partout',
     const s = await cryptoMarketSummary(u);
     expect(s.positions).toBe(0);
     expect(s.marketValue).toBe(0);
-    expect(s.invested).toBe(b.notionalCoins + b.feeCoins);
+    expect(s.invested).toBe(b.notionalCoins + b.feeCoins);                          // total acheté (cumul) : inchangé après la vente
+    expect(s.investedNow).toBe(0);                                                  // actuellement investi : plus rien
+    const board: any = await rankingService.board(u, undefined);
+    expect(board.progress.investedCoins).toBe(0);                                    // le seuil du classement compte le montant ACTUELLEMENT investi
     expect(s.proceeds).toBeGreaterThan(0);
     expect(s.gain).toBe(s.proceeds - s.invested);                                  // une perte réelle (frais, écart), jamais un gain gratuit
     expect(s.gain).toBeLessThan(0);

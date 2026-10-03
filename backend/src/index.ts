@@ -1,4 +1,4 @@
-import { env } from './config/env';
+import { env, databaseNameFromUrl } from './config/env';
 import { initDatabase, executeSchema, closePool } from './utils/db';
 import app from './app';
 // Start server
@@ -24,7 +24,7 @@ const startServer = async () => {
 ║  http://0.0.0.0:${PORT}
 ║  Local: http://127.0.0.1:${PORT}
 ║  Environment: ${env.nodeEnv}
-║  Database: ${env.database.name}
+║  Database: ${databaseNameFromUrl(env.database.url, env.database.name)}
 ║  CORS Origins: ${env.corsOrigins.join(', ')}
 ╚════════════════════════════════════════════╝
       `);

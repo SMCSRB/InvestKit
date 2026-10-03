@@ -351,6 +351,8 @@ function StartScreen({ starts, onStart, busy }) {
 }
 
 function AssetList({ assets, onOpen, filters, setFilters, categories }) {
+  // La capitalisation n'existe que si les données de marché l'ont fournie : sans elle, la colonne (et le tri) disparaissent au lieu de rester vides.
+  const hasCap = assets.some((a) => a.marketCap != null);
   return (
     <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: 12 }}>
@@ -359,21 +361,21 @@ function AssetList({ assets, onOpen, filters, setFilters, categories }) {
           <option value="">Toutes catégories</option>
           {Object.entries(categories).map(([id, l]) => <option key={id} value={id}>{l}</option>)}
         </select>
-        <select aria-label="Tri" style={input} value={filters.sort} onChange={(e) => setFilters({ ...filters, sort: e.target.value })}>
-          <option value="marketCap">Capitalisation</option><option value="volume">Volume</option><option value="change1d">Variation 24 h</option><option value="change30d">Variation 30 j</option><option value="name">Nom</option>
+        <select aria-label="Tri" style={input} value={!hasCap && filters.sort === 'marketCap' ? 'volume' : filters.sort} onChange={(e) => setFilters({ ...filters, sort: e.target.value })}>
+          {hasCap && <option value="marketCap">Capitalisation</option>}<option value="volume">Volume</option><option value="change1d">Variation 24 h</option><option value="change30d">Variation 30 j</option><option value="name">Nom</option>
         </select>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--ik-text-2)', fontSize: 13, minWidth: 560 }}>
           <thead><tr style={{ color: 'var(--ik-text-3)', textAlign: 'right' }}>
-            <th style={{ textAlign: 'left', padding: '8px 12px' }}>Actif</th><th style={{ padding: 8 }}>Prix</th><th style={{ padding: 8 }}>24 h</th><th style={{ padding: 8 }}>7 j</th><th style={{ padding: 8 }}>30 j</th><th style={{ padding: 8 }}>Volume 24 h<HelpTip term="volume" /></th><th style={{ padding: 8 }}>Capi.<HelpTip term="capitalisation" /></th><th style={{ padding: 8 }}>Risque<HelpTip term="drawdown" /></th>
+            <th style={{ textAlign: 'left', padding: '8px 12px' }}>Actif</th><th style={{ padding: 8 }}>Prix</th><th style={{ padding: 8 }}>24 h</th><th style={{ padding: 8 }}>7 j</th><th style={{ padding: 8 }}>30 j</th><th style={{ padding: 8 }}>Volume 24 h<HelpTip term="volume" /></th>{hasCap && <th style={{ padding: 8 }}>Capi.<HelpTip term="capitalisation" /></th>}<th style={{ padding: 8 }}>Risque<HelpTip term="drawdown" /></th>
           </tr></thead>
           <tbody>
             {assets.map((a) => (
               <tr key={a.symbol} data-testid={`row-${a.symbol}`} onClick={() => onOpen(a.symbol)} style={{ cursor: 'pointer', borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)', textAlign: 'right', opacity: a.stale ? 0.6 : 1 }}>
                 <td style={{ textAlign: 'left', padding: '10px 12px' }}><strong>{a.symbol}</strong> <span style={{ color: 'var(--ik-text-3)' }}>{a.name}</span>{a.synthetic && <span title="Données fictives" style={{ marginLeft: 6, fontSize: 10, color: 'var(--ik-warning)', border: '1px solid var(--ik-warning)', borderRadius: 4, padding: '0 4px' }}>FICTIF</span>}{a.collapsed && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--ik-negative)', border: '1px solid var(--ik-negative)', borderRadius: 4, padding: '0 4px' }}>EFFONDRÉ</span>}</td>
                 <td style={{ padding: 8 }}>{fmtPrice(a.priceCoins, a.price)}</td><td style={{ padding: 8 }}><Pct v={a.change1d} /></td><td style={{ padding: 8 }}><Pct v={a.change7d} /></td><td style={{ padding: 8 }}><Pct v={a.change30d} /></td>
-                <td style={{ padding: 8 }}>{big(a.volume24h)}</td><td style={{ padding: 8 }}>{big(a.marketCap)}</td><td style={{ padding: 8 }}>{'●'.repeat(a.risk)}<span style={{ color: 'var(--ik-border-strong)' }}>{'●'.repeat(5 - a.risk)}</span></td>
+                <td style={{ padding: 8 }}>{big(a.volume24h)}</td>{hasCap && <td style={{ padding: 8 }}>{big(a.marketCap)}</td>}<td style={{ padding: 8 }}>{'●'.repeat(a.risk)}<span style={{ color: 'var(--ik-border-strong)' }}>{'●'.repeat(5 - a.risk)}</span></td>
               </tr>
             ))}
             {!assets.length && <tr><td colSpan={8} style={{ padding: 18, color: 'var(--ik-text-3)', textAlign: 'center' }}>Aucun actif ne correspond à ta recherche à cette date.</td></tr>}
@@ -432,7 +434,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
         <div style={{ color: 'var(--ik-text-3)', fontSize: 13, margin: '4px 0 10px' }}>{state.categories[a.category] || a.category} · coté depuis le {a.listedSince ? dateFr(Date.parse(a.listedSince)) : '—'}</div>
         <p style={{ color: 'var(--ik-text-2)', lineHeight: 1.6, margin: '0 0 10px' }}>{a.description}</p>
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 13, color: 'var(--ik-text-2)' }}>
-          <span>Capitalisation<HelpTip term="capitalisation" /> : <b>{big(a.marketCap)}</b></span><span>Volume 24 h<HelpTip term="volume" /> : <b>{big(a.volume24h)}</b></span>
+          <span>Capitalisation<HelpTip term="capitalisation" /> : <b>{a.marketCap == null ? 'non importée' : big(a.marketCap)}</b></span><span>Volume 24 h<HelpTip term="volume" /> : <b>{big(a.volume24h)}</b></span>
           <span>Plus haut historique (à ce jour)<HelpTip term="plus-haut-historique" /> : <b>{usd(a.allTimeHigh)}</b></span><span>Plus bas : <b>{usd(a.allTimeLow)}</b></span>
           <span>Liquidité : <b>palier {a.liquidityTier}</b><HelpTip term="palier-liquidite" /></span>
         </div>

@@ -132,18 +132,19 @@ describe.skipIf(!hasDb)('quiz : correction par le serveur, récompense unique, p
     expect(await balanceOf(u)).toBe(EDUCATION_CATALOG.crypto_market.length * 20 + 100);
   });
 
-  it('plafond absolu : tout refaire plusieurs fois ne dépasse jamais (chapitres × 20) + (domaines × 100)', async () => {
-    const u = await createUser({ balance: 0 });
-    for (let pass = 0; pass < 2; pass++) {
-      for (const [domainId, chapters] of Object.entries(EDUCATION_CATALOG)) {
+  it('plafond absolu : tout refaire plusieurs fois ne dépasse jamais (chapitres × 20) + 100 par domaine', async () => {
+    // Un joueur par domaine : le limiteur (20 tentatives par 10 minutes et par joueur) ne doit pas fausser le calcul du plafond.
+    for (const [domainId, chapters] of Object.entries(EDUCATION_CATALOG)) {
+      const u = await createUser({ balance: 0 });
+      for (let pass = 0; pass < 2; pass++) {
         for (const c of chapters) await submit(u, { domainId, scope: c, answers: goodAnswers(domainId, c) });
         await submit(u, { domainId, scope: 'final', answers: goodAnswers(domainId, 'final') });
       }
+      const cap = chapters.length * 20 + 100;
+      expect(await balanceOf(u), domainId).toBe(cap);
+      const ledger = (await query(`SELECT COALESCE(SUM(amount),0)::int AS s FROM investcoins_transactions WHERE user_id = $1 AND reason IN ('quiz_chapter','quiz_domain_complete')`, [u])).rows[0].s;
+      expect(ledger, domainId).toBe(cap);
     }
-    const cap = Object.values(EDUCATION_CATALOG).reduce((n, ch) => n + ch.length * 20 + 100, 0);
-    expect(await balanceOf(u)).toBe(cap);
-    const ledger = (await query(`SELECT COALESCE(SUM(amount),0)::int AS s FROM investcoins_transactions WHERE user_id = $1 AND reason IN ('quiz_chapter','quiz_domain_complete')`, [u])).rows[0].s;
-    expect(ledger).toBe(cap);
   });
 
   it('martelage : au-delà de 20 tentatives en 10 minutes, le serveur répond 429 (par joueur)', async () => {

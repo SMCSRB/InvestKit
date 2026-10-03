@@ -197,7 +197,7 @@ export default function EducationPage() {
                           </div>
                         </div>
                         <div className="text-3xl">
-                          <Glyph g={isCompleted ? domain.badge : 'lock'} size={28} />
+                          <Glyph g={isLocked ? 'lock' : domain.badge} size={28} />
                         </div>
                       </div>
 

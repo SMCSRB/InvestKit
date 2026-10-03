@@ -335,7 +335,7 @@ describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), endet
     expect(low.reasons.map((r) => r.code)).not.toContain('RESERVE_TOO_LOW');
     expect(low.warnings).toHaveLength(1);
     expect(low.warnings[0]).toMatchObject({ code: 'LOW_SAVINGS', savings: 1500, months: 1.5, thresholdMonths: 3 });
-    expect(low.warnings[0].message.replace(/[\u202f\u00a0]/g, ' ')).toContain('il te restera 1 500 pièces, soit 1,5 mensualité');
+    expect(low.warnings[0].message.replace(/[\u202f\u00a0]/g, ' ')).toContain('il te restera 1 500 pièces, soit 1,5 mensualité (1 500 pièces ÷ 1 000,00 de mensualités par mois');
     expect(low.warnings[0].message).toContain('Moins de 3 mensualités expose à un impayé.');
     const zero = assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 0 });
     expect(zero.decision).toBe('approved'); expect(zero.warnings[0].message).toContain('0 pièces, soit 0,0 mensualité');
@@ -350,7 +350,7 @@ describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), endet
     expect(lowSavingsWarning({ savings: 5000, monthlyPayments: 700, thresholdMonths: 3 })).toBeNull();
     expect(lowSavingsWarning({ savings: 10, monthlyPayments: 0, thresholdMonths: 3 })).toBeNull();           // aucune mensualité : rien à comparer
     expect(lowSavingsWarning({ savings: -50, monthlyPayments: 700, thresholdMonths: 3 })!.savings).toBe(0);  // jamais d'épargne négative affichée
-    expect(lowSavingsWarning({ savings: 700, monthlyPayments: 700, thresholdMonths: 3, moment: 'prêt' })!.message).toContain('Après ce prêt, il te restera 700 pièces, soit 1,0 mensualité.');
+    expect(lowSavingsWarning({ savings: 700, monthlyPayments: 700, thresholdMonths: 3, moment: 'prêt' })!.message).toContain('Après ce prêt, il te restera 700 pièces, soit 1,0 mensualité (700 pièces ÷ 700,00 de mensualités par mois');
   });
   it('durée > 25 ans refusée, sauf travaux importants (27 ans)', () => {
     const long = { ...ctx, downPayment: 30000, loanMonths: 312 };

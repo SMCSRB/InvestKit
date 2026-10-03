@@ -83,6 +83,20 @@ export function Leaderboard({ game, notify }) {
         <div className={`rp-banner ${data.mine.ranked ? 'rp-banner--ok' : 'rp-banner--warn'}`}>
           <div><strong>Ma performance : {p(data.mine.performancePct)}</strong>
             <p>Investi {eur(data.mine.investedEuros)} · valeur nette de revente {eur(data.mine.liquidationValueEuros)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}</p>
+            <details className="rp-explain" data-testid="perf-explain">
+              <summary>Comment est calculée cette performance ?</summary>
+              <p>
+                Gain = valeur nette de revente {eur(data.mine.liquidationValueEuros)} + loyers encaissés (nets) {eur(data.mine.cumulativeCashFlow)} + ventes déjà faites {eur(data.mine.saleNetProceeds)}
+                {' '}− montants investis {eur(data.mine.investedEuros)} − intérêts de prêts personnels {eur(data.mine.bankInterestPaidEuros ?? 0)} = <strong>{eur(data.mine.gainLiquidationEuros ?? 0)}</strong>.
+              </p>
+              <p>
+                Performance = gain ÷ capital de départ de ton compte ({eur(data.mine.startingCapitalCoins ?? 0)}) = <strong>{p(data.mine.performancePct)}</strong>.
+              </p>
+              <p className="ik-muted">
+                Un chiffre négatif au début est normal : les frais de notaire, de dossier et de revente (agence, diagnostics, impôt, décote d’un bien loué) sont déduits tout de suite,
+                alors que les loyers n’ont pas encore eu le temps de les compenser. Le gain devient positif si le bien prend de la valeur ou si les loyers s’accumulent.
+              </p>
+            </details>
             {data.me && <p>Ton rang en {year} : n°{data.me.rank} sur {data.totalRanked}.</p>}</div>
         </div>
       )}

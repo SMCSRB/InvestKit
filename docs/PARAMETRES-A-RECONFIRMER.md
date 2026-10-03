@@ -152,3 +152,11 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
   - **pas d'effacement gratuit** après avoir dépensé l'argent emprunté (emprunter, dépenser, puis faire effacer la dette ne doit pas être rentable).
 - **Script `test:give-coins` (se donner des InvestCoins pour les tests)** : `backend/scripts/test-give-coins.ts` + ligne `test:give-coins` de `backend/package.json`. **À RETIRER ou à BLOQUER avant l'ouverture au public**, pour qu'il ne puisse pas exister sur le vrai site. Il est déjà protégé (refus si le nom de la base ne finit pas par `_test`, double contrôle après connexion, crédit par le registre avec le motif `test_gift`, compte existant seulement, jamais lancé automatiquement), mais la meilleure garantie est qu'il n'existe pas en production : le supprimer du dépôt de production, ou l'exclure de l'image de déploiement. À vérifier à l'audit de sécurité : `grep -rn "test_gift" backend/` ne doit rien trouver dans la version publique.
 - **« Jour actif »** : à resserrer à l'audit de sécurité (voir `docs/classement-net-de-revente.md`).
+
+## Finitions de l'économie : choix faits sans question (principe : la vraie vie)
+| Sujet | Choix | État |
+|---|---|---|
+| « Capital investi » du seuil de classement | Montant ACTUELLEMENT investi (positions détenues au prix de revient ; biens immobiliers encore possédés), pas le cumul des achats. Le cumul reste affiché sous « Total acheté (cumul) ». Seuil : 2 500 et 5 jours actifs (inchangés). | DÉCISION produit |
+| Parcours d'éducation Bourse et Immobilier | Créés (5 chapitres + quiz final chacun) ; récompenses identiques aux autres parcours (20 par chapitre, 100 par parcours). Faits fiscaux repris des règles françaises ; les barèmes du jeu restent des valeurs de jeu. | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** pour les montants de récompense et les paramètres du jeu cités ; textes à relire. |
+| Capitalisation Crypto absente | Colonne et tri masqués plutôt que vides (aucune capitalisation inventée). | DÉCISION produit |
+| Tableau de bord Bourse | Onglets Crypto (ancien domaine) et Immobilier retirés de l'onglet Bourse ; les positions de l'ancien domaine Crypto restent comptées dans le patrimoine. | DÉCISION produit |

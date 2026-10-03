@@ -3,6 +3,734 @@
 export interface QuizQuestionSpec { id: string; options: string[]; correct: string }
 export interface QuizSpec { passingScore: number; questions: QuizQuestionSpec[] }
 export const EDUCATION_QUIZZES: Record<string, { chapters: Record<string, QuizSpec>; final: QuizSpec }> = {
+  "stocks": {
+    "chapters": {
+      "1": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "oy8on9vpcj3",
+              "oy0rtm6iafz",
+              "o1zen775hx05",
+              "o1p61g3k0n6w"
+            ],
+            "correct": "oy8on9vpcj3"
+          },
+          {
+            "id": "2",
+            "options": [
+              "opmz7s82nn6",
+              "o2af2t56zjnd",
+              "o51zuf5a5ta",
+              "o18xs48zjti3"
+            ],
+            "correct": "o2af2t56zjnd"
+          },
+          {
+            "id": "3",
+            "options": [
+              "o2eyfdi018yo",
+              "o231on31b716",
+              "o1muk6ye8jtw",
+              "o1g1zrnswl8e"
+            ],
+            "correct": "o231on31b716"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o175op0z4uha",
+              "ot5s487e3pd",
+              "o1zjwilzgasr",
+              "ow8b6sgo0y4"
+            ],
+            "correct": "ot5s487e3pd"
+          },
+          {
+            "id": "5",
+            "options": [
+              "oa7798iaa5q",
+              "o2f4s9gemwyw",
+              "o1dnxn4s2u4",
+              "o1nstj8svy03"
+            ],
+            "correct": "o2f4s9gemwyw"
+          }
+        ]
+      },
+      "2": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o1dp0h5ascsh",
+              "ogqr8gx5y1w",
+              "o1hrc1er8hyy",
+              "olfeeyofke2"
+            ],
+            "correct": "o1dp0h5ascsh"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o1ufa934t194",
+              "o1lmcjuevi33",
+              "o28jlkznwbsp",
+              "o138dvdf44qv"
+            ],
+            "correct": "o1lmcjuevi33"
+          },
+          {
+            "id": "3",
+            "options": [
+              "ox7fnicw2pz",
+              "ounbx5v0z8j",
+              "o172hjtf1757",
+              "o1fu2khu130h"
+            ],
+            "correct": "ounbx5v0z8j"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o11x5uzbj4zy",
+              "o1ff0y25h9ug",
+              "omox87phe49",
+              "o1x43ym0l5nw"
+            ],
+            "correct": "o1ff0y25h9ug"
+          },
+          {
+            "id": "5",
+            "options": [
+              "o2fmzm02cbg3",
+              "o2122d5bks2k",
+              "o1cmuvv1c8kw",
+              "o145uzoqj8q9"
+            ],
+            "correct": "o2122d5bks2k"
+          }
+        ]
+      },
+      "3": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o1nqgma4xjs2",
+              "ovm32a7bom1",
+              "ovwfcxdvmzm",
+              "o20s7h746671"
+            ],
+            "correct": "ovm32a7bom1"
+          },
+          {
+            "id": "2",
+            "options": [
+              "oqykqmdpbtn",
+              "o21x0n6zil7",
+              "o1r91rmqomh8",
+              "oy47aemxl1q"
+            ],
+            "correct": "o21x0n6zil7"
+          },
+          {
+            "id": "3",
+            "options": [
+              "o17cwg48kuyj",
+              "o10m4ixjckao",
+              "oo2gdm3xh06",
+              "o2evb3ymvhuz"
+            ],
+            "correct": "o10m4ixjckao"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o28i22erty43",
+              "o1ks8c219l7u",
+              "o12kgmv9b4fk",
+              "oqtrjjyykos"
+            ],
+            "correct": "o1ks8c219l7u"
+          },
+          {
+            "id": "5",
+            "options": [
+              "ounfv5xgoq8",
+              "o1e7j605ppdv",
+              "o166l7kt1qu6",
+              "o2fs8nq7a4iq"
+            ],
+            "correct": "o1e7j605ppdv"
+          }
+        ]
+      },
+      "4": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o37oilofpph",
+              "ornlx9a2v3l",
+              "o1yjrzek4mwz",
+              "o2dj0u1giknw"
+            ],
+            "correct": "o37oilofpph"
+          },
+          {
+            "id": "2",
+            "options": [
+              "oepl4hllaxn",
+              "o1vkf1of58y5",
+              "o1a20xjui5u3",
+              "o19yuz6m2550"
+            ],
+            "correct": "oepl4hllaxn"
+          },
+          {
+            "id": "3",
+            "options": [
+              "otgonjjd4ai",
+              "ou5nwyp1n9",
+              "oom5b8n77xr",
+              "o2efj50x49s2"
+            ],
+            "correct": "otgonjjd4ai"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o1xj8m173r11",
+              "oc65up8o6hd",
+              "of0z7dkvyox",
+              "o2csqeh7lpsb"
+            ],
+            "correct": "oc65up8o6hd"
+          },
+          {
+            "id": "5",
+            "options": [
+              "ocdojcgc57m",
+              "o12j1ijgx6l9",
+              "oqd9g1c68e2",
+              "o1qd7vwrsfd3"
+            ],
+            "correct": "o12j1ijgx6l9"
+          }
+        ]
+      },
+      "5": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "oqqdmaba2ds",
+              "oz73surea6i",
+              "ohzp2o9e2w0",
+              "o1m9yuylsuj9"
+            ],
+            "correct": "oz73surea6i"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o2fkha9g9e88",
+              "o1cjl0yn2bzs",
+              "o16ojn2jnogw",
+              "obohy753xe6"
+            ],
+            "correct": "o1cjl0yn2bzs"
+          },
+          {
+            "id": "3",
+            "options": [
+              "owfbxgtu2i6",
+              "onitrylyh4z",
+              "o1tixi5awtgr",
+              "o218q0r18a1"
+            ],
+            "correct": "owfbxgtu2i6"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o299ubhhorll",
+              "o1bgkusdocyy",
+              "ox7cyd38upt",
+              "o1hddlwx1ljk"
+            ],
+            "correct": "o1bgkusdocyy"
+          },
+          {
+            "id": "5",
+            "options": [
+              "onyn1wgowbz",
+              "o1z0n22wi0fo",
+              "o1he520t2gdq",
+              "o22xqf21l0ql"
+            ],
+            "correct": "o1z0n22wi0fo"
+          }
+        ]
+      }
+    },
+    "final": {
+      "passingScore": 75,
+      "questions": [
+        {
+          "id": "1",
+          "options": [
+            "o1yl10fx5re4",
+            "ooxex2dk1yh",
+            "o1kgs55cnofa",
+            "o12ywrbvkumd"
+          ],
+          "correct": "o1yl10fx5re4"
+        },
+        {
+          "id": "2",
+          "options": [
+            "owby0b9ghpi",
+            "o1yo2d2ln28y",
+            "o1jxiwhcojom",
+            "o1l6d1duoj9f"
+          ],
+          "correct": "owby0b9ghpi"
+        },
+        {
+          "id": "3",
+          "options": [
+            "o2di88lyfkgl",
+            "o400cy35rqy",
+            "o24pjqx0qt4k",
+            "oek66rsxuxp"
+          ],
+          "correct": "o2di88lyfkgl"
+        },
+        {
+          "id": "4",
+          "options": [
+            "o8nbkleuag0",
+            "o1z41ivl798i",
+            "o1pccqo004j4",
+            "o1s3d6z8vbch"
+          ],
+          "correct": "o8nbkleuag0"
+        },
+        {
+          "id": "5",
+          "options": [
+            "onu73fk2ea9",
+            "okb2gul8iyo",
+            "o1anpy64cpxs",
+            "o22qpxmur14"
+          ],
+          "correct": "onu73fk2ea9"
+        },
+        {
+          "id": "6",
+          "options": [
+            "omdbwe2qaxo",
+            "o27knjm7hdub",
+            "o1k0yeknnkme",
+            "ok2i8c4wtpv"
+          ],
+          "correct": "omdbwe2qaxo"
+        },
+        {
+          "id": "7",
+          "options": [
+            "ok0ko6tla7w",
+            "o209pmg1gn92",
+            "o164psktzwec",
+            "ormplxqmt8m"
+          ],
+          "correct": "ok0ko6tla7w"
+        },
+        {
+          "id": "8",
+          "options": [
+            "ob6xzsr2ve1",
+            "o16zjcixau7v",
+            "o6xvvum01bi",
+            "o2b2vx7gj69a"
+          ],
+          "correct": "ob6xzsr2ve1"
+        }
+      ]
+    }
+  },
+  "real_estate": {
+    "chapters": {
+      "1": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o1iml2w0jveg",
+              "o2eqj7cv3f5j",
+              "o9w3eco7994",
+              "o1o9gguakieb"
+            ],
+            "correct": "o2eqj7cv3f5j"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o13dyr8ugfaj",
+              "or57y1ni2pn",
+              "o19sop4tv3bq",
+              "oprb6x28yq3"
+            ],
+            "correct": "or57y1ni2pn"
+          },
+          {
+            "id": "3",
+            "options": [
+              "o72iemwjlq3",
+              "o28oz0md7j8j",
+              "ohd36t0nr80",
+              "o1cehnbb4m8p"
+            ],
+            "correct": "o28oz0md7j8j"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o7kxgr758po",
+              "o23yskdlkvo7",
+              "o1u4wwd6ts4k",
+              "o1d0cdz4bdz"
+            ],
+            "correct": "o23yskdlkvo7"
+          },
+          {
+            "id": "5",
+            "options": [
+              "ofjfyjxdwx2",
+              "o146i2hlfuyz",
+              "o1i73u4ngvzl",
+              "ojcvxvj3394"
+            ],
+            "correct": "o146i2hlfuyz"
+          }
+        ]
+      },
+      "2": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o1ueqai5pk6d",
+              "om28qve1oj1",
+              "onzawop77ct",
+              "o2g6346v81dg"
+            ],
+            "correct": "om28qve1oj1"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o1pg6mjol30s",
+              "o3r2ixgmlh8",
+              "o25ykl4uh3nt",
+              "o1h4ly5ecl8e"
+            ],
+            "correct": "o1pg6mjol30s"
+          },
+          {
+            "id": "3",
+            "options": [
+              "o161ee6bwl75",
+              "o1je51xf1itr",
+              "o1oa6bw1a3so",
+              "o1zy2cfhswz3"
+            ],
+            "correct": "o1je51xf1itr"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o1zq8gz40g3u",
+              "o16158ngacxy",
+              "oqtqlwxuzdk",
+              "o196rj34o3bw"
+            ],
+            "correct": "o1zq8gz40g3u"
+          },
+          {
+            "id": "5",
+            "options": [
+              "ohn0wyjjlxp",
+              "obol5r5voje",
+              "o1d8sc2edimf",
+              "o1hw8n9ypq4d"
+            ],
+            "correct": "obol5r5voje"
+          }
+        ]
+      },
+      "3": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "obkbropbrgv",
+              "o1kije97wges",
+              "o5t2zzjcfdn",
+              "o1k2gom6rxb1"
+            ],
+            "correct": "obkbropbrgv"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o1la6kpkqtda",
+              "o5qfpdj36v",
+              "o24e7ojetdvo",
+              "oyxblnkh2hr"
+            ],
+            "correct": "o1la6kpkqtda"
+          },
+          {
+            "id": "3",
+            "options": [
+              "o2dsq07ssl63",
+              "o133nj96qzxm",
+              "o20kwwwbd5q0",
+              "o1xlpllgg23e"
+            ],
+            "correct": "o133nj96qzxm"
+          },
+          {
+            "id": "4",
+            "options": [
+              "oxuh48ifs5v",
+              "o23wccdvbrcp",
+              "o1eyg4lxkrin",
+              "ow2gdrn8qzr"
+            ],
+            "correct": "oxuh48ifs5v"
+          },
+          {
+            "id": "5",
+            "options": [
+              "o1jjvqjmyyqu",
+              "o1440whfs20d",
+              "ovoi2heg5gm",
+              "o28uj7wjcdc9"
+            ],
+            "correct": "o1jjvqjmyyqu"
+          }
+        ]
+      },
+      "4": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o261rj4fc2xp",
+              "o23flwoj5ij7",
+              "o10z2x1dk9sc",
+              "oatatx7ps74"
+            ],
+            "correct": "o23flwoj5ij7"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o29uad0oj74",
+              "os1n9w6j8xc",
+              "o52trvhebcd",
+              "osyluwxi4fj"
+            ],
+            "correct": "o29uad0oj74"
+          },
+          {
+            "id": "3",
+            "options": [
+              "o1t5raewrb50",
+              "o1jzpzrw6xrg",
+              "o1hs9b7cbket",
+              "osdlcopyl2b"
+            ],
+            "correct": "o1hs9b7cbket"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o1migi38hh8",
+              "ob6j1qef8e",
+              "oagcn4eg0n2",
+              "o25hfi2x68ja"
+            ],
+            "correct": "o1migi38hh8"
+          },
+          {
+            "id": "5",
+            "options": [
+              "o1s4m9lguxi5",
+              "o1wvd8fkf4ke",
+              "o3bfxq1kua5",
+              "o27cms5o1q6d"
+            ],
+            "correct": "o1s4m9lguxi5"
+          }
+        ]
+      },
+      "5": {
+        "passingScore": 75,
+        "questions": [
+          {
+            "id": "1",
+            "options": [
+              "o1su4u4ow6xh",
+              "o1jzu9yn8ygf",
+              "o1x9jvsocmw6",
+              "o7ojwzbt47d"
+            ],
+            "correct": "o1su4u4ow6xh"
+          },
+          {
+            "id": "2",
+            "options": [
+              "o2dqep3ptvc2",
+              "o1l678eqa6fj",
+              "o1dla23lomm1",
+              "o22cqvw7bzgl"
+            ],
+            "correct": "o2dqep3ptvc2"
+          },
+          {
+            "id": "3",
+            "options": [
+              "oxx0afapzr5",
+              "o2aumnsx1kpi",
+              "oye63lgjvge",
+              "o2cffy2tnq2l"
+            ],
+            "correct": "o2aumnsx1kpi"
+          },
+          {
+            "id": "4",
+            "options": [
+              "o1y10uzvu9rf",
+              "o1yqanrq1gr3",
+              "o10k99n0myhc",
+              "o7wmoku6nyl"
+            ],
+            "correct": "o1yqanrq1gr3"
+          },
+          {
+            "id": "5",
+            "options": [
+              "og48ulndbnx",
+              "o1unvuj0ortz",
+              "o2elfkzm5b6f",
+              "o11llchrpi4x"
+            ],
+            "correct": "o1unvuj0ortz"
+          }
+        ]
+      }
+    },
+    "final": {
+      "passingScore": 75,
+      "questions": [
+        {
+          "id": "1",
+          "options": [
+            "o262g3k5krua",
+            "o222c5092cd",
+            "o1why0h4ral1",
+            "o1pupvqna2ul"
+          ],
+          "correct": "o262g3k5krua"
+        },
+        {
+          "id": "2",
+          "options": [
+            "o224my270a96",
+            "ogtile2xgy2",
+            "oafqaa7f1mv",
+            "o1e9naw58ttr"
+          ],
+          "correct": "o224my270a96"
+        },
+        {
+          "id": "3",
+          "options": [
+            "oxqqfx7h31g",
+            "o147y1pg57f",
+            "oz61uvyr1dg",
+            "o2brnmkgdtc6"
+          ],
+          "correct": "oxqqfx7h31g"
+        },
+        {
+          "id": "4",
+          "options": [
+            "ot2ijhj3uhm",
+            "o2cxatgqw5w5",
+            "o8h0qy8jsox",
+            "o2fa3ts4c7ol"
+          ],
+          "correct": "ot2ijhj3uhm"
+        },
+        {
+          "id": "5",
+          "options": [
+            "o1ofb3cym5ke",
+            "o29rn76iintg",
+            "o2f3c6caufaf",
+            "o1q4u4g8sg94"
+          ],
+          "correct": "o1ofb3cym5ke"
+        },
+        {
+          "id": "6",
+          "options": [
+            "o1zu1mggrbb3",
+            "o7k482s4i3w",
+            "osh23lz4jye",
+            "o2gnolojsmwh"
+          ],
+          "correct": "o1zu1mggrbb3"
+        },
+        {
+          "id": "7",
+          "options": [
+            "o3jtt8vd19o",
+            "o10kkonojh99",
+            "o24lqpy81mz3",
+            "o1l3khwyp022"
+          ],
+          "correct": "o3jtt8vd19o"
+        },
+        {
+          "id": "8",
+          "options": [
+            "o284h7i3n6cc",
+            "o6orexd80n1",
+            "oka2kdeus3p",
+            "o1trhax56xpd"
+          ],
+          "correct": "o284h7i3n6cc"
+        }
+      ]
+    }
+  },
   "crypto": {
     "chapters": {
       "1": {
