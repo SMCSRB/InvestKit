@@ -8,6 +8,7 @@ import { CRYPTO_DOMAIN, CRYPTO_MODE } from '../../config/cryptoMarketRules';
 import { LEADERBOARD_SIZE } from '../../config/game';
 import { RANKING_MIN_INVESTED } from '../../config/economy';
 import { CryptoDataError } from './dataService';
+import { rankingProgress } from '../rankingEligibility';
 import { marketFor, num, toAccount } from './core';
 import type { CryptoAccount } from './clockService';
 
@@ -52,6 +53,8 @@ export const rankingService = {
     // Pas de regard vers le futur : on ne consulte pas un classement d'une période que le joueur n'a pas encore atteinte.
     if (period > periodOf(acc.simulatedAt)) throw new CryptoDataError('INVALID_INPUT', 'Cette période est dans ton futur simulé.');
     const board = await leaderboardRepository.getBoard({ mode: CRYPTO_MODE, domain: CRYPTO_DOMAIN, year: 0, period, minCapital: RANKING_MIN_INVESTED, limit: LEADERBOARD_SIZE, callerId: userId });
-    return { domain: CRYPTO_DOMAIN, mode: CRYPTO_MODE, period: period.slice(1), minCapital: RANKING_MIN_INVESTED, ...board };
+    const committed = await leaderboardRepository.committedBy({ mode: CRYPTO_MODE, domain: CRYPTO_DOMAIN, period, userId });
+    const progress = await rankingProgress({ query } as any, userId, committed);
+    return { domain: CRYPTO_DOMAIN, mode: CRYPTO_MODE, period: period.slice(1), minCapital: RANKING_MIN_INVESTED, ...board, progress };
   },
 };

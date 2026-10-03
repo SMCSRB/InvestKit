@@ -790,3 +790,13 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Banque, prêt personnel : avec très peu de pièces à toi (hors pièces empruntées), la demande est refusée pour « Réserve de sécurité » avec le montant manquant.
 6. Aucun « € » dans ces messages : tout est en InvestCoins.
 7. Si tu veux changer les 10 % ou les 4 mensualités : `backend/src/config/immoRules.ts` (`minDownPaymentPctOfPrice`, `reserveMonthlyPayments`).
+
+## Classement net de revente, seuil et barre de progression
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR (dernière du lot, après la banque).
+
+1. Page Classements (Bourse, Crypto, Immobilier) et onglet Bilan de l'Immobilier : une barre **« … / 2 500 investis »** et une barre **« … / 5 jours actifs »**. Le texte est neutre : pas de date limite, pas de pression.
+2. Avec un compte neuf (moins de 5 jours actifs) qui a investi plus de 2 500 : tu n'es **pas classé**, la barre des jours n'est pas pleine. Après avoir joué 5 jours différents : tu apparais au classement.
+3. Avec 5 jours actifs mais moins de 2 500 investis : pas classé non plus ; investis davantage, la barre se remplit.
+4. Immobilier, Bilan : « valeur nette de revente » est **plus basse** que les fonds propres (frais d'agence, diagnostics, impôt…). Un bien **loué** vaut 10 % de moins en revente qu'un bien vide.
+5. Le pourcentage du classement Immobilier est le gain net de revente divisé par **10 000** (compte gratuit) ou **20 000** (compte Pro).
+6. Note de sécurité à garder : « jour actif » compte aujourd'hui toute requête connectée ; à resserrer à l'audit (`docs/classement-net-de-revente.md`).

@@ -22,6 +22,7 @@ import { planLine } from '@/app/lib/plan';
 import { useCoins } from '@/app/lib/coinStore';
 import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
+import RankingProgress from '@/app/components/ui/RankingProgress';
 import ProfileForm from '@/app/components/profile/ProfileForm';
 import NewsFeed from './NewsFeed';
 import DeleteAccount from '@/app/components/profile/DeleteAccount';
@@ -1683,8 +1684,9 @@ function DashboardContent() {
                 {/* Classement (comparaison à année simulée égale) */}
                 <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '32px 0 8px 0' }}>Classement</h3>
                 <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: '0 0 12px 0' }}>
-                  Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} <Coin /> pour être classé.
+                  Les joueurs sont comparés à la même année simulée. Pour être classé, il faut avoir investi au moins {tradingBoard?.minCapital ?? 100} <Coin /> et avoir joué au moins 5 jours différents.
                 </p>
+                <RankingProgress progress={tradingBoard?.progress} />
                 <div style={{ marginBottom: '12px' }}>
                   <select
                     value={tradingBoard?.year ?? ''}

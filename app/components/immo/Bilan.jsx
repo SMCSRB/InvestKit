@@ -6,6 +6,7 @@ import { EmptyState, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import { MONTHS, call, coins, eur, eur2, eurText2 } from './api';
 import Coin from '@/app/components/ui/Coin';
+import RankingProgress from '@/app/components/ui/RankingProgress';
 import { Medal } from '@/app/components/ui/Icon';
 
 const kindTone = (k = '') => (/late|unpaid|default|forced/.test(k) ? 'bad' : /works|notice|vacan|truce/.test(k) ? 'warn' : /gli|sold|let|reimb/.test(k) ? 'ok' : 'info');
@@ -75,13 +76,13 @@ export function Leaderboard({ game, notify }) {
   return (
     <div className="rp-board">
       <h2>Classement Immobilier<HelpTip term="performance" /></h2>
-      <p className="ik-muted">Il compare la performance de chaque joueur à la même année de jeu : (fonds propres + argent encaissé − argent investi) ÷ argent investi. Un gain réalisé en vendant reste compté. Le classement est net de dettes : les intérêts d’un prêt personnel sont déduits et le gain est rapporté à ton capital propre (le levier utilisé est affiché). Pour être classé, il faut avoir investi au moins {data.mine?.minCapitalCoins ?? data.minCapital} <Coin />.</p>
+      <p className="ik-muted">Il compare la performance de chaque joueur à la même année de jeu : Le gain compté est celui que tu aurais net de revente : prix de vente moins l’agence, les diagnostics, les frais de remboursement anticipé, l’impôt sur la plus-value et, pour un bien loué, la décote de 10 % des biens occupés. Il est rapporté au capital de départ de ton compte (10 000 en gratuit, 20 000 avec Pro). Les intérêts d’un prêt personnel sont déduits et le levier utilisé est affiché. Pour être classé, il faut avoir investi au moins {data.mine?.minCapitalCoins ?? data.minCapital} <Coin /> et avoir joué au moins 5 jours différents.</p>
       <label className="rp-field rp-field--inline"><span>Année de comparaison</span><select className="ik-select" value={year} onChange={(e) => setYear(Number(e.target.value))}>{years.map((y) => <option key={y} value={y}>{y}</option>)}</select></label>
+      <RankingProgress progress={data.progress} />
       {data.mine && (
         <div className={`rp-banner ${data.mine.ranked ? 'rp-banner--ok' : 'rp-banner--warn'}`}>
           <div><strong>Ma performance : {p(data.mine.performancePct)}</strong>
-            <p>Investi {eur(data.mine.investedEuros)} · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}</p>
-            {!data.mine.ranked && <p>Tu n’es pas encore classé : investis au moins {data.mine.minCapitalCoins} <Coin /> (apport, frais et travaux compris).</p>}
+            <p>Investi {eur(data.mine.investedEuros)} · valeur nette de revente {eur(data.mine.liquidationValueEuros)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}</p>
             {data.me && <p>Ton rang en {year} : n°{data.me.rank} sur {data.totalRanked}.</p>}</div>
         </div>
       )}

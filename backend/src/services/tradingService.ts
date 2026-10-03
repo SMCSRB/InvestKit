@@ -4,7 +4,8 @@ import {
   VirtualPortfolio,
 } from '../repositories/virtualPortfolioRepository';
 import { investcoinsRepository, InsufficientFundsError, Queryable } from '../repositories/investcoinsRepository';
-import { leaderboardRepository } from '../repositories/leaderboardRepository';
+import { leaderboardRepository, periodForYear } from '../repositories/leaderboardRepository';
+import { rankingProgress } from './rankingEligibility';
 import { userRepository } from '../repositories/userRepository';
 import { DomainConfig, getDomain } from '../data/marketData';
 import { getBuyAccess, BuyAccess } from '../utils/entitlements';
@@ -459,6 +460,8 @@ export const tradingService = {
       limit: LEADERBOARD_SIZE,
       callerId: userId,
     });
-    return { domain: domain.id, year, minCapital: RANKING_MIN_INVESTED, ...board };
+    const committed = await leaderboardRepository.committedBy({ mode: MODE, domain: domain.id, period: periodForYear(year), userId });
+    const progress = await rankingProgress({ query } as any, userId, committed);
+    return { domain: domain.id, year, minCapital: RANKING_MIN_INVESTED, ...board, progress };
   },
 };

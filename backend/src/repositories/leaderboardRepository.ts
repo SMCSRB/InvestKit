@@ -1,5 +1,6 @@
 import { query } from '../utils/db';
 import type { Queryable } from './investcoinsRepository';
+import { RANKING_MIN_ACTIVE_DAYS } from '../config/economy';
 
 export interface BoardEntry {
   rank: number;
@@ -25,6 +26,15 @@ export interface Board {
 export const periodForYear = (year: number): string => `Y${year}`;
 
 export const leaderboardRepository = {
+  // Capital engagé du joueur dans son instantané de la période (0 s'il n'en a pas encore) : sert à la barre de progression vers le classement.
+  async committedBy(params: { mode: string; domain: string; period: string; userId: string }): Promise<number> {
+    const r = await query(
+      `SELECT capital_committed FROM leaderboard_rankings WHERE user_id = $1 AND mode = $2 AND domain = $3 AND period = $4`,
+      [params.userId, params.mode, params.domain, params.period]
+    );
+    return r.rows.length ? Number(r.rows[0].capital_committed) : 0;
+  },
+
   // Enregistre (ou met à jour) l'instantané du joueur pour cette année
   // simulée. Appelé dans la même transaction que l'ordre ou l'avancée qui
   // le modifie, pour que le classement ne diffère jamais du portefeuille.
@@ -62,7 +72,8 @@ export const leaderboardRepository = {
     );
   },
 
-  // Seuls les joueurs ayant engagé au moins `minCapital` sont classés (un %
+  // Seuls les joueurs ayant engagé au moins `minCapital` ET ayant au moins RANKING_MIN_ACTIVE_DAYS jours actifs sont classés (règle unique, tous domaines).
+  // (Avant : seuls les joueurs ayant engagé au moins `minCapital`)  (un %
   // sur un capital dérisoire n'a aucun sens). Le rang est calculé à la
   // lecture : il reste ainsi toujours cohérent avec les instantanés.
   async getBoard(params: {
@@ -88,13 +99,14 @@ export const leaderboardRepository = {
          JOIN users u ON u.id = lr.user_id
          WHERE lr.mode = $1 AND lr.domain = $2 AND lr.period = $3
            AND lr.capital_committed >= $4
+           AND u.active_days >= $7
        )
        SELECT user_id, username, avatar_id, pro, performance_pct, leverage, rank,
               (SELECT COUNT(*) FROM ranked) AS total
        FROM ranked
        WHERE (rank <= $5 AND rn <= $5) OR user_id = $6
        ORDER BY rank, (user_id = $6) DESC, username`,
-      [params.mode, params.domain, params.period ?? periodForYear(params.year), params.minCapital, params.limit, params.callerId]
+      [params.mode, params.domain, params.period ?? periodForYear(params.year), params.minCapital, params.limit, params.callerId, RANKING_MIN_ACTIVE_DAYS]
     );
 
     const toEntry = (row: any): BoardEntry => ({
