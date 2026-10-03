@@ -669,3 +669,13 @@ La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.
 ## Suppression du compte (vrai bouton)
 
 Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer mon compte » (ou /profile > Compte) : le formulaire demande le mot de passe (+ code 2FA si activée) et d'écrire SUPPRIMER ; un mauvais mot de passe est refusé ; « Télécharger mes données avant » fonctionne ; après confirmation, tu es renvoyé sur l'accueil et le compte n'existe plus (connexion impossible). Avec un abonnement Stripe de test : il est annulé d'abord.
+
+## Suppression de compte : conservation et anonymisation
+
+1. Avec un compte de test avec abonnement Stripe de test : « Supprimer mon compte ». Tu reçois deux e-mails (« suppression en cours » puis « compte supprimé »). L'abonnement est annulé chez Stripe.
+2. Reconnecte-toi avec l'ancien navigateur : tu es déconnecté (jeton refusé).
+3. Dans l'administration : la statistique « pièces par domaine » n'a pas bougé.
+4. En base : `SELECT * FROM billing_records_archive ORDER BY id DESC LIMIT 1;` : formule et dates, aucun e-mail ni identifiant de joueur.
+5. Si le compte était chef de guilde : la guilde existe toujours avec un nouveau chef (le plus ancien membre), ou a disparu s'il était seul.
+6. Les amis du compte supprimé ne voient plus ni son nom, ni ses notifications « X est ton ami ».
+7. Relis la section 8 de la page de confidentialité (à faire valider par un professionnel).

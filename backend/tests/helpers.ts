@@ -20,6 +20,7 @@ export const resetPlayers = async (): Promise<void> => {
   if (!/test/i.test(name)) throw new Error(`Refus de vider la base « ${name} » : son nom ne contient pas « test ».`);
   await query('TRUNCATE users CASCADE');
   await query('TRUNCATE leaderboard_rankings');
+  await query('TRUNCATE investcoins_ledger_archive');   // totaux anonymes des comptes supprimés : repartent de zéro avec les joueurs
 };
 
 export const teardownDb = async (): Promise<void> => {

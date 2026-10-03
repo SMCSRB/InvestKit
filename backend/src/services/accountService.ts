@@ -7,6 +7,9 @@ import { getStripeClient } from '../utils/stripe';
 import { consumeBackupCode, verifyTotpCode } from '../utils/totp';
 import { decryptField } from '../utils/fieldCrypto';
 import { auditLog } from './auditService';
+import { sendAccountDeletionNotice } from '../utils/email';
+import { invalidateUserStatus } from '../utils/userStatus';
+import { socialService } from './socialService';
 
 // ─────────────────────────────────────────────────────────────────────────
 // DROITS RGPD : export de ses données (accès / portabilité) et suppression du compte (effacement).
@@ -80,7 +83,7 @@ export const deleteAccount = async (
   userId: string,
   input: { password?: unknown; code?: unknown; confirm?: unknown },
   deps: { cancelSubscription: (externalId: string) => Promise<void> } = { cancelSubscription: cancelStripeSubscription },
-  ip?: string | null
+  _ip?: string | null   // volontairement non journalisée : le journal de suppression est anonyme
 ) => {
   if (input.confirm !== DELETE_CONFIRM_PHRASE) throw new AccountError('INVALID_INPUT', `Confirmation requise : écris ${DELETE_CONFIRM_PHRASE}.`);
   if (typeof input.password !== 'string' || !input.password) throw new AccountError('INVALID_INPUT', 'Mot de passe requis.');
@@ -96,6 +99,10 @@ export const deleteAccount = async (
     if (!ok) throw new AccountError('BAD_CREDENTIALS', 'Code de double authentification invalide.');
   }
 
+  // Prévenance AVANT : l'adresse du compte est prévenue qu'une suppression vient d'être confirmée (au cas où ce ne serait pas son propriétaire).
+  const email = user.email; const name = user.username || null;
+  void Promise.resolve(sendAccountDeletionNotice(email, name, 'requested')).catch(() => undefined);
+
   // Abonnement Stripe annulé AVANT la suppression : on ne supprime pas un compte qui continuerait d'être facturé.
   const sub = await subscriptionRepository.findActiveByUserId(userId);
   let cancelled = false;
@@ -104,11 +111,44 @@ export const deleteAccount = async (
     catch (e) { throw new AccountError('SUBSCRIPTION_CANCEL_FAILED', 'Impossible d\'annuler ton abonnement pour le moment : ton compte n\'a pas été supprimé. Réessaie plus tard ou contacte le support.'); }
   }
 
+  const guildIds = (await query('SELECT guild_id FROM guild_members WHERE user_id = $1', [userId])).rows.map((r: any) => r.guild_id as string);
   const client: PoolClient = await getClient();
   try {
     await client.query('BEGIN');
-    await auditLog({ userId, action: 'account_deleted', entityType: 'user', entityId: userId, metadata: { subscriptionCancelled: cancelled }, ip }, client);
-    await client.query('DELETE FROM users WHERE id = $1', [userId]);   // cascade : données de jeu, prêts, pièces… ; audit anonymisé
+    await client.query('SELECT 1 FROM users WHERE id = $1 FOR UPDATE', [userId]);
+
+    // 1) Registre des pièces : résumé ANONYME (totaux par domaine, nature et motif) avant d'effacer les lignes du joueur : les statistiques restent exactes.
+    await client.query(
+      `INSERT INTO investcoins_ledger_archive (domain, nature, reason, entries, credited, debited)
+       SELECT domain, nature, reason, COUNT(*), COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0), COALESCE(-SUM(amount) FILTER (WHERE amount < 0), 0)
+       FROM investcoins_transactions WHERE user_id = $1 GROUP BY domain, nature, reason
+       ON CONFLICT ((COALESCE(domain, '')), nature, reason) DO UPDATE SET entries = investcoins_ledger_archive.entries + EXCLUDED.entries,
+         credited = investcoins_ledger_archive.credited + EXCLUDED.credited, debited = investcoins_ledger_archive.debited + EXCLUDED.debited`, [userId]);
+
+    // 2) Abonnements payants : trace comptable minimale, SANS identifiant de joueur ni e-mail (obligation légale de conservation, 10 ans).
+    await client.query(
+      `INSERT INTO billing_records_archive (tier, payment_provider, external_subscription_id, started_at, current_period_end, canceled_at)
+       SELECT tier, payment_provider, external_subscription_id, started_at, current_period_end, canceled_at
+       FROM subscriptions WHERE user_id = $1 AND external_subscription_id IS NOT NULL`, [userId]);
+
+    // 3) Données libres du joueur : ses retours (texte libre) sont supprimés ; les notifications des AUTRES joueurs qui citent son pseudo aussi.
+    await client.query('DELETE FROM feedback WHERE user_id = $1', [userId]);
+    if (user.username) {
+      const like = `%${String(user.username).replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+      await client.query(`DELETE FROM notifications WHERE kind IN ('friend_request', 'friend_accepted') AND user_id <> $1 AND body LIKE $2`, [userId, like]);
+    }
+
+    // 4) Journal d'audit : plus d'auteur, plus d'adresse IP, plus d'identifiant de la personne, plus de cible/e-mail/pseudo dans les détails.
+    await client.query(
+      `UPDATE audit_logs SET user_id = CASE WHEN user_id = $1 THEN NULL ELSE user_id END,
+         ip_address = CASE WHEN user_id = $1 THEN NULL ELSE ip_address END,
+         entity_id = CASE WHEN entity_id = $1 THEN NULL ELSE entity_id END,
+         metadata = metadata - 'target' - 'email' - 'username'
+       WHERE user_id = $1 OR entity_id = $1`, [userId]);
+    // La suppression elle-même est journalisée, de façon anonyme (ni identifiant, ni IP, ni e-mail) : seulement qu'une suppression a eu lieu.
+    await auditLog({ userId: null, action: 'account_deleted', entityType: 'user', entityId: null, metadata: { subscriptionCancelled: cancelled, hadPaidSubscription: !!sub, accountAgeDays: Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000) } }, client);
+
+    await client.query('DELETE FROM users WHERE id = $1', [userId]);   // cascade : données de jeu, prêts, pièces, amis, guildes (appartenance), photo, codes…
     await client.query('COMMIT');
   } catch (e) {
     await client.query('ROLLBACK');
@@ -116,5 +156,9 @@ export const deleteAccount = async (
   } finally {
     client.release();
   }
+  invalidateUserStatus(userId);   // un jeton encore valide ne doit plus rien ouvrir
+  // Guildes : si le joueur en était le chef, le membre le plus ancien reprend ; guilde vide : supprimée.
+  for (const gid of guildIds) await socialService.healGuild(gid).catch((e) => console.error('Guild heal error:', e));
+  void Promise.resolve(sendAccountDeletionNotice(email, name, 'done')).catch(() => undefined);
   return { deleted: true, subscriptionCancelled: cancelled };
 };

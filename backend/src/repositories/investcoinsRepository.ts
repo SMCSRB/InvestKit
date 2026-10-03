@@ -152,12 +152,17 @@ export const investcoinsRepository = {
   // créations et destructions « pures », `exchangeNet` les allers-retours achat/vente.
   async ledgerStatsByDomain() {
     const result = await query(
+      // Les écritures des joueurs supprimés ne sont plus listées une à une : elles subsistent en totaux anonymes (investcoins_ledger_archive).
       `SELECT COALESCE(domain, '(hors domaine)') AS domain, nature,
-              COUNT(*)::int AS entries,
-              COALESCE(SUM(amount), 0)::bigint AS net,
-              COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0)::bigint AS credited,
-              COALESCE(-SUM(amount) FILTER (WHERE amount < 0), 0)::bigint AS debited
-       FROM investcoins_transactions GROUP BY 1, 2 ORDER BY 1, 2`
+              SUM(entries)::int AS entries,
+              SUM(credited - debited)::bigint AS net,
+              SUM(credited)::bigint AS credited,
+              SUM(debited)::bigint AS debited
+       FROM (
+         SELECT domain, nature, COUNT(*) AS entries, COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0) AS credited, COALESCE(-SUM(amount) FILTER (WHERE amount < 0), 0) AS debited
+         FROM investcoins_transactions GROUP BY domain, nature
+         UNION ALL SELECT domain, nature, entries, credited, debited FROM investcoins_ledger_archive
+       ) t GROUP BY 1, 2 ORDER BY 1, 2`
     );
     const byDomain: Record<string, { created: number; destroyed: number; credited: number; repaid: number; exchangeNet: number; netInjected: number; entries: number }> = {};
     for (const r of result.rows) {
@@ -176,8 +181,11 @@ export const investcoinsRepository = {
   // Puits d'InvestCoins : pièces détruites PAR DOMAINE et PAR MOTIF (courtage, impôts, intérêts de prêt…), hors remboursements de prêts.
   async sinksByDomainAndReason() {
     const result = await query(
-      `SELECT COALESCE(domain, '(hors domaine)') AS domain, reason, COUNT(*)::int AS entries, COALESCE(-SUM(amount), 0)::bigint AS destroyed
-       FROM investcoins_transactions WHERE nature = 'destruction' GROUP BY 1, 2 ORDER BY 1, 2`
+      `SELECT COALESCE(domain, '(hors domaine)') AS domain, reason, SUM(entries)::int AS entries, SUM(debited)::bigint AS destroyed
+       FROM (
+         SELECT domain, reason, COUNT(*) AS entries, COALESCE(-SUM(amount), 0) AS debited FROM investcoins_transactions WHERE nature = 'destruction' GROUP BY domain, reason
+         UNION ALL SELECT domain, reason, entries, debited FROM investcoins_ledger_archive WHERE nature = 'destruction'
+       ) t GROUP BY 1, 2 ORDER BY 1, 2`
     );
     const out: Record<string, Record<string, { entries: number; destroyed: number }>> = {};
     for (const r of result.rows) (out[r.domain] ??= {})[r.reason] = { entries: r.entries, destroyed: Number(r.destroyed) };

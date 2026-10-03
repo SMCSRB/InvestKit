@@ -118,7 +118,7 @@ export default function PrivacyPage() {
           },
           {
             title: '8. Conservation des Données',
-            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. La suppression du compte est immédiate et définitive : vos données sont effacées et le journal de sécurité est anonymisé. Les obligations légales de conservation (par exemple la facturation d’un abonnement) restent réservées.',
+            content: 'Nous conservons vos données aussi longtemps que votre compte est actif. La suppression du compte est immédiate et définitive : votre profil, votre progression, vos InvestCoins, vos portefeuilles, vos amis, votre photo et vos retours sont effacés, et les éléments qui subsistent dans le journal de sécurité (adresse IP, identifiant, pseudo, e-mail) sont retirés. Seules deux traces sans lien avec votre profil subsistent : des totaux statistiques anonymes (par exemple le nombre total d’InvestCoins créés) et, si vous aviez un abonnement payant, une trace comptable minimale (dates, formule, identifiant d’abonnement chez notre prestataire de paiement) conservée dix ans, comme la loi l’exige pour les pièces comptables ; vos factures restent chez le prestataire de paiement. Par sécurité, des sauvegardes techniques de nos serveurs sont conservées 14 jours : un compte supprimé peut donc y figurer pendant 14 jours au plus, puis disparaît définitivement ; ces sauvegardes ne sont jamais réutilisées pour le service courant, et si une restauration devait avoir lieu, la suppression serait immédiatement réappliquée.',
             list: null,
           },
           {

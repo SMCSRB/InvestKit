@@ -196,6 +196,18 @@ export const emailChangeNoticeMail = (name: string | null | undefined, stage: 'r
     : ['L\'adresse e-mail de ton compte vient d\'être remplacée. Tu te connecteras désormais avec la nouvelle.', 'Ce n\'est pas toi ? Contacte-nous immédiatement via la page Support.'],
 });
 
+// Suppression de compte : prévenance AVANT (demande en cours, au cas où ce ne serait pas toi) puis APRÈS (compte supprimé).
+export const accountDeletionMail = (name: string | null | undefined, stage: 'requested' | 'done'): MailContent => ({
+  subject: stage === 'requested' ? 'Suppression de ton compte InvestKit en cours' : 'Ton compte InvestKit a été supprimé',
+  preheader: stage === 'requested' ? 'Si ce n\'est pas toi, change ton mot de passe tout de suite.' : 'Tes données ont été effacées.',
+  title: stage === 'requested' ? 'Suppression de ton compte demandée' : 'Compte supprimé',
+  greetingName: name,
+  hero: 'shield',
+  paragraphs: stage === 'requested'
+    ? ['Quelqu\'un vient de confirmer la suppression de ton compte InvestKit avec ton mot de passe. Elle est définitive et va être exécutée dans un instant.', 'Ce n\'est pas toi ? Contacte-nous immédiatement via la page Support.']
+    : ['Ton compte InvestKit est supprimé : ta progression, tes InvestCoins, tes portefeuilles, tes amis et ta photo sont effacés. Seules quelques traces comptables d\'un éventuel abonnement payant sont conservées, sans lien avec ton profil, comme la loi l\'exige. Les sauvegardes techniques les plus anciennes disparaissent d\'elles-mêmes sous 14 jours.', 'Merci d\'avoir joué avec nous.'],
+});
+
 const sendMail = (to: string, c: MailContent) => {
   const { subject, html, text } = renderMail(c);
   return deliverEmail(to, subject, html, text);
@@ -219,3 +231,5 @@ export const sendWelcomeEmail = async (email: string, name?: string | null) =>
 
 export const sendEmailChangeCode = async (newEmail: string, name: string | null | undefined, code: string) => sendMail(newEmail, emailChangeCodeMail(name, code));
 export const sendEmailChangeNotice = async (oldEmail: string, name: string | null | undefined, stage: 'requested' | 'done') => sendMail(oldEmail, emailChangeNoticeMail(name, stage));
+
+export const sendAccountDeletionNotice = async (email: string, name: string | null | undefined, stage: 'requested' | 'done') => sendMail(email, accountDeletionMail(name, stage));
