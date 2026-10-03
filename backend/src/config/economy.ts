@@ -36,6 +36,12 @@ export const MAX_OUTSTANDING_DEBT_COINS = 500_000;
 // (complété seulement si le joueur a moins).
 export const RECOVERY_BASE_CAPITAL = STARTING_CAPITAL;
 
+// ── Récompense quotidienne ───────────────────────────────────────────────────
+// Montant fixe (pas de série, pas de bonus qui grandit), au plus ce nombre de jours payés par semaine
+// (semaine du lundi au dimanche, en UTC). Le serveur décide de tout et chaque versement passe par le registre.
+export const DAILY_REWARD_COINS = 10;
+export const DAILY_REWARD_MAX_DAYS_PER_WEEK = 3;
+
 // ── Récompenses d'éducation ──────────────────────────────────────────────────
 // Versées une seule fois par chapitre ou par domaine terminé, décidées par le serveur.
 export const EDUCATION_CHAPTER_COINS = 20;

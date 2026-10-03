@@ -23,8 +23,8 @@ const ACTIONS = [
   { href: '/education', icon: 'book', title: 'Apprendre', hint: 'Cours et quiz' },
 ];
 
-// Accueil vivant du tableau de bord : salutation, série de jours, scène 3D qui suit le curseur (parallaxe en profondeur),
-// raccourcis en grandes cartes. Tout est réel (nom, série, patrimoine) ; mouvement coupé par « Animations : Non ».
+// Accueil vivant du tableau de bord : salutation, jours actifs, scène 3D qui suit le curseur (parallaxe en profondeur),
+// raccourcis en grandes cartes. Tout est réel (nom, jours actifs, patrimoine) ; mouvement coupé par « Animations : Non ».
 export default function DashHero({ username, patrimoine, loading }) {
   const ref = useRef(null);
   const { motionEnabled } = useTheme();
@@ -53,7 +53,7 @@ export default function DashHero({ username, patrimoine, loading }) {
     return () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerleave', leave); if (raf) cancelAnimationFrame(raf); };
   }, [motionEnabled]);
 
-  const streak = wallet?.dailyStreak ?? 0;
+  const activeDays = wallet?.activeDays ?? 0;
   const ready = !!wallet?.canClaimToday;
   // Même action que le bouton cadeau de la barre du haut (même fonction du serveur, mêmes données partagées)
   const chipRef = useRef(null);
@@ -63,7 +63,7 @@ export default function DashHero({ username, patrimoine, loading }) {
     try {
       const r = await shell.claimDaily();
       if (motionEnabled) burstCoins(chipRef.current, document.querySelector('.ik-balance'));
-      setMsg(`+${r.reward} InvestCoins ! Série : ${r.newStreak} jour${r.newStreak > 1 ? 's' : ''}.`);
+      setMsg(`+${r.reward} InvestCoins !`);
     } catch (e) {
       setMsg(e.message || 'Récompense indisponible pour le moment.');
     } finally {
@@ -81,7 +81,7 @@ export default function DashHero({ username, patrimoine, loading }) {
             {shell?.user?.plan?.isPro && <p className="dh__plan" data-testid="plan-line">{planLine(shell.user.plan)}</p>}
             <p className="dh__sub">Voici où en est ton parcours. Choisis une action pour continuer.</p>
             <div className="dh__chips">
-              {streak > 0 && <span className="dh__chip dh__chip--flame"><Icon name="flame" size={16} /> Série de {streak} jour{streak > 1 ? 's' : ''}</span>}
+              {activeDays > 0 && <span className="dh__chip" title="Les jours où tu as utilisé InvestKit. Ce compteur ne baisse jamais."><Icon name="calendar" size={16} /> {activeDays} jour{activeDays > 1 ? 's' : ''} actif{activeDays > 1 ? 's' : ''}</span>}
               {ready && <button ref={chipRef} type="button" className="dh__chip dh__chip--claim" onClick={claim} disabled={busy}><Icon name="gift" size={16} /> Récupérer ma récompense du jour</button>}
               {msg && <span className="dh__chip" role="status">{msg}</span>}
             </div>

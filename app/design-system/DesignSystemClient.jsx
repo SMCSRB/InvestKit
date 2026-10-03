@@ -46,7 +46,7 @@ export default function DesignSystemClient() {
         <Reveal index={0}><StatCard label="Patrimoine total" icon="wallet" value={325980} format={fmt} unit={<Coin size={26} />} delta={12} deltaLabel="sur l'année (exemple)" hero /></Reveal>
         <Reveal index={1}><StatCard label="Investi" icon="chart" value={270560} format={fmt} unit={<Coin size={26} />} delta={20} deltaLabel="exemple" href="#" /></Reveal>
         <Reveal index={2}><StatCard label="Plus-values" icon="trendUp" value={55420} format={fmt} unit={<Coin size={26} />} delta={-3.2} deltaLabel="exemple" /></Reveal>
-        <Reveal index={3}><StatCard label="Série de jours" icon="flame" value={7} format={(v) => `${Math.round(v)} jours`} deltaLabel="récompense quotidienne" /></Reveal>
+        <Reveal index={3}><StatCard label="Jours actifs" icon="calendar" value={7} format={(v) => `${Math.round(v)} jours`} deltaLabel="sans pénalité" /></Reveal>
       </div>
 
       <div className="ik-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', marginTop: 16 }}>

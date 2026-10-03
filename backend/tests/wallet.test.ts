@@ -6,6 +6,7 @@ import { query } from '../src/utils/db';
 import { netWorthCoins } from '../src/engine/wealth';
 import { withTx, originateLoan } from '../src/services/bankService';
 import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum } from './helpers';
+import { DAILY_REWARD_COINS, DAILY_REWARD_MAX_DAYS_PER_WEEK } from '../src/config/economy';
 import fs from 'fs';
 import path from 'path';
 
@@ -33,10 +34,10 @@ describe.skipIf(!hasDb)('InvestCoins : le serveur renvoie le portefeuille à jou
   const player = (balance = 1000) => createUser({ balance, freeDomain: 'stocks' });
   const wallet = async (id: string) => (await request(app).get('/api/v1/economy/balance').set('Authorization', tok(id))).body;
 
-  it('GET /economy/balance : solde, titres, dettes, patrimoine, série ; patrimoine = vue d\'ensemble', async () => {
+  it('GET /economy/balance : solde, titres, dettes, patrimoine, jours actifs ; patrimoine = vue d\'ensemble', async () => {
     const id = await player(800);
     const w = await wallet(id);
-    expect(w).toMatchObject({ balance: 800, tradingValue: 0, debtCoins: 0, netWorth: 800, dailyStreak: 0, canClaimToday: true });
+    expect(w).toMatchObject({ balance: 800, tradingValue: 0, debtCoins: 0, netWorth: 800, activeDays: 1, canClaimToday: true, dailyRewardCoins: DAILY_REWARD_COINS, claimedThisWeek: 0, maxClaimsPerWeek: DAILY_REWARD_MAX_DAYS_PER_WEEK });
     expect(typeof w.at).toBe('number');
     const ov = (await request(app).get('/api/v1/overview').set('Authorization', tok(id))).body;
     expect(ov.totals.netWorth).toBe(w.netWorth);
@@ -47,7 +48,7 @@ describe.skipIf(!hasDb)('InvestCoins : le serveur renvoie le portefeuille à jou
     const r = await request(app).post('/api/v1/economy/daily-reward').set('Authorization', tok(id));
     expect(r.status).toBe(200);
     expect(r.body.balance).toBe(await balanceOf(id));
-    expect(r.body.wallet).toMatchObject({ balance: await balanceOf(id), netWorth: await balanceOf(id), canClaimToday: false, dailyStreak: 1 });
+    expect(r.body.wallet).toMatchObject({ balance: await balanceOf(id), netWorth: await balanceOf(id), canClaimToday: false, claimedThisWeek: 1 });
     const again = await request(app).post('/api/v1/economy/daily-reward').set('Authorization', tok(id));
     expect(again.status).toBe(400);
     expect(again.body.wallet).toBeUndefined();                                 // jamais d'affichage « optimiste » pour un refus

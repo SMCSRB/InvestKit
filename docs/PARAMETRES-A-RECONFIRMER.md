@@ -104,7 +104,7 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Capital Pro | ×2 (complément de 10 000 🪙, une seule fois) | DÉCISION | — |
 | Seuil d'entrée au classement (tous les domaines) | 2 500 🪙 investis dans le domaine ET 5 jours actifs (`RANKING_MIN_INVESTED`, `RANKING_MIN_ACTIVE_DAYS`, `config/economy.ts`) | DÉCISION | — |
 | Capital minimal pour apparaître au classement | 100 🪙 ; 20 places | JEU | — |
-| Récompense quotidienne | 50 🪙 + 10 par jour de série, plafond 30 jours | JEU | — |
+| Récompense quotidienne | 10 🪙 fixes, 3 jours payés au maximum par semaine (lundi → dimanche, UTC), aucune série (`DAILY_REWARD_*`, `config/economy.ts`) | JEU | — |
 | Chapitre / domaine d'éducation | 20 🪙 et 100 XP / 100 🪙 et 500 XP | JEU | — |
 | Étape de la checklist d'accueil | 10 🪙 | JEU | — |
 | Prix du plan Pro | 7,99 € par mois ; 79 € par an | DÉCISION | — |

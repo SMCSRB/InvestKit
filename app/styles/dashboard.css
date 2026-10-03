@@ -329,19 +329,10 @@
   font: 700 var(--ik-fs-sm) / 1 var(--ik-font);
   backdrop-filter: blur(6px);
 }
-.dh__chip--flame svg {
-  color: #ffc14d;
-  animation: dh-flicker 1.6s ease-in-out infinite;
-}
-@keyframes dh-flicker {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.18) rotate(-6deg); }
-}
 .dh__chip--claim {
   cursor: pointer;
   background: #fff;
   color: #2c1d7a;
-  animation: ik-pulse-ring 1.8s var(--ik-ease) infinite;
 }
 .dh__chip--claim:hover {
   transform: translate3d(0, -2px, 0);

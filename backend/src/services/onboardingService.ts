@@ -17,7 +17,7 @@ export const STEPS: StepDef[] = [
     done: (u) => exists(`SELECT 1 FROM users WHERE id = $1 AND (free_domain IS NOT NULL OR subscription_tier = 'pro' OR pro_override)`, u) },
   { key: 'first_lesson', title: 'Terminer une leçon d\'éducation', description: 'Un chapitre pour comprendre les bases (et gagner des pièces).', link: '/education',
     done: (u) => exists('SELECT 1 FROM education_progress WHERE user_id = $1', u) },
-  { key: 'daily_reward', title: 'Réclamer ta récompense quotidienne', description: 'Reviens chaque jour : le bonus grandit avec ta série.', link: '/dashboard',
+  { key: 'daily_reward', title: 'Réclamer ta récompense quotidienne', description: 'Une petite récompense fixe, jusqu\'à 3 jours par semaine : aucune série à tenir.', link: '/dashboard',
     done: (u) => exists('SELECT 1 FROM users WHERE id = $1 AND last_daily_claim_at IS NOT NULL', u) },
   { key: 'first_trade', title: 'Faire ton premier achat en Bourse ou en Crypto', description: 'Achète un titre dans le Simulateur : les frais et impôts sont expliqués avant de valider.', link: '/dashboard',
     done: (u) => exists('SELECT 1 FROM virtual_portfolios WHERE user_id = $1 AND total_bought > 0', u) },

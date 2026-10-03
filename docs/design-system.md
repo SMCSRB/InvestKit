@@ -39,7 +39,7 @@ React, dans `app/components/ui/` : `Icon` (jeu d'icônes SVG), `Logo`, `primitiv
 Les graphiques de marché professionnels (bougies, indicateurs) utilisent Lightweight Charts (attribution obligatoire), voir `app/crypto/PriceChart.jsx`.
 
 Coque, dans `app/components/shell/` : `AppShell` (menu latéral repliable, bandeau de cours, barre supérieure, recherche Ctrl/⌘ + K), `PageHeader`.
-Navigation : **une seule source**, `app/components/shell/nav.js`. Données de la barre supérieure : **réelles** (solde d'InvestCoins, série de jours, notifications, droit d'administration).
+Navigation : **une seule source**, `app/components/shell/nav.js`. Données de la barre supérieure : **réelles** (solde d'InvestCoins, jours actifs, notifications, droit d'administration).
 Le bandeau de cours n'affiche que les actifs du marché simulé du joueur (Crypto) ; sans compte Crypto, il disparaît. Aucun chiffre inventé.
 
 Règles : les valeurs d'exemple sont toujours étiquetées « exemple » ; les icônes sont des SVG (pas d'emoji comme icône) ; un bouton sans action réelle n'existe pas (ou porte « Bientôt » honnêtement).
@@ -77,7 +77,7 @@ Plusieurs pages (amis, profil, quiz final…) utilisaient des classes de type Ta
 
 ## Tableau de bord vivant (lot 8)
 
-- `DashHero.jsx` : salutation, série de jours (réelle), scène 3D à couches décalées par le curseur (variables `--px`/`--py` × profondeur `--d`), raccourcis `data-tilt`. `ProgressCard.jsx` : anneau de niveau (XP réels). `TiltScope` est monté dans `AppShell` : toute carte `data-tilt` s'incline.
+- `DashHero.jsx` : salutation, jours actifs (réels), scène 3D à couches décalées par le curseur (variables `--px`/`--py` × profondeur `--d`), raccourcis `data-tilt`. `ProgressCard.jsx` : anneau de niveau (XP réels). `TiltScope` est monté dans `AppShell` : toute carte `data-tilt` s'incline.
 - Règles : uniquement `transform`/`opacity` ; chaque animation a sa coupure `data-motion='off'` et `prefers-reduced-motion` (testé) ; aucun chiffre inventé ; pas de suivi de souris sur écran tactile.
 
 ## Voir les composants

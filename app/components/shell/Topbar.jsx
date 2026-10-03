@@ -110,14 +110,16 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
   const reward = async () => {
     if (!wallet || busyRef.current) return;
     if (!wallet.canClaimToday) {
-      setMsg(`Récompense du jour déjà récupérée. Série en cours : ${wallet.dailyStreak} jour${wallet.dailyStreak > 1 ? 's' : ''}.`);
+      setMsg(wallet.claimedThisWeek >= wallet.maxClaimsPerWeek
+        ? `Tu as déjà reçu tes ${wallet.maxClaimsPerWeek} récompenses de la semaine. La prochaine est disponible lundi.`
+        : 'Récompense du jour déjà récupérée.');
       return;
     }
     busyRef.current = true;
     try {
       const r = await claimDaily();
       if (motionEnabled) burstCoins(rewardRef.current, balanceRef.current);
-      setMsg(`+${r.reward} InvestCoins ! Série : ${r.newStreak} jour${r.newStreak > 1 ? 's' : ''}.`);
+      setMsg(`+${r.reward} InvestCoins !`);
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -134,12 +136,12 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
         {wallet ? <AnimatedNumber value={wallet.balance} format={fmtCoins} /> : <span className="ik-num">–</span>}
       </Link>
       <span ref={rewardRef} className="ik-quick" style={{ display: 'inline-flex', gap: 8 }}>
-        <Button variant="primary" icon="gift" onClick={reward} className={`ik-rewardbtn ${wallet?.canClaimToday ? 'is-ready' : ''}`} aria-label={wallet?.canClaimToday ? 'Récupérer la récompense du jour' : 'Récompense du jour et série'} title={wallet?.canClaimToday ? 'Récupérer la récompense du jour' : `Série : ${wallet?.dailyStreak ?? 0} jour(s)`} />
+        <Button variant="primary" icon="gift" onClick={reward} className={`ik-rewardbtn ${wallet?.canClaimToday ? 'is-ready' : ''}`} aria-label={wallet?.canClaimToday ? `Récupérer la récompense du jour : ${wallet.dailyRewardCoins} InvestCoins` : 'Récompense du jour'} title={wallet?.canClaimToday ? `Récupérer la récompense du jour : ${wallet.dailyRewardCoins} InvestCoins` : (wallet && wallet.claimedThisWeek >= wallet.maxClaimsPerWeek ? 'Prochaine récompense lundi' : 'Récompense du jour déjà récupérée')} />
         <Button variant="secondary" icon="arrowUpRight" href="/crypto" aria-label="Investir : marché Crypto" title="Investir" />
         <Button variant="secondary" icon="swap" href="/banque" aria-label="Banque : prêts et échéances" title="Banque" />
       </span>
-      {wallet && wallet.dailyStreak > 0 && (
-        <span className="ik-chip ik-quick" title="Série de jours consécutifs" style={{ gap: 4 }}><Icon name="flame" size={14} />{wallet.dailyStreak}</span>
+      {wallet && wallet.activeDays > 0 && (
+        <span className="ik-chip ik-quick" title="Jours actifs : les jours où tu as utilisé InvestKit. Ce compteur ne baisse jamais." aria-label={`Jours actifs : ${wallet.activeDays}`} style={{ gap: 4 }}><Icon name="calendar" size={14} />{wallet.activeDays}</span>
       )}
       <span className="ik-topbar__spacer" />
       <button type="button" className="ik-search" onClick={onOpenSearch} aria-label="Rechercher… Ctrl K">
