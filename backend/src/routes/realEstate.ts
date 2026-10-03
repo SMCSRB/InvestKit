@@ -1,9 +1,11 @@
 import { Router } from 'express';
+import { walletEcho } from '../middleware/walletEcho';
 import { realEstateController as c } from '../controllers/realEstateController';
 import { watchLimiter } from '../middleware/rateLimiter';
 import { authMiddleware } from '../middleware/auth';
 
 export const realEstateRoutes = Router();
+realEstateRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portefeuille à jour (`wallet`)
 
 realEstateRoutes.get('/state', authMiddleware, c.getState);
 realEstateRoutes.post('/start', authMiddleware, c.start);

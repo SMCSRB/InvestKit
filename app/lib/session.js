@@ -4,6 +4,8 @@
 // localStorage.token ne contient plus qu'un MARQUEUR « connecté » (nombreux écrans testent sa présence).
 // Un ancien vrai jeton (sessions ouvertes avant cette version) est échangé contre un cookie au démarrage (upgradeLegacyToken).
 
+import { applyWallet, refreshCoins } from './coinStore';
+
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 export const SESSION_MARKER = 'cookie-session';
@@ -61,7 +63,13 @@ export const installApiFetch = () => {
       const csrf = readCsrfCookie();
       if (csrf) headers.set('X-CSRF-Token', csrf);
     }
-    return nativeFetch(input, { ...init, headers, credentials: 'include' });
+    const done = nativeFetch(input, { ...init, headers, credentials: 'include' });
+    // Toute action qui écrit et réussit peut renvoyer le portefeuille à jour (`wallet`) : on l'affiche tout de suite, partout.
+    // Réseau coupé pendant une écriture : on ne sait pas si elle est passée, on relit la vraie valeur du serveur.
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+      done.then((res) => { if (res.ok && (res.headers.get('content-type') || '').includes('json')) res.clone().json().then((d) => { if (d && d.wallet) applyWallet(d.wallet); }).catch(() => {}); }, () => { setTimeout(refreshCoins, 1500); });
+    }
+    return done;
   };
 };
 

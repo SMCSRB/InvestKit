@@ -1,10 +1,12 @@
 import { Router } from 'express';
+import { walletEcho } from '../middleware/walletEcho';
 import { authMiddleware } from '../middleware/auth';
 import { cryptoOrderLimiter } from '../middleware/rateLimiter';
 import { cryptoController } from '../controllers/cryptoController';
 
 // Domaine Crypto (marché simulé). Toutes les routes sont authentifiées ; la date simulée vient du compte (serveur), jamais du navigateur.
 export const cryptoRoutes = Router();
+cryptoRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portefeuille à jour (`wallet`)
 cryptoRoutes.get('/state', authMiddleware, cryptoController.state);
 cryptoRoutes.post('/account', authMiddleware, cryptoController.create);
 cryptoRoutes.get('/assets', authMiddleware, cryptoController.assets);

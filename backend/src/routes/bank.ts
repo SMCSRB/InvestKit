@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { walletEcho } from '../middleware/walletEcho';
 import { bankController as c } from '../controllers/bankController';
 import { authMiddleware } from '../middleware/auth';
 
 export const bankRoutes = Router();
+bankRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portefeuille à jour (`wallet`)
 
 bankRoutes.get('/overview', authMiddleware, c.overview);
 bankRoutes.get('/events', authMiddleware, c.events);
