@@ -32,7 +32,7 @@ describe.skipIf(!hasDb)('amis réels', () => {
     const fa = (await svc.friends(a)).friends, fb = (await svc.friends(b)).friends;
     expect(fa).toHaveLength(1); expect(fb).toHaveLength(1);
     expect(fa[0]).toMatchObject({ userId: b, xp: 1200, level: 3 });
-    expect(Object.keys(fa[0]).sort()).toEqual(['level', 'name', 'since', 'userId', 'xp']); // rien d'autre n'est exposé
+    expect(Object.keys(fa[0]).sort()).toEqual(['identity', 'level', 'name', 'pro', 'since', 'tag', 'userId', 'xp']); // rien d'autre n'est exposé : pseudo, #, indicateur Pro (booléen), niveau, XP
     const n = (await query('SELECT kind FROM notifications WHERE user_id = ANY($1::uuid[])', [[a, b]])).rows.map((x: any) => x.kind);
     expect(n).toContain('friend_request'); expect(n).toContain('friend_accepted');
   });
@@ -68,7 +68,7 @@ describe.skipIf(!hasDb)('amis réels', () => {
     await svc.sendRequest(a, await code(b)); await svc.respond(b, (await svc.requests(b)).incoming[0].id, 'accept');
     await svc.block(b, a);
     expect((await svc.friends(a)).friends).toHaveLength(0);
-    await expect(svc.sendRequest(a, await code(b))).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'Aucun joueur avec ce code' });
+    await expect(svc.sendRequest(a, await code(b))).rejects.toMatchObject({ code: 'NOT_FOUND', message: 'Aucun joueur avec cet identifiant' });
     await expect(svc.sendRequest(b, await code(a))).rejects.toMatchObject({ code: 'NOT_FOUND' });
     expect((await svc.blocks(b)).blocks.map((x) => x.userId)).toEqual([a]);
     await svc.unblock(b, a);
@@ -286,7 +286,7 @@ describe.skipIf(!hasDb)('classement entre amis', () => {
     expect(r.entries.map((e) => e.userId)).not.toContain(pending);
     expect(r.entries.map((e) => [e.xp, e.rank])).toEqual([[500, 1], [300, 2], [300, 2]]);   // ex æquo : rang 2 pour les deux
     expect(r.entries.find((e) => e.isMe)?.userId).toBe(me);
-    expect(Object.keys(r.entries[0]).sort()).toEqual(['isMe', 'level', 'name', 'rank', 'userId', 'xp']);
+    expect(Object.keys(r.entries[0]).sort()).toEqual(['identity', 'isMe', 'level', 'name', 'pro', 'rank', 'tag', 'userId', 'xp']);
     expect(r.friendsCount).toBe(2);
     const http = await request(app).get('/api/v1/social/friends/ranking').set('Authorization', `Bearer ${generateToken(me, `${me}@test.local`)}`);
     expect(http.status).toBe(200); expect(http.body.entries).toHaveLength(3);

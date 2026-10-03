@@ -6,6 +6,10 @@ import { socialWriteLimiter } from '../middleware/rateLimiter';
 export const socialRoutes = Router();
 
 socialRoutes.get('/me', authMiddleware, c.me);
+socialRoutes.get('/tag', authMiddleware, c.tag);
+socialRoutes.post('/tag', authMiddleware, socialWriteLimiter, c.changeTag);
+socialRoutes.get('/tag/history', authMiddleware, c.tagHistory);
+socialRoutes.post('/privacy', authMiddleware, socialWriteLimiter, c.privacy);
 socialRoutes.get('/friends', authMiddleware, c.friends);
 socialRoutes.get('/friends/ranking', authMiddleware, c.friendsRanking);
 socialRoutes.get('/requests', authMiddleware, c.requests);

@@ -106,7 +106,9 @@ export const billingController = {
 
       const user = await userRepository.findById(req.user.userId);
       if (!user?.stripe_customer_id) {
-        res.status(400).json({ error: 'Aucun abonnement associé à ce compte' });
+        // Pro accordé à la main (testeurs) : pas d'abonnement Stripe, donc rien à gérer. Message clair, pas une panne.
+        if (user?.pro_override) { res.status(400).json({ error: 'Accès Pro offert, aucun abonnement à gérer.', code: 'MANUAL_PRO' }); return; }
+        res.status(400).json({ error: 'Aucun abonnement associé à ce compte', code: 'NO_SUBSCRIPTION' });
         return;
       }
 
