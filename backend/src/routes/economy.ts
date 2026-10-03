@@ -9,4 +9,5 @@ economyRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portef
 economyRoutes.get('/balance', authMiddleware, economyController.getBalance);
 economyRoutes.get('/history', authMiddleware, economyController.getHistory);
 economyRoutes.post('/daily-reward', authMiddleware, economyController.claimDailyReward);
+economyRoutes.get('/first-steps', authMiddleware, economyController.getFirstSteps);
 economyRoutes.get('/admin/coins-by-domain', authMiddleware, economyController.getCoinsByDomain);

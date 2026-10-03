@@ -1,4 +1,4 @@
-import { EUROS_PER_COIN } from '../src/config/economy';
+import { EUROS_PER_COIN, FIRST_STEP_BONUSES } from '../src/config/economy';
 import { randomEventOn } from '../src/services/crypto/eventsService';
 import { randomUUID } from 'crypto';
 import { initDatabase, executeSchema, query, closePool } from '../src/utils/db';
@@ -33,7 +33,7 @@ export const teardownDb = async (): Promise<void> => {
 };
 
 export const createUser = async (
-  opts: { id?: string; balance?: number; tier?: 'free' | 'pro'; proOverride?: boolean; freeDomain?: string | null; verified?: boolean; code?: string; referredBy?: string } = {}
+  opts: { id?: string; balance?: number; tier?: 'free' | 'pro'; proOverride?: boolean; freeDomain?: string | null; verified?: boolean; code?: string; referredBy?: string; firstStepsPending?: boolean } = {}
 ): Promise<string> => {
   const id = opts.id ?? randomUUID();
   await query(
@@ -47,6 +47,13 @@ export const createUser = async (
   );
   if (opts.balance !== undefined) {
     await query('INSERT INTO investcoins_balance (user_id, balance) VALUES ($1, $2)', [id, opts.balance]);
+  }
+  // Par défaut, les bonus « premiers pas » sont déjà reçus : les tests de montants exacts (achats, quiz, registre) restent centrés sur leur sujet.
+  // Les tests des bonus eux-mêmes demandent un compte neuf avec { firstStepsPending: true }.
+  if (!opts.firstStepsPending) {
+    for (const [key, coins] of Object.entries(FIRST_STEP_BONUSES)) {
+      await query('INSERT INTO first_step_bonuses (user_id, step_key, coins) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [id, key, coins]);
+    }
   }
   return id;
 };

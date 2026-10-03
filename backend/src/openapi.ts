@@ -39,6 +39,7 @@ export const ROUTES: Row[] = [
   ['get', '/economy/balance', 'InvestCoins', 'Solde de pièces'],
   ['get', '/economy/history', 'InvestCoins', 'Historique des transactions'],
   ['post', '/economy/daily-reward', 'InvestCoins', 'Récompense quotidienne'],
+  ['get', '/economy/first-steps', 'InvestCoins', 'Bonus « premiers pas » : état et montants'],
   ['get', '/economy/admin/coins-by-domain', 'InvestCoins', 'Statistiques admin des pièces par domaine', 'admin'],
   ['post', '/education/submit-quiz', 'Éducation', 'Soumettre un quiz (corrigé par le serveur, récompense unique)'],
   ['post', '/education/complete-chapter', 'Éducation', 'Ancienne route (410, ne récompense plus)'],

@@ -728,3 +728,13 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
    Puis clique sur le cadeau : **« Tu as déjà reçu tes 3 récompenses de la semaine. La prochaine est disponible lundi. »**
 7. Page d'accueil du site (déconnecté) : la puce « Récompense du jour » et la phrase « jusqu'à 3 par semaine, sans série à tenir » remplacent « Série de 7 jours ».
 8. Les jours actifs ne baissent jamais, même après des semaines d'absence.
+
+## Bonus « premiers pas » (30 / 30 / 40, une seule fois)
+À dérouler chez toi après avoir fusionné cette PR (après « Récompense quotidienne »). Utilise un compte **neuf**. Aucun écran nouveau : seul le solde et l'historique changent.
+
+1. Éducation, parcours « Crypto marché », chapitre 1 : réussis le quiz. Ton solde augmente de **50** (20 de chapitre + **30 de bonus « première leçon »**).
+2. Chapitre 2 : seulement **+20** (pas de second bonus). Refaire le quiz du chapitre 1 ne donne rien.
+3. Premier achat en Bourse d'au moins **100 🪙** : tes pièces baissent du prix et des frais, puis **+30** (bonus « premier investissement »). Un achat plus petit que 100 🪙 ne donne pas le bonus. Un second achat non plus.
+4. Termine les 5 chapitres puis le quiz final : **+100** (quiz final) et **+40** (bonus « premier quiz réussi »).
+5. Dans l'historique (Banque et InvestCoins), les bonus apparaissent avec le motif `first_step_bonus`. Au total jamais plus de **100** pièces de bonus.
+6. Ouvre dans ton navigateur `…/api/v1/economy/first-steps` (connecté) : tu vois les trois bonus, ceux déjà reçus et les montants. Il n'existe aucun bouton ni aucune adresse pour « réclamer » un bonus.

@@ -4,6 +4,7 @@ import { CRYPTO_DOMAIN, CRYPTO_ECONOMY as E } from '../../config/cryptoMarketRul
 import { Execution, Side } from '../../engine/crypto/execution';
 import { emptyTaxState, readTaxState, saleTax } from '../../engine/trading/costs';
 import { liquidityTierFor, CryptoDataError } from './dataService';
+import { grantFirstInvestment } from '../firstStepsService';
 import type { CryptoAccount } from './clockService';
 
 // Noyau commun du trading Crypto : contexte de marché, exécution d'un achat/vente dans la transaction en cours, retrait de position.
@@ -61,6 +62,7 @@ export const applyFill = async (
       `INSERT INTO crypto_positions (user_id, asset_id, quantity, cost_basis_coins) VALUES ($1,$2,$3::numeric,$4)
        ON CONFLICT (user_id, asset_id) DO UPDATE SET quantity = crypto_positions.quantity + EXCLUDED.quantity, cost_basis_coins = crypto_positions.cost_basis_coins + EXCLUDED.cost_basis_coins, updated_at = NOW()`,
       [userId, m.assetId, qty, ex.notionalCoins]);
+    await grantFirstInvestment(userId, ex.notionalCoins, db);   // bonus unique « premier investissement » (dans la même transaction)
   } else {
     basis = await takeFromPosition(db, userId, m.assetId, qty);
 
