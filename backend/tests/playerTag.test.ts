@@ -194,7 +194,7 @@ describe.skipIf(!hasDb)('# personnalisé et badge Pro (base réelle)', () => {
     let f = await list();
     expect(f.find((x) => x.name === 'Dore').pro).toBe(true);
     expect(f.find((x) => x.name === 'Simple').pro).toBe(false);
-    expect(Object.keys(f.find((x) => x.name === 'Dore')).sort()).toEqual(['identity', 'level', 'name', 'pro', 'since', 'tag', 'userId', 'xp']);
+    expect(Object.keys(f.find((x) => x.name === 'Dore')).sort()).toEqual(['avatarId', 'identity', 'level', 'name', 'pro', 'since', 'tag', 'userId', 'xp']);
     await query(`UPDATE users SET subscription_tier = 'free' WHERE id = $1`, [pro]); // fin de l'abonnement
     f = await list();
     expect(f.find((x) => x.name === 'Dore').pro).toBe(false);

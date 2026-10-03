@@ -1,0 +1,25 @@
+/* Paramètres > Profil : photo, champs, procédure de changement d'e-mail. */
+.pf { display: grid; gap: 20px; }
+.pf-photo { display: flex; gap: 16px; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--ik-border); flex-wrap: wrap; }
+.pf-photo__side { display: grid; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.pf-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.pf-fields { display: grid; gap: 16px; }
+.pf-label { display: block; font-size: 12px; font-weight: 600; color: var(--ik-text-3); margin-bottom: 6px; }
+.pf-input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--ik-border-strong); background: var(--ik-surface-2); color: var(--ik-text); font-size: 14px; font-family: inherit; }
+.pf-input[readonly] { opacity: .85; cursor: not-allowed; }
+.pf-input::placeholder { color: var(--ik-text-3); opacity: .8; }
+.pf-input:focus-visible { outline: 2px solid var(--ik-focus); outline-offset: 2px; }
+.pf-bio { resize: vertical; min-height: 80px; }
+.pf-hint { font-size: 12px; color: var(--ik-text-3); margin: 6px 0 0; line-height: 1.5; }
+.pf-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pf-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--ik-primary) 40%, transparent); background: color-mix(in srgb, var(--ik-primary) 22%, transparent); color: var(--ik-text); font-size: 13px; font-weight: 600; cursor: pointer; }
+.pf-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ik-primary) 34%, transparent); }
+.pf-btn:disabled { opacity: .6; cursor: progress; }
+.pf-btn--ghost { background: transparent; border-color: var(--ik-border-strong); color: var(--ik-text-2); }
+.pf-btn:focus-visible { outline: 2px solid var(--ik-focus); outline-offset: 2px; }
+.pf-box { display: grid; gap: 8px; padding: 14px; border-radius: 12px; background: var(--ik-surface-3); margin-top: 10px; }
+.pf-msg { margin: 8px 0 0; font-size: 13px; }
+.pf-msg--ok { color: var(--ik-positive); }
+.pf-msg--err { color: var(--ik-negative); }
+.pf-email { margin-top: 6px; }
+@media (max-width: 520px) { .pf .pf-btn { flex: 1 1 100%; justify-content: center; } }

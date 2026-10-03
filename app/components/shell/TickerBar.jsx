@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Delta } from '@/app/components/ui/primitives';
 import { Sparkline } from '@/app/components/ui/charts';
+import { keepGenuineSparklines } from '@/app/lib/sparklines';
 import { useTheme } from '@/app/context/ThemeContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -29,7 +30,7 @@ function useTickerItems() {
         if (!res.ok) return;
         const { assets } = await res.json();
         const top = assets.filter((a) => !a.stable && !a.collapsed).slice(0, 8);
-        const out = await Promise.all(top.map(async (a) => {
+        const raw = await Promise.all(top.map(async (a) => {
           let series = [];
           try {
             const r = await fetch(`${API}/crypto/candles?symbol=${encodeURIComponent(a.symbol)}&tf=1d&limit=24`);
@@ -37,6 +38,7 @@ function useTickerItems() {
           } catch { /* mini-courbe absente : l'élément s'affiche quand même */ }
           return { symbol: a.symbol, name: a.name, price: a.price, change: a.change1d, series };
         }));
+        const out = keepGenuineSparklines(raw);   // courbe retirée si elle ne vient pas d'une vraie série propre à l'actif
         if (!alive) return;
         setItems(out);
         try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items: out })); } catch { /* ignore */ }

@@ -11,6 +11,7 @@
     "set-pro": "ts-node scripts/set-pro.ts",
     "set-admin": "ts-node scripts/set-admin.ts",
     "crypto:import": "ts-node scripts/crypto-import.ts",
+    "crypto:check-series": "ts-node scripts/crypto-check-series.ts",
     "invite": "ts-node scripts/invite.ts",
     "coins-stats": "ts-node scripts/coins-stats.ts",
     "mail:preview": "ts-node scripts/mail-preview.ts",
@@ -39,6 +40,7 @@
     "pg": "8.10.0",
     "qrcode": "^1.5.4",
     "resend": "^6.28.1",
+    "sharp": "0.35.5",
     "stripe": "^22.6.2",
     "zod": "^3.25.76"
   },

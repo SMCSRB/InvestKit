@@ -39,6 +39,7 @@ export default function HeroPreview() {
           <div className="lp-bob"><Coin3D size={74} /></div>
         </Layer>
       </Stage3D>
+      <p className="ik-muted" style={{ textAlign: 'center', fontSize: 'var(--ik-fs-xs)', margin: '6px 0 0' }}>Aperçu illustratif</p>
     </div>
   );
 }

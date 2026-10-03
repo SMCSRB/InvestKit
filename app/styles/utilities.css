@@ -8,14 +8,11 @@
   .bg-blue-900\/30{background-color:color-mix(in srgb, var(--ik-primary) 30%, transparent)}
   .bg-gradient-to-br{background-image:linear-gradient(to bottom right,var(--tw-from,transparent),var(--tw-via,var(--tw-to,transparent)),var(--tw-to,transparent))}
   .bg-gradient-to-r{background-image:linear-gradient(to right,var(--tw-from,transparent),var(--tw-via,var(--tw-to,transparent)),var(--tw-to,transparent))}
-  .bg-gray-600{background-color:color-mix(in srgb, var(--ik-text) 22%, transparent)}
   .bg-gray-700{background-color:var(--ik-surface-3)}
   .bg-gray-800{background-color:var(--ik-surface-2)}
   .bg-green-600{background-color:var(--ik-positive)}
   .bg-orange-900\/30{background-color:color-mix(in srgb, var(--ik-warning) 30%, transparent)}
-  .bg-purple-600{background-color:var(--ik-orchid)}
   .bg-purple-900\/30{background-color:color-mix(in srgb, var(--ik-orchid) 30%, transparent)}
-  .bg-red-900\/20{background-color:color-mix(in srgb, var(--ik-negative) 16%, transparent)}
   .bg-slate-700{background-color:var(--ik-surface-3)}
   .bg-slate-700\/50{background-color:color-mix(in srgb, var(--ik-surface-3) 50%, transparent)}
   .bg-slate-800{background-color:var(--ik-surface-2)}
@@ -40,7 +37,7 @@
   .border-purple-400\/30{border-color:color-mix(in srgb, var(--ik-orchid) 30%, transparent)}
   .border-purple-400\/50{border-color:color-mix(in srgb, var(--ik-orchid) 50%, transparent)}
   .border-purple-500\/20{border-color:color-mix(in srgb, var(--ik-orchid) 20%, transparent)}
-  .border-red-500\/50{border-color:color-mix(in srgb, var(--ik-negative) 50%, transparent)}
+  .border-red-500\/30{border-color:color-mix(in srgb, var(--ik-negative) 30%, transparent)}
   .border-t{border-top-width:1px;border-top-style:solid}
   .border-yellow-400\/30{border-color:color-mix(in srgb, var(--ik-warning) 30%, transparent)}
   .cursor-pointer{cursor:pointer}
@@ -62,7 +59,6 @@
   .from-purple-900\/30{--tw-from:color-mix(in srgb, var(--ik-orchid) 30%, transparent)}
   .from-slate-900{--tw-from:var(--ik-surface-1)}
   .from-yellow-500{--tw-from:var(--ik-warning)}
-  .gap-1{gap:0.25rem}
   .gap-2{gap:0.5rem}
   .gap-3{gap:0.75rem}
   .gap-4{gap:1rem}
@@ -72,7 +68,6 @@
   .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
   .grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .grid-cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}
   .h-12{height:3rem}
   .h-2{height:0.5rem}
   .h-3{height:0.75rem}
@@ -82,13 +77,11 @@
   .hover\:bg-blue-700:hover{background-color:var(--ik-primary)}
   .hover\:bg-gray-600:hover{background-color:color-mix(in srgb, var(--ik-text) 22%, transparent)}
   .hover\:bg-green-700:hover{background-color:var(--ik-positive)}
-  .hover\:bg-purple-700:hover{background-color:var(--ik-orchid)}
   .hover\:bg-slate-600:hover{background-color:color-mix(in srgb, var(--ik-text) 22%, transparent)}
   .hover\:border-amber-400:hover{border-color:color-mix(in srgb, var(--ik-warning) 60%, transparent)}
   .hover\:border-gray-500:hover{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}
   .hover\:border-gray-600\/50:hover{border-color:color-mix(in srgb, var(--ik-text) 16%, transparent)}
   .hover\:border-purple-400:hover{border-color:color-mix(in srgb, var(--ik-orchid) 60%, transparent)}
-  .hover\:border-red-500:hover{border-color:color-mix(in srgb, var(--ik-negative) 60%, transparent)}
   .hover\:text-blue-300:hover{color:color-mix(in srgb, var(--ik-accent) 78%, var(--ik-text))}
   .hover\:translate-y-\[-4px\]:hover{transform:translateY(-4px)}
   .inline-block{display:inline-block}
@@ -98,8 +91,6 @@
   .justify-between{justify-content:space-between}
   .justify-center{justify-content:center}
   .last\:border-b-0:last-child{border-bottom-width:0}
-  .left-1{left:.25rem}
-  .left-7{left:1.75rem}
   .max-w-2xl{max-width:42rem}
   .max-w-4xl{max-width:56rem}
   .max-w-6xl{max-width:72rem}
@@ -129,7 +120,6 @@
   .pb-8{padding-bottom:2rem}
   .placeholder-gray-400::placeholder{color:var(--ik-text-3)}
   .pt-4{padding-top:1rem}
-  .px-3{padding-left:0.75rem;padding-right:0.75rem}
   .px-4{padding-left:1rem;padding-right:1rem}
   .px-6{padding-left:1.5rem;padding-right:1.5rem}
   .px-8{padding-left:2rem;padding-right:2rem}

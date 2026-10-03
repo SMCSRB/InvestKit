@@ -19,7 +19,7 @@ describe('badge Pro et # : interface', () => {
     for (const f of ['app/components/plan/ProMark.jsx', 'app/components/social/PlayerName.jsx']) expect(read(f)).not.toMatch(/localStorage|sessionStorage|document\.cookie/);
   });
   it('le pseudo, le # et la couronne sont affichés partout où un joueur apparaît', () => {
-    expect(read('app/components/social/SocialHub.jsx')).toMatch(/<PlayerName name=\{p\.name\} tag=\{p\.tag\} pro=\{p\.pro\}/);
+    expect(read('app/components/social/SocialHub.jsx')).toMatch(/<PlayerName name=\{p\.name\} avatarId=\{p\.avatarId \?\? null\} tag=\{p\.tag\} pro=\{p\.pro\}/);
     const cl = read('app/classements/page.jsx');
     expect((cl.match(/<PlayerName /g) ?? []).length).toBeGreaterThanOrEqual(3);
   });

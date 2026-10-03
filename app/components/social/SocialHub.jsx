@@ -19,7 +19,7 @@ function Person({ p, children, rank }) {
       {rank ? <span className="soc-rank" aria-label={`Rang ${rank}`}><Medal rank={rank} /></span> : null}
       <Avatar name={p.name} />
       <div className="soc-row__main">
-        <strong className="soc-row__name"><PlayerName name={p.name} tag={p.tag} pro={p.pro} isMe={p.isMe} /></strong>
+        <strong className="soc-row__name"><PlayerName name={p.name} avatarId={p.avatarId ?? null} tag={p.tag} pro={p.pro} isMe={p.isMe} /></strong>
         {p.level !== undefined && <span className="ik-muted">Niveau {p.level} · <span className="ik-num">{fr(p.xp)}</span> XP</span>}
       </div>
       {p.role === 'owner' && <span className="ik-chip"><Icon name="crown" size={13} />Chef</span>}

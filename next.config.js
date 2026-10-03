@@ -10,7 +10,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.hcaptcha.com https://*.hcaptcha.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https:",
+  `img-src 'self' data: blob: https: ${apiOrigin}`,
   `connect-src 'self' ${apiOrigin} https://*.hcaptcha.com${isDev ? ' ws:' : ''}`,
   "frame-src 'self' https://*.hcaptcha.com",
   "worker-src 'self' blob:",

@@ -654,3 +654,40 @@ La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.
 6. Prends un prêt à la Banque : Liquidités ↑ et Dette ↑ du même montant, **Patrimoine inchangé** (Patrimoine = liquidités + titres − dettes).
 7. Coupe ta connexion puis récupère la récompense : message d'erreur clair, le solde affiché reste la vraie valeur du serveur.
 8. Dans Paramètres > Affichage, mets « Animations » sur Non (ou active « réduire les animations » sur ton système) : les chiffres changent d'un coup, sans compteur.
+
+## Paramètres > Profil : photo, nom, e-mail, bio (vrais enregistrements)
+
+À tester chez toi, avec un compte de test :
+1. Paramètres > Profil : le champ **Adresse e-mail** montre TON adresse (grisée, non modifiable), **Nom complet** et **Bio** sont vides si tu n'as rien saisi (texte grisé d'aide seulement). Plus de « jean.dupont@example.com » ni de bio d'exemple.
+2. Clique « Enregistrer les modifications » sans rien changer : message « Aucune modification à enregistrer ». Rien n'a bougé (recharge la page pour vérifier).
+3. Saisis un nom et une bio, enregistre, recharge : ils sont toujours là. Vide la bio, enregistre, recharge : elle reste vide.
+4. **Photo** : « Choisir une photo » → la photo apparaît **tout de suite** dans le rond en haut à droite, sans recharger. Ouvre le menu profil, Classements > Amis, Amis : elle y est aussi.
+5. Essaie un faux fichier (un .txt renommé en .png) : message clair, rien n'est enregistré. Essaie une image de plus de 15 Mo : refusée.
+6. « Supprimer ma photo » : la lettre de ton pseudo revient partout.
+7. **Changer l'e-mail** : bouton « Changer mon adresse e-mail » → nouvelle adresse + mot de passe → un code arrive sur la NOUVELLE adresse, et un message d'alerte sur l'ANCIENNE. Tant que le code n'est pas saisi, l'adresse de connexion ne change pas. Après confirmation, un second message prévient l'ancienne adresse.
+8. Avec la double authentification activée, le formulaire demande aussi le code de l'appli.
+9. Après déploiement : l'API crée toute seule les tables `user_avatars` et `email_change_requests` et les colonnes `bio`, `avatar_id` (migration 042, rien à faire). Les photos sont stockées **dans la base** (donc sauvegardées avec elle et jamais sur le disque de l'application). Nouvelle dépendance du serveur : `sharp` (traitement d'image, licence Apache-2.0, version fixée) : lance `npm ci` dans `backend/`.
+
+## Chasse aux faux contenus
+
+À vérifier chez toi :
+1. Tableau de bord > « Actualités » : plus de CAC 40 / Alerte BTC / +5 k€. Soit les vraies annonces publiées dans l'administration, soit « Aucune actualité pour le moment ». Publie une annonce de test dans /admin : elle apparaît.
+2. /profile > Compte : ton VRAI e-mail (plus l'adresse écrite en dur) ; « Exporter » télécharge un fichier JSON ; « Se déconnecter » te déconnecte ; « Modifier l'email » ouvre Paramètres > Profil ; « Changer le mot de passe » ouvre « mot de passe oublié ».
+3. /profile : plus de calendrier aux cases aléatoires (recharge plusieurs fois : le texte ne change pas) ; « Série » écrit en français.
+4. Paramètres > Affichage : Devise et Format de date sont du texte (« Fixe pour l'instant »), plus de listes qui ne font rien. Paramètres > Sécurité : plus de « Sessions actives ». Paramètres > Données : « Exporter » télécharge le fichier, « Lire » ouvre la politique de confidentialité.
+5. Bandeau des cours : lance `cd backend && npm run crypto:check-series -- --symbols BTC,ETH,BNB,XRP --days 24` sur ton serveur : tu vois les 24 derniers cours et la corrélation entre actifs (jamais 1,000 pour de vrais cours).
+6. Lis `docs/faux-contenus.md`, section « À ton choix » : décisions attendues.
+
+## Suppression du compte (vrai bouton)
+
+Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer mon compte » (ou /profile > Compte) : le formulaire demande le mot de passe (+ code 2FA si activée) et d'écrire SUPPRIMER ; un mauvais mot de passe est refusé ; « Télécharger mes données avant » fonctionne ; après confirmation, tu es renvoyé sur l'accueil et le compte n'existe plus (connexion impossible). Avec un abonnement Stripe de test : il est annulé d'abord.
+
+## Suppression de compte : conservation et anonymisation
+
+1. Avec un compte de test avec abonnement Stripe de test : « Supprimer mon compte ». Tu reçois deux e-mails (« suppression en cours » puis « compte supprimé »). L'abonnement est annulé chez Stripe.
+2. Reconnecte-toi avec l'ancien navigateur : tu es déconnecté (jeton refusé).
+3. Dans l'administration : la statistique « pièces par domaine » n'a pas bougé.
+4. En base : `SELECT * FROM billing_records_archive ORDER BY id DESC LIMIT 1;` : formule et dates, aucun e-mail ni identifiant de joueur.
+5. Si le compte était chef de guilde : la guilde existe toujours avec un nouveau chef (le plus ancien membre), ou a disparu s'il était seul.
+6. Les amis du compte supprimé ne voient plus ni son nom, ni ses notifications « X est ton ami ».
+7. Relis la section 8 de la page de confidentialité (à faire valider par un professionnel).

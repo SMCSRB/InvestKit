@@ -173,6 +173,41 @@ export const welcomeMail = (name: string | null | undefined, appUrl: string): Ma
   button: { label: 'Ouvrir InvestKit', url: appUrl },
 });
 
+// Changement d'adresse e-mail : un code part vers la NOUVELLE adresse ; l'ANCIENNE est prévenue (au moment de la demande, puis du changement).
+export const emailChangeCodeMail = (name: string | null | undefined, code: string): MailContent => ({
+  subject: 'Confirme ta nouvelle adresse e-mail InvestKit',
+  preheader: `Ton code : ${code}. Il est valable 15 minutes.`,
+  title: 'Confirme ta nouvelle adresse',
+  greetingName: name,
+  hero: 'shield',
+  paragraphs: ['Tu as demandé à utiliser cette adresse pour ton compte InvestKit. Saisis ce code dans Paramètres > Profil pour confirmer.'],
+  code: { value: code, caption: 'Ton code de confirmation' },
+  notes: ['Ce code expire dans 15 minutes.', 'Ce n\'est pas toi ? Ignore ce message : rien ne sera modifié.'],
+});
+
+export const emailChangeNoticeMail = (name: string | null | undefined, stage: 'requested' | 'done'): MailContent => ({
+  subject: stage === 'requested' ? 'Demande de changement d\'adresse e-mail sur ton compte InvestKit' : 'L\'adresse e-mail de ton compte InvestKit a changé',
+  preheader: stage === 'requested' ? 'Si ce n\'est pas toi, change ton mot de passe.' : 'Cette adresse n\'est plus celle de ton compte.',
+  title: stage === 'requested' ? 'Changement d\'adresse demandé' : 'Adresse e-mail modifiée',
+  greetingName: name,
+  hero: 'shield',
+  paragraphs: stage === 'requested'
+    ? ['Une demande de changement de l\'adresse e-mail de ton compte vient d\'être faite. Elle n\'aboutira que si le code envoyé à la nouvelle adresse est saisi.', 'Ce n\'est pas toi ? Change ton mot de passe tout de suite : quelqu\'un connaît peut-être l\'ancien.']
+    : ['L\'adresse e-mail de ton compte vient d\'être remplacée. Tu te connecteras désormais avec la nouvelle.', 'Ce n\'est pas toi ? Contacte-nous immédiatement via la page Support.'],
+});
+
+// Suppression de compte : prévenance AVANT (demande en cours, au cas où ce ne serait pas toi) puis APRÈS (compte supprimé).
+export const accountDeletionMail = (name: string | null | undefined, stage: 'requested' | 'done'): MailContent => ({
+  subject: stage === 'requested' ? 'Suppression de ton compte InvestKit en cours' : 'Ton compte InvestKit a été supprimé',
+  preheader: stage === 'requested' ? 'Si ce n\'est pas toi, change ton mot de passe tout de suite.' : 'Tes données ont été effacées.',
+  title: stage === 'requested' ? 'Suppression de ton compte demandée' : 'Compte supprimé',
+  greetingName: name,
+  hero: 'shield',
+  paragraphs: stage === 'requested'
+    ? ['Quelqu\'un vient de confirmer la suppression de ton compte InvestKit avec ton mot de passe. Elle est définitive et va être exécutée dans un instant.', 'Ce n\'est pas toi ? Contacte-nous immédiatement via la page Support.']
+    : ['Ton compte InvestKit est supprimé : ta progression, tes InvestCoins, tes portefeuilles, tes amis et ta photo sont effacés. Seules quelques traces comptables d\'un éventuel abonnement payant sont conservées, sans lien avec ton profil, comme la loi l\'exige. Les sauvegardes techniques les plus anciennes disparaissent d\'elles-mêmes sous 14 jours.', 'Merci d\'avoir joué avec nous.'],
+});
+
 const sendMail = (to: string, c: MailContent) => {
   const { subject, html, text } = renderMail(c);
   return deliverEmail(to, subject, html, text);
@@ -193,3 +228,8 @@ export const sendAccountExistsEmail = async (email: string, loginUrl: string, re
 
 export const sendWelcomeEmail = async (email: string, name?: string | null) =>
   sendMail(email, welcomeMail(name, env.frontendUrl.replace(/\/$/, '') + '/dashboard'));
+
+export const sendEmailChangeCode = async (newEmail: string, name: string | null | undefined, code: string) => sendMail(newEmail, emailChangeCodeMail(name, code));
+export const sendEmailChangeNotice = async (oldEmail: string, name: string | null | undefined, stage: 'requested' | 'done') => sendMail(oldEmail, emailChangeNoticeMail(name, stage));
+
+export const sendAccountDeletionNotice = async (email: string, name: string | null | undefined, stage: 'requested' | 'done') => sendMail(email, accountDeletionMail(name, stage));
