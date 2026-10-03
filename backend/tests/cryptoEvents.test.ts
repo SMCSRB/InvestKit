@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId, setFlatFx } from './helpers';
 import { query } from '../src/utils/db';
 import { importDemo } from '../src/services/crypto/importer';
 import { clockService } from '../src/services/crypto/clockService';
@@ -78,7 +78,7 @@ describe.skipIf(!hasDb)('Crypto : impôt à la sortie, échanges, événements (
   const order = (u: string, o: any) => svc.placeOrder(u, { clientOrderId: cid(), ...o });
   const fee = async (u: string) => Number((await query(`SELECT COALESCE(SUM(fee_coins),0)::int AS f FROM crypto_fills WHERE user_id = $1`, [u])).rows[0].f);
 
-  beforeAll(async () => { await setupDb(); await importDemo(); }, 120_000);
+  beforeAll(async () => { await setupDb(); await importDemo(); await setFlatFx(1); }, 120_000);
   afterAll(async () => { TRADING_TAX.enabled = false; await teardownDb(); });
 
   it('impôt : seulement à la sortie vers l\'euro, sur la plus-value, au-dessus du seuil annuel ; journalisé comme destruction', async () => {

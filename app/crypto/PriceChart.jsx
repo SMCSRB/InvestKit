@@ -42,6 +42,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
   const priceLinesRef = useRef([]);
   const markersApiRef = useRef(null);
   const candlesRef = useRef([]);
+  const [unit, setUnit] = useState('usd');
   const stateRef = useRef({ hasMore: false, before: null, loading: false });
   const modeRef = useRef('none');
   const pendingPointRef = useRef(null);
@@ -94,6 +95,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
     candleLoader(symbol, tf, null).then((r) => {
       if (cancelled) return;
       candlesRef.current = r.candles;
+      setUnit(r.unit === 'coins' ? 'coins' : 'usd');
       stateRef.current = { hasMore: r.hasMore, before: r.nextBefore, loading: false };
       setVersion((v) => v + 1);
       setLoading(false);
@@ -194,7 +196,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
       toolSeriesRef.current.push(s);
     });
     // Niveaux du joueur : prix de revient moyen, ordres en attente
-    (levels || []).forEach((l) => { priceLinesRef.current.push(main.createPriceLine({ price: l.price, color: theme[l.color] || l.color, lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: true, title: l.title })); });
+    (levels || []).filter((l) => !l.unit || l.unit === unit).forEach((l) => { priceLinesRef.current.push(main.createPriceLine({ price: l.price, color: theme[l.color] || l.color, lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: true, title: l.title })); });
     // Repères d'ordres (achats / ventes du joueur) : accrochés à la bougie qui contient l'exécution
     if (markers?.length) {
       const first = candles[0].ts;
@@ -205,7 +207,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
       }).sort((a, b) => a.time - b.time);
       markersApiRef.current = createSeriesMarkers(main, mk);
     }
-  }, [version, type, scale, indicators, tools, markers, levels, theme]);
+  }, [version, type, scale, indicators, tools, markers, levels, theme, unit]);
 
   // Infobulle OHLC au survol + outils de dessin (clic)
   useEffect(() => {
@@ -288,7 +290,7 @@ export default function PriceChart({ symbol, tf, candleLoader, refreshKey, marke
 
       <div style={{ position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', background: 'color-mix(in srgb, var(--ik-bg) 60%, transparent)' }}>
         <div data-testid="chart-legend" style={{ position: 'absolute', zIndex: 3, top: 6, left: 10, right: 60, fontSize: 12, color: 'var(--ik-text-2)', pointerEvents: 'none', display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
-          <strong style={{ color: 'var(--ik-text)' }}>{symbol} · {tf}</strong>
+          <strong style={{ color: 'var(--ik-text)' }}>{symbol} · {tf} · en {unit === 'coins' ? 'InvestCoins' : 'dollars'}</strong>
           {shown && <>
             <span>O <b>{fmt(shown.o)}</b></span><span>H <b>{fmt(shown.h)}</b></span><span>L <b>{fmt(shown.l)}</b></span><span>C <b>{fmt(shown.c)}</b></span>
             {pct !== null && <span style={{ color: pct >= 0 ? theme.up : theme.down }}>{pct >= 0 ? '+' : ''}{pct.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %</span>}

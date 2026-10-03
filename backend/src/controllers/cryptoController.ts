@@ -12,8 +12,11 @@ import { REALTIME_STATUS } from '../services/crypto/realtime';
 import { ATTRIBUTION, DISCLAIMER, TIMEFRAMES, TF_LABELS, Timeframe, CRYPTO_DOMAIN } from '../config/cryptoMarketRules';
 import { CATEGORY_LABELS, RISK_LABELS } from '../data/crypto/catalog';
 
-const STATUS: Record<string, number> = { INVALID_INPUT: 400, NOT_FOUND: 404 };
+const STATUS: Record<string, number> = { INVALID_INPUT: 400, NOT_FOUND: 404, FX_UNAVAILABLE: 503 };
 const SYMBOL_RE = /^[A-Z0-9]{2,20}$/;
+
+// Taux de change du jour de jeu (dollars pour 1 InvestCoin = 1 €), tel que décidé par le serveur ; null = indisponible (l'affichage reste en dollars).
+const fxView = (fx: Awaited<ReturnType<typeof fxService.rateAt>>) => ({ available: !!fx, usdPerCoin: fx?.perEur ?? null, rateDay: fx?.day ?? null, staleDays: fx?.staleDays ?? null, demo: fx?.demo ?? null, source: fx?.source ?? null });
 
 const wrap = (fallback: string, fn: (req: AuthRequest) => Promise<unknown>) => async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -56,7 +59,7 @@ export const cryptoController = {
     return {
       domain: CRYPTO_DOMAIN, hasAccount: !!acc, dataReady: end !== null,
       // Taux de change du jour de jeu (dollars pour 1 InvestCoin = 1 €) : décidé par le serveur ; null = indisponible, l'affichage reste en dollars.
-      fx: acc ? { available: !!fx, usdPerCoin: fx?.perEur ?? null, rateDay: fx?.day ?? null, staleDays: fx?.staleDays ?? null, demo: fx?.demo ?? null, source: fx?.source ?? null } : null,
+      fx: acc ? fxView(fx) : null,
       account: acc ? { startAt: acc.startAt, simulatedAt: acc.simulatedAt, canAdvance: end !== null && acc.simulatedAt < end, dataEnd: end } : null,
       starts: acc ? null : await availableStarts(),
       timeframes: TIMEFRAMES.map((t) => ({ id: t, label: TF_LABELS[t] })),
@@ -80,18 +83,28 @@ export const cryptoController = {
     const acc = await requireAccount(req);
     const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 40) : undefined;
     const category = typeof req.query.category === 'string' && req.query.category in CATEGORY_LABELS ? req.query.category : undefined;
-    return { simulatedAt: acc.simulatedAt, assets: await cryptoDataService.listAssets(acc.simulatedAt, { q, category, sort: typeof req.query.sort === 'string' ? req.query.sort : undefined }) };
+    const fx = await fxService.rateAt(acc.simulatedAt);
+    const assets = await cryptoDataService.listAssets(acc.simulatedAt, { q, category, sort: typeof req.query.sort === 'string' ? req.query.sort : undefined });
+    // `price` : cours d'origine en dollars ; `priceCoins` : le même prix en InvestCoins (taux BCE du jour de jeu), null si le taux est indisponible.
+    return { simulatedAt: acc.simulatedAt, fx: fxView(fx), assets: assets.map((a) => ({ ...a, priceCoins: fx ? a.price / fx.perEur : null })) };
   }),
 
   asset: wrap('Erreur lors de la lecture de l\'actif', async (req) => {
     const acc = await requireAccount(req);
     const symbol = symbolOf(req.params.symbol);
-    return { simulatedAt: acc.simulatedAt, asset: await cryptoDataService.getAsset(symbol, acc.simulatedAt), timeframes: await cryptoDataService.availableTimeframes(symbol, acc.simulatedAt) };
+    const fx = await fxService.rateAt(acc.simulatedAt);
+    const asset = await cryptoDataService.getAsset(symbol, acc.simulatedAt);
+    return { simulatedAt: acc.simulatedAt, fx: fxView(fx), asset: { ...asset, priceCoins: fx ? asset.price / fx.perEur : null }, timeframes: await cryptoDataService.availableTimeframes(symbol, acc.simulatedAt) };
   }),
 
   candles: wrap('Erreur lors de la lecture des bougies', async (req) => {
     const acc = await requireAccount(req);
-    return cryptoDataService.getCandles(symbolOf(req.query.symbol), tfOf(req.query.tf ?? '1d'), acc.simulatedAt, { before: intOf(req.query.before, 'before'), limit: intOf(req.query.limit, 'limit') });
+    const res = await cryptoDataService.getCandles(symbolOf(req.query.symbol), tfOf(req.query.tf ?? '1d'), acc.simulatedAt, { before: intOf(req.query.before, 'before'), limit: intOf(req.query.limit, 'limit') });
+    if (req.query.unit !== 'coins' || !res.candles.length) return { ...res, unit: 'usd' };
+    // unit=coins : chaque bougie est convertie avec le taux BCE de SON jour. Un jour sans taux rend la série indisponible (jamais devinée) : l'affichage repasse en dollars.
+    const rater = await fxService.dayRater(res.candles[0].ts, acc.simulatedAt);
+    const candles = res.candles.map((c) => { const r = rater(c.ts); if (!r) throw new CryptoDataError('FX_UNAVAILABLE', 'Taux de change indisponible pour une partie de la période : le graphique reste en dollars.'); return { ...c, o: c.o / r, h: c.h / r, l: c.l / r, c: c.c / r }; });
+    return { ...res, candles, unit: 'coins' };
   }),
 
   quote: wrap('Erreur lors du chiffrage de l\'ordre', async (req) => cryptoTradingService.quote(req.user!.userId, symbolOf(req.query.symbol), req.query.side, req.query.quantity, req.query.amountCoins)),

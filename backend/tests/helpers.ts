@@ -81,3 +81,12 @@ export const calmUserId = (startMs = Date.parse('2020-01-01T00:00:00Z'), days = 
   }
   throw new Error('Aucun identifiant sans incident trouvé');
 };
+
+// Taux de change plat pour les tests de la Crypto : `rate` dollars pour 1 InvestCoin sur tous les jours ouvrés (1 = 1 InvestCoin vaut 1 $, les montants
+// des anciens tests restent lisibles). Remplace le taux de démonstration écrit par importDemo ; les tests du taux lui-même choisissent leur valeur.
+export const setFlatFx = async (rate = 1): Promise<void> => {
+  await query('DELETE FROM fx_rates');
+  await query(
+    `INSERT INTO fx_rates (day, currency, per_eur, source, demo)
+     SELECT d::date, 'USD', $1::numeric, 'test-taux-plat', TRUE FROM generate_series('2013-01-01'::date, '2026-12-31'::date, interval '1 day') AS d WHERE extract(isodow FROM d) < 6`, [rate]);
+};

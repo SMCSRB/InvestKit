@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../src/app';
 import { generateToken } from '../src/utils/jwt';
-import { hasDb, setupDb, teardownDb, createUser } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, setFlatFx } from './helpers';
 import { query } from '../src/utils/db';
 import { importDemo } from '../src/services/crypto/importer';
 import { addStep } from '../src/services/crypto/clockService';
@@ -25,7 +25,7 @@ describe.skipIf(!hasDb)('API Crypto : horloge serveur, pas de fuite du futur (HT
 
   beforeAll(async () => {
     await setupDb();
-    await importDemo();
+    await importDemo(); await setFlatFx(1);
     u = await createUser({ balance: 1000, tier: 'pro' });
     other = await createUser({ balance: 1000, tier: 'pro' });
   }, 120_000);

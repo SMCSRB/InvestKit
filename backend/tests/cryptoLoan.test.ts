@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../src/app';
 import { generateToken } from '../src/utils/jwt';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId, setFlatFx } from './helpers';
 import { query } from '../src/utils/db';
 import { importDemo } from '../src/services/crypto/importer';
 import { cryptoDataService } from '../src/services/crypto/dataService';
@@ -46,7 +46,7 @@ describe.skipIf(!hasDb)('Prêt sur portefeuille Crypto, classement, contrôles (
 
   beforeAll(async () => {
     await setupDb();
-    await importDemo();
+    await importDemo(); await setFlatFx(1);
     const mk = async (sym: string, lows: Record<number, number>, closes: Record<number, number> = {}) => {
       await cryptoDataService.upsertSyntheticAsset({ symbol: sym, name: `${sym} (fictif)`, category: 'defi', risk: 4, stable: false, description: 'Actif FICTIF de test pour les prêts.' });
       await cryptoDataService.importCandles(sym, '1d', series(lows, closes), { provider: 'test-fictif' });

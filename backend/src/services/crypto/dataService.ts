@@ -3,7 +3,7 @@ import { CATALOG } from '../../data/crypto/catalog';
 import { BASE_OF, BaseTimeframe, CANDLES, LIQUIDITY_TIERS, Timeframe } from '../../config/cryptoMarketRules';
 import { BASE_MS, Candle, aggregate, countGaps, isValidCandle } from '../../engine/crypto/candles';
 
-export class CryptoDataError extends Error { constructor(public code: 'INVALID_INPUT' | 'NOT_FOUND', message: string) { super(message); this.name = 'CryptoDataError'; } }
+export class CryptoDataError extends Error { constructor(public code: 'INVALID_INPUT' | 'NOT_FOUND' | 'FX_UNAVAILABLE', message: string) { super(message); this.name = 'CryptoDataError'; } }
 
 const DAY = 86_400_000;
 const rowToCandle = (r: any): Candle => ({ ts: new Date(r.ts).getTime(), o: r.o, h: r.h, l: r.l, c: r.c, volume: r.volume, marketCap: r.market_cap });

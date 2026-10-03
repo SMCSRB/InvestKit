@@ -9,10 +9,10 @@ import { LOMBARD, bankProductRatePct } from '../../config/bankRules';
 import { BankError, originateLoan, assertCanBorrow, logBankEvent, ensureAccount } from '../bankService';
 import { applyPayment } from '../bankPortfolioService';
 import { notify } from '../notificationService';
-import { CRYPTO_DOMAIN, CRYPTO_ECONOMY as E, CRYPTO_LOAN } from '../../config/cryptoMarketRules';
+import { CRYPTO_DOMAIN, CRYPTO_LOAN } from '../../config/cryptoMarketRules';
 import { BASE_MS } from '../../engine/crypto/candles';
 import { CryptoDataError } from './dataService';
-import { DAY, marketFor, applyFill, num, toAccount } from './core';
+import { DAY, marketFor, applyFill, num, toAccount, fxOf } from './core';
 import type { CryptoAccount } from './clockService';
 import type { Execution } from '../../engine/crypto/execution';
 
@@ -32,7 +32,9 @@ export const collateralAt = async (db: Queryable, userId: string, nowMs: number,
     const m = await marketFor(db, p.symbol, nowMs);
     const close = m?.price ?? 0;
     const price = lows && lows.has(p.symbol) ? Math.min(close, lows.get(p.symbol)!) : close;
-    items.push({ symbol: p.symbol, quantity: p.q, close, price, assetId: m?.assetId, value: (price * num(p.q)) / E.usdPerCoin, ltv: CRYPTO_LOAN.ltv });
+    // Valeur en InvestCoins : dollars ÷ taux BCE du jour de jeu (sans taux, la garantie ne peut pas être évaluée : message clair, rien n'est deviné).
+    const fx = m ? fxOf(m) : 1;
+    items.push({ symbol: p.symbol, quantity: p.q, close, price, fx, assetId: m?.assetId, value: (price * num(p.q)) / fx, ltv: CRYPTO_LOAN.ltv });
   }
   return { items, limits: collateralLimits(items) };
 };
@@ -143,7 +145,7 @@ export const collateralRelease = async (db: Queryable, userId: string, nowMs: nu
   const loan = await activeLoan(db, userId, true);
   if (!loan) return 0;
   const { items } = await collateralAt(db, userId, nowMs);
-  const rest = items.map((i) => ({ ...i, value: i.symbol === assetSymbol ? Math.max(0, ((num(i.quantity) - num(qty)) * i.price) / E.usdPerCoin) : i.value }));
+  const rest = items.map((i) => ({ ...i, value: i.symbol === assetSymbol ? Math.max(0, ((num(i.quantity) - num(qty)) * i.price) / i.fx) : i.value }));
   const limits = collateralLimits(rest);
   const need = Math.ceil(Math.max(0, debtCoins(loan) - limits.maxLimit));
   if (need <= 0) return 0;
@@ -188,10 +190,17 @@ export const processLoan = async (db: Queryable, account: CryptoAccount, fromMs:
   await db.query(`UPDATE bank_loans SET due_interest_h = $2, remainder_h = $3, missed_instalments = $4, interest_paid_h = $5, annual_rate_pct = $6, last_clock_total = $7 WHERE id = $1`,
     [loan.id, dueH, remainder, missed, paidI, rate, Math.floor(toMs / DAY)]);
 
-  // 2. Garantie au plus bas de la période (sinon clôture).
+  // 2. Garantie au plus bas de la période (sinon clôture). Sans taux de change ce jour-là, l'évaluation est REPORTÉE (aucun appel de marge ni vente forcée décidés sans taux).
   const lows = await periodLows(db, userId, fromMs, toMs);
-  const low = await collateralAt(db, userId, toMs, lows);
-  const close = await collateralAt(db, userId, toMs);
+  let low, close;
+  try { low = await collateralAt(db, userId, toMs, lows); close = await collateralAt(db, userId, toMs); }
+  catch (e) {
+    if (e instanceof CryptoDataError && e.code === 'FX_UNAVAILABLE') {
+      await emit('margin_check_postponed', 'Évaluation de ta garantie reportée : le taux de change n\'est pas disponible pour cette date. Aucun appel de marge ni vente forcée n\'est déclenché sans taux.');
+      return events;
+    }
+    throw e;
+  }
   const debt = (balanceH + dueH) / 100;
   let state = marginState(debt, low.limits);
   const pending = loan.meta?.marginCall ?? null;
@@ -212,13 +221,13 @@ export const processLoan = async (db: Queryable, account: CryptoAccount, fromMs:
       const sold = fraction >= 1 ? it.quantity : String(Math.floor(num(it.quantity) * fraction * 1e8) / 1e8);
       if (num(sold) <= 0) continue;
       const price = it.close * (1 - LOMBARD.haircutPct / 100);
-      const notional = Math.floor((price * num(sold)) / E.usdPerCoin + 1e-9);
+      const notional = Math.floor((price * num(sold)) / it.fx + 1e-9);
       const ex: Execution = { price, spreadPct: LOMBARD.haircutPct, slippagePct: 0, notionalCoins: notional, feeCoins: 0 };
       const ord = (await db.query(`INSERT INTO crypto_orders (user_id, client_order_id, asset_id, side, type, quantity, status, created_sim_at) VALUES ($1,$2,$3,'sell','market',$4::numeric,'open',to_timestamp($5::float8 / 1000.0)) RETURNING id`,
         [userId, `forced-${loan.id}-${toMs}-${it.symbol}`.slice(0, 64), it.assetId, sold, toMs])).rows[0];
       const m = await marketFor(db, it.symbol, toMs);
       if (!m) continue;
-      await applyFill(db, userId, ord.id, m, 'sell', String(sold), ex, it.close, false, toMs, account);
+      await applyFill(db, userId, ord.id, m, 'sell', String(sold), ex, it.close, false, toMs, account, it.fx);
       proceedsTotal += notional;
     }
     const fresh = (await db.query('SELECT * FROM bank_loans WHERE id = $1', [loan.id])).rows[0];

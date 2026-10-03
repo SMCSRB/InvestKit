@@ -3,7 +3,7 @@ import request from 'supertest';
 import app from '../src/app';
 import { generateToken } from '../src/utils/jwt';
 import { query, getClient } from '../src/utils/db';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, calmUserId, setFlatFx } from './helpers';
 import { tradingService } from '../src/services/tradingService';
 import { realEstateService as svc } from '../src/services/realEstateService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
@@ -33,7 +33,7 @@ describe('bonus premiers pas : règles', () => {
 });
 
 describe.skipIf(!hasDb)('bonus premiers pas (base réelle)', () => {
-  beforeAll(async () => { await setupDb(); await importDemo(); }, 120_000);
+  beforeAll(async () => { await setupDb(); await importDemo(); await setFlatFx(1); }, 120_000);
   afterAll(teardownDb);
 
   const stockSymbol = async (id: string) => {
