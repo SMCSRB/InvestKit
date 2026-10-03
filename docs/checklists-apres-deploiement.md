@@ -865,3 +865,15 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Banque, prêt personnel : avec très peu de pièces à toi, un message orange « Après ce prêt, il te restera… » apparaît, mais le bouton « Emprunter » reste actif.
 6. Les refus qui restent : apport inférieur à notaire + 10 % du prix ; endettement au-dessus de 35 % ; durée trop longue ; reste à vivre insuffisant. Chacun avec ses chiffres, aucun « € ».
 7. Glossaire : le mot « Épargne restante (en mensualités) » existe.
+
+## Finitions de l'économie (dernière PR du lot économie)
+1. **Annonces** : ouvre une dizaine d'annonces : plus aucun mot « undefined » dans les descriptions.
+2. **Avertissement d'épargne** : il montre son calcul, « soit 1,1 mensualité (X pièces ÷ Z de mensualités par mois, tous tes prêts compris) ».
+3. **Seuil du classement** : tableau de bord, cartes Bourse et Crypto : « Actuellement investi » (positions détenues, c'est lui qui compte pour le seuil de 2 500) et « Total acheté (cumul) » (tous les achats). Vends tout : « Actuellement investi » tombe à 0, « Total acheté » ne bouge pas.
+4. **Immobilier, Bilan** : sous « Ma performance », déplie « Comment est calculée cette performance ? » : tu vois chaque nombre (valeur nette de revente, loyers, ventes, investi, intérêts, gain) puis le gain ÷ capital de départ.
+5. **Fiche d'un bien** : si la banque accepte mais que tu n'as pas assez de pièces, un seul message : « La banque accepte ton dossier, mais il te manque des pièces », avec les chiffres.
+6. **Éducation** : quatre parcours : Bourse et PEA, Immobilier, Cryptomonnaies, Crypto : le marché simulé. Plus de cadenas sur les parcours ouverts (même sur un compte Pro). Fais un quiz de chapitre de la Bourse et de l'Immobilier : +20 pièces la première fois.
+7. **Onglet du navigateur** : « InvestKit - Simulation d'investissement ».
+8. **Bourse** (tableau de bord) : plus de boutons Crypto ni Immobilier en doublon ; solde, valeur des positions et prix avec la pièce.
+9. **Démarrage de l'API** : la bannière affiche le vrai nom de la base (par exemple investkit_design_test).
+10. **Marché Crypto** : si aucune capitalisation n'est importée, la colonne « Capi. » et le tri par capitalisation disparaissent ; sur la fiche : « non importée ».

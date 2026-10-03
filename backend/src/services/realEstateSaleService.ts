@@ -406,9 +406,11 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
     `SELECT p.*, l.principal AS l_principal, l.annual_rate_pct AS l_rate, l.months AS l_months, l.insurance_rate_pct AS l_ins, l.months_paid AS l_paid, l.status AS l_status, l.upfront_fees AS l_fees
      FROM re_properties p LEFT JOIN re_loans l ON l.id = p.loan_id WHERE p.game_id = $1`, [game.id])).rows;
   const y = game.simulated_year, m = game.simulated_month;
-  let invested = 0, equity = 0, liquidation = 0;
+  let invested = 0, investedCurrent = 0, equity = 0, liquidation = 0;
   for (const p of props) {
-    invested += Number(p.down_payment) + Number(p.l_fees ?? 0) + Number(p.extra_invested_eur);
+    const put = Number(p.down_payment) + Number(p.l_fees ?? 0) + Number(p.extra_invested_eur);
+    invested += put;
+    if (p.status !== 'sold') investedCurrent += put;      // « actuellement investi » : seulement les biens encore possédés
     if (p.status !== 'sold') {
       const value = await valueOfProperty(p, y, m);
       const debt = p.loan_id && p.l_status === 'active'
@@ -439,7 +441,7 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
   const startingCapitalCoins = await startingCapitalOf(db, game.user_id);
   const gainLiquidation = liquidation + cash + Number(sold) - invested - interestEuros;
   const performancePct = invested > 0 ? Math.round(((gainLiquidation / (startingCapitalCoins * EUROS_PER_COIN)) * 100) * 1e4) / 1e4 : 0;
-  return { investedEuros: round2(invested), equity: round2(equity), liquidationValueEuros: round2(liquidation), cumulativeCashFlow: round2(cash), saleNetProceeds: round2(Number(sold)),
+  return { investedEuros: round2(invested), investedCurrentEuros: round2(investedCurrent), equity: round2(equity), liquidationValueEuros: round2(liquidation), cumulativeCashFlow: round2(cash), saleNetProceeds: round2(Number(sold)),
     bankDebtEuros: round2(debtEuros), bankInterestPaidEuros: round2(interestEuros), leverage: net.leverage, ownCapitalEuros: net.ownCapital,
     startingCapitalCoins, gainLiquidationEuros: round2(gainLiquidation), performancePct };
 }
@@ -448,7 +450,7 @@ export async function snapshotLeaderboard(c: PoolClient, game: GameRow, userId: 
   const w = await wealthMetrics(c, game);
   await leaderboardRepository.upsertSnapshot(c, {
     userId, mode: 'accelerated', domain: RE_DOMAIN, year: game.simulated_year,
-    performancePct: w.performancePct, capitalCommitted: round2(w.investedEuros / EUROS_PER_COIN), leverage: w.leverage,
+    performancePct: w.performancePct, capitalCommitted: round2(w.investedCurrentEuros / EUROS_PER_COIN), leverage: w.leverage,
   });
 }
 
@@ -462,7 +464,7 @@ export const getRealEstateLeaderboard = async (userId: string, yearRaw: unknown)
   const board = await leaderboardRepository.getBoard({ mode: 'accelerated', domain: RE_DOMAIN, year, minCapital: RANKING_MIN_INVESTED, limit: LEADERBOARD_SIZE, callerId: userId });
   // Ma performance détaillée (calculée côté serveur) : visible même si je ne suis pas encore classé.
   const w = await wealthMetrics({ query } as any, game);
-  const investedCoins = round2(w.investedEuros / EUROS_PER_COIN);
+  const investedCoins = round2(w.investedCurrentEuros / EUROS_PER_COIN);   // actuellement investi (biens possédés)
   const progress = await rankingProgress({ query } as any, userId, investedCoins);
   const mine = { ...w, investedCoins, ranked: progress.ranked, minCapitalCoins: RANKING_MIN_INVESTED };
   return { domain: RE_DOMAIN, year, minCapital: RANKING_MIN_INVESTED, ...board, mine, progress };

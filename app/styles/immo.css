@@ -466,3 +466,7 @@
 
 /* Avertissement non bloquant (épargne restante faible) */
 .rp-bank__warning { color: var(--ik-warning); margin-top: 8px; }
+
+.rp-explain { margin-top: 8px; font-size: var(--ik-fs-sm); }
+.rp-explain summary { cursor: pointer; font-weight: 600; }
+.rp-explain p { margin: 6px 0 0; }

@@ -64,7 +64,7 @@ describe.skipIf(!hasDb)('banque aux règles françaises', () => {
     expect(p.bank.warnings).toHaveLength(1);
     const w = p.bank.warnings[0];
     expect(w.code).toBe('LOW_SAVINGS');
-    expect(w.message).toMatch(/Après cet achat, il te restera \d[\d\s]* pièces, soit \d+,\d mensualité/);
+    expect(w.message).toMatch(/Après cet achat, il te restera [\d\s\u202f]* pièces, soit \d+,\d mensualité \(.* pièces ÷ .* de mensualités par mois/);
     expect(w.message).toContain('Moins de 3 mensualités expose à un impayé.');
     expect(w.months).toBeLessThan(3);
     // le joueur peut acheter quand même

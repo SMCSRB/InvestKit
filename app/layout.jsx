@@ -22,11 +22,11 @@ const jakarta = localFont({
 });
 
 export const metadata = {
-  title: 'InvestKit - Investissez Intelligemment',
-  description: 'Plateforme éducative et outils de simulation financière pour investir intelligemment',
+  title: 'InvestKit - Simulation d\'investissement',
+  description: 'Plateforme éducative et simulation d\'investissement : tu t\'entraînes avec des pièces de jeu, sans argent réel',
   keywords: 'investissement, simulation, PEA, ETF, éducation financière, France',
   openGraph: {
-    title: 'InvestKit - Investissez Intelligemment',
+    title: 'InvestKit - Simulation d\'investissement',
     description: 'Simulateurs pro, éducation gamifiée, et analyses de risque pour vos investissements',
     type: 'website',
   },

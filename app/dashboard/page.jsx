@@ -1404,39 +1404,7 @@ function DashboardContent() {
               <p style={{ color: 'var(--ik-text-3)' }}>Chargement...</p>
             ) : (
               <>
-                {/* Sélecteur de domaine */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                  {tradingDomains.map((d) => (
-                    <button
-                      key={d.id}
-                      onClick={() => changeTradingDomain(d.id)}
-                      disabled={tradingLoading}
-                      style={{
-                        padding: '8px 18px',
-                        borderRadius: '20px',
-                        border: `1px solid ${tradingDomain === d.id ? 'rgba(96,165,250,0.6)' : 'color-mix(in srgb, var(--ik-text) 15%, transparent)'}`,
-                        background: tradingDomain === d.id ? 'color-mix(in srgb, var(--ik-primary) 25%, transparent)' : 'transparent',
-                        color: tradingDomain === d.id ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 70%, transparent)',
-                        fontWeight: '700',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => router.push('/immobilier')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
-                  > Immobilier →
-                  </button>
-                  <button
-                    onClick={() => router.push('/crypto')}
-                    style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
-                  >
-                    ₿ Marché Crypto →
-                  </button>
-                </div>
+                {/* La Bourse n'a plus d'onglets Crypto ni Immobilier : ils ont chacun leur page (Crypto, Immobilier). */}
 
                 {/* Portfolio summary */}
                 <div style={{
@@ -1447,8 +1415,8 @@ function DashboardContent() {
                 }}>
                   {[
                     { label: 'Année simulée', value: tradingPortfolio?.simulatedYear, tip: 'annee-simulee' },
-                    { label: 'Solde InvestCoins', value: `${tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')} InvestCoins` },
-                    { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} InvestCoins`, tip: 'valeur-positions' },
+                    { label: 'Solde InvestCoins', value: <>{tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')} <Coin /></> },
+                    { label: 'Valeur positions', value: <>{tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} <Coin /></>, tip: 'valeur-positions' },
                     {
                       label: 'Performance',
                       tip: 'performance-portefeuille',
@@ -1647,7 +1615,7 @@ function DashboardContent() {
                         <div>
                           <p style={{ color: 'var(--ik-text)', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
                           <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: 0 }}>
-                            {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} InvestCoins
+                            {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} <Coin />
                           </p>
                         </div>
                         <button

@@ -15,17 +15,17 @@ import { marketFor, num, toAccount } from './crypto/core';
 export const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypto') => {
   const domain = getDomain(domainId)!;
   const row = (await query(`SELECT positions, simulated_year, total_bought, total_proceeds, tax_state FROM virtual_portfolios WHERE user_id = $1 AND mode = 'accelerated' AND domain = $2`, [userId, domainId])).rows[0];
-  if (!row) return { started: false, positions: 0, marketValue: 0, invested: 0, proceeds: 0, gain: 0, performancePct: 0, simulatedYear: domain.minYear, feesPaid: 0, taxPaid: 0 };
-  let marketValue = 0, positions = 0;
-  for (const p of row.positions as { symbol: string; quantity: number }[]) {
+  if (!row) return { started: false, positions: 0, marketValue: 0, invested: 0, investedNow: 0, proceeds: 0, gain: 0, performancePct: 0, simulatedYear: domain.minYear, feesPaid: 0, taxPaid: 0 };
+  let marketValue = 0, positions = 0, investedNow = 0;
+  for (const p of row.positions as { symbol: string; quantity: number; avgBuyPrice?: number }[]) {
     const price = domain.getPrice(p.symbol, row.simulated_year) ?? 0;
-    if (p.quantity > 1e-9) { marketValue += price * p.quantity; positions++; }
+    if (p.quantity > 1e-9) { marketValue += price * p.quantity; positions++; investedNow += p.quantity * (p.avgBuyPrice ?? 0); }
   }
   const invested = Number(row.total_bought), proceeds = Number(row.total_proceeds);
   const gain = marketValue + proceeds - invested;
   const ts = readTaxState(row.tax_state);
   return {
-    started: invested > 0 || positions > 0, positions, marketValue: Math.round(marketValue), invested: Math.round(invested), proceeds: Math.round(proceeds),
+    started: invested > 0 || positions > 0, positions, marketValue: Math.round(marketValue), invested: Math.round(invested), investedNow: Math.round(investedNow), proceeds: Math.round(proceeds),
     gain: Math.round(gain), performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
     simulatedYear: row.simulated_year, feesPaid: ts.feesPaid, taxPaid: ts.taxPaid,
   };
@@ -33,7 +33,7 @@ export const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypt
 
 // Nouveau marché Crypto (domaine « crypto_market », tables crypto_*) : même forme de résumé que tradingSummary, en InvestCoins.
 export const cryptoMarketSummary = async (userId: string) => {
-  const empty = { started: false, positions: 0, marketValue: 0, invested: 0, proceeds: 0, gain: 0, performancePct: 0, simulatedYear: getDomain('crypto')!.minYear, feesPaid: 0, taxPaid: 0, fxUnavailable: false };
+  const empty = { started: false, positions: 0, marketValue: 0, invested: 0, investedNow: 0, proceeds: 0, gain: 0, performancePct: 0, simulatedYear: getDomain('crypto')!.minYear, feesPaid: 0, taxPaid: 0, fxUnavailable: false };
   const accRow = (await query('SELECT * FROM crypto_accounts WHERE user_id = $1', [userId])).rows[0];
   if (!accRow) return empty;
   const acc = toAccount(accRow);
@@ -52,9 +52,10 @@ export const cryptoMarketSummary = async (userId: string) => {
             COALESCE(SUM(fee_coins) FILTER (WHERE swap), 0)::bigint AS swap_fees
        FROM crypto_fills WHERE user_id = $1`, [userId])).rows[0];
   const invested = num(f.bought), proceeds = num(f.proceeds) - num(f.swap_fees);
+  const investedNow = Math.round(num((await query(`SELECT COALESCE(SUM(cost_basis_coins), 0) AS s FROM crypto_positions WHERE user_id = $1 AND quantity > 0`, [userId])).rows[0].s));
   const gain = marketValue + proceeds - invested;
   return {
-    started: invested > 0 || pos.length > 0, positions: pos.length, marketValue, invested, proceeds, gain,
+    started: invested > 0 || pos.length > 0, positions: pos.length, marketValue, invested, investedNow, proceeds, gain,
     performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0, simulatedYear: new Date(acc.simulatedAt).getUTCFullYear(),
     feesPaid: num(f.fees), taxPaid: num(f.tax), fxUnavailable,
   };
@@ -67,7 +68,7 @@ export const mergeCryptoSummaries = (old: Summary, market: Summary): Summary => 
   const gain = old.gain + market.gain;
   return {
     started: old.started || market.started, positions: old.positions + market.positions, marketValue: old.marketValue + market.marketValue,
-    invested, proceeds: old.proceeds + market.proceeds, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
+    invested, investedNow: old.investedNow + market.investedNow, proceeds: old.proceeds + market.proceeds, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
     simulatedYear: market.started ? market.simulatedYear : old.simulatedYear, feesPaid: old.feesPaid + market.feesPaid, taxPaid: old.taxPaid + market.taxPaid,
     fxUnavailable: !!market.fxUnavailable,
   };
@@ -100,7 +101,7 @@ export const overviewService = {
         equityCoinsApprox: Math.round(w.equity / EUROS_PER_COIN),
         // Tout en InvestCoins (1 pièce = 1 €) : valeur nette de revente, fonds propres, investi, dette.
         netLiquidationCoins: Math.round(w.liquidationValueEuros / EUROS_PER_COIN), equityCoins: Math.round(w.equity / EUROS_PER_COIN),
-        investedCoins: Math.round(w.investedEuros / EUROS_PER_COIN), bankDebtCoins: Math.round(w.bankDebtEuros / EUROS_PER_COIN),
+        investedCoins: Math.round(w.investedCurrentEuros / EUROS_PER_COIN), bankDebtCoins: Math.round(w.bankDebtEuros / EUROS_PER_COIN),
       };
     }
 
@@ -127,7 +128,7 @@ export const overviewService = {
         coinsAndTrading: coins + stocks.marketValue + crypto.marketValue,
         netWorth: wealth.financial,                       // patrimoine financier (nom conservé) : liquidités + titres − dettes
         financialWealth: wealth.financial, realEstateNetCoins: wealth.realEstateNet, totalWealth: wealth.total,
-        invested, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
+        invested, investedNow: stocks.investedNow + crypto.investedNow, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
         feesPaid: stocks.feesPaid + crypto.feesPaid, taxPaid: stocks.taxPaid + crypto.taxPaid,
       },
       realEstate, bank: { debtCoins }, risk,

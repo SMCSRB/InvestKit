@@ -70,7 +70,7 @@ export interface Reason {
 }
 
 // Avertissement non bloquant : le joueur peut acheter quand même.
-export interface Warning { code: 'LOW_SAVINGS'; message: string; savings: number; months: number | null; thresholdMonths: number }
+export interface Warning { code: 'LOW_SAVINGS'; message: string; savings: number; months: number | null; thresholdMonths: number; monthlyPayments: number }
 
 const frNum = (n: number, d = 0): string => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
@@ -87,8 +87,10 @@ export const lowSavingsWarning = (
   const loanNote = (i.unpaidPersonalLoan ?? 0) > 0
     ? ` Les pièces d'un prêt personnel non remboursé (${frNum(i.unpaidPersonalLoan!)} InvestCoins restant dus) ne comptent pas comme de l'épargne.` : '';
   return {
-    code: 'LOW_SAVINGS', savings: Math.round(savings), months: Math.round(months * 10) / 10, thresholdMonths: i.thresholdMonths,
-    message: `Après ${moment === 'achat' ? 'cet achat' : 'ce prêt'}, il te restera ${frNum(savings)} pièces, soit ${frNum(months, 1)} mensualité${months >= 2 ? 's' : ''}. ` +
+    code: 'LOW_SAVINGS', savings: Math.round(savings), months: Math.round(months * 10) / 10, thresholdMonths: i.thresholdMonths, monthlyPayments: Math.round(i.monthlyPayments * 100) / 100,
+    // Le calcul est montré : épargne ÷ somme des mensualités par mois (tous les prêts, assurance comprise).
+    message: `Après ${moment === 'achat' ? 'cet achat' : 'ce prêt'}, il te restera ${frNum(savings)} pièces, soit ${frNum(months, 1)} mensualité${months >= 2 ? 's' : ''} ` +
+      `(${frNum(savings)} pièces ÷ ${frNum(i.monthlyPayments, 2)} de mensualités par mois, tous tes prêts compris). ` +
       `Moins de ${frNum(i.thresholdMonths)} mensualités expose à un impayé.${loanNote}`,
   };
 };

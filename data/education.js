@@ -1,3 +1,5 @@
+import { bourseDomain } from './educationBourse.js';
+import { immobilierDomain } from './educationImmobilier.js';
 import { cryptoMarketDomain } from './educationCryptoMarket.js';
 
 const baseEducationDomains = [
@@ -2421,4 +2423,4 @@ Bonne chance dans votre voyage !
   },
 ];
 
-export const educationDomains = [...baseEducationDomains, cryptoMarketDomain];
+export const educationDomains = [bourseDomain, immobilierDomain, ...baseEducationDomains, cryptoMarketDomain];

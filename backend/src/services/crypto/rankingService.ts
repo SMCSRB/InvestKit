@@ -32,13 +32,14 @@ export const snapshotLeaderboard = async (db: Queryable, account: CryptoAccount,
        FROM crypto_fills WHERE user_id = $1`, [userId])).rows[0];
   const invested = num(f.bought), proceeds = num(f.proceeds) - num(f.swap_fees);
   if (invested <= 0) return;
+  const investedNow = Math.round(num((await db.query(`SELECT COALESCE(SUM(cost_basis_coins), 0) AS s FROM crypto_positions WHERE user_id = $1 AND quantity > 0`, [userId])).rows[0].s));
   const debt = await portfolioDebtInfo(db as any, userId, CRYPTO_DOMAIN);
   const borrowed = debt.debt > 0 || debt.interestPaid > 0;
   const net = borrowed ? computeNetPerformance({ equity, cumulativeCashFlow: proceeds, invested, interestPaid: debt.interestPaid, borrowedInvested: Math.min(invested, Math.max(0, debt.debt - debt.reserve)) }) : null;
   await leaderboardRepository.upsertSnapshot(db, {
     userId, mode: CRYPTO_MODE, domain: CRYPTO_DOMAIN, year: new Date(atMs).getUTCFullYear(), period: periodOf(atMs),
     performancePct: net ? net.performancePct : computePerformancePct({ marketValue: equity, totalBought: invested, totalProceeds: proceeds }),
-    capitalCommitted: invested, leverage: net ? net.leverage : null,
+    capitalCommitted: investedNow, leverage: net ? net.leverage : null,   // montant ACTUELLEMENT investi (prix de revient des positions détenues), pas le cumul des achats
   });
 };
 

@@ -158,7 +158,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
   };
 
   const canBuy = pv?.bank?.approved && pv?.coins?.affordable && access?.canBuy;
-  const bankTone = pv?.bank ? (pv.bank.approved ? 'ok' : 'ko') : 'neutral';
+  const bankTone = pv?.bank ? (pv.bank.approved ? (pv.coins?.affordable === false ? 'warn' : 'ok') : 'ko') : 'neutral';
   const description = describeListing(l, city, neighborhood);
 
   return (
@@ -282,10 +282,10 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               <>
                 <div className="rp-monthly"><span>Mensualité<HelpTip term="mensualite" /></span><strong>{eur2(pv.loan.monthlyPaymentWithInsurance)}</strong><small>assurance comprise · taux {pct(pv.loan.annualRatePct, 2)}</small></div>
                 <div className={`rp-bank rp-bank--${bankTone}`} role="status">
-                  <strong>{pv.bank.approved ? 'La banque accepte' : 'La banque refuse'}</strong>
+                  <strong>{pv.bank.approved ? (pv.coins.affordable ? 'La banque accepte' : 'La banque accepte ton dossier, mais il te manque des pièces') : 'La banque refuse'}</strong>
                   <p>Endettement<HelpTip term="endettement" /> : {pct(pv.bank.debtRatioPct)} (maximum accepté : {eur(pv.bank.maxMonthlyPayment)}/mois) · reste à vivre<HelpTip term="reste-a-vivre" /> : {eur(pv.bank.livingRemaining)}</p>
+                  {pv.bank.approved && !pv.coins.affordable && <p className="rp-bank__reason" data-testid="missing-coins">• Il te faut {coins(pv.coins.total)} (apport et frais), tu as {coins(pv.coins.balance)} : il en manque {coins(pv.coins.total - pv.coins.balance)}. Baisse l&apos;apport si la banque le permet, ou attends d&apos;avoir plus de pièces.</p>}
                   {!pv.bank.approved && pv.bank.reasons?.map((r) => <p key={r.code} className="rp-bank__reason">• {r.message}</p>)}
-                  {pv.bank.warnings?.map((w) => <p key={w.code} className="rp-bank__warning" data-testid="bank-warning" role="note"><Icon name="alert" size={16} /> <strong>Attention :</strong> {w.message} Tu peux acheter quand même.<HelpTip term="epargne-restante" /></p>)}
                   {pv.bank.warnings?.map((w) => <p key={w.code} className="rp-bank__warning" data-testid="bank-warning" role="note"><Icon name="alert" size={16} /> <strong>Attention :</strong> {w.message} Tu peux acheter quand même.<HelpTip term="epargne-restante" /></p>)}
                 </div>
                 <dl className="rp-facts rp-facts--tight">
@@ -293,7 +293,6 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
                   <Row label="Coût en InvestCoins"><strong>{coins(pv.coins.total)}</strong></Row>
                   <Row label="Ton solde">{coins(pv.coins.balance)}</Row>
                 </dl>
-                {!pv.coins.affordable && <p className="ik-error">Solde InvestCoins insuffisant pour cet apport.</p>}
                 {advanced && (
                   <dl className="rp-facts rp-facts--tight rp-facts--adv">
                     <Row label="TAEG" help={<HelpTip term="taeg" />}>{pct(pv.loan.taegPct, 2)}</Row>

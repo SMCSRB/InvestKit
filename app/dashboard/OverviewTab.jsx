@@ -162,7 +162,8 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
           {loading ? <div className="ik-skeleton" style={{ height: 104 }} /> : stocks.started ? (
             <>
               <Line label="Positions" value={stocks.positions} />
-              <Line label="Capital investi" value={`${fmtInt(stocks.invested)}`} />
+              <Line label="Actuellement investi" value={`${fmtInt(stocks.investedNow ?? 0)}`} />
+              <Line label="Total acheté (cumul)" value={`${fmtInt(stocks.invested)}`} />
               <Line label="Gain ou perte" value={signed(stocks.gain)} tone={stocks.gain >= 0 ? 'ik-up' : 'ik-down'} />
               <Line label="Année simulée" value={stocks.simulatedYear} />
             </>
@@ -175,7 +176,8 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
             <>
               <Line label="Positions" value={crypto.positions} />
               <Line label="Valeur actuelle" value={crypto.fxUnavailable ? 'taux indisponible' : <>{fmtInt(crypto.marketValue)} <Coin /></>} />
-              <Line label="Capital investi" value={`${fmtInt(crypto.invested)}`} />
+              <Line label="Actuellement investi" value={`${fmtInt(crypto.investedNow ?? 0)}`} />
+              <Line label="Total acheté (cumul)" value={`${fmtInt(crypto.invested)}`} />
               <Line label="Gain ou perte" value={signed(crypto.gain)} tone={crypto.gain >= 0 ? 'ik-up' : 'ik-down'} />
             </>
           ) : <p className="ik-muted" style={{ margin: 0 }}>Pas encore commencé : choisis ta date de départ.</p>}
@@ -202,7 +204,8 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
           <Card style={{ height: '100%' }}>
             <CardHead title="Synthèse Bourse + Crypto" icon="file" />
             <div style={{ display: 'grid', gap: 12 }}>
-              <Line label="Capital investi" value={loading ? '…' : fmtInt(invested)} />
+              <Line label="Actuellement investi (compte pour le classement)" value={loading ? '…' : fmtInt(t.investedNow ?? 0)} />
+              <Line label="Total acheté (cumul)" value={loading ? '…' : fmtInt(invested)} />
               <Line label="Gain ou perte (latent + réalisé)" value={loading ? '…' : signed(t.gain)} tone={!loading && t.gain < 0 ? 'ik-down' : 'ik-up'} />
               <Line label="Frais et impôts payés" value={loading ? '…' : fmtInt(t.feesPaid + t.taxPaid)} />
             </div>

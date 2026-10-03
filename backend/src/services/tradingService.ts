@@ -141,7 +141,7 @@ const snapshot = async (
     domain: domain.id,
     year,
     performancePct: net ? net.performancePct : computePerformancePct({ marketValue, ...totals }),
-    capitalCommitted: totals.totalBought,
+    capitalCommitted: positions.filter((p) => p.quantity > 1e-9).reduce((a, p) => a + p.quantity * p.avgBuyPrice, 0),   // montant ACTUELLEMENT investi (positions détenues, au prix d'achat), pas le cumul des achats
     leverage: net ? net.leverage : null,
   });
 };

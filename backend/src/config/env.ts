@@ -2,6 +2,12 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
+// Nom RÉEL de la base visée : celui de DATABASE_URL s'il est défini (c'est lui qui sert à la connexion), sinon DB_NAME. Jamais le mot de passe.
+export const databaseNameFromUrl = (url: string | undefined, fallback: string): string => {
+  if (!url) return fallback;
+  try { return decodeURIComponent(new URL(url).pathname.replace(/^\/+/, '').split('/')[0] ?? '') || fallback; } catch { return fallback; }
+};
+
 export const env = {
   port: parseInt(process.env.PORT || '5000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
