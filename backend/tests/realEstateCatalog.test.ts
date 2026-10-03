@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { getRealEstateDataSource } from '../src/data/realEstate';
 import { computeAcquisition, evaluatePurchase, ProfileId } from '../src/engine/immo';
-import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
+import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
+import { EUROS_PER_COIN } from '../src/config/economy';
+import { legacyCoins } from './helpers';
 import { hashString, createRng } from '../src/utils/seededRandom';
 
 const YEARS = Array.from({ length: src.maxYear - src.minYear + 1 }, (_, i) => src.minYear + i);
@@ -128,9 +130,9 @@ describe('graine déterministe', () => {
 // Exigence produit : « chaque profil doit pouvoir acheter au moins un bien du
 // catalogue de départ, chaque année », AVEC les règles de la banque : apport
 // minimum = frais de notaire, durée ≤ 25 ans, loyer prévisionnel retenu à 70 %.
-// Apport de départ : 500  InvestCoins × 20 €. Prêt sur 25 ans. Travaux annoncés financés.
+// Apport de départ : 10 000 € (le capital de départ). Prêt sur 25 ans. Travaux annoncés financés.
 describe('chaque profil peut acheter au moins un bien, chaque année (règles complètes)', () => {
-  const DOWN_PAYMENT = 500 * EUROS_PER_COIN;
+  const DOWN_PAYMENT = legacyCoins(500) * EUROS_PER_COIN; // 10 000 € d'apport : le capital de départ
   const profiles = Object.keys(STARTING_PROFILES) as ProfileId[];
 
   const evaluate = async (profile: ProfileId, l: Awaited<ReturnType<typeof src.listListings>>[number], year: number) => {

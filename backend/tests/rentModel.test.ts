@@ -4,7 +4,8 @@ import {
   clampAskingRentRatio, reviseRent, capRentAtRelet, computeRentTax, toCents, convertEurosToCoins,
   buildMonthlyStatement, EngineInputError, MonthlyInput,
 } from '../src/engine/immo';
-import { RENT_MODEL, VACANCY_MODEL, EUROS_PER_COIN, RENT_TAX_RATE_BY_PROFILE, STARTING_PROFILES } from '../src/config/immoRules';
+import { RENT_MODEL, VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, STARTING_PROFILES } from '../src/config/immoRules';
+import { EUROS_PER_COIN } from '../src/config/economy';
 import { createRng } from '../src/utils/seededRandom';
 
 const NO_TAX = { ytdBefore: 0, ratePct: 0, settleThisMonth: false };
@@ -207,25 +208,32 @@ describe('impôt annuel sur les loyers : base réelle simplifiée, réglé en d�
 });
 
 describe('conversion euros → InvestCoins : ni perte ni création', () => {
-  const C = EUROS_PER_COIN; // 20 €
-  it('exemples chiffrés', () => {
-    expect(convertEurosToCoins(0, toCents(25), C)).toEqual({ coins: 1, remainderCents: 500 });   // 25 € = 1 InvestCoin + 5 € en attente
-    expect(convertEurosToCoins(1500, toCents(6), C)).toEqual({ coins: 1, remainderCents: 100 });  // 15 + 6 = 21 €
-    expect(convertEurosToCoins(1999, 1, C)).toEqual({ coins: 1, remainderCents: 0 });            // pile 20 €
-    expect(convertEurosToCoins(0, toCents(19.99), C)).toEqual({ coins: 0, remainderCents: 1999 });
-    expect(convertEurosToCoins(0, toCents(100), C)).toEqual({ coins: 5, remainderCents: 0 });
+  const C = EUROS_PER_COIN; // 1 € : règle actuelle du jeu
+  it('règle actuelle (1 InvestCoin = 1 €) : exemples chiffrés', () => {
+    expect(C).toBe(1);
+    expect(convertEurosToCoins(0, toCents(25.4), C)).toEqual({ coins: 25, remainderCents: 40 });  // 25,40 € = 25 InvestCoins + 0,40 € en attente
+    expect(convertEurosToCoins(60, toCents(0.5), C)).toEqual({ coins: 1, remainderCents: 10 });   // 0,60 + 0,50 = 1,10 €
+    expect(convertEurosToCoins(0, toCents(0.99), C)).toEqual({ coins: 0, remainderCents: 99 });
+    expect(convertEurosToCoins(99, 1, C)).toEqual({ coins: 1, remainderCents: 0 });               // pile 1 €
   });
-  it('déficit : arrondi contre le joueur (jamais de débit « offert »)', () => {
-    expect(convertEurosToCoins(0, toCents(-5), C)).toEqual({ coins: -1, remainderCents: 1500 });  // −5 € débite 1 InvestCoin, 15 € de crédit en attente
-    expect(convertEurosToCoins(500, toCents(-25), C)).toEqual({ coins: -1, remainderCents: 0 });
-    expect(convertEurosToCoins(500, toCents(-21), C)).toEqual({ coins: -1, remainderCents: 400 });
+  it('règle actuelle : déficit arrondi contre le joueur (jamais de débit « offert »)', () => {
+    expect(convertEurosToCoins(0, toCents(-5.5), C)).toEqual({ coins: -6, remainderCents: 50 });  // −5,50 € débite 6 InvestCoins, 0,50 € de crédit en attente
+    expect(convertEurosToCoins(50, toCents(-5), C)).toEqual({ coins: -5, remainderCents: 50 });
+    expect(convertEurosToCoins(0, toCents(-0.01), C)).toEqual({ coins: -1, remainderCents: 99 });
+  });
+  it('le moteur reste correct pour un autre taux (ancien taux de 20 € par pièce, exemples inchangés)', () => {
+    expect(convertEurosToCoins(0, toCents(25), 20)).toEqual({ coins: 1, remainderCents: 500 });
+    expect(convertEurosToCoins(1500, toCents(6), 20)).toEqual({ coins: 1, remainderCents: 100 });
+    expect(convertEurosToCoins(1999, 1, 20)).toEqual({ coins: 1, remainderCents: 0 });
+    expect(convertEurosToCoins(0, toCents(-5), 20)).toEqual({ coins: -1, remainderCents: 1500 });
+    expect(convertEurosToCoins(500, toCents(-25), 20)).toEqual({ coins: -1, remainderCents: 0 });
   });
   it('les centimes flottants ne dérivent pas', () => {
     expect(toCents(19.99)).toBe(1999);
     expect(toCents(0.1 + 0.2)).toBe(30);
     expect(toCents(1234.565)).toBe(123457);
   });
-  it('INVARIANT sur 20 000 opérations aléatoires : pièces × 20 € + reliquat = somme exacte des euros', () => {
+  it('INVARIANT sur 20 000 opérations aléatoires : pièces × (€ par pièce) + reliquat = somme exacte des euros', () => {
     const rng = createRng(2026);
     let remainder = 0, coinsTotal = 0, centsTotal = 0;
     for (let i = 0; i < 20000; i++) {
@@ -237,7 +245,7 @@ describe('conversion euros → InvestCoins : ni perte ni création', () => {
     }
     expect(coinsTotal * C * 100 + remainder).toBe(centsTotal);
   });
-  it('loyers seuls (positifs) : jamais plus de pièces que d\'euros / 20', () => {
+  it('loyers seuls (positifs) : jamais plus de pièces que d\'euros / EUROS_PER_COIN', () => {
     const rng = createRng(99);
     let remainder = 0, coins = 0, cents = 0;
     for (let i = 0; i < 5000; i++) {

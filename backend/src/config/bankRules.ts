@@ -62,7 +62,7 @@ export const PERSONAL_LOAN = {
   incomeMonthsCap: 6,
   minMonths: 6,
   maxMonths: 60,
-  minPrincipalCoins: 25,
+  minPrincipalCoins: 500,   // = 500 € : avant le passage à 1 InvestCoin = 1 €, 25 InvestCoins valaient 500 € en Immobilier (même montant en euros)
   maxActive: 1,
 };
 

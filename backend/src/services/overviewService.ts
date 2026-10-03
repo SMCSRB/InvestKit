@@ -5,7 +5,7 @@ import { readTaxState } from '../engine/trading/costs';
 import { outstandingCoins } from './bankService';
 import { wealthMetrics } from './realEstateSaleService';
 import { riskService } from './riskService';
-import { EUROS_PER_COIN } from '../config/immoRules';
+import { EUROS_PER_COIN } from '../config/economy';
 import { netWorthCoins } from '../engine/wealth';
 
 // Vue d'ensemble RÉELLE du joueur (remplace les chiffres fictifs du tableau de bord). Chaque domaine garde son unité :

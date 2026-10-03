@@ -1,8 +1,13 @@
+import { EUROS_PER_COIN } from '../src/config/economy';
 import { randomEventOn } from '../src/services/crypto/eventsService';
 import { randomUUID } from 'crypto';
 import { initDatabase, executeSchema, query, closePool } from '../src/utils/db';
 
 export const hasDb = !!process.env.TEST_DATABASE_URL;
+
+// Les montants en pièces écrits avant le passage à 1 InvestCoin = 1 € valaient 20 € chacun en Immobilier :
+// legacyCoins(n) donne le même montant en euros avec la règle actuelle (les assertions en euros restent donc valables).
+export const legacyCoins = (n: number): number => Math.round((n * 20) / EUROS_PER_COIN);
 
 export const setupDb = async (): Promise<void> => {
   initDatabase();

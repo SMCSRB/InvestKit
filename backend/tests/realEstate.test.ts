@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum, legacyCoins } from './helpers';
 import { query } from '../src/utils/db';
 import { realEstateService as svc, RealEstateError } from '../src/services/realEstateService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
-import { EUROS_PER_COIN } from '../src/config/immoRules';
+import { EUROS_PER_COIN } from '../src/config/economy';
 
 const YEAR = 2010; // année de départ d'une partie
 
@@ -49,7 +49,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const l = await findListing(() => true);
       const locked = await newPlayer({ freeDomain: 'stocks' });
       expect((await rejects(svc.buyExpertise(locked, l.id))).code).toBe('DOMAIN_LOCKED');
-      expect((await rejects(svc.purchase(locked, { listingId: l.id, downPaymentCoins: 100, months: 240 }))).code).toBe('DOMAIN_LOCKED');
+      expect((await rejects(svc.purchase(locked, { listingId: l.id, downPaymentCoins: legacyCoins(100), months: 240 }))).code).toBe('DOMAIN_LOCKED');
       const none = await newPlayer({ freeDomain: null });
       expect((await rejects(svc.buyExpertise(none, l.id))).code).toBe('FREE_DOMAIN_NOT_CHOSEN');
       const pro = await newPlayer({ freeDomain: 'stocks', pro: true });
@@ -66,11 +66,11 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const l = await findListing(() => true);
       for (const bad of [
         { listingId: l.id, downPaymentCoins: 1.5, months: 240 }, { listingId: l.id, downPaymentCoins: -1, months: 240 },
-        { listingId: l.id, downPaymentCoins: '100', months: 240 }, { listingId: l.id, downPaymentCoins: 100, months: 6 },
-        { listingId: l.id, downPaymentCoins: 100, months: 999 }, { listingId: "x'; DROP TABLE users;--", downPaymentCoins: 100, months: 240 },
-        { downPaymentCoins: 100, months: 240 }, null,
+        { listingId: l.id, downPaymentCoins: '100', months: 240 }, { listingId: l.id, downPaymentCoins: legacyCoins(100), months: 6 },
+        { listingId: l.id, downPaymentCoins: legacyCoins(100), months: 999 }, { listingId: "x'; DROP TABLE users;--", downPaymentCoins: legacyCoins(100), months: 240 },
+        { downPaymentCoins: legacyCoins(100), months: 240 }, null,
       ]) expect((await rejects(svc.previewPurchase(uid, bad))).code).toBe('INVALID_INPUT');
-      expect((await rejects(svc.previewPurchase(uid, { listingId: 'nope-1', downPaymentCoins: 100, months: 240 }))).code).toBe('UNKNOWN_LISTING');
+      expect((await rejects(svc.previewPurchase(uid, { listingId: 'nope-1', downPaymentCoins: legacyCoins(100), months: 240 }))).code).toBe('UNKNOWN_LISTING');
       expect((await rejects(svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: 9999999, months: 240 }))).code).toBe('INVALID_INPUT');
     });
   });
@@ -93,7 +93,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
     it('durée > 25 ans et endettement trop élevé : motifs cumulés', async () => {
       const uid = await newPlayer({ profile: 'student' });
       const l = await findListing((x) => x.price > 150000);
-      const err = await rejects(svc.purchase(uid, { listingId: l.id, downPaymentCoins: 1000, months: 360 }));
+      const err = await rejects(svc.purchase(uid, { listingId: l.id, downPaymentCoins: legacyCoins(1000), months: 360 }));
       const codes = ((err.details as any).reasons as { code: string }[]).map((r) => r.code);
       expect(codes).toContain('LOAN_TERM_TOO_LONG');
       expect(codes).toContain('DEBT_RATIO_TOO_HIGH');
@@ -102,13 +102,13 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const uid = await newPlayer();
       const l = await findListing((x) => x.age === 'old' && x.price > 60000 && x.price < 120000);
       const before = await balanceOf(uid);
-      const p: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: 1000, months: 240 });
+      const p: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: legacyCoins(1000), months: 240 });
       expect(p.bank.approved).toBe(true);
       expect(p.costs.totalCost).toBeCloseTo(l.price + p.costs.notaryFees + p.costs.works, 2);
       expect(p.costs.loanPrincipal).toBeCloseTo(p.costs.totalCost - 20000, 2);
       expect(p.loan.taegPct).toBeGreaterThan(p.loan.annualRatePct);
       expect(p.loan.monthlyPaymentWithInsurance).toBeGreaterThan(p.loan.monthlyPaymentWithoutInsurance);
-      expect(p.coins.total).toBe(1000 + p.coins.loanFees);
+      expect(p.coins.total).toBe(legacyCoins(1000) + p.coins.loanFees);
       expect(await balanceOf(uid)).toBe(before);
       expect((await query('SELECT count(*)::int AS n FROM investcoins_transactions WHERE user_id = $1', [uid])).rows[0].n).toBe(0);
     });
@@ -118,7 +118,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
     it('achat réussi : pièces débitées exactement, ledger classé, prêt et bien créés', async () => {
       const uid = await newPlayer({ balance: 100000 });
       const l = await findListing((x) => x.age === 'old' && x.advertisedWorks === 0 && x.price > 50000 && x.price < 100000);
-      const coins = 800;
+      const coins = legacyCoins(800);
       const p: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: coins, months: 240 });
       expect(p.bank.approved).toBe(true);
       const res: any = await svc.purchase(uid, { listingId: l.id, downPaymentCoins: coins, months: 240 });
@@ -133,7 +133,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       expect(byReason['re_loan_fees']).toMatchObject({ nature: 'destruction' });
       expect(byReason['re_exchange_down_payment']).toMatchObject({ nature: 'exchange', domain: 'real_estate' });
       // les pièces détruites couvrent exactement les frais de notaire arrondis au-dessus
-      expect(-byReason['re_notary_fees'].amount).toBe(Math.ceil(p.costs.notaryFees / 20));
+      expect(-byReason['re_notary_fees'].amount).toBe(Math.ceil(p.costs.notaryFees / EUROS_PER_COIN));
 
       const loan = (await query('SELECT * FROM re_loans l JOIN re_games g ON g.id = l.game_id WHERE g.user_id = $1', [uid])).rows;
       expect(loan).toHaveLength(1);
@@ -151,20 +151,20 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
     it('deux achats SIMULTANÉS du même bien : un seul passe, débit unique', async () => {
       const uid = await newPlayer({ balance: 100000 });
       const l = await findListing((x) => x.age === 'old' && x.advertisedWorks === 0 && x.price > 50000 && x.price < 100000);
-      const params = { listingId: l.id, downPaymentCoins: 800, months: 240 };
+      const params = { listingId: l.id, downPaymentCoins: legacyCoins(800), months: 240 };
       const r = await Promise.allSettled([svc.purchase(uid, params), svc.purchase(uid, params), svc.purchase(uid, params)]);
       expect(r.filter((x) => x.status === 'fulfilled').length).toBe(1);
       const errs = r.filter((x) => x.status === 'rejected').map((x: any) => x.reason.code);
       expect(errs.every((c) => c === 'ALREADY_OWNED')).toBe(true);
       const props = (await query('SELECT count(*)::int AS n FROM re_properties p JOIN re_games g ON g.id = p.game_id WHERE g.user_id = $1', [uid])).rows[0].n;
       expect(props).toBe(1);
-      expect(await ledgerSum(uid)).toBeGreaterThan(-1000); // débité une seule fois (~800 + frais)
+      expect(await ledgerSum(uid)).toBeGreaterThan(-legacyCoins(1000)); // débité une seule fois (~800 + frais, au taux d'avant)
     });
 
     it('achats simultanés de biens différents avec un solde pour un seul : jamais négatif', async () => {
-      const uid = await newPlayer({ balance: 1000 });
+      const uid = await newPlayer({ balance: legacyCoins(1000) });
       const ls = (await src.listListings(YEAR)).filter((x) => x.age === 'old' && x.advertisedWorks === 0 && x.price > 50000 && x.price < 100000).slice(0, 3);
-      const r = await Promise.allSettled(ls.map((l) => svc.purchase(uid, { listingId: l.id, downPaymentCoins: 700, months: 240 })));
+      const r = await Promise.allSettled(ls.map((l) => svc.purchase(uid, { listingId: l.id, downPaymentCoins: legacyCoins(700), months: 240 })));
       const ok = r.filter((x) => x.status === 'fulfilled').length;
       expect(ok).toBeLessThanOrEqual(1);
       expect(await balanceOf(uid)).toBeGreaterThanOrEqual(0);
@@ -175,7 +175,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
     it('solde insuffisant : refus net, rien n\'est écrit', async () => {
       const uid = await newPlayer({ balance: 50 });
       const l = await findListing((x) => x.age === 'old' && x.advertisedWorks === 0 && x.price > 50000 && x.price < 100000);
-      const err = await rejects(svc.purchase(uid, { listingId: l.id, downPaymentCoins: 800, months: 240 }));
+      const err = await rejects(svc.purchase(uid, { listingId: l.id, downPaymentCoins: legacyCoins(800), months: 240 }));
       expect(err.code).toBe('INSUFFICIENT_FUNDS');
       expect(await balanceOf(uid)).toBe(50);
       expect((await query('SELECT count(*)::int AS n FROM re_loans l JOIN re_games g ON g.id = l.game_id WHERE g.user_id = $1', [uid])).rows[0].n).toBe(0);
@@ -186,7 +186,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const ls = (await src.listListings(YEAR)).filter((x) => x.age === 'old' && x.advertisedWorks === 0 && x.price > 90000 && x.price < 150000);
       let refused: RealEstateError | null = null;
       for (const l of ls) {
-        try { await svc.purchase(uid, { listingId: l.id, downPaymentCoins: 1200, months: 300 }); }
+        try { await svc.purchase(uid, { listingId: l.id, downPaymentCoins: legacyCoins(1200), months: 300 }); }
         catch (e) { refused = e as RealEstateError; break; }
       }
       expect(refused?.code).toBe('BANK_REFUSED');
@@ -198,7 +198,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const a = await newPlayer({ balance: 100000 });
       const b = await newPlayer({ balance: 100000 });
       const l = await findListing((x) => x.age === 'old' && x.advertisedWorks === 0 && x.price > 50000 && x.price < 100000);
-      const params = { listingId: l.id, downPaymentCoins: 800, months: 240 };
+      const params = { listingId: l.id, downPaymentCoins: legacyCoins(800), months: 240 };
       await svc.purchase(a, params);
       await svc.purchase(b, params);
       expect((await svc.listProperties(a)).properties).toHaveLength(1);
@@ -249,7 +249,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       expect(Number(prop.pending_works_eur)).toBeGreaterThan(2000);
       const before = await balanceOf(uid);
       const paid: any = await svc.payPendingWorks(uid, prop.id);
-      expect(paid.charged).toBe(Math.ceil(Number(prop.pending_works_eur) / 20));
+      expect(paid.charged).toBe(Math.ceil(Number(prop.pending_works_eur) / EUROS_PER_COIN));
       expect(await balanceOf(uid)).toBe(before - paid.charged);
       expect((await svc.payPendingWorks(uid, prop.id)).charged).toBe(0); // rien à repayer
       const nat = (await query(`SELECT nature FROM investcoins_transactions WHERE user_id = $1 AND reason = 're_exchange_pay_works'`, [uid])).rows[0].nature;

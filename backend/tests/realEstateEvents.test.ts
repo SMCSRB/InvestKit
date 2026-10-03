@@ -10,6 +10,7 @@ import {
 } from '../src/engine/immo';
 import { EVENT_PARAMS as P } from '../src/config/immoRules';
 import { createRng } from '../src/utils/seededRandom';
+import { EUROS_PER_COIN } from '../src/config/economy';
 
 const ORIGINAL = JSON.parse(JSON.stringify(P));
 const reset = () => { Object.assign(P, JSON.parse(JSON.stringify(ORIGINAL))); };
@@ -173,7 +174,7 @@ describe.skipIf(!hasDb)('événements dans la partie', () => {
       if ((await src.getExpertise(x.id, 2010))!.hiddenDefects.length === 0) { l = x; break; } // pas de travaux cachés : le bien est louable
     }
     expect(l, 'bien de test introuvable').toBeDefined();
-    await svc.purchase(uid, { listingId: l.id, downPaymentCoins: Math.floor((l.price * 0.5) / 20), months: 240 });
+    await svc.purchase(uid, { listingId: l.id, downPaymentCoins: Math.floor((l.price * 0.5) / EUROS_PER_COIN), months: 240 });
     const prop = (await svc.listProperties(uid)).properties[0];
     return { uid, prop, l };
   };
@@ -435,7 +436,7 @@ describe.skipIf(!hasDb)('événements dans la partie', () => {
     expect(seen.size).toBeGreaterThan(1);
   });
 
-  it('CONSERVATION avec tous les événements actifs, 60 mois : pièces × 20 € + reliquat = somme exacte des cash-flows', async () => {
+  it('CONSERVATION avec tous les événements actifs, 60 mois : pièces × (€ par pièce) + reliquat = somme exacte des cash-flows', async () => {
     reset();
     const { uid, prop: p0 } = await player({ seed: 'conservation-evts', city: 'brumevalle' });
     await life.listForRent(uid, p0.id, 1.1);
@@ -446,7 +447,7 @@ describe.skipIf(!hasDb)('événements dans la partie', () => {
     const rem = Number((await prop(p0.id)).euro_remainder_cents);
     const g = (await query('SELECT arrears_eur FROM re_games WHERE user_id = $1', [uid])).rows[0];
     expect(Number(g.arrears_eur)).toBe(0); // solde large : aucun débit partiel
-    expect(coins * 2000 + rem).toBe(cents);
+    expect(coins * EUROS_PER_COIN * 100 + rem).toBe(cents);
     // chaque mois : somme des lignes = net
     for (const r of st) {
       const L = r.lines;

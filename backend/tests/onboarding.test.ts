@@ -7,7 +7,7 @@ import { onboardingService, suggestPath, CHECKLIST_REWARD_COINS, PROFILE_OPTIONS
 import { tradingService } from '../src/services/tradingService';
 import { realEstateService as svc } from '../src/services/realEstateService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, legacyCoins } from './helpers';
 
 describe('conseil de départ selon le profil', () => {
   it('débutant : éducation d\'abord ; prudent : liquidités ; risque élevé : tests de résistance ; immobilier : rendement et effort d\'épargne', () => {
@@ -52,11 +52,11 @@ describe.skipIf(!hasDb)('checklist d\'accueil gamifiée (base réelle)', () => {
   });
 
   it('premier bien immobilier', async () => {
-    const u = await createUser({ balance: 30000, freeDomain: 'real_estate' });
+    const u = await createUser({ balance: legacyCoins(30000), freeDomain: 'real_estate' });
     await svc.startGame(u, 'executive');
     let listing: any;
     for (const l of await src.listListings(2010)) { if (l.age === 'old' && l.advertisedWorks === 0 && l.condition !== 'to_renovate' && l.price > 50000 && l.price < 90000) { listing = l; break; } }
-    await svc.purchase(u, { listingId: listing.id, downPaymentCoins: 1500, months: 240 });
+    await svc.purchase(u, { listingId: listing.id, downPaymentCoins: legacyCoins(1500), months: 240 });
     expect(await done(u)).toContain('first_property');
   });
 
