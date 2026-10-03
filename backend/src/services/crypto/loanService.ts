@@ -70,8 +70,8 @@ const evaluate = async (db: Queryable, userId: string, amountRaw: unknown, accou
   const ratePct = bankProductRatePct('portfolio', year);
   const reasons: { code: string; message: string }[] = [];
   if (limits.value <= 0) reasons.push({ code: 'NO_COLLATERAL', message: 'Tu ne détiens aucune crypto : il faut des actifs à mettre en garantie.' });
-  if (amountRaw < LOMBARD.minPrincipalCoins) reasons.push({ code: 'TOO_SMALL', message: `Montant minimum : ${LOMBARD.minPrincipalCoins} 🪙.` });
-  if (amountRaw > capacity) reasons.push({ code: 'OVER_CAPACITY', message: `Tu peux emprunter au plus ${fr(capacity)} 🪙 (${CRYPTO_LOAN.ltv.max} % de la valeur de tes cryptos).` });
+  if (amountRaw < LOMBARD.minPrincipalCoins) reasons.push({ code: 'TOO_SMALL', message: `Montant minimum : ${LOMBARD.minPrincipalCoins} InvestCoins.` });
+  if (amountRaw > capacity) reasons.push({ code: 'OVER_CAPACITY', message: `Tu peux emprunter au plus ${fr(capacity)} InvestCoins (${CRYPTO_LOAN.ltv.max} % de la valeur de tes cryptos).` });
   if (await activeLoan(db, userId)) reasons.push({ code: 'ALREADY_HAVE_ONE', message: 'Tu as déjà un prêt sur ton portefeuille Crypto : rembourse-le d\'abord (un seul à la fois).' });
   const acc = (await db.query('SELECT credit_blocked FROM bank_accounts WHERE user_id = $1', [userId])).rows[0];
   if (acc?.credit_blocked) reasons.push({ code: 'CREDIT_BLOCKED', message: 'Un de tes prêts est en défaut : aucun nouveau crédit tant qu\'il n\'est pas soldé.' });
@@ -111,7 +111,7 @@ export const cryptoLoanService = {
       const day = Math.floor(account.simulatedAt / DAY);
       const { loanId } = await originateLoan(client as any, { userId, product: 'portfolio', domain: CRYPTO_DOMAIN, principalCoins: e.amount, annualRatePct: e.ratePct, months: 1, clockTotal: day, repaymentType: 'interest_only', meta: { rateKind: 'variable', lastAccrualMs: account.simulatedAt, crypto: true } });
       await client.query('COMMIT');
-      return { loanId, amountCoins: e.amount, annualRatePct: e.ratePct, message: `Prêt accordé : ${fr(e.amount)} 🪙 à ${fr(e.ratePct)} % (taux variable). Ces pièces ne servent que dans le domaine Crypto ; tes cryptos sont mises en garantie.` };
+      return { loanId, amountCoins: e.amount, annualRatePct: e.ratePct, message: `Prêt accordé : ${fr(e.amount)} InvestCoins à ${fr(e.ratePct)} % (taux variable). Ces pièces ne servent que dans le domaine Crypto ; tes cryptos sont mises en garantie.` };
     } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
   },
 
@@ -126,11 +126,11 @@ export const cryptoLoanService = {
       if (!loan) throw new CryptoDataError('NOT_FOUND', 'Prêt introuvable');
       if (loan.status !== 'active' && loan.status !== 'defaulted') throw new CryptoDataError('INVALID_INPUT', 'Ce prêt est déjà clos');
       const maxCoins = Math.ceil((Number(loan.balance_h) + Number(loan.due_interest_h)) / 100);
-      if (coinsRaw > maxCoins) throw new CryptoDataError('INVALID_INPUT', `Il ne reste que ${maxCoins} 🪙 à rembourser`);
-      if ((await investcoinsRepository.getBalance(userId, client)) < coinsRaw) throw new CryptoDataError('INVALID_INPUT', `Solde insuffisant : ${coinsRaw} 🪙 nécessaires.`);
+      if (coinsRaw > maxCoins) throw new CryptoDataError('INVALID_INPUT', `Il ne reste que ${maxCoins} InvestCoins à rembourser`);
+      if ((await investcoinsRepository.getBalance(userId, client)) < coinsRaw) throw new CryptoDataError('INVALID_INPUT', `Solde insuffisant : ${coinsRaw} InvestCoins nécessaires.`);
       const r = await applyPayment(client as any, userId, loan, coinsRaw);
       if (!r.repaid) { const v = await view(client, userId, account.simulatedAt); if (v.loan && v.loan.state === 'ok') await client.query(`UPDATE bank_loans SET meta = meta - 'marginCall' WHERE id = $1`, [loan.id]); }
-      await logBankEvent(client as any, userId, loan.id, 'loan_repayment', `Remboursement de ${coinsRaw} 🪙 sur le prêt Crypto.`, { coins: coinsRaw });
+      await logBankEvent(client as any, userId, loan.id, 'loan_repayment', `Remboursement de ${coinsRaw} InvestCoins sur le prêt Crypto.`, { coins: coinsRaw });
       await client.query('COMMIT');
       return { loanId: loan.id, coinsPaid: coinsRaw, repaid: r.repaid, remainingCoins: (r.balanceH + r.dueH) / 100 };
     } catch (e) { await client.query('ROLLBACK'); throw e; } finally { client.release(); }
@@ -147,7 +147,7 @@ export const collateralRelease = async (db: Queryable, userId: string, nowMs: nu
   const limits = collateralLimits(rest);
   const need = Math.ceil(Math.max(0, debtCoins(loan) - limits.maxLimit));
   if (need <= 0) return 0;
-  if (need > netProceeds) throw new CryptoDataError('INVALID_INPUT', `Cette vente laisserait ton prêt sans garantie suffisante : il faudrait en rembourser ${fr(need)} 🪙, mais la vente ne rapporte que ${fr(netProceeds)} 🪙. Rembourse d'abord une partie du prêt, ou vends moins.`);
+  if (need > netProceeds) throw new CryptoDataError('INVALID_INPUT', `Cette vente laisserait ton prêt sans garantie suffisante : il faudrait en rembourser ${fr(need)} InvestCoins, mais la vente ne rapporte que ${fr(netProceeds)} InvestCoins. Rembourse d'abord une partie du prêt, ou vends moins.`);
   return need;
 };
 
@@ -157,7 +157,7 @@ export const repayFromSale = async (db: Queryable, userId: string, coins: number
   if (!loan) return;
   const pay = Math.min(coins, Math.ceil(debtCoins(loan)));
   await applyPayment(db as any, userId, loan, pay, { autoRepay: true });
-  await logBankEvent(db as any, userId, loan.id, 'auto_repay', `Une partie du produit de la vente (${fr(pay)} 🪙) a servi à rembourser ton prêt Crypto, car les cryptos vendues étaient en garantie.`, { coins: pay });
+  await logBankEvent(db as any, userId, loan.id, 'auto_repay', `Une partie du produit de la vente (${fr(pay)} InvestCoins) a servi à rembourser ton prêt Crypto, car les cryptos vendues étaient en garantie.`, { coins: pay });
 };
 
 // Passage du temps (fromMs → toMs) : intérêts jour par jour, puis évaluation de la garantie au plus bas de la période (appel de marge, vente forcée).
@@ -182,7 +182,7 @@ export const processLoan = async (db: Queryable, account: CryptoAccount, fromMs:
       paidI += dueH; remainder = conv.remainderCents; dueH = 0; missed = 0;
     } else {
       missed += 1;
-      await emit('interest_unpaid', `Intérêts impayés (${fr(dueH / 100)} 🪙) : solde insuffisant. Ils s'ajoutent à ta dette.`, { missed });
+      await emit('interest_unpaid', `Intérêts impayés (${fr(dueH / 100)} InvestCoins) : solde insuffisant. Ils s'ajoutent à ta dette.`, { missed });
     }
   }
   await db.query(`UPDATE bank_loans SET due_interest_h = $2, remainder_h = $3, missed_instalments = $4, interest_paid_h = $5, annual_rate_pct = $6, last_clock_total = $7 WHERE id = $1`,
@@ -201,7 +201,7 @@ export const processLoan = async (db: Queryable, account: CryptoAccount, fromMs:
     if (pending) { await setMargin(null); await emit('margin_cleared', 'Appel de marge levé : ta garantie est de nouveau suffisante.'); }
   } else if (state === 'call') {
     await setMargin({ sinceMs: toMs, debtCoins: debt, collateralCoins: low.limits.value });
-    await emit('margin_call', `APPEL DE MARGE : ta dette (${fr(debt)} 🪙) dépasse ${CRYPTO_LOAN.ltv.call} % de la valeur de tes cryptos au plus bas de la période (${fr(low.limits.value)} 🪙). Avant ta prochaine avance dans le temps, rembourse une partie du prêt ou achète des cryptos ; sinon elles seront vendues de force. ${CRYPTO_LOAN.simplification}`, { debt, callLimit: low.limits.callLimit });
+    await emit('margin_call', `APPEL DE MARGE : ta dette (${fr(debt)} InvestCoins) dépasse ${CRYPTO_LOAN.ltv.call} % de la valeur de tes cryptos au plus bas de la période (${fr(low.limits.value)} InvestCoins). Avant ta prochaine avance dans le temps, rembourse une partie du prêt ou achète des cryptos ; sinon elles seront vendues de force. ${CRYPTO_LOAN.simplification}`, { debt, callLimit: low.limits.callLimit });
     await notify(db, userId, { kind: 'crypto_margin_call', title: 'Appel de marge sur ton prêt Crypto', body: `Ta dette dépasse ${CRYPTO_LOAN.ltv.call} % de la valeur de tes cryptos. Régularise avant d'avancer dans le temps.`, link: '/crypto' });
   } else {
     // Vente forcée proportionnelle à la clôture moins la décote, jusqu'à ramener la dette sous 30 % de ce qui reste.
@@ -232,12 +232,12 @@ export const processLoan = async (db: Queryable, account: CryptoAccount, fromMs:
     if (remaining === 0 && left > 0) {
       await db.query(`UPDATE bank_loans SET status = 'defaulted' WHERE id = $1`, [loan.id]);
       await db.query(`UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'default', blocked_at = NOW(), defaults = defaults + 1 WHERE user_id = $1`, [userId]);
-      msg = `VENTE FORCÉE : toutes tes cryptos ont été vendues (${fr(proceedsTotal)} 🪙 après décote de ${LOMBARD.haircutPct} %), mais il reste ${fr(left)} 🪙 de dette. Elle reste due et tu ne peux plus emprunter tant qu'elle n'est pas soldée. ${CRYPTO_LOAN.simplification}`;
+      msg = `VENTE FORCÉE : toutes tes cryptos ont été vendues (${fr(proceedsTotal)} InvestCoins après décote de ${LOMBARD.haircutPct} %), mais il reste ${fr(left)} InvestCoins de dette. Elle reste due et tu ne peux plus emprunter tant qu'elle n'est pas soldée. ${CRYPTO_LOAN.simplification}`;
     } else if (r.repaid) {
       await db.query(`UPDATE bank_loans SET status = 'liquidated' WHERE id = $1`, [loan.id]);
-      msg = `VENTE FORCÉE : ${Math.round(Math.min(1, fraction) * 100)} % de tes cryptos ont été vendues (${fr(proceedsTotal)} 🪙 après décote de ${LOMBARD.haircutPct} %) et le prêt est soldé. ${CRYPTO_LOAN.simplification}`;
+      msg = `VENTE FORCÉE : ${Math.round(Math.min(1, fraction) * 100)} % de tes cryptos ont été vendues (${fr(proceedsTotal)} InvestCoins après décote de ${LOMBARD.haircutPct} %) et le prêt est soldé. ${CRYPTO_LOAN.simplification}`;
     } else {
-      msg = `VENTE FORCÉE : ${Math.round(Math.min(1, fraction) * 100)} % de tes cryptos ont été vendues (${fr(proceedsTotal)} 🪙 après décote de ${LOMBARD.haircutPct} %) pour ramener ta dette à ${fr(left)} 🪙. ${CRYPTO_LOAN.simplification}`;
+      msg = `VENTE FORCÉE : ${Math.round(Math.min(1, fraction) * 100)} % de tes cryptos ont été vendues (${fr(proceedsTotal)} InvestCoins après décote de ${LOMBARD.haircutPct} %) pour ramener ta dette à ${fr(left)} InvestCoins. ${CRYPTO_LOAN.simplification}`;
     }
     await emit('liquidation', msg, { proceeds: proceedsTotal, left });
     await notify(db, userId, { kind: 'crypto_liquidation', title: 'Vente forcée sur ton prêt Crypto', body: msg, link: '/crypto' });

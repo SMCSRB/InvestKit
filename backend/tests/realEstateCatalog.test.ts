@@ -128,7 +128,7 @@ describe('graine déterministe', () => {
 // Exigence produit : « chaque profil doit pouvoir acheter au moins un bien du
 // catalogue de départ, chaque année », AVEC les règles de la banque : apport
 // minimum = frais de notaire, durée ≤ 25 ans, loyer prévisionnel retenu à 70 %.
-// Apport de départ : 500 🪙 × 20 €. Prêt sur 25 ans. Travaux annoncés financés.
+// Apport de départ : 500  InvestCoins × 20 €. Prêt sur 25 ans. Travaux annoncés financés.
 describe('chaque profil peut acheter au moins un bien, chaque année (règles complètes)', () => {
   const DOWN_PAYMENT = 500 * EUROS_PER_COIN;
   const profiles = Object.keys(STARTING_PROFILES) as ProfileId[];

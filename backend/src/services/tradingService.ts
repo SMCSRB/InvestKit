@@ -257,14 +257,14 @@ export const tradingService = {
           }
           const cost = chargeForBuy(price, quantity);
           if (cost < 1) {
-            throw new TradingError('INVALID_INPUT', 'Montant trop faible (minimum 1 🪙)');
+            throw new TradingError('INVALID_INPUT', 'Montant trop faible (minimum 1 InvestCoin)');
           }
 
           const fee = brokerageFee(kindOf(domain, symbol), cost);
           const ts = readTaxState(portfolio.tax_state);
           if (account === 'pea') {
             if (ts.peaDeposits + cost > TRADING_TAX.pea.depositCeiling) {
-              throw new TradingError('PEA_CEILING', `Plafond de versements du PEA (${TRADING_TAX.pea.depositCeiling.toLocaleString('fr-FR')} 🪙) dépassé : utilise le compte-titres`);
+              throw new TradingError('PEA_CEILING', `Plafond de versements du PEA (${TRADING_TAX.pea.depositCeiling.toLocaleString('fr-FR')} InvestCoins) dépassé : utilise le compte-titres`);
             }
             ts.peaDeposits += cost;
             if (ts.peaOpenedYear === null) ts.peaOpenedYear = year;
@@ -338,7 +338,7 @@ export const tradingService = {
         existing.quantity -= sold;
         const remaining = positions.filter((p) => p.quantity > 1e-9);
 
-        // Poussière : une vente qui vaut moins d'1 🪙 est créditée 0 (arrondi
+        // Poussière : une vente qui vaut moins d'1 InvestCoin est créditée 0 (arrondi
         // contre le joueur) ; le ledger refuse les montants nuls, donc on
         // n'écrit pas de ligne dans ce cas.
         if (proceeds > 0) {

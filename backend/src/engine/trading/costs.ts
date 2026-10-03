@@ -53,7 +53,7 @@ export const saleTax = (i: SaleTaxInput): SaleTax => {
   if (i.account === 'crypto') {
     const already = i.taxState.cryptoSales[String(i.year)] ?? 0;
     if (already + i.proceeds <= TRADING_TAX.cryptoDisposalThreshold) {
-      return NONE(gain, `Cessions de l'année sous ${TRADING_TAX.cryptoDisposalThreshold} 🪙 : aucune imposition.`);
+      return NONE(gain, `Cessions de l'année sous ${TRADING_TAX.cryptoDisposalThreshold} InvestCoins : aucune imposition.`);
     }
     const it = TRADING_TAX.incomeTaxPct(i.year, 'crypto');
     return {

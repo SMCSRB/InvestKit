@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Coin from '@/app/components/ui/Coin';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 export const tone = (s) => (s < 25 ? 'var(--ik-positive)' : s < 50 ? 'var(--ik-primary)' : s < 75 ? 'var(--ik-warning)' : 'var(--ik-negative)');
@@ -26,19 +27,19 @@ export default function PortfolioRisk({ domain, refreshKey }) {
   const box = { background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)', borderRadius: 16, padding: 20, marginTop: 24 };
   if (error) return <div style={box}><p style={{ margin: 0, color: 'var(--ik-negative)', fontSize: 13 }}>Risque du portefeuille : {error}</p></div>;
   if (!data) return null;
-  if (data.empty) return <div style={box}><h3 style={{ fontSize: 15, margin: '0 0 6px', color: 'var(--ik-text)' }}>🎯 Risque de ton portefeuille</h3><p style={{ margin: 0, fontSize: 13, color: 'var(--ik-text-3)' }}>{data.message}</p></div>;
+  if (data.empty) return <div style={box}><h3 style={{ fontSize: 15, margin: '0 0 6px', color: 'var(--ik-text)' }}>Risque de ton portefeuille</h3><p style={{ margin: 0, fontSize: 13, color: 'var(--ik-text-3)' }}>{data.message}</p></div>;
 
   const s = data.score;
   const top = [...s.factors].sort((a, b) => b.contribution - a.contribution).slice(0, 3);
   return (
     <div style={box}>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-        <h3 style={{ fontSize: 15, margin: 0, color: 'var(--ik-text)' }}>🎯 Risque de ton portefeuille</h3>
+        <h3 style={{ fontSize: 15, margin: 0, color: 'var(--ik-text)' }}>Risque de ton portefeuille</h3>
         <div style={{ fontSize: 22, fontWeight: 800, color: tone(s.score) }} aria-label={`Score de risque ${s.score} sur 100, ${s.label}`}>{s.score}<span style={{ fontSize: 13, color: 'var(--ik-text-3)' }}> / 100 · {s.label}</span></div>
       </div>
       <div style={{ height: 8, background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)', borderRadius: 6, margin: '10px 0' }}><div style={{ width: `${s.score}%`, height: 8, borderRadius: 6, background: tone(s.score) }} /></div>
       <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--ik-text-2)' }}>
-        Pire crise historique pour ce portefeuille : <strong style={{ color: 'var(--ik-negative)' }}>{s.worstStress.lossPct} %</strong> ({s.worstStress.label}), soit environ {fr(Math.round(data.totalValue * s.worstStress.lossPct / 100))} 🪙 sur {fr(data.totalValue)} 🪙.
+        Pire crise historique pour ce portefeuille : <strong style={{ color: 'var(--ik-negative)' }}>{s.worstStress.lossPct} %</strong> ({s.worstStress.label}), soit environ {fr(Math.round(data.totalValue * s.worstStress.lossPct / 100))} <Coin /> sur {fr(data.totalValue)} <Coin />.
       </p>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
         {data.allocation.map((a) => <span key={a.cls} style={{ fontSize: 12, padding: '3px 8px', borderRadius: 10, background: 'color-mix(in srgb, var(--ik-text) 8%, transparent)', color: 'var(--ik-text-2)' }}>{a.label} {a.weightPct} %</span>)}

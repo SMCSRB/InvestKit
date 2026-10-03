@@ -61,7 +61,7 @@ const explain = (kind: SaleKind, c: SaleClosing, opts: { discountPct?: number; o
   } else parts.push('Aucune plus-value imposable (moins-value ou gain nul).');
   if (opts.arrearsCovered > 0) parts.push(`${fr(opts.arrearsCovered)} € de tes impayés ont été réglés avec le produit de la vente.`);
   if (opts.shortfall > 0) parts.push(`Le prix ne couvre pas la dette : il reste ${fr(opts.shortfall)} € dus à la banque, ajoutés à tes impayés.`);
-  else parts.push(`Il te reste ${fr(c.netProceeds - opts.arrearsCovered)} € : ${opts.coins} 🪙 crédités (les centimes restent en attente).`);
+  else parts.push(`Il te reste ${fr(c.netProceeds - opts.arrearsCovered)} € : ${opts.coins} InvestCoins crédités (les centimes restent en attente).`);
   return parts.join(' ');
 };
 

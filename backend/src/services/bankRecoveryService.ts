@@ -11,7 +11,7 @@ import { auditLog } from './auditService';
 //  - la dette du domaine est effacée (le prêt passe « written_off », l'écart est suivi pour l'administrateur) ;
 //  - le domaine est remis à zéro : titres ou biens perdus, partie repartant de la première année, RANG PERDU ;
 //  - les pièces empruntées non dépensées de ce domaine sont reprises ;
-//  - capital de base (500 🪙) complété seulement si le joueur a moins ;
+//  - capital de base (500  InvestCoins) complété seulement si le joueur a moins ;
 //  - interdiction de nouveau crédit 30 jours (temps réel) ; au plus 3 procédures par compte, espacées de 30 jours.
 // Les badges de domaine sont aujourd'hui dans le navigateur du joueur, pas sur le serveur : ils ne peuvent pas être retirés d'ici
 // (voir docs/banque.md) ; la procédure est journalisée (table bank_recoveries) pour le faire quand ils seront rattachés au serveur.
@@ -99,7 +99,7 @@ export const bankRecoveryService = {
       await q(c, `UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'recovery', blocked_at = NOW(), blocked_until = NOW() + ($2 || ' days')::interval,
                     recoveries = recoveries + 1, last_recovery_at = NOW(), written_off_coins = written_off_coins + $3 WHERE user_id = $1`, [userId, String(RECOVERY.creditBanDays), a.writtenOffCoins]);
       await q(c, 'INSERT INTO bank_recoveries (user_id, domain, written_off_coins, seized_coins, grant_coins) VALUES ($1,$2,$3,$4,$5)', [userId, domain, a.writtenOffCoins, a.seized, a.grant]);
-      const message = `Procédure de rétablissement terminée pour ${DOMAIN_LABEL[domain]} : dette de ${a.writtenOffCoins.toLocaleString('fr-FR')} 🪙 effacée, ${DOMAIN_LABEL[domain]} remis à zéro et rang perdu${a.grant > 0 ? `, capital de base complété de ${a.grant} 🪙` : ''}. Aucun nouveau crédit pendant ${RECOVERY.creditBanDays} jours.`;
+      const message = `Procédure de rétablissement terminée pour ${DOMAIN_LABEL[domain]} : dette de ${a.writtenOffCoins.toLocaleString('fr-FR')} InvestCoins effacée, ${DOMAIN_LABEL[domain]} remis à zéro et rang perdu${a.grant > 0 ? `, capital de base complété de ${a.grant} InvestCoins` : ''}. Aucun nouveau crédit pendant ${RECOVERY.creditBanDays} jours.`;
       await auditLog({ userId, action: 'bank_recovery', entityType: 'user', entityId: userId, metadata: { domain, writtenOffCoins: a.writtenOffCoins, grant: a.grant } }, c);
       await logBankEvent(c, userId, null, 'recovery', message, { domain, writtenOffCoins: a.writtenOffCoins, seized: a.seized, grant: a.grant });
       return { domain, message, writtenOffCoins: a.writtenOffCoins, borrowedCoinsSeized: a.seized, baseCapitalTopUpCoins: a.grant, creditBanDays: RECOVERY.creditBanDays,

@@ -584,6 +584,15 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 5. Après déploiement : lance `ops/sql/detecter-session-sans-preuve.sql` (voir `docs/faille-session-sans-preuve.md`) et envisage de changer `JWT_SECRET`.
 6. Déploie le site et l'API ensemble.
 
+## Refonte des emojis (icônes SVG)
+
+1. Parcours le site (tableau de bord, éducation, banque, crypto, immobilier, classements, amis, profil, paramètres) : **plus aucun emoji** dans les titres, boutons, menus, badges ; que des icônes au même trait.
+2. Chaque montant en InvestCoins est suivi de la **petite pièce dorée** ; au survol ou au lecteur d'écran : « InvestCoins ».
+3. Les badges (tableau de bord, profil, pop-up de récompense) sont dans un médaillon dont la couleur dépend de la rareté.
+4. Onboarding : enregistre un pseudo, le message de succès est vert ; laisse le pseudo vide, le message d'erreur est rouge.
+5. Les messages venant du serveur (prêts, notifications, erreurs d'ordre) disent « InvestCoins », sans emoji.
+6. Compare avec `docs/refonte-emojis/comparaison.html`.
+
 ## Badge Pro doré, # personnalisé, boutons d'abonnement
 
 1. Avec un compte **Pro** et un compte **gratuit** qui sont amis : chacun voit la petite couronne dorée à côté du pseudo de l'autre s'il est Pro ; le compte gratuit n'en a pas. Survole la couronne (ou tabule dessus) : « Membre Pro ».

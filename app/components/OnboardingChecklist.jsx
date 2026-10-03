@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Coin from '@/app/components/ui/Coin';
+import Icon from '@/app/components/ui/Icon';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 const LABELS = {
@@ -38,7 +40,7 @@ export default function OnboardingChecklist() {
     setMsg('');
     const res = await fetch(`${API}/onboarding/claim`, { method: 'POST' });
     const d = await res.json().catch(() => ({}));
-    setMsg(res.ok && d.coins > 0 ? `+${d.coins} 🪙 ajoutés à ton solde !` : (d.error || ''));
+    setMsg(res.ok && d.coins > 0 ? `+${d.coins} InvestCoins ajoutés à ton solde !` : (d.error || ''));
     load();
   };
   const toggle = (k, v, max) => setForm((f) => ({ ...f, [k]: f[k].includes(v) ? f[k].filter((x) => x !== v) : f[k].length < max ? [...f[k], v] : f[k] }));
@@ -55,7 +57,7 @@ export default function OnboardingChecklist() {
   return (
     <section style={card} aria-label="Premiers pas">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, fontSize: 17, color: 'var(--ik-text)' }}>🚀 Tes premiers pas {allDone && '— terminés, bravo !'}</h2>
+        <h2 style={{ margin: 0, fontSize: 17, color: 'var(--ik-text)' }}>Tes premiers pas {allDone && '— terminés, bravo !'}</h2>
         <div style={{ fontSize: 13, color: 'var(--ik-text-2)' }}>{data.doneCount} / {data.total} étapes</div>
       </div>
       <div style={{ height: 8, background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)', borderRadius: 6, margin: '12px 0' }} role="progressbar" aria-label="Avancement des premiers pas" aria-valuenow={data.doneCount} aria-valuemin={0} aria-valuemax={data.total}>
@@ -79,16 +81,16 @@ export default function OnboardingChecklist() {
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
         {data.steps.map((s) => (
           <li key={s.key} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14, color: s.done ? 'color-mix(in srgb, var(--ik-text) 55%, transparent)' : 'var(--ik-text)' }}>
-            <span aria-hidden="true">{s.done ? '✅' : '⬜'}</span>
+            <span aria-hidden="true"><Icon name={s.done ? 'circleCheck' : 'circleDot'} size={18} /></span>
             <span style={{ flex: 1, textDecoration: s.done ? 'line-through' : 'none' }}>{s.title}</span>
-            <span style={{ fontSize: 12, color: s.claimed ? 'var(--ik-positive)' : 'var(--ik-warning)' }}>{s.claimed ? 'récompense reçue' : `+${s.reward} 🪙`}</span>
+            <span style={{ fontSize: 12, color: s.claimed ? 'var(--ik-positive)' : 'var(--ik-warning)' }}>{s.claimed ? 'récompense reçue' : <>+{s.reward} <Coin /></>}</span>
             {!s.done && <button onClick={() => openStep(s)} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid color-mix(in srgb, var(--ik-text) 25%, transparent)', background: 'transparent', color: 'var(--ik-text)', fontSize: 12, cursor: 'pointer' }}>Y aller</button>}
           </li>
         ))}
       </ul>
 
       {data.claimableCoins > 0 && (
-        <button onClick={claim} style={{ marginTop: 14, padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-positive)', color: 'var(--ik-text-on-positive)', fontWeight: 700, cursor: 'pointer' }}>Récupérer mes {data.claimableCoins} 🪙</button>
+        <button onClick={claim} style={{ marginTop: 14, padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-positive)', color: 'var(--ik-text-on-positive)', fontWeight: 700, cursor: 'pointer' }}>Récupérer mes {data.claimableCoins} <Coin /></button>
       )}
       {msg && <p role="status" style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--ik-positive)' }}>{msg}</p>}
 

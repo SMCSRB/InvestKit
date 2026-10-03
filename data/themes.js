@@ -3,7 +3,7 @@ export const themes = [
     id: 'dark',
     name: 'Sombre',
     description: 'Thème sombre classique',
-    emoji: '🌙',
+    icon: 'moon',
     colors: {
       primary: '#0f172a',
       secondary: '#1e293b',
@@ -21,7 +21,7 @@ export const themes = [
     id: 'light',
     name: 'Clair',
     description: 'Thème clair et lumineux',
-    emoji: '☀️',
+    icon: 'sun',
     colors: {
       primary: '#f8fafc',
       secondary: '#e2e8f0',
@@ -39,7 +39,7 @@ export const themes = [
     id: 'neon',
     name: 'Néon',
     description: 'Thème cyberpunk avec couleurs éclatantes',
-    emoji: '⚡',
+    icon: 'zap',
     colors: {
       primary: '#0a0e27',
       secondary: '#1a1a3e',
@@ -57,7 +57,7 @@ export const themes = [
     id: 'ocean',
     name: 'Océan',
     description: 'Thème inspiré par les profondeurs marines',
-    emoji: '🌊',
+    icon: 'waves',
     colors: {
       primary: '#0a1428',
       secondary: '#15202b',
@@ -75,7 +75,7 @@ export const themes = [
     id: 'forest',
     name: 'Forêt',
     description: 'Thème naturel avec teintes vertes',
-    emoji: '🌲',
+    icon: 'trees',
     colors: {
       primary: '#0f2818',
       secondary: '#1a4d2e',
@@ -93,7 +93,7 @@ export const themes = [
     id: 'sunset',
     name: 'Coucher de soleil',
     description: 'Thème chaud avec gradient crépusculaire',
-    emoji: '🌅',
+    icon: 'sunset',
     colors: {
       primary: '#2d1b27',
       secondary: '#3d2645',
@@ -111,7 +111,7 @@ export const themes = [
     id: 'minimalist',
     name: 'Minimaliste',
     description: 'Design épuré et minimaliste',
-    emoji: '◆',
+    icon: 'gem',
     colors: {
       primary: '#fafafa',
       secondary: '#f5f5f5',
@@ -129,7 +129,7 @@ export const themes = [
     id: 'premium',
     name: 'Premium',
     description: 'Thème exclusif doré et luxueux',
-    emoji: '✨',
+    icon: 'sparkles',
     colors: {
       primary: '#1a1410',
       secondary: '#2d2520',

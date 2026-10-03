@@ -15,7 +15,7 @@ describe.skipIf(!hasDb)('capital de départ Pro (base réelle)', () => {
   beforeAll(setupDb);
   afterAll(teardownDb);
 
-  it('compte gratuit : 500 🪙 ; compte Pro à l\'activation : 1 000 🪙', async () => {
+  it('compte gratuit : 500  InvestCoins ; compte Pro à l\'activation : 1 000  InvestCoins', async () => {
     const free = await createUser({ verified: false, code: '111111', balance: 0 });
     await activateAccount((await userRepository.findById(free))!, '111111');
     expect(await balanceOf(free)).toBe(500);

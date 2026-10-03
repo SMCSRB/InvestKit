@@ -7,6 +7,7 @@ import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { VIEWS } from './art';
 import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
 import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct } from './api';
+import Coin from '@/app/components/ui/Coin';
 
 // Signature chez le notaire : un stylo trace la signature, un tampon « Acte signé » tombe, puis les clés sont remises.
 function Signature({ phase, onClose, error }) {
@@ -216,8 +217,8 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           <Card className="rp-finance" flat id="rp-finance">
             <h2>Simuler mon financement</h2>
             <div className="rp-finance__fields">
-              <label className="rp-field"><span>Apport (🪙{eurosPerCoin ? `, 1 🪙 = ${eurosPerCoin} €` : ''})<HelpTip term="apport" /></span>
-                <span className="rp-field__box"><input className="ik-input" type="number" min="0" inputMode="numeric" value={plan.down} onChange={(e) => setPlan({ ...plan, down: e.target.value })} /><em>🪙</em></span></label>
+              <label className="rp-field"><span>Apport (<Coin />{eurosPerCoin ? `, 1 InvestCoin = ${eurosPerCoin} €` : ''})<HelpTip term="apport" /></span>
+                <span className="rp-field__box"><input className="ik-input" type="number" min="0" inputMode="numeric" value={plan.down} onChange={(e) => setPlan({ ...plan, down: e.target.value })} /><em><Coin /></em></span></label>
               <label className="rp-field"><span>Durée du prêt</span>
                 <select className="ik-select" value={plan.months} onChange={(e) => setPlan({ ...plan, months: e.target.value })}>{[120, 180, 240, 300, 360].map((m) => <option key={m} value={m}>{m / 12} ans</option>)}</select></label>
             </div>
@@ -248,7 +249,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
                 )}
               </>
             )}
-            {!access?.canBuy && <p className="rp-lock">🔒 L’achat demande d’avoir choisi Immobilier comme domaine gratuit, ou l’abonnement Pro.</p>}
+            {!access?.canBuy && <p className="rp-lock">L’achat demande d’avoir choisi Immobilier comme domaine gratuit, ou l’abonnement Pro.</p>}
             <Button variant="primary" size="lg" block disabled={!canBuy || busy} onClick={() => setConfirm(true)}>Acheter ce bien</Button>
             <Button block onClick={expertise} disabled={busy || !!d.expertise || !access?.canBuy}>{d.expertise ? 'Expertise réalisée' : `Faire expertiser · ${coins(d.expertiseCostCoins)}`}</Button>
           </Card>

@@ -6,9 +6,9 @@ export const cryptoMarketDomain = {
   id: 'crypto_market',
   name: 'Crypto : le marché simulé',
   description: 'Lire un marché, comprendre les risques, passer des ordres, utiliser un levier — avec le simulateur',
-  icon: '📈',
+  icon: 'trendingUp',
   color: '#38bdf8',
-  badge: '📈',
+  badge: 'trendingUp',
   totalChapters: 5,
   chapters: [
     {

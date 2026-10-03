@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, CardHead, EmptyState, Modal, Skeleton, Tabs } from '@/app/components/ui/primitives';
-import Icon from '@/app/components/ui/Icon';
+import Icon, { Medal } from '@/app/components/ui/Icon';
 import { Reveal } from '@/app/components/ui/motion';
 import { copyText, social } from '@/app/lib/social';
 import PlayerName from '@/app/components/social/PlayerName';
 import TagEditor from '@/app/components/social/TagEditor';
 
 const fr = (n) => Number(n ?? 0).toLocaleString('fr-FR');
-const MEDALS = ['🥇', '🥈', '🥉'];
 
 function Avatar({ name }) {
   return <span className="soc-avatar" aria-hidden="true">{(name || '?').trim().slice(0, 1).toUpperCase()}</span>;
@@ -17,7 +16,7 @@ function Avatar({ name }) {
 function Person({ p, children, rank }) {
   return (
     <div className="soc-row">
-      {rank ? <span className="soc-rank" aria-label={`Rang ${rank}`}>{MEDALS[rank - 1] || rank}</span> : null}
+      {rank ? <span className="soc-rank" aria-label={`Rang ${rank}`}><Medal rank={rank} /></span> : null}
       <Avatar name={p.name} />
       <div className="soc-row__main">
         <strong className="soc-row__name"><PlayerName name={p.name} tag={p.tag} pro={p.pro} isMe={p.isMe} /></strong>

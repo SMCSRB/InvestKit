@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, AreaSeries, CrosshairMode, TickMarkType } from 'lightweight-charts';
 import { useChartTheme, withAlpha } from '@/app/lib/chartTheme';
+import Coin from '@/app/components/ui/Coin';
 
 // Historique d'un titre de la Bourse (cours de clôture annuels du jeu de données simplifié).
 // Les données viennent du serveur et s'arrêtent à l'année simulée du joueur : jamais de futur.
@@ -72,7 +73,7 @@ export default function HistoryChart({ domain, symbol, simulatedYear, enabled = 
       {data && pts.length >= 2 && (
         <>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'baseline', marginBottom: 8 }}>
-            <strong className="ik-num" style={{ fontSize: 'var(--ik-fs-lg)' }}>{shown && fr(shown.close)} 🪙</strong>
+            <strong className="ik-num" style={{ fontSize: 'var(--ik-fs-lg)' }}>{shown && fr(shown.close)} <Coin /></strong>
             <span className="ik-muted">clôture {shown && shown.year}</span>
             {change !== null && pts.length > 1 && <span className={`ik-num ${change >= 0 ? 'ik-up' : 'ik-down'}`}>{change >= 0 ? '▲ +' : '▼ '}{change.toFixed(1).replace('.', ',')} % depuis {first.year}</span>}
           </div>
@@ -80,7 +81,7 @@ export default function HistoryChart({ domain, symbol, simulatedYear, enabled = 
           <details style={{ marginTop: 10 }}>
             <summary className="ik-link" style={{ cursor: 'pointer' }}>Voir les valeurs (tableau)</summary>
             <table className="ik-table" style={{ marginTop: 8 }}>
-              <thead><tr><th scope="col">Année</th><th scope="col">Clôture (🪙)</th></tr></thead>
+              <thead><tr><th scope="col">Année</th><th scope="col">Clôture (<Coin />)</th></tr></thead>
               <tbody>{pts.map((p) => <tr key={p.year}><td>{p.year}</td><td className="ik-num">{fr(p.close)}</td></tr>)}</tbody>
             </table>
           </details>

@@ -8,7 +8,7 @@ import { riskService } from './riskService';
 import { EUROS_PER_COIN } from '../config/immoRules';
 
 // Vue d'ensemble RÉELLE du joueur (remplace les chiffres fictifs du tableau de bord). Chaque domaine garde son unité :
-// Bourse et Crypto en pièces (🪙 ≈ 1 € de cours dans le jeu), Immobilier en euros (1 🪙 = 20 €) — volontairement non additionnés
+// Bourse et Crypto en pièces (InvestCoins ≈ 1 € de cours dans le jeu), Immobilier en euros (1 InvestCoin = 20 €) — volontairement non additionnés
 // tant que l'unification des unités n'est pas faite (voir docs/banque.md).
 const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypto') => {
   const domain = getDomain(domainId)!;
@@ -71,7 +71,7 @@ export const overviewService = {
         feesPaid: stocks.feesPaid + crypto.feesPaid, taxPaid: stocks.taxPaid + crypto.taxPaid,
       },
       realEstate, bank: { debtCoins }, risk,
-      notes: ['Bourse et Crypto sont en pièces ; l\'Immobilier est en euros (1 🪙 = 20 €) : les deux ne sont pas additionnés.'],
+      notes: ['Bourse et Crypto sont en pièces ; l\'Immobilier est en euros (1 InvestCoin = 20 €) : les deux ne sont pas additionnés.'],
     };
   },
 };

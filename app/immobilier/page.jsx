@@ -12,6 +12,7 @@ import { OwnedList, PropertySheet } from '@/app/components/immo/Owned';
 import { Leaderboard, Summary } from '@/app/components/immo/Bilan';
 import { ImmoModeProvider, useImmoMode } from '@/app/components/immo/bits';
 import { MONTHS, call, eur } from '@/app/components/immo/api';
+import Coin from '@/app/components/ui/Coin';
 
 // Immobilier façon portail d'annonces : Chercher → fiche → simuler → acheter, puis Mes biens (gestion locative), Bilan du mois, Classement.
 // Toute la logique et tous les calculs restent côté serveur (aucune règle du jeu n'est dans ce fichier).
@@ -115,7 +116,7 @@ function ImmoInner() {
           actions={game && (
             <>
               <span className="rp-date" title="Mode accéléré : un mois passe quand tu le décides"><strong>{MONTHS[game.month - 1]} {game.year}</strong><HelpTip term="mode-accelere" /></span>
-              <span className="rp-balance">{Number(state.balance).toLocaleString('fr-FR')} 🪙<HelpTip term="investcoin" /></span>
+              <span className="rp-balance">{Number(state.balance).toLocaleString('fr-FR')} <Coin /><HelpTip term="investcoin" /></span>
               <Button variant="primary" size="sm" icon="calendar" loading={busy} disabled={busy} onClick={() => advance(1)}>Avancer d’un mois</Button>
               <Button size="sm" disabled={busy} onClick={() => advance(12)}>Avancer d’un an</Button>
             </>
@@ -129,9 +130,9 @@ function ImmoInner() {
         )}
 
         {toast && <div role={toast.isError ? 'alert' : 'status'} className={`rp-toast ${toast.isError ? 'is-bad' : 'is-ok'}`} key={toast.k}>{toast.msg}</div>}
-        {state && !state.access?.canBuy && game && <div className="rp-banner rp-banner--warn">🔒 Tu peux consulter le domaine Immobilier, mais l’achat demande de l’avoir choisi comme domaine gratuit ou d’avoir l’abonnement Pro.</div>}
+        {state && !state.access?.canBuy && game && <div className="rp-banner rp-banner--warn">Tu peux consulter le domaine Immobilier, mais l’achat demande de l’avoir choisi comme domaine gratuit ou d’avoir l’abonnement Pro.</div>}
         {content}
-        <p className="rp-foot"><Link href="/banque">🏦 Ma banque</Link></p>
+        <p className="rp-foot"><Link href="/banque">Ma banque</Link></p>
       </div>
     </AppShell>
   );

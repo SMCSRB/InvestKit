@@ -36,8 +36,8 @@ const evaluate = async (db: Db, userId: string, amountRaw: unknown, monthsRaw: u
   const instalmentEuros = instalmentCoins * EUROS_PER_COIN;
 
   const reasons: { code: string; message: string }[] = [];
-  if (amount < PERSONAL_LOAN.minPrincipalCoins) reasons.push({ code: 'TOO_SMALL', message: `Montant minimum : ${PERSONAL_LOAN.minPrincipalCoins} 🪙.` });
-  if (amount > capCoins) reasons.push({ code: 'OVER_CAP', message: `Plafond du prêt personnel : ${PERSONAL_LOAN.incomeMonthsCap} mois de revenus, soit ${fr(capCoins)} 🪙 pour ton profil (${profile.label}).` });
+  if (amount < PERSONAL_LOAN.minPrincipalCoins) reasons.push({ code: 'TOO_SMALL', message: `Montant minimum : ${PERSONAL_LOAN.minPrincipalCoins} InvestCoins.` });
+  if (amount > capCoins) reasons.push({ code: 'OVER_CAP', message: `Plafond du prêt personnel : ${PERSONAL_LOAN.incomeMonthsCap} mois de revenus, soit ${fr(capCoins)} InvestCoins pour ton profil (${profile.label}).` });
   const active = Number((await q(db, `SELECT COUNT(*) AS n FROM bank_loans WHERE user_id = $1 AND product = 'personal' AND status IN ('active','defaulted')`, [userId])).rows[0].n);
   if (active >= PERSONAL_LOAN.maxActive) reasons.push({ code: 'ALREADY_HAVE_ONE', message: 'Tu as déjà un prêt personnel en cours : un seul à la fois.' });
   const clock = monthTotal(game.simulated_year, game.simulated_month);
@@ -96,7 +96,7 @@ export const bankPersonalService = {
       });
       return {
         loanId, amountCoins: e.amount, months: e.months, annualRatePct: e.ratePct, instalmentCoins: e.instalmentCoins,
-        message: `Prêt personnel accordé : ${fr(e.amount)} 🪙 (${fr(e.amount * EUROS_PER_COIN)} €) à ${fr(e.ratePct)} % sur ${e.months} mois, ${fr(e.instalmentCoins)} 🪙 par mois. Ces pièces ne servent que dans l'Immobilier.`,
+        message: `Prêt personnel accordé : ${fr(e.amount)} InvestCoins (${fr(e.amount * EUROS_PER_COIN)} €) à ${fr(e.ratePct)} % sur ${e.months} mois, ${fr(e.instalmentCoins)} InvestCoins par mois. Ces pièces ne servent que dans l'Immobilier.`,
       };
     });
   },

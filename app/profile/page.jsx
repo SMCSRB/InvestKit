@@ -12,6 +12,7 @@ import AppearanceSettings from '@/app/components/AppearanceSettings';
 import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
 import { readPhoto, onPhotoChange, savePhotoFromFile, clearPhoto, PHOTO_TYPES } from '@/app/lib/profilePhoto';
+import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 export default function ProfilePage() {
   const { theme, toggleTheme } = useTheme();
@@ -29,8 +30,8 @@ export default function ProfilePage() {
   const [activeSettingsTab, setActiveSettingsTab] = useState('display');
   const [profileData, setProfileData] = useState({
     username: 'InvestKitUser',
-    bio: 'Passionné par l\'investissement et l\'apprentissage 🚀',
-    avatar: '👤',
+    bio: 'Passionné par l\'investissement et l\'apprentissage',
+    avatar: 'user',
   });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [photo, setPhoto] = useState(null);
@@ -95,9 +96,9 @@ export default function ProfilePage() {
   }
 
   const badgeInfo = {
-    first_blood: { name: 'Premier Sang', emoji: '🩸', description: 'Premier chapitre complété' },
-    perfect: { name: 'Parfait', emoji: '💯', description: 'Obtenu un score de 100%' },
-    no_mistakes: { name: 'Sans Erreurs', emoji: '⭐', description: '3+ chapitres d\'affilée' },
+    first_blood: { name: 'Premier Sang', icon: 'droplet', description: 'Premier chapitre complété' },
+    perfect: { name: 'Parfait', icon: 'circleCheck', description: 'Obtenu un score de 100%' },
+    no_mistakes: { name: 'Sans Erreurs', icon: 'star', description: '3+ chapitres d\'affilée' },
   };
 
   const totalChaptersCompleted = progress.completedChapters.length;
@@ -106,12 +107,12 @@ export default function ProfilePage() {
   const copyProfileLink = () => {
     const profileUrl = `${window.location.origin}/profile`;
     navigator.clipboard.writeText(profileUrl).then(() => {
-      alert('Lien du profil copié! 📋');
+      alert('Lien du profil copié!');
     });
   };
 
   const shareProfile = () => {
-    const message = `Viens rejoindre moi sur InvestKit! J'ai déjà atteint le niveau ${progress.userLevel} avec ${progress.totalXP} XP! 🚀`;
+    const message = `Viens rejoindre moi sur InvestKit! J'ai déjà atteint le niveau ${progress.userLevel} avec ${progress.totalXP} XP!`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://twitter.com/intent/tweet?text=${encodedMessage}`, '_blank', 'width=600,height=400');
   };
@@ -134,15 +135,14 @@ export default function ProfilePage() {
               <div className="flex items-center gap-6 flex-wrap" style={{ minWidth: 0 }}>
                 {photo
                   ? <img src={photo} alt="Ta photo de profil" data-testid="profile-photo" style={{ width: 'clamp(72px, 20vw, 128px)', height: 'clamp(72px, 20vw, 128px)', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--ik-primary)' }} />
-                  : <div className="text-8xl" style={{ fontSize: 'clamp(64px, 20vw, 128px)', lineHeight: 1 }}>{profileData.avatar}</div>}
+                  : <div className="text-8xl" style={{ fontSize: 'clamp(64px, 20vw, 128px)', lineHeight: 1 }}><Glyph g={profileData.avatar} size={96} /></div>}
                 <div style={{ minWidth: 0 }}>
                   <h1 className="text-4xl font-bold text-white mb-2" style={{ overflowWrap: 'anywhere' }}>{profileData.username}</h1>
                   <p className="text-gray-400 mb-3">{profileData.bio}</p>
                   <button
                     onClick={() => setIsEditingProfile(true)}
                     className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
-                  >
-                    ✏️ Modifier le profil
+                  > Modifier le profil
                   </button>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                         {photo
                           ? <img src={photo} alt="Aperçu de ta photo" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
-                          : <span aria-hidden="true" style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 30, background: 'var(--ik-surface-3)' }}>{profileData.avatar}</span>}
+                          : <span aria-hidden="true" style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 30, background: 'var(--ik-surface-3)' }}><Glyph g={profileData.avatar} size={32} /></span>}
                         <input ref={photoInput} type="file" accept={PHOTO_TYPES.join(',')} onChange={choosePhoto} data-testid="photo-input" style={{ display: 'none' }} aria-label="Choisir une photo de profil" />
                         <button type="button" onClick={() => photoInput.current?.click()} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">{photo ? 'Changer la photo' : 'Choisir une photo'}</button>
                         {photo && <button type="button" onClick={() => { setPhotoError(''); clearPhoto(); }} className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">Retirer</button>}
@@ -174,7 +174,7 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-white font-semibold mb-2">Avatar (si tu n'as pas de photo)</label>
                       <div className="grid grid-cols-6 gap-2">
-                        {['👤', '👨', '👩', '🧑', '🎭', '⭐'].map((emoji) => (
+                        {['user', 'users', 'drama', 'star', 'crown', 'rocket'].map((emoji) => (
                           <button
                             key={emoji}
                             onClick={() => setProfileData({ ...profileData, avatar: emoji })}
@@ -184,7 +184,7 @@ export default function ProfilePage() {
                                 : 'bg-slate-700 hover:bg-slate-600'
                             }`}
                           >
-                            {emoji}
+                            <Glyph g={emoji} size={28} />
                           </button>
                         ))}
                       </div>
@@ -247,26 +247,26 @@ export default function ProfilePage() {
               </div>
               <div className="bg-orange-900/30 border border-orange-400/30 rounded-lg p-4">
                 <p className="text-orange-300 text-sm font-semibold">Racha Actuelle</p>
-                <p className="text-white text-3xl font-bold">🔥 {progress.streak}</p>
+                <p className="text-white text-3xl font-bold"><Icon name="flame" size={18} /> {progress.streak}</p>
               </div>
               <div className="bg-purple-900/30 border border-purple-400/30 rounded-lg p-4">
                 <p className="text-purple-300 text-sm font-semibold">Max Racha</p>
-                <p className="text-white text-3xl font-bold">⭐ {progress.maxStreak}</p>
+                <p className="text-white text-3xl font-bold"><Icon name="star" size={18} /> {progress.maxStreak}</p>
               </div>
             </div>
           </div>
 
           {/* Settings Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">⚙️ Paramètres</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Paramètres</h2>
 
             {/* Settings Tabs */}
             <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-700">
               {[
-                { id: 'display', label: '🎨 Affichage', icon: '🎨' },
-                { id: 'notifications', label: '🔔 Notifications', icon: '🔔' },
-                { id: 'privacy', label: '🔒 Confidentialité', icon: '🔒' },
-                { id: 'account', label: '👤 Compte', icon: '👤' },
+                { id: 'display', label: 'Affichage', icon: 'palette' },
+                { id: 'notifications', label: 'Notifications', icon: 'bell' },
+                { id: 'privacy', label: 'Confidentialité', icon: 'lock' },
+                { id: 'account', label: 'Compte', icon: 'user' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -449,8 +449,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Delete Data */}
-                <button className="w-full p-4 rounded-lg bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-400 font-semibold transition-all duration-300">
-                  🗑️ Supprimer toutes mes données
+                <button className="w-full p-4 rounded-lg bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-400 font-semibold transition-all duration-300"> Supprimer toutes mes données
                 </button>
               </div>
             )}
@@ -480,14 +479,12 @@ export default function ProfilePage() {
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
                   <h3 className="text-white font-semibold mb-3">Exporter Mes Données</h3>
                   <p className="text-gray-400 text-sm mb-3">Télécharger vos données de progression en JSON</p>
-                  <button className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300">
-                    📥 Exporter
+                  <button className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300"> Exporter
                   </button>
                 </div>
 
                 {/* Logout */}
-                <button className="w-full p-4 rounded-lg bg-slate-700/50 border border-gray-600/50 hover:border-gray-500 text-gray-300 font-semibold transition-all duration-300">
-                  🚪 Se déconnecter
+                <button className="w-full p-4 rounded-lg bg-slate-700/50 border border-gray-600/50 hover:border-gray-500 text-gray-300 font-semibold transition-all duration-300"> Se déconnecter
                 </button>
               </div>
             )}
@@ -495,7 +492,7 @@ export default function ProfilePage() {
 
           {/* Progress Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">📈 Progression</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Progression</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="flex justify-between items-center mb-2">
@@ -531,7 +528,7 @@ export default function ProfilePage() {
           {/* Badges Section */}
           {progress.badges.length > 0 && (
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-              <h2 className="text-2xl font-bold text-white mb-6">🏆 Badges Gagnés ({progress.badges.length})</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Badges Gagnés ({progress.badges.length})</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {progress.badges.map((badgeId) => {
                   const badge = badgeInfo[badgeId];
@@ -540,7 +537,7 @@ export default function ProfilePage() {
                       key={badgeId}
                       className="p-6 rounded-lg bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-400/50 text-center hover:border-purple-400 transition-all duration-300"
                     >
-                      <div className="text-5xl mb-3">{badge.emoji}</div>
+                      <div className="text-5xl mb-3"><BadgeMedal icon={badge.icon} size={64} /></div>
                       <h3 className="text-white font-bold mb-1">{badge.name}</h3>
                       <p className="text-purple-300 text-sm">{badge.description}</p>
                     </div>
@@ -552,7 +549,7 @@ export default function ProfilePage() {
 
           {/* Domains Progress */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">📚 Domaines</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Domaines</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {educationDomains.map((domain) => {
                 const isCompleted = isDomainCompleted(domain.id);
@@ -576,7 +573,7 @@ export default function ProfilePage() {
                             <p className="text-gray-400 text-xs">{chaptersCompleted}/{domain.chapters.length} chapitres</p>
                           </div>
                         </div>
-                        {isCompleted && <span className="text-2xl">✅</span>}
+                        {isCompleted && <span className="text-2xl"><Icon name="circleCheck" size={18} /></span>}
                       </div>
                       <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
                         <div
@@ -597,7 +594,7 @@ export default function ProfilePage() {
 
           {/* Certificates Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">🎖️ Certificats</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Certificats</h2>
             {totalDomainsCompleted > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {educationDomains.map((domain) => {
@@ -614,17 +611,15 @@ export default function ProfilePage() {
                     >
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-4xl">{domain.icon}</span>
-                        <span className="text-2xl">✅</span>
+                        <span className="text-2xl"><Icon name="circleCheck" size={18} /></span>
                       </div>
                       <h3 className="text-white font-bold mb-1">Certificat</h3>
                       <p className="text-amber-300 font-semibold mb-3">{domain.name}</p>
                       <p className="text-gray-400 text-sm mb-4">Complété le {formattedDate}</p>
                       <div className="flex gap-2">
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all duration-300">
-                          📥 Télécharger
+                        <button className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all duration-300"> Télécharger
                         </button>
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all duration-300">
-                          📤 Partager
+                        <button className="flex-1 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all duration-300"> Partager
                         </button>
                       </div>
                     </div>
@@ -632,13 +627,13 @@ export default function ProfilePage() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-400">Complète un domaine pour recevoir un certificat! 🎯</p>
+              <p className="text-gray-400">Complète un domaine pour recevoir un certificat!</p>
             )}
           </div>
 
           {/* Learning Calendar */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">📅 Activité d'Apprentissage</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Activité d'Apprentissage</h2>
             <div className="bg-slate-800/50 p-6 rounded-lg border border-gray-700/50">
               <p className="text-gray-400 mb-4">Jours d'étude ce mois-ci: <span className="text-blue-400 font-bold">{Math.min(progress.completedChapters.length, 30)}/30</span></p>
               <div className="grid grid-cols-7 gap-1">
@@ -657,13 +652,13 @@ export default function ProfilePage() {
                   );
                 })}
               </div>
-              <p className="text-gray-400 text-xs mt-4">🟢 = Jour d'étude · 🟫 = Jour sans activité</p>
+              <p className="text-gray-400 text-xs mt-4">= Jour d'étude · = Jour sans activité</p>
             </div>
           </div>
 
           {/* Statistics Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">📊 Statistiques Mensuelles</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Statistiques Mensuelles</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* XP Progress */}
               <div className="p-6 rounded-lg bg-slate-800/50 border border-gray-700/50">
@@ -724,11 +719,11 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-gray-400 text-sm mb-2">Racha actuelle</p>
-                    <p className="text-3xl font-bold text-orange-400">🔥 {progress.streak}</p>
+                    <p className="text-3xl font-bold text-orange-400"><Icon name="flame" size={18} /> {progress.streak}</p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-2">Max racha</p>
-                    <p className="text-3xl font-bold text-yellow-400">⭐ {progress.maxStreak}</p>
+                    <p className="text-3xl font-bold text-yellow-400"><Icon name="star" size={18} /> {progress.maxStreak}</p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-2">Niveau actuel</p>
@@ -743,7 +738,7 @@ export default function ProfilePage() {
 
           {/* Themes Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">🎨 Thèmes Disponibles</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Thèmes Disponibles</h2>
             <p className="text-gray-400 mb-6">Débloque de nouveaux thèmes en gagnant de l'XP!</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {themes.map((theme) => {
@@ -763,13 +758,13 @@ export default function ProfilePage() {
                     onClick={() => {
                       if (isUnlocked) {
                         setSelectedTheme(theme.id);
-                        addNotification(`✨ Thème "${theme.name}" activé!`, 'success', 3000);
+                        addNotification(`Thème "${theme.name}" activé!`, 'success', 3000);
                       }
                     }}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-4xl">{theme.emoji}</span>
+                        <span className="text-4xl"><Glyph g={theme.icon} size={32} /></span>
                         <div>
                           <h3 className="text-white font-bold">{theme.name}</h3>
                           <p className="text-sm text-gray-400">{theme.description}</p>
@@ -804,7 +799,7 @@ export default function ProfilePage() {
 
           {/* Share Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50">
-            <h2 className="text-2xl font-bold text-white mb-6">🤝 Partager mon Profil</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Partager mon Profil</h2>
             <p className="text-gray-400 mb-6">Invite tes amis à rejoindre InvestKit et à progresser ensemble!</p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button
@@ -820,8 +815,7 @@ export default function ProfilePage() {
                 onMouseLeave={(e) => {
                   e.target.style.transform = 'scale(1)';
                 }}
-              >
-                📋 Copier le lien
+              > Copier le lien
               </button>
               <button
                 onClick={shareProfile}

@@ -19,7 +19,7 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
   afterAll(teardownDb);
 
   describe('ledger', () => {
-    it('10 débits simultanés de 30 sur 100 🪙 : exactement 3 passent, jamais négatif', async () => {
+    it('10 débits simultanés de 30 sur 100  InvestCoins : exactement 3 passent, jamais négatif', async () => {
       const uid = await createUser({ balance: 100 });
       const results = await Promise.allSettled(
         Array.from({ length: 10 }, () => investcoinsRepository.applyTransaction(uid, -30, 'test'))
@@ -67,7 +67,7 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       const view = await tradingService.getPortfolioView(uid, 'stocks');
       const symbol = Object.keys(view.prices).find((s) => view.prices[s] !== null)!;
       const price = view.prices[symbol]!;
-      const qty = Math.floor(700 / price) || 1; // ~700 🪙 chacun : un seul passe sur 1000
+      const qty = Math.floor(700 / price) || 1; // ~700  InvestCoins chacun : un seul passe sur 1000
       const results = await Promise.allSettled([
         tradingService.buy(uid, 'stocks', symbol, qty),
         tradingService.buy(uid, 'stocks', symbol, qty),

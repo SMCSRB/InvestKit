@@ -62,7 +62,7 @@ const applyWith = async (
   metadata?: { domain?: unknown; [key: string]: unknown }
 ): Promise<number> => {
   // Le ledger est en pièces ENTIÈRES. Un montant décimal serait arrondi en
-  // silence par la base (un achat à 0,4 🪙 deviendrait gratuit) : on refuse
+  // silence par la base (un achat à 0,4  InvestCoins deviendrait gratuit) : on refuse
   // plutôt que d'arrondir dans le dos de l'appelant.
   if (!Number.isInteger(amount) || amount === 0) {
     throw new Error(`Montant InvestCoins invalide : ${amount}`);

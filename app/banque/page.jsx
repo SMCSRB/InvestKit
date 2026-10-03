@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import HelpTip from '../components/HelpTip';
 import AppShell from '@/app/components/shell/AppShell';
+import Coin from '@/app/components/ui/Coin';
+import Icon from '@/app/components/ui/Icon';
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/bank`;
 const TRADING_API = `${process.env.NEXT_PUBLIC_API_URL}/trading`;
@@ -61,8 +63,8 @@ function Recovery({ domains, onDone, notify }) {
             <>
               <div><strong>Tu perds :</strong> {pv.willLose.assets}{pv.willLose.rank ? ', ainsi que ton rang' : ''}.</div>
               <div style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>{pv.willLose.badges}</div>
-              <div><strong>Effacé :</strong> {num(pv.willHappen.debtWrittenOffCoins)} 🪙 de dette.{pv.willHappen.borrowedCoinsSeized > 0 && <> Les {num(pv.willHappen.borrowedCoinsSeized, 0)} 🪙 empruntés non dépensés te sont repris.</>}</div>
-              <div>Capital de base : {pv.willHappen.baseCapitalTopUpCoins > 0 ? `complété de ${num(pv.willHappen.baseCapitalTopUpCoins, 0)} 🪙 (pour atteindre ${pv.willHappen.baseCapitalCoins} 🪙)` : `tu as déjà plus de ${pv.willHappen.baseCapitalCoins} 🪙 : rien ne t'est ajouté`}.</div>
+              <div><strong>Effacé :</strong> {num(pv.willHappen.debtWrittenOffCoins)} <Coin /> de dette.{pv.willHappen.borrowedCoinsSeized > 0 && <> Les {num(pv.willHappen.borrowedCoinsSeized, 0)} <Coin /> empruntés non dépensés te sont repris.</>}</div>
+              <div>Capital de base : {pv.willHappen.baseCapitalTopUpCoins > 0 ? `complété de ${num(pv.willHappen.baseCapitalTopUpCoins, 0)} InvestCoins (pour atteindre ${pv.willHappen.baseCapitalCoins} InvestCoins)` : `tu as déjà plus de ${pv.willHappen.baseCapitalCoins} InvestCoins : rien ne t'est ajouté`}.</div>
               <div style={{ color: 'var(--ik-warning)' }}>Aucun nouveau crédit pendant {pv.willHappen.creditBanDays} jours. Procédure {pv.limits.usedProcedures + 1} sur {pv.limits.maxProcedures} possibles, espacées de {pv.limits.cooldownDays} jours.</div>
               <label style={{ fontSize: 13 }}>Pour confirmer, écris <strong>{pv.confirmPhrase}</strong> :
                 <input style={{ ...input, display: 'block', marginTop: 4 }} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
@@ -101,7 +103,7 @@ function PersonalLoan({ onDone, notify }) {
       <h3 style={{ margin: '0 0 6px', color: 'var(--ik-text)' }}>Prêt personnel<HelpTip term="pret-personnel" /></h3>
       <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--ik-text-3)' }}>Pour l&apos;Immobilier uniquement : apport, travaux, rénovation, découvert. Les pièces empruntées sont <strong>fléchées</strong><HelpTip term="credit-fleche" /> : elles ne se dépensent pas en Bourse ni en crypto.</p>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <label style={{ fontSize: 13 }}>Montant (🪙)
+        <label style={{ fontSize: 13 }}>Montant (<Coin />)
           <input style={{ ...input, display: 'block', width: 120 }} type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </label>
         <label style={{ fontSize: 13 }}>Durée
@@ -115,9 +117,9 @@ function PersonalLoan({ onDone, notify }) {
       {quote?.loan && (
         <div style={{ marginTop: 12, fontSize: 14, display: 'grid', gap: 5 }}>
           <div>Taux : <strong>{num(quote.loan.annualRatePct)} %</strong><HelpTip term="taux-base" /> (un prêt immobilier de la même année : {num(quote.mortgageRatePct)} %, car le prêt personnel n&apos;a aucune garantie)</div>
-          <div>Mensualité : <strong>{num(quote.loan.instalmentCoins)} 🪙</strong> (≈ {num(quote.loan.instalmentCoins * 20, 0)} €) pendant {quote.loan.months} mois</div>
-          <div>Coût total : {num(quote.loan.totalRepaidCoins)} 🪙 rendus pour {num(quote.loan.amountCoins)} 🪙 empruntés, soit {num(quote.loan.totalInterestCoins)} 🪙 d&apos;intérêts <span style={{ color: 'var(--ik-text-3)' }}>(ces pièces sont détruites, pas reversées à quelqu&apos;un)</span></div>
-          <div>Plafond pour ton profil : {num(quote.limits.capCoins, 0)} 🪙 ({quote.limits.incomeMonthsCap} mois de revenus)</div>
+          <div>Mensualité : <strong>{num(quote.loan.instalmentCoins)} <Coin /></strong> (≈ {num(quote.loan.instalmentCoins * 20, 0)} €) pendant {quote.loan.months} mois</div>
+          <div>Coût total : {num(quote.loan.totalRepaidCoins)} <Coin /> rendus pour {num(quote.loan.amountCoins)} <Coin /> empruntés, soit {num(quote.loan.totalInterestCoins)} <Coin /> d&apos;intérêts <span style={{ color: 'var(--ik-text-3)' }}>(ces pièces sont détruites, pas reversées à quelqu&apos;un)</span></div>
+          <div>Plafond pour ton profil : {num(quote.limits.capCoins, 0)} <Coin /> ({quote.limits.incomeMonthsCap} mois de revenus)</div>
           <div style={{ color: quote.approved ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>
             Banque : {quote.approved ? 'accord' : 'refus'} — endettement {num(quote.bank.debtRatioPct)} % (max {quote.bank.maxDebtRatioPct} %), reste à vivre {num(quote.bank.livingRemaining, 0)} € (min {num(quote.bank.minLivingRemaining, 0)} €)
             {quote.reasons.map((r) => <div key={r.code} style={{ fontSize: 13 }}>• {r.message}</div>)}
@@ -152,7 +154,7 @@ function PortfolioLoan({ onDone, notify }) {
         <label style={{ fontSize: 13 }}>Domaine
           <select style={{ ...input, display: 'block' }} value={domain} onChange={(e) => { setDomain(e.target.value); setQuote(null); }}>{LOMBARD_DOMAINS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
         </label>
-        <label style={{ fontSize: 13 }}>Montant (🪙)
+        <label style={{ fontSize: 13 }}>Montant (<Coin />)
           <input style={{ ...input, display: 'block', width: 120 }} type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </label>
         <button style={btn(false)} disabled={busy} onClick={simulate}>Simuler</button>
@@ -160,10 +162,10 @@ function PortfolioLoan({ onDone, notify }) {
       {quote?.error && <p style={{ color: 'var(--ik-negative)' }}>{quote.error}</p>}
       {quote?.loan && (
         <div style={{ marginTop: 12, fontSize: 14, display: 'grid', gap: 5 }}>
-          <div>Garantie : {num(quote.collateral.valueCoins, 0)} 🪙 de titres · tu peux emprunter au plus <strong>{num(quote.collateral.capacityCoins, 0)} 🪙</strong> (actions 50 %, crypto 30 %)</div>
-          <div>Taux : <strong>{num(quote.loan.annualRatePct)} %</strong> variable → environ {num(quote.loan.yearlyInterestCoins)} 🪙 d&apos;intérêts par an</div>
+          <div>Garantie : {num(quote.collateral.valueCoins, 0)} <Coin /> de titres · tu peux emprunter au plus <strong>{num(quote.collateral.capacityCoins, 0)} <Coin /></strong> (actions 50 %, crypto 30 %)</div>
+          <div>Taux : <strong>{num(quote.loan.annualRatePct)} %</strong> variable → environ {num(quote.loan.yearlyInterestCoins)} <Coin /> d&apos;intérêts par an</div>
           {quote.afterPurchase.leverage && <div>Si tu achètes des titres avec ces pièces : levier <strong>×{num(quote.afterPurchase.leverage)}</strong><HelpTip term="levier" /></div>}
-          <div style={{ color: 'var(--ik-warning)' }}>⚠️ {quote.margin}<HelpTip term="appel-de-marge" /></div>
+          <div style={{ color: 'var(--ik-warning)' }}><Icon name="triangleAlert" size={18} /> {quote.margin}<HelpTip term="appel-de-marge" /></div>
           <div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>{quote.simplification}</div>
           <div style={{ color: quote.approved ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>{quote.approved ? 'Banque : accord' : 'Banque : refus'}{quote.reasons.map((r) => <div key={r.code} style={{ fontSize: 13 }}>• {r.message}</div>)}</div>
           <div><button style={btn(true)} disabled={busy || !quote.approved} onClick={borrow}>Emprunter</button></div>
@@ -189,9 +191,9 @@ function PortfolioLoanCard({ loan, view, onDone, notify }) {
     <div style={{ marginTop: 8 }}>
       {v && lim && (
         <div style={{ fontSize: 14, color: 'var(--ik-text-2)' }}>
-          Valeur des titres en garantie : <strong>{num(lim.value, 0)} 🪙</strong> · dette {num(v.debtCoins)} 🪙 · rapport prêt/valeur <strong style={{ color: stateColor }}>{num(v.ltvPct)} %</strong><HelpTip term="appel-de-marge" />
-          <div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>Appel de marge au-delà de {num(lim.callLimit, 0)} 🪙 de dette, vente forcée au-delà de {num(lim.liquidationLimit, 0)} 🪙 (aux cours de clôture de l&apos;année).</div>
-          {v.state === 'call' || v.marginCall ? <div style={{ ...card, borderColor: 'var(--ik-warning)', marginTop: 6 }}>⚠️ <strong>Appel de marge.</strong> Rembourse une partie du prêt ou achète des titres avant le prochain passage d&apos;année, sinon tes titres seront vendus de force.</div> : null}
+          Valeur des titres en garantie : <strong>{num(lim.value, 0)} <Coin /></strong> · dette {num(v.debtCoins)} <Coin /> · rapport prêt/valeur <strong style={{ color: stateColor }}>{num(v.ltvPct)} %</strong><HelpTip term="appel-de-marge" />
+          <div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>Appel de marge au-delà de {num(lim.callLimit, 0)} <Coin /> de dette, vente forcée au-delà de {num(lim.liquidationLimit, 0)} <Coin /> (aux cours de clôture de l&apos;année).</div>
+          {v.state === 'call' || v.marginCall ? <div style={{ ...card, borderColor: 'var(--ik-warning)', marginTop: 6 }}><Icon name="triangleAlert" size={18} /> <strong>Appel de marge.</strong> Rembourse une partie du prêt ou achète des titres avant le prochain passage d&apos;année, sinon tes titres seront vendus de force.</div> : null}
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
@@ -243,18 +245,18 @@ export default function BanquePage() {
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <Link href="/immobilier" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Immobilier</Link>
-        <h1 style={{ margin: '6px 0 4px', color: 'var(--ik-text)', fontSize: 'clamp(24px, 5vw, 32px)' }}>🏦 Ma banque</h1>
+        <h1 style={{ margin: '6px 0 4px', color: 'var(--ik-text)', fontSize: 'clamp(24px, 5vw, 32px)' }}>Ma banque</h1>
         <p style={{ color: 'var(--ik-text-3)', marginTop: 0, fontSize: 14 }}>Les pièces ne servent que dans le jeu : elles ne s&apos;échangent pas entre joueurs et ne s&apos;achètent pas avec de l&apos;argent réel. Les taux sont fictifs, calés sur l&apos;histoire (à titre pédagogique).</p>
         {toast && <div role="status" style={{ ...card, marginBottom: 14, borderColor: toast.isError ? 'var(--ik-negative)' : 'var(--ik-positive)' }}>{toast.msg}</div>}
 
         {data && (
           <>
-            {data.account.creditBlocked && <div style={{ ...card, borderColor: 'var(--ik-negative)', marginBottom: 14 }}>⛔ <strong>Crédit bloqué :</strong> {data.account.blockedReason === 'recovery' ? `suite à une procédure de rétablissement, aucun nouveau crédit avant le ${new Date(data.account.blockedUntil).toLocaleDateString('fr-FR')}.` : 'un de tes prêts est en défaut. Tu ne peux plus emprunter tant qu\'il n\'est pas soldé.'}<HelpTip term="defaut-paiement" /></div>}
+            {data.account.creditBlocked && <div style={{ ...card, borderColor: 'var(--ik-negative)', marginBottom: 14 }}><Icon name="ban" size={18} /> <strong>Crédit bloqué :</strong> {data.account.blockedReason === 'recovery' ? `suite à une procédure de rétablissement, aucun nouveau crédit avant le ${new Date(data.account.blockedUntil).toLocaleDateString('fr-FR')}.` : 'un de tes prêts est en défaut. Tu ne peux plus emprunter tant qu\'il n\'est pas soldé.'}<HelpTip term="defaut-paiement" /></div>}
             {(() => { const ds = [...new Set(data.loans.filter((l) => l.status === 'defaulted').map((l) => l.domain))]; return ds.length > 0 ? <Recovery domains={ds} onDone={refresh} notify={notify} /> : null; })()}
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-              <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase' }}>Dette en cours</div><div style={{ fontSize: 24, fontWeight: 800, color: 'var(--ik-text)' }}>{num(data.totals.outstandingCoins)} 🪙</div><div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>{data.totals.activeLoans} prêt(s) sur {data.totals.maxActiveLoans} possibles</div></div>
+              <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase' }}>Dette en cours</div><div style={{ fontSize: 24, fontWeight: 800, color: 'var(--ik-text)' }}>{num(data.totals.outstandingCoins)} <Coin /></div><div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>{data.totals.activeLoans} prêt(s) sur {data.totals.maxActiveLoans} possibles</div></div>
               <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase' }}>Crédit fléché non dépensé<HelpTip term="credit-fleche" /></div>
-                {data.reservedCredit.length === 0 ? <div style={{ fontSize: 18, color: 'var(--ik-text-2)', marginTop: 4 }}>—</div> : data.reservedCredit.map((r) => <div key={r.domain} style={{ fontSize: 18, fontWeight: 700, color: 'var(--ik-warning)' }}>{num(r.coins, 0)} 🪙 <span style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>utilisables en {DOMAIN_LABEL[r.domain] || r.domain} seulement</span></div>)}</div>
+                {data.reservedCredit.length === 0 ? <div style={{ fontSize: 18, color: 'var(--ik-text-2)', marginTop: 4 }}>—</div> : data.reservedCredit.map((r) => <div key={r.domain} style={{ fontSize: 18, fontWeight: 700, color: 'var(--ik-warning)' }}>{num(r.coins, 0)} <Coin /> <span style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>utilisables en {DOMAIN_LABEL[r.domain] || r.domain} seulement</span></div>)}</div>
             </div>
             <PersonalLoan onDone={refresh} notify={notify} />
             <PortfolioLoan onDone={refresh} notify={notify} />
@@ -268,11 +270,11 @@ export default function BanquePage() {
                     <span style={{ color: l.status === 'active' ? 'var(--ik-positive)' : l.status === 'defaulted' ? 'var(--ik-negative)' : 'var(--ik-text-3)' }}>{STATUS_LABEL[l.status] || l.status}</span>
                   </div>
                   <div style={{ fontSize: 14, color: 'var(--ik-text-2)', margin: '6px 0' }}>
-                    Emprunté {num(l.principalCoins, 0)} 🪙 à {num(l.annualRatePct)} %{l.repaymentType === 'interest_only' ? ' variable, durée indéterminée (intérêts à chaque passage d\'année)' : ` sur ${l.months} mois`} · reste à rembourser <strong>{num(l.balanceCoins)} 🪙</strong>{l.repaymentType === 'annuity' && <> · mois écoulés {l.monthsElapsed}/{l.months}</>}
-                    {l.nextInstalmentCoins !== null && <> · prochaine mensualité ≈ {num(l.nextInstalmentCoins)} 🪙</>}
-                    {l.overdueCoins > 0 && <span style={{ color: 'var(--ik-negative)' }}> · impayé : {num(l.overdueCoins)} 🪙 ({l.missedInstalments} échéance(s))</span>}
+                    Emprunté {num(l.principalCoins, 0)} <Coin /> à {num(l.annualRatePct)} %{l.repaymentType === 'interest_only' ? ' variable, durée indéterminée (intérêts à chaque passage d\'année)' : ` sur ${l.months} mois`} · reste à rembourser <strong>{num(l.balanceCoins)} <Coin /></strong>{l.repaymentType === 'annuity' && <> · mois écoulés {l.monthsElapsed}/{l.months}</>}
+                    {l.nextInstalmentCoins !== null && <> · prochaine mensualité ≈ {num(l.nextInstalmentCoins)} <Coin /></>}
+                    {l.overdueCoins > 0 && <span style={{ color: 'var(--ik-negative)' }}> · impayé : {num(l.overdueCoins)} <Coin /> ({l.missedInstalments} échéance(s))</span>}
                   </div>
-                  <div style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>Déjà rendu : capital {num(l.principalPaidCoins)} 🪙 + intérêts {num(l.interestPaidCoins)} 🪙</div>
+                  <div style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>Déjà rendu : capital {num(l.principalPaidCoins)} <Coin /> + intérêts {num(l.interestPaidCoins)} <Coin /></div>
                   {(l.status === 'active' || l.status === 'defaulted') && l.repaymentType === 'annuity' && <div style={{ marginTop: 8 }}><button style={btn(false)} onClick={() => repay(l)}>Solder ce prêt<HelpTip term="remboursement-anticipe" /></button></div>}
                   {(l.status === 'active' || l.status === 'defaulted') && l.repaymentType === 'interest_only' && <PortfolioLoanCard loan={l} view={views[l.domain]} onDone={refresh} notify={notify} />}
                 </div>

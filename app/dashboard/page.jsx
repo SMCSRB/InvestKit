@@ -20,6 +20,8 @@ import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
+import Coin from '@/app/components/ui/Coin';
+import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 // Transparence d'une couleur quelconque (hexadécimale ou variable de design).
 const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
@@ -164,11 +166,11 @@ function DashboardContent() {
 
   // Guild Events & Announcements
   const [guildEvents, setGuildEvents] = useState([
-    { id: 1, guildId: 'crypto-masters', title: '🎯 Défi Crypto Hebdo', description: 'Investissez 1000€ en crypto et battez les autres membres', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 604800000), participants: 12, reward: '500 XP' },
-    { id: 2, guildId: 'immobilier-pro', title: '🏠 Tournoi Immobilier', description: 'Simulez l\'achat d\'un bien immobilier avec le meilleur ROI', startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 1209600000), participants: 8, reward: '1000 XP' },
-    { id: 3, guildId: 'crypto-masters', title: '💰 Challenge Portefeuille', description: 'Rebalancez votre portefeuille et gagnez des points', startDate: new Date(Date.now() - 86400000), endDate: new Date(Date.now() + 259200000), participants: 25, reward: '300 XP' },
-    { id: 4, guildId: 'crypto-masters', title: '📊 Analyse Technique Marathon', description: 'Analysez les patterns sur 5 paires différentes et partagez vos prédictions', startDate: new Date(Date.now() + 345600000), endDate: new Date(Date.now() + 432000000), participants: 18, reward: '750 XP' },
-    { id: 5, guildId: 'immobilier-pro', title: '🔍 Visite Virtuelle d\'Immeubles', description: 'Tour virtuel de 10 propriétés prestigieuses et évaluation de leur potentiel', startDate: new Date(Date.now() + 259200000), endDate: new Date(Date.now() + 604800000), participants: 22, reward: '600 XP' },
+    { id: 1, guildId: 'crypto-masters', title: 'Défi Crypto Hebdo', description: 'Investissez 1000€ en crypto et battez les autres membres', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 604800000), participants: 12, reward: '500 XP' },
+    { id: 2, guildId: 'immobilier-pro', title: 'Tournoi Immobilier', description: 'Simulez l\'achat d\'un bien immobilier avec le meilleur ROI', startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 1209600000), participants: 8, reward: '1000 XP' },
+    { id: 3, guildId: 'crypto-masters', title: 'Challenge Portefeuille', description: 'Rebalancez votre portefeuille et gagnez des points', startDate: new Date(Date.now() - 86400000), endDate: new Date(Date.now() + 259200000), participants: 25, reward: '300 XP' },
+    { id: 4, guildId: 'crypto-masters', title: 'Analyse Technique Marathon', description: 'Analysez les patterns sur 5 paires différentes et partagez vos prédictions', startDate: new Date(Date.now() + 345600000), endDate: new Date(Date.now() + 432000000), participants: 18, reward: '750 XP' },
+    { id: 5, guildId: 'immobilier-pro', title: 'Visite Virtuelle d\'Immeubles', description: 'Tour virtuel de 10 propriétés prestigieuses et évaluation de leur potentiel', startDate: new Date(Date.now() + 259200000), endDate: new Date(Date.now() + 604800000), participants: 22, reward: '600 XP' },
   ]);
   const [guildAnnouncements, setGuildAnnouncements] = useState([]);
 
@@ -192,26 +194,26 @@ function DashboardContent() {
   // Badge System - Rarity levels: common, rare, very_rare, unique
   // Enhanced with statistics, XP value, and rarity percentages
   const badgeDefinitions = {
-    'first_step': { name: 'Premier Pas', emoji: '👶', rarity: 'common', requirement: 'level:1', xp: 50, rarity_percent: 98.5, category: 'milestone', description: 'Débuter ton parcours d\'investisseur' },
-    'crypto_novice': { name: 'Novice Crypto', emoji: '₿', rarity: 'rare', requirement: 'course:crypto', xp: 150, rarity_percent: 45.2, category: 'education', description: 'Première leçon de crypto complétée' },
-    'stock_master': { name: 'Maître Boursier', emoji: '📈', rarity: 'rare', requirement: 'course:stocks', xp: 150, rarity_percent: 38.7, category: 'education', description: 'Maîtriser la bourse et les PEA' },
-    'real_estate_pro': { name: 'Pro Immobilier', emoji: '🏠', rarity: 'rare', requirement: 'course:realestate', xp: 150, rarity_percent: 32.1, category: 'education', description: 'Devenir expert en immobilier' },
-    'investment_guru': { name: 'Gourou Investisseur', emoji: '🧠', rarity: 'very_rare', requirement: 'level:10', xp: 300, rarity_percent: 22.5, category: 'milestone', description: 'Atteindre le niveau 10' },
-    'crypto_master': { name: 'Maître Crypto', emoji: '👑', rarity: 'very_rare', requirement: 'level:15', xp: 400, rarity_percent: 12.8, category: 'milestone', description: 'Atteindre le niveau 15' },
-    'portfolio_genius': { name: 'Génie Portefeuille', emoji: '💎', rarity: 'very_rare', requirement: 'level:20', xp: 500, rarity_percent: 8.3, category: 'milestone', description: 'Atteindre le niveau 20' },
-    'legend': { name: 'Légende Investisseur', emoji: '⭐', rarity: 'unique', requirement: 'level:50', xp: 1000, rarity_percent: 0.5, category: 'milestone', description: 'Atteindre le niveau 50 - Légende !' },
-    'founder': { name: 'Fondateur', emoji: '👑', rarity: 'unique', requirement: 'event:founder', xp: 750, rarity_percent: 0.1, category: 'event', description: 'Membre fondateur d\'InvestKit' },
-    'event_champion': { name: 'Champion Événement', emoji: '🏆', rarity: 'very_rare', requirement: 'event:win', xp: 350, rarity_percent: 5.2, category: 'event', description: 'Gagnant d\'un événement' },
-    'spring_collector': { name: 'Collecteur Printemps', emoji: '🌸', rarity: 'rare', requirement: 'seasonal:spring', xp: 200, rarity_percent: 25.0, category: 'seasonal', description: 'Actif au printemps', season: 'spring' },
-    'summer_master': { name: 'Maître Été', emoji: '☀️', rarity: 'very_rare', requirement: 'seasonal:summer', xp: 350, rarity_percent: 12.0, category: 'seasonal', description: 'Maître de l\'été', season: 'summer' },
-    'autumn_warrior': { name: 'Guerrier Automne', emoji: '🍂', rarity: 'rare', requirement: 'seasonal:autumn', xp: 200, rarity_percent: 20.0, category: 'seasonal', description: 'Combattant d\'automne', season: 'autumn' },
-    'winter_champion': { name: 'Champion Hiver', emoji: '❄️', rarity: 'very_rare', requirement: 'seasonal:winter', xp: 350, rarity_percent: 18.0, category: 'seasonal', description: 'Roi de l\'hiver', season: 'winter' },
-    'night_trader': { name: 'Trader Nocturne', emoji: '🌙', rarity: 'rare', requirement: 'secret:night', xp: 200, rarity_percent: 8.5, category: 'secret', description: 'Trader qui travaille la nuit' },
-    'lucky_seven': { name: 'Sept Chanceuse', emoji: '7️⃣', rarity: 'very_rare', requirement: 'secret:lucky', xp: 300, rarity_percent: 3.2, category: 'secret', description: 'Un hasard fortuné s\'est produit' },
-    'speedster': { name: 'Rapide comme l\'éclair', emoji: '⚡', rarity: 'rare', requirement: 'secret:speed', xp: 250, rarity_percent: 6.8, category: 'secret', description: 'Atteindre 3 niveaux en un jour' },
-    'million_club': { name: 'Club Million', emoji: '💰', rarity: 'very_rare', requirement: 'secret:wealth', xp: 400, rarity_percent: 4.1, category: 'secret', description: 'Simuler un million en gains' },
-    'perfectionist': { name: 'Perfectionniste', emoji: '✨', rarity: 'unique', requirement: 'secret:perfect', xp: 600, rarity_percent: 0.3, category: 'secret', description: 'Compléter tous les cours au 100%' },
-    'mystery_badge': { name: '🔮 Mystère', emoji: '🔮', rarity: 'unique', requirement: 'secret:mystery', xp: 750, rarity_percent: 1.5, category: 'secret', description: 'Un secret attendant sa révélation' },
+    'first_step': { name: 'Premier Pas', icon: 'baby', rarity: 'common', requirement: 'level:1', xp: 50, rarity_percent: 98.5, category: 'milestone', description: 'Débuter ton parcours d\'investisseur' },
+    'crypto_novice': { name: 'Novice Crypto', icon: 'bitcoin', rarity: 'rare', requirement: 'course:crypto', xp: 150, rarity_percent: 45.2, category: 'education', description: 'Première leçon de crypto complétée' },
+    'stock_master': { name: 'Maître Boursier', icon: 'trendingUp', rarity: 'rare', requirement: 'course:stocks', xp: 150, rarity_percent: 38.7, category: 'education', description: 'Maîtriser la bourse et les PEA' },
+    'real_estate_pro': { name: 'Pro Immobilier', icon: 'house', rarity: 'rare', requirement: 'course:realestate', xp: 150, rarity_percent: 32.1, category: 'education', description: 'Devenir expert en immobilier' },
+    'investment_guru': { name: 'Gourou Investisseur', icon: 'brain', rarity: 'very_rare', requirement: 'level:10', xp: 300, rarity_percent: 22.5, category: 'milestone', description: 'Atteindre le niveau 10' },
+    'crypto_master': { name: 'Maître Crypto', icon: 'crown', rarity: 'very_rare', requirement: 'level:15', xp: 400, rarity_percent: 12.8, category: 'milestone', description: 'Atteindre le niveau 15' },
+    'portfolio_genius': { name: 'Génie Portefeuille', icon: 'gem', rarity: 'very_rare', requirement: 'level:20', xp: 500, rarity_percent: 8.3, category: 'milestone', description: 'Atteindre le niveau 20' },
+    'legend': { name: 'Légende Investisseur', icon: 'star', rarity: 'unique', requirement: 'level:50', xp: 1000, rarity_percent: 0.5, category: 'milestone', description: 'Atteindre le niveau 50 - Légende !' },
+    'founder': { name: 'Fondateur', icon: 'award', rarity: 'unique', requirement: 'event:founder', xp: 750, rarity_percent: 0.1, category: 'event', description: 'Membre fondateur d\'InvestKit' },
+    'event_champion': { name: 'Champion Événement', icon: 'trophy', rarity: 'very_rare', requirement: 'event:win', xp: 350, rarity_percent: 5.2, category: 'event', description: 'Gagnant d\'un événement' },
+    'spring_collector': { name: 'Collecteur Printemps', icon: 'flower2', rarity: 'rare', requirement: 'seasonal:spring', xp: 200, rarity_percent: 25.0, category: 'seasonal', description: 'Actif au printemps', season: 'spring' },
+    'summer_master': { name: 'Maître Été', icon: 'sun', rarity: 'very_rare', requirement: 'seasonal:summer', xp: 350, rarity_percent: 12.0, category: 'seasonal', description: 'Maître de l\'été', season: 'summer' },
+    'autumn_warrior': { name: 'Guerrier Automne', icon: 'leaf', rarity: 'rare', requirement: 'seasonal:autumn', xp: 200, rarity_percent: 20.0, category: 'seasonal', description: 'Combattant d\'automne', season: 'autumn' },
+    'winter_champion': { name: 'Champion Hiver', icon: 'snowflake', rarity: 'very_rare', requirement: 'seasonal:winter', xp: 350, rarity_percent: 18.0, category: 'seasonal', description: 'Roi de l\'hiver', season: 'winter' },
+    'night_trader': { name: 'Trader Nocturne', icon: 'moon', rarity: 'rare', requirement: 'secret:night', xp: 200, rarity_percent: 8.5, category: 'secret', description: 'Trader qui travaille la nuit' },
+    'lucky_seven': { name: 'Sept Chanceuse', icon: 'sparkles', rarity: 'very_rare', requirement: 'secret:lucky', xp: 300, rarity_percent: 3.2, category: 'secret', description: 'Un hasard fortuné s\'est produit' },
+    'speedster': { name: 'Rapide comme l\'éclair', icon: 'zap', rarity: 'rare', requirement: 'secret:speed', xp: 250, rarity_percent: 6.8, category: 'secret', description: 'Atteindre 3 niveaux en un jour' },
+    'million_club': { name: 'Club Million', icon: 'banknote', rarity: 'very_rare', requirement: 'secret:wealth', xp: 400, rarity_percent: 4.1, category: 'secret', description: 'Simuler un million en gains' },
+    'perfectionist': { name: 'Perfectionniste', icon: 'circleCheck', rarity: 'unique', requirement: 'secret:perfect', xp: 600, rarity_percent: 0.3, category: 'secret', description: 'Compléter tous les cours au 100%' },
+    'mystery_badge': { name: 'Mystère', icon: 'sparkles', rarity: 'unique', requirement: 'secret:mystery', xp: 750, rarity_percent: 1.5, category: 'secret', description: 'Un secret attendant sa révélation' },
   };
 
   const [userBadges, setUserBadges] = useState([]);
@@ -626,7 +628,7 @@ function DashboardContent() {
       id: toastId,
       badgeId,
       badgeName: badge.name,
-      badgeEmoji: badge.emoji,
+      badgeIcon: badge.icon,
       rarity: badge.rarity,
       xp: badge.xp,
     };
@@ -926,7 +928,7 @@ function DashboardContent() {
   }, [badgesHydrated, unlockBadge]);
 
   // Notifications réelles : chargées au démarrage puis toutes les 60 s. Une nouvelle notification non lue déclenche une pastille (pop-up) de quelques secondes.
-  const NOTIF_ICONS = { bank: '🏦', re: '🏠', security: '🔐', admin: '🎁', pro: '⭐' };
+  const NOTIF_ICONS = { bank: 'landmark', re: 'house', security: 'lockKeyhole', admin: 'gift', pro: 'star' };
   const knownNotifIds = useRef(null);
   const loadNotifications = useCallback(async () => {
     try {
@@ -934,7 +936,7 @@ function DashboardContent() {
       if (!res.ok) return;
       const data = await res.json();
       const mapped = data.notifications.map((n) => ({
-        id: n.id, type: 'system', user: n.title, avatar: NOTIF_ICONS[n.kind.split('_')[0]] || '🔔', message: n.body, timestamp: new Date(n.createdAt), read: n.read, link: n.link,
+        id: n.id, type: 'system', user: n.title, avatar: NOTIF_ICONS[n.kind.split('_')[0]] || 'bell', message: n.body, timestamp: new Date(n.createdAt), read: n.read, link: n.link,
       }));
       if (knownNotifIds.current) {
         const fresh = mapped.filter((n) => !n.read && !knownNotifIds.current.has(n.id));
@@ -1105,7 +1107,7 @@ function DashboardContent() {
       const currentGuilde = guildes.find(g => g.id === userGuildes[0]);
       setGuildMessage({
         type: 'error',
-        text: `🚫 Tu ne peux être que dans 1 seule guilde à la fois.\n\nTu es actuellement dans: ${currentGuilde?.name || 'une guilde'}\n\nQuitte d'abord cette guilde pour en rejoindre une autre.`
+        text: `Tu ne peux être que dans 1 seule guilde à la fois.\n\nTu es actuellement dans: ${currentGuilde?.name || 'une guilde'}\n\nQuitte d'abord cette guilde pour en rejoindre une autre.`
       });
       setTimeout(() => setGuildMessage(null), 5000);
       return;
@@ -1127,12 +1129,12 @@ function DashboardContent() {
 
     if (!levelOk || missingDomains.length > 0) {
       // Afficher le message d'erreur
-      let errorMsg = '❌ Tu ne peux pas rejoindre cette guilde.\n\n';
+      let errorMsg = 'Tu ne peux pas rejoindre cette guilde.\n\n';
       if (!levelOk) {
-        errorMsg += `📊 Niveau insuffisant: tu es niveau ${progress.userLevel} (niveau ${guilde.restrictions.minLevel} requis)\n`;
+        errorMsg += `Niveau insuffisant: tu es niveau ${progress.userLevel} (niveau ${guilde.restrictions.minLevel} requis)\n`;
       }
       if (missingDomains.length > 0) {
-        errorMsg += `📈 Progression domaine insuffisante:\n${missingDomains.map(d => `  • ${d}`).join('\n')}`;
+        errorMsg += `Progression domaine insuffisante:\n${missingDomains.map(d => `  • ${d}`).join('\n')}`;
       }
 
       setGuildMessage({ type: 'error', text: errorMsg });
@@ -1209,31 +1211,31 @@ function DashboardContent() {
       id: 1,
       title: 'Règle des 50/30/20',
       tip: 'Alloquez 50% à vos besoins, 30% à vos envies et 20% à l\'épargne/investissement',
-      icon: '💰',
+      icon: 'banknote',
     },
     {
       id: 2,
       title: 'Diversification',
       tip: 'Ne mettez jamais tout votre argent dans un seul investissement. Répartissez le risque.',
-      icon: '📊',
+      icon: 'chartColumn',
     },
     {
       id: 3,
       title: 'Dollar Cost Averaging',
       tip: 'Investissez régulièrement des montants fixes pour lisser les prix d\'achat',
-      icon: '📈',
+      icon: 'trendingUp',
     },
     {
       id: 4,
       title: 'Fonds d\'urgence',
       tip: 'Maintenez 3-6 mois de dépenses en compte d\'épargne avant d\'investir',
-      icon: '🛡️',
+      icon: 'shield',
     },
     {
       id: 5,
       title: 'Rebalancement',
       tip: 'Réajustez votre portefeuille 2x par an pour maintenir votre allocation cible',
-      icon: '⚖️',
+      icon: 'scale',
     },
   ]);
 
@@ -1513,8 +1515,7 @@ function DashboardContent() {
         {/* TRADING TAB - Simulateur Bourse (mode accéléré) */}
         {activeTab === 'trading' && (
           <div style={{ marginTop: '20px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ik-text)', margin: '0 0 8px 0' }}>
-              📈 Simulateur — Mode Accéléré
+            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ik-text)', margin: '0 0 8px 0' }}> Simulateur — Mode Accéléré
             </h2>
             <p style={{ color: 'var(--ik-text-3)', fontSize: '13px', margin: '0 0 24px 0' }}>
               Achète et vends avec tes InvestCoins sur des données historiques simplifiées (illustratives, pas de vrais cours).
@@ -1542,14 +1543,13 @@ function DashboardContent() {
                         cursor: 'pointer',
                       }}
                     >
-                      {d.id === 'crypto' ? '₿ ' : '📊 '}{d.label}
+                      {d.label}
                     </button>
                   ))}
                   <button
                     onClick={() => router.push('/immobilier')}
                     style={{ padding: '8px 18px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--ik-text) 15%, transparent)', background: 'transparent', color: 'var(--ik-text-2)', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
-                  >
-                    🏠 Immobilier →
+                  > Immobilier →
                   </button>
                   <button
                     onClick={() => router.push('/crypto')}
@@ -1568,7 +1568,7 @@ function DashboardContent() {
                 }}>
                   {[
                     { label: 'Année simulée', value: tradingPortfolio?.simulatedYear, tip: 'annee-simulee' },
-                    { label: 'Solde InvestCoins', value: `🪙 ${tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')}` },
+                    { label: 'Solde InvestCoins', value: `${tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')} InvestCoins` },
                     { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} €`, tip: 'valeur-positions' },
                     {
                       label: 'Performance',
@@ -1605,8 +1605,7 @@ function DashboardContent() {
                     cursor: tradingLoading ? 'wait' : 'pointer',
                     marginBottom: '24px',
                   }}
-                >
-                  ⏩ Avancer d'un an {tradingPortfolio?.simulatedYear < tradingPortfolio?.maxYear ? `(→ ${tradingPortfolio?.simulatedYear + 1})` : `(déjà en ${tradingPortfolio?.maxYear})`}
+                > Avancer d'un an {tradingPortfolio?.simulatedYear < tradingPortfolio?.maxYear ? `(→ ${tradingPortfolio?.simulatedYear + 1})` : `(déjà en ${tradingPortfolio?.maxYear})`}
                 </button>
 
                 {tradingError && (
@@ -1615,8 +1614,7 @@ function DashboardContent() {
 
                 {/* Prêt sur portefeuille en cours : rapport prêt/valeur et appel de marge (calculés par le serveur) */}
                 {tradingPortfolio?.bank?.loan && (
-                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'color-mix(in srgb, var(--ik-primary) 12%, transparent)' : 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'color-mix(in srgb, var(--ik-warning) 60%, transparent)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'var(--ik-text)', fontSize: '13px' }}>
-                    🏦 Prêt sur portefeuille : dette {tradingPortfolio.bank.loan.debtCoins} 🪙 · rapport prêt/valeur {tradingPortfolio.bank.loan.ltvPct} %.
+                  <div style={{ background: tradingPortfolio.bank.loan.state === 'ok' ? 'color-mix(in srgb, var(--ik-primary) 12%, transparent)' : 'color-mix(in srgb, var(--ik-warning) 15%, transparent)', border: `1px solid ${tradingPortfolio.bank.loan.state === 'ok' ? 'rgba(96,165,250,0.4)' : 'color-mix(in srgb, var(--ik-warning) 60%, transparent)'}`, borderRadius: '16px', padding: '14px 18px', marginBottom: '20px', color: 'var(--ik-text)', fontSize: '13px' }}> Prêt sur portefeuille : dette {tradingPortfolio.bank.loan.debtCoins} <Coin /> · rapport prêt/valeur {tradingPortfolio.bank.loan.ltvPct} %.
                     {tradingPortfolio.bank.loan.state !== 'ok' && <strong style={{ color: 'var(--ik-warning)' }}> Appel de marge : rembourse ou ajoute des titres avant le prochain passage d'année, sinon vente forcée.</strong>}
                     <button onClick={() => router.push('/banque')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Ouvrir ma banque</button>
                   </div>
@@ -1643,8 +1641,7 @@ function DashboardContent() {
                           router.push('/immobilier');
                         }}
                         disabled={tradingLoading || tradingPortfolio?.freeDomain === 'real_estate'}
-                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'color-mix(in srgb, var(--ik-primary) 25%, transparent)', color: 'var(--ik-accent)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}>
-                        🏠 Immobilier{tradingPortfolio?.freeDomain === 'real_estate' ? ' (actuel)' : ''}
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(96,165,250,0.6)', background: 'color-mix(in srgb, var(--ik-primary) 25%, transparent)', color: 'var(--ik-accent)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: tradingPortfolio?.freeDomain === 'real_estate' ? 0.4 : 1 }}> Immobilier{tradingPortfolio?.freeDomain === 'real_estate' ? ' (actuel)' : ''}
                       </button>
                       {showDomainChooser && (
                         <button onClick={() => setShowDomainChooser(false)} style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'transparent', color: 'var(--ik-text-3)', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
@@ -1653,8 +1650,7 @@ function DashboardContent() {
                   </div>
                 )}
                 {tradingPortfolio?.access?.reason === 'DOMAIN_LOCKED' && (
-                  <div style={{ background: 'color-mix(in srgb, var(--ik-warning) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-warning) 40%, transparent)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: 'var(--ik-warning)', fontSize: '13px' }}>
-                    🔒 Ce domaine n'est pas ton domaine gratuit : l'achat nécessite le plan Pro. Tu peux toujours vendre tes positions.
+                  <div style={{ background: 'color-mix(in srgb, var(--ik-warning) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ik-warning) 40%, transparent)', borderRadius: '16px', padding: '16px 20px', marginBottom: '24px', color: 'var(--ik-warning)', fontSize: '13px' }}> Ce domaine n'est pas ton domaine gratuit : l'achat nécessite le plan Pro. Tu peux toujours vendre tes positions.
                     {tradingPortfolio?.canChangeFreeDomain && (
                       <button onClick={() => setShowDomainChooser(true)} style={{ marginLeft: '10px', background: 'none', border: 'none', color: 'var(--ik-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}>Changer mon domaine gratuit (1 fois)</button>
                     )}
@@ -1713,7 +1709,7 @@ function DashboardContent() {
                       </select>
                     )}
                     <span style={{ color: 'var(--ik-text-3)', fontSize: '13px' }}>
-                      ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} 🪙
+                      ≈ {((tradingPortfolio?.prices?.[tradingSelectedAsset] ?? 0) * Number(tradingQuantity || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} <Coin />
                       {' '}+ courtage (~{tradingPortfolio?.costs?.brokeragePct?.[tradingAssets.find((a) => a.symbol === tradingSelectedAsset)?.type ?? 'stock'] ?? 0} %)
                       <HelpTip term="courtage" />
                     </span>
@@ -1734,7 +1730,7 @@ function DashboardContent() {
                     <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
                       {tradingAccount === 'pea'
                         ? (tradingPortfolio.costs.pea.openedYear
-                          ? `PEA ouvert en ${tradingPortfolio.costs.pea.openedYear} : exonéré d'impôt sur le revenu à partir de ${tradingPortfolio.costs.pea.exemptFromYear}. Versé : ${tradingPortfolio.costs.pea.deposits.toLocaleString('fr-FR')} / ${tradingPortfolio.costs.pea.depositCeiling.toLocaleString('fr-FR')} 🪙.`
+                          ? `PEA ouvert en ${tradingPortfolio.costs.pea.openedYear} : exonéré d'impôt sur le revenu à partir de ${tradingPortfolio.costs.pea.exemptFromYear}. Versé : ${tradingPortfolio.costs.pea.deposits.toLocaleString('fr-FR')} / ${tradingPortfolio.costs.pea.depositCeiling.toLocaleString('fr-FR')} InvestCoins.`
                           : 'Ton PEA s\'ouvre à ton premier achat : après 5 ans, plus d\'impôt sur le revenu sur les gains (il reste les prélèvements sociaux).')
                         : 'Compte-titres : flat tax sur chaque plus-value, sans condition de durée.'}
                       <HelpTip term="pea" />
@@ -1742,13 +1738,13 @@ function DashboardContent() {
                   )}
                   {tradingDomain === 'crypto' && tradingPortfolio?.costs && (
                     <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
-                      Crypto : impôt uniquement à la vente contre euros. Cessions de l'année : {(tradingPortfolio.costs.cryptoDisposalsThisYear ?? 0).toLocaleString('fr-FR')} 🪙 (aucun impôt tant que le total reste sous {tradingPortfolio.costs.cryptoThreshold} 🪙).
+                      Crypto : impôt uniquement à la vente contre euros. Cessions de l'année : {(tradingPortfolio.costs.cryptoDisposalsThisYear ?? 0).toLocaleString('fr-FR')} <Coin /> (aucun impôt tant que le total reste sous {tradingPortfolio.costs.cryptoThreshold} <Coin />).
                       <HelpTip term="impot-crypto" />
                     </p>
                   )}
                   {tradingPortfolio?.costs && (tradingPortfolio.costs.feesPaid > 0 || tradingPortfolio.costs.taxPaid > 0) && (
                     <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--ik-text-3)' }}>
-                      Payé depuis le début : {tradingPortfolio.costs.feesPaid.toLocaleString('fr-FR')} 🪙 de courtage, {tradingPortfolio.costs.taxPaid.toLocaleString('fr-FR')} 🪙 d'impôts.
+                      Payé depuis le début : {tradingPortfolio.costs.feesPaid.toLocaleString('fr-FR')} <Coin /> de courtage, {tradingPortfolio.costs.taxPaid.toLocaleString('fr-FR')} <Coin /> d'impôts.
                     </p>
                   )}
                 </div>
@@ -1793,9 +1789,9 @@ function DashboardContent() {
 
                 {tradingQuote && (
                   <div style={{ marginTop: 14, background: 'color-mix(in srgb, var(--ik-primary) 12%, transparent)', border: '1px solid rgba(96,165,250,0.4)', borderRadius: 12, padding: '14px 18px', color: 'var(--ik-text)', fontSize: 13 }}>
-                    <strong>Vente de {Number(tradingQuote.quantity.toFixed(6))} {tradingQuote.symbol}</strong> : produit {tradingQuote.amount.toLocaleString('fr-FR')} 🪙,
-                    courtage {tradingQuote.fee.toLocaleString('fr-FR')} 🪙, impôt sur la plus-value {tradingQuote.tax.toLocaleString('fr-FR')} 🪙
-                    {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} 🪙</strong>.
+                    <strong>Vente de {Number(tradingQuote.quantity.toFixed(6))} {tradingQuote.symbol}</strong> : produit {tradingQuote.amount.toLocaleString('fr-FR')} <Coin />,
+                    courtage {tradingQuote.fee.toLocaleString('fr-FR')} <Coin />, impôt sur la plus-value {tradingQuote.tax.toLocaleString('fr-FR')} <Coin />
+                    {' '}→ <strong>tu reçois {tradingQuote.net.toLocaleString('fr-FR')} <Coin /></strong>.
                     {tradingQuote.note && <div style={{ marginTop: 6, color: 'var(--ik-text-2)' }}>{tradingQuote.note}</div>}
                     <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
                       <button onClick={() => tradingSell(tradingQuote.symbol, tradingQuote.quantity, tradingQuote.account)} disabled={tradingLoading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--ik-negative)', color: 'var(--ik-text-on-negative)', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Confirmer la vente</button>
@@ -1807,9 +1803,9 @@ function DashboardContent() {
                 <PortfolioRisk domain={tradingDomain} refreshKey={`${tradingPortfolio?.simulatedYear}-${tradingPortfolio?.positions?.length}-${tradingPortfolio?.cashBalance}-${tradingPortfolio?.marketValue}`} />
 
                 {/* Classement (comparaison à année simulée égale) */}
-                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '32px 0 8px 0' }}>🏆 Classement</h3>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--ik-text)', margin: '32px 0 8px 0' }}>Classement</h3>
                 <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: '0 0 12px 0' }}>
-                  Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} 🪙 pour être classé.
+                  Les joueurs sont comparés à la même année simulée. Il faut avoir engagé au moins {tradingBoard?.minCapital ?? 100} <Coin /> pour être classé.
                 </p>
                 <div style={{ marginBottom: '12px' }}>
                   <select
@@ -1868,8 +1864,7 @@ function DashboardContent() {
                   fontWeight: '800',
                   color: currentTheme.text,
                   margin: '0 0 8px 0',
-                }}>
-                  📚 Académie
+                }}> Académie
                 </h2>
                 <div style={{
                   display: 'flex',
@@ -1881,16 +1876,15 @@ function DashboardContent() {
                     Niveau {progress.userLevel}
                   </span>
                   <span style={{ color: currentTheme.accent }}>
-                    ⭐ {progress.totalXP} XP
+                    <Icon name="star" size={18} /> {progress.totalXP} XP
                   </span>
                   {progress.streak > 0 && (
-                    <span style={{ color: 'var(--ik-warning)' }}>
-                      🔥 Racha: {progress.streak}
+                    <span style={{ color: 'var(--ik-warning)' }}> Racha: {progress.streak}
                     </span>
                   )}
                   {progress.badges && progress.badges.length > 0 && (
                     <span style={{ color: 'var(--ik-accent)' }}>
-                      ✨ {progress.badges.length} Badges
+                      <Icon name="sparkles" size={18} /> {progress.badges.length} Badges
                     </span>
                   )}
                 </div>
@@ -1953,9 +1947,9 @@ function DashboardContent() {
                         alignItems: 'start',
                         marginBottom: '12px',
                       }}>
-                        <div style={{ fontSize: '28px' }}>{domain.icon}</div>
+                        <div style={{ fontSize: '28px' }}><Glyph g={domain.icon} size={28} /></div>
                         <div style={{ fontSize: '24px' }}>
-                          {isCompleted ? domain.badge : ''}
+                          {isCompleted ? <Glyph g={domain.badge} size={24} /> : null}
                         </div>
                       </div>
 
@@ -2032,8 +2026,7 @@ function DashboardContent() {
                   fontWeight: '700',
                   color: currentTheme.text,
                   margin: '0 0 16px 0',
-                }}>
-                  🏆 Mes Badges ({progress.completedDomains.length})
+                }}> Mes Badges ({progress.completedDomains.length})
                 </h3>
                 <div style={{
                   display: 'grid',
@@ -2067,7 +2060,7 @@ function DashboardContent() {
                           fontSize: '32px',
                           marginBottom: '4px',
                         }}>
-                          {domain.badge}
+                          <Glyph g={domain.badge} size={24} />
                         </div>
                         <p style={{
                           fontSize: '10px',
@@ -2096,8 +2089,7 @@ function DashboardContent() {
               fontWeight: '800',
               color: currentTheme.text,
               margin: '0 0 24px 0',
-            }}>
-              ⚙️ Paramètres
+            }}> Paramètres
             </h2>
 
             {/* Settings Tabs */}
@@ -2108,11 +2100,11 @@ function DashboardContent() {
               marginBottom: '24px',
             }}>
               {[
-                { id: 'general', label: '🎨 Affichage', icon: '🎨' },
-                { id: 'profile', label: '👤 Profil', icon: '👤' },
-                { id: 'security', label: '🔐 Sécurité', icon: '🔐' },
-                { id: 'privacy', label: '📊 Données', icon: '📊' },
-                { id: 'billing', label: '💳 Abonnement', icon: '💳' },
+                { id: 'general', label: 'Affichage', icon: 'palette' },
+                { id: 'profile', label: 'Profil', icon: 'user' },
+                { id: 'security', label: 'Sécurité', icon: 'lockKeyhole' },
+                { id: 'privacy', label: 'Données', icon: 'chartColumn' },
+                { id: 'billing', label: 'Abonnement', icon: 'creditCard' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -2164,8 +2156,7 @@ function DashboardContent() {
                     fontWeight: '700',
                     color: currentTheme.text,
                     margin: 0,
-                  }}>
-                    🎨 Préférences d'Affichage
+                  }}> Préférences d'Affichage
                   </h3>
 
                   {/* Theme Toggle */}
@@ -2198,7 +2189,7 @@ function DashboardContent() {
                     onMouseEnter={(e) => { e.currentTarget.style.background = isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 30%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 20%, transparent)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = isDarkMode ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)'; }}
                     >
-                      {isDarkMode ? '🌙 Sombre' : '☀️ Clair'}
+                      {isDarkMode ? 'Sombre' : 'Clair'}
                     </button>
                   </div>
 
@@ -2273,8 +2264,7 @@ function DashboardContent() {
                       fontWeight: '700',
                       color: currentTheme.text,
                       margin: 0,
-                    }}>
-                      👤 Profil Utilisateur
+                    }}> Profil Utilisateur
                     </h3>
                     <a href="/profile" style={{
                       display: 'inline-flex',
@@ -2290,8 +2280,7 @@ function DashboardContent() {
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
-                    }}>
-                      📊 Voir profil complet →
+                    }}> Voir profil complet →
                     </a>
                   </div>
 
@@ -2322,7 +2311,7 @@ function DashboardContent() {
                           objectFit: 'cover',
                         }} />
                       ) : (
-                        '👤'
+                        <Icon name="user" size={20} />
                       )}
                     </div>
                     <div style={{
@@ -2432,7 +2421,7 @@ function DashboardContent() {
                       }}>
                         Bio
                       </label>
-                      <textarea defaultValue="Passionné par l'investissement et l'apprentissage 🚀" style={{
+                      <textarea defaultValue="Passionné par l'investissement et l'apprentissage" style={{
                         width: '100%',
                         padding: '10px 12px',
                         background: currentTheme.border,
@@ -2480,8 +2469,7 @@ function DashboardContent() {
                       fontWeight: '700',
                       color: currentTheme.text,
                       margin: '0 0 16px 0',
-                    }}>
-                      📊 Mes Statistiques Académie
+                    }}> Mes Statistiques Académie
                     </h4>
                     <div style={{
                       display: 'grid',
@@ -2510,7 +2498,7 @@ function DashboardContent() {
                         borderRadius: '8px',
                       }}>
                         <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Racha</p>
-                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}>🔥 {progress.streak}</p>
+                        <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}><Icon name="flame" size={18} /> {progress.streak}</p>
                       </div>
                       <div style={{
                         padding: '12px',
@@ -2533,8 +2521,7 @@ function DashboardContent() {
                       fontWeight: '700',
                       color: currentTheme.text,
                       margin: '0 0 16px 0',
-                    }}>
-                      👤 Visibilité du Profil
+                    }}> Visibilité du Profil
                     </h4>
                     <div style={{ display: 'grid', gap: '12px' }}>
                       {/* Profile Visibility */}
@@ -2565,9 +2552,9 @@ function DashboardContent() {
                             fontSize: '12px',
                             cursor: 'pointer',
                           }}>
-                          <option value="public">🌍 Public</option>
-                          <option value="private">🔒 Privé</option>
-                          <option value="friends">👥 Amis seulement</option>
+                          <option value="public">Public</option>
+                          <option value="private">Privé</option>
+                          <option value="friends">Amis seulement</option>
                         </select>
                       </div>
 
@@ -2671,8 +2658,7 @@ function DashboardContent() {
                       fontWeight: '700',
                       color: currentTheme.text,
                       margin: '0 0 16px 0',
-                    }}>
-                      🎓 Préférences d'Apprentissage
+                    }}> Préférences d'Apprentissage
                     </h4>
                     <div style={{ display: 'grid', gap: '12px' }}>
                       {/* Preferred Domain */}
@@ -2699,12 +2685,12 @@ function DashboardContent() {
                             fontSize: '12px',
                             cursor: 'pointer',
                           }}>
-                          <option value="crypto">🪙 Crypto-monnaies</option>
-                          <option value="stocks">📈 Actions/Bourse</option>
-                          <option value="real-estate">🏠 Immobilier</option>
-                          <option value="bonds">📊 Obligations</option>
-                          <option value="forex">💱 Forex</option>
-                          <option value="general">🎯 Tous les domaines</option>
+                          <option value="crypto">InvestCoins Crypto-monnaies</option>
+                          <option value="stocks">Actions/Bourse</option>
+                          <option value="real-estate">Immobilier</option>
+                          <option value="bonds">Obligations</option>
+                          <option value="forex">Forex</option>
+                          <option value="general">Tous les domaines</option>
                         </select>
                       </div>
 
@@ -2732,10 +2718,10 @@ function DashboardContent() {
                             fontSize: '12px',
                             cursor: 'pointer',
                           }}>
-                          <option value="beginner">🌱 Débutant</option>
-                          <option value="intermediate">📚 Intermédiaire</option>
-                          <option value="advanced">⭐ Avancé</option>
-                          <option value="expert">🏆 Expert</option>
+                          <option value="beginner">Débutant</option>
+                          <option value="intermediate">Intermédiaire</option>
+                          <option value="advanced">Avancé</option>
+                          <option value="expert">Expert</option>
                         </select>
                       </div>
 
@@ -2795,8 +2781,7 @@ function DashboardContent() {
                     fontWeight: '700',
                     color: currentTheme.text,
                     margin: 0,
-                  }}>
-                    🔐 Sécurité
+                  }}> Sécurité
                   </h3>
 
                   <div style={{
@@ -2840,7 +2825,7 @@ function DashboardContent() {
                         Authentification 2FA
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        {userData?.enable2FA ? '✅ Activée' : 'Sécurité supplémentaire'}
+                        {userData?.enable2FA ? 'Activée' : 'Sécurité supplémentaire'}
                       </p>
                     </div>
                     <button
@@ -2881,8 +2866,7 @@ function DashboardContent() {
                     fontWeight: '700',
                     color: currentTheme.text,
                     margin: 0,
-                  }}>
-                    📊 Données & Confidentialité
+                  }}> Données & Confidentialité
                   </h3>
 
                   <ProBadgePrivacy />
@@ -2946,8 +2930,7 @@ function DashboardContent() {
                   </div>
 
                   <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ik-negative)', margin: '0 0 8px 0' }}>
-                      ⚠️ Zone Danger
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ik-negative)', margin: '0 0 8px 0' }}> Zone Danger
                     </p>
                     <button style={{
                       padding: '10px 20px',
@@ -2968,8 +2951,7 @@ function DashboardContent() {
               {/* ABONNEMENT TAB */}
               {settingsTab === 'billing' && (
                 <div style={{ display: 'grid', gap: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: currentTheme.text, margin: 0 }}>
-                    💳 Abonnement
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: currentTheme.text, margin: 0 }}> Abonnement
                   </h3>
 
                   {billingError && (
@@ -2988,7 +2970,7 @@ function DashboardContent() {
                     }}>
                       <div>
                         <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                          ✨ {planLine(plan)}
+                          <Icon name="sparkles" size={18} /> {planLine(plan)}
                         </p>
                         <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
                           Tous les domaines et fonctionnalités débloqués
@@ -3107,8 +3089,7 @@ function DashboardContent() {
                       border: `1px solid ${currentTheme.border}`,
                       background: currentTheme.bg,
                     }}>
-                      <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                        🎁 Parraine tes amis
+                      <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}> Parraine tes amis
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: '0 0 12px 0' }}>
                         Tu reçois 100 InvestCoins pour chaque ami qui s'inscrit avec ton code et vérifie son email.
@@ -3165,8 +3146,7 @@ function DashboardContent() {
                 color: currentTheme.text,
                 margin: 0,
                 letterSpacing: '-0.5px',
-              }}>
-                🔔 Notifications
+              }}> Notifications
               </h2>
               {notifications.some(n => !n.read) && (
                 <button
@@ -3206,7 +3186,7 @@ function DashboardContent() {
                   borderRadius: '16px',
                   border: `1px solid ${currentTheme.border}`,
                 }}>
-                  <p style={{ fontSize: '36px', margin: '0 0 16px 0' }}>✨</p>
+                  <p style={{ fontSize: '36px', margin: '0 0 16px 0' }}><Icon name="sparkles" size={18} /></p>
                   <p style={{ color: currentTheme.textSecondary, margin: 0 }}>
                     Aucune notification pour le moment
                   </p>
@@ -3261,7 +3241,7 @@ function DashboardContent() {
                         flexShrink: 0,
                         boxShadow: '0 8px 16px color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       }}>
-                        {notif.avatar}
+                        <Glyph g={notif.avatar} size={20} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <p style={{
@@ -3384,7 +3364,7 @@ function DashboardContent() {
             }}>
               <span>9:41</span>
               <span style={{ fontWeight: '700' }}>InvestKit</span>
-              <span>📶 📡 🔋</span>
+              <span><Icon name="signal" size={18} /> <Icon name="radioTower" size={18} /> <Icon name="batteryMedium" size={18} /></span>
             </div>
 
             {/* Modal Tabs */}
@@ -3409,8 +3389,7 @@ function DashboardContent() {
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
-              >
-                📰 Actualités
+              > Actualités
               </button>
               <button
                 onClick={() => setNewsModalTab('tips')}
@@ -3426,8 +3405,7 @@ function DashboardContent() {
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                 }}
-              >
-                💡 Conseils
+              > Conseils
               </button>
             </div>
 
@@ -3458,7 +3436,7 @@ function DashboardContent() {
                       alignItems: 'start',
                       marginBottom: '8px',
                     }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}>📈</span>
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="trendingUp" size={18} /></span>
                       <div style={{ flex: 1 }}>
                         <p style={{
                           fontSize: '15px',
@@ -3500,7 +3478,7 @@ function DashboardContent() {
                       alignItems: 'start',
                       marginBottom: '8px',
                     }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}>💡</span>
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="lightbulb" size={18} /></span>
                       <div style={{ flex: 1 }}>
                         <p style={{
                           fontSize: '15px',
@@ -3542,7 +3520,7 @@ function DashboardContent() {
                       alignItems: 'start',
                       marginBottom: '8px',
                     }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}>📚</span>
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="bookOpen" size={18} /></span>
                       <div style={{ flex: 1 }}>
                         <p style={{
                           fontSize: '15px',
@@ -3584,7 +3562,7 @@ function DashboardContent() {
                       alignItems: 'start',
                       marginBottom: '8px',
                     }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}>⚠️</span>
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="triangleAlert" size={18} /></span>
                       <div style={{ flex: 1 }}>
                         <p style={{
                           fontSize: '15px',
@@ -3626,7 +3604,7 @@ function DashboardContent() {
                       alignItems: 'start',
                       marginBottom: '8px',
                     }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}>🏆</span>
+                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="trophy" size={18} /></span>
                       <div style={{ flex: 1 }}>
                         <p style={{
                           fontSize: '15px',
@@ -3676,7 +3654,7 @@ function DashboardContent() {
                         marginBottom: '8px',
                       }}>
                         <span style={{ fontSize: '24px', marginTop: '2px' }}>
-                          {tip.icon}
+                          <Glyph g={tip.icon} size={24} />
                         </span>
                         <div style={{ flex: 1 }}>
                           <p style={{
@@ -3811,8 +3789,8 @@ function DashboardContent() {
               background: 'rgba(0, 0, 0, 0.2)',
             }}>
               {[
-                { id: 'badges', label: '🏅 Badges', icon: '🏅' },
-                { id: 'bio', label: '📝 Bio', icon: '📝' },
+                { id: 'badges', label: 'Badges', icon: 'award' },
+                { id: 'bio', label: 'Bio', icon: 'pencilLine' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -3858,8 +3836,7 @@ function DashboardContent() {
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
-                    }}>
-                      📦 Fond du Badge (Sélectionnez max 3 badges)
+                    }}> Fond du Badge (Sélectionnez max 3 badges)
                     </label>
                     <div style={{
                       display: 'grid',
@@ -3905,8 +3882,7 @@ function DashboardContent() {
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
-                    }}>
-                      🏅 Vos Badges ({selectedDisplayBadges.length}/3)
+                    }}> Vos Badges ({selectedDisplayBadges.length}/3)
                     </label>
                     <div style={{
                       display: 'grid',
@@ -3944,7 +3920,7 @@ function DashboardContent() {
                               opacity: selectedDisplayBadges.length >= 3 && !isSelected ? 0.5 : 1,
                             }}
                           >
-                            <div style={{ fontSize: '28px', marginBottom: '4px' }}>{badge.emoji}</div>
+                            <div style={{ fontSize: '28px', marginBottom: '4px' }}><BadgeMedal icon={badge.icon} rarity={badge.rarity} size={48} /></div>
                             <p style={{
                               fontSize: '9px',
                               color: rarityColors[badge.rarity],
@@ -3971,8 +3947,7 @@ function DashboardContent() {
                     marginBottom: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
-                  }}>
-                    📝 Ma Bio
+                  }}> Ma Bio
                   </label>
                   <textarea
                     value={bioEditInput}
@@ -4133,7 +4108,7 @@ function DashboardContent() {
               marginBottom: '12px',
               animation: 'bounce 0.6s ease-in-out',
             }}>
-              {newAchievement.icon}
+              <Glyph g={newAchievement.icon} size={40} />
             </div>
             <div style={{
               fontSize: '18px',
@@ -4247,11 +4222,7 @@ function DashboardContent() {
           >
             <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
               <span style={{ fontSize: '20px', flexShrink: 0 }}>
-                {notif.type === 'success' ? '🎉' :
-                 notif.type === 'follow' ? '👤' :
-                 notif.type === 'achievement' ? '🏆' :
-                 notif.type === 'guild_join' ? '👥' :
-                 '🔔'}
+                <Glyph g={notif.type === 'success' ? 'partyPopper' : notif.type === 'follow' ? 'user' : notif.type === 'achievement' ? 'trophy' : notif.type === 'guild_join' ? 'users' : 'bell'} size={20} />
               </span>
               <div style={{ flex: 1 }}>
                 <p style={{
@@ -4330,14 +4301,14 @@ function DashboardContent() {
             animation: 'toastSlideIn 0.4s ease-out',
             pointerEvents: 'auto',
           }}>
-            <div style={{ fontSize: '32px' }}>{toast.badgeEmoji}</div>
+            <div style={{ fontSize: '32px' }}><BadgeMedal icon={toast.badgeIcon} rarity={toast.rarity} size={44} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 fontSize: '14px',
                 fontWeight: '700',
                 color: 'var(--ik-text)',
                 marginBottom: '4px',
-              }}>🎉 Nouveau Badge!</div>
+              }}>Nouveau Badge!</div>
               <div style={{
                 fontSize: '13px',
                 color: 'var(--ik-text)',
@@ -4351,7 +4322,7 @@ function DashboardContent() {
             <div style={{
               fontSize: '20px',
               animation: 'milestoneCelebrate 0.6s ease-out',
-            }}>✨</div>
+            }}><Icon name="sparkles" size={18} /></div>
           </div>
         ))}
       </div>
@@ -4407,8 +4378,7 @@ function DashboardContent() {
                 color: 'var(--ik-text)',
                 fontSize: '24px',
                 fontWeight: '700',
-              }}>
-                📖 Album de Badges
+              }}> Album de Badges
               </h2>
               <button onClick={() => setShowBadgeAlbum(false)} style={{
                 background: 'none',
@@ -4447,7 +4417,7 @@ function DashboardContent() {
                 fontWeight: '700',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
-              }}>📊 Statistiques de Collection</h3>
+              }}>Statistiques de Collection</h3>
 
               <div style={{
                 display: 'grid',
@@ -4539,7 +4509,7 @@ function DashboardContent() {
                     onMouseEnter={() => setHoveredBadge(badgeId)}
                     onMouseLeave={() => setHoveredBadge(null)}>
                       <div style={{ fontSize: '32px', marginBottom: '8px' }}>
-                        {badge.emoji}
+                        <BadgeMedal icon={badge.icon} rarity={badge.rarity} size={48} />
                       </div>
                       <div style={{
                         fontSize: '11px',
@@ -4608,7 +4578,7 @@ function DashboardContent() {
                           e.currentTarget.style.transform = 'scale(1)';
                         }}
                       >
-                        {isPinned ? '📌' : '📍'}
+                        <Icon name={isPinned ? 'pin' : 'mapPin'} size={16} />
                       </button>
                     )}
                   </div>
@@ -4649,8 +4619,7 @@ function DashboardContent() {
           >
             {twoFAModal === 'setup' && (
               <>
-                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}>
-                  🔐 Activer la 2FA
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}> Activer la 2FA
                 </h3>
                 <p style={{ fontSize: '13px', color: currentTheme.textSecondary, margin: '0 0 16px' }}>
                   Scannez ce QR code avec Google Authenticator, Authy ou une app équivalente.
@@ -4712,8 +4681,7 @@ function DashboardContent() {
 
             {twoFAModal === 'backup-codes' && (
               <>
-                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}>
-                  ✅ 2FA activée !
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: currentTheme.text }}> 2FA activée !
                 </h3>
                 <p style={{ fontSize: '13px', color: currentTheme.textSecondary, margin: '0 0 16px' }}>
                   Notez ces 8 codes de secours dans un endroit sûr. Chacun ne fonctionne qu'une seule fois, en cas de perte de votre téléphone.

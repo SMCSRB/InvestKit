@@ -6,6 +6,8 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import HelpTip from '../components/HelpTip';
 import AppShell from '@/app/components/shell/AppShell';
+import Coin from '@/app/components/ui/Coin';
+import Icon from '@/app/components/ui/Icon';
 
 // Le graphique n'existe que dans le navigateur (canvas) : chargement dynamique, sans rendu serveur.
 const PriceChart = dynamic(() => import('./PriceChart'), { ssr: false, loading: () => <div style={{ color: 'var(--ik-text-3)' }}>Chargement du graphique…</div> });
@@ -43,7 +45,9 @@ async function call(path, method = 'GET', body) {
 }
 
 
-const coins = (n) => `${Number(n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} 🪙`;
+const coinNumber = (n) => Number(n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+const coins = (n) => <>{coinNumber(n)} <Coin /></>;
+const coinsText = (n) => `${coinNumber(n)} InvestCoins`;
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `o-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 const TYPE_LABEL = { market: 'Au marché', limit: 'Limite', stop_loss: 'Stop-loss', take_profit: 'Take-profit' };
 
@@ -82,7 +86,7 @@ function OrderTicket({ symbol, asset, onDone }) {
       const o = r.order;
       setOrderId(uid());
       setMsg(o.status === 'filled'
-        ? { ok: true, text: `Exécuté : ${o.fill.quantity} ${symbol} à ${usd(o.fill.price)} (prix de marché ${usd(o.fill.refPrice)}, écart ${o.fill.spreadPct.toFixed(2)} %, glissement ${o.fill.slippagePct.toFixed(3)} %). Frais : ${coins(o.fill.feeCoins)}${o.fill.taxCoins ? `, impôt : ${coins(o.fill.taxCoins)}` : ''}.` }
+        ? { ok: true, text: `Exécuté : ${o.fill.quantity} ${symbol} à ${usd(o.fill.price)} (prix de marché ${usd(o.fill.refPrice)}, écart ${o.fill.spreadPct.toFixed(2)} %, glissement ${o.fill.slippagePct.toFixed(3)} %). Frais : ${coinsText(o.fill.feeCoins)}${o.fill.taxCoins ? `, impôt : ${coinsText(o.fill.taxCoins)}` : ''}.` }
         : { ok: true, text: `Ordre ${TYPE_LABEL[o.type].toLowerCase()} enregistré : il attend que le prix atteigne ${usd(o.price)}. Il sera exécuté quand tu avanceras dans le temps.` });
       setQty(''); setAmount(''); setPrice('');
       onDone();
@@ -103,10 +107,10 @@ function OrderTicket({ symbol, asset, onDone }) {
           {side === 'sell' && <><option value="stop_loss">Stop-loss (limiter la perte)</option><option value="take_profit">Take-profit (sécuriser un gain)</option></>}
         </select>
         {isMarket && side === 'buy' && (
-          <select aria-label="Saisie" style={input} value={mode} onChange={(e) => setMode(e.target.value)}><option value="qty">Saisir une quantité</option><option value="amount">Saisir un montant en 🪙</option></select>
+          <select aria-label="Saisie" style={input} value={mode} onChange={(e) => setMode(e.target.value)}><option value="qty">Saisir une quantité</option><option value="amount">Saisir un montant en InvestCoins</option></select>
         )}
         {byAmount
-          ? <input aria-label="Montant en pièces" inputMode="numeric" placeholder="Montant total (frais inclus) en 🪙" style={input} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} />
+          ? <input aria-label="Montant en pièces" inputMode="numeric" placeholder="Montant total (frais inclus) en InvestCoins" style={input} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} />
           : <input aria-label="Quantité" inputMode="decimal" placeholder={`Quantité de ${symbol} (8 décimales max)`} style={input} value={qty} onChange={(e) => setQty(e.target.value.replace(',', '.'))} />}
         {!isMarket && <input aria-label="Prix" inputMode="decimal" placeholder={type === 'limit' ? 'Prix limite en $' : type === 'stop_loss' ? 'Prix de déclenchement (sous le prix actuel)' : 'Prix de déclenchement (au-dessus du prix actuel)'} style={input} value={price} onChange={(e) => setPrice(e.target.value.replace(',', '.'))} />}
       </div>
@@ -199,7 +203,7 @@ function JournalView({ simulatedAt }) {
           <div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>{dateFr(Date.parse(e.date))} · <span style={{ color: KIND_COLOR[e.kind] || 'var(--ik-text-3)', fontWeight: 700 }}>{e.kindLabel}</span>{e.origin === 'random' && ' · tirage du jeu'}</div>
           <div style={{ color: 'var(--ik-text)', fontWeight: 800, margin: '2px 0 4px' }}>{e.title}</div>
           <div style={{ color: 'var(--ik-text-2)', fontSize: 14, lineHeight: 1.5 }}>{e.message}</div>
-          <div style={{ color: 'var(--ik-warning)', fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>💡 {e.lesson}</div>
+          <div style={{ color: 'var(--ik-warning)', fontSize: 13, marginTop: 6, lineHeight: 1.5 }}><Icon name="lightbulb" size={18} /> {e.lesson}</div>
         </div>
       ))}
       {!events.length && <div style={card}><span style={{ color: 'var(--ik-text-3)' }}>Aucun événement pour l&apos;instant : avance dans le temps pour découvrir l&apos;histoire du marché.</span></div>}
@@ -219,7 +223,7 @@ function SwapCard({ positions, assets, onDone }) {
     setBusy(true); setMsg(null);
     try {
       const r = await call('/swap', 'POST', { clientOrderId: uid(), from, to, quantity: qty });
-      setMsg({ ok: true, text: `Échangé : tu reçois ${r.received.quantity} ${r.received.symbol}. Frais : ${coins(r.order.fill.feeCoins)}. Aucun impôt.` });
+      setMsg({ ok: true, text: `Échangé : tu reçois ${r.received.quantity} ${r.received.symbol}. Frais : ${coinsText(r.order.fill.feeCoins)}. Aucun impôt.` });
       setQty(''); onDone();
     } catch (e) { setMsg({ ok: false, text: e.message }); }
     setBusy(false);
@@ -265,7 +269,7 @@ function LoanView({ simulatedAt, refreshKey, onChanged }) {
           <div style={{ color: 'var(--ik-text)', fontWeight: 800 }}>Dette : {coins(v.loan.debtCoins)} <span style={{ color: 'var(--ik-text-3)', fontWeight: 400, fontSize: 13 }}>(capital {coins(v.loan.principalCoins)}, taux variable {v.loan.annualRatePct.toLocaleString('fr-FR')} %)</span></div>
           <div style={{ fontSize: 13, color: 'var(--ik-text-2)', margin: '6px 0' }}>Dette ÷ garantie : <b>{v.loan.ltvPct.toLocaleString('fr-FR')} %</b> · {stateLabel[v.loan.state]}{v.loan.marginCall && <span style={{ color: 'var(--ik-negative)' }}> — appel de marge en cours : rembourse ou achète des cryptos avant d&apos;avancer dans le temps, sinon vente forcée.</span>}</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input aria-label="Montant à rembourser" inputMode="numeric" placeholder="Montant en 🪙" style={{ ...input, width: 150 }} value={repay} onChange={(e) => setRepay(e.target.value.replace(/[^0-9]/g, ''))} />
+            <input aria-label="Montant à rembourser" inputMode="numeric" placeholder="Montant en InvestCoins" style={{ ...input, width: 150 }} value={repay} onChange={(e) => setRepay(e.target.value.replace(/[^0-9]/g, ''))} />
             <button style={btn(true)} disabled={busy || !repay} onClick={() => act(() => call('/loan/repay', 'POST', { loanId: v.loan.id, coins: Number(repay) }), 'Remboursement effectué.')}>Rembourser</button>
             <button style={btn(false)} disabled={busy} onClick={() => act(() => call('/loan/repay', 'POST', { loanId: v.loan.id, coins: Math.ceil(v.loan.debtCoins) }), 'Prêt soldé.')}>Tout rembourser</button>
           </div>
@@ -273,7 +277,7 @@ function LoanView({ simulatedAt, refreshKey, onChanged }) {
       ) : (
         <div style={card}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input aria-label="Montant à emprunter" inputMode="numeric" placeholder="Montant à emprunter en 🪙" style={{ ...input, width: 220 }} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} />
+            <input aria-label="Montant à emprunter" inputMode="numeric" placeholder="Montant à emprunter en InvestCoins" style={{ ...input, width: 220 }} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} />
             <button data-testid="loan-quote" style={btn(false)} disabled={!amount} onClick={doQuote}>Simuler</button>
           </div>
           {quote && (
@@ -300,7 +304,7 @@ function BoardView({ simulatedAt }) {
   return (
     <div style={card} data-testid="board">
       <h3 style={{ margin: '0 0 6px', color: 'var(--ik-text)', fontSize: 16 }}>Classement Crypto — {b.period}<HelpTip term="levier" /></h3>
-      <p style={{ margin: '0 0 10px', color: 'var(--ik-text-3)', fontSize: 13, lineHeight: 1.5 }}>Il compare les joueurs au <b>même mois simulé</b>, en pourcentage, <b>net de dettes</b> : les intérêts d&apos;un prêt sont déduits, le gain est rapporté à ton capital propre et le <b>levier</b> utilisé est affiché. Il faut avoir investi au moins {b.minCapital} 🪙 pour être classé.</p>
+      <p style={{ margin: '0 0 10px', color: 'var(--ik-text-3)', fontSize: 13, lineHeight: 1.5 }}>Il compare les joueurs au <b>même mois simulé</b>, en pourcentage, <b>net de dettes</b> : les intérêts d&apos;un prêt sont déduits, le gain est rapporté à ton capital propre et le <b>levier</b> utilisé est affiché. Il faut avoir investi au moins {b.minCapital} <Coin /> pour être classé.</p>
       <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--ik-text-2)', fontSize: 13, minWidth: 360 }}>
         <thead><tr style={{ color: 'var(--ik-text-3)', textAlign: 'right' }}><th style={{ textAlign: 'left', padding: 6 }}>#</th><th style={{ textAlign: 'left', padding: 6 }}>Joueur</th><th style={{ padding: 6 }}>Performance</th><th style={{ padding: 6 }}>Levier</th></tr></thead>
         <tbody>{b.entries.map((e) => (
@@ -497,7 +501,7 @@ export default function CryptoPage() {
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
         <h1 style={{ margin: 0, color: 'var(--ik-text)', fontSize: 26 }}>₿ Marché Crypto</h1>
-        <span style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}><Link href="/education/crypto_market" data-testid="learn-link" style={{ color: 'var(--ik-warning)', fontSize: 14 }}>📚 Apprendre : cours et quiz</Link><Link href="/glossaire" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>Glossaire</Link><Link href="/dashboard" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Tableau de bord</Link></span>
+        <span style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}><Link href="/education/crypto_market" data-testid="learn-link" style={{ color: 'var(--ik-warning)', fontSize: 14 }}>Apprendre : cours et quiz</Link><Link href="/glossaire" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>Glossaire</Link><Link href="/dashboard" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Tableau de bord</Link></span>
       </div>
       {info && <div role="status" style={{ ...card, borderColor: 'color-mix(in srgb, var(--ik-primary) 60%, transparent)', color: 'var(--ik-accent)', marginBottom: 12 }}>{info}</div>}
       {msg && <div role="alert" style={{ ...card, borderColor: 'var(--ik-negative)', color: 'var(--ik-negative)', marginBottom: 12 }}>{msg}</div>}

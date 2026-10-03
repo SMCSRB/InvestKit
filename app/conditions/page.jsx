@@ -39,8 +39,7 @@ export default function ConditionsPage() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             margin: '0 0 12px 0',
-          }}>
-            ⚖️ Conditions d'Utilisation
+          }}> Conditions d'Utilisation
           </h1>
           <p style={{
             fontSize: '13px',

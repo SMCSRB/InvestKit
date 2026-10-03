@@ -72,7 +72,7 @@ export const educationAbuseService = {
       if (bad.length) await client.query('UPDATE education_progress SET coins_earned = 0, xp_earned = 0 WHERE id = ANY($1)', [bad.map((r: any) => r.id)]);
       if (bad.length) {
         await auditLog({ userId: null, action: 'education_abuse_corrected', entityType: 'user', entityId: userId, metadata: { removed, unrecovered: owed - removed, rows: bad.length, via: adminLabel } }, client);
-        await notify(client, userId, { kind: 'admin_coins', title: removed > 0 ? `${removed} 🪙 retirés` : 'Correction de ta progression', body: 'Des récompenses d\'éducation obtenues avec des chapitres qui n\'existent pas ont été annulées (faille corrigée).' });
+        await notify(client, userId, { kind: 'admin_coins', title: removed > 0 ? `${removed} InvestCoins retirés` : 'Correction de ta progression', body: 'Des récompenses d\'éducation obtenues avec des chapitres qui n\'existent pas ont été annulées (faille corrigée).' });
       }
       await client.query('COMMIT');
       return { removed, unrecovered: owed - removed, rows: bad.length };

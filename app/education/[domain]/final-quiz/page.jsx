@@ -8,6 +8,8 @@ import { useEducationProgress } from '@/app/context/EducationContext';
 import { shuffleOptions } from '@/app/lib/quiz';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
+import Icon from '@/app/components/ui/Icon';
+import { Glyph } from '@/app/components/ui/Icon';
 
 // Couleur de domaine lisible comme texte dans les deux thèmes (la couleur pure d'un domaine, ex. orange, est trop claire en thème clair)
 const readable = (c) => `color-mix(in srgb, ${c} 55%, var(--ik-text))`;
@@ -86,13 +88,13 @@ export default function FinalQuizPage() {
 
           <div className="mb-12">
             <div className="flex items-center gap-4 mb-6">
-              <div className="text-6xl">🏆</div>
+              <div className="text-6xl"><Icon name="trophy" size={18} /></div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <h1 className="text-4xl font-bold text-white" style={{ overflowWrap: 'anywhere', fontSize: 'clamp(24px, 7vw, 36px)' }}>
                   Quiz Final - {domain.name}
                 </h1>
                 <p className="text-gray-400 mt-2">
-                  Dernier test avant d'obtenir le badge {domain.badge} !
+                  Dernier test avant d'obtenir le badge <Glyph g={domain.badge} size={18} /> !
                 </p>
               </div>
             </div>
@@ -105,8 +107,7 @@ export default function FinalQuizPage() {
                   borderLeft: `3px solid ${domain.color}`,
                 }}
               >
-                <p className="text-sm text-gray-300">
-                  ⚠️ Vous devez obtenir au minimum{' '}
+                <p className="text-sm text-gray-300"> Vous devez obtenir au minimum{' '}
                   <span className="font-bold" style={{ color: readable(domain.color) }}>
                     {finalQuiz.passingScore}%
                   </span>{' '}
@@ -183,7 +184,7 @@ export default function FinalQuizPage() {
                     e.target.style.transform = 'scale(1)';
                   }}
                 >
-                  {busy ? 'Correction…' : 'Soumettre et Obtenir le Badge 🏆'}
+                  {busy ? 'Correction…' : 'Soumettre et Obtenir le Badge'}
                 </button>
               </div>
             </div>
@@ -194,7 +195,7 @@ export default function FinalQuizPage() {
                   <div className="text-9xl mb-8 inline-block" style={{
                     animation: 'bounce 2s infinite',
                   }}>
-                    {domain.badge}
+                    <Glyph g={domain.badge} size={36} />
                   </div>
 
                   <h2 className="text-4xl font-bold text-white mb-4">
@@ -219,7 +220,7 @@ export default function FinalQuizPage() {
 
                   <div className="bg-slate-800 p-6 rounded-lg mb-8 max-w-md mx-auto">
                     <p className="text-gray-300 mb-3 font-semibold">Badge Déverrouillé</p>
-                    <div className="text-6xl mb-3">{domain.badge}</div>
+                    <div className="text-6xl mb-3"><Glyph g={domain.badge} size={64} /></div>
                     <p className="text-white font-bold">
                       Maître {domain.name}
                     </p>
@@ -308,8 +309,7 @@ export default function FinalQuizPage() {
                     onMouseLeave={(e) => {
                       e.target.style.transform = 'scale(1)';
                     }}
-                  >
-                    🔄 Réessayer
+                  > Réessayer
                   </button>
                 </div>
               )}

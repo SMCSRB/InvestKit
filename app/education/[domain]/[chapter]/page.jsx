@@ -9,6 +9,8 @@ import { shuffleOptions } from '@/app/lib/quiz';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import PageWrapper from '@/app/components/PageWrapper';
 import AppShell from '@/app/components/shell/AppShell';
+import Coin from '@/app/components/ui/Coin';
+import Icon from '@/app/components/ui/Icon';
 
 // Affichage minimal du texte des chapitres (titres, listes, gras) : tout est rendu comme du TEXTE, jamais comme du HTML.
 const inline = (t) => t.split(/(\*\*[^*]+\*\*)/g).map((p, i) => (p.startsWith('**') && p.endsWith('**') ? <strong key={i} style={{ color: 'var(--ik-text)' }}>{p.slice(2, -2)}</strong> : <Fragment key={i}>{p}</Fragment>));
@@ -75,7 +77,7 @@ export default function ChapterPage() {
         <div className="max-w-4xl mx-auto" data-testid="chapter">
           <Link href={`/education/${domainId}`} className="text-blue-400 hover:text-blue-300">← Retour au parcours</Link>
           <h1 className="text-4xl font-bold text-white mb-2 mt-4">{chapter.title}</h1>
-          <p className="text-gray-400 mb-6">{chapter.description} · ⏱️ {chapter.duration}</p>
+          <p className="text-gray-400 mb-6">{chapter.description} ·{chapter.duration}</p>
 
           <div style={box}><Lesson text={chapter.content} /></div>
 
@@ -95,7 +97,7 @@ export default function ChapterPage() {
 
           <div style={box} data-testid="chapter-quiz">
             <h2 className="text-2xl font-bold text-white mb-1">Quiz</h2>
-            <p style={{ color: 'var(--ik-text-3)', fontSize: 14, marginTop: 0 }}>Il faut au moins {quiz.passingScore} % de bonnes réponses ; la première réussite de chaque chapitre rapporte des 🪙.</p>
+            <p style={{ color: 'var(--ik-text-3)', fontSize: 14, marginTop: 0 }}>Il faut au moins {quiz.passingScore} % de bonnes réponses ; la première réussite de chaque chapitre rapporte des <Coin />.</p>
             {orders === null ? <p style={{ color: 'var(--ik-text-3)' }}>Préparation du quiz…</p> : quiz.questions.map((q) => {
               const r = result?.results?.find((x) => x.questionId === String(q.id));
               return (
@@ -112,7 +114,7 @@ export default function ChapterPage() {
                     </label>
                   );
                 })}
-                {result?.passed && <div style={{ color: 'var(--ik-warning)', fontSize: 13, margin: '4px 0 0 8px' }}>💡 {q.explanation}</div>}
+                {result?.passed && <div style={{ color: 'var(--ik-warning)', fontSize: 13, margin: '4px 0 0 8px' }}><Icon name="lightbulb" size={18} /> {q.explanation}</div>}
                 {result && !result.passed && r && !r.correct && <div style={{ color: 'var(--ik-negative)', fontSize: 13, margin: '4px 0 0 8px' }}>À revoir dans le chapitre.</div>}
               </fieldset>
               );
@@ -123,7 +125,7 @@ export default function ChapterPage() {
                 style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-primary)', color: 'var(--ik-text-on-primary)', fontWeight: 700, cursor: 'pointer', opacity: busy || Object.keys(answers).length < quiz.questions.length ? 0.5 : 1 }}>{busy ? 'Correction…' : 'Valider mes réponses'}</button>
             ) : (
               <div data-testid="quiz-result">
-                <p style={{ color: result.passed ? 'var(--ik-positive)' : 'var(--ik-negative)', fontWeight: 800, fontSize: 18 }}>{result.passed ? `Réussi : ${result.score} % 🎉${result.rewarded ? ` · +${result.coinsEarned} 🪙` : ''}` : `${result.score} % : il faut ${result.passingScore} % pour valider. Relis le chapitre et réessaie.`}</p>
+                <p style={{ color: result.passed ? 'var(--ik-positive)' : 'var(--ik-negative)', fontWeight: 800, fontSize: 18 }}>{result.passed ? `Réussi : ${result.score} % ${result.rewarded ? ` · +${result.coinsEarned} InvestCoins` : ''}` : `${result.score} % : il faut ${result.passingScore} % pour valider. Relis le chapitre et réessaie.`}</p>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   {!result.passed && <button onClick={retry} style={{ padding: '10px 18px', borderRadius: 10, border: '1px solid color-mix(in srgb, var(--ik-primary) 60%, transparent)', background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)', color: 'var(--ik-text)', fontWeight: 700, cursor: 'pointer' }}>Réessayer</button>}
                   {result.passed && next && <Link href={`/education/${domainId}/${next.id}`} className="text-blue-400 hover:text-blue-300" style={{ alignSelf: 'center' }}>Chapitre suivant →</Link>}

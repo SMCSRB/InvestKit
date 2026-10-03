@@ -126,7 +126,7 @@ export const cryptoTradingService = {
       if (type === 'market') {
         const ex = planMarket(m, side, Number(qty), eff.stress);
         const isFullExit = side === 'sell' && Math.abs(Number(qty) - avail) < 1e-9;
-        if (ex.notionalCoins < E.minNotionalCoins && !isFullExit) throw bad(`Ordre trop petit : minimum ${E.minNotionalCoins} 🪙 (la sortie complète d'une position reste permise).`);
+        if (ex.notionalCoins < E.minNotionalCoins && !isFullExit) throw bad(`Ordre trop petit : minimum ${E.minNotionalCoins} InvestCoins (la sortie complète d'une position reste permise).`);
         try {
           const release = side === 'sell' ? await collateralRelease(client, userId, account.simulatedAt, symbol, qty, ex.notionalCoins - ex.feeCoins) : 0;
           await applyFill(client, userId, ins.id, m, side, qty, ex, m.price, false, account.simulatedAt, account);
@@ -179,7 +179,7 @@ export const cryptoTradingService = {
       const tier = Math.max(mf.tier, mt.tier);
       const fee = feeCoins(sell.notionalCoins, tier, false);
       const net = sell.notionalCoins - fee;
-      if (sell.notionalCoins < E.minNotionalCoins) throw bad(`Échange trop petit : minimum ${E.minNotionalCoins} 🪙.`);
+      if (sell.notionalCoins < E.minNotionalCoins) throw bad(`Échange trop petit : minimum ${E.minNotionalCoins} InvestCoins.`);
       let q = Number(floorQty8((net * E.usdPerCoin) / mt.price));
       let buy = planMarket(mt, 'buy', q, eff.stress);
       for (let i = 0; i < 40 && q > 0 && buy.notionalCoins > net; i++) { q = Number(floorQty8(q * (net / buy.notionalCoins) * 0.9999)); buy = planMarket(mt, 'buy', q, eff.stress); }
@@ -348,7 +348,7 @@ const processResting = async (db: Queryable, account: CryptoAccount, fromMs: num
       await db.query('RELEASE SAVEPOINT fill');
       events.push({ orderId: o.id, symbol: o.symbol, status: 'filled' });
       const verb = o.side === 'buy' ? 'Achat' : 'Vente';
-      await notify(db, account.userId, { kind: 'crypto_order_filled', title: `${verb} exécuté : ${o.symbol}`, body: `Ton ordre ${o.type} (${o.quantity} ${o.symbol}) a été exécuté à ${ex.price.toPrecision(6)} $. Frais : ${ex.feeCoins} 🪙${res.taxCoins ? `, impôt : ${res.taxCoins} 🪙` : ''}.`, link: '/crypto' });
+      await notify(db, account.userId, { kind: 'crypto_order_filled', title: `${verb} exécuté : ${o.symbol}`, body: `Ton ordre ${o.type} (${o.quantity} ${o.symbol}) a été exécuté à ${ex.price.toPrecision(6)} $. Frais : ${ex.feeCoins} InvestCoins${res.taxCoins ? `, impôt : ${res.taxCoins} InvestCoins` : ''}.`, link: '/crypto' });
     } catch (e) {
       await db.query('ROLLBACK TO SAVEPOINT fill');
       const reason = e instanceof InsufficientFundsError ? 'Solde insuffisant au moment de l\'exécution' : e instanceof CryptoDataError && /garantie/.test(e.message) ? 'Vente refusée : elle laisserait ton prêt Crypto sans garantie suffisante' : 'Quantité plus disponible au moment de l\'exécution';

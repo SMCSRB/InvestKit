@@ -60,7 +60,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
 
   it('simulation : plafond = 50 % des actions, taux variable base + écart, levier annoncé, simplification signalée ; aucun effet', async () => {
     const uid = await player({ year: 2019 });
-    await trading.buy(uid, 'stocks', 'TTE', 10);                           // 10 × 45 = 450 🪙
+    await trading.buy(uid, 'stocks', 'TTE', 10);                           // 10 × 45 = 450  InvestCoins
     const before = await balanceOf(uid);
     const q: any = await lombard.quote(uid, { domain: 'stocks', amountCoins: 200 });
     expect(q.approved).toBe(true);
@@ -113,7 +113,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
 
   it('PASSAGE D\'ANNÉE : intérêts de l\'année payés (destruction), nouveau taux variable, conservation exacte', async () => {
     const uid = await player({ year: 2010, balance: 1000 });
-    await trading.buy(uid, 'stocks', 'LVMH', 5);                           // 600 🪙 en 2010
+    await trading.buy(uid, 'stocks', 'LVMH', 5);                           // 600  InvestCoins en 2010
     await lombard.borrow(uid, { domain: 'stocks', amountCoins: 250 });
     const rate2010 = bankProductRatePct('portfolio', 2010);
     const before = await balanceOf(uid);
@@ -131,7 +131,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
 
   it('APPEL DE MARGE (TTE 2019 → 2020, −33 %) : signalé, titres conservés, régularisable ; sinon vente forcée au passage suivant', async () => {
     const uid = await player({ year: 2019, balance: 1000 });
-    await trading.buy(uid, 'stocks', 'TTE', 10);                           // 450 🪙
+    await trading.buy(uid, 'stocks', 'TTE', 10);                           // 450  InvestCoins
     await lombard.borrow(uid, { domain: 'stocks', amountCoins: 225 });    // le maximum : 50 %
     const r: any = await trading.advanceYear(uid, 'stocks');               // TTE 30 : valeur 300, dette 225 = 75 % → appel de marge
     expect(r.bankEvents.map((e: any) => e.kind)).toContain('margin_call');
@@ -159,7 +159,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
 
   it('VENTE FORCÉE (AIR 2019 → 2020, −48 %) : vente proportionnelle décotée, dette ramenée sous le plafond, pièces conservées', async () => {
     const uid = await player({ year: 2019, balance: 3000 });
-    await trading.buy(uid, 'stocks', 'AIR', 20);                           // 2 600 🪙
+    await trading.buy(uid, 'stocks', 'AIR', 20);                           // 2 600  InvestCoins
     await lombard.borrow(uid, { domain: 'stocks', amountCoins: 1150 });
     const balBefore = await balanceOf(uid);
     const r: any = await trading.advanceYear(uid, 'stocks');
@@ -183,7 +183,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
 
   it('DETTE RÉSIDUELLE : tout est vendu et il reste une dette → défaut, compte bloqué, nouvel emprunt refusé ; la solder débloque', async () => {
     const uid = await player({ year: 2019, balance: 2000 });
-    await trading.buy(uid, 'stocks', 'AIR', 10);                           // 1 300 🪙
+    await trading.buy(uid, 'stocks', 'AIR', 10);                           // 1 300  InvestCoins
     await lombard.borrow(uid, { domain: 'stocks', amountCoins: 600 });
     await query(`UPDATE bank_loans SET balance_h = 400000 WHERE user_id = $1 AND product = 'portfolio'`, [uid]);   // dette gonflée : la vente de tout ne suffit pas
     const r: any = await trading.advanceYear(uid, 'stocks');
@@ -217,7 +217,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
     await trading.buy(uid2, 'stocks', 'TTE', 10);
     await lombard.borrow(uid2, { domain: 'stocks', amountCoins: 225 });
     await trading.advanceYear(uid2, 'stocks');                              // appel de marge, valeur 300, dette 225
-    const refused = await rejects(trading.sell(uid2, 'stocks', 'TTE', 1));  // 30 🪙 de produit, il en faudrait bien plus
+    const refused = await rejects(trading.sell(uid2, 'stocks', 'TTE', 1));  // 30  InvestCoins de produit, il en faudrait bien plus
     expect(refused.code).toBe('NOT_ALLOWED');
     expect(refused.message).toContain('sans garantie suffisante');
     expect((await pos(uid2))[0].quantity).toBe(10);                          // rien n'a été vendu
@@ -225,7 +225,7 @@ describe.skipIf(!hasDb)('prêt sur portefeuille (Lombard) : Bourse et Crypto', (
 
   it('CRYPTO : plafond 30 %, krach BTC 2017 → 2018 (−72 %) déclenche la vente forcée', async () => {
     const uid = await player({ domain: 'crypto', year: 2017, balance: 2000 });
-    await trading.buy(uid, 'crypto', 'BTC', 0.1);                            // 1 300 🪙
+    await trading.buy(uid, 'crypto', 'BTC', 0.1);                            // 1 300  InvestCoins
     const q: any = await lombard.quote(uid, { domain: 'crypto', amountCoins: 390 });
     expect(q.collateral.capacityCoins).toBe(390);
     expect(((await lombard.quote(uid, { domain: 'crypto', amountCoins: 391 })) as any).reasons.map((r: any) => r.code)).toContain('OVER_CAPACITY');
