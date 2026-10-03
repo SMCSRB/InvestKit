@@ -117,11 +117,11 @@ function PersonalLoan({ onDone, notify }) {
       {quote?.loan && (
         <div style={{ marginTop: 12, fontSize: 14, display: 'grid', gap: 5 }}>
           <div>Taux : <strong>{num(quote.loan.annualRatePct)} %</strong><HelpTip term="taux-base" /> (un prêt immobilier de la même année : {num(quote.mortgageRatePct)} %, car le prêt personnel n&apos;a aucune garantie)</div>
-          <div>Mensualité : <strong>{num(quote.loan.instalmentCoins)} <Coin /></strong> (≈ {num(quote.loan.instalmentCoins * 20, 0)} €) pendant {quote.loan.months} mois</div>
+          <div>Mensualité : <strong>{num(quote.loan.instalmentCoins)} <Coin /></strong> pendant {quote.loan.months} mois</div>
           <div>Coût total : {num(quote.loan.totalRepaidCoins)} <Coin /> rendus pour {num(quote.loan.amountCoins)} <Coin /> empruntés, soit {num(quote.loan.totalInterestCoins)} <Coin /> d&apos;intérêts <span style={{ color: 'var(--ik-text-3)' }}>(ces pièces sont détruites, pas reversées à quelqu&apos;un)</span></div>
           <div>Plafond pour ton profil : {num(quote.limits.capCoins, 0)} <Coin /> ({quote.limits.incomeMonthsCap} mois de revenus)</div>
           <div style={{ color: quote.approved ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>
-            Banque : {quote.approved ? 'accord' : 'refus'} — endettement {num(quote.bank.debtRatioPct)} % (max {quote.bank.maxDebtRatioPct} %), reste à vivre {num(quote.bank.livingRemaining, 0)} € (min {num(quote.bank.minLivingRemaining, 0)} €)
+            Banque : {quote.approved ? 'accord' : 'refus'} — endettement {num(quote.bank.debtRatioPct)} % (max {quote.bank.maxDebtRatioPct} %), reste à vivre {num(quote.bank.livingRemaining, 0)} <Coin /> (min {num(quote.bank.minLivingRemaining, 0)} <Coin />)
             {quote.reasons.map((r) => <div key={r.code} style={{ fontSize: 13 }}>• {r.message}</div>)}
           </div>
           <div><button style={btn(true)} disabled={busy || !quote.approved} onClick={borrow}>Emprunter</button></div>

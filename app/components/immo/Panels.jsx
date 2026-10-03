@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
-import { call, coins, eur, eur2 } from './api';
+import { call, coins, eur, eur2, eurText } from './api';
 import Coin from '@/app/components/ui/Coin';
 
 // Fonctions avancées d'un bien : elles apparaissent dans la fiche du bien, au bon moment (pas dans une liste de boutons).
@@ -50,7 +50,7 @@ export function RenovationPanel({ property, onDone, notify }) {
   }, [property.id, property.energy_class]); // eslint-disable-line react-hooks/exhaustive-deps
   const go = async () => {
     setBusy(true);
-    try { const r = await call(`/properties/${property.id}/renovate`, 'POST'); notify(`Rénovation terminée : classe ${r.previousClass} → ${r.newClass} pour ${eur(r.costEuros)} (${r.coinsCharged} InvestCoins).`); await onDone(); }
+    try { const r = await call(`/properties/${property.id}/renovate`, 'POST'); notify(`Rénovation terminée : classe ${r.previousClass} → ${r.newClass} pour ${eurText(r.costEuros)} (${r.coinsCharged} InvestCoins).`); await onDone(); }
     catch (e) { notify(e.message, true); }
     setBusy(false);
   };
@@ -60,7 +60,7 @@ export function RenovationPanel({ property, onDone, notify }) {
       <h3>Rénovation énergétique<HelpTip term="dpe" /></h3>
       {pv.canRenovate ? (
         <>
-          <p>Classe <strong>{pv.currentClass}</strong> → <strong>{pv.newClass}</strong> · devis <strong>{eur(pv.costEuros)}</strong> ({pv.coinsCost} <Coin />).</p>
+          <p>Classe <strong>{pv.currentClass}</strong> → <strong>{pv.newClass}</strong> · devis <strong>{eur(pv.costEuros)}</strong>.</p>
           <dl className="rp-facts rp-facts--tight">
             <div className="rp-row"><dt>Loyer de marché</dt><dd>{eur2(pv.rentBefore)} → {eur2(pv.rentAfter)} ({pv.rentGainMonthly > 0 ? '+' : ''}{eur2(pv.rentGainMonthly)}/mois, {eur(pv.rentGainYearly)}/an)</dd></div>
             <div className="rp-row"><dt>Valeur du bien<HelpTip term="valeur-verte" /></dt><dd>{eur(pv.valueBefore)} → {eur(pv.valueBefore + pv.valueGain)} ({pv.valueGain > 0 ? '+' : ''}{eur(pv.valueGain)})</dd></div>
