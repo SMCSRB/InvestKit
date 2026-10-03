@@ -10,7 +10,18 @@ const SCRIPT = join(__dirname, '../../ops/stack.sh');
 const has = (cmd: string) => spawnSync('bash', ['-c', `command -v ${cmd}`]).status === 0;
 const canRun = has('bash') && (has('lsof') || has('ss') || has('fuser')) && has('setsid');
 
-const freePort = () => new Promise<number>((resolve) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = (s.address() as net.AddressInfo).port; s.close(() => resolve(p)); }); });
+// Ports choisis HORS de la plage « éphémère » du système (32768 et plus), où les autres tests ouvrent leurs serveurs (supertest écoute sur un port
+// choisi par le système). Avec un port éphémère, un autre test pouvait récupérer le même port juste après qu'on l'ait libéré, et `stack.sh stop`
+// (qui arrête PAR PORT) aurait alors arrêté le serveur d'un autre test : échec sans cause visible. Chaque port n'est donné qu'une fois.
+const given = new Set<number>();
+const tryBind = (port: number) => new Promise<boolean>((resolve) => { const s = net.createServer(); s.once('error', () => resolve(false)); s.listen(port, '127.0.0.1', () => s.close(() => resolve(true))); });
+const freePort = async (): Promise<number> => {
+  for (let i = 0; i < 200; i++) {
+    const p = 20000 + Math.floor(Math.random() * 10000);
+    if (!given.has(p) && await tryBind(p)) { given.add(p); return p; }
+  }
+  throw new Error('aucun port libre trouvé dans la plage 20000-29999');
+};
 const listening = (port: number) => new Promise<boolean>((resolve) => { const c = net.connect(port, '127.0.0.1'); c.on('connect', () => { c.destroy(); resolve(true); }); c.on('error', () => resolve(false)); c.setTimeout(500, () => { c.destroy(); resolve(false); }); });
 
 describe.skipIf(!canRun)('ops/stack.sh : arrêt par port', () => {

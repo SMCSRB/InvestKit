@@ -770,6 +770,31 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 7. Sans taux : supprime (sur ta copie de test seulement) les taux d'une période, avance jusque-là : les ordres sont refusés avec « Taux de change indisponible… », le graphique repasse en dollars (écrit), aucune vente forcée n'a lieu.
 8. Rien n'a changé en Bourse ni en Immobilier.
 
+## Crypto : achat refusé avec assez de pièces (correctif)
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR.
+
+1. Compte avec un prêt personnel Immobilier dont une partie n'est pas dépensée (pièces empruntées réservées à l'Immobilier). Page Crypto > Portefeuille : à côté de « Pièces disponibles », une carte **« Utilisables en Crypto »** apparaît avec un montant plus bas.
+2. Fiche d'un actif, saisis un achat plus grand que ce montant : sous l'estimation, un message **rouge avant de cliquer** dit « Tu as X, mais Y sont des pièces empruntées réservées à un autre domaine… Tu peux en dépenser Z ici ; il en faut W ».
+3. Clique quand même sur Acheter : refus avec le même message, aucune pièce débitée.
+4. Un achat plus petit que « Utilisables en Crypto » passe normalement.
+5. Compte sans prêt : pas de carte supplémentaire, achat de 150 avec 387 pièces accepté (total ≤ 150).
+6. Sous le formulaire d'ordre : **« Tu possèdes X ACTIF »** (0 si aucun), avec « dont Y engagés dans des ordres en attente » si besoin.
+7. Achète puis revends tout de suite : tu perds les frais et l'écart, jamais de gain.
+
+## Prêt personnel non affecté (suite de la correction Crypto)
+1. Banque, prêt personnel : le texte dit que les pièces rejoignent ton **solde libre** ; plus de mot « fléché Immobilier ». Minimum 500 InvestCoins.
+2. Prends un prêt personnel : « Pièces disponibles » augmente du montant, **aucune** carte « Utilisables en Crypto » n'apparaît, et la page Banque ne montre plus de « crédit fléché » pour ce prêt.
+3. Achète en Crypto ou en Bourse avec ces pièces : accepté.
+4. Achat d'un bien avec un prêt immobilier : ton solde baisse seulement de l'apport et des frais ; aucune pièce n'est ajoutée, et le prêt reste affiché sur le bien.
+5. Un prêt sur portefeuille (Bourse ou Crypto) reste, lui, réservé à son domaine.
+6. Comptes de test qui ont déjà un prêt personnel : leur réserve existe encore tant que tu n'as pas choisi une des 3 options de `docs/crypto-solde-achat.md`.
+
+## Crypto : quantité d'un achat « pour X pièces »
+1. Fiche d'un actif, saisie d'un montant de 100 pièces : l'estimation dit « Tu recevras X BTC », puis « Prix × quantité = …, arrondi à la pièce supérieure : N · frais … (minimum 1 pièce) · total débité … ».
+2. Exécute l'ordre : la quantité reçue est **celle annoncée**, et le total débité est celui annoncé (100 au plus).
+3. Vérifie à la main : prix d'exécution × quantité ≈ montant avant arrondi ; l'écart avec le montant est inférieur à une pièce.
+4. Pour un même budget, la quantité reçue est maintenant ≈ (budget − 1) ÷ prix d'exécution (≈ 0,01545 BTC pour 100 pièces au 1er janvier 2020).
+
 ## Affichage en InvestCoins
 À dérouler chez toi **avec les PR taux BCE et Crypto en InvestCoins** (déploiement ensemble).
 
@@ -791,24 +816,15 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 6. Aucun « € » dans ces messages : tout est en InvestCoins.
 7. Si tu veux changer les 10 % ou les 4 mensualités : `backend/src/config/immoRules.ts` (`minDownPaymentPctOfPrice`, `reserveMonthlyPayments`).
 
-## Crypto : achat refusé avec assez de pièces (correctif)
-À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR.
+## Classement net de revente, seuil et barre de progression
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR (dernière du lot, après la banque).
 
-1. Compte avec un prêt personnel Immobilier dont une partie n'est pas dépensée (pièces empruntées réservées à l'Immobilier). Page Crypto > Portefeuille : à côté de « Pièces disponibles », une carte **« Utilisables en Crypto »** apparaît avec un montant plus bas.
-2. Fiche d'un actif, saisis un achat plus grand que ce montant : sous l'estimation, un message **rouge avant de cliquer** dit « Tu as X, mais Y sont des pièces empruntées réservées à un autre domaine… Tu peux en dépenser Z ici ; il en faut W ».
-3. Clique quand même sur Acheter : refus avec le même message, aucune pièce débitée.
-4. Un achat plus petit que « Utilisables en Crypto » passe normalement.
-5. Compte sans prêt : pas de carte supplémentaire, achat de 150 avec 387 pièces accepté (total ≤ 150).
-6. Sous le formulaire d'ordre : **« Tu possèdes X ACTIF »** (0 si aucun), avec « dont Y engagés dans des ordres en attente » si besoin.
-7. Achète puis revends tout de suite : tu perds les frais et l'écart, jamais de gain.
-
-## Prêt personnel non affecté (suite de la correction Crypto)
-1. Banque, prêt personnel : le texte dit que les pièces rejoignent ton **solde libre** ; plus de mot « fléché Immobilier ». Minimum 500 InvestCoins.
-2. Prends un prêt personnel : « Pièces disponibles » augmente du montant, **aucune** carte « Utilisables en Crypto » n'apparaît, et la page Banque ne montre plus de « crédit fléché » pour ce prêt.
-3. Achète en Crypto ou en Bourse avec ces pièces : accepté.
-4. Achat d'un bien avec un prêt immobilier : ton solde baisse seulement de l'apport et des frais ; aucune pièce n'est ajoutée, et le prêt reste affiché sur le bien.
-5. Un prêt sur portefeuille (Bourse ou Crypto) reste, lui, réservé à son domaine.
-6. Comptes de test qui ont déjà un prêt personnel : leur réserve existe encore tant que tu n'as pas choisi une des 3 options de `docs/crypto-solde-achat.md`.
+1. Page Classements (Bourse, Crypto, Immobilier) et onglet Bilan de l'Immobilier : une barre **« … / 2 500 investis »** et une barre **« … / 5 jours actifs »**. Le texte est neutre : pas de date limite, pas de pression.
+2. Avec un compte neuf (moins de 5 jours actifs) qui a investi plus de 2 500 : tu n'es **pas classé**, la barre des jours n'est pas pleine. Après avoir joué 5 jours différents : tu apparais au classement.
+3. Avec 5 jours actifs mais moins de 2 500 investis : pas classé non plus ; investis davantage, la barre se remplit.
+4. Immobilier, Bilan : « valeur nette de revente » est **plus basse** que les fonds propres (frais d'agence, diagnostics, impôt…). Un bien **loué** vaut 10 % de moins en revente qu'un bien vide.
+5. Le pourcentage du classement Immobilier est le gain net de revente divisé par **10 000** (compte gratuit) ou **20 000** (compte Pro).
+6. Note de sécurité à garder : « jour actif » compte aujourd'hui toute requête connectée ; à resserrer à l'audit (`docs/classement-net-de-revente.md`).
 
 ## Réserve de sécurité : pièces propres uniquement
 À dérouler chez toi sur ta copie de test, après les PR 8b (#107) et #109.

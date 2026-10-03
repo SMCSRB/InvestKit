@@ -115,7 +115,7 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
     });
 
     it('classement : achat visible, sous le seuil non classé', async () => {
-      const big = await createUser({ balance: 5000, freeDomain: 'stocks' });
+      const big = await createUser({ balance: 5000, freeDomain: 'stocks', activeDays: 5 });
       const view = await tradingService.getPortfolioView(big, 'stocks');
       const symbol = Object.keys(view.prices).find((s) => view.prices[s] !== null)!;
       const q = Math.ceil(RANKING_MIN_INVESTED / view.prices[symbol]!);
@@ -124,7 +124,7 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       expect(board.me).not.toBeNull();
       expect(board.me!.isMe).toBe(true);
 
-      const tiny = await createUser({ balance: 5000, freeDomain: 'stocks' });
+      const tiny = await createUser({ balance: 5000, freeDomain: 'stocks', activeDays: 5 });
       await tradingService.buy(tiny, 'stocks', symbol, 0.01); // < seuil de capital
       const b2 = await tradingService.getLeaderboard(tiny, 'stocks', undefined);
       expect(b2.me).toBeNull();

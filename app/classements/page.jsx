@@ -9,6 +9,7 @@ import HelpTip from '@/app/components/HelpTip';
 import Coin from '@/app/components/ui/Coin';
 import Icon, { Medal } from '@/app/components/ui/Icon';
 import PlayerName from '@/app/components/social/PlayerName';
+import RankingProgress from '@/app/components/ui/RankingProgress';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 const TABS = ['monde', 'amis', 'guilde'];
@@ -67,8 +68,9 @@ function Monde({ domaine, onDomaine }) {
         <Card>
           <CardHead title={`Classement ${d.label} · ${data.period ? `mois ${data.period}` : `année ${data.year}`}`} icon="trophy" help={<HelpTip term="performance" />} />
           <p className="ik-muted" style={{ margin: '0 0 12px', fontSize: 'var(--ik-fs-sm)' }}>
-            Les joueurs sont comparés à la même date de jeu, en pourcentage et net de dettes. Il faut avoir engagé au moins {fr(data.minCapital ?? data.mine?.minCapitalCoins ?? 100)} <Coin /> pour être classé.
+            Les joueurs sont comparés à la même date de jeu, en pourcentage et net de dettes. Pour être classé, il faut avoir investi au moins {fr(data.minCapital ?? data.mine?.minCapitalCoins ?? 100)} <Coin /> et avoir joué au moins 5 jours différents.
           </p>
+          <RankingProgress progress={data.progress} />
           {data.me
             ? <p data-testid="mon-rang"><strong>Ton rang : n°{data.me.rank}</strong> sur {fr(data.totalRanked)} · {pct(data.me.performancePct)}</p>
             : <p className="ik-muted" data-testid="mon-rang">Tu n’es pas encore classé dans ce domaine à cette date.</p>}
