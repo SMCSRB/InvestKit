@@ -15,6 +15,7 @@
     "crypto:check-series": "ts-node scripts/crypto-check-series.ts",
     "invite": "ts-node scripts/invite.ts",
     "coins-stats": "ts-node scripts/coins-stats.ts",
+    "test:give-coins": "ts-node scripts/test-give-coins.ts",
     "mail:preview": "ts-node scripts/mail-preview.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
