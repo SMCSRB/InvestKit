@@ -9,7 +9,7 @@ import { monthTotal } from '../engine/immo';
 import { BankError, withTx, originateLoan, assertCanBorrow, ensureAccount } from './bankService';
 
 // ─────────────────────────────────────────────────────────────────────────
-// PRÊT PERSONNEL : plafonné (6 mois de revenus nets du profil), fléché Immobilier (apport, travaux, rénovation, découvert),
+// PRÊT PERSONNEL : plafonné (6 mois de revenus nets du profil), NON affecté (comme un vrai prêt personnel) : les pièces vont dans le solde libre et se dépensent partout,
 // taux = base + écart (plus cher que l'immobilier : pas de garantie), compté dans l'endettement comme tout crédit.
 // L'accès suit celui du domaine Immobilier (domaine gratuit ou Pro). Les échéances suivent l'horloge de l'Immobilier.
 // ─────────────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ const checkInt = (v: unknown, name: string, min: number, max: number): number =>
 const evaluate = async (db: Db, userId: string, amountRaw: unknown, monthsRaw: unknown) => {
   const user = await userRepository.findById(userId);
   const access = user ? getBuyAccess(user, RE_DOMAIN) : { allowed: false as const, reason: 'DOMAIN_LOCKED' as const };
-  if (!access.allowed) throw new BankError('NOT_ALLOWED', 'Le prêt personnel (fléché Immobilier) demande d\'avoir l\'Immobilier comme domaine gratuit ou l\'abonnement Pro.');
+  if (!access.allowed) throw new BankError('NOT_ALLOWED', 'Le prêt personnel demande d\'avoir l\'Immobilier comme domaine gratuit ou l\'abonnement Pro.');
   const game = await requireGame(userId, db as any);
   const profile = STARTING_PROFILES[game.profile];
   const capCoins = Math.floor((PERSONAL_LOAN.incomeMonthsCap * profile.netMonthlyIncome) / EUROS_PER_COIN);
@@ -77,7 +77,7 @@ export const bankPersonalService = {
         },
         limits: { capCoins: e.capCoins, incomeMonthsCap: PERSONAL_LOAN.incomeMonthsCap, minMonths: PERSONAL_LOAN.minMonths, maxMonths: PERSONAL_LOAN.maxMonths, minPrincipalCoins: PERSONAL_LOAN.minPrincipalCoins },
         bank: { debtRatioPct: e.debtRatioPct, maxDebtRatioPct: BANK_RULES.maxDebtRatioPct, livingRemaining: e.livingRemaining, minLivingRemaining: e.minLiving },
-        earmark: 'Ces pièces ne pourront être dépensées que dans l\'Immobilier (apport, travaux, rénovation, découvert), pas en Bourse ni en crypto.',
+        earmark: 'Ces pièces rejoignent ton solde libre : comme un vrai prêt personnel non affecté, tu peux les dépenser où tu veux (Bourse, Crypto, Immobilier). Tu les rembourses avec les intérêts.',
         mortgageRatePct: await source().getLoanRatePct(e.game.simulated_year, 300), // pour comparer : le prêt personnel est plus cher
       };
     });
@@ -92,12 +92,12 @@ export const bankPersonalService = {
       if (e.reasons.length > 0) throw new BankError('NOT_ALLOWED', e.reasons[0].message, { reasons: e.reasons });
       await assertCanBorrow(c, userId, e.amount);
       const { loanId } = await originateLoan(c, {
-        userId, product: 'personal', domain: RE_DOMAIN, principalCoins: e.amount, annualRatePct: e.ratePct, months: e.months, clockTotal: e.clock,
+        userId, product: 'personal', domain: RE_DOMAIN, principalCoins: e.amount, annualRatePct: e.ratePct, months: e.months, clockTotal: e.clock, earmark: false,
         meta: { purpose: 'immobilier', year: e.game.simulated_year },
       });
       return {
         loanId, amountCoins: e.amount, months: e.months, annualRatePct: e.ratePct, instalmentCoins: e.instalmentCoins,
-        message: `Prêt personnel accordé : ${fr(e.amount)} InvestCoins (${fr(e.amount * EUROS_PER_COIN)} €) à ${fr(e.ratePct)} % sur ${e.months} mois, ${fr(e.instalmentCoins)} InvestCoins par mois. Ces pièces ne servent que dans l'Immobilier.`,
+        message: `Prêt personnel accordé : ${fr(e.amount)} InvestCoins à ${fr(e.ratePct)} % sur ${e.months} mois, ${fr(e.instalmentCoins)} InvestCoins par mois. Ces pièces sont ajoutées à ton solde libre : tu peux les dépenser où tu veux.`,
       };
     });
   },
