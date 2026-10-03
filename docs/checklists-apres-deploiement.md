@@ -150,8 +150,8 @@ Aucun effet sur le site. Après fusion : onglet **Actions** du dépôt GitHub �
 7. Admin : `/api/v1/economy/admin/coins-by-domain` contient `sinks` (frais et impôts par domaine).
 
 ## PR Capital de départ Pro
-1. Compte gratuit neuf : après validation de l'e-mail, solde 500 🪙.
-2. Compte gratuit qui passe Pro (paiement test Stripe) : le solde augmente de **500 🪙** (une seule fois). Historique : ligne « pro_starting_bonus ».
+1. Compte gratuit neuf : après validation de l'e-mail, solde = capital de départ (10 000 🪙).
+2. Compte gratuit qui passe Pro (paiement test Stripe) : le solde augmente de **10 000 🪙** (une seule fois). Historique : ligne « pro_starting_bonus ».
 3. Résilie puis reprends l'abonnement Pro : aucun nouveau bonus.
 
 ## PR Sessions par cookie httpOnly + CSRF
@@ -691,3 +691,14 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Si le compte était chef de guilde : la guilde existe toujours avec un nouveau chef (le plus ancien membre), ou a disparu s'il était seul.
 6. Les amis du compte supprimé ne voient plus ni son nom, ni ses notifications « X est ton ami ».
 7. Relis la section 8 de la page de confidentialité (à faire valider par un professionnel).
+
+
+## Économie : un seul fichier de réglages (capital de départ 10 000 🪙)
+À dérouler chez toi **après avoir fusionné cette PR ET la suivante** (« Immobilier 1 🪙 = 1 € »), car les deux vont ensemble. Rien à faire sur ta base : les comptes de test repartiront de zéro avec le script de remise à zéro (PR plus tard).
+
+1. Ouvre la page d'inscription : le compteur animé s'arrête sur **10 000** (et non 500).
+2. Crée un compte neuf (copie de test) et valide l'e-mail : le solde affiché est **10 000 🪙**.
+3. Compte qui passe Pro : le solde augmente de **10 000 🪙** une seule fois (ligne « pro_starting_bonus » dans l'historique).
+4. Glossaire, fiche « InvestCoin » : l'exemple parle de **10 000** InvestCoins.
+5. Ouvre `backend/src/config/economy.ts` : tous les montants (capital, bonus Pro, seuil de classement, récompenses, plafond de dette) sont dans ce seul fichier, chacun marqué « VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER ».
+6. Aucun autre fichier ne doit contenir ces montants : le test `economy.test.ts` le vérifie.

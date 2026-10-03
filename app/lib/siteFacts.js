@@ -13,6 +13,6 @@ export const CRYPTO_ASSET_COUNT = 110;
 const WORDS = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six'];
 export const countWord = (n) => WORDS[n] ?? String(n);
 
-// InvestCoins offerts à l'activation du compte (backend/src/config/game.ts : STARTING_CAPITAL ; un test compare les deux).
+// InvestCoins offerts à l'activation du compte (backend/src/config/economy.ts : STARTING_CAPITAL ; un test compare les deux).
 // VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
-export const STARTING_COINS = 500;
+export const STARTING_COINS = 10000;

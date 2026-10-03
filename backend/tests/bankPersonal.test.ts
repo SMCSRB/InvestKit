@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
 import { query } from '../src/utils/db';
 import { investcoinsRepository, InsufficientFundsError } from '../src/repositories/investcoinsRepository';
@@ -11,6 +11,11 @@ import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog'
 import { bankProductRatePct, PERSONAL_LOAN } from '../src/config/bankRules';
 import { EVENT_PARAMS } from '../src/config/immoRules';
 import { computeNetPerformance, computePerformancePctFromEuros } from '../src/engine/immo';
+
+// Le seuil d'entrée au classement vaut RANKING_MIN_INVESTED en production ; ces tests vérifient le CLASSEMENT (rang, levier,
+// instantané), pas le seuil : on le ramène à une valeur atteignable avec le capital de la partie de test.
+vi.mock('../src/config/economy', async (orig) => ({ ...(await orig<typeof import('../src/config/economy')>()), RANKING_MIN_INVESTED: 100 }));
+
 
 describe('prêt personnel : performance nette de dettes (règle pure)', () => {
   it('sans emprunt : identique à la formule d\'origine, levier ×1', () => {

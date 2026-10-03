@@ -6,7 +6,7 @@ import { PLANS, PRICES, yearlySavingPct } from '../../app/lib/plans.js';
 // @ts-expect-error module JavaScript du frontend
 import { AVAILABLE_DOMAINS, CRYPTO_ASSET_COUNT, STARTING_COINS } from '../../app/lib/siteFacts.js';
 import { CATALOG } from '../src/data/crypto/catalog';
-import { STARTING_CAPITAL } from '../src/config/game';
+import { STARTING_CAPITAL } from '../src/config/economy';
 
 const APP = join(__dirname, '../../app');
 const read = (p: string) => readFileSync(join(APP, p), 'utf8');

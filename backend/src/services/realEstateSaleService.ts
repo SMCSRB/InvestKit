@@ -13,7 +13,8 @@ import {
 import {
   CAPITAL_GAIN_RULES, SALE_PARAMS, EUROS_PER_COIN, RENT_TAX_RATE_BY_PROFILE, RENOVATION_RULES, RENT_MODEL,
 } from '../config/immoRules';
-import { MIN_RANKED_CAPITAL, LEADERBOARD_SIZE } from '../config/game';
+import { LEADERBOARD_SIZE } from '../config/game';
+import { RANKING_MIN_INVESTED } from '../config/economy';
 import { applyEnergyRenovation } from '../engine/immo';
 
 export type SaleKind = 'amicable' | 'distress_amicable' | 'forced';
@@ -434,10 +435,10 @@ export const getRealEstateLeaderboard = async (userId: string, yearRaw: unknown)
     year = Number(yearRaw);
     if (!Number.isInteger(year) || year < source().minYear || year > source().maxYear) throw new RealEstateError('INVALID_INPUT', 'Année invalide');
   }
-  const board = await leaderboardRepository.getBoard({ mode: 'accelerated', domain: RE_DOMAIN, year, minCapital: MIN_RANKED_CAPITAL, limit: LEADERBOARD_SIZE, callerId: userId });
+  const board = await leaderboardRepository.getBoard({ mode: 'accelerated', domain: RE_DOMAIN, year, minCapital: RANKING_MIN_INVESTED, limit: LEADERBOARD_SIZE, callerId: userId });
   // Ma performance détaillée (calculée côté serveur) : visible même si je ne suis pas encore classé.
   const w = await wealthMetrics({ query } as any, game);
   const investedCoins = round2(w.investedEuros / EUROS_PER_COIN);
-  const mine = { ...w, investedCoins, ranked: investedCoins >= MIN_RANKED_CAPITAL, minCapitalCoins: MIN_RANKED_CAPITAL };
-  return { domain: RE_DOMAIN, year, minCapital: MIN_RANKED_CAPITAL, ...board, mine };
+  const mine = { ...w, investedCoins, ranked: investedCoins >= RANKING_MIN_INVESTED, minCapitalCoins: RANKING_MIN_INVESTED };
+  return { domain: RE_DOMAIN, year, minCapital: RANKING_MIN_INVESTED, ...board, mine };
 };

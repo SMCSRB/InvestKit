@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
 import { query } from '../src/utils/db';
 import { realEstateService as svc, RealEstateError } from '../src/services/realEstateService';
@@ -11,6 +11,11 @@ import {
   computeSaleClosing, buildSchedule, applyEnergyRenovation, EngineInputError,
 } from '../src/engine/immo';
 import { CAPITAL_GAIN_RULES, EVENT_PARAMS, SALE_PARAMS, RENOVATION_RULES } from '../src/config/immoRules';
+
+// Le seuil d'entrée au classement vaut RANKING_MIN_INVESTED en production ; ces tests vérifient le CLASSEMENT (rang, levier,
+// instantané), pas le seuil : on le ramène à une valeur atteignable avec le capital de la partie de test.
+vi.mock('../src/config/economy', async (orig) => ({ ...(await orig<typeof import('../src/config/economy')>()), RANKING_MIN_INVESTED: 100 }));
+
 
 // ─────────────────────────── règles pures ───────────────────────────
 describe('plus-value : abattements pour durée de détention (barème exact des sources)', () => {

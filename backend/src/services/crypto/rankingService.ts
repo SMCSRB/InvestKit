@@ -5,7 +5,8 @@ import { computeNetPerformance } from '../../engine/immo/valuation';
 import { computePerformancePct } from '../../utils/performance';
 import { portfolioDebtInfo } from '../bankPortfolioService';
 import { CRYPTO_DOMAIN, CRYPTO_MODE, CRYPTO_ECONOMY as E } from '../../config/cryptoMarketRules';
-import { LEADERBOARD_SIZE, MIN_RANKED_CAPITAL } from '../../config/game';
+import { LEADERBOARD_SIZE } from '../../config/game';
+import { RANKING_MIN_INVESTED } from '../../config/economy';
 import { CryptoDataError } from './dataService';
 import { marketFor, num, toAccount } from './core';
 import type { CryptoAccount } from './clockService';
@@ -46,7 +47,7 @@ export const rankingService = {
     if (!/^M\d{4}-(0[1-9]|1[0-2])$/.test(period)) throw new CryptoDataError('INVALID_INPUT', 'Période invalide (AAAA-MM)');
     // Pas de regard vers le futur : on ne consulte pas un classement d'une période que le joueur n'a pas encore atteinte.
     if (period > periodOf(acc.simulatedAt)) throw new CryptoDataError('INVALID_INPUT', 'Cette période est dans ton futur simulé.');
-    const board = await leaderboardRepository.getBoard({ mode: CRYPTO_MODE, domain: CRYPTO_DOMAIN, year: 0, period, minCapital: MIN_RANKED_CAPITAL, limit: LEADERBOARD_SIZE, callerId: userId });
-    return { domain: CRYPTO_DOMAIN, mode: CRYPTO_MODE, period: period.slice(1), minCapital: MIN_RANKED_CAPITAL, ...board };
+    const board = await leaderboardRepository.getBoard({ mode: CRYPTO_MODE, domain: CRYPTO_DOMAIN, year: 0, period, minCapital: RANKING_MIN_INVESTED, limit: LEADERBOARD_SIZE, callerId: userId });
+    return { domain: CRYPTO_DOMAIN, mode: CRYPTO_MODE, period: period.slice(1), minCapital: RANKING_MIN_INVESTED, ...board };
   },
 };

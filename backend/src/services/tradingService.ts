@@ -17,9 +17,9 @@ import { bankPortfolioService, portfolioLoanView, portfolioDebtInfo } from './ba
 import {
   MAX_TRADE_QUANTITY,
   MAX_QUANTITY_DECIMALS,
-  MIN_RANKED_CAPITAL,
   LEADERBOARD_SIZE,
 } from '../config/game';
+import { RANKING_MIN_INVESTED } from '../config/economy';
 
 export const MODE = 'accelerated'; // seul mode disponible pour l'instant (décision produit)
 
@@ -453,10 +453,10 @@ export const tradingService = {
       mode: MODE,
       domain: domain.id,
       year,
-      minCapital: MIN_RANKED_CAPITAL,
+      minCapital: RANKING_MIN_INVESTED,
       limit: LEADERBOARD_SIZE,
       callerId: userId,
     });
-    return { domain: domain.id, year, minCapital: MIN_RANKED_CAPITAL, ...board };
+    return { domain: domain.id, year, minCapital: RANKING_MIN_INVESTED, ...board };
   },
 };
