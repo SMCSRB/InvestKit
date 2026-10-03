@@ -14,7 +14,12 @@ export class AvatarError extends Error {
 }
 
 // Vrai type d'après les octets de tête : JPEG (FF D8 FF), PNG (89 50 4E 47 0D 0A 1A 0A), WebP (RIFF....WEBP).
-export const sniffImageType = (b: Buffer): 'jpeg' | 'png' | 'webp' | null => {
+// Contrôle de type explicite (texte et tableau écartés avant toute lecture) : une valeur venue d'une requête n'est jamais supposée être un Buffer.
+const isBytes = (v: unknown): v is Buffer => typeof v === 'object' && v !== null && !Array.isArray(v) && Buffer.isBuffer(v);
+
+export const sniffImageType = (input: unknown): 'jpeg' | 'png' | 'webp' | null => {
+  if (!isBytes(input)) return null;
+  const b: Buffer = input;
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpeg';
   if (b.length >= 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'png';
   if (b.length >= 12 && b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP') return 'webp';
@@ -22,7 +27,7 @@ export const sniffImageType = (b: Buffer): 'jpeg' | 'png' | 'webp' | null => {
 };
 
 export const processAvatar = async (input: unknown): Promise<{ image: Buffer; contentType: 'image/webp' }> => {
-  if (!Buffer.isBuffer(input) || input.length === 0) throw new AvatarError('EMPTY', 'Aucune image reçue.');
+  if (!isBytes(input) || input.length === 0) throw new AvatarError('EMPTY', 'Aucune image reçue.');
   if (input.length > AVATAR_MAX_BYTES) throw new AvatarError('TOO_LARGE', 'Image trop lourde (3 Mo maximum).');
   if (!sniffImageType(input)) throw new AvatarError('BAD_TYPE', 'Format non pris en charge : choisis une vraie image JPG, PNG ou WebP.');
   try {
