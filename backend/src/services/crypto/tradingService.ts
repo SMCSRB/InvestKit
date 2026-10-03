@@ -9,7 +9,8 @@ import { BASE_MS } from '../../engine/crypto/candles';
 import { executeAt, evaluateResting, feeCoins, floorQty8, parseQuantity, OrderType, Side, Execution } from '../../engine/crypto/execution';
 import { readTaxState } from '../../engine/trading/costs';
 import { CryptoDataError } from './dataService';
-import { num, Market, marketFor, fmtQty, takeFromPosition, applyFill, availableQty, toAccount } from './core';
+import { num, Market, marketFor, fmtQty, takeFromPosition, applyFill, availableQty, toAccount, fxOf, priceCoinsOf } from './core';
+import { fxService } from '../fxService';
 import { clockService, CryptoAccount } from './clockService';
 import { activeEffects, processEvents } from './eventsService';
 import { collateralRelease, repayFromSale, processLoan } from './loanService';
@@ -26,10 +27,10 @@ const bad = (m: string) => new CryptoDataError('INVALID_INPUT', m);
 
 
 // Chiffre un ordre AU MARCHÉ sans l'exécuter (aperçu des coûts affiché avant de valider).
-const planMarket = (m: Market, side: Side, qty: number, stress = 1): Execution => executeAt({ side, refPrice: m.price, quantity: qty, tier: m.tier, avgDailyVolumeUsd: m.adv, maker: false, stressMultiplier: stress });
+const planMarket = (m: Market, side: Side, qty: number, stress = 1): Execution => executeAt({ side, refPrice: m.price, quantity: qty, tier: m.tier, avgDailyVolumeUsd: m.adv, maker: false, stressMultiplier: stress, usdPerCoin: fxOf(m) });
 
 const quantityForBudget = (m: Market, budget: number, stress = 1): string => {
-  let q = Number(floorQty8((budget * E.usdPerCoin) / m.price));   // départ : budget entier sans frais ; on réduit jusqu'à ce que prix + frais tiennent dans le budget
+  let q = Number(floorQty8((budget * fxOf(m)) / m.price));   // départ : budget entier sans frais ; on réduit jusqu'à ce que prix + frais tiennent dans le budget
   for (let i = 0; i < 40 && q > 0; i++) {
     const ex = planMarket(m, 'buy', q, stress);
     const total = ex.notionalCoins + ex.feeCoins;
@@ -51,7 +52,7 @@ export const cryptoTradingService = {
     if (qty === null && side === 'buy' && amountRaw !== undefined) { const a = Number(amountRaw); if (!Number.isInteger(a) || a < 1) throw bad('Montant invalide'); qty = quantityForBudget(m, a, stress); }
     if (qty === null || Number(qty) <= 0) throw bad('Quantité invalide (8 décimales maximum)');
     const ex = planMarket(m, side, Number(qty), stress);
-    return { symbol, side, quantity: qty, refPrice: m.price, tier: m.tier, stale: m.stale, execution: { price: ex.price, spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
+    return { symbol, side, quantity: qty, refPrice: m.price, refPriceCoins: priceCoinsOf(m), fxUsdPerCoin: fxOf(m), tier: m.tier, stale: m.stale, execution: { price: ex.price, priceCoins: ex.price / fxOf(m), spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
       note: 'Estimation : le prix de référence est celui de la date simulée ; l\'écart achat/vente et le glissement dépendent de la liquidité de l\'actif.' };
   },
 
@@ -66,7 +67,7 @@ export const cryptoTradingService = {
     let trigger: number | null = null;
     if (type !== 'market') {
       trigger = Number(input.price);
-      if (!Number.isFinite(trigger) || trigger <= 0 || trigger > 1e12) throw bad('Prix invalide');
+      if (!Number.isFinite(trigger) || trigger <= 0 || trigger > 1e12) throw bad('Prix invalide (en InvestCoins par unité)');
     } else if (input.price !== undefined && input.price !== null) throw bad('Un ordre au marché n\'a pas de prix : il est décidé par le serveur');
     if (input.amountCoins !== undefined && !(type === 'market' && side === 'buy')) throw bad('Le montant en pièces ne s\'utilise que pour un achat au marché');
 
@@ -92,6 +93,7 @@ export const cryptoTradingService = {
       if (!m) throw new CryptoDataError('NOT_FOUND', 'Actif introuvable ou pas encore coté à cette date');
       const eff = activeEffects(userId, account.simulatedAt, account.startAt);
       if (type === 'market' && eff.outage) throw bad('Plateforme indisponible aujourd\'hui (incident simulé) : pas d\'ordre au marché. Place un ordre en attente ou avance dans le temps.');
+      fxOf(m);   // sans taux de change du jour de jeu : aucun ordre (message clair), rien n'est écrit
       if (side === 'buy' && m.stale) throw bad('Cet actif n\'est plus coté : les achats sont fermés (la vente reste possible au dernier prix connu).');
 
       let qty = parseQuantity(input.quantity);
@@ -111,8 +113,9 @@ export const cryptoTradingService = {
         avail = await availableQty(client, userId, m.assetId);
         if (Number(qty) > avail + 1e-9) throw new CryptoDataError('INVALID_INPUT', 'Quantité disponible insuffisante (une partie est peut-être déjà engagée dans un autre ordre en attente).');
       }
-      if (type === 'stop_loss' && trigger! >= m.price) throw bad('Un stop-loss doit être placé sous le prix actuel.');
-      if (type === 'take_profit' && trigger! <= m.price) throw bad('Un take-profit doit être placé au-dessus du prix actuel.');
+      // Le prix d'un ordre en attente est en InvestCoins par unité (1 InvestCoin = 1 €), comparé au prix actuel converti avec le taux du jour.
+      if (type === 'stop_loss' && trigger! >= priceCoinsOf(m)) throw bad('Un stop-loss doit être placé sous le prix actuel.');
+      if (type === 'take_profit' && trigger! <= priceCoinsOf(m)) throw bad('Un take-profit doit être placé au-dessus du prix actuel.');
       if (type !== 'market') {
         const open = Number((await client.query(`SELECT COUNT(*)::int AS n FROM crypto_orders WHERE user_id = $1 AND status = 'open'`, [userId])).rows[0].n);
         if (open >= E.maxOpenOrders) throw bad(`Trop d'ordres en attente (${E.maxOpenOrders} maximum).`);
@@ -129,7 +132,7 @@ export const cryptoTradingService = {
         if (ex.notionalCoins < E.minNotionalCoins && !isFullExit) throw bad(`Ordre trop petit : minimum ${E.minNotionalCoins} InvestCoins (la sortie complète d'une position reste permise).`);
         try {
           const release = side === 'sell' ? await collateralRelease(client, userId, account.simulatedAt, symbol, qty, ex.notionalCoins - ex.feeCoins) : 0;
-          await applyFill(client, userId, ins.id, m, side, qty, ex, m.price, false, account.simulatedAt, account);
+          await applyFill(client, userId, ins.id, m, side, qty, ex, m.price, false, account.simulatedAt, account, fxOf(m));
           await repayFromSale(client, userId, release);
           await snapshotLeaderboard(client, account);
         } catch (e) {
@@ -172,6 +175,7 @@ export const cryptoTradingService = {
       if (eff.outage) throw bad('Plateforme indisponible aujourd\'hui (incident simulé) : pas d\'échange. Avance dans le temps.');
       const mf = await marketFor(client, from, account.simulatedAt), mt = await marketFor(client, to, account.simulatedAt);
       if (!mf || !mt) throw new CryptoDataError('NOT_FOUND', 'Actif introuvable ou pas encore coté à cette date');
+      fxOf(mf);
       if (mt.stale || mt.price <= 0) throw bad('L\'actif reçu n\'est pas échangeable (plus coté ou prix nul).');
       const avail = await availableQty(client, userId, mf.assetId);
       if (Number(qty) > avail + 1e-9) throw bad('Quantité disponible insuffisante.');
@@ -180,7 +184,7 @@ export const cryptoTradingService = {
       const fee = feeCoins(sell.notionalCoins, tier, false);
       const net = sell.notionalCoins - fee;
       if (sell.notionalCoins < E.minNotionalCoins) throw bad(`Échange trop petit : minimum ${E.minNotionalCoins} InvestCoins.`);
-      let q = Number(floorQty8((net * E.usdPerCoin) / mt.price));
+      let q = Number(floorQty8((net * fxOf(mt)) / mt.price));
       let buy = planMarket(mt, 'buy', q, eff.stress);
       for (let i = 0; i < 40 && q > 0 && buy.notionalCoins > net; i++) { q = Number(floorQty8(q * (net / buy.notionalCoins) * 0.9999)); buy = planMarket(mt, 'buy', q, eff.stress); }
       if (q <= 0) throw bad('Montant trop faible pour recevoir la moindre quantité.');
@@ -200,10 +204,10 @@ export const cryptoTradingService = {
       }
       const ts = readTaxState(account.taxState); ts.feesPaid += fee;
       await client.query('UPDATE crypto_accounts SET tax_state = $2::jsonb, updated_at = NOW() WHERE user_id = $1', [userId, JSON.stringify(ts)]);
-      const ins = `INSERT INTO crypto_fills (order_id, user_id, asset_id, side, quantity, ref_price, price, spread_pct, slippage_pct, liquidity_tier, maker, notional_coins, fee_coins, tax_coins, basis_coins, gain_coins, sim_at, swap)
-                   VALUES ($1,$2,$3,$4,$5::numeric,$6,$7,$8,$9,$10,FALSE,$11,$12,0,$13,NULL,to_timestamp($14::float8 / 1000.0),TRUE)`;
-      await client.query(ins, [ord.id, userId, mf.assetId, 'sell', qty, mf.price, sell.price, sell.spreadPct, sell.slippagePct, mf.tier, sell.notionalCoins, fee, basis, account.simulatedAt]);
-      await client.query(ins, [ord.id, userId, mt.assetId, 'buy', qtyTo, mt.price, buy.price, buy.spreadPct, buy.slippagePct, mt.tier, buy.notionalCoins, 0, null, account.simulatedAt]);
+      const ins = `INSERT INTO crypto_fills (order_id, user_id, asset_id, side, quantity, ref_price, price, spread_pct, slippage_pct, liquidity_tier, maker, notional_coins, fee_coins, tax_coins, basis_coins, gain_coins, sim_at, swap, fx_usd_per_coin)
+                   VALUES ($1,$2,$3,$4,$5::numeric,$6,$7,$8,$9,$10,FALSE,$11,$12,0,$13,NULL,to_timestamp($14::float8 / 1000.0),TRUE,$15)`;
+      await client.query(ins, [ord.id, userId, mf.assetId, 'sell', qty, mf.price, sell.price, sell.spreadPct, sell.slippagePct, mf.tier, sell.notionalCoins, fee, basis, account.simulatedAt, fxOf(mf)]);
+      await client.query(ins, [ord.id, userId, mt.assetId, 'buy', qtyTo, mt.price, buy.price, buy.spreadPct, buy.slippagePct, mt.tier, buy.notionalCoins, 0, null, account.simulatedAt, fxOf(mt)]);
       await snapshotLeaderboard(client, account);
       await auditLog({ userId, action: 'crypto.swap', entityType: 'crypto_order', entityId: ord.id, ip, metadata: { from, to, quantity: qty, received: qtyTo, feeCoins: fee, simAt: new Date(account.simulatedAt).toISOString() } }, client);
       await client.query('COMMIT');
@@ -240,17 +244,19 @@ export const cryptoTradingService = {
       `SELECT p.asset_id, a.symbol, a.name, p.quantity::text AS quantity, p.cost_basis_coins, p.realized_gain_coins FROM crypto_positions p JOIN crypto_assets a ON a.id = p.asset_id
         WHERE p.user_id = $1 AND (p.quantity > 0 OR p.realized_gain_coins <> 0) ORDER BY a.symbol`, [userId])).rows;
     const positions = [];
-    let invested = 0, value = 0, realized = 0;
+    let invested = 0, value = 0, realized = 0, fxUnavailable = false;
     for (const p of pos) {
       realized += num(p.realized_gain_coins);
       if (num(p.quantity) <= 0) continue;
       const m = await marketFor({ query }, p.symbol, acc.simulatedAt);
-      const price = m?.price ?? 0;
-      const v = Math.floor((price * num(p.quantity)) / E.usdPerCoin);
+      const price = m?.price ?? 0;                      // cours d'origine, en dollars par unité
+      const fx = m?.fx ?? null;                         // dollars pour 1 InvestCoin (taux BCE du jour de jeu)
       const basis = Math.round(num(p.cost_basis_coins));
-      invested += basis; value += v;
-      positions.push({ symbol: p.symbol, name: p.name, quantity: fmtQty(p.quantity), avgCost: num(p.quantity) > 0 ? (basis * E.usdPerCoin) / num(p.quantity) : 0, price, stale: m?.stale ?? true,
-        valueCoins: v, costBasisCoins: basis, unrealizedCoins: v - basis, unrealizedPct: basis > 0 ? Math.round(((v / basis) - 1) * 10000) / 100 : null, realizedCoins: num(p.realized_gain_coins) });
+      const v = fx ? Math.floor((price * num(p.quantity)) / fx) : null;
+      if (fx === null) fxUnavailable = true;
+      invested += basis; value += v ?? 0;
+      positions.push({ symbol: p.symbol, name: p.name, quantity: fmtQty(p.quantity), avgCostCoins: num(p.quantity) > 0 ? basis / num(p.quantity) : 0, price, priceUsd: price, priceCoins: fx ? price / fx : null, valueUsd: price * num(p.quantity), stale: m?.stale ?? true,
+        valueCoins: v, costBasisCoins: basis, unrealizedCoins: v === null ? null : v - basis, unrealizedPct: v !== null && basis > 0 ? Math.round(((v / basis) - 1) * 10000) / 100 : null, realizedCoins: num(p.realized_gain_coins) });
     }
     const balance = await investcoinsRepository.getBalance(userId);
     const ts = readTaxState(acc.taxState);
@@ -259,9 +265,10 @@ export const cryptoTradingService = {
       simulatedAt: acc.simulatedAt, balanceCoins: balance, holdingsValueCoins: value, wealthCoins: balance + value, investedCoins: invested,
       unrealizedCoins: value - invested, realizedCoins: realized, feesPaidCoins: num(fills.f), taxPaidCoins: num(fills.t),
       cryptoSalesThisYear: ts.cryptoSales[String(new Date(acc.simulatedAt).getUTCFullYear())] ?? 0,
-      positions: positions.map((p) => ({ ...p, allocationPct: value > 0 ? Math.round((p.valueCoins / value) * 10000) / 100 : 0 })),
+      fxUnavailable,                                    // vrai : taux de change indisponible, les valeurs en InvestCoins ne sont pas calculables (affichage en dollars)
+      positions: positions.map((p) => ({ ...p, allocationPct: value > 0 && p.valueCoins !== null ? Math.round((p.valueCoins / value) * 10000) / 100 : 0 })),
       openOrders: await cryptoTradingService.listOrders(userId, 'open', 50),
-      economy: { usdPerCoin: E.usdPerCoin, minNotionalCoins: E.minNotionalCoins, note: 'Valeurs de jeu non sourcées, à reconfirmer.' },
+      economy: { minNotionalCoins: E.minNotionalCoins, fxSource: 'Taux de référence EUR/USD de la BCE du jour de jeu', note: 'Valeurs de jeu non sourcées, à reconfirmer.' },
     };
   },
 
@@ -306,11 +313,11 @@ export const orderView = async (id: string, userId: string) => {
   const o = (await query(
     `SELECT o.id, o.client_order_id, a.symbol, (SELECT symbol FROM crypto_assets WHERE id = o.to_asset_id) AS to_symbol, o.side, o.type, o.quantity::text AS quantity, o.trigger_price, o.status, o.reject_reason, o.created_sim_at, o.closed_sim_at FROM crypto_orders o JOIN crypto_assets a ON a.id = o.asset_id WHERE o.id = $1 AND o.user_id = $2`, [id, userId])).rows[0];
   if (!o) return null;
-  const f = (await query(`SELECT quantity::text AS quantity, ref_price, price, spread_pct, slippage_pct, liquidity_tier, maker, notional_coins, fee_coins, tax_coins, basis_coins, gain_coins, sim_at FROM crypto_fills WHERE order_id = $1 ORDER BY id LIMIT 1`, [id])).rows[0];
+  const f = (await query(`SELECT quantity::text AS quantity, ref_price, price, spread_pct, slippage_pct, liquidity_tier, maker, notional_coins, fee_coins, tax_coins, basis_coins, gain_coins, sim_at, fx_usd_per_coin FROM crypto_fills WHERE order_id = $1 ORDER BY id LIMIT 1`, [id])).rows[0];
   return {
-    id: o.id, clientOrderId: o.client_order_id, symbol: o.symbol, toSymbol: o.to_symbol, side: o.side, type: o.type, quantity: fmtQty(o.quantity), price: o.trigger_price, status: o.status, rejectReason: o.reject_reason,
+    id: o.id, clientOrderId: o.client_order_id, symbol: o.symbol, toSymbol: o.to_symbol, side: o.side, type: o.type, quantity: fmtQty(o.quantity), price: o.trigger_price, triggerCoins: o.trigger_price, status: o.status, rejectReason: o.reject_reason,
     createdSimAt: new Date(o.created_sim_at).getTime(), closedSimAt: o.closed_sim_at ? new Date(o.closed_sim_at).getTime() : null,
-    fill: f ? { quantity: fmtQty(f.quantity), refPrice: f.ref_price, price: f.price, spreadPct: f.spread_pct, slippagePct: f.slippage_pct, liquidityTier: f.liquidity_tier, maker: f.maker, notionalCoins: f.notional_coins, feeCoins: f.fee_coins, taxCoins: f.tax_coins, basisCoins: f.basis_coins, gainCoins: f.gain_coins, simAt: new Date(f.sim_at).getTime() } : null,
+    fill: f ? { quantity: fmtQty(f.quantity), refPrice: f.ref_price, price: f.price, fxUsdPerCoin: Number(f.fx_usd_per_coin), refPriceCoins: f.ref_price / Number(f.fx_usd_per_coin), priceCoins: f.price / Number(f.fx_usd_per_coin), spreadPct: f.spread_pct, slippagePct: f.slippage_pct, liquidityTier: f.liquidity_tier, maker: f.maker, notionalCoins: f.notional_coins, feeCoins: f.fee_coins, taxCoins: f.tax_coins, basisCoins: f.basis_coins, gainCoins: f.gain_coins, simAt: new Date(f.sim_at).getTime() } : null,
   };
 };
 
@@ -320,7 +327,9 @@ const processResting = async (db: Queryable, account: CryptoAccount, fromMs: num
   const orders = (await db.query(
     `SELECT o.id, o.asset_id, a.symbol, o.side, o.type, o.quantity::text AS quantity, o.trigger_price, o.created_sim_at FROM crypto_orders o JOIN crypto_assets a ON a.id = o.asset_id
       WHERE o.user_id = $1 AND o.status = 'open' ORDER BY o.created_at FOR UPDATE OF o`, [account.userId])).rows;
-  const cands: { order: any; ts: number; refPrice: number; maker: boolean; end: number }[] = [];
+  // Taux de change de chaque jour de la période : les bougies (en dollars) sont converties en InvestCoins jour par jour, car le prix d'un ordre en attente est en InvestCoins.
+  const rater = await fxService.dayRater(fromMs, toMs, db);
+  const cands: { order: any; ts: number; refPrice: number; fx: number; maker: boolean; end: number }[] = [];
   for (const o of orders) {
     const startMs = Math.max(fromMs, new Date(o.created_sim_at).getTime());
     let tf: '1h' | '1d' = '1h';
@@ -329,9 +338,14 @@ const processResting = async (db: Queryable, account: CryptoAccount, fromMs: num
       [o.asset_id, startMs, toMs, t]);
     let rows = (await query1('1h')).rows;
     if (!rows.length) { tf = '1d'; rows = (await query1('1d')).rows; }
-    const candles = rows.map((r: any) => ({ ts: new Date(r.ts).getTime(), o: num(r.o), h: num(r.h), l: num(r.l), c: num(r.c), volume: num(r.volume) }));
+    // Bougies converties en InvestCoins par unité ; une bougie sans taux de change ce jour-là ne peut pas déclencher d'ordre (elle est ignorée, jamais devinée).
+    const candles = [];
+    for (const r of rows) {
+      const ts = new Date(r.ts).getTime(), rate = rater(ts);
+      if (rate) candles.push({ ts, o: num(r.o) / rate, h: num(r.h) / rate, l: num(r.l) / rate, c: num(r.c) / rate, volume: num(r.volume) });
+    }
     const hit = evaluateResting({ side: o.side, type: o.type, triggerPrice: num(o.trigger_price) }, candles);
-    if (hit) cands.push({ order: o, ts: hit.ts, refPrice: hit.refPrice, maker: hit.maker, end: hit.ts + BASE_MS[tf] });
+    if (hit) { const fx = rater(hit.ts)!; cands.push({ order: o, ts: hit.ts, refPrice: hit.refPrice * fx, fx, maker: hit.maker, end: hit.ts + BASE_MS[tf] }); }   // refPrice : retour en dollars (cours d'origine)
   }
   cands.sort((a, b) => a.end - b.end);
   const events: { orderId: string; symbol: string; status: 'filled' | 'cancelled'; note?: string }[] = [];
@@ -339,16 +353,16 @@ const processResting = async (db: Queryable, account: CryptoAccount, fromMs: num
     const o = c.order;
     const m = await marketFor(db, o.symbol, c.end);
     if (!m) continue;
-    const ex = executeAt({ side: o.side, refPrice: c.refPrice, quantity: Number(o.quantity), tier: m.tier, avgDailyVolumeUsd: m.adv, maker: c.maker, stressMultiplier: activeEffects(account.userId, c.end, account.startAt).stress });
+    const ex = executeAt({ side: o.side, refPrice: c.refPrice, quantity: Number(o.quantity), tier: m.tier, avgDailyVolumeUsd: m.adv, maker: c.maker, usdPerCoin: c.fx, stressMultiplier: activeEffects(account.userId, c.end, account.startAt).stress });
     await db.query('SAVEPOINT fill');
     try {
       const release = o.side === 'sell' ? await collateralRelease(db, account.userId, c.end, o.symbol, o.quantity, ex.notionalCoins - ex.feeCoins) : 0;
-      const res = await applyFill(db, account.userId, o.id, m, o.side, o.quantity, ex, c.refPrice, c.maker, c.end, account);
+      const res = await applyFill(db, account.userId, o.id, m, o.side, o.quantity, ex, c.refPrice, c.maker, c.end, account, c.fx);
       await repayFromSale(db, account.userId, release);
       await db.query('RELEASE SAVEPOINT fill');
       events.push({ orderId: o.id, symbol: o.symbol, status: 'filled' });
       const verb = o.side === 'buy' ? 'Achat' : 'Vente';
-      await notify(db, account.userId, { kind: 'crypto_order_filled', title: `${verb} exécuté : ${o.symbol}`, body: `Ton ordre ${o.type} (${o.quantity} ${o.symbol}) a été exécuté à ${ex.price.toPrecision(6)} $. Frais : ${ex.feeCoins} InvestCoins${res.taxCoins ? `, impôt : ${res.taxCoins} InvestCoins` : ''}.`, link: '/crypto' });
+      await notify(db, account.userId, { kind: 'crypto_order_filled', title: `${verb} exécuté : ${o.symbol}`, body: `Ton ordre ${o.type} (${o.quantity} ${o.symbol}) a été exécuté à ${(ex.price / c.fx).toPrecision(6)} InvestCoins par unité. Frais : ${ex.feeCoins} InvestCoins${res.taxCoins ? `, impôt : ${res.taxCoins} InvestCoins` : ''}.`, link: '/crypto' });
     } catch (e) {
       await db.query('ROLLBACK TO SAVEPOINT fill');
       const reason = e instanceof InsufficientFundsError ? 'Solde insuffisant au moment de l\'exécution' : e instanceof CryptoDataError && /garantie/.test(e.message) ? 'Vente refusée : elle laisserait ton prêt Crypto sans garantie suffisante' : 'Quantité plus disponible au moment de l\'exécution';

@@ -6,12 +6,19 @@ import { emptyTaxState, readTaxState, saleTax } from '../../engine/trading/costs
 import { liquidityTierFor, CryptoDataError } from './dataService';
 import { grantFirstInvestment } from '../firstStepsService';
 import type { CryptoAccount } from './clockService';
+import { fxService } from '../fxService';
 
 // Noyau commun du trading Crypto : contexte de marché, exécution d'un achat/vente dans la transaction en cours, retrait de position.
 export const DAY = 86_400_000;
 export const num = (v: any): number => Number(v);
 
-export interface Market { assetId: number; symbol: string; stable: boolean; price: number; priceAt: number; stale: boolean; tier: number; adv: number }
+// `price` : dollars par unité (cours d'origine). `fx` : dollars pour 1 InvestCoin (1 € = 1 InvestCoin) d'après le taux BCE du jour de jeu ; null = taux indisponible.
+export interface Market { assetId: number; symbol: string; stable: boolean; price: number; priceAt: number; stale: boolean; tier: number; adv: number; fx: number | null; fxDemo: boolean | null }
+
+// Taux obligatoire pour toute conversion en pièces : sans taux, l'opération est refusée (message clair), jamais devinée.
+export const FX_MESSAGE = 'Taux de change indisponible pour cette date de jeu : la conversion en InvestCoins est impossible pour le moment (aucun ordre n\'est passé).';
+export const fxOf = (m: Pick<Market, 'fx'>): number => { if (m.fx === null || !(m.fx > 0)) throw new CryptoDataError('FX_UNAVAILABLE', FX_MESSAGE); return m.fx; };
+export const priceCoinsOf = (m: Market): number => m.price / fxOf(m);
 
 // Contexte de marché d'un actif À LA DATE SIMULÉE : dernier prix connu (clôture de la dernière bougie journalière terminée),
 // volume quotidien moyen sur 30 jours (glissement) et palier de liquidité (volume moyen sur 90 jours).
@@ -26,9 +33,10 @@ export const marketFor = async (db: Queryable, symbol: string, nowMs: number): P
             COALESCE(AVG(volume), 0) AS v90
        FROM crypto_candles WHERE asset_id = $1 AND tf = '1d' AND ts <= to_timestamp(($2::float8 - 86400000) / 1000.0) AND ts > to_timestamp(($2::float8 - 91 * 86400000.0) / 1000.0)`, [a.id, nowMs])).rows[0];
   const lastTs = new Date(last.ts).getTime();
+  const fx = await fxService.rateAt(nowMs, db);
   return {
     assetId: a.id, symbol: a.symbol, stable: a.stable, price: num(last.c), priceAt: lastTs + DAY, stale: nowMs - lastTs > E.staleDays * DAY,
-    tier: liquidityTierFor(num(vol.v90), a.stable), adv: num(vol.v30),
+    tier: liquidityTierFor(num(vol.v90), a.stable), adv: num(vol.v30), fx: fx?.perEur ?? null, fxDemo: fx ? fx.demo : null,
   };
 };
 
@@ -49,7 +57,7 @@ export const takeFromPosition = async (db: Queryable, userId: string, assetId: n
 
 // Applique une exécution (achat ou vente) dans la transaction en cours : registre des pièces, position, ligne d'exécution.
 export const applyFill = async (
-  db: Queryable, userId: string, orderId: string, m: Market, side: Side, qty: string, ex: Execution, refPrice: number, maker: boolean, simAtMs: number, account: CryptoAccount
+  db: Queryable, userId: string, orderId: string, m: Market, side: Side, qty: string, ex: Execution, refPrice: number, maker: boolean, simAtMs: number, account: CryptoAccount, fx: number
 ): Promise<{ fillId: number; taxCoins: number; gainCoins: number | null }> => {
   const meta = { domain: CRYPTO_DOMAIN, symbol: m.symbol, side, orderId };
   let taxCoins = 0;
@@ -85,9 +93,9 @@ export const applyFill = async (
   }
   await db.query('UPDATE crypto_accounts SET tax_state = $2::jsonb, updated_at = NOW() WHERE user_id = $1', [userId, JSON.stringify(account.taxState ?? emptyTaxState())]);
   const f = await db.query(
-    `INSERT INTO crypto_fills (order_id, user_id, asset_id, side, quantity, ref_price, price, spread_pct, slippage_pct, liquidity_tier, maker, notional_coins, fee_coins, tax_coins, basis_coins, gain_coins, sim_at)
-     VALUES ($1,$2,$3,$4,$5::numeric,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,to_timestamp($17::float8 / 1000.0)) RETURNING id`,
-    [orderId, userId, m.assetId, side, qty, refPrice, ex.price, ex.spreadPct, ex.slippagePct, m.tier, maker, ex.notionalCoins, ex.feeCoins, taxCoins, basis, gain, simAtMs]);
+    `INSERT INTO crypto_fills (order_id, user_id, asset_id, side, quantity, ref_price, price, spread_pct, slippage_pct, liquidity_tier, maker, notional_coins, fee_coins, tax_coins, basis_coins, gain_coins, sim_at, fx_usd_per_coin)
+     VALUES ($1,$2,$3,$4,$5::numeric,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,to_timestamp($17::float8 / 1000.0),$18) RETURNING id`,
+    [orderId, userId, m.assetId, side, qty, refPrice, ex.price, ex.spreadPct, ex.slippagePct, m.tier, maker, ex.notionalCoins, ex.feeCoins, taxCoins, basis, gain, simAtMs, fx]);
   await db.query(`UPDATE crypto_orders SET status = 'filled', closed_sim_at = to_timestamp($2::float8 / 1000.0) WHERE id = $1`, [orderId, simAtMs]);
   return { fillId: Number(f.rows[0].id), taxCoins, gainCoins: gain };
 };

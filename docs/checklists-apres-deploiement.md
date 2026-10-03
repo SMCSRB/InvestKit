@@ -757,3 +757,15 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 3. Sinon, pour essayer : `npm run fx:import -- --demo` (taux **fictifs**, à ne pas faire sur une vraie base).
 4. Ouvre `…/api/v1/crypto/state` (connecté, avec un compte Crypto) : le champ `fx` indique le taux du jour, `demo: false` pour de vrais taux.
 5. Dis-moi si ton fichier a un format différent : le lecteur est écrit d'après la documentation, pas testé sur le vrai site.
+
+## Crypto en InvestCoins
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné les PR « taux BCE » puis « Crypto en InvestCoins » (et l'affichage, qui se déploient ensemble). Il faut des taux importés (voir « Taux de change BCE »).
+
+1. Crypto, fiche d'un actif : le prix est en **🪙** (avec le dollar entre parenthèses, plus petit). Le graphique indique « en InvestCoins ».
+2. Estimation d'un achat : « Prix estimé … 🪙 (marché … 🪙, soit … $) ». Achète : tes pièces baissent du montant + frais, et l'historique montre le prix en 🪙.
+3. Ordre limite : le champ dit « Prix limite en InvestCoins par unité ». Un prix limite égal au prix de marché en 🪙 est accepté ; un stop-loss au-dessus du prix actuel est refusé.
+4. Avance de quelques jours : un ordre limite placé sous le prix se déclenche seulement si le cours converti passe sous ton prix ; la notification dit « à X InvestCoins par unité ».
+5. Portefeuille : prix moyen, prix actuel, valeur en 🪙 ; la somme « Patrimoine » colle à tes pièces + valeur des cryptos.
+6. Prêt sur portefeuille : la garantie s'affiche en 🪙 ; l'appel de marge et la vente forcée suivent les prix en 🪙.
+7. Sans taux : supprime (sur ta copie de test seulement) les taux d'une période, avance jusque-là : les ordres sont refusés avec « Taux de change indisponible… », le graphique repasse en dollars (écrit), aucune vente forcée n'a lieu.
+8. Rien n'a changé en Bourse ni en Immobilier.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { unitNumber, fmtUsd } from '../lib/money';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -48,6 +49,11 @@ async function call(path, method = 'GET', body) {
 const coinNumber = (n) => Number(n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 const coins = (n) => <>{coinNumber(n)} <Coin /></>;
 const coinsText = (n) => `${coinNumber(n)} InvestCoins`;
+// Prix d'une unité (décimales adaptées) ; texte pour les messages, élément pour les tableaux.
+const unitCoinsText = (n) => (n == null ? '—' : `${unitNumber(n)} InvestCoins`);
+const unitCoins = (n) => (n == null ? '—' : <>{unitNumber(n)} <Coin /></>);
+// Prix en pièces si le taux de change est connu, sinon repli sur le dollar d'origine.
+const fmtPrice = (c, u) => (c != null ? unitCoins(c) : fmtUsd(u));
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `o-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 const TYPE_LABEL = { market: 'Au marché', limit: 'Limite', stop_loss: 'Stop-loss', take_profit: 'Take-profit' };
 
@@ -86,8 +92,8 @@ function OrderTicket({ symbol, asset, onDone }) {
       const o = r.order;
       setOrderId(uid());
       setMsg(o.status === 'filled'
-        ? { ok: true, text: `Exécuté : ${o.fill.quantity} ${symbol} à ${usd(o.fill.price)} (prix de marché ${usd(o.fill.refPrice)}, écart ${o.fill.spreadPct.toFixed(2)} %, glissement ${o.fill.slippagePct.toFixed(3)} %). Frais : ${coinsText(o.fill.feeCoins)}${o.fill.taxCoins ? `, impôt : ${coinsText(o.fill.taxCoins)}` : ''}.` }
-        : { ok: true, text: `Ordre ${TYPE_LABEL[o.type].toLowerCase()} enregistré : il attend que le prix atteigne ${usd(o.price)}. Il sera exécuté quand tu avanceras dans le temps.` });
+        ? { ok: true, text: `Exécuté : ${o.fill.quantity} ${symbol} à ${unitCoinsText(o.fill.priceCoins)} l'unité (prix de marché ${unitCoinsText(o.fill.refPriceCoins)}, écart ${o.fill.spreadPct.toFixed(2)} %, glissement ${o.fill.slippagePct.toFixed(3)} %). Frais : ${coinsText(o.fill.feeCoins)}${o.fill.taxCoins ? `, impôt : ${coinsText(o.fill.taxCoins)}` : ''}.` }
+        : { ok: true, text: `Ordre ${TYPE_LABEL[o.type].toLowerCase()} enregistré : il attend que le prix atteigne ${unitCoinsText(o.triggerCoins)}. Il sera exécuté quand tu avanceras dans le temps.` });
       setQty(''); setAmount(''); setPrice('');
       onDone();
     } catch (e) { setMsg({ ok: false, text: e.message }); setOrderId(uid()); }
@@ -112,11 +118,11 @@ function OrderTicket({ symbol, asset, onDone }) {
         {byAmount
           ? <input aria-label="Montant en pièces" inputMode="numeric" placeholder="Montant total (frais inclus) en InvestCoins" style={input} value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} />
           : <input aria-label="Quantité" inputMode="decimal" placeholder={`Quantité de ${symbol} (8 décimales max)`} style={input} value={qty} onChange={(e) => setQty(e.target.value.replace(',', '.'))} />}
-        {!isMarket && <input aria-label="Prix" inputMode="decimal" placeholder={type === 'limit' ? 'Prix limite en $' : type === 'stop_loss' ? 'Prix de déclenchement (sous le prix actuel)' : 'Prix de déclenchement (au-dessus du prix actuel)'} style={input} value={price} onChange={(e) => setPrice(e.target.value.replace(',', '.'))} />}
+        {!isMarket && <input aria-label="Prix" inputMode="decimal" placeholder={type === 'limit' ? 'Prix limite en InvestCoins par unité' : type === 'stop_loss' ? 'Prix de déclenchement en InvestCoins (sous le prix actuel)' : 'Prix de déclenchement en InvestCoins (au-dessus du prix actuel)'} style={input} value={price} onChange={(e) => setPrice(e.target.value.replace(',', '.'))} />}
       </div>
       {quote && (
         <div data-testid="quote" style={{ marginTop: 10, fontSize: 13, color: 'var(--ik-text-2)', lineHeight: 1.6 }}>
-          Prix estimé <b>{usd(quote.execution.price)}</b> (marché {usd(quote.refPrice)}) · écart<HelpTip term="ecart-achat-vente" /> {quote.execution.spreadPct.toFixed(2)} % · glissement<HelpTip term="glissement" /> {quote.execution.slippagePct.toFixed(3)} %<br />
+          Prix estimé <b>{unitCoins(quote.execution.priceCoins)}</b> (marché {unitCoins(quote.refPriceCoins)}, soit {usd(quote.refPrice)}) · écart<HelpTip term="ecart-achat-vente" /> {quote.execution.spreadPct.toFixed(2)} % · glissement<HelpTip term="glissement" /> {quote.execution.slippagePct.toFixed(3)} %<br />
           Montant <b>{coins(quote.execution.notionalCoins)}</b> · frais <b>{coins(quote.execution.feeCoins)}</b> · {side === 'buy' ? 'total débité' : 'net crédité (avant impôt)'} <b>{coins(quote.execution.totalCoins)}</b>
           {quote.stale && <div style={{ color: 'var(--ik-warning)' }}>Cet actif n&apos;est plus coté : dernier prix connu.</div>}
         </div>
@@ -155,7 +161,7 @@ function PortfolioView({ simulatedAt, refreshKey, onOpen, assets }) {
             {p.positions.map((x) => (
               <tr key={x.symbol} data-testid={`pos-${x.symbol}`} onClick={() => onOpen(x.symbol)} style={{ cursor: 'pointer', borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)', textAlign: 'right' }}>
                 <td style={{ textAlign: 'left', padding: '10px 12px' }}><b>{x.symbol}</b> <span style={{ color: 'var(--ik-text-3)' }}>{x.name}</span></td>
-                <td style={{ padding: 8 }}>{x.quantity}</td><td style={{ padding: 8 }}>{usd(x.avgCost)}</td><td style={{ padding: 8 }}>{usd(x.price)}</td><td style={{ padding: 8 }}>{coins(x.valueCoins)}</td>
+                <td style={{ padding: 8 }}>{x.quantity}</td><td style={{ padding: 8 }}>{unitCoins(x.avgCostCoins)}</td><td style={{ padding: 8 }}>{fmtPrice(x.priceCoins, x.priceUsd)}</td><td style={{ padding: 8 }}>{x.valueCoins == null ? '—' : coins(x.valueCoins)}</td>
                 <td style={{ padding: 8, color: tone(x.unrealizedCoins) }}>{coins(x.unrealizedCoins)}{x.unrealizedPct !== null && ` (${x.unrealizedPct >= 0 ? '+' : ''}${x.unrealizedPct.toLocaleString('fr-FR')} %)`}</td><td style={{ padding: 8 }}>{x.allocationPct.toLocaleString('fr-FR')} %</td>
               </tr>
             ))}
@@ -167,7 +173,7 @@ function PortfolioView({ simulatedAt, refreshKey, onOpen, assets }) {
         <h3 style={{ margin: '0 0 8px', color: 'var(--ik-text)', fontSize: 16 }}>Ordres en attente</h3>
         {p.openOrders.length === 0 ? <div style={{ color: 'var(--ik-text-3)', fontSize: 13 }}>Aucun ordre en attente.</div> : p.openOrders.map((o) => (
           <div key={o.id} data-testid={`open-${o.id}`} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '6px 0', borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)', fontSize: 13, color: 'var(--ik-text-2)' }}>
-            <span style={{ flex: '1 1 240px' }}><b>{o.side === 'buy' ? 'Achat' : 'Vente'}</b> {o.quantity} {o.symbol} · {TYPE_LABEL[o.type]} à {usd(o.price)}</span>
+            <span style={{ flex: '1 1 240px' }}><b>{o.side === 'buy' ? 'Achat' : 'Vente'}</b> {o.quantity} {o.symbol} · {TYPE_LABEL[o.type]} à {unitCoins(o.triggerCoins)}</span>
             <button style={btn(false)} onClick={() => cancel(o.id)}>Annuler</button>
           </div>
         ))}
@@ -179,7 +185,7 @@ function PortfolioView({ simulatedAt, refreshKey, onOpen, assets }) {
           <tbody>{history.map((o) => (
             <tr key={o.id} style={{ borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)', textAlign: 'right' }}>
               <td style={{ textAlign: 'left', padding: 6 }}>{dateFr(o.fill.simAt)}</td><td style={{ textAlign: 'left', padding: 6 }}>{o.side === 'buy' ? 'Achat' : 'Vente'} {o.fill.quantity} {o.symbol}</td>
-              <td style={{ padding: 6 }}>{usd(o.fill.price)}</td><td style={{ padding: 6 }}>{coins(o.fill.notionalCoins)}</td><td style={{ padding: 6 }}>{coins(o.fill.feeCoins)}</td><td style={{ padding: 6 }}>{coins(o.fill.taxCoins)}</td>
+              <td style={{ padding: 6 }}>{unitCoins(o.fill.priceCoins)}</td><td style={{ padding: 6 }}>{coins(o.fill.notionalCoins)}</td><td style={{ padding: 6 }}>{coins(o.fill.feeCoins)}</td><td style={{ padding: 6 }}>{coins(o.fill.taxCoins)}</td>
               <td style={{ padding: 6, color: o.fill.gainCoins == null ? 'var(--ik-text-3)' : tone(o.fill.gainCoins) }}>{o.fill.gainCoins == null ? '—' : coins(o.fill.gainCoins)}</td>
             </tr>))}
             {!history.length && <tr><td colSpan={7} style={{ padding: 12, textAlign: 'center', color: 'var(--ik-text-3)' }}>Aucune exécution pour l&apos;instant.</td></tr>}
@@ -360,7 +366,7 @@ function AssetList({ assets, onOpen, filters, setFilters, categories }) {
             {assets.map((a) => (
               <tr key={a.symbol} data-testid={`row-${a.symbol}`} onClick={() => onOpen(a.symbol)} style={{ cursor: 'pointer', borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)', textAlign: 'right', opacity: a.stale ? 0.6 : 1 }}>
                 <td style={{ textAlign: 'left', padding: '10px 12px' }}><strong>{a.symbol}</strong> <span style={{ color: 'var(--ik-text-3)' }}>{a.name}</span>{a.synthetic && <span title="Données fictives" style={{ marginLeft: 6, fontSize: 10, color: 'var(--ik-warning)', border: '1px solid var(--ik-warning)', borderRadius: 4, padding: '0 4px' }}>FICTIF</span>}{a.collapsed && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--ik-negative)', border: '1px solid var(--ik-negative)', borderRadius: 4, padding: '0 4px' }}>EFFONDRÉ</span>}</td>
-                <td style={{ padding: 8 }}>{usd(a.price)}</td><td style={{ padding: 8 }}><Pct v={a.change1d} /></td><td style={{ padding: 8 }}><Pct v={a.change7d} /></td><td style={{ padding: 8 }}><Pct v={a.change30d} /></td>
+                <td style={{ padding: 8 }}>{fmtPrice(a.priceCoins, a.price)}</td><td style={{ padding: 8 }}><Pct v={a.change1d} /></td><td style={{ padding: 8 }}><Pct v={a.change7d} /></td><td style={{ padding: 8 }}><Pct v={a.change30d} /></td>
                 <td style={{ padding: 8 }}>{big(a.volume24h)}</td><td style={{ padding: 8 }}>{big(a.marketCap)}</td><td style={{ padding: 8 }}>{'●'.repeat(a.risk)}<span style={{ color: 'var(--ik-border-strong)' }}>{'●'.repeat(5 - a.risk)}</span></td>
               </tr>
             ))}
@@ -381,8 +387,8 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
   useEffect(() => { reloadMine(); }, [reloadMine, simulatedAt]);
   const markers = useMemo(() => mine.orders.map((o) => ({ ts: o.fill.simAt - 1, side: o.side, text: `${o.side === 'buy' ? 'A' : 'V'} ${o.fill.quantity}` })), [mine.orders]);
   const levels = useMemo(() => [
-    ...(mine.position ? [{ price: mine.position.avgCost, color: 'line', title: 'prix moyen' }] : []),
-    ...((mine.open || []).map((o) => ({ price: o.price, color: o.side === 'buy' ? 'up' : 'down', title: TYPE_LABEL[o.type] }))),
+    ...(mine.position ? [{ price: mine.position.avgCostCoins, unit: 'coins', color: 'line', title: 'prix moyen' }] : []),
+    ...((mine.open || []).map((o) => ({ price: o.triggerCoins, unit: 'coins', color: o.side === 'buy' ? 'up' : 'down', title: TYPE_LABEL[o.type] }))),
   ], [mine]);
   const [tf, setTf] = useState(TIMEFRAME_DEFAULT);
   const [err, setErr] = useState('');
@@ -402,7 +408,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
     return () => { off = true; };
   }, [symbol, cmpWith, tf, simulatedAt]);
 
-  const loader = useCallback((sym, frame, before) => call(`/candles?symbol=${encodeURIComponent(sym)}&tf=${frame}${before != null ? `&before=${before}` : ''}&limit=300`), []);
+  const loader = useCallback((sym, frame, before) => call(`/candles?symbol=${encodeURIComponent(sym)}&tf=${frame}${before != null ? `&before=${before}` : ''}&limit=300${state.fx?.available ? '&unit=coins' : ''}`).catch((e) => { if (e.code === 'FX_UNAVAILABLE') return call(`/candles?symbol=${encodeURIComponent(sym)}&tf=${frame}${before != null ? `&before=${before}` : ''}&limit=300`); throw e; }), [state.fx?.available]);
   const a = info?.asset;
   const frames = state.timeframes.filter((t) => !info || info.timeframes.includes(t.id));
 
@@ -415,7 +421,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
       <div style={card}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--ik-text)' }}>{a.name} <span style={{ color: 'var(--ik-text-3)', fontSize: 16 }}>{a.symbol}</span></h2>
-          <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--ik-text)' }}>{usd(a.price)}</span><Pct v={a.change1d} />
+          <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--ik-text)' }}>{fmtPrice(a.priceCoins, a.price)}</span>{a.priceCoins != null && <span style={{ color: 'var(--ik-text-3)', fontSize: 13 }}>({usd(a.price)})</span>}<Pct v={a.change1d} />
         </div>
         <div style={{ color: 'var(--ik-text-3)', fontSize: 13, margin: '4px 0 10px' }}>{state.categories[a.category] || a.category} · coté depuis le {a.listedSince ? dateFr(Date.parse(a.listedSince)) : '—'}</div>
         <p style={{ color: 'var(--ik-text-2)', lineHeight: 1.6, margin: '0 0 10px' }}>{a.description}</p>

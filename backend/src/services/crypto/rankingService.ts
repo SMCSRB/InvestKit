@@ -4,7 +4,7 @@ import { leaderboardRepository } from '../../repositories/leaderboardRepository'
 import { computeNetPerformance } from '../../engine/immo/valuation';
 import { computePerformancePct } from '../../utils/performance';
 import { portfolioDebtInfo } from '../bankPortfolioService';
-import { CRYPTO_DOMAIN, CRYPTO_MODE, CRYPTO_ECONOMY as E } from '../../config/cryptoMarketRules';
+import { CRYPTO_DOMAIN, CRYPTO_MODE } from '../../config/cryptoMarketRules';
 import { LEADERBOARD_SIZE } from '../../config/game';
 import { RANKING_MIN_INVESTED } from '../../config/economy';
 import { CryptoDataError } from './dataService';
@@ -19,7 +19,11 @@ export const snapshotLeaderboard = async (db: Queryable, account: CryptoAccount,
   const userId = account.userId;
   const pos = (await db.query(`SELECT a.symbol, p.quantity::text AS q FROM crypto_positions p JOIN crypto_assets a ON a.id = p.asset_id WHERE p.user_id = $1 AND p.quantity > 0`, [userId])).rows;
   let equity = 0;
-  for (const p of pos) { const m = await marketFor(db, p.symbol, atMs); equity += Math.floor(((m?.price ?? 0) * num(p.q)) / E.usdPerCoin); }
+  for (const p of pos) {
+    const m = await marketFor(db, p.symbol, atMs);
+    if (m && m.fx === null) return;                // sans taux de change ce jour-là, pas d'instantané (jamais une valeur devinée)
+    equity += Math.floor(((m?.price ?? 0) * num(p.q)) / (m?.fx ?? 1));
+  }
   const f = (await db.query(
     `SELECT COALESCE(SUM(notional_coins + fee_coins) FILTER (WHERE side = 'buy' AND NOT swap), 0)::bigint AS bought,
             COALESCE(SUM(notional_coins - fee_coins - tax_coins) FILTER (WHERE side = 'sell' AND NOT swap), 0)::bigint AS proceeds,

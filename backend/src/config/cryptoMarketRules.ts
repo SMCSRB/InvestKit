@@ -44,7 +44,6 @@ export const DISCLAIMER = 'Simulation à but éducatif, pas un conseil en invest
 // ⚠️ TOUTES ces valeurs sont des VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER (inspirées des ordres de grandeur des
 // plateformes d'échange grand public, pas de leurs barèmes exacts).
 export const CRYPTO_ECONOMY = {
-  usdPerCoin: 1,                 // conversion propre au domaine Crypto : 1 InvestCoin = 1 $ de jeu (l'unification 1 InvestCoin = 20 € est reportée)
   minNotionalCoins: 10,          // montant minimal d'un ordre (hors sortie complète d'une position)
   quantityDecimals: 8,
   maxOpenOrders: 20,

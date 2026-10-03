@@ -20,7 +20,9 @@ export const slippageFraction = (notionalUsd: number, avgDailyVolumeUsd: number)
   return Math.min(E.slippage.maxFraction, E.slippage.k * Math.sqrt(notionalUsd / avgDailyVolumeUsd));
 };
 
-export interface ExecInput { side: Side; refPrice: number; quantity: number; tier: number; avgDailyVolumeUsd: number; maker: boolean; stressMultiplier?: number }
+// `usdPerCoin` : dollars pour 1 InvestCoin (= 1 €) ce jour-là, d'après le taux de la BCE ; décidé par le serveur. Prix, écart et glissement restent en dollars ;
+// seul le montant final est converti en pièces. Défaut 1 : 1 InvestCoin = 1 $ (tests du moteur).
+export interface ExecInput { side: Side; refPrice: number; quantity: number; tier: number; avgDailyVolumeUsd: number; maker: boolean; stressMultiplier?: number; usdPerCoin?: number }
 export interface Execution { price: number; spreadPct: number; slippagePct: number; notionalCoins: number; feeCoins: number }
 
 // Prix effectif : un achat paie plus cher, une vente reçoit moins (demi-écart + glissement). Un ordre maker s'exécute à son prix, sans écart ni glissement.
@@ -32,7 +34,9 @@ export const executeAt = (i: ExecInput): Execution => {
   const slip = i.maker ? 0 : Math.min(E.slippage.maxFraction * mult, slippageFraction(notionalUsdRef, i.avgDailyVolumeUsd) * mult);
   const factor = 1 + (i.side === 'buy' ? 1 : -1) * (spreadPct / 200 + slip);
   const price = Math.max(0, i.refPrice * factor);
-  const raw = (price * i.quantity) / E.usdPerCoin;
+  const rate = i.usdPerCoin ?? 1;
+  if (!(rate > 0) || !Number.isFinite(rate)) throw new Error('Taux de change invalide');
+  const raw = (price * i.quantity) / rate;
   const notionalCoins = i.side === 'buy' ? Math.ceil(raw - 1e-9) : Math.floor(raw + 1e-9);
   return { price, spreadPct, slippagePct: slip * 100, notionalCoins, feeCoins: feeCoins(notionalCoins, i.tier, i.maker) };
 };
