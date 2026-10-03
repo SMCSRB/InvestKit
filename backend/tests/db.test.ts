@@ -5,7 +5,7 @@ import { query } from '../src/utils/db';
 import { investcoinsRepository, InsufficientFundsError } from '../src/repositories/investcoinsRepository';
 import { tradingService, TradingError } from '../src/services/tradingService';
 import { claimDailyReward } from '../src/services/dailyRewardService';
-import { STARTING_CAPITAL, RANKING_MIN_INVESTED } from '../src/config/economy';
+import { STARTING_CAPITAL, RANKING_MIN_INVESTED, DAILY_REWARD_COINS } from '../src/config/economy';
 import { activateAccount } from '../src/services/verificationService';
 import { DOMAINS } from '../src/data/marketData';
 import { invitationRepository, normalizeInvitationCode } from '../src/repositories/invitationRepository';
@@ -136,17 +136,15 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       const uid = await createUser({ balance: 0 });
       const results = await Promise.all(Array.from({ length: 10 }, () => claimDailyReward(uid)));
       expect(results.filter((r) => r.claimed).length).toBe(1);
-      expect(await balanceOf(uid)).toBe(50);
+      expect(await balanceOf(uid)).toBe(DAILY_REWARD_COINS);
     });
 
-    it('série : jour suivant +1, jour manqué remet à 1 (horloge injectée)', async () => {
+    it('aucune série : le montant reste le même, jours consécutifs ou jour manqué (horloge injectée)', async () => {
       const uid = await createUser({ balance: 0 });
-      const d1 = new Date('2026-03-01T10:00:00Z');
-      const r1 = await claimDailyReward(uid, d1);
-      const r2 = await claimDailyReward(uid, new Date('2026-03-02T09:00:00Z'));
-      const r3 = await claimDailyReward(uid, new Date('2026-03-04T09:00:00Z'));
-      expect([r1, r2, r3].map((r) => r.claimed && r.newStreak)).toEqual([1, 2, 1]);
-      expect(r2.claimed && r2.reward).toBe(60);
+      const r1 = await claimDailyReward(uid, new Date('2026-03-02T10:00:00Z'));   // lundi
+      const r2 = await claimDailyReward(uid, new Date('2026-03-03T09:00:00Z'));   // mardi (jour suivant)
+      const r3 = await claimDailyReward(uid, new Date('2026-03-05T09:00:00Z'));   // jeudi (jour manqué)
+      expect([r1, r2, r3].map((r) => r.claimed && r.reward)).toEqual([DAILY_REWARD_COINS, DAILY_REWARD_COINS, DAILY_REWARD_COINS]);
     });
   });
 

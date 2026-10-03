@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, TokenPayload } from '../utils/jwt';
 import { userStatus } from '../utils/userStatus';
+import { recordActiveDay } from '../services/activityService';
 import {
   SESSION_COOKIE, CSRF_COOKIE, CSRF_HEADER, readCookie, isSafeMethod, csrfValid, csrfTokenFor, originAllowed, setSessionCookies,
 } from '../utils/session';
@@ -81,6 +82,9 @@ export const authMiddleware = async (
       }
       req.impersonatedBy = payload.impersonatedBy;
     }
+
+    // Jour actif (compteur sans pénalité) : seulement pour le joueur lui-même, jamais pour une session d'impersonation.
+    if (!payload.impersonatedBy) await recordActiveDay(payload.userId);
 
     req.user = payload;
     req.authVia = cookieToken ? 'cookie' : 'bearer';

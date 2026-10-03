@@ -84,10 +84,11 @@ describe('vie du tableau de bord (lot 8) : mouvement honnête et respectueux', (
     for (const f of frames) expect(f).not.toMatch(/\b(width|height|top|left|right|bottom|margin|padding)\s*:/);
   });
 
-  it('l\'accueil n\'affiche que des données réelles (nom, série, patrimoine du serveur) et rien d\'inventé', () => {
+  it('l\'accueil n\'affiche que des données réelles (nom, jours actifs, patrimoine du serveur) et rien d\'inventé', () => {
     const hero = read('dashboard/DashHero.jsx');
-    expect(hero).toContain('shell?.wallet'); // série et récompense : données partagées de la coque (/economy/balance)
-    expect(hero).toMatch(/streak > 0/);                 // pas de série affichée tant qu'elle n'existe pas
+    expect(hero).toContain('shell?.wallet'); // jours actifs et récompense : données partagées de la coque (/economy/balance)
+    expect(hero).toMatch(/activeDays > 0/);             // aucun compteur affiché tant qu'il n'existe pas
+    expect(hero).not.toMatch(/streak|série de/i);       // plus aucune série : ni compteur, ni message de série
     expect(hero).toMatch(/Number\.isFinite\(patrimoine\)/);
     const prog = read('dashboard/ProgressCard.jsx');
     expect(prog).toContain('useEducationProgress');     // niveau et XP réels

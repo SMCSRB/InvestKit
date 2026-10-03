@@ -18,7 +18,6 @@ export interface User {
   stripe_customer_id?: string;
   totp_secret?: string;
   totp_backup_codes?: string[];
-  daily_streak: number;
   last_daily_claim_at?: Date;
   referral_code?: string;
   referred_by_user_id?: string;
@@ -318,10 +317,4 @@ export const userRepository = {
     );
   },
 
-  async setDailyStreak(id: string, streak: number, claimedAt: Date): Promise<void> {
-    await query(
-      `UPDATE users SET daily_streak = $1, last_daily_claim_at = $2, updated_at = NOW() WHERE id = $3`,
-      [streak, claimedAt, id]
-    );
-  },
 };

@@ -30,7 +30,7 @@ export default function HeroPreview() {
           </div>
         </Layer>
         <Layer z={96} par={-0.05} className="lp-abs lp-abs--a">
-          <div className="lp-bob lp-chip3d"><Icon name="flame" size={16} />Série de 7 jours</div>
+          <div className="lp-bob lp-chip3d"><Icon name="gift" size={16} />Récompense du jour</div>
         </Layer>
         <Layer z={78} par={-0.035} className="lp-abs lp-abs--b">
           <div className="lp-bob lp-bob--late lp-chip3d"><Icon name="trophy" size={16} />Niveau 3</div>

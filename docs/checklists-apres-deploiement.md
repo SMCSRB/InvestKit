@@ -360,7 +360,7 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 À fusionner **après** la PR « Design 2 ». Connecte-toi avec ton compte de test.
 
 **Coque et navigation**
-1. `/dashboard` : menu latéral à gauche, barre du haut avec ton solde d'InvestCoins (réel), ta série de jours, tes notifications.
+1. `/dashboard` : menu latéral à gauche, barre du haut avec ton solde d'InvestCoins (réel), tes jours actifs, tes notifications.
 2. Les onglets sont : Vue d'ensemble, Marché, Simulateur, Académie, Amis, Notifications, Activité, Paramètres. Les anciens onglets « Projets » et « Risques » (qui n'affichaient que « Section en développement ») sont masqués ; un ancien lien `?tab=risk` ouvre l'analyse de risque réelle (dans le Simulateur).
 3. Clique chaque onglet : l'adresse change (`?tab=…`), F5 te remet sur le même onglet. Les liens du menu latéral (Bourse et PEA, Éducation, Amis, Paramètres…) ouvrent le bon onglet.
 
@@ -468,7 +468,7 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 À fusionner **après** la PR « Design 7 ». Ouvre `/dashboard` (Vue d'ensemble).
 
 1. **Accueil** : un grand bandeau violet te salue (« Bonjour/Bon après-midi/Bonsoir, <ton nom> »). Bouge la souris dessus : la pièce 3D, les petites pièces, les sphères et la carte « Patrimoine » se décalent à des profondeurs différentes (parallaxe) et flottent doucement. Sur téléphone : pas de suivi de souris, la scène flotte seulement.
-2. **Série de jours** : la pastille « Série de N jours » n'apparaît que si ta série est réelle (> 0). Si ta récompense du jour est disponible, un bouton blanc « Récupérer ma récompense du jour » pulse ; il fait exactement la même chose que le bouton cadeau de la barre du haut (compare ton solde avant/après).
+2. **Jours actifs** : la pastille « N jours actifs » n'apparaît que si le compteur est réel (> 0). Si ta récompense du jour est disponible, un bouton blanc « Récupérer ma récompense du jour » s'affiche ; il fait exactement la même chose que le bouton cadeau de la barre du haut (compare ton solde avant/après).
 3. **Raccourcis** (Bourse et PEA, Crypto, Immobilier, Apprendre) : les cartes s'inclinent vers le curseur avec un reflet, l'icône se soulève au survol. Chaque carte ouvre la bonne page.
 4. **Cartes de chiffres** (Patrimoine, Liquidités, Titres, Dette) : même inclinaison ; les chiffres s'animent jusqu'à leur valeur réelle.
 5. **Ma progression** : un anneau se remplit jusqu'à ton avancement vers le niveau suivant ; niveau et XP viennent de ta progression d'éducation (compare avec l'onglet Académie). « Continuer à apprendre » ouvre `/education`.
@@ -714,3 +714,17 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 6. Tableau de bord : la phrase sous le patrimoine dit « Tous les montants sont en InvestCoins (1 InvestCoin = 1 €) ».
 7. Glossaire, fiche « InvestCoin » : « 1 InvestCoin vaut 1 € de jeu, dans tous les domaines ».
 8. La Crypto reste en dollars pour l'instant (conversion en euros avec le taux de la BCE : PR suivante).
+
+## Récompense quotidienne : 10 🪙 fixes, 3 jours par semaine, sans série
+À dérouler chez toi après avoir fusionné cette PR (après « Immobilier : 1 InvestCoin = 1 € »). Utilise un compte neuf.
+
+1. Barre du haut : clique sur le bouton cadeau. Message **« +10 InvestCoins ! »** (sans mot « série »), solde +10.
+2. À côté du cadeau et sur l'accueil du tableau de bord : une pastille **« 1 jour actif »** (icône calendrier). Plus aucune flamme ni « Série de N jours ».
+3. Reclique sur le cadeau : **« Récompense du jour déjà récupérée. »** Le solde ne bouge pas.
+4. Le bouton cadeau n'a plus d'animation qui clignote : juste un anneau fixe quand la récompense est disponible.
+5. Historique (Banque et InvestCoins) : une ligne « daily_reward » de +10, rien d'autre.
+6. Plafond de la semaine : vérifié par un test automatique (3 jours payés, le 4e refusé). Pour le voir à l'écran, **sur la copie de test uniquement**, ajoute 3 lignes pour les jours déjà passés de la semaine en cours (remplace l'identifiant et les dates par ceux de ton compte de test et du lundi, mardi, mercredi de cette semaine) :
+   `INSERT INTO daily_reward_claims (user_id, claim_day, week_start, coins) VALUES ('<id>','<lundi>','<lundi>',10),('<id>','<mardi>','<lundi>',10),('<id>','<mercredi>','<lundi>',10);`
+   Puis clique sur le cadeau : **« Tu as déjà reçu tes 3 récompenses de la semaine. La prochaine est disponible lundi. »**
+7. Page d'accueil du site (déconnecté) : la puce « Récompense du jour » et la phrase « jusqu'à 3 par semaine, sans série à tenir » remplacent « Série de 7 jours ».
+8. Les jours actifs ne baissent jamais, même après des semaines d'absence.

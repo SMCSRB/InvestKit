@@ -57,12 +57,14 @@ export const economyController = {
       if (!result.claimed) {
         if (result.reason === 'USER_NOT_FOUND') {
           res.status(404).json({ error: 'Utilisateur non trouvé' });
+        } else if (result.reason === 'WEEKLY_CAP') {
+          res.status(400).json({ error: `Tu as déjà reçu tes ${result.maxPerWeek} récompenses de la semaine. La prochaine est disponible lundi.`, code: 'WEEKLY_CAP', nextWeekStart: result.nextWeekStart });
         } else {
-          res.status(400).json({ error: 'Récompense déjà réclamée aujourd\'hui' });
+          res.status(400).json({ error: 'Récompense du jour déjà récupérée.', code: 'ALREADY_CLAIMED' });
         }
         return;
       }
-      res.json({ success: true, reward: result.reward, newStreak: result.newStreak, balance: result.balance });
+      res.json({ success: true, reward: result.reward, balance: result.balance, claimedThisWeek: result.claimedThisWeek, maxPerWeek: result.maxPerWeek });
     } catch (error) {
       console.error('Claim daily reward error:', error);
       res.status(500).json({ error: 'Erreur lors de la réclamation de la récompense' });

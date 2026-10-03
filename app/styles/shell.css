@@ -380,7 +380,8 @@
   flex: none;
 }
 .ik-rewardbtn.is-ready {
-  animation: ik-pulse-ring 1.8s var(--ik-ease) infinite;
+  /* Repère calme (anneau fixe) : aucune animation qui réclame l'attention, aucune pression pour revenir. */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ik-primary, #8b5cf6) 40%, transparent);
 }
 
 /* Contenu */

@@ -215,9 +215,10 @@ function FeatureVisual({ kind }) {
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800 }}><Coin size={26} /> Récompense du jour</div>
-      <div className="lp-streak" aria-label="Série de jours">
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <i key={i} className={i < 5 ? 'is-on' : ''}>{d}</i>)}
+      <div className="lp-streak" aria-label="Jusqu'à 3 jours payés par semaine">
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <i key={i} className={[0, 2, 4].includes(i) ? 'is-on' : ''}>{d}</i>)}
       </div>
+      <span className="ik-muted">Jusqu'à 3 jours payés par semaine, sans série à tenir.</span>
     </div>
   );
 }
@@ -228,7 +229,7 @@ const FEATURES = [
   { kind: 'time', t: 'Le temps en accéléré', d: 'Avance mois par mois ou année par année sur un historique de marché simulé. Le mode temps réel n\'est pas encore disponible.' },
   { kind: 'chart', t: 'Des graphiques professionnels', d: 'Bougies, volumes, indicateurs, outils de dessin, comparaison d\'actifs et plein écran, comme sur une vraie plateforme.' },
   { kind: 'rank', t: 'Un classement entre joueurs', d: 'Compare ta performance à celle des autres, par domaine, avec un capital minimum pour que le classement reste équitable.' },
-  { kind: 'coins', t: 'Une économie d\'InvestCoins', d: 'Récompense quotidienne, séries de jours et badges. Les InvestCoins restent virtuels : pas de boutique, pas de retrait, pas d\'échange entre joueurs.' },
+  { kind: 'coins', t: 'Une économie d\'InvestCoins', d: 'Une petite récompense du jour (jusqu\'à 3 par semaine, sans série à tenir) et des badges. Les InvestCoins restent virtuels : pas de boutique, pas de retrait, pas d\'échange entre joueurs.' },
 ];
 
 export function Features() {

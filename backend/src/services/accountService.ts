@@ -25,7 +25,7 @@ export class AccountError extends Error {
 export const DELETE_CONFIRM_PHRASE = 'SUPPRIMER';
 
 const USER_FIELDS = `id, email, first_name, last_name, username, role, subscription_tier, free_domain, pro_override, account_type, interests, language,
-  enable_2fa, daily_streak, last_daily_claim_at, referral_code, referred_by_user_id, verified, created_at, last_login_at, friend_code, bio`;
+  enable_2fa, last_daily_claim_at, referral_code, referred_by_user_id, verified, created_at, last_login_at, friend_code, bio`;
 
 export const exportUserData = async (userId: string) => {
   const one = async (sql: string, params: any[] = [userId]) => (await query(sql, params)).rows;
