@@ -25,3 +25,9 @@ describe('page Bourse', () => {
     expect(read('app/dashboard/DashHero.jsx')).toContain("href: '/bourse'");
   });
 });
+
+describe('ancien onglet Bourse du tableau de bord', () => {
+  it('?tab=trading et ?tab=risk redirigent vers /bourse', () => {
+    expect(read('app/dashboard/page.jsx')).toContain("router.replace('/bourse')");
+  });
+});

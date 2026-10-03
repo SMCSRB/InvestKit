@@ -886,3 +886,7 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Onglet **Classement** : ta progression vers le seuil (2 500 investis, 5 jours actifs) et le tableau par année.
 6. Compte gratuit sans domaine choisi : un bandeau propose de choisir la Bourse ; avec un autre domaine : message « domaine verrouillé ».
 7. Sur téléphone (390 px) : pas de défilement horizontal.
+
+## Bourse : ancien onglet du tableau de bord
+1. Ouvre `/dashboard?tab=trading` (ou un vieux favori) : tu arrives directement sur **/bourse**.
+2. Le tableau de bord (accueil) s'ouvre toujours normalement, sans onglet Bourse.
