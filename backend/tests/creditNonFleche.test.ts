@@ -38,11 +38,10 @@ describe.skipIf(!hasDb)('crédit : prêt personnel libre, prêt immobilier attac
 
   it('prêt personnel : dépensable aussi en Bourse (aucun fléchage)', async () => {
     const { investcoinsRepository } = await import('../src/repositories/investcoinsRepository');
-    const u = await createUser({ balance: 0, freeDomain: 'real_estate' });
+    const u = await createUser({ balance: 3000, freeDomain: 'real_estate' });   // pièces propres : la banque exige une réserve avant de prêter
     await re.startGame(u, 'employee');
-    // le profil « employee » a des revenus : la réserve de sécurité n'existe pas encore dans cette branche
     await personal.borrow(u, { amountCoins: 500, months: 24 });
-    await investcoinsRepository.applyTransaction(u, -500, 'trade_buy', { domain: 'stocks' });
+    await investcoinsRepository.applyTransaction(u, -3500, 'trade_buy', { domain: 'stocks' });
     expect(await balanceOf(u)).toBe(0);
   });
 

@@ -6,7 +6,7 @@ import { Button, Card, Modal, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { VIEWS } from './art';
 import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
-import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct } from './api';
+import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct, eurText } from './api';
 import Coin from '@/app/components/ui/Coin';
 import Link from 'next/link';
 
@@ -98,7 +98,7 @@ function RentVsBuy({ l, pv, rentMode, down }) {
         <div className="rp-vs__col"><span><Icon name="keyRound" size={16} />Locataire</span><strong>{eur(tenant)}<small>/mois</small></strong><p>Le loyer, et rien ne t’appartient à la fin.</p></div>
         <div className="rp-vs__col is-own"><span><Icon name="house" size={16} />Propriétaire</span><strong>{eur(owner)}<small>/mois</small></strong><p>Mensualité {eur(pv.loan.monthlyPaymentWithInsurance)} + charges et taxes {eur(yearly / 12)}.</p></div>
       </div>
-      <p className="rp-vs__note">{diff > 0 ? `Acheter coûte ${eur(diff)} de plus par mois que louer ce bien` : `Acheter coûte ${eur(-diff)} de moins par mois que louer ce bien`} : une partie de la mensualité rembourse le prêt, donc te constitue un patrimoine. Calcul avec un apport de {coins(down)}.</p>
+      <p className="rp-vs__note">{diff > 0 ? `Acheter coûte ${eurText(diff)} de plus par mois que louer ce bien` : `Acheter coûte ${eurText(-diff)} de moins par mois que louer ce bien`} : une partie de la mensualité rembourse le prêt, donc te constitue un patrimoine. Calcul avec un apport de {coins(down)}.</p>
     </div>
   );
 }
@@ -158,7 +158,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
   };
 
   const canBuy = pv?.bank?.approved && pv?.coins?.affordable && access?.canBuy;
-  const bankTone = pv?.bank ? (pv.bank.approved ? (pv.bank.reasons?.length ? 'warn' : 'ok') : 'ko') : 'neutral';
+  const bankTone = pv?.bank ? (pv.bank.approved ? 'ok' : 'ko') : 'neutral';
   const description = describeListing(l, city, neighborhood);
 
   return (
@@ -174,7 +174,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               <p className="rp-hero__where">{city?.name} · {city?.region}{city?.tenseZone && <> · zone tendue<HelpTip term="zone-tendue" /></>}</p>
               <div className="rp-hero__price">
                 {rentMode ? <strong>{eur(l.marketRentMonthly)}<small>/mois</small></strong> : <strong>{eur(l.price)}</strong>}
-                {rentMode ? <span>à l’achat : {eur(l.price)}</span> : <span>≈ {coins(l.priceCoins)} · {eur(l.pricePerSqm)}/m²</span>}
+                {rentMode ? <span>à l’achat : {eur(l.price)}</span> : <span>{eur(l.pricePerSqm)}/m²</span>}
               </div>
             </header>
           </Gallery>
@@ -264,7 +264,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           <Card className="rp-finance" flat id="rp-finance">
             <h2>{rentMode ? 'Et si j’achetais ce bien ?' : 'Simuler mon financement'}</h2>
             <div className="rp-finance__fields">
-              <label className="rp-field"><span>Apport (<Coin />{eurosPerCoin ? `, 1 InvestCoin = ${eurosPerCoin} €` : ''})<HelpTip term="apport" /></span>
+              <label className="rp-field"><span>Apport<HelpTip term="apport" /></span>
                 <span className="rp-field__box"><input className="ik-input" type="number" min="0" inputMode="numeric" value={plan.down} onChange={(e) => setPlan({ ...plan, down: e.target.value })} /><em><Coin /></em></span></label>
               <label className="rp-field"><span>Durée du prêt</span>
                 <select className="ik-select" value={plan.months} onChange={(e) => setPlan({ ...plan, months: e.target.value })}>{[120, 180, 240, 300, 360].map((m) => <option key={m} value={m}>{m / 12} ans</option>)}</select></label>
@@ -282,9 +282,9 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               <>
                 <div className="rp-monthly"><span>Mensualité<HelpTip term="mensualite" /></span><strong>{eur2(pv.loan.monthlyPaymentWithInsurance)}</strong><small>assurance comprise · taux {pct(pv.loan.annualRatePct, 2)}</small></div>
                 <div className={`rp-bank rp-bank--${bankTone}`} role="status">
-                  <strong>{pv.bank.approved ? (pv.bank.reasons?.length ? 'La banque accepte, avec une réserve' : 'La banque accepte') : 'La banque refuse'}</strong>
+                  <strong>{pv.bank.approved ? 'La banque accepte' : 'La banque refuse'}</strong>
                   <p>Endettement<HelpTip term="endettement" /> : {pct(pv.bank.debtRatioPct)} (maximum accepté : {eur(pv.bank.maxMonthlyPayment)}/mois) · reste à vivre<HelpTip term="reste-a-vivre" /> : {eur(pv.bank.livingRemaining)}</p>
-                  {pv.bank.reasons?.map((r) => <p key={r.code} className="rp-bank__reason">• {r.message}</p>)}
+                  {!pv.bank.approved && pv.bank.reasons?.map((r) => <p key={r.code} className="rp-bank__reason">• {r.message}</p>)}
                 </div>
                 <dl className="rp-facts rp-facts--tight">
                   <Row label="Tu empruntes">{eur(pv.costs.loanPrincipal)}</Row>
@@ -320,7 +320,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
       <Portal>
       <div className="rp-stickycta">
-        <div><strong>{rentMode ? `${eur(l.marketRentMonthly)}/mois` : eur(l.price)}</strong><span>{rentMode ? `à l’achat : ${eur(l.price)}` : <>≈ {coins(l.priceCoins)}</>}</span></div>
+        <div><strong>{rentMode ? `${eurText(l.marketRentMonthly)}/mois` : eur(l.price)}</strong><span>{rentMode ? `à l’achat : ${eurText(l.price)}` : `${eurText(l.pricePerSqm)}/m²`}</span></div>
         <Button variant="primary" onClick={() => document.getElementById('rp-finance')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{rentMode ? 'Louer ou acheter ?' : 'Simuler et acheter'}</Button>
       </div>
 

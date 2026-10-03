@@ -21,6 +21,7 @@ export interface PurchaseInput {
   notaryRule: NotaryFeeRule;
   bankRules: BankRules;
   loanFees: (principal: number) => number; // frais de dossier
+  freeCoinsAfter?: number;       // pièces libres (non empruntées) après l'achat, pour la règle de réserve
 }
 
 export interface PurchaseEvaluation {
@@ -32,7 +33,7 @@ export interface PurchaseEvaluation {
   upfrontFees: number;
   taegPct: number | null;
   assessment: Assessment;
-  approved: boolean;             // accord ou accord sous réserve
+  approved: boolean;
 }
 
 export const evaluatePurchase = (input: PurchaseInput): PurchaseEvaluation => {
@@ -65,6 +66,8 @@ export const evaluatePurchase = (input: PurchaseInput): PurchaseEvaluation => {
   const payment = schedule ? schedule.monthlyPaymentWithInsurance : 0;
 
   const assessment = assessLoanApplication(input.household, payment, input.bankRules, input.projectedMonthlyRent, {
+    price: input.price,
+    freeCoinsAfter: input.freeCoinsAfter,
     downPayment: input.downPayment,
     notaryFees: budget.notaryFees,
     loanMonths: input.loanMonths,
@@ -81,6 +84,6 @@ export const evaluatePurchase = (input: PurchaseInput): PurchaseEvaluation => {
     upfrontFees: upfront,
     taegPct,
     assessment,
-    approved: assessment.decision !== 'refused',
+    approved: assessment.decision === 'approved',
   };
 };

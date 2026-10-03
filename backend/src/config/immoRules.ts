@@ -21,8 +21,13 @@ export const BANK_RULES: BankRules = {
   livingRemainingPerChild: 0,
   rentalIncomeWeight: 0.7,   // loyers déjà perçus : 70 % retenus
   projectRentWeight: 0.7,    // loyer prévisionnel du bien acheté : 70 % retenus
-  // Apport minimum : au moins les frais de notaire (décision produit). Modifiable.
+  // Apport minimum : les frais de notaire en entier + 10 % du prix. Un prêt immobilier français couvre le bien, pas les frais de notaire,
+  // et les banques demandent en pratique environ 10 % d'apport. 10 % = VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
   minDownPaymentPctOfNotaryFees: 100,
+  minDownPaymentPctOfPrice: 10,
+  // Réserve de sécurité : 4 mensualités (assurance comprise, tous prêts) à garder en pièces libres après l'achat.
+  // 4 = VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (règle d'équilibrage, pas une règle bancaire officielle).
+  reserveMonthlyPayments: 4,
   // Durée : 25 ans, 27 ans pour un achat avec travaux importants (règle du HCSF,
   // vérifiée sur des sources de presse/courtage le 2026-09-29, pas sur le texte
   // officiel : à reconfirmer). Le HCSF cite aussi les VEFA (neuf) et la

@@ -158,7 +158,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
   const rejects = async (p: Promise<unknown>): Promise<RealEstateError> => { try { await p; } catch (e) { return e as RealEstateError; } throw new Error('aurait dû échouer'); };
   const cheap = (l: any) => l.age === 'old' && l.advertisedWorks === 0 && l.condition !== 'to_renovate' && l.price > 50000 && l.price < 110000;
   const setup = async (opts: { balance?: number; seed?: string; startYear?: number; pred?: (l: any) => boolean; apportShare?: number } = {}) => {
-    const uid = await createUser({ balance: opts.balance ?? 900000, freeDomain: 'real_estate' });
+    const uid = await createUser({ balance: opts.balance ?? 900000, freeDomain: 'real_estate', activeDays: 5 });
     await svc.startGame(uid, 'executive');
     if (opts.seed) await query('UPDATE re_games SET seed = $2 WHERE user_id = $1', [uid, opts.seed]);
     const startYear = opts.startYear ?? 2010;
@@ -301,7 +301,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
 
   describe('difficultés de paiement : amiable puis vente forcée', () => {
     const broke = async (seed: string) => {
-      const s = await setup({ seed, balance: 100000, apportShare: 0.1, pred: (l) => cheap(l) && l.price > 70000 });
+      const s = await setup({ seed, balance: 100000, apportShare: 0.2, pred: (l) => cheap(l) && l.price > 70000 });
       await query('UPDATE investcoins_balance SET balance = 0 WHERE user_id = $1', [s.uid]); // plus aucune pièce
       return s;
     };
@@ -511,14 +511,27 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       const game = (await query('SELECT * FROM re_games WHERE user_id = $1', [uid])).rows[0];
       const w1 = await wealthMetrics({ query: query as any }, game);
       expect(w1.investedEuros).toBeGreaterThan(0);
-      expect(w1.performancePct).toBeCloseTo(((w1.equity + w1.cumulativeCashFlow + w1.saleNetProceeds - w1.investedEuros) / w1.investedEuros) * 100, 1);
+      // Nouvelle définition : gain NET DE REVENTE ÷ capital de départ réel du compte (10 000 en gratuit).
+      expect(w1.startingCapitalCoins).toBe(10000);
+      expect(w1.liquidationValueEuros).toBeLessThan(w1.equity);   // revendre coûte : agence, diagnostics, remboursement anticipé, impôt, décote d'un bien occupé
+      expect(w1.gainLiquidationEuros).toBeCloseTo(w1.liquidationValueEuros + w1.cumulativeCashFlow + w1.saleNetProceeds - w1.investedEuros - w1.bankInterestPaidEuros, 1);
+      expect(w1.performancePct).toBeCloseTo((w1.gainLiquidationEuros / (w1.startingCapitalCoins * EUROS_PER_COIN)) * 100, 2);
+      // Un bien loué se revend avec la décote des biens occupés (10 %) : la valeur de liquidation est plus basse que celle du même bien vide.
+      const status = (await query('SELECT status FROM re_properties WHERE id = $1', [prop.id])).rows[0].status;
+      if (status === 'let') {
+        await query(`UPDATE re_properties SET status = 'vacant' WHERE id = $1`, [prop.id]);
+        const vacant = await wealthMetrics({ query: query as any }, game);
+        await query(`UPDATE re_properties SET status = 'let' WHERE id = $1`, [prop.id]);
+        expect(vacant.liquidationValueEuros).toBeGreaterThan(w1.liquidationValueEuros);
+      }
       await sales.sell(uid, prop.id, 0.85);
       await untilSold(uid, prop.id, 36);
       const game2 = (await query('SELECT * FROM re_games WHERE user_id = $1', [uid])).rows[0];
       const w2 = await wealthMetrics({ query: query as any }, game2);
       expect(w2.equity).toBe(0);
       expect(w2.saleNetProceeds).toBeGreaterThan(0);
-      expect(w2.performancePct).toBeGreaterThan(-100);
+      expect(w2.liquidationValueEuros).toBe(0);   // plus de bien : rien à liquider, le gain vendu reste compté
+      expect(w2.gainLiquidationEuros).toBeCloseTo(w2.cumulativeCashFlow + w2.saleNetProceeds - w2.investedEuros - w2.bankInterestPaidEuros, 1);
       expect(w2.investedEuros).toBeCloseTo(w1.investedEuros, 2);
     });
 

@@ -5,7 +5,7 @@ import Icon from '@/app/components/ui/Icon';
 import { Button } from '@/app/components/ui/primitives';
 import { LazyListingArt } from './art';
 import { Dpe } from './bits';
-import { TYPE_LABEL, eur, listingAlt, pct } from './api';
+import { TYPE_LABEL, eur, eurText, listingAlt, pct } from './api';
 import {
   WORLD, MAX_K, scaleOf, initialView, clampView, zoomAt, panBy, pinchView, fitBounds, boundsOf, clusterPoints, cityLayout, layoutPins, blobPath, mapRng, zoneKey, toScreen,
 } from '@/app/lib/mapGeo';
@@ -14,7 +14,7 @@ import {
 // pincement à deux doigts, regroupement des annonces en bulles numérotées, pastilles de prix = VRAIS boutons.
 // Les villes sont fictives : le dessin est le nôtre ; la liste des résultats reste l'équivalent texte de la carte.
 const ZONE_LABEL = { centre: 'Centre', pericentre: 'Péricentre', peripherie: 'Périphérie' };
-const short = (n) => (n >= 1e6 ? `${(n / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} M€` : n >= 1e4 ? `${Math.round(n / 1e3)} k€` : `${Math.round(n).toLocaleString('fr-FR')} €`);
+const short = (n) => (n >= 1e6 ? `${(n / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} M` : n >= 1e4 ? `${Math.round(n / 1e3)} k` : `${Math.round(n).toLocaleString('fr-FR')}`);
 const lerp = (a, b, t) => a + (b - a) * t;
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -34,7 +34,7 @@ export default function ListingMap({ cities, listings, pool, mode = 'buy', activ
   const setView = useCallback((v) => { viewRef.current = v; setViewState(v); }, []);
   const rent = mode === 'rent';
   const valueOf = useCallback((l) => (rent ? l.marketRentMonthly : l.price), [rent]);
-  const labelOf = useCallback((l) => (rent ? `${Math.round(l.marketRentMonthly).toLocaleString('fr-FR')} €` : short(l.price)), [rent]);
+  const labelOf = useCallback((l) => (rent ? `${Math.round(l.marketRentMonthly).toLocaleString('fr-FR')}` : short(l.price)), [rent]);
 
   // Taille réelle du cadre (la carte occupe toute la place disponible, sur ordinateur comme sur téléphone).
   useEffect(() => {
@@ -214,7 +214,7 @@ export default function ListingMap({ cities, listings, pool, mode = 'buy', activ
                   {view.k >= 2 && roads.map((d, i) => <path key={i} d={d} className="rp-map__road" style={{ strokeWidth: 1.6 / s }} />)}
                   {view.k >= 3.2 && ['peripherie', 'pericentre', 'centre'].map((z) => (
                     <text key={z} x={a.x} y={a.y - a.ry * { peripherie: 0.82, pericentre: 0.52, centre: 0 }[z] + (z === 'centre' ? 3 / s : -4 / s)} textAnchor="middle" className="rp-map__zonelabel" style={{ fontSize: 11 / s, strokeWidth: 3 / s }}>
-                      {ZONE_LABEL[z]}{mean[z] ? ` · ${Math.round(mean[z]).toLocaleString('fr-FR')} €/m²` : ''}
+                      {ZONE_LABEL[z]}{mean[z] ? ` · ${Math.round(mean[z]).toLocaleString('fr-FR')} InvestCoins/m²` : ''}
                     </text>
                   ))}
                 </g>
@@ -241,7 +241,7 @@ export default function ListingMap({ cities, listings, pool, mode = 'buy', activ
               <button key={c.key} type="button" className={`rp-pin rp-pin2 ${activeId === l.id || selected === l.id ? 'is-active' : ''} ${l.urgentSale ? 'is-urgent' : ''}`} style={{ left: p.x, top: p.y }}
                 onMouseEnter={() => onActive?.(l.id)} onMouseLeave={() => onActive?.(null)} onFocus={() => onActive?.(l.id)} onBlur={() => onActive?.(null)}
                 onClick={() => { setSelected(l.id); onActive?.(l.id); }}
-                aria-label={`${TYPE_LABEL[l.type]} ${l.surfaceSqm} m², ${l.neighborhoodName}, ${rent ? `${eur(l.marketRentMonthly)} par mois` : eur(l.price)}${l.urgentSale ? ', vente pressée' : ''}${fav ? ', favori' : ''}. Afficher l’aperçu.`}>
+                aria-label={`${TYPE_LABEL[l.type]} ${l.surfaceSqm} m², ${l.neighborhoodName}, ${rent ? `${eurText(l.marketRentMonthly)} par mois` : eurText(l.price)}${l.urgentSale ? ', vente pressée' : ''}${fav ? ', favori' : ''}. Afficher l’aperçu.`}>
                 {fav && <Icon name="heart" size={11} />}{labelOf(l)}
               </button>
             );
@@ -250,7 +250,7 @@ export default function ListingMap({ cities, listings, pool, mode = 'buy', activ
           const d = Math.round(34 + Math.log2(c.count) * 7);
           return (
             <button key={c.key} type="button" className="rp-cluster" style={{ left: p.x, top: p.y, width: d, height: d }} onClick={() => openCluster(c)}
-              aria-label={`${c.count} annonces groupées, ${rent ? 'loyers' : 'prix'} de ${rent ? `${Math.round(lo)} à ${Math.round(hi)} € par mois` : `${eur(lo)} à ${eur(hi)}`}. Zoomer sur ce groupe.`}>
+              aria-label={`${c.count} annonces groupées, ${rent ? 'loyers' : 'prix'} de ${rent ? `${Math.round(lo)} à ${Math.round(hi)} InvestCoins par mois` : `${eurText(lo)} à ${eurText(hi)}`}. Zoomer sur ce groupe.`}>
               <strong>{c.count}</strong>
             </button>
           );
@@ -261,9 +261,9 @@ export default function ListingMap({ cities, listings, pool, mode = 'buy', activ
             <button type="button" className="rp-map2__popclose" onClick={() => setSelected(null)} aria-label="Fermer l’aperçu"><Icon name="x" size={16} /></button>
             <div className="rp-map2__popmedia"><LazyListingArt listing={sel} alt={listingAlt(sel, cityOf?.[sel.cityId])} /></div>
             <div className="rp-map2__popbody">
-              <strong>{rent ? `${eur(sel.marketRentMonthly)}/mois` : eur(sel.price)}</strong>
+              <strong>{rent ? `${eurText(sel.marketRentMonthly)}/mois` : eur(sel.price)}</strong>
               <span>{TYPE_LABEL[sel.type]} · {sel.surfaceSqm} m² · {sel.rooms} p. · {sel.neighborhoodName}</span>
-              <span className="rp-map2__popmeta"><Dpe cls={sel.energyClass} size="sm" /> {rent ? `${eur(sel.price)} à l’achat` : `rendement ${pct(sel.grossYieldPct)}`}</span>
+              <span className="rp-map2__popmeta"><Dpe cls={sel.energyClass} size="sm" /> {rent ? `${eurText(sel.price)} à l’achat` : `rendement ${pct(sel.grossYieldPct)}`}</span>
               <Button size="sm" variant="primary" onClick={() => onOpen(sel.id)}>Voir la fiche</Button>
             </div>
           </div>

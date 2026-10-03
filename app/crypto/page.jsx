@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import HelpTip from '../components/HelpTip';
+import RankingProgress from '../components/ui/RankingProgress';
 import AppShell from '@/app/components/shell/AppShell';
 import Coin from '@/app/components/ui/Coin';
 import Icon from '@/app/components/ui/Icon';
@@ -315,6 +316,7 @@ function BoardView({ simulatedAt }) {
     <div style={card} data-testid="board">
       <h3 style={{ margin: '0 0 6px', color: 'var(--ik-text)', fontSize: 16 }}>Classement Crypto — {b.period}<HelpTip term="levier" /></h3>
       <p style={{ margin: '0 0 10px', color: 'var(--ik-text-3)', fontSize: 13, lineHeight: 1.5 }}>Il compare les joueurs au <b>même mois simulé</b>, en pourcentage, <b>net de dettes</b> : les intérêts d&apos;un prêt sont déduits, le gain est rapporté à ton capital propre et le <b>levier</b> utilisé est affiché. Il faut avoir investi au moins {b.minCapital} <Coin /> pour être classé.</p>
+      <RankingProgress progress={b.progress} />
       <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--ik-text-2)', fontSize: 13, minWidth: 360 }}>
         <thead><tr style={{ color: 'var(--ik-text-3)', textAlign: 'right' }}><th style={{ textAlign: 'left', padding: 6 }}>#</th><th style={{ textAlign: 'left', padding: 6 }}>Joueur</th><th style={{ padding: 6 }}>Performance</th><th style={{ padding: 6 }}>Levier</th></tr></thead>
         <tbody>{b.entries.map((e) => (

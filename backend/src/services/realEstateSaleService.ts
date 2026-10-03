@@ -16,6 +16,7 @@ import {
 import { EUROS_PER_COIN } from '../config/economy';
 import { LEADERBOARD_SIZE } from '../config/game';
 import { RANKING_MIN_INVESTED } from '../config/economy';
+import { startingCapitalOf, rankingProgress } from './rankingEligibility';
 import { applyEnergyRenovation } from '../engine/immo';
 
 export type SaleKind = 'amicable' | 'distress_amicable' | 'forced';
@@ -67,6 +68,26 @@ const explain = (kind: SaleKind, c: SaleClosing, opts: { discountPct?: number; o
   return parts.join(' ');
 };
 
+// Clôture d'une vente (tous les postes : agence, diagnostics, indemnité de remboursement anticipé, impôts, dépôt de garantie).
+// Utilisée par la vente réelle ET par la valeur de liquidation du classement : un seul calcul.
+const closingFor = (
+  game: GameRow, p: any,
+  i: { capitalRemaining: number; loanRate: number; salePrice: number; forced: boolean; proceedingCosts: number; y: number; m: number }
+): SaleClosing => {
+  const energy = String(p.energy_class).trim() as EnergyClass;
+  const unit = p.property_type as UnitType;
+  const yearsHeld = Math.max(0, Math.floor((monthTotal(i.y, i.m) - monthTotal(p.purchase_year, p.purchase_month)) / 12));
+  const rentalTaxDue = computeRentTax(Number(p.tax_base_ytd), RENT_TAX_RATE_BY_PROFILE[game.profile]);
+  return computeSaleClosing({
+    salePrice: i.salePrice, capitalRemaining: i.capitalRemaining, loanRatePct: i.loanRate, applyEarlyRepaymentFee: !i.forced,
+    agencyFeePct: i.forced ? 0 : SALE_PARAMS.agencyFeePct, diagnosticsCost: i.forced ? 0 : SALE_PARAMS.diagnosticsCost,
+    energyAuditCost: !i.forced && energyAuditRequired(unit, energy, i.y, i.m) ? SALE_PARAMS.energyAuditCost : 0,
+    proceedingCosts: i.proceedingCosts, depositToTransfer: p.status === 'let' ? Number(p.deposit_held_eur) : 0, rentalTaxDue,
+    purchase: { price: Number(p.purchase_price), notaryFees: Number(p.notary_fees), works: Number(p.works_financed), yearsHeld },
+    gainRules: CAPITAL_GAIN_RULES,
+  });
+};
+
 // Solde d'un bien vendu : rembourse le prêt, calcule tous les frais et impôts, règle les impayés du joueur,
 // crédite les pièces (arrondi contre le joueur, reliquat conservé), marque le bien vendu, journalise.
 export async function closeSale(
@@ -74,8 +95,6 @@ export async function closeSale(
   opts: { arrearsEur: number; discountPct?: number; occupiedDiscountPct?: number; valueBefore: number; y: number; m: number }
 ): Promise<CloseOutcome> {
   const { y, m } = opts;
-  const energy = String(p.energy_class).trim() as EnergyClass;
-  const unit = p.property_type as UnitType;
   const yearsHeld = Math.max(0, Math.floor((monthTotal(y, m) - monthTotal(p.purchase_year, p.purchase_month)) / 12));
 
   let capitalRemaining = 0, loanRate = 0, loanRow: any = null;
@@ -90,15 +109,7 @@ export async function closeSale(
   const proceedingCosts = forced
     ? round2(Math.min(SALE_PARAMS.distress.proceedingCostsMax, Math.max(SALE_PARAMS.distress.proceedingCostsMin, (salePrice * SALE_PARAMS.distress.proceedingCostsPct) / 100)))
     : 0;
-  const rentalTaxDue = computeRentTax(Number(p.tax_base_ytd), RENT_TAX_RATE_BY_PROFILE[game.profile]);
-  const closing = computeSaleClosing({
-    salePrice, capitalRemaining, loanRatePct: loanRate, applyEarlyRepaymentFee: !forced,
-    agencyFeePct: forced ? 0 : SALE_PARAMS.agencyFeePct, diagnosticsCost: forced ? 0 : SALE_PARAMS.diagnosticsCost,
-    energyAuditCost: !forced && energyAuditRequired(unit, energy, y, m) ? SALE_PARAMS.energyAuditCost : 0,
-    proceedingCosts, depositToTransfer: p.status === 'let' ? Number(p.deposit_held_eur) : 0, rentalTaxDue,
-    purchase: { price: Number(p.purchase_price), notaryFees: Number(p.notary_fees), works: Number(p.works_financed), yearsHeld },
-    gainRules: CAPITAL_GAIN_RULES,
-  });
+  const closing = closingFor(game, p, { capitalRemaining, loanRate, salePrice, forced, proceedingCosts, y, m });
 
   // Le produit règle d'abord les impayés du joueur ; s'il est négatif, le solde reste dû à la banque.
   const positive = Math.max(0, closing.netProceeds);
@@ -395,7 +406,7 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
     `SELECT p.*, l.principal AS l_principal, l.annual_rate_pct AS l_rate, l.months AS l_months, l.insurance_rate_pct AS l_ins, l.months_paid AS l_paid, l.status AS l_status, l.upfront_fees AS l_fees
      FROM re_properties p LEFT JOIN re_loans l ON l.id = p.loan_id WHERE p.game_id = $1`, [game.id])).rows;
   const y = game.simulated_year, m = game.simulated_month;
-  let invested = 0, equity = 0;
+  let invested = 0, equity = 0, liquidation = 0;
   for (const p of props) {
     invested += Number(p.down_payment) + Number(p.l_fees ?? 0) + Number(p.extra_invested_eur);
     if (p.status !== 'sold') {
@@ -403,6 +414,14 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
       const debt = p.loan_id && p.l_status === 'active'
         ? remainingBalance(scheduleOf({ principal: p.l_principal, annual_rate_pct: p.l_rate, months: p.l_months, insurance_rate_pct: p.l_ins }).rows, Number(p.l_principal), Number(p.l_paid)) : 0;
       equity += value - debt;
+      // Valeur de liquidation : ce qu'il resterait après une revente AUJOURD'HUI (agence, diagnostics, remboursement anticipé, impôt sur la plus-value,
+      // décote d'un bien occupé). Un bien loué se brade : sa valeur de liquidation est réduite de la décote des biens occupés.
+      const occupied = p.status === 'let' ? SALE_PARAMS.occupiedDiscountPct : 0;
+      const closing = closingFor(game, p, {
+        capitalRemaining: debt, loanRate: p.loan_id && p.l_status === 'active' ? Number(p.l_rate) : 0,
+        salePrice: round2(value * (1 - occupied / 100)), forced: false, proceedingCosts: 0, y, m,
+      });
+      liquidation += closing.netProceeds;
     }
   }
   const cash = Number((await q('SELECT COALESCE(SUM(net_cash_flow), 0) AS s FROM re_statements WHERE game_id = $1', [game.id])).rows[0].s);
@@ -416,9 +435,13 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
   const interestEuros = (Number(bank.interest_h) / 100) * EUROS_PER_COIN;
   const borrowedInvested = Math.min(invested, Math.max(0, debtEuros - reserve * EUROS_PER_COIN));
   const net = computeNetPerformance({ equity, cumulativeCashFlow: cash + Number(sold), invested, interestPaid: interestEuros, borrowedInvested });
-  return { investedEuros: round2(invested), equity: round2(equity), cumulativeCashFlow: round2(cash), saleNetProceeds: round2(Number(sold)),
+  // Classement : gain NET DE REVENTE ÷ capital de départ RÉEL du compte (10 000 en gratuit, 20 000 avec Pro). Le levier reste affiché.
+  const startingCapitalCoins = await startingCapitalOf(db, game.user_id);
+  const gainLiquidation = liquidation + cash + Number(sold) - invested - interestEuros;
+  const performancePct = invested > 0 ? Math.round(((gainLiquidation / (startingCapitalCoins * EUROS_PER_COIN)) * 100) * 1e4) / 1e4 : 0;
+  return { investedEuros: round2(invested), equity: round2(equity), liquidationValueEuros: round2(liquidation), cumulativeCashFlow: round2(cash), saleNetProceeds: round2(Number(sold)),
     bankDebtEuros: round2(debtEuros), bankInterestPaidEuros: round2(interestEuros), leverage: net.leverage, ownCapitalEuros: net.ownCapital,
-    performancePct: net.performancePct };
+    startingCapitalCoins, gainLiquidationEuros: round2(gainLiquidation), performancePct };
 }
 
 export async function snapshotLeaderboard(c: PoolClient, game: GameRow, userId: string): Promise<void> {
@@ -440,6 +463,7 @@ export const getRealEstateLeaderboard = async (userId: string, yearRaw: unknown)
   // Ma performance détaillée (calculée côté serveur) : visible même si je ne suis pas encore classé.
   const w = await wealthMetrics({ query } as any, game);
   const investedCoins = round2(w.investedEuros / EUROS_PER_COIN);
-  const mine = { ...w, investedCoins, ranked: investedCoins >= RANKING_MIN_INVESTED, minCapitalCoins: RANKING_MIN_INVESTED };
-  return { domain: RE_DOMAIN, year, minCapital: RANKING_MIN_INVESTED, ...board, mine };
+  const progress = await rankingProgress({ query } as any, userId, investedCoins);
+  const mine = { ...w, investedCoins, ranked: progress.ranked, minCapitalCoins: RANKING_MIN_INVESTED };
+  return { domain: RE_DOMAIN, year, minCapital: RANKING_MIN_INVESTED, ...board, mine, progress };
 };
