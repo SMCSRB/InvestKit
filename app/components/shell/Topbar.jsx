@@ -86,7 +86,7 @@ function ProfileMenu({ user, isAdmin, theme, onToggleTheme }) {
           <div className="ik-menu__sep" role="separator" />
           <Link href="/profile" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="user" size={18} />Mon profil</Link>
           <Link href="/dashboard?tab=settings" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="settings" size={18} />Paramètres</Link>
-          <Link href="/dashboard?tab=settings&section=billing" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="crown" size={18} />Abonnement</Link>
+          <Link href="/dashboard?tab=settings&section=billing" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="crown" size={18} />{user?.plan?.isPro ? 'Gérer mon abonnement' : 'Voir les offres'}</Link>
           <Link href="/support" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="help" size={18} />Aide</Link>
           {isAdmin && <Link href="/admin" role="menuitem" className="ik-menu__item" onClick={close}><Icon name="shield" size={18} />Administration</Link>}
           <button type="button" role="menuitem" className="ik-menu__item" onClick={() => { onToggleTheme(); }}><Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />{theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}</button>

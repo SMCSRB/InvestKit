@@ -7,6 +7,7 @@ import OverviewTab from './OverviewTab';
 import MarketTab from './MarketTab';
 import HistoryChart from '@/app/components/HistoryChart';
 import SocialHub from '@/app/components/social/SocialHub';
+import ProBadgePrivacy from '@/app/components/plan/ProBadgePrivacy';
 
 import { PRICES, formatEuro } from '@/app/lib/plans';
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
@@ -17,7 +18,6 @@ import PortfolioRisk from '@/app/components/PortfolioRisk';
 import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
-import { useShell } from '@/app/components/shell/ShellContext';
 import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
@@ -39,7 +39,13 @@ function DashboardContent() {
   const router = useRouter();
   const { progress, isDomainCompleted, getDomainProgress } = useEducationProgress();
   const { user: userData, setUser, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } = useUser();
-  const shell = useShell();
+  // Statut d'abonnement renvoyé par le SERVEUR (/auth/me). NB : le contexte de la coque n'est pas disponible ici, car AppShell est rendu PLUS BAS par cette page (pas de fournisseur au-dessus).
+  const [plan, setPlan] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)).then((d) => { const pl = d?.user?.plan ?? d?.plan; if (alive && pl) setPlan(pl); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTabState] = useState('overview');
   const [socialTab, setSocialTab] = useState('friends');
@@ -2863,6 +2869,8 @@ function DashboardContent() {
                   }}> Données & Confidentialité
                   </h3>
 
+                  <ProBadgePrivacy />
+
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -2950,7 +2958,7 @@ function DashboardContent() {
                     <p style={{ color: 'var(--ik-negative)', fontSize: '13px', margin: 0 }}>{billingError}</p>
                   )}
 
-                  {(shell?.user?.plan?.isPro ?? userData?.subscriptionTier === 'pro') ? (
+                  {(plan?.isPro ?? userData?.subscriptionTier === 'pro') ? (
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -2962,28 +2970,40 @@ function DashboardContent() {
                     }}>
                       <div>
                         <p style={{ fontSize: '14px', fontWeight: '700', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                          <Icon name="sparkles" size={18} /> {planLine(shell?.user?.plan)}
+                          <Icon name="sparkles" size={18} /> {planLine(plan)}
                         </p>
                         <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
                           Tous les domaines et fonctionnalités débloqués
                         </p>
                       </div>
-                      <button
-                        onClick={openBillingPortal}
-                        disabled={billingLoading}
-                        style={{
-                          padding: '10px 18px',
-                          borderRadius: '8px',
-                          border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
-                          background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
-                          color: currentTheme.accent,
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          cursor: billingLoading ? 'wait' : 'pointer',
-                        }}
-                      >
-                        {billingLoading ? '...' : 'Gérer mon abonnement'}
-                      </button>
+                      {plan?.source === 'manual' ? (
+                        <p data-testid="manual-pro-note" style={{ margin: 0, maxWidth: 260, fontSize: '13px', fontWeight: 600, color: currentTheme.textSecondary }}>
+                          Accès Pro offert, aucun abonnement à gérer.
+                        </p>
+                      ) : (
+                        <div style={{ display: 'grid', gap: 6, justifyItems: 'end' }}>
+                          <button
+                            onClick={openBillingPortal}
+                            disabled={billingLoading}
+                            data-testid="manage-subscription"
+                            style={{
+                              padding: '10px 18px',
+                              borderRadius: '8px',
+                              border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
+                              background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
+                              color: currentTheme.accent,
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              cursor: billingLoading ? 'wait' : 'pointer',
+                            }}
+                          >
+                            {billingLoading ? '...' : 'Gérer mon abonnement'}
+                          </button>
+                          <span style={{ fontSize: '11px', color: currentTheme.textSecondary, maxWidth: 260, textAlign: 'right' }}>
+                            Détails, renouvellement, changer de formule, résilier et factures : dans le portail de paiement sécurisé.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>

@@ -32,6 +32,10 @@ export const social = {
   transfer: (userId) => call('/guilds/transfer', 'POST', { userId }),
   regenerateInvite: () => call('/guilds/invite/regenerate', 'POST'),
   disband: () => call('/guilds', 'DELETE'),
+  tag: () => call('/tag'),
+  changeTag: (tag) => call('/tag', 'POST', { tag }),
+  tagHistory: () => call('/tag/history'),
+  setProBadgeVisible: (showProBadge) => call('/privacy', 'POST', { showProBadge }),
 };
 
 export const copyText = async (text) => {

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { socialService, SocialError } from '../services/socialService';
+import { playerTagService } from '../services/playerTagService';
 
 const STATUS = { INVALID_INPUT: 400, NOT_FOUND: 404, FORBIDDEN: 403, CONFLICT: 409, LIMIT: 429 } as const;
 
@@ -9,7 +10,7 @@ const handle = (fallback: string, fn: (req: AuthRequest, uid: string) => Promise
     try {
       res.json(await fn(req, req.user!.userId));
     } catch (error) {
-      if (error instanceof SocialError) { res.status(STATUS[error.code]).json({ error: error.message, code: error.code }); return; }
+      if (error instanceof SocialError) { res.status(STATUS[error.code]).json({ error: error.message, code: error.code, ...(error.detail ?? {}) }); return; }
       console.error(fallback, error);
       res.status(500).json({ error: fallback });
     }
@@ -35,5 +36,9 @@ export const socialController = {
   kick: handle('Erreur lors du retrait du membre', (r, u) => socialService.kick(u, r.body?.userId, r.ip)),
   transfer: handle('Erreur lors du transfert de la guilde', (r, u) => socialService.transfer(u, r.body?.userId)),
   regenerateInvite: handle('Erreur lors du changement du code', (_r, u) => socialService.regenerateInvite(u)),
+  tag: handle('Erreur lors de la lecture de ton #', (_r, u) => playerTagService.mine(u)),
+  changeTag: handle('Erreur lors du changement de #', (r, u) => playerTagService.changeTag(u, r.body?.tag, r.ip)),
+  tagHistory: handle('Erreur lors de la lecture de l\'historique', (_r, u) => playerTagService.history(u)),
+  privacy: handle('Erreur lors de l\'enregistrement', (r, u) => playerTagService.setProBadgeVisible(u, r.body?.showProBadge)),
   disband: handle('Erreur lors de la dissolution', (r, u) => socialService.disband(u, r.ip)),
 };
