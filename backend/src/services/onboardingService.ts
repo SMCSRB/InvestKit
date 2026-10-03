@@ -20,7 +20,8 @@ export const STEPS: StepDef[] = [
   { key: 'daily_reward', title: 'Réclamer ta récompense quotidienne', description: 'Une petite récompense fixe, jusqu\'à 3 jours par semaine : aucune série à tenir.', link: '/dashboard',
     done: (u) => exists('SELECT 1 FROM users WHERE id = $1 AND last_daily_claim_at IS NOT NULL', u) },
   { key: 'first_trade', title: 'Faire ton premier achat en Bourse ou en Crypto', description: `Achète un titre dans le Simulateur : les frais et impôts sont expliqués avant de valider. Le bonus « premier investissement » (${FIRST_STEP_BONUSES.first_investment} pièces, à partir de 100) est versé à part, automatiquement.`, link: '/dashboard',
-    done: (u) => exists('SELECT 1 FROM virtual_portfolios WHERE user_id = $1 AND total_bought > 0', u) },
+    done: async (u) => (await exists('SELECT 1 FROM virtual_portfolios WHERE user_id = $1 AND total_bought > 0', u))
+      || (await exists(`SELECT 1 FROM crypto_fills WHERE user_id = $1 AND side = 'buy' AND NOT swap`, u)) },   // Bourse, ancienne Crypto OU nouveau marché Crypto
   { key: 'first_property', title: 'Acheter ton premier bien immobilier', description: 'Choisis une annonce, simule l\'achat avec un crédit, et deviens propriétaire.', link: '/immobilier',
     done: (u) => exists('SELECT 1 FROM re_properties p JOIN re_games g ON g.id = p.game_id WHERE g.user_id = $1', u) },
   { key: 'two_factor', title: 'Protéger ton compte avec la double authentification', description: 'Un code en plus du mot de passe : la meilleure protection de ton compte.', link: '/dashboard',

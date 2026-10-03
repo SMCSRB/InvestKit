@@ -15,7 +15,6 @@ import { fmtInt } from '@/app/lib/format';
 import { useCoins } from '@/app/lib/coinStore';
 
 const signed = (v) => `${Number(v) > 0 ? '+' : ''}${fmtInt(v)}`;
-const eur = (v) => `${fmtInt(v)} €`;
 
 // Droit d'accès au domaine côté affichage (la règle réelle reste côté serveur : backend/src/utils/entitlements.ts).
 const isLocked = (ov, domainIds) => ov.tier !== 'pro' && !domainIds.includes(ov.freeDomain);
@@ -54,7 +53,10 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
   const loading = !ov && !failed;
   const t = ov?.totals;
   const coins = w?.balance ?? ov?.coins ?? 0;
-  const netWorth = w?.netWorth ?? t?.netWorth;
+  // Deux patrimoines : FINANCIER (liquidités + titres − dettes) et TOTAL (financier + immobilier net de revente).
+  const financialWealth = w?.financialWealth ?? t?.financialWealth ?? w?.netWorth ?? t?.netWorth;
+  const totalWealth = w?.totalWealth ?? t?.totalWealth;
+  const netWorth = totalWealth;
   const tradingValue = w?.tradingValue ?? t?.tradingValue;
   const debtCoins = w?.debtCoins ?? ov?.bank?.debtCoins;
   const stocks = ov?.trading?.stocks;
@@ -66,6 +68,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
     { label: 'Liquidités', value: coins, color: 'var(--ik-series-1)' },
     { label: 'Bourse', value: stocks?.marketValue ?? 0, color: 'var(--ik-series-2)' },
     { label: 'Crypto', value: crypto?.marketValue ?? 0, color: 'var(--ik-series-3)' },
+    { label: 'Immobilier (net de revente)', value: Math.max(0, re?.netLiquidationCoins ?? 0), color: 'var(--ik-series-4)' },
   ];
   const distTotal = dist.reduce((a, d) => a + d.value, 0);
   const lockedStocks = !!ov && isLocked(ov, ['stocks']);
@@ -89,16 +92,20 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
 
       <div className="ik-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
         <Reveal index={0} data-tilt="">
-          <StatCard hero icon="wallet" label="Patrimoine" value={Number.isFinite(netWorth) ? netWorth : NaN} unit={<Coin size={26} />}
-            delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={Number.isFinite(netWorth) ? 'liquidités + titres − dettes' : undefined} />
+          <StatCard hero icon="wallet" label="Patrimoine total" value={Number.isFinite(totalWealth) ? totalWealth : NaN} unit={<Coin size={26} />}
+            deltaLabel={Number.isFinite(totalWealth) ? 'financier + immobilier net de revente' : undefined} />
         </Reveal>
         <Reveal index={1} data-tilt="">
-          <StatCard icon="coins" label="Liquidités" value={loading && !w ? NaN : coins} unit={<Coin size={22} />} deltaLabel="à dépenser dans les domaines" href="/banque" />
+          <StatCard icon="wallet" label="Patrimoine financier" value={Number.isFinite(financialWealth) ? financialWealth : NaN} unit={<Coin size={22} />}
+            delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={Number.isFinite(financialWealth) ? 'liquidités + titres − dettes' : undefined} />
         </Reveal>
         <Reveal index={2} data-tilt="">
-          <StatCard icon="chart" label="Titres" value={Number.isFinite(tradingValue) ? tradingValue : NaN} unit={<Coin size={22} />} delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : invested > 0 ? 'depuis le début' : 'Bourse + Crypto'} />
+          <StatCard icon="coins" label="Liquidités" value={loading && !w ? NaN : coins} unit={<Coin size={22} />} deltaLabel="à dépenser dans les domaines" href="/banque" />
         </Reveal>
         <Reveal index={3} data-tilt="">
+          <StatCard icon="chart" label="Titres" value={Number.isFinite(tradingValue) ? tradingValue : NaN} unit={<Coin size={22} />} delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : invested > 0 ? 'depuis le début' : 'Bourse + Crypto'} />
+        </Reveal>
+        <Reveal index={4} data-tilt="">
           <StatCard icon="bank" label="Dette bancaire" value={Number.isFinite(debtCoins) ? debtCoins : NaN} unit={<Coin size={22} />} deltaLabel="à rembourser" href="/banque" />
         </Reveal>
       </div>
@@ -167,6 +174,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
           {loading ? <div className="ik-skeleton" style={{ height: 100 }} /> : crypto.started ? (
             <>
               <Line label="Positions" value={crypto.positions} />
+              <Line label="Valeur actuelle" value={crypto.fxUnavailable ? 'taux indisponible' : <>{fmtInt(crypto.marketValue)} <Coin /></>} />
               <Line label="Capital investi" value={`${fmtInt(crypto.invested)}`} />
               <Line label="Gain ou perte" value={signed(crypto.gain)} tone={crypto.gain >= 0 ? 'ik-up' : 'ik-down'} />
             </>
@@ -178,8 +186,8 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
           {loading ? <div className="ik-skeleton" style={{ height: 206 }} /> : re?.started ? (
             <>
               <Line label="Biens" value={re.properties} />
-              <Line label="Patrimoine net" value={eur(re.equityEuros)} />
-              <Line label="Dette bancaire" value={eur(re.bankDebtEuros ?? 0)} />
+              <Line label="Valeur nette de revente" value={<>{fmtInt(re.netLiquidationCoins ?? 0)} <Coin /></>} />
+              <Line label="Dette bancaire" value={<>{fmtInt(re.bankDebtCoins ?? 0)} <Coin /></>} />
               <Line label="Performance" value={`${re.performancePct > 0 ? '+' : ''}${re.performancePct} %`} tone={re.performancePct >= 0 ? 'ik-up' : 'ik-down'} />
             </>
           ) : <p className="ik-muted" style={{ margin: 0 }}>Pas encore commencé : choisis ton profil.</p>}
@@ -198,7 +206,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
               <Line label="Gain ou perte (latent + réalisé)" value={loading ? '…' : signed(t.gain)} tone={!loading && t.gain < 0 ? 'ik-down' : 'ik-up'} />
               <Line label="Frais et impôts payés" value={loading ? '…' : fmtInt(t.feesPaid + t.taxPaid)} />
             </div>
-            <p className="ik-muted" style={{ margin: '14px 0 0' }}>Tous les montants sont en InvestCoins (1 InvestCoin = 1 €). Le patrimoine immobilier est affiché à part : il n&apos;est pas encore additionné aux autres domaines.</p>
+            <p className="ik-muted" style={{ margin: '14px 0 0' }}>Tous les montants sont en InvestCoins. Le patrimoine financier = liquidités + Bourse + Crypto − dettes ; le patrimoine total y ajoute l&apos;immobilier net de revente (ce qu&apos;il resterait après avoir tout revendu).</p>
           </Card>
         </Reveal>
       </div>

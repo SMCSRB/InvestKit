@@ -6,7 +6,8 @@ import { outstandingCoins } from './bankService';
 import { wealthMetrics } from './realEstateSaleService';
 import { riskService } from './riskService';
 import { EUROS_PER_COIN } from '../config/economy';
-import { netWorthCoins } from '../engine/wealth';
+import { wealthBreakdown } from '../engine/wealth';
+import { marketFor, num, toAccount } from './crypto/core';
 
 // Vue d'ensemble RÉELLE du joueur (remplace les chiffres fictifs du tableau de bord). Chaque domaine garde son unité :
 // Bourse et Crypto en pièces (InvestCoins ≈ 1 € de cours dans le jeu), Immobilier en euros (1 InvestCoin = 20 €) — volontairement non additionnés
@@ -30,12 +31,63 @@ export const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypt
   };
 };
 
+// Nouveau marché Crypto (domaine « crypto_market », tables crypto_*) : même forme de résumé que tradingSummary, en InvestCoins.
+export const cryptoMarketSummary = async (userId: string) => {
+  const empty = { started: false, positions: 0, marketValue: 0, invested: 0, proceeds: 0, gain: 0, performancePct: 0, simulatedYear: getDomain('crypto')!.minYear, feesPaid: 0, taxPaid: 0, fxUnavailable: false };
+  const accRow = (await query('SELECT * FROM crypto_accounts WHERE user_id = $1', [userId])).rows[0];
+  if (!accRow) return empty;
+  const acc = toAccount(accRow);
+  const pos = (await query(`SELECT a.symbol, p.quantity::text AS q FROM crypto_positions p JOIN crypto_assets a ON a.id = p.asset_id WHERE p.user_id = $1 AND p.quantity > 0`, [userId])).rows;
+  let marketValue = 0, fxUnavailable = false;
+  for (const p of pos) {
+    const m = await marketFor({ query }, p.symbol, acc.simulatedAt);
+    if (!m) continue;
+    if (m.fx === null) { fxUnavailable = true; continue; }     // sans taux de change du jour de jeu : jamais une valeur devinée
+    marketValue += Math.floor((m.price * num(p.q)) / m.fx);
+  }
+  const f = (await query(
+    `SELECT COALESCE(SUM(notional_coins + fee_coins) FILTER (WHERE side = 'buy' AND NOT swap), 0)::bigint AS bought,
+            COALESCE(SUM(notional_coins - fee_coins - tax_coins) FILTER (WHERE side = 'sell' AND NOT swap), 0)::bigint AS proceeds,
+            COALESCE(SUM(fee_coins), 0)::bigint AS fees, COALESCE(SUM(tax_coins), 0)::bigint AS tax,
+            COALESCE(SUM(fee_coins) FILTER (WHERE swap), 0)::bigint AS swap_fees
+       FROM crypto_fills WHERE user_id = $1`, [userId])).rows[0];
+  const invested = num(f.bought), proceeds = num(f.proceeds) - num(f.swap_fees);
+  const gain = marketValue + proceeds - invested;
+  return {
+    started: invested > 0 || pos.length > 0, positions: pos.length, marketValue, invested, proceeds, gain,
+    performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0, simulatedYear: new Date(acc.simulatedAt).getUTCFullYear(),
+    feesPaid: num(f.fees), taxPaid: num(f.tax), fxUnavailable,
+  };
+};
+
+type Summary = Awaited<ReturnType<typeof tradingSummary>> & { fxUnavailable?: boolean };
+// Crypto du joueur = ancienne Crypto (domaine « crypto », portefeuille virtuel) + nouveau marché (« crypto_market ») : les deux comptent, rien n'est perdu.
+export const mergeCryptoSummaries = (old: Summary, market: Summary): Summary => {
+  const invested = old.invested + market.invested;
+  const gain = old.gain + market.gain;
+  return {
+    started: old.started || market.started, positions: old.positions + market.positions, marketValue: old.marketValue + market.marketValue,
+    invested, proceeds: old.proceeds + market.proceeds, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
+    simulatedYear: market.started ? market.simulatedYear : old.simulatedYear, feesPaid: old.feesPaid + market.feesPaid, taxPaid: old.taxPaid + market.taxPaid,
+    fxUnavailable: !!market.fxUnavailable,
+  };
+};
+export const cryptoSummary = async (userId: string): Promise<Summary> => mergeCryptoSummaries(await tradingSummary(userId, 'crypto'), await cryptoMarketSummary(userId));
+
+// Immobilier NET DE REVENTE en InvestCoins (valeur de liquidation : agence, diagnostics, remboursement anticipé, impôt, décote d'un bien loué ; prêt immobilier déjà déduit).
+export const realEstateNetCoins = async (userId: string): Promise<number> => {
+  const game = (await query('SELECT id, user_id, profile, simulated_year, simulated_month, seed FROM re_games WHERE user_id = $1', [userId])).rows[0];
+  if (!game) return 0;
+  const w = await wealthMetrics({ query } as any, game);
+  return Math.round(w.liquidationValueEuros / EUROS_PER_COIN);
+};
+
 export const overviewService = {
   async get(userId: string) {
     const user = (await query(`SELECT subscription_tier, pro_override, free_domain, username, created_at FROM users WHERE id = $1`, [userId])).rows[0];
     const coins = await investcoinsRepository.getBalance(userId);
     const stocks = await tradingSummary(userId, 'stocks');
-    const crypto = await tradingSummary(userId, 'crypto');
+    const crypto = await cryptoSummary(userId);
 
     let realEstate: any = { started: false };
     const game = (await query('SELECT id, user_id, profile, simulated_year, simulated_month, seed FROM re_games WHERE user_id = $1', [userId])).rows[0];
@@ -46,17 +98,22 @@ export const overviewService = {
         started: true, profile: game.profile, year: game.simulated_year, month: game.simulated_month, properties: props,
         equityEuros: w.equity, investedEuros: w.investedEuros, performancePct: Math.round(w.performancePct * 10) / 10, leverage: w.leverage, bankDebtEuros: w.bankDebtEuros,
         equityCoinsApprox: Math.round(w.equity / EUROS_PER_COIN),
+        // Tout en InvestCoins (1 pièce = 1 €) : valeur nette de revente, fonds propres, investi, dette.
+        netLiquidationCoins: Math.round(w.liquidationValueEuros / EUROS_PER_COIN), equityCoins: Math.round(w.equity / EUROS_PER_COIN),
+        investedCoins: Math.round(w.investedEuros / EUROS_PER_COIN), bankDebtCoins: Math.round(w.bankDebtEuros / EUROS_PER_COIN),
       };
     }
 
     const debtCoins = await outstandingCoins({ query } as any, userId);
+    const wealth = wealthBreakdown({ coins, tradingValue: stocks.marketValue + crypto.marketValue, debtCoins, realEstateNetCoins: realEstate.started ? realEstate.netLiquidationCoins : 0 });
     const invested = stocks.invested + crypto.invested;
     const gain = stocks.gain + crypto.gain;
 
     // Risque du domaine de trading le plus important (si des positions existent).
     let risk: any = null;
-    const biggest = stocks.marketValue >= crypto.marketValue ? 'stocks' : 'crypto';
-    if (stocks.marketValue + crypto.marketValue > 0) {
+    const oldCrypto = await tradingSummary(userId, 'crypto');   // l'analyse de risque ne lit que les portefeuilles Bourse et ancienne Crypto
+    const biggest = stocks.marketValue >= oldCrypto.marketValue ? 'stocks' : 'crypto';
+    if (stocks.marketValue + oldCrypto.marketValue > 0) {
       const r: any = await riskService.portfolioRisk(userId, biggest);
       if (!r.empty) risk = { domain: biggest, score: r.score.score, label: r.score.label, volatilityPct: r.score.portfolioVolPct, worstCrisis: r.score.worstStress };
     }
@@ -68,12 +125,13 @@ export const overviewService = {
       totals: {
         tradingValue: stocks.marketValue + crypto.marketValue,
         coinsAndTrading: coins + stocks.marketValue + crypto.marketValue,
-        netWorth: netWorthCoins({ coins, tradingValue: stocks.marketValue + crypto.marketValue, debtCoins }),   // liquidités + titres − dettes
+        netWorth: wealth.financial,                       // patrimoine financier (nom conservé) : liquidités + titres − dettes
+        financialWealth: wealth.financial, realEstateNetCoins: wealth.realEstateNet, totalWealth: wealth.total,
         invested, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
         feesPaid: stocks.feesPaid + crypto.feesPaid, taxPaid: stocks.taxPaid + crypto.taxPaid,
       },
       realEstate, bank: { debtCoins }, risk,
-      notes: ['Patrimoine = liquidités + titres (Bourse, Crypto) − dettes bancaires. Bourse et Crypto sont en pièces ; l\'Immobilier est en euros (1 InvestCoin = 20 €) : les deux ne sont pas additionnés.'],
+      notes: ['Patrimoine financier = liquidités + titres (Bourse, Crypto) − dettes bancaires. Patrimoine total = patrimoine financier + immobilier net de revente. Tout est en InvestCoins (1 InvestCoin = 1 €).'],
     };
   },
 };

@@ -4,8 +4,8 @@ import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { dailyRewardStatus } from './dailyRewardService';
 import { getActiveDays } from './activityService';
 import { outstandingCoins } from './bankService';
-import { tradingSummary } from './overviewService';
-import { netWorthCoins } from '../engine/wealth';
+import { tradingSummary, cryptoSummary, realEstateNetCoins } from './overviewService';
+import { wealthBreakdown } from '../engine/wealth';
 
 // Portefeuille du joueur : l'UNIQUE source des chiffres d'InvestCoins affichés par le site (barre du haut, menu, carte Patrimoine,
 // Liquidités). Renvoyé par GET /economy/balance et ajouté à la réponse de chaque action qui peut changer les pièces
@@ -14,7 +14,10 @@ export interface WalletSnapshot {
   balance: number;          // liquidités
   tradingValue: number;     // valeur des titres (Bourse + Crypto)
   debtCoins: number;        // dettes bancaires
-  netWorth: number;         // liquidités + titres − dettes
+  netWorth: number;         // = financialWealth (nom conservé)
+  financialWealth: number;  // patrimoine financier : liquidités + titres − dettes
+  realEstateNet: number;    // immobilier net de revente
+  totalWealth: number;      // patrimoine total : financier + immobilier net de revente
   activeDays: number;       // jours d'utilisation du site : ne baisse jamais, sans pénalité
   canClaimToday: boolean;   // récompense du jour disponible (jour pas encore pris ET moins de 3 jours payés cette semaine)
   dailyRewardCoins: number; // montant de la récompense du jour
@@ -29,11 +32,12 @@ export const walletService = {
     const activeDays = await getActiveDays(userId, db as any);
     const reward = await dailyRewardStatus(userId, db);
     const stocks = await tradingSummary(userId, 'stocks');
-    const crypto = await tradingSummary(userId, 'crypto');
+    const crypto = await cryptoSummary(userId);   // ancienne Crypto + nouveau marché
     const debtCoins = await outstandingCoins(db as any, userId);
     const tradingValue = stocks.marketValue + crypto.marketValue;
+    const wealth = wealthBreakdown({ coins: balance, tradingValue, debtCoins, realEstateNetCoins: await realEstateNetCoins(userId) });
     return {
-      balance, tradingValue, debtCoins, netWorth: netWorthCoins({ coins: balance, tradingValue, debtCoins }),
+      balance, tradingValue, debtCoins, netWorth: wealth.financial, financialWealth: wealth.financial, realEstateNet: wealth.realEstateNet, totalWealth: wealth.total,
       activeDays, canClaimToday: reward.canClaim, dailyRewardCoins: reward.coins, claimedThisWeek: reward.claimedThisWeek,
       maxClaimsPerWeek: reward.maxPerWeek, at: Date.now(),
     };

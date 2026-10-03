@@ -95,7 +95,7 @@ export default function DashHero({ username, patrimoine, loading }) {
             {!loading && Number.isFinite(patrimoine) && (
               <div className="dh__layer dh__layer--glass" style={{ '--d': 2.2 }}>
                 <div className="dh__glass">
-                  <span>Patrimoine</span>
+                  <span>Patrimoine total</span>
                   <strong className="ik-num"><AnimatedNumber value={patrimoine} /> <Coin /></strong>
                 </div>
               </div>

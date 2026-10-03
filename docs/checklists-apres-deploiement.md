@@ -840,3 +840,16 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 2. Dans l'application, le solde du compte a bien augmenté ; dans la Banque / l'historique InvestCoins, une ligne « test_gift » apparaît.
 3. Nom de compte inconnu : message d'erreur, rien de créé.
 4. Avec `DATABASE_URL` qui vise une base dont le nom ne finit pas par `_test` : « Refusé… », rien n'est modifié. (Ne le teste PAS sur le vrai site : fais-le avec une adresse de base inexistante.)
+
+## Tableau de bord : achat Crypto vu partout, deux patrimoines
+À dérouler chez toi sur ta copie de test, après avoir fusionné cette PR.
+
+1. Achète un peu de BTC sur le **nouveau marché Crypto** (page Crypto). Retourne au **Tableau de bord** :
+   - **Titres** n'est plus à 0 (valeur du BTC) ; **Patrimoine financier** = liquidités + titres − dettes ;
+   - la carte **Crypto** n'est plus « pas encore commencé » : positions, valeur actuelle, capital investi, gain ou perte ;
+   - **Capital investi** (carte Crypto et « Synthèse Bourse + Crypto ») = ce que tu as payé (prix + frais).
+2. La checklist : l'étape **« Faire ton premier achat en Bourse ou en Crypto »** est cochée.
+3. Page Classements > Crypto, ou page Crypto > Classement : la barre « **x / 2 500 investis** » compte ton achat ; à 2 500 investis et 5 jours actifs, tu apparais.
+4. Le dashboard affiche **deux chiffres** : **Patrimoine total** (grosse carte) et **Patrimoine financier**. Avec un bien immobilier, le total = financier + **valeur nette de revente** du bien (le prêt immobilier est déjà déduit, jamais compté deux fois). Un prêt personnel ne rend plus le patrimoine négatif si l'immobilier est compté.
+5. Carte Immobilier : « Valeur nette de revente » et « Dette bancaire » avec la pièce, **aucun €** nulle part sur le tableau de bord.
+6. Si tu avais aussi des positions dans l'**ancienne** Crypto, elles s'ajoutent à celles du nouveau marché (rien n'est perdu).

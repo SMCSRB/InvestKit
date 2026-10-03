@@ -158,7 +158,7 @@ function DashboardContent() {
 
   // Guild Events & Announcements
   const [guildEvents, setGuildEvents] = useState([
-    { id: 1, guildId: 'crypto-masters', title: 'Défi Crypto Hebdo', description: 'Investissez 1000€ en crypto et battez les autres membres', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 604800000), participants: 12, reward: '500 XP' },
+    { id: 1, guildId: 'crypto-masters', title: 'Défi Crypto Hebdo', description: 'Investissez 1000 InvestCoins en crypto et battez les autres membres', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 604800000), participants: 12, reward: '500 XP' },
     { id: 2, guildId: 'immobilier-pro', title: 'Tournoi Immobilier', description: 'Simulez l\'achat d\'un bien immobilier avec le meilleur ROI', startDate: new Date(Date.now() + 172800000), endDate: new Date(Date.now() + 1209600000), participants: 8, reward: '1000 XP' },
     { id: 3, guildId: 'crypto-masters', title: 'Challenge Portefeuille', description: 'Rebalancez votre portefeuille et gagnez des points', startDate: new Date(Date.now() - 86400000), endDate: new Date(Date.now() + 259200000), participants: 25, reward: '300 XP' },
     { id: 4, guildId: 'crypto-masters', title: 'Analyse Technique Marathon', description: 'Analysez les patterns sur 5 paires différentes et partagez vos prédictions', startDate: new Date(Date.now() + 345600000), endDate: new Date(Date.now() + 432000000), participants: 18, reward: '750 XP' },
@@ -1448,7 +1448,7 @@ function DashboardContent() {
                   {[
                     { label: 'Année simulée', value: tradingPortfolio?.simulatedYear, tip: 'annee-simulee' },
                     { label: 'Solde InvestCoins', value: `${tradingPortfolio?.cashBalance?.toLocaleString('fr-FR')} InvestCoins` },
-                    { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} €`, tip: 'valeur-positions' },
+                    { label: 'Valeur positions', value: `${tradingPortfolio?.marketValue?.toLocaleString('fr-FR')} InvestCoins`, tip: 'valeur-positions' },
                     {
                       label: 'Performance',
                       tip: 'performance-portefeuille',
@@ -1560,7 +1560,7 @@ function DashboardContent() {
                         const price = tradingPortfolio?.prices?.[a.symbol];
                         return (
                           <option key={a.symbol} value={a.symbol} disabled={price == null}>
-                            {a.name} ({a.symbol}) — {price == null ? 'pas encore coté' : `${price.toLocaleString('fr-FR')} €`}
+                            {a.name} ({a.symbol}) — {price == null ? 'pas encore coté' : `${price.toLocaleString('fr-FR')} InvestCoins`}
                           </option>
                         );
                       })}
@@ -1647,7 +1647,7 @@ function DashboardContent() {
                         <div>
                           <p style={{ color: 'var(--ik-text)', fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>{pos.symbol}{pos.account && pos.account !== 'crypto' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#93c5fd' }}>{pos.account === 'pea' ? 'PEA' : 'Compte-titres'}</span>}</p>
                           <p style={{ color: 'var(--ik-text-3)', fontSize: '12px', margin: 0 }}>
-                            {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}€
+                            {Number(pos.quantity.toFixed(6))} × prix moyen {pos.avgBuyPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} InvestCoins
                           </p>
                         </div>
                         <button

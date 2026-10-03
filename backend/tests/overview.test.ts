@@ -49,7 +49,7 @@ describe.skipIf(!hasDb)('vue d\'ensemble réelle (base réelle)', () => {
     expect(r.risk.score).toBeGreaterThan(0);
   });
 
-  it('Immobilier (en euros, séparé) et dette bancaire', async () => {
+  it('Immobilier (en InvestCoins, net de revente, compté dans le patrimoine total) et dette bancaire', async () => {
     const u = await createUser({ balance: legacyCoins(30000), freeDomain: 'real_estate' });
     await svc.startGame(u, 'executive');
     let listing: any;
@@ -61,7 +61,8 @@ describe.skipIf(!hasDb)('vue d\'ensemble réelle (base réelle)', () => {
     expect(r.realEstate.equityEuros).toBeGreaterThan(0);
     expect(r.realEstate.equityCoinsApprox).toBe(Math.round(r.realEstate.equityEuros / EUROS_PER_COIN));
     expect(r.bank.debtCoins).toBeGreaterThanOrEqual(200);
-    expect(r.notes.join(' ')).toMatch(/pas additionnés/);
+    expect(r.notes.join(' ')).toMatch(/Patrimoine total = patrimoine financier \+ immobilier net de revente/);
+    expect(r.totals.totalWealth).toBe(r.totals.financialWealth + r.realEstate.netLiquidationCoins);   // l'immobilier est compté, net de revente
   });
 
   it('frais et impôts payés remontés depuis le portefeuille', async () => {
