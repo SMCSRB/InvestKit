@@ -584,6 +584,24 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 5. Après déploiement : lance `ops/sql/detecter-session-sans-preuve.sql` (voir `docs/faille-session-sans-preuve.md`) et envisage de changer `JWT_SECRET`.
 6. Déploie le site et l'API ensemble.
 
+## Badge Pro doré, # personnalisé, boutons d'abonnement
+
+1. Avec un compte **Pro** et un compte **gratuit** qui sont amis : chacun voit la petite couronne dorée à côté du pseudo de l'autre s'il est Pro ; le compte gratuit n'en a pas. Survole la couronne (ou tabule dessus) : « Membre Pro ».
+2. Page **Amis** : tu vois « Ton identifiant » (Pseudo#1234) et le bouton « Copier mon identifiant ». Envoie-le à un autre compte : sur « Ajouter », il tape `Pseudo#1234` et la demande arrive.
+3. Compte **Pro** : « Choisir mon # », tape `Alpha26` : l'identifiant devient Pseudo#Alpha26. Un deuxième changement le même mois est refusé avec la date du prochain.
+4. Essaie `admin`, `support`, `investkit` : refusés. Essaie le # d'un autre joueur déjà pris avec le même pseudo : refusé.
+5. Tes amis sont toujours là après le changement de #.
+6. Compte **gratuit** : « Mon # (Pro) » explique que c'est réservé aux Pro et propose « Voir les offres ».
+7. Paramètres → Données : interrupteur « Afficher ma couronne Pro aux autres joueurs ». Désactive-le : l'ami ne voit plus la couronne ; toi, tu la vois toujours chez toi.
+8. Paramètres → Abonnement : Pro abonné → « Gérer mon abonnement » ouvre le portail Stripe (mode test) ; **Pro accordé à la main** → « Accès Pro offert, aucun abonnement à gérer. » sans bouton.
+9. Menu du profil (en haut à droite) : « Gérer mon abonnement » si Pro, « Voir les offres » sinon.
+10. Fin d'abonnement (à simuler en base de test) : la couronne disparaît tout de suite ; le # choisi reste 30 jours puis revient à un # automatique ; un réabonnement dans les 90 jours le rend.
+11. Après déploiement (migration 041) : tous les joueurs qui ont un pseudo reçoivent un # automatique, sans doublon (vérifie : `SELECT username, player_tag FROM users WHERE username IS NOT NULL LIMIT 10;`).
+
+## À faire AVANT l'ouverture au public : liste d'insultes des # personnalisés
+
+La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.ts`, champ `insults`) est volontairement **courte** : elle ne contient que des mots sans ambiguïté. À compléter par la modération (et à relire régulièrement) avant d'ouvrir l'inscription à tous. Les mots réservés (admin, support, investkit…) sont déjà en place.
+
 ## Mail de bienvenue (une seule fois)
 
 1. Après déploiement, les comptes existants ne reçoivent AUCUN mail de bienvenue (la migration 039 les marque comme déjà servis, une seule fois).
