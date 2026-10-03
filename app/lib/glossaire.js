@@ -117,7 +117,7 @@ export const GLOSSARY = [
     inGame: 'Plafond : 6 mois de revenus nets de ton profil. Taux : taux de base de l\'année + 4,5 points (valeur de jeu). Réservé à l\'Immobilier. Un seul prêt à la fois.' },
   { id: 'credit-fleche', category: 'credit', term: 'Crédit fléché (prêt affecté)',
     short: 'Un prêt dont l\'argent ne peut servir qu\'à un usage précis.',
-    long: 'Comme un prêt « affecté » réel : l\'argent est prévu pour un projet. Ici, les pièces empruntées sont réservées à un domaine (l\'Immobilier pour le prêt personnel) et ne peuvent pas être dépensées ailleurs. Cela évite qu\'un emprunt dans un domaine serve à jouer dans un autre où les pièces n\'ont pas la même valeur.',
+    long: 'Comme un prêt « affecté » réel : l\'argent est prévu pour un projet. Ici, seul le prêt sur portefeuille est fléché : ses pièces sont réservées à son domaine (Bourse ou Crypto) et ne peuvent pas être dépensées ailleurs. Le prêt personnel, lui, est libre comme dans la réalité, et le prêt immobilier reste attaché au bien (il ne crée aucune pièce libre). Cela évite qu\'un emprunt dans un domaine serve à jouer dans un autre où les pièces n\'ont pas la même valeur.',
     inGame: 'Les pièces réservées sont dépensées en premier dans leur domaine. Tes propres pièces restent libres partout.' },
   { id: 'taux-base', category: 'credit', term: 'Taux de base',
     short: 'Le taux de référence de l\'année, auquel la banque ajoute sa marge selon le risque.',

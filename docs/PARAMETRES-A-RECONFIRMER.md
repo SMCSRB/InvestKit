@@ -48,6 +48,8 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Reste à vivre minimal | étudiant 500 € ; salarié 1 200 € ; cadre 1 800 € | JEU | pratique bancaire (pas de texte officiel) |
 | Apport minimal | frais de notaire (100 %) + 10 % du prix | JEU, NON SOURCÉE, À RECONFIRMER (les 10 %) ; DÉCISION produit | pratique bancaire (pas de texte officiel) |
 | Réserve de sécurité | 4 mensualités (assurance comprise, tous prêts) en pièces propres après l'opération (achat et prêt personnel) | JEU, NON SOURCÉE, À RECONFIRMER | règle d'équilibrage du jeu |
+| Réserve de sécurité : pièces propres uniquement | Ne comptent PAS : le capital restant dû d'un prêt personnel non remboursé (et les pièces d'un prêt sur portefeuille fléché). Règle prudente : on retire le capital dû même si les pièces ont été dépensées. | DÉCISION produit (Andreja) | `ownCoins` dans `bankService.ts` |
+| Crédit fléché : prêt personnel | NON affecté : pièces libres, dépensables partout (décision d'Andreja, comme un vrai prêt personnel). Le prêt immobilier reste attaché au bien (il ne crée aucune pièce). Le prêt sur portefeuille reste fléché vers son domaine. | DÉCISION produit | `bankPersonalService.ts` (`earmark: false`) |
 | Assurance emprunteur | 0,36 % du capital par an | JEU | comparateurs publics ; CCSF |
 | Frais de dossier | max(200 €, 0,2 % du capital) | JEU | tarifs bancaires |
 | Expertise avant achat | 300 € + 0,15 % du prix | JEU | — |
@@ -140,3 +142,11 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 3. Pour chaque ligne JEU : décide « on garde » (la mention reste, c'est un choix de jeu) ou « on change ».
 4. Tranche les incohérences signalées (18,6 % contre 17,2 %).
 5. Fais relire la liste par un comptable ou un juriste avant l'ouverture au public.
+
+
+## À traiter avant l'ouverture au public
+- **Rétablissement (procédure après défaut de paiement)** : décision d'Andreja, **ne rien changer maintenant**. Avant l'ouverture au public, il doit suivre la vraie vie :
+  - **saisie de tous les biens**, pas seulement des pièces réservées (aujourd'hui seules les pièces réservées sont saisies, et le prêt personnel n'en réserve plus) ;
+  - **conséquences durables** (blocage du crédit, historique visible, effets qui ne disparaissent pas au bout de quelques minutes) ;
+  - **pas d'effacement gratuit** après avoir dépensé l'argent emprunté (emprunter, dépenser, puis faire effacer la dette ne doit pas être rentable).
+- **« Jour actif »** : à resserrer à l'audit de sécurité (voir `docs/classement-net-de-revente.md`).

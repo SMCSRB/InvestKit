@@ -790,3 +790,31 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Banque, prêt personnel : avec très peu de pièces à toi (hors pièces empruntées), la demande est refusée pour « Réserve de sécurité » avec le montant manquant.
 6. Aucun « € » dans ces messages : tout est en InvestCoins.
 7. Si tu veux changer les 10 % ou les 4 mensualités : `backend/src/config/immoRules.ts` (`minDownPaymentPctOfPrice`, `reserveMonthlyPayments`).
+
+## Crypto : achat refusé avec assez de pièces (correctif)
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR.
+
+1. Compte avec un prêt personnel Immobilier dont une partie n'est pas dépensée (pièces empruntées réservées à l'Immobilier). Page Crypto > Portefeuille : à côté de « Pièces disponibles », une carte **« Utilisables en Crypto »** apparaît avec un montant plus bas.
+2. Fiche d'un actif, saisis un achat plus grand que ce montant : sous l'estimation, un message **rouge avant de cliquer** dit « Tu as X, mais Y sont des pièces empruntées réservées à un autre domaine… Tu peux en dépenser Z ici ; il en faut W ».
+3. Clique quand même sur Acheter : refus avec le même message, aucune pièce débitée.
+4. Un achat plus petit que « Utilisables en Crypto » passe normalement.
+5. Compte sans prêt : pas de carte supplémentaire, achat de 150 avec 387 pièces accepté (total ≤ 150).
+6. Sous le formulaire d'ordre : **« Tu possèdes X ACTIF »** (0 si aucun), avec « dont Y engagés dans des ordres en attente » si besoin.
+7. Achète puis revends tout de suite : tu perds les frais et l'écart, jamais de gain.
+
+## Prêt personnel non affecté (suite de la correction Crypto)
+1. Banque, prêt personnel : le texte dit que les pièces rejoignent ton **solde libre** ; plus de mot « fléché Immobilier ». Minimum 500 InvestCoins.
+2. Prends un prêt personnel : « Pièces disponibles » augmente du montant, **aucune** carte « Utilisables en Crypto » n'apparaît, et la page Banque ne montre plus de « crédit fléché » pour ce prêt.
+3. Achète en Crypto ou en Bourse avec ces pièces : accepté.
+4. Achat d'un bien avec un prêt immobilier : ton solde baisse seulement de l'apport et des frais ; aucune pièce n'est ajoutée, et le prêt reste affiché sur le bien.
+5. Un prêt sur portefeuille (Bourse ou Crypto) reste, lui, réservé à son domaine.
+6. Comptes de test qui ont déjà un prêt personnel : leur réserve existe encore tant que tu n'as pas choisi une des 3 options de `docs/crypto-solde-achat.md`.
+
+## Réserve de sécurité : pièces propres uniquement
+À dérouler chez toi sur ta copie de test, après les PR 8b (#107) et #109.
+
+1. Compte avec juste assez de pièces pour l'apport et les frais d'un bien, mais pas pour la réserve : la banque refuse (« Réserve de sécurité insuffisante … Il te manque … »).
+2. Prends un prêt personnel de 500 : « Pièces disponibles » monte de 500, mais le refus **reste** et le message ajoute que les pièces d'un prêt personnel non remboursé ne comptent pas dans la réserve (avec le capital restant dû). Le montant « à toi » affiché est le même qu'avant le prêt.
+3. Rembourse le prêt personnel : le message n'en parle plus et la réserve compte tes vraies pièces.
+4. Un achat payé avec l'argent du prêt est refusé de la même façon ; aucune pièce n'est débitée.
+5. Prêt personnel avec très peu de pièces à toi : refusé pour réserve (message chiffré), comme avant.

@@ -145,7 +145,7 @@ describe.skipIf(!hasDb)('procédure de rétablissement après défaut', () => {
     await query(`UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'default', defaults = 1 WHERE user_id = $1`, [uid]);
     await query(`INSERT INTO leaderboard_rankings (user_id, mode, domain, period, performance_pct, capital_committed) VALUES ($1,'accelerated','real_estate','Y2010',5,150)`, [uid]);
     const r: any = await recovery.start(uid, { domain: 'real_estate', confirm: 'RETABLISSEMENT' });
-    expect(r.borrowedCoinsSeized).toBe(legacyCoins(100));
+    expect(r.borrowedCoinsSeized).toBe(0);   // prêt personnel non affecté : aucune pièce réservée à saisir
     expect((await query('SELECT COUNT(*) AS n FROM re_games WHERE user_id = $1', [uid])).rows[0].n).toBe('0');
     expect((await query(`SELECT COUNT(*) AS n FROM leaderboard_rankings WHERE user_id = $1 AND domain = 'real_estate'`, [uid])).rows[0].n).toBe('0');
     expect((await loans(uid))[0].status).toBe('written_off');

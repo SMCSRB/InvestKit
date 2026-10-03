@@ -160,9 +160,12 @@ const buildPlan = async (game: GameRow, params: PurchaseParams, db: { query: Poo
     // Réserve de sécurité : pièces PROPRES (non empruntées) qu'il restera après l'achat (apport + frais de dossier payés en pièces).
     const spent = params.downPaymentCoins + (evaluation.upfrontFees > 0 ? coinsFor(evaluation.upfrontFees) : 0);
     const own = await ownCoins(db as any, game.user_id);
-    const fromOwn = Math.max(0, spent - own.creditInDomain(RE_DOMAIN));
     // Pièces insuffisantes pour payer l'achat : c'est l'erreur « solde insuffisant » qui doit s'afficher, pas un faux refus de réserve.
-    if (fromOwn <= own.own) evaluation = evaluatePurchase({ ...evalInput, freeCoinsAfter: own.own - fromOwn });
+    // Sinon, la réserve se mesure sur les pièces PROPRES après l'achat (hors prêt personnel non remboursé), qui peuvent être négatives :
+    // un achat payé avec l'argent d'un prêt ne reconstitue jamais la réserve.
+    if (spent <= await spendableCoins(db as any, game.user_id, RE_DOMAIN)) {
+      evaluation = evaluatePurchase({ ...evalInput, freeCoinsAfter: own.own - spent, unpaidPersonalLoan: own.unpaidPersonalLoan });
+    }
   } catch (e: any) {
     throw new RealEstateError('INVALID_INPUT', e.message);
   }

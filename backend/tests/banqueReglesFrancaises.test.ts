@@ -1,6 +1,7 @@
 // Banque aux règles françaises : apport = notaire + 10 % du prix, refus net (plus de « caution »), réserve de 4 mensualités, messages chiffrés.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { hasDb, setupDb, teardownDb, createUser, balanceOf, minDownCoins } from './helpers';
+import { query } from '../src/utils/db';
 import { realEstateService as svc, RealEstateError } from '../src/services/realEstateService';
 import { bankPersonalService as personal } from '../src/services/bankPersonalService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
@@ -72,6 +73,44 @@ describe.skipIf(!hasDb)('banque aux règles françaises', () => {
     const l = await listing();
     const err = await svc.purchase(uid, { listingId: l.id, downPaymentCoins: minDownCoins(l), months: 240 }).catch((e) => e as RealEstateError);
     expect((err as RealEstateError).code).toBe('INSUFFICIENT_FUNDS');
+  });
+
+  it('RÉSERVE = PIÈCES PROPRES : un prêt personnel de 500 ne permet pas d\'atteindre la réserve exigée pour un achat', async () => {
+    const l = await listing();
+    const down = minDownCoins(l);
+    const uid = await player(down + 400);                       // l'apport et les frais passent, mais pas la réserve
+    const before: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 });
+    const r0 = reasonsOf(before).find((x) => x.code === 'RESERVE_TOO_LOW')!;
+    expect(r0, 'réserve insuffisante au départ').toBeDefined();
+    // le joueur emprunte 500 (prêt personnel) : son solde monte, mais la réserve ne change pas
+    const loan: any = await personal.borrow(uid, { amountCoins: 500, months: 24 });
+    expect(loan.loanId).toBeDefined();
+    expect(await balanceOf(uid)).toBe(down + 900);
+    const after: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 });
+    const r1 = reasonsOf(after).find((x) => x.code === 'RESERVE_TOO_LOW')!;
+    expect(r1, 'toujours refusé malgré le prêt').toBeDefined();
+    expect(after.bank.approved).toBe(false);
+    expect(r1.message).toContain('prêt personnel non remboursé');
+    expect(r1.message).toContain('500');
+    expect(r1.message).toMatch(/Il te manque \d/);
+    // les pièces propres restantes sont identiques avec ou sans le prêt (hors mensualité du prêt personnel dans la réserve exigée)
+    const own = (m: string) => Number(/il te resterait (\d+) InvestCoins à toi/.exec(m)![1]);
+    expect(own(r1.message)).toBe(own(r0.message));
+    // même en payant l'achat avec l'argent du prêt : toujours refusé
+    const err = await svc.purchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 }).catch((e) => e as RealEstateError);
+    expect((err as RealEstateError).code).toBe('BANK_REFUSED');
+    expect(await balanceOf(uid)).toBe(down + 900);
+  });
+
+  it('le remboursement du prêt personnel redonne ses pièces propres : la réserve compte alors l\'épargne réelle', async () => {
+    const l = await listing();
+    const down = minDownCoins(l);
+    const uid = await player(down + 400);
+    await personal.borrow(uid, { amountCoins: 500, months: 24 });
+    await query(`UPDATE bank_loans SET status = 'repaid', balance_h = 0 WHERE user_id = $1`, [uid]);   // prêt soldé (simulation)
+    const p: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 });
+    const r = reasonsOf(p).find((x) => x.code === 'RESERVE_TOO_LOW')!;
+    expect(r.message).not.toContain('prêt personnel non remboursé');
   });
 
   it('prêt personnel : réserve de 4 mensualités exigée sur les pièces propres, message chiffré', async () => {

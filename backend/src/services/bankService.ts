@@ -45,12 +45,15 @@ export const spendableCoins = async (db: Db, userId: string, domain: string): Pr
   return Math.max(0, balance - Number(r.rows[0].s));
 };
 
-// Pièces PROPRES du joueur : solde moins toutes les pièces empruntées encore réservées (tous domaines). Sert à la règle de réserve de sécurité.
-export const ownCoins = async (db: Db, userId: string): Promise<{ own: number; creditInDomain: (domain: string) => number }> => {
+// Pièces PROPRES du joueur, pour la règle de réserve de sécurité : solde moins (1) les pièces empruntées encore réservées à un domaine (prêt sur portefeuille)
+// et moins (2) le capital restant dû d'un PRÊT PERSONNEL non remboursé. Une banque ne prend pas un prêt récent pour de l'épargne.
+// Règle prudente : on retire le capital restant dû même si les pièces ont déjà été dépensées (on ne peut pas suivre quelles pièces sont lesquelles).
+export const ownCoins = async (db: Db, userId: string): Promise<{ own: number; unpaidPersonalLoan: number; creditInDomain: (domain: string) => number }> => {
   const balance = await investcoinsRepository.getBalance(userId, db as any);
   const rows = (await q(db, 'SELECT domain, coins FROM bank_credit_balances WHERE user_id = $1 AND coins > 0', [userId])).rows;
   const total = rows.reduce((a: number, r: any) => a + Number(r.coins), 0);
-  return { own: Math.max(0, balance - total), creditInDomain: (d: string) => rows.filter((r: any) => r.domain === d).reduce((a: number, r: any) => a + Number(r.coins), 0) };
+  const unpaid = Number((await q(db, `SELECT COALESCE(SUM(balance_h), 0) AS h FROM bank_loans WHERE user_id = $1 AND product = 'personal' AND status IN ('active','defaulted')`, [userId])).rows[0].h) / 100;
+  return { own: Math.max(0, balance - total - unpaid), unpaidPersonalLoan: unpaid, creditInDomain: (d: string) => rows.filter((r: any) => r.domain === d).reduce((a: number, r: any) => a + Number(r.coins), 0) };
 };
 
 // Échéances mensuelles des prêts bancaires à annuités d'un domaine (actifs et en défaut), en pièces par mois.

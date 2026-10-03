@@ -95,6 +95,7 @@ export interface PurchaseContext {
   notaryFees: number;     // frais de notaire
   // Pièces libres (non empruntées) qu'il restera après l'opération. Absent = règle de réserve non évaluée.
   freeCoinsAfter?: number;
+  unpaidPersonalLoan?: number;   // capital restant dû d'un prêt personnel (ne compte pas dans la réserve) : sert à expliquer le refus
   loanMonths: number;     // durée demandée
   loanPrincipal: number;  // montant emprunté (€)
   works: number;          // travaux financés (€)
@@ -179,9 +180,10 @@ export const assessLoanApplication = (
         decision = 'refused';
         reasons.push({
           code: 'RESERVE_TOO_LOW',
-          message: `Réserve de sécurité insuffisante : après cet achat il te resterait ${purchase.freeCoinsAfter.toFixed(0)} InvestCoins libres, ` +
+          message: `Réserve de sécurité insuffisante : après cet achat il te resterait ${Math.max(0, purchase.freeCoinsAfter).toFixed(0)} InvestCoins à toi, ` +
             `la banque veut que tu gardes ${rules.reserveMonthlyPayments} mensualités (${requiredReserve.toFixed(0)} InvestCoins). ` +
-            `Il te manque ${(requiredReserve - purchase.freeCoinsAfter).toFixed(0)} InvestCoins.`,
+            `Il te manque ${(requiredReserve - Math.max(0, purchase.freeCoinsAfter)).toFixed(0)} InvestCoins.` +
+            ((purchase.unpaidPersonalLoan ?? 0) > 0 ? ` Les pièces d'un prêt personnel non remboursé (${purchase.unpaidPersonalLoan!.toFixed(0)} InvestCoins restant dus) ne comptent pas dans la réserve : une banque ne prend pas un prêt récent pour de l'épargne.` : ''),
           value: purchase.freeCoinsAfter,
           limit: requiredReserve,
         });
