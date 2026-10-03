@@ -15,6 +15,7 @@ import { clockService, CryptoAccount } from './clockService';
 import { activeEffects, processEvents } from './eventsService';
 import { collateralRelease, repayFromSale, processLoan } from './loanService';
 import { snapshotLeaderboard } from './rankingService';
+import { spendableCoins } from '../bankService';
 
 const CLIENT_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 const ORDER_TYPES: OrderType[] = ['market', 'limit', 'stop_loss', 'take_profit'];
@@ -40,6 +41,18 @@ const quantityForBudget = (m: Market, budget: number, stress = 1): string => {
   return floorQty8(q);
 };
 
+// Pièces dont le joueur dispose dans la Crypto : son solde moins les pièces EMPRUNTÉES encore réservées à un autre domaine (prêt Immobilier, etc.).
+const fundsOf = async (db: Queryable, userId: string) => {
+  const balance = await investcoinsRepository.getBalance(userId, db);
+  const spendable = await spendableCoins(db as any, userId, CRYPTO_DOMAIN);
+  return { balance, spendable, reservedElsewhere: Math.max(0, balance - spendable) };
+};
+const insufficientMessage = (needed: number, f: { balance: number; spendable: number; reservedElsewhere: number }): string =>
+  f.balance >= needed && f.spendable < needed
+    ? `Tu as ${f.balance} InvestCoins, mais ${f.reservedElsewhere} sont des pièces empruntées réservées à un autre domaine (elles ne se dépensent que là où le prêt a été pris). ` +
+      `Tu peux en dépenser ${f.spendable} ici ; il en faut ${needed} (prix + frais).`
+    : `Solde InvestCoins insuffisant : il faut ${needed} (prix + frais), tu as ${f.spendable} à dépenser ici.`;
+
 export const cryptoTradingService = {
   // ── Aperçu : coûts d'un ordre au marché à la date simulée du joueur.
   async quote(userId: string, symbol: string, sideRaw: unknown, quantityRaw: unknown, amountRaw: unknown) {
@@ -52,7 +65,10 @@ export const cryptoTradingService = {
     if (qty === null && side === 'buy' && amountRaw !== undefined) { const a = Number(amountRaw); if (!Number.isInteger(a) || a < 1) throw bad('Montant invalide'); qty = quantityForBudget(m, a, stress); }
     if (qty === null || Number(qty) <= 0) throw bad('Quantité invalide (8 décimales maximum)');
     const ex = planMarket(m, side, Number(qty), stress);
-    return { symbol, side, quantity: qty, refPrice: m.price, refPriceCoins: priceCoinsOf(m), fxUsdPerCoin: fxOf(m), tier: m.tier, stale: m.stale, execution: { price: ex.price, priceCoins: ex.price / fxOf(m), spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
+    const funds = await fundsOf({ query }, userId);
+    const totalNeeded = ex.notionalCoins + ex.feeCoins;
+    return { symbol, side, quantity: qty, funds: { balanceCoins: funds.balance, spendableCoins: funds.spendable, reservedElsewhereCoins: funds.reservedElsewhere },
+      affordable: side === 'sell' ? true : funds.spendable >= totalNeeded, affordableMessage: side === 'buy' && funds.spendable < totalNeeded ? insufficientMessage(totalNeeded, funds) : null, refPrice: m.price, refPriceCoins: priceCoinsOf(m), fxUsdPerCoin: fxOf(m), tier: m.tier, stale: m.stale, execution: { price: ex.price, priceCoins: ex.price / fxOf(m), spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
       note: 'Estimation : le prix de référence est celui de la date simulée ; l\'écart achat/vente et le glissement dépendent de la liquidité de l\'actif.' };
   },
 
@@ -136,7 +152,7 @@ export const cryptoTradingService = {
           await repayFromSale(client, userId, release);
           await snapshotLeaderboard(client, account);
         } catch (e) {
-          if (e instanceof InsufficientFundsError) throw bad('Solde InvestCoins insuffisant pour cet achat (prix + frais).');
+          if (e instanceof InsufficientFundsError) throw bad(insufficientMessage(ex.notionalCoins + ex.feeCoins, await fundsOf(client, userId)));
           throw e;
         }
       }
@@ -258,11 +274,12 @@ export const cryptoTradingService = {
       positions.push({ symbol: p.symbol, name: p.name, quantity: fmtQty(p.quantity), avgCostCoins: num(p.quantity) > 0 ? basis / num(p.quantity) : 0, price, priceUsd: price, priceCoins: fx ? price / fx : null, valueUsd: price * num(p.quantity), stale: m?.stale ?? true,
         valueCoins: v, costBasisCoins: basis, unrealizedCoins: v === null ? null : v - basis, unrealizedPct: v !== null && basis > 0 ? Math.round(((v / basis) - 1) * 10000) / 100 : null, realizedCoins: num(p.realized_gain_coins) });
     }
-    const balance = await investcoinsRepository.getBalance(userId);
+    const funds = await fundsOf({ query }, userId);
+    const balance = funds.balance;
     const ts = readTaxState(acc.taxState);
     const fills = (await query(`SELECT COALESCE(SUM(fee_coins),0)::bigint AS f, COALESCE(SUM(tax_coins),0)::bigint AS t FROM crypto_fills WHERE user_id = $1`, [userId])).rows[0];
     return {
-      simulatedAt: acc.simulatedAt, balanceCoins: balance, holdingsValueCoins: value, wealthCoins: balance + value, investedCoins: invested,
+      simulatedAt: acc.simulatedAt, balanceCoins: balance, spendableCoins: funds.spendable, reservedElsewhereCoins: funds.reservedElsewhere, holdingsValueCoins: value, wealthCoins: balance + value, investedCoins: invested,
       unrealizedCoins: value - invested, realizedCoins: realized, feesPaidCoins: num(fills.f), taxPaidCoins: num(fills.t),
       cryptoSalesThisYear: ts.cryptoSales[String(new Date(acc.simulatedAt).getUTCFullYear())] ?? 0,
       fxUnavailable,                                    // vrai : taux de change indisponible, les valeurs en InvestCoins ne sont pas calculables (affichage en dollars)
