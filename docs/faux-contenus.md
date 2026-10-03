@@ -7,8 +7,8 @@ Un test automatique (`backend/tests/fauxContenus.test.ts`) échoue si une valeur
 | Où | Ce qui s'affichait | Statut |
 |---|---|---|
 | Accueil, chiffres | « 10K+ investisseurs actifs », « 99.9 % uptime garanti » | **Déjà supprimés** (PR « retours design ») ; chiffres actuels = comptes réels (110 actifs, 110 termes) ; test `landing.test.ts` + nouveau test |
-| Accueil, aperçu du produit (`HeroPreview`) | Patrimoine 12 480, +6,4 %, « Série de 7 jours », « Niveau 3 », courbe sur 8 mois | **À ton choix** : maquette illustrative non étiquetée comme exemple. Reco : ajouter la légende « Aperçu illustratif » (sans mention « simulation » en plus). |
-| Accueil, vignettes de domaines (mensualité 62/28/10, score de risque 62, « Joueur A/B/C ») | Valeurs illustratives, certaines marquées « (exemple) » | **À ton choix** : même reco, étiqueter toutes les vignettes. |
+| Accueil, aperçu du produit (`HeroPreview`) | Patrimoine 12 480, +6,4 %, « Série de 7 jours », « Niveau 3 », courbe sur 8 mois | **Corrigé** (reco validée) : légende « Aperçu illustratif » sous la maquette. |
+| Accueil, vignettes de domaines (mensualité 62/28/10, score de risque 62, « Joueur A/B/C ») | Valeurs illustratives, certaines marquées « (exemple) » | Déjà marquées « (exemple) » pour les chiffres (mensualité, score de risque) ; inchangé. |
 | Bandeau du haut (cours) | Cours et mini-courbes | **Réel** : cours du marché Crypto simulé du joueur (`/crypto/state`, `/crypto/assets`, `/crypto/candles?symbol=` pour CHAQUE actif) ; le bandeau disparaît sans compte Crypto ou sans réponse. |
 | Mini-courbes BTC/ETH/BNB/XRP « presque identiques » | Forme proche | **Non écrites en dur** : chaque courbe est lue au serveur pour son propre actif (test). Des cryptos réelles sont fortement corrélées, la ressemblance seule n'est pas une preuve de copie. Garde-fou ajouté : une courbe trop courte, plate, invalide ou **de forme identique à celle d'un autre actif** (corrélation ≥ 0,99999) est retirée. Contrôle de ta base : `cd backend && npm run crypto:check-series -- --symbols BTC,ETH,BNB,XRP --days 24` (lecture seule). Dans la base de test locale, il n'y a que des actifs fictifs « DEMO » : je n'ai pas pu examiner tes vrais cours. |
 | Onglet Marché | Mêmes sources que le bandeau | **Réel**, même garde-fou |
@@ -24,12 +24,12 @@ Un test automatique (`backend/tests/fauxContenus.test.ts`) échoue si une valeur
 | Paramètres > Sécurité : « Sessions actives, gérez vos sessions » | Fonction inexistante | **Corrigé** : retirée |
 | Sécurité : « Modifier » (mot de passe) | Bouton sans action | **Corrigé** : mène au vrai flux « mot de passe oublié » |
 | Données : « Exporter », « Lire » | Boutons sans action | **Corrigé** : export réel (fichier JSON du serveur), « Lire » mène à la politique de confidentialité |
-| Données : « Supprimer mon compte » | Bouton sans action (alors que la suppression existe côté serveur) | **À ton choix** : reco : brancher la vraie suppression (mot de passe + « SUPPRIMER », déjà prévus par l'API) dans une PR dédiée. |
-| Abonnement | Prix 7,99 € / 79 €, « 2 mois offerts » | **Réel** : `lib/plans.js` ; « 2 mois offerts » : 79 € = 9,9 mois de 7,99 € (−18 %) : à reformuler si tu veux un chiffre exact (**à ton choix**). |
-| Parrainage | « 100 InvestCoins par ami » | À vérifier avec le code serveur de parrainage (**à ton choix** si la valeur a changé). |
-| Visibilité du profil (public/privé/amis), « masquer mes stats », « partager ma progression » | Enregistrés **seulement dans ce navigateur**, lus par aucun écran ni par le serveur : un profil « privé » ne l'est pas | **À ton choix, important** : reco : les brancher au serveur dans une PR dédiée, ou les retirer d'ici là. |
-| Préférences d'apprentissage (domaine favori, niveau, notifications Académie) | Même problème : enregistrées localement, sans effet | **À ton choix** : reco : retirer ou brancher. |
-| Fenêtre « personnalisation du profil » (`showProfileMenu`) | Code jamais affiché (aucun bouton ne l'ouvre) | **À ton choix** : reco : supprimer ce code mort (gros bloc, risque nul). |
+| Données : « Supprimer mon compte » | Bouton sans action (alors que la suppression existe côté serveur) | **Reco validée → PR dédiée** (vraie suppression : mot de passe + « SUPPRIMER »). Bouton retiré en attendant. |
+| Abonnement | Prix 7,99 € / 79 €, « 2 mois offerts » | **Corrigé** : prix réels (`lib/plans.js`) ; « 2 mois offerts » remplacé par le chiffre exact calculé (−18 %). |
+| Parrainage | « 100 InvestCoins par ami » | **Vérifié** : `REFERRAL_BONUS = 100` côté serveur. |
+| Visibilité du profil (public/privé/amis), « masquer mes stats », « partager ma progression » | Enregistrés **seulement dans ce navigateur**, lus par aucun écran ni par le serveur : un profil « privé » ne l'est pas | **Retirés** (reco validée) avec la mention « arrivera bientôt » ; leur vrai branchement au serveur demande de définir ce que « privé » masque (classements, amis, guildes) : à lancer sur ton « go ». |
+| Préférences d'apprentissage (domaine favori, niveau, notifications Académie) | Même problème : enregistrées localement, sans effet | **Retirées** (reco validée). |
+| Fenêtre « personnalisation du profil » (`showProfileMenu`) | Code jamais affiché (aucun bouton ne l'ouvre) | **Corrigé** : code mort supprimé. |
 | Série (« Racha ») | Mot espagnol | **Corrigé** : « Série » |
 
 ## Page /profile
@@ -38,12 +38,12 @@ Un test automatique (`backend/tests/fauxContenus.test.ts`) échoue si une valeur
 | Compte > Email | **adresse personnelle écrite en dur dans le code** (vue par tous les joueurs comme leur propre e-mail) | **Corrigé** : e-mail réel du compte ; « Modifier l'email » mène à la procédure sécurisée |
 | Compte > Mot de passe | « Dernière modification il y a 3 mois » | **Corrigé** : retiré ; le bouton mène au flux « mot de passe oublié » |
 | Compte > Exporter / Se déconnecter | Boutons sans action | **Corrigé** : export réel, déconnexion réelle |
-| Compte > « Supprimer toutes mes données » | Bouton sans action | **À ton choix** (voir « Supprimer mon compte ») |
+| Compte > « Supprimer toutes mes données » | Bouton sans action | **Retiré** (la vraie suppression arrive dans une PR dédiée) |
 | Calendrier « Activité d'apprentissage » | **Cases tirées au hasard** à chaque affichage | **Corrigé** : retiré, remplacé par le vrai nombre de chapitres terminés + « bientôt » |
 | « Statistiques mensuelles / XP ce mois » | C'était l'XP total | **Corrigé** : renommé « Statistiques / XP total » |
 | « Temps d'apprentissage » | Affichait la série et le niveau (aucun temps mesuré) | **Corrigé** : « Série et niveau » |
-| Certificats : « Télécharger », « Partager » | Boutons sans action | **À ton choix** : reco : retirer ces boutons tant qu'il n'y a pas de vrai certificat à exporter. |
-| Confidentialité (profil public, masquer l'XP) ; Notifications (son, rappels quotidiens, « résumé hebdomadaire par e-mail ») ; Affichage (Animations, Mode compact) | Interrupteurs sans effet ; **aucun e-mail hebdomadaire n'existe** ; « Animations » existe déjà (vrai réglage) dans la carte Apparence | **À ton choix** : reco : retirer les interrupteurs sans fonction, garder ceux qui agissent (Mode sombre, Animations de la carte Apparence). |
+| Certificats : « Télécharger », « Partager » | Boutons sans action | **Corrigé** : boutons retirés. |
+| Confidentialité (profil public, masquer l'XP) ; Notifications (son, rappels quotidiens, « résumé hebdomadaire par e-mail ») ; Affichage (Animations, Mode compact) | Interrupteurs sans effet ; **aucun e-mail hebdomadaire n'existe** ; « Animations » existe déjà (vrai réglage) dans la carte Apparence | **Corrigé** : onglets Notifications et Confidentialité retirés, interrupteurs « Animations » et « Mode compact » sans effet retirés ; Mode sombre conservé. |
 | Pseudo, bio | « InvestKitUser » et texte d'exemple par défaut | **Corrigé** (PR profil #92) |
 
 ## Amis, guildes, classements, immobilier, banque, crypto

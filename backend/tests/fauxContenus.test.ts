@@ -33,6 +33,9 @@ const INTERDITS: [RegExp, string][] = [
   [/Math\.random\(\) > 0\.6/, 'activité tirée au hasard'],
   [/useState\(Math\.floor\(Math\.random\(\)/, 'XP tiré au hasard'],
   [/\bRacha\b/i, 'faute (« série »)'],
+  [/Profil Public|Masquer votre XP publiquement|Résumé hebdomadaire de vos progrès/, 'réglage sans effet'],
+  [/setShowProfileMenu|const \[profileVisibility/, 'code mort ou réglage local sans effet'],
+  [/2 mois offerts/, 'chiffre non calculé'],
 ];
 
 describe('faux contenus : aucune valeur d\'exemple connue dans le code de l\'interface', () => {

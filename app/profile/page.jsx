@@ -278,8 +278,6 @@ export default function ProfilePage() {
             <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-700">
               {[
                 { id: 'display', label: 'Affichage', icon: 'palette' },
-                { id: 'notifications', label: 'Notifications', icon: 'bell' },
-                { id: 'privacy', label: 'Confidentialité', icon: 'lock' },
                 { id: 'account', label: 'Compte', icon: 'user' },
               ].map((tab) => (
                 <button
@@ -319,152 +317,7 @@ export default function ProfilePage() {
                   </button>
                 </div>
 
-                {/* Animation Settings */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Animations</h3>
-                    <p className="text-gray-400 text-sm">Activer les animations et transitions</p>
-                  </div>
-                  <button className="relative w-14 h-8 rounded-full bg-blue-600">
-                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-7" />
-                  </button>
-                </div>
-
-                {/* Compact Mode */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Mode Compact</h3>
-                    <p className="text-gray-400 text-sm">Interface condensée pour petits écrans</p>
-                  </div>
-                  <button className="relative w-14 h-8 rounded-full bg-gray-600">
-                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-1" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Notification Settings */}
-            {activeSettingsTab === 'notifications' && (
-              <div className="space-y-6">
-                {/* Enable Notifications */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Notifications In-App</h3>
-                    <p className="text-gray-400 text-sm">Recevoir les notifications dans l'application</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('notificationsEnabled', !settings.notificationsEnabled)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.notificationsEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.notificationsEnabled ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Sound Notifications */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Son</h3>
-                    <p className="text-gray-400 text-sm">Son pour les notifications importantes</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.soundEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.soundEnabled ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Daily Reminders */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Rappels Quotidiens</h3>
-                    <p className="text-gray-400 text-sm">Rappels d'apprentissage quotidiens</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('remindersEnabled', !settings.remindersEnabled)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.remindersEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.remindersEnabled ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Email Notifications */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Notifications par Email</h3>
-                    <p className="text-gray-400 text-sm">Résumé hebdomadaire de vos progrès</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('emailNotifications', !settings.emailNotifications)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.emailNotifications ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.emailNotifications ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Privacy Settings */}
-            {activeSettingsTab === 'privacy' && (
-              <div className="space-y-6">
-                {/* Public Profile */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Profil Public</h3>
-                    <p className="text-gray-400 text-sm">Permettre aux autres de voir votre profil</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('profilePublic', !settings.profilePublic)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.profilePublic ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.profilePublic ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Hide XP Publicly */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Masquer votre XP publiquement</h3>
-                    <p className="text-gray-400 text-sm">Vos statistiques ne seront pas visibles</p>
-                  </div>
-                  <button className="relative w-14 h-8 rounded-full bg-gray-600">
-                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-1" />
-                  </button>
-                </div>
-
-                {/* Delete Data */}
-                <button className="w-full p-4 rounded-lg bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-400 font-semibold transition-all duration-300"> Supprimer toutes mes données
-                </button>
+                <p className="text-gray-400 text-sm">Les animations se règlent dans la carte « Apparence » ci-dessus.</p>
               </div>
             )}
 
@@ -631,12 +484,7 @@ export default function ProfilePage() {
                       <h3 className="text-white font-bold mb-1">Certificat</h3>
                       <p className="text-amber-300 font-semibold mb-3">{domain.name}</p>
                       <p className="text-gray-400 text-sm mb-4">Complété le {formattedDate}</p>
-                      <div className="flex gap-2">
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all duration-300"> Télécharger
-                        </button>
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all duration-300"> Partager
-                        </button>
-                      </div>
+                      {/* Boutons Télécharger / Partager retirés : aucun certificat réel à exporter pour l'instant. */}
                     </div>
                   );
                 })}
