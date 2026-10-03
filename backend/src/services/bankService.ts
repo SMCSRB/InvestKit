@@ -45,6 +45,14 @@ export const spendableCoins = async (db: Db, userId: string, domain: string): Pr
   return Math.max(0, balance - Number(r.rows[0].s));
 };
 
+// Pièces PROPRES du joueur : solde moins toutes les pièces empruntées encore réservées (tous domaines). Sert à la règle de réserve de sécurité.
+export const ownCoins = async (db: Db, userId: string): Promise<{ own: number; creditInDomain: (domain: string) => number }> => {
+  const balance = await investcoinsRepository.getBalance(userId, db as any);
+  const rows = (await q(db, 'SELECT domain, coins FROM bank_credit_balances WHERE user_id = $1 AND coins > 0', [userId])).rows;
+  const total = rows.reduce((a: number, r: any) => a + Number(r.coins), 0);
+  return { own: Math.max(0, balance - total), creditInDomain: (d: string) => rows.filter((r: any) => r.domain === d).reduce((a: number, r: any) => a + Number(r.coins), 0) };
+};
+
 // Échéances mensuelles des prêts bancaires à annuités d'un domaine (actifs et en défaut), en pièces par mois.
 export const monthlyInstalmentCoins = async (db: Db, userId: string, domain: string): Promise<number> => {
   const loans = (await q(db, `SELECT principal_coins, annual_rate_pct, months FROM bank_loans WHERE user_id = $1 AND domain = $2 AND status IN ('active','defaulted') AND repayment_type = 'annuity'`, [userId, domain])).rows;

@@ -7,7 +7,7 @@ import HelpTip from '@/app/components/HelpTip';
 import { LazyListingArt } from './art';
 import ListingMap from './ListingMap';
 import { Dpe, Heart, Pill, Portal } from './bits';
-import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct } from './api';
+import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct, eurText } from './api';
 import Coin from '@/app/components/ui/Coin';
 
 export const DEFAULT_SEARCH = { filters: {}, view: 'grid', sort: 'relevance', favOnly: false };
@@ -43,7 +43,6 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
       <div className="rp-card__body">
         <div className="rp-card__price">
           {rent ? <strong>{eur(l.marketRentMonthly)}<small>/mois</small></strong> : <strong>{eur(l.price)}</strong>}
-          {!rent && <span title={eurosPerCoin ? `Prix en InvestCoins (1 InvestCoin = ${eurosPerCoin} €)` : 'Prix en InvestCoins'}>≈ {coins(l.priceCoins)}</span>}
           {rent && <span className="rp-card__alt">à l’achat : {eur(l.price)}</span>}
         </div>
         <h3 className="rp-card__title"><button type="button" onClick={() => onOpen(l.id)}>{TYPE_LABEL[l.type]} · {l.neighborhoodName}</button></h3>
@@ -54,9 +53,9 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
         </ul>
         <div className="rp-card__foot">
           {rent
-            ? <span className="rp-card__stat"><Icon name="ruler" size={14} />{Number(l.rentPerSqm).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} €/m²/mois</span>
+            ? <span className="rp-card__stat"><Icon name="ruler" size={14} />{Number(l.rentPerSqm).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} InvestCoins/m²/mois</span>
             : <span className="rp-card__stat rp-card__stat--yield" title="Loyer annuel estimé ÷ prix : avant charges et frais"><Icon name="trendingUp" size={14} />Rendement brut estimé {pct(l.grossYieldPct)}</span>}
-          <span className="rp-card__stat">{rent ? `${AGE_LABEL[l.age]} · ${CONDITION_LABEL[l.condition]}` : `${eur(l.pricePerSqm)}/m² · ${CONDITION_LABEL[l.condition]}`}</span>
+          <span className="rp-card__stat">{rent ? `${AGE_LABEL[l.age]} · ${CONDITION_LABEL[l.condition]}` : `${eurText(l.pricePerSqm)}/m² · ${CONDITION_LABEL[l.condition]}`}</span>
         </div>
       </div>
     </article>
@@ -88,12 +87,12 @@ function FilterPanel({ f, set, onClose, count, onReset, rent }) {
         </fieldset>
         {rent ? (
           <fieldset><legend>Loyer mensuel (hors charges)</legend>
-            <div className="rp-pair"><NumberField id="f-minr" label="Min" value={f.minRent} onChange={(v) => set({ minRent: v })} suffix="€" /><NumberField id="f-maxr" label="Max" value={f.maxRent} onChange={(v) => set({ maxRent: v })} suffix="€" /></div>
+            <div className="rp-pair"><NumberField id="f-minr" label="Min" value={f.minRent} onChange={(v) => set({ minRent: v })} suffix={<Coin />} /><NumberField id="f-maxr" label="Max" value={f.maxRent} onChange={(v) => set({ maxRent: v })} suffix={<Coin />} /></div>
           </fieldset>
         ) : (
           <fieldset><legend>Budget</legend>
-            <div className="rp-pair"><NumberField id="f-minp" label="Min" value={f.minPrice} onChange={(v) => set({ minPrice: v })} suffix="€" /><NumberField id="f-maxp" label="Max" value={f.maxPrice} onChange={(v) => set({ maxPrice: v })} suffix="€" /></div>
-            <NumberField id="f-maxm2" label="Prix au m² maximum" value={f.maxPricePerSqm} onChange={(v) => set({ maxPricePerSqm: v })} suffix="€/m²" />
+            <div className="rp-pair"><NumberField id="f-minp" label="Min" value={f.minPrice} onChange={(v) => set({ minPrice: v })} suffix={<Coin />} /><NumberField id="f-maxp" label="Max" value={f.maxPrice} onChange={(v) => set({ maxPrice: v })} suffix={<Coin />} /></div>
+            <NumberField id="f-maxm2" label="Prix au m² maximum" value={f.maxPricePerSqm} onChange={(v) => set({ maxPricePerSqm: v })} suffix="InvestCoins/m²" />
           </fieldset>
         )}
         <fieldset><legend>Surface</legend>
@@ -134,17 +133,17 @@ const FILTER_LABELS = (f, cities) => {
   if (c) out.push(['cityId', c.name]);
   if (f.q) out.push(['q', `« ${f.q} »`]);
   arr(f.types).forEach((t) => out.push([`types:${t}`, TYPE_LABEL[t]]));
-  if (f.minPrice) out.push(['minPrice', `dès ${eur(f.minPrice)}`]);
-  if (f.maxPrice) out.push(['maxPrice', `jusqu’à ${eur(f.maxPrice)}`]);
+  if (f.minPrice) out.push(['minPrice', `dès ${eurText(f.minPrice)}`]);
+  if (f.maxPrice) out.push(['maxPrice', `jusqu’à ${eurText(f.maxPrice)}`]);
   if (f.minSurface) out.push(['minSurface', `≥ ${f.minSurface} m²`]);
   if (f.maxSurface) out.push(['maxSurface', `≤ ${f.maxSurface} m²`]);
   if (f.minRooms) out.push(['minRooms', `${f.minRooms}+ pièces`]);
   arr(f.conditions).forEach((x) => out.push([`conditions:${x}`, CONDITION_LABEL[x]]));
   arr(f.energy).forEach((x) => out.push([`energy:${x}`, `DPE ${x}`]));
   if (f.minYieldPct) out.push(['minYieldPct', `rendement ≥ ${f.minYieldPct} %`]);
-  if (f.minRent) out.push(['minRent', `loyer dès ${eur(f.minRent)}`]);
-  if (f.maxRent) out.push(['maxRent', `loyer jusqu’à ${eur(f.maxRent)}`]);
-  if (f.maxPricePerSqm) out.push(['maxPricePerSqm', `≤ ${eur(f.maxPricePerSqm)}/m²`]);
+  if (f.minRent) out.push(['minRent', `loyer dès ${eurText(f.minRent)}`]);
+  if (f.maxRent) out.push(['maxRent', `loyer jusqu’à ${eurText(f.maxRent)}`]);
+  if (f.maxPricePerSqm) out.push(['maxPricePerSqm', `≤ ${eurText(f.maxPricePerSqm)}/m²`]);
   arr(f.ages).forEach((x) => out.push([`ages:${x}`, AGE_LABEL[x]]));
   if (f.urgentOnly) out.push(['urgentOnly', 'Ventes pressées']);
   if (f.worksOnly) out.push(['worksOnly', 'Travaux à prévoir']);

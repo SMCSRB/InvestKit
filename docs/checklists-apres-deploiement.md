@@ -788,3 +788,34 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Achat d'un bien avec un prêt immobilier : ton solde baisse seulement de l'apport et des frais ; aucune pièce n'est ajoutée, et le prêt reste affiché sur le bien.
 5. Un prêt sur portefeuille (Bourse ou Crypto) reste, lui, réservé à son domaine.
 6. Comptes de test qui ont déjà un prêt personnel : leur réserve existe encore tant que tu n'as pas choisi une des 3 options de `docs/crypto-solde-achat.md`.
+
+## Affichage en InvestCoins
+À dérouler chez toi **avec les PR taux BCE et Crypto en InvestCoins** (déploiement ensemble).
+
+1. Immobilier, liste des annonces : chaque prix est écrit **une seule fois**, avec la pièce (pas de « € », pas de « ≈ »). Même chose sur la fiche, le bloc de financement, « Mes biens », le bilan et la carte (étiquettes sans unité, info-bulle en InvestCoins).
+2. Filtres de prix et de loyer : le petit symbole à droite des champs est la pièce.
+3. Banque, prêt personnel : la mensualité n'a plus de « (≈ … €) » ; le reste à vivre est en pièces.
+4. Bandeau de cours sous la barre du haut : prix en pièces ; survole un prix pour voir le dollar d'origine.
+5. Tableau de bord, liste de départ : sur « Terminer une leçon d'éducation », tu lis « checklist : +10 » et, sous la liste, la phrase sur les deux récompenses séparées. Réussis un quiz de chapitre : **+30** arrive tout de suite (bonus première leçon), puis récupère les **+10** de la checklist avec le bouton : ce sont deux versements différents.
+6. Écran de téléphone (390 px) : aucune barre de défilement horizontale sur l'Immobilier et la Crypto.
+
+## Banque aux règles françaises
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR (après les PR 5, 6, 7).
+
+1. Immobilier, fiche d'une annonce, simulateur de financement : mets en apport **seulement les frais de notaire**. La banque **refuse** et dit : « Apport insuffisant : … exige au moins … (… de frais de notaire + … soit 10 % du prix). Il te manque … InvestCoins. » Ajoute le montant manquant : le motif disparaît.
+2. Avec l'apport exact, mais presque plus de pièces libres après l'achat : refus « Réserve de sécurité insuffisante : … 4 mensualités … Il te manque … ». Ajoute des pièces (ou baisse l'apport si tu en as) : la banque accepte.
+3. Il n'y a plus de message « La banque accepte, avec une réserve » : c'est accepté ou refusé.
+4. Avec un profil étudiant et une grosse mensualité : refus « Reste à vivre insuffisant … Mensualité maximale compatible : … ». Réduis le prêt (apport plus grand ou durée plus longue) : accepté.
+5. Banque, prêt personnel : avec très peu de pièces à toi (hors pièces empruntées), la demande est refusée pour « Réserve de sécurité » avec le montant manquant.
+6. Aucun « € » dans ces messages : tout est en InvestCoins.
+7. Si tu veux changer les 10 % ou les 4 mensualités : `backend/src/config/immoRules.ts` (`minDownPaymentPctOfPrice`, `reserveMonthlyPayments`).
+
+## Classement net de revente, seuil et barre de progression
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR (dernière du lot, après la banque).
+
+1. Page Classements (Bourse, Crypto, Immobilier) et onglet Bilan de l'Immobilier : une barre **« … / 2 500 investis »** et une barre **« … / 5 jours actifs »**. Le texte est neutre : pas de date limite, pas de pression.
+2. Avec un compte neuf (moins de 5 jours actifs) qui a investi plus de 2 500 : tu n'es **pas classé**, la barre des jours n'est pas pleine. Après avoir joué 5 jours différents : tu apparais au classement.
+3. Avec 5 jours actifs mais moins de 2 500 investis : pas classé non plus ; investis davantage, la barre se remplit.
+4. Immobilier, Bilan : « valeur nette de revente » est **plus basse** que les fonds propres (frais d'agence, diagnostics, impôt…). Un bien **loué** vaut 10 % de moins en revente qu'un bien vide.
+5. Le pourcentage du classement Immobilier est le gain net de revente divisé par **10 000** (compte gratuit) ou **20 000** (compte Pro).
+6. Note de sécurité à garder : « jour actif » compte aujourd'hui toute requête connectée ; à resserrer à l'audit (`docs/classement-net-de-revente.md`).

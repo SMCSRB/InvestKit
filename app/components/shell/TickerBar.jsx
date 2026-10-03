@@ -6,10 +6,13 @@ import { Delta } from '@/app/components/ui/primitives';
 import { Sparkline } from '@/app/components/ui/charts';
 import { keepGenuineSparklines } from '@/app/lib/sparklines';
 import { useTheme } from '@/app/context/ThemeContext';
+import Coin from '@/app/components/ui/Coin';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
-const CACHE_KEY = 'ik-ticker-v1';
+const CACHE_KEY = 'ik-ticker-v2';
 const usd = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+// Prix en InvestCoins (1 pièce = 1 €) : décimales adaptées aux petits prix.
+const unit = (n) => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: n >= 100 ? 2 : n >= 1 ? 3 : n >= 0.01 ? 5 : 8 });
 
 // Cours HISTORIQUES du marché crypto du joueur, rejoués à sa date de jeu (ils ne sont pas en direct ; les données peuvent être fictives tant
 // que l'historique n'est pas importé). Sans compte Crypto ou sans réponse : le bandeau disparaît.
@@ -34,10 +37,11 @@ function useTickerItems() {
         const raw = await Promise.all(top.map(async (a) => {
           let series = [];
           try {
-            const r = await fetch(`${API}/crypto/candles?symbol=${encodeURIComponent(a.symbol)}&tf=1d&limit=24`);
+            let r = await fetch(`${API}/crypto/candles?symbol=${encodeURIComponent(a.symbol)}&tf=1d&limit=24${a.priceCoins != null ? '&unit=coins' : ''}`);
+            if (!r.ok && a.priceCoins != null) r = await fetch(`${API}/crypto/candles?symbol=${encodeURIComponent(a.symbol)}&tf=1d&limit=24`);
             if (r.ok) series = (await r.json()).candles.map((k) => k.c);
           } catch { /* mini-courbe absente : l'élément s'affiche quand même */ }
-          return { symbol: a.symbol, name: a.name, price: a.price, change: a.change1d, series, synthetic: !!a.synthetic };
+          return { symbol: a.symbol, name: a.name, price: a.price, priceCoins: a.priceCoins ?? null, change: a.change1d, series, synthetic: !!a.synthetic };
         }));
         const out = keepGenuineSparklines(raw);   // courbe retirée si elle ne vient pas d'une vraie série propre à l'actif
         if (!alive) return;
@@ -60,7 +64,7 @@ export default function TickerBar() {
       <span className="ik-tick__sym" aria-hidden="true">{t.symbol.slice(0, 3)}</span>
       {t.symbol}
       <Sparkline values={t.series} width={56} height={20} />
-      <span className="ik-num">{usd.format(t.price)}</span>
+      <span className="ik-num" title={t.priceCoins != null ? `${usd.format(t.price)} (cours d'origine)` : undefined}>{t.priceCoins != null ? <>{unit(t.priceCoins)} <Coin /></> : usd.format(t.price)}</span>
       <Delta value={t.change} />
     </Link>
   ));

@@ -7,7 +7,7 @@ import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { LazyListingArt } from './art';
 import { Dpe, Pill, Row, useImmoMode } from './bits';
 import { GliPanel, RenovationPanel, SalePanel, Statements } from './Panels';
-import { MONTHS, STATUS_LABEL, TYPE_LABEL, call, coins, eur, eur2 } from './api';
+import { MONTHS, STATUS_LABEL, TYPE_LABEL, call, coins, eur, eur2, eurText, eurText2 } from './api';
 
 const artOf = (p) => ({ id: p.listing_id, cityId: p.city_id, type: p.property_type, condition: p.condition, energyClass: p.energy_class, surfaceSqm: Number(p.surface_sqm), rooms: 2 });
 const nextMonth = (game) => MONTHS[game.month % 12];
@@ -15,19 +15,19 @@ const nextMonth = (game) => MONTHS[game.month % 12];
 // Alertes du bien : discrètes, lisibles, et toujours accompagnées de la prochaine action possible.
 function alertsOf(p, data, game) {
   const out = [];
-  if (Number(p.pending_works_eur) > 0) out.push({ tone: 'warn', icon: 'alert', text: `Travaux à payer : ${eur(p.pending_works_eur)}` });
+  if (Number(p.pending_works_eur) > 0) out.push({ tone: 'warn', icon: 'alert', text: `Travaux à payer : ${eurText(p.pending_works_eur)}` });
   if (p.status === 'vacant' && !p.searching && Number(p.pending_works_eur) === 0) out.push({ tone: 'info', icon: 'info', text: 'Bien vide : mets-le en location pour toucher un loyer.' });
   if (p.searching && p.search) out.push({ tone: 'info', icon: 'clock', text: `Recherche de locataire : mois ${p.search.vacantMonthsSoFar}, ${p.search.monthlyLetProbabilityPct} % de chance de louer chaque mois.` });
   if (p.status === 'notice') out.push({ tone: 'warn', icon: 'alert', text: 'Préavis donné : le locataire va partir.' });
-  if (p.saleSearch) out.push({ tone: 'info', icon: 'building', text: `En vente à ${eur(p.saleSearch.askingPrice)} depuis ${p.saleSearch.monthsSoFar} mois.` });
-  if (data.missedMonths > 0) out.push({ tone: 'bad', icon: 'alert', text: `Impayés de crédit : ${data.missedMonths} mois (${eur(data.arrearsEur)}).` });
+  if (p.saleSearch) out.push({ tone: 'info', icon: 'building', text: `En vente à ${eurText(p.saleSearch.askingPrice)} depuis ${p.saleSearch.monthsSoFar} mois.` });
+  if (data.missedMonths > 0) out.push({ tone: 'bad', icon: 'alert', text: `Impayés de crédit : ${data.missedMonths} mois (${eurText(data.arrearsEur)}).` });
   if (p.gli?.active && p.gli.inCarence) out.push({ tone: 'info', icon: 'shield', text: 'Assurance loyers : délai de carence en cours.' });
   return out;
 }
 
 export function PropertyCard({ p, data, game, onOpen, act, busy }) {
   const alerts = alertsOf(p, data, game);
-  const next = p.l_payment && p.l_status === 'active' ? `mensualité ${eur2(p.l_payment)}` : null;
+  const next = p.l_payment && p.l_status === 'active' ? `mensualité ${eurText2(p.l_payment)}` : null;
   return (
     <article className={`rp-own ${alerts.some((a) => a.tone === 'bad') ? 'has-bad' : ''}`}>
       <div className="rp-own__media" onClick={() => onOpen(p.id)}><LazyListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} badge={false} /><div className="rp-card__dpe"><Dpe cls={p.energy_class} /></div></div>
