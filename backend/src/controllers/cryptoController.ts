@@ -1,3 +1,4 @@
+import { fxService } from '../services/fxService';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { cryptoDataService, CryptoDataError } from '../services/crypto/dataService';
@@ -51,8 +52,11 @@ export const cryptoController = {
   state: wrap('Erreur lors de la lecture de l\'état Crypto', async (req) => {
     const acc = await clockService.get(req.user!.userId);
     const end = await dataEnd();
+    const fx = acc ? await fxService.rateAt(acc.simulatedAt) : null;
     return {
       domain: CRYPTO_DOMAIN, hasAccount: !!acc, dataReady: end !== null,
+      // Taux de change du jour de jeu (dollars pour 1 InvestCoin = 1 €) : décidé par le serveur ; null = indisponible, l'affichage reste en dollars.
+      fx: acc ? { available: !!fx, usdPerCoin: fx?.perEur ?? null, rateDay: fx?.day ?? null, staleDays: fx?.staleDays ?? null, demo: fx?.demo ?? null, source: fx?.source ?? null } : null,
       account: acc ? { startAt: acc.startAt, simulatedAt: acc.simulatedAt, canAdvance: end !== null && acc.simulatedAt < end, dataEnd: end } : null,
       starts: acc ? null : await availableStarts(),
       timeframes: TIMEFRAMES.map((t) => ({ id: t, label: TF_LABELS[t] })),

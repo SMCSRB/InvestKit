@@ -4,6 +4,7 @@ import { BaseTimeframe } from '../../config/cryptoMarketRules';
 import { cryptoDataService } from './dataService';
 import { MarketDataProvider, HttpGet, coinGeckoMarketCaps } from './providers';
 import { query } from '../../utils/db';
+import { fxService } from '../fxService';
 
 export interface ImportOptions { provider: MarketDataProvider; symbols: string[]; tf: BaseTimeframe; fromMs: number; toMs: number; http?: HttpGet; log?: (m: string) => void; continueOnError?: boolean }
 export interface ImportReport { symbol: string; status: 'ok' | 'empty' | 'error'; written: number; rejected: number; gaps: number; error?: string }
@@ -57,4 +58,7 @@ export const importDemo = async (log: (m: string) => void = () => {}): Promise<v
     await cryptoDataService.importCandles(spec.symbol, '1m', m1, { provider: 'demo-fictif' });
     log(`✓ ${spec.symbol} (FICTIF) : ${d1.length} jours, ${h1.length} heures, ${m1.length} minutes`);
   }
+  // Taux de change FICTIFS (marqués « demo », jamais par-dessus un taux réel) pour que le jeu d'exemple fonctionne en InvestCoins.
+  const n = await fxService.seedDemoRates();
+  log(`✓ ${n} taux de change FICTIFS de démonstration`);
 };

@@ -748,3 +748,12 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Tableau de bord, onglet Marché, en bas : « Les indices boursiers et les références immobilières ne sont pas disponibles pour l'instant : aucune source de données fiable n'est branchée, donc rien n'est affiché. »
 5. Crypto, estimation d'un ordre : la note parle du « prix de référence », plus du « prix réel ».
 6. Cherche dans le site les mots « en direct », « temps réel », « cours réels » : ils ne restent que pour dire que ce n'est PAS le cas.
+
+## Taux de change BCE (préparation de la Crypto en InvestCoins)
+À dérouler chez toi **sur ta copie de test** après avoir fusionné cette PR (les PR 5, 6 et 7 se déploient ensemble). Aucun effet visible tant que la PR 6 n'est pas fusionnée.
+
+1. Télécharge le fichier des taux de la BCE (voir `docs/taux-bce.md`), puis vérifie-le sans rien écrire : `cd backend && npm run fx:import -- --check --file ./ton-fichier.csv`. Tu dois voir « N taux valides du 2014-… au 20… » et « rien n'est écrit ».
+2. Si tu as accès au site de la BCE depuis le serveur : `npm run fx:import -- --from 2014-01-01`. Tu dois voir « ✓ N taux écrits ». Relance la même commande : même nombre, aucune erreur.
+3. Sinon, pour essayer : `npm run fx:import -- --demo` (taux **fictifs**, à ne pas faire sur une vraie base).
+4. Ouvre `…/api/v1/crypto/state` (connecté, avec un compte Crypto) : le champ `fx` indique le taux du jour, `demo: false` pour de vrais taux.
+5. Dis-moi si ton fichier a un format différent : le lecteur est écrit d'après la documentation, pas testé sur le vrai site.

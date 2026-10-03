@@ -11,6 +11,7 @@
     "set-pro": "ts-node scripts/set-pro.ts",
     "set-admin": "ts-node scripts/set-admin.ts",
     "crypto:import": "ts-node scripts/crypto-import.ts",
+    "fx:import": "ts-node scripts/fx-import.ts",
     "crypto:check-series": "ts-node scripts/crypto-check-series.ts",
     "invite": "ts-node scripts/invite.ts",
     "coins-stats": "ts-node scripts/coins-stats.ts",

@@ -14,6 +14,15 @@
 // convertissent encore les euros en pièces par cette constante : la règle « 1 € = 1 InvestCoin » tient donc en un endroit.
 export const EUROS_PER_COIN = 1;
 
+// ── Taux de change (Crypto : cours en dollars, jeu en InvestCoins) ───────────
+// 1 InvestCoin = 1 €. Les cours crypto sont en dollars : on les convertit avec le taux de référence EURO/USD de la BCE du jour de jeu
+// (table fx_rates, importée par `npm run fx:import`). Le jeu ne reçoit jamais un taux du navigateur.
+// Sans taux publié ce jour-là (week-end, jour férié) : on prend le dernier taux publié, mais pas plus vieux que ce nombre de jours.
+// Au-delà, la conversion est « indisponible » : les ordres sont refusés et l'affichage reste en dollars.
+export const FX_MAX_STALE_DAYS = 7;
+// Taux des données de DÉMONSTRATION (jeu fictif) : dollars pour 1 euro. Toujours marqué « démo » en base.
+export const FX_DEMO_USD_PER_EUR = 1.1;
+
 // ── Capital de départ ────────────────────────────────────────────────────────
 // Offert à l'activation du compte. Un abonné Pro reçoit en plus UN complément unique (une seule fois par compte,
 // même après résiliation puis réabonnement) : le Pro démarre donc avec le double.
