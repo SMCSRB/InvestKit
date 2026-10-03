@@ -101,7 +101,7 @@ function PersonalLoan({ onDone, notify }) {
   return (
     <div style={card}>
       <h3 style={{ margin: '0 0 6px', color: 'var(--ik-text)' }}>Prêt personnel<HelpTip term="pret-personnel" /></h3>
-      <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--ik-text-3)' }}>Pour l&apos;Immobilier uniquement : apport, travaux, rénovation, découvert. Les pièces empruntées sont <strong>fléchées</strong><HelpTip term="credit-fleche" /> : elles ne se dépensent pas en Bourse ni en crypto.</p>
+      <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--ik-text-3)' }}>Comme un vrai prêt personnel non affecté, les pièces empruntées rejoignent ton solde libre : tu peux les dépenser où tu veux (Bourse, Crypto, Immobilier). Seul le prêt sur portefeuille est <strong>fléché</strong><HelpTip term="credit-fleche" /> vers son domaine.</p>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <label style={{ fontSize: 13 }}>Montant (<Coin />)
           <input style={{ ...input, display: 'block', width: 120 }} type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />

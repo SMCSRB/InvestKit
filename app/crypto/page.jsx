@@ -58,7 +58,7 @@ const fmtPrice = (c, u) => (c != null ? unitCoins(c) : fmtUsd(u));
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `o-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 const TYPE_LABEL = { market: 'Au marché', limit: 'Limite', stop_loss: 'Stop-loss', take_profit: 'Take-profit' };
 
-function OrderTicket({ symbol, asset, onDone }) {
+function OrderTicket({ symbol, asset, owned, committed, onDone }) {
   const [side, setSide] = useState('buy');
   const [type, setType] = useState('market');
   const [mode, setMode] = useState('qty');           // quantité ou montant (achat au marché seulement)
@@ -125,11 +125,13 @@ function OrderTicket({ symbol, asset, onDone }) {
         <div data-testid="quote" style={{ marginTop: 10, fontSize: 13, color: 'var(--ik-text-2)', lineHeight: 1.6 }}>
           Prix estimé <b>{unitCoins(quote.execution.priceCoins)}</b> (marché {unitCoins(quote.refPriceCoins)}, soit {usd(quote.refPrice)}) · écart<HelpTip term="ecart-achat-vente" /> {quote.execution.spreadPct.toFixed(2)} % · glissement<HelpTip term="glissement" /> {quote.execution.slippagePct.toFixed(3)} %<br />
           Montant <b>{coins(quote.execution.notionalCoins)}</b> · frais <b>{coins(quote.execution.feeCoins)}</b> · {side === 'buy' ? 'total débité' : 'net crédité (avant impôt)'} <b>{coins(quote.execution.totalCoins)}</b>
+          {side === 'buy' && quote.affordable === false && <div role="alert" data-testid="quote-unaffordable" style={{ color: 'var(--ik-negative)', marginTop: 4 }}>{quote.affordableMessage}</div>}
           {quote.stale && <div style={{ color: 'var(--ik-warning)' }}>Cet actif n&apos;est plus coté : dernier prix connu.</div>}
         </div>
       )}
       {side === 'sell' && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ik-text-3)' }}>Stop-loss<HelpTip term="stop-loss" /> · Take-profit<HelpTip term="take-profit" /> · Ordre limite<HelpTip term="ordre-limite" /><br />Une vente est imposée si tes cessions de l&apos;année dépassent le seuil de la flat tax (barème de jeu, à reconfirmer).</div>}
       <button data-testid="submit-order" style={{ ...btn(true), width: '100%', marginTop: 12, background: side === 'buy' ? 'var(--ik-positive)' : 'var(--ik-negative)', color: side === 'buy' ? 'var(--ik-text-on-positive)' : 'var(--ik-text-on-negative)' }} disabled={busy} onClick={submit}>{side === 'buy' ? 'Acheter' : 'Vendre'} {symbol}</button>
+      <div data-testid="owned-qty" style={{ marginTop: 10, fontSize: 13, color: 'var(--ik-text-2)' }}>Tu possèdes <b>{owned ?? '0'} {symbol}</b>{committed > 0 && <> (dont {committed} engagés dans des ordres en attente)</>}</div>
       {msg && <div role="status" data-testid="order-msg" style={{ marginTop: 10, fontSize: 13, color: msg.ok ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>{msg.text}</div>}
     </div>
   );
@@ -151,7 +153,7 @@ function PortfolioView({ simulatedAt, refreshKey, onOpen, assets }) {
   return (
     <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'minmax(0,1fr)' }}>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {stat('Patrimoine', coins(p.wealthCoins))}{stat('Pièces disponibles', coins(p.balanceCoins))}{stat('Valeur des cryptos', coins(p.holdingsValueCoins))}
+        {stat('Patrimoine', coins(p.wealthCoins))}{stat('Pièces disponibles', coins(p.balanceCoins))}{p.reservedElsewhereCoins > 0 && stat('Utilisables en Crypto', coins(p.spendableCoins))}{stat('Valeur des cryptos', coins(p.holdingsValueCoins))}
         {stat('Plus-value latente', coins(p.unrealizedCoins), tone(p.unrealizedCoins))}{stat('Plus-value réalisée', coins(p.realizedCoins), tone(p.realizedCoins))}{stat('Frais payés', coins(p.feesPaidCoins))}{stat('Impôts payés', coins(p.taxPaidCoins))}
       </div>
       <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
@@ -449,7 +451,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
         <PriceChart key={symbol} symbol={symbol} tf={tf} candleLoader={loader} refreshKey={refreshKey} markers={markers} levels={levels} />
       </div>
 
-      <OrderTicket symbol={symbol} asset={a} onDone={() => { reloadMine(); onTraded(); }} />
+      <OrderTicket symbol={symbol} asset={a} owned={mine.position?.quantity} committed={(mine.open || []).filter((o) => o.side === 'sell').reduce((t, o) => t + Number(o.quantity), 0)} onDone={() => { reloadMine(); onTraded(); }} />
 
       <div style={card}>
         <h3 style={{ margin: '0 0 8px', color: 'var(--ik-text)', fontSize: 16 }}>Comparer avec d&apos;autres actifs<HelpTip term="base-100" /></h3>

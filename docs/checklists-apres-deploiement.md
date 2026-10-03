@@ -770,6 +770,25 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 7. Sans taux : supprime (sur ta copie de test seulement) les taux d'une période, avance jusque-là : les ordres sont refusés avec « Taux de change indisponible… », le graphique repasse en dollars (écrit), aucune vente forcée n'a lieu.
 8. Rien n'a changé en Bourse ni en Immobilier.
 
+## Crypto : achat refusé avec assez de pièces (correctif)
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR.
+
+1. Compte avec un prêt personnel Immobilier dont une partie n'est pas dépensée (pièces empruntées réservées à l'Immobilier). Page Crypto > Portefeuille : à côté de « Pièces disponibles », une carte **« Utilisables en Crypto »** apparaît avec un montant plus bas.
+2. Fiche d'un actif, saisis un achat plus grand que ce montant : sous l'estimation, un message **rouge avant de cliquer** dit « Tu as X, mais Y sont des pièces empruntées réservées à un autre domaine… Tu peux en dépenser Z ici ; il en faut W ».
+3. Clique quand même sur Acheter : refus avec le même message, aucune pièce débitée.
+4. Un achat plus petit que « Utilisables en Crypto » passe normalement.
+5. Compte sans prêt : pas de carte supplémentaire, achat de 150 avec 387 pièces accepté (total ≤ 150).
+6. Sous le formulaire d'ordre : **« Tu possèdes X ACTIF »** (0 si aucun), avec « dont Y engagés dans des ordres en attente » si besoin.
+7. Achète puis revends tout de suite : tu perds les frais et l'écart, jamais de gain.
+
+## Prêt personnel non affecté (suite de la correction Crypto)
+1. Banque, prêt personnel : le texte dit que les pièces rejoignent ton **solde libre** ; plus de mot « fléché Immobilier ». Minimum 500 InvestCoins.
+2. Prends un prêt personnel : « Pièces disponibles » augmente du montant, **aucune** carte « Utilisables en Crypto » n'apparaît, et la page Banque ne montre plus de « crédit fléché » pour ce prêt.
+3. Achète en Crypto ou en Bourse avec ces pièces : accepté.
+4. Achat d'un bien avec un prêt immobilier : ton solde baisse seulement de l'apport et des frais ; aucune pièce n'est ajoutée, et le prêt reste affiché sur le bien.
+5. Un prêt sur portefeuille (Bourse ou Crypto) reste, lui, réservé à son domaine.
+6. Comptes de test qui ont déjà un prêt personnel : leur réserve existe encore tant que tu n'as pas choisi une des 3 options de `docs/crypto-solde-achat.md`.
+
 ## Affichage en InvestCoins
 À dérouler chez toi **avec les PR taux BCE et Crypto en InvestCoins** (déploiement ensemble).
 
