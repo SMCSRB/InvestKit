@@ -5,9 +5,10 @@ import { userRepository } from '../repositories/userRepository';
 import { getBuyAccess } from '../utils/entitlements';
 import { getRealEstateDataSource, Listing } from '../data/realEstate';
 import {
-  BANK_RULES, NOTARY_RULE, STARTING_PROFILES, EUROS_PER_COIN, LOAN_INSURANCE_RATE_PCT, SUGGESTED_DOWN_PAYMENT_PCT,
+  BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, SUGGESTED_DOWN_PAYMENT_PCT,
   loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
 } from '../config/immoRules';
+import { EUROS_PER_COIN } from '../config/economy';
 import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees } from '../engine/immo';
 import { spendableCoins, monthlyInstalmentCoins } from './bankService';
 

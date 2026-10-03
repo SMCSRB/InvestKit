@@ -9,6 +9,11 @@
 // Aucune décision de montant ne doit être écrite ailleurs (les services importent ce fichier).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Conversion : 1 InvestCoin = 1 € ──────────────────────────────────────────
+// Valeur de jeu décidée par le propriétaire (avant : 20 € dans l'Immobilier). Les moteurs Immobilier et Banque
+// convertissent encore les euros en pièces par cette constante : la règle « 1 € = 1 InvestCoin » tient donc en un endroit.
+export const EUROS_PER_COIN = 1;
+
 // ── Capital de départ ────────────────────────────────────────────────────────
 // Offert à l'activation du compte. Un abonné Pro reçoit en plus UN complément unique (une seule fois par compte,
 // même après résiliation puis réabonnement) : le Pro démarre donc avec le double.
@@ -25,7 +30,7 @@ export const RANKING_MIN_ACTIVE_DAYS = 5;
 
 // ── Dette ─────────────────────────────────────────────────────────────────────
 // Garde-fou global sur la dette en cours d'un joueur (capital emprunté non remboursé).
-export const MAX_OUTSTANDING_DEBT_COINS = 50_000;
+export const MAX_OUTSTANDING_DEBT_COINS = 500_000;
 
 // Capital de base après une procédure de rétablissement : le même que le capital de départ
 // (complété seulement si le joueur a moins).

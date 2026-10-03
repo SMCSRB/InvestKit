@@ -11,6 +11,7 @@ import {
   computeSaleClosing, buildSchedule, applyEnergyRenovation, EngineInputError,
 } from '../src/engine/immo';
 import { CAPITAL_GAIN_RULES, EVENT_PARAMS, SALE_PARAMS, RENOVATION_RULES } from '../src/config/immoRules';
+import { EUROS_PER_COIN } from '../src/config/economy';
 
 // Le seuil d'entrée au classement vaut RANKING_MIN_INVESTED en production ; ces tests vérifient le CLASSEMENT (rang, levier,
 // instantané), pas le seuil : on le ramène à une valeur atteignable avec le capital de la partie de test.
@@ -168,7 +169,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       if ((await src.getExpertise(x.id, startYear))!.hiddenDefects.length === 0) { l = x; break; }
     }
     expect(l, 'bien de test introuvable').toBeDefined();
-    await svc.purchase(uid, { listingId: l.id, downPaymentCoins: Math.floor((l.price * (opts.apportShare ?? 0.5)) / 20), months: 300 });
+    await svc.purchase(uid, { listingId: l.id, downPaymentCoins: Math.floor((l.price * (opts.apportShare ?? 0.5)) / EUROS_PER_COIN), months: 300 });
     const prop = (await svc.listProperties(uid)).properties[0];
     return { uid, prop, l };
   };
@@ -215,7 +216,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       // pièces : aucune perte ni création
       const lastStmt = (await query('SELECT remainder_cents_after AS r FROM re_statements WHERE property_id = $1 ORDER BY year DESC, month DESC LIMIT 1', [prop.id])).rows[0];
       const credited = Number(s.net_proceeds) - Number(s.arrears_covered);
-      expect(s.coins_credited * 2000 + p.euro_remainder_cents - lastStmt.r).toBe(Math.round(credited * 100));
+      expect(s.coins_credited * EUROS_PER_COIN * 100 + p.euro_remainder_cents - lastStmt.r).toBe(Math.round(credited * 100));
       const led = (await query(`SELECT amount, nature, domain FROM investcoins_transactions WHERE user_id = $1 AND reason = 're_exchange_sale_net'`, [uid])).rows;
       expect(led).toHaveLength(1);
       expect(led[0]).toMatchObject({ amount: s.coins_credited, nature: 'exchange', domain: 'real_estate' });
@@ -395,7 +396,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
       const before = await balanceOf(uid);
       const r: any = await sales.renovate(uid, prop.id);
       expect(r).toMatchObject({ previousClass: 'G', newClass: 'E' });
-      expect(r.coinsCharged).toBe(Math.ceil(Number(prop.surface_sqm) * SALE_PARAMS.renovationCostPerSqm / 20));
+      expect(r.coinsCharged).toBe(Math.ceil(Number(prop.surface_sqm) * SALE_PARAMS.renovationCostPerSqm / EUROS_PER_COIN));
       expect(await balanceOf(uid)).toBe(before - r.coinsCharged);
       const led = (await query(`SELECT nature FROM investcoins_transactions WHERE user_id = $1 AND reason = 're_exchange_renovation'`, [uid])).rows;
       expect(led[0].nature).toBe('exchange');

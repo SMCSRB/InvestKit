@@ -5,6 +5,7 @@ import { realEstateService as svc, RealEstateError } from '../src/services/realE
 import { realEstateLifeService as life } from '../src/services/realEstateLifeService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { EVENT_PARAMS as P, GLI_PARAMS, WINTER_TRUCE, inWinterTruce } from '../src/config/immoRules';
+import { EUROS_PER_COIN } from '../src/config/economy';
 
 const ORIGINAL = JSON.parse(JSON.stringify(P));
 const reset = () => { Object.assign(P, JSON.parse(JSON.stringify(ORIGINAL))); };
@@ -42,7 +43,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
       if ((await src.getExpertise(x.id, 2010))!.hiddenDefects.length === 0) { l = x; break; }
     }
     expect(l, 'bien de test introuvable').toBeDefined();
-    await svc.purchase(uid, { listingId: l.id, downPaymentCoins: Math.floor((l.price * 0.5) / 20), months: 240 });
+    await svc.purchase(uid, { listingId: l.id, downPaymentCoins: Math.floor((l.price * 0.5) / EUROS_PER_COIN), months: 240 });
     const prop = (await svc.listProperties(uid)).properties[0];
     return { uid, prop, l };
   };
@@ -202,7 +203,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
     expect((await rows(prop.id)).reduce((a: number, r: any) => a + r.lines.gliReimbursed, 0)).toBeGreaterThan(0);
   });
 
-  it('REPRODUCTIBLE et CONSERVATION avec assurance + impayés + trêve, 48 mois : pièces × 20 € + reliquat = somme exacte des cash-flows', async () => {
+  it('REPRODUCTIBLE et CONSERVATION avec assurance + impayés + trêve, 48 mois : pièces × (€ par pièce) + reliquat = somme exacte des cash-flows', async () => {
     const run = async () => {
       reset(); allWorkers();
       for (const t of Object.values(P.tenants)) t.defaultProbPerMonth = 0.15;
@@ -217,7 +218,7 @@ describe.skipIf(!hasDb)('assurance loyers impayés (GLI) et trêve hivernale', (
       const rem = Number((await propRow(prop.id)).euro_remainder_cents);
       const g = (await query('SELECT arrears_eur FROM re_games WHERE user_id = $1', [uid])).rows[0];
       expect(Number(g.arrears_eur)).toBe(0);
-      expect(coins * 2000 + rem).toBe(cents);
+      expect(coins * EUROS_PER_COIN * 100 + rem).toBe(cents);
       return JSON.stringify(st.map((r: any) => [r.year, r.month, r.status, r.lines.gliPremium, r.lines.gliReimbursed, r.net_cash_flow]));
     };
     expect(await run()).toBe(await run());

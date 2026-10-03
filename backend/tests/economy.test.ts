@@ -5,6 +5,22 @@ import * as E from '../src/config/economy';
 import { BANK_LIMITS, RECOVERY } from '../src/config/bankRules';
 
 // Un seul fichier décide des montants d'InvestCoins : config/economy.ts.
+describe('économie : 1 InvestCoin = 1 €', () => {
+  it('règle unique dans tous les domaines', () => {
+    expect(E.EUROS_PER_COIN).toBe(1);
+  });
+
+  it('le pouvoir d\'achat du capital de départ ne change pas (500 pièces × 20 € avant, 10 000 × 1 € maintenant)', () => {
+    expect(E.STARTING_CAPITAL * E.EUROS_PER_COIN).toBe(500 * 20);
+    expect((E.STARTING_CAPITAL + E.PRO_STARTING_BONUS) * E.EUROS_PER_COIN).toBe(1000 * 20);
+  });
+
+  it('le plafond de dette est plus strict qu\'avant en euros (500 000 € contre 1 000 000 €)', () => {
+    expect(E.MAX_OUTSTANDING_DEBT_COINS * E.EUROS_PER_COIN).toBeLessThan(50_000 * 20);
+    expect(E.MAX_OUTSTANDING_DEBT_COINS).toBe(500_000);
+  });
+});
+
 describe('économie : valeurs de départ', () => {
   it('capital de départ 10 000, Pro : le double une seule fois', () => {
     expect(E.STARTING_CAPITAL).toBe(10_000);
@@ -43,7 +59,7 @@ describe('économie : pas de montant en dur ailleurs', () => {
   const files = walk(join(__dirname, '..', 'src')).filter((f) => !f.endsWith(join('config', 'economy.ts')));
 
   it('aucune autre définition du capital de départ, du seuil de classement ou des récompenses', () => {
-    const bad = /\b(export\s+)?const\s+(STARTING_CAPITAL|PRO_STARTING_BONUS|RANKING_MIN_INVESTED|RANKING_MIN_ACTIVE_DAYS|MIN_RANKED_CAPITAL|CHECKLIST_REWARD_COINS|EDUCATION_CHAPTER_COINS|EDUCATION_DOMAIN_COMPLETE_COINS)\s*=\s*[0-9_]+/;
+    const bad = /\b(export\s+)?const\s+(EUROS_PER_COIN|STARTING_CAPITAL|PRO_STARTING_BONUS|RANKING_MIN_INVESTED|RANKING_MIN_ACTIVE_DAYS|MIN_RANKED_CAPITAL|CHECKLIST_REWARD_COINS|EDUCATION_CHAPTER_COINS|EDUCATION_DOMAIN_COMPLETE_COINS)\s*=\s*[0-9_]+/;
     const hits = files.filter((f) => bad.test(readFileSync(f, 'utf8')));
     expect(hits).toEqual([]);
   });

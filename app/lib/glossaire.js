@@ -96,7 +96,7 @@ export const GLOSSARY = [
   { id: 'apport', category: 'credit', term: 'Apport',
     short: 'L\'argent que tu mets de ta poche au départ, pour ne pas tout emprunter.',
     long: 'Plus l\'apport est élevé, moins tu empruntes, et plus la mensualité est légère. Les banques demandent en général au moins de quoi couvrir les frais de notaire.',
-    inGame: 'Tu le paies en InvestCoins (1 InvestCoin = 20 € dans l\'Immobilier).' },
+    inGame: 'Tu le paies en InvestCoins (1 InvestCoin = 1 €).' },
   { id: 'endettement', category: 'credit', term: 'Taux d\'endettement',
     short: 'La part de tes revenus qui part en remboursement de crédits.',
     long: 'La banque calcule : mensualités ÷ revenus. En France, les banques doivent en principe respecter un plafond de 35 % (assurance comprise) fixé par le Haut Conseil de stabilité financière, avec une petite marge de souplesse. Au-delà, elle refuse en général. Elle ne compte qu\'une partie des loyers que le bien rapportera, par prudence.' },
@@ -277,7 +277,7 @@ export const GLOSSARY = [
 
   // ── Dans le jeu
   { id: 'investcoin', category: 'jeu', term: 'InvestCoin (InvestCoins)',
-    short: 'La monnaie du jeu. Dans l\'Immobilier, 1 InvestCoin vaut 20 €.',
+    short: 'La monnaie du jeu : 1 InvestCoin vaut 1 € de jeu, dans tous les domaines.',
     long: 'Tous les achats, ventes et revenus sont convertis en pièces entières, avec un petit reliquat conservé pour ne rien perdre ni créer.' },
   { id: 'patrimoine-net', category: 'jeu', term: 'Patrimoine net (fonds propres)',
     short: 'La valeur de tes biens moins ce que tu dois à la banque.',

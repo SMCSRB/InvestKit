@@ -36,7 +36,7 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Remboursement anticipé (conso) | 1 % du capital remboursé si > 1 an restant, sinon 0,5 % | JEU (« de mémoire ») | Code de la consommation art. L312-34 (à vérifier) |
 | Prêt sur portefeuille : plafond / appel / liquidation | actions et ETF 50 / 65 / 80 % ; obligations 70 / 91 / 100 % ; crypto 30 / 39 / 48 % (bourse) et 30 / 65 / 80 % (module crypto) | DÉCISION + JEU | pratiques de prêts lombards (banques privées) ; pas de texte officiel |
 | Décote d'une vente forcée | 3 % | JEU | — |
-| Limites de dette | 3 prêts actifs ; 50 000 🪙 de dette ; 3 échéances impayées = défaut | JEU | — |
+| Limites de dette | 3 prêts actifs ; 500 000 🪙 de dette (`config/economy.ts`) ; 3 échéances impayées = défaut | JEU | — |
 | Rétablissement après défaut | capital de base = capital de départ (10 000 🪙, `config/economy.ts`) ; 30 jours d'interdiction ; 30 jours entre deux procédures ; 3 au maximum | JEU | inspiré de la procédure de rétablissement personnel (Code de la consommation L711-1 et suivants) |
 
 ## C. Immobilier — règles bancaires, frais, loyers (`backend/src/config/immoRules.ts`)

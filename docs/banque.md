@@ -3,7 +3,7 @@
 Décisions produit validées : crédit fléché par domaine ; prêts suivant l'horloge de leur domaine ; pièces créées à l'emprunt (nature « credit »)
 et détruites au remboursement (capital ET intérêts, nature « repayment ») ; prêt personnel plafonné (fléché Immobilier) ; prêt sur portefeuille
 avec appel de marge ; blocage après défaut puis « procédure de rétablissement » ; taux = base + écart (non sourcé) ; pas de taux d'usure en v1 mais la structure existe ;
-classement en richesse nette de dettes. Unification 1 🪙 = 20 € : plus tard.
+classement en richesse nette de dettes. Unification 1 🪙 = 1 € : faite (voir `docs/immo-un-pour-un.md`).
 
 ## RÈGLE DE CONCEPTION
 Les InvestCoins n'existent que dans le jeu : pas de boutique, pas de retrait, pas d'achat avec de l'argent réel, pas d'échange ni de transfert entre joueurs.

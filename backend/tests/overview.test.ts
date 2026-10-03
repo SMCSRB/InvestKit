@@ -8,7 +8,8 @@ import { realEstateService as svc } from '../src/services/realEstateService';
 import { bankPersonalService as personal } from '../src/services/bankPersonalService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { computePerformancePct } from '../src/utils/performance';
-import { hasDb, setupDb, teardownDb, createUser } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, legacyCoins } from './helpers';
+import { EUROS_PER_COIN } from '../src/config/economy';
 
 describe.skipIf(!hasDb)('vue d\'ensemble réelle (base réelle)', () => {
   beforeAll(setupDb);
@@ -49,16 +50,16 @@ describe.skipIf(!hasDb)('vue d\'ensemble réelle (base réelle)', () => {
   });
 
   it('Immobilier (en euros, séparé) et dette bancaire', async () => {
-    const u = await createUser({ balance: 30000, freeDomain: 'real_estate' });
+    const u = await createUser({ balance: legacyCoins(30000), freeDomain: 'real_estate' });
     await svc.startGame(u, 'executive');
     let listing: any;
     for (const l of await src.listListings(2010)) { if (l.age === 'old' && l.advertisedWorks === 0 && l.condition !== 'to_renovate' && l.price > 50000 && l.price < 90000) { listing = l; break; } }
-    await svc.purchase(u, { listingId: listing.id, downPaymentCoins: 1500, months: 240 });
-    await personal.borrow(u, { amountCoins: 200, months: 24 });
+    await svc.purchase(u, { listingId: listing.id, downPaymentCoins: legacyCoins(1500), months: 240 });
+    await personal.borrow(u, { amountCoins: legacyCoins(200), months: 24 });
     const r = (await get(u)).body;
     expect(r.realEstate).toMatchObject({ started: true, properties: 1, year: 2010, profile: 'executive' });
     expect(r.realEstate.equityEuros).toBeGreaterThan(0);
-    expect(r.realEstate.equityCoinsApprox).toBe(Math.round(r.realEstate.equityEuros / 20));
+    expect(r.realEstate.equityCoinsApprox).toBe(Math.round(r.realEstate.equityEuros / EUROS_PER_COIN));
     expect(r.bank.debtCoins).toBeGreaterThanOrEqual(200);
     expect(r.notes.join(' ')).toMatch(/pas additionnés/);
   });

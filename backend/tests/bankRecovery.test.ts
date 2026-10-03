@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, legacyCoins } from './helpers';
 import { query } from '../src/utils/db';
 import { tradingService as trading } from '../src/services/tradingService';
 import { realEstateService as svc } from '../src/services/realEstateService';
@@ -138,14 +138,14 @@ describe.skipIf(!hasDb)('procédure de rétablissement après défaut', () => {
   });
 
   it('IMMOBILIER : la partie (biens, prêts, événements) est supprimée, le rang perdu ; on peut recommencer avec un nouveau profil', async () => {
-    const uid = await createUser({ balance: 200, freeDomain: 'real_estate' });
+    const uid = await createUser({ balance: legacyCoins(200), freeDomain: 'real_estate' });
     await svc.startGame(uid, 'employee');
-    const loan: any = await personal.borrow(uid, { amountCoins: 100, months: 12 });
+    const loan: any = await personal.borrow(uid, { amountCoins: legacyCoins(100), months: 12 });
     await query(`UPDATE bank_loans SET status = 'defaulted' WHERE id = $1`, [loan.loanId]);
     await query(`UPDATE bank_accounts SET credit_blocked = TRUE, blocked_reason = 'default', defaults = 1 WHERE user_id = $1`, [uid]);
     await query(`INSERT INTO leaderboard_rankings (user_id, mode, domain, period, performance_pct, capital_committed) VALUES ($1,'accelerated','real_estate','Y2010',5,150)`, [uid]);
     const r: any = await recovery.start(uid, { domain: 'real_estate', confirm: 'RETABLISSEMENT' });
-    expect(r.borrowedCoinsSeized).toBe(100);
+    expect(r.borrowedCoinsSeized).toBe(legacyCoins(100));
     expect((await query('SELECT COUNT(*) AS n FROM re_games WHERE user_id = $1', [uid])).rows[0].n).toBe('0');
     expect((await query(`SELECT COUNT(*) AS n FROM leaderboard_rankings WHERE user_id = $1 AND domain = 'real_estate'`, [uid])).rows[0].n).toBe('0');
     expect((await loans(uid))[0].status).toBe('written_off');

@@ -11,8 +11,9 @@ import {
   EnergyClass, UnitType,
 } from '../engine/immo';
 import {
-  CAPITAL_GAIN_RULES, SALE_PARAMS, EUROS_PER_COIN, RENT_TAX_RATE_BY_PROFILE, RENOVATION_RULES, RENT_MODEL,
+  CAPITAL_GAIN_RULES, SALE_PARAMS, RENT_TAX_RATE_BY_PROFILE, RENOVATION_RULES, RENT_MODEL,
 } from '../config/immoRules';
+import { EUROS_PER_COIN } from '../config/economy';
 import { LEADERBOARD_SIZE } from '../config/game';
 import { RANKING_MIN_INVESTED } from '../config/economy';
 import { applyEnergyRenovation } from '../engine/immo';

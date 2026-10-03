@@ -702,3 +702,15 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Glossaire, fiche « InvestCoin » : l'exemple parle de **10 000** InvestCoins.
 5. Ouvre `backend/src/config/economy.ts` : tous les montants (capital, bonus Pro, seuil de classement, récompenses, plafond de dette) sont dans ce seul fichier, chacun marqué « VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER ».
 6. Aucun autre fichier ne doit contenir ces montants : le test `economy.test.ts` le vérifie.
+
+## Immobilier : 1 InvestCoin = 1 €
+À dérouler chez toi après avoir fusionné cette PR **juste après** « Économie : un seul fichier de réglages ». Les comptes de test existants gardent leurs anciens soldes : utilise un compte neuf (ou le script de remise à zéro, PR plus tard).
+
+1. Compte neuf (10 000 🪙), domaine Immobilier, profil Salarié : la page « Chercher » affiche pour chaque bien « 32 000 € ≈ 32 000 🪙 » (avant : « ≈ 1 600 🪙 »).
+2. Ouvre un bien : le champ « Apport » indique « 1 InvestCoin = 1 € » ; un apport de 12 000 🪙 donne un apport de 12 000 € dans le détail du financement.
+3. Achète un petit bien (moins de 50 000 €) avec environ 30 % d'apport : ton solde baisse **exactement** de l'apport, des frais de notaire (arrondis au-dessus) et des frais de dossier. Regarde l'historique dans Banque et InvestCoins : aucune ligne positive n'apparaît pour un achat.
+4. Banque, prêt personnel : minimum **500 🪙**, plafond = 6 mois de revenus nets (Salarié : 14 400 🪙).
+5. Banque : le plafond de dette affiché est **500 000 🪙**.
+6. Tableau de bord : la phrase sous le patrimoine dit « Tous les montants sont en InvestCoins (1 InvestCoin = 1 €) ».
+7. Glossaire, fiche « InvestCoin » : « 1 InvestCoin vaut 1 € de jeu, dans tous les domaines ».
+8. La Crypto reste en dollars pour l'instant (conversion en euros avec le taux de la BCE : PR suivante).

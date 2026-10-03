@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, ledgerSum, legacyCoins } from './helpers';
 import { query } from '../src/utils/db';
 import { realEstateService as svc, RealEstateError } from '../src/services/realEstateService';
 import { realEstateLifeService as life } from '../src/services/realEstateLifeService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { buildSchedule, reviseRent } from '../src/engine/immo';
 import { EVENT_PARAMS } from '../src/config/immoRules';
+import { EUROS_PER_COIN } from '../src/config/economy';
 
 const rejects = async (p: Promise<unknown>) => { try { await p; } catch (e) { return e as RealEstateError; } throw new Error('aurait dû échouer'); };
 const newPlayer = async (balance = 300000, profile = 'executive') => {
@@ -19,7 +20,7 @@ const pick = async (pred: (l: any) => boolean = cheap, year = 2010, clean = true
   for (const l of await src.listListings(year)) { if (pred(l) && (!clean || (await src.getExpertise(l.id, year))!.hiddenDefects.length === 0)) return l; }
   return undefined as any;
 };
-const buy = async (uid: string, l: any, coins = 1500, months = 240) => {
+const buy = async (uid: string, l: any, coins = legacyCoins(1500), months = 240) => {
   await svc.purchase(uid, { listingId: l.id, downPaymentCoins: coins, months });
   return (await svc.listProperties(uid)).properties.find((p: any) => p.listing_id === l.id);
 };
@@ -61,7 +62,7 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const uid = await newPlayer();
       const l = await pick((x) => x.age === 'old' && x.price < 120000 && x.advertisedWorks > 0 && x.condition === 'to_renovate');
       const truth = (await src.getExpertise(l.id, 2010))!;
-      let prop = await buy(uid, l, 2500);
+      let prop = await buy(uid, l, legacyCoins(2500));
       if (Number(prop.pending_works_eur) > 0) {
         expect((await rejects(life.listForRent(uid, prop.id, 1))).message).toContain('Travaux à payer');
         await svc.payPendingWorks(uid, prop.id);
@@ -141,7 +142,7 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       expect(st.explanations.find((e: any) => e.code === 'NOT_LISTED').cashFlowImpact).toBe(0);
     });
 
-    it('CONSERVATION sur 36 mois : Σ pièces × 20 € + reliquat = Σ cash-flows exacts', async () => {
+    it('CONSERVATION sur 36 mois : Σ pièces × (€ par pièce) + reliquat = Σ cash-flows exacts', async () => {
       const uid = await newPlayer(400000);
       const prop = await buy(uid, await pick());
       await life.listForRent(uid, prop.id, 1);
@@ -151,7 +152,7 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const totalCents = rows.reduce((a: number, r: any) => a + Math.round(Number(r.net_cash_flow) * 100), 0);
       const totalCoins = rows.reduce((a: number, r: any) => a + r.coins_delta, 0);
       const remainder = Number((await query('SELECT euro_remainder_cents AS r FROM re_properties WHERE id = $1', [prop.id])).rows[0].r);
-      expect(totalCoins * 2000 + remainder).toBe(totalCents);
+      expect(totalCoins * EUROS_PER_COIN * 100 + remainder).toBe(totalCents);
       expect(remainder).toBeGreaterThanOrEqual(0);
       expect(remainder).toBeLessThan(2000);
       // ventilation : intérêts + capital + assurance = mensualité, chaque mois
@@ -230,7 +231,7 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const uid = await newPlayer(600000);
       const l = await pick();
       // apport calculé pour n'emprunter que ~6 000 € (une mensualité compatible avec l'endettement)
-      const coins = Math.floor((l.price * 1.075 - 6000) / 20);
+      const coins = Math.floor((l.price * 1.075 - 6000) / EUROS_PER_COIN);
       const prop = await buy(uid, l, coins, 12); // prêt sur 12 mois
       const loan = (await query('SELECT * FROM re_loans WHERE id = $1', [prop.loan_id])).rows[0];
       const sched = buildSchedule({ principal: Number(loan.principal), annualRatePct: Number(loan.annual_rate_pct), months: 12, insurance: { annualRatePct: Number(loan.insurance_rate_pct), basis: 'initial' } });
@@ -282,15 +283,15 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
 
   describe('impayés du joueur (solde insuffisant)', () => {
     it('faute de pièces : dette en euros, avertissement, achat bloqué, puis régularisation', async () => {
-      const uid = await newPlayer(4000);
-      const prop = await buy(uid, await pick(), 800);
+      const uid = await newPlayer(legacyCoins(4000));
+      const prop = await buy(uid, await pick(), legacyCoins(800));
       await query('UPDATE investcoins_balance SET balance = 0 WHERE user_id = $1', [uid]); // le joueur n'a plus rien
       const r = await life.advanceTime(uid, 1);
       expect(r.settled[0].arrearsEur).toBeGreaterThan(0);
       expect(r.settled[0].warnings[0].code).toBe('ARREARS');
       expect(await balanceOf(uid)).toBe(0);
       const other = await pick((x) => cheap(x) && x.id !== prop.listing_id);
-      const err = await rejects(svc.purchase(uid, { listingId: other.id, downPaymentCoins: 900, months: 240 }));
+      const err = await rejects(svc.purchase(uid, { listingId: other.id, downPaymentCoins: legacyCoins(900), months: 240 }));
       expect(['BANK_REFUSED', 'INSUFFICIENT_FUNDS']).toContain(err.code);
       if (err.code === 'BANK_REFUSED') expect(JSON.stringify(err.details)).toContain('LOAN_ARREARS');
       await life.advanceTime(uid, 2);
@@ -328,7 +329,7 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const uid = await newPlayer(600000);
       const l = await pick((x) => x.age === 'old' && x.price < 100000 && x.condition === 'to_renovate' && ['E', 'F', 'G'].includes(x.energyClass), 2010, false);
       expect(l, 'il faut un bien à rénover E/F/G dans le catalogue de test').toBeDefined();
-      const prop = await buy(uid, l, 2500);
+      const prop = await buy(uid, l, legacyCoins(2500));
       const before = await life.getPortfolio(uid);
       const beforeRent = before.properties[0].marketRent;
       if (Number(prop.pending_works_eur) > 0) await svc.payPendingWorks(uid, prop.id);

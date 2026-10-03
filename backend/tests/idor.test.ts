@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import app from '../src/app';
 import { generateToken } from '../src/utils/jwt';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, legacyCoins } from './helpers';
 import { query } from '../src/utils/db';
 import { realEstateService as svc } from '../src/services/realEstateService';
 import { bankPersonalService as personal } from '../src/services/bankPersonalService';
@@ -27,8 +27,8 @@ describe.skipIf(!hasDb)('SÉCURITÉ : anti-IDOR sur toutes les routes à identif
   beforeAll(async () => {
     await setupDb();
     for (const t of Object.values(EVENT_PARAMS.tenants)) { t.lateProbPerMonth = 0; t.defaultProbPerMonth = 0; t.tenureMonths = 1e9; }
-    victim = await createUser({ balance: 30000, freeDomain: 'real_estate', tier: 'pro' });
-    attacker = await createUser({ balance: 30000, freeDomain: 'real_estate', tier: 'pro' });
+    victim = await createUser({ balance: legacyCoins(30000), freeDomain: 'real_estate', tier: 'pro' });
+    attacker = await createUser({ balance: legacyCoins(30000), freeDomain: 'real_estate', tier: 'pro' });
     victimToken = generateToken(victim, `${victim}@test.local`);
     attackerToken = generateToken(attacker, `${attacker}@test.local`);
     await svc.startGame(victim, 'executive');
@@ -38,10 +38,10 @@ describe.skipIf(!hasDb)('SÉCURITÉ : anti-IDOR sur toutes les routes à identif
     for (const l of await src.listListings(2010)) {
       if (l.age === 'old' && l.advertisedWorks === 0 && l.condition !== 'to_renovate' && l.price > 50000 && l.price < 90000 && (await src.getExpertise(l.id, 2010))!.hiddenDefects.length === 0) { listing = l; break; }
     }
-    await svc.purchase(victim, { listingId: listing.id, downPaymentCoins: 1500, months: 240 });
+    await svc.purchase(victim, { listingId: listing.id, downPaymentCoins: legacyCoins(1500), months: 240 });
     propertyId = (await svc.listProperties(victim)).properties[0].id;
 
-    await personal.borrow(victim, { amountCoins: 300, months: 24 });
+    await personal.borrow(victim, { amountCoins: legacyCoins(300), months: 24 });
     personalLoanId = (await query(`SELECT id FROM bank_loans WHERE user_id = $1 AND product = 'personal'`, [victim])).rows[0].id;
 
     await trading.getPortfolioView(victim, 'stocks');

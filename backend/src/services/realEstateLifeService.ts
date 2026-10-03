@@ -17,7 +17,8 @@ import {
 } from '../engine/immo';
 import { settleMonth as settleBankMonth } from './bankService';
 import { describeSale, processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
-import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EUROS_PER_COIN, EVENT_PARAMS, GLI_PARAMS, inWinterTruce } from '../config/immoRules';
+import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EVENT_PARAMS, GLI_PARAMS, inWinterTruce } from '../config/immoRules';
+import { EUROS_PER_COIN } from '../config/economy';
 
 // ─────────────────────────────────────────────────────────────────────────
 // VIE DU BIEN : mise en location, mois qui passent, relevés, valorisation.

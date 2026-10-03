@@ -20,7 +20,7 @@ Le client n'envoie que le bien, l'apport en pièces et la durée : prix, taux, f
 - Frais de dossier max(200 €, 0,2 %), assurance 0,36 %/an : valeurs de jeu.
 
 ## Pièces
-Apport en pièces entières (1 🪙 = 20 €). Le ledger enregistre séparément : frais de notaire (`re_notary_fees`, **destruction**), frais de dossier (`re_loan_fees`, destruction), apport versé au vendeur (`re_exchange_down_payment`, **échange**), expertise (`re_expertise`, destruction), travaux payés (`re_exchange_pay_works`, échange). Tous arrondis contre le joueur.
+Apport en pièces entières (1 🪙 = 1 €, `EUROS_PER_COIN` dans `config/economy.ts`). Le ledger enregistre séparément : frais de notaire (`re_notary_fees`, **destruction**), frais de dossier (`re_loan_fees`, destruction), apport versé au vendeur (`re_exchange_down_payment`, **échange**), expertise (`re_expertise`, destruction), travaux payés (`re_exchange_pay_works`, échange). Tous arrondis contre le joueur.
 
 ## Expertise
 Sans expertise : la banque finance les travaux annoncés ; l'écart avec les travaux réels devient une **dette de travaux** découverte après l'achat (à payer avant de pouvoir louer, étape 4). Avec expertise : la banque finance les travaux réels, aucune surprise.

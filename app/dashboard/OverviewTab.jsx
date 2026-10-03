@@ -198,7 +198,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
               <Line label="Gain ou perte (latent + réalisé)" value={loading ? '…' : signed(t.gain)} tone={!loading && t.gain < 0 ? 'ik-down' : 'ik-up'} />
               <Line label="Frais et impôts payés" value={loading ? '…' : fmtInt(t.feesPaid + t.taxPaid)} />
             </div>
-            <p className="ik-muted" style={{ margin: '14px 0 0' }}>Bourse et Crypto sont en InvestCoins ; l&apos;Immobilier est en euros (1 InvestCoin = 20 €) : les deux ne sont pas additionnés.</p>
+            <p className="ik-muted" style={{ margin: '14px 0 0' }}>Tous les montants sont en InvestCoins (1 InvestCoin = 1 €). Le patrimoine immobilier est affiché à part : il n&apos;est pas encore additionné aux autres domaines.</p>
           </Card>
         </Reveal>
       </div>
