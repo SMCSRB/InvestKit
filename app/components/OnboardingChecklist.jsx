@@ -83,11 +83,12 @@ export default function OnboardingChecklist() {
           <li key={s.key} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14, color: s.done ? 'color-mix(in srgb, var(--ik-text) 55%, transparent)' : 'var(--ik-text)' }}>
             <span aria-hidden="true"><Icon name={s.done ? 'circleCheck' : 'circleDot'} size={18} /></span>
             <span style={{ flex: 1, textDecoration: s.done ? 'line-through' : 'none' }}>{s.title}</span>
-            <span style={{ fontSize: 12, color: s.claimed ? 'var(--ik-positive)' : 'var(--ik-warning)' }}>{s.claimed ? 'récompense reçue' : <>+{s.reward} <Coin /></>}</span>
+            <span style={{ fontSize: 12, color: s.claimed ? 'var(--ik-positive)' : 'var(--ik-warning)' }}>{s.claimed ? 'récompense reçue' : <>checklist : +{s.reward} <Coin /></>}</span>
             {!s.done && <button onClick={() => openStep(s)} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid color-mix(in srgb, var(--ik-text) 25%, transparent)', background: 'transparent', color: 'var(--ik-text)', fontSize: 12, cursor: 'pointer' }}>Y aller</button>}
           </li>
         ))}
       </ul>
+      <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--ik-text-3)' }}>Deux récompenses séparées : celles de cette liste (à récupérer ici) et les bonus « premiers pas » (première leçon, premier quiz, premier investissement), versés automatiquement au moment où tu les réussis.</p>
 
       {data.claimableCoins > 0 && (
         <button onClick={claim} style={{ marginTop: 14, padding: '10px 18px', borderRadius: 10, border: 'none', background: 'var(--ik-positive)', color: 'var(--ik-text-on-positive)', fontWeight: 700, cursor: 'pointer' }}>Récupérer mes {data.claimableCoins} <Coin /></button>

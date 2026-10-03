@@ -17,8 +17,15 @@ export async function call(path, method = 'GET', body) {
 }
 
 export const clean = (n) => (Math.abs(Number(n ?? 0)) < 0.005 ? 0 : Number(n ?? 0));
-export const eur = (n) => `${clean(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
-export const eur2 = (n) => `${clean(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+// Tout le jeu se compte en InvestCoins (1 pièce = 1 €) : plus aucun « € » dans l'Immobilier, l'euro est réservé à l'argent réel (abonnement Pro).
+// eur / eur2 : élément avec l'icône de pièce (à placer dans du JSX) ; eurText / eurText2 : chaîne (info-bulle, message, étiquette d'accessibilité).
+// Les noms gardent « eur » car les champs du serveur sont aussi nommés ainsi (…Euros) : leur valeur est déjà en pièces.
+const fixed0 = (n) => clean(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+const fixed2 = (n) => clean(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const eur = (n) => createElement(Fragment, null, fixed0(n), ' ', createElement(Coin));
+export const eur2 = (n) => createElement(Fragment, null, fixed2(n), ' ', createElement(Coin));
+export const eurText = (n) => `${fixed0(n)} InvestCoins`;
+export const eurText2 = (n) => `${fixed2(n)} InvestCoins`;
 export const pct = (n, d = 1) => `${Number(n ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d })} %`;
 const coinNumber = (n) => Math.round(Number(n ?? 0)).toLocaleString('fr-FR');
 // Montant en InvestCoins : élément avec l'icône de pièce (à placer dans du JSX) ; coinsText pour une chaîne (info-bulle, message).

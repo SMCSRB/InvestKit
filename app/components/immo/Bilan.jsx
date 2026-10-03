@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Icon from '@/app/components/ui/Icon';
 import { EmptyState, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
-import { MONTHS, call, coins, eur, eur2 } from './api';
+import { MONTHS, call, coins, eur, eur2, eurText2 } from './api';
 import Coin from '@/app/components/ui/Coin';
 import { Medal } from '@/app/components/ui/Icon';
 
@@ -31,7 +31,7 @@ export function Summary({ summary, events }) {
           </button>
           <div id="rp-letter" className={`rp-letter ${open ? 'is-open' : ''}`} hidden={!open}>
             {lines.length === 0 ? <p>Rien de particulier ce mois-ci : tout s’est déroulé normalement.</p> : lines.map((e, i) => (
-              <p key={i}><strong>{e.title}.</strong> {e.message}{e.cashFlowImpact ? ` (${e.cashFlowImpact > 0 ? '+' : ''}${eur2(e.cashFlowImpact)})` : ''}</p>
+              <p key={i}><strong>{e.title}.</strong> {e.message}{e.cashFlowImpact ? ` (${e.cashFlowImpact > 0 ? '+' : ''}${eurText2(e.cashFlowImpact)})` : ''}</p>
             ))}
           </div>
         </div>
@@ -80,7 +80,7 @@ export function Leaderboard({ game, notify }) {
       {data.mine && (
         <div className={`rp-banner ${data.mine.ranked ? 'rp-banner--ok' : 'rp-banner--warn'}`}>
           <div><strong>Ma performance : {p(data.mine.performancePct)}</strong>
-            <p>Investi {eur(data.mine.investedEuros)} ({data.mine.investedCoins} <Coin />) · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}</p>
+            <p>Investi {eur(data.mine.investedEuros)} · fonds propres {eur(data.mine.equity)} · flux encaissés {eur(data.mine.cumulativeCashFlow + data.mine.saleNetProceeds)}{data.mine.bankDebtEuros > 0 && <> · dette bancaire {eur(data.mine.bankDebtEuros)} (intérêts payés {eur(data.mine.bankInterestPaidEuros)}) · <strong>levier ×{data.mine.leverage}</strong></>}</p>
             {!data.mine.ranked && <p>Tu n’es pas encore classé : investis au moins {data.mine.minCapitalCoins} <Coin /> (apport, frais et travaux compris).</p>}
             {data.me && <p>Ton rang en {year} : n°{data.me.rank} sur {data.totalRanked}.</p>}</div>
         </div>

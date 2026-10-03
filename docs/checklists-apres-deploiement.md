@@ -769,3 +769,13 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 6. Prêt sur portefeuille : la garantie s'affiche en 🪙 ; l'appel de marge et la vente forcée suivent les prix en 🪙.
 7. Sans taux : supprime (sur ta copie de test seulement) les taux d'une période, avance jusque-là : les ordres sont refusés avec « Taux de change indisponible… », le graphique repasse en dollars (écrit), aucune vente forcée n'a lieu.
 8. Rien n'a changé en Bourse ni en Immobilier.
+
+## Affichage en InvestCoins
+À dérouler chez toi **avec les PR taux BCE et Crypto en InvestCoins** (déploiement ensemble).
+
+1. Immobilier, liste des annonces : chaque prix est écrit **une seule fois**, avec la pièce (pas de « € », pas de « ≈ »). Même chose sur la fiche, le bloc de financement, « Mes biens », le bilan et la carte (étiquettes sans unité, info-bulle en InvestCoins).
+2. Filtres de prix et de loyer : le petit symbole à droite des champs est la pièce.
+3. Banque, prêt personnel : la mensualité n'a plus de « (≈ … €) » ; le reste à vivre est en pièces.
+4. Bandeau de cours sous la barre du haut : prix en pièces ; survole un prix pour voir le dollar d'origine.
+5. Tableau de bord, liste de départ : sur « Terminer une leçon d'éducation », tu lis « checklist : +10 » et, sous la liste, la phrase sur les deux récompenses séparées. Réussis un quiz de chapitre : **+30** arrive tout de suite (bonus première leçon), puis récupère les **+10** de la checklist avec le bouton : ce sont deux versements différents.
+6. Écran de téléphone (390 px) : aucune barre de défilement horizontale sur l'Immobilier et la Crypto.
