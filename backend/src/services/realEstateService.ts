@@ -10,7 +10,7 @@ import {
 } from '../config/immoRules';
 import { EUROS_PER_COIN } from '../config/economy';
 import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees } from '../engine/immo';
-import { spendableCoins, monthlyInstalmentCoins } from './bankService';
+import { ownCoins, spendableCoins, monthlyInstalmentCoins } from './bankService';
 import { grantFirstInvestment } from './firstStepsService';
 
 export const RE_DOMAIN = 'real_estate';
@@ -148,14 +148,21 @@ const buildPlan = async (game: GameRow, params: PurchaseParams, db: { query: Poo
     throw new RealEstateError('INVALID_INPUT', 'Apport nettement supérieur au coût de l\'achat');
   }
 
+  const evalInput = {
+    household, price: listing.price, age: listing.age, works: worksFinanced,
+    projectedMonthlyRent: listing.marketRentMonthly,
+    downPayment: downPaymentEuros, loanMonths: params.months, annualRatePct: rate,
+    insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES, loanFees: loanApplicationFee,
+  };
   let evaluation: PurchaseEvaluation;
   try {
-    evaluation = evaluatePurchase({
-      household, price: listing.price, age: listing.age, works: worksFinanced,
-      projectedMonthlyRent: listing.marketRentMonthly,
-      downPayment: downPaymentEuros, loanMonths: params.months, annualRatePct: rate,
-      insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES, loanFees: loanApplicationFee,
-    });
+    evaluation = evaluatePurchase(evalInput);
+    // Réserve de sécurité : pièces PROPRES (non empruntées) qu'il restera après l'achat (apport + frais de dossier payés en pièces).
+    const spent = params.downPaymentCoins + (evaluation.upfrontFees > 0 ? coinsFor(evaluation.upfrontFees) : 0);
+    const own = await ownCoins(db as any, game.user_id);
+    const fromOwn = Math.max(0, spent - own.creditInDomain(RE_DOMAIN));
+    // Pièces insuffisantes pour payer l'achat : c'est l'erreur « solde insuffisant » qui doit s'afficher, pas un faux refus de réserve.
+    if (fromOwn <= own.own) evaluation = evaluatePurchase({ ...evalInput, freeCoinsAfter: own.own - fromOwn });
   } catch (e: any) {
     throw new RealEstateError('INVALID_INPUT', e.message);
   }
@@ -165,7 +172,7 @@ const buildPlan = async (game: GameRow, params: PurchaseParams, db: { query: Poo
     evaluation.assessment.decision = 'refused';
     evaluation.assessment.reasons.unshift({
       code: 'LOAN_ARREARS' as any,
-      message: `Tu as ${Number(game.arrears_eur).toFixed(0)} € d'impayés en cours : la banque ne finance aucun nouvel achat tant qu'ils ne sont pas réglés.`,
+      message: `Tu as ${Number(game.arrears_eur).toFixed(0)} InvestCoins d'impayés en cours : la banque ne finance aucun nouvel achat tant qu'ils ne sont pas réglés.`,
       value: Number(game.arrears_eur),
     });
     evaluation.approved = false;
@@ -379,7 +386,7 @@ export const realEstateService = {
             hiddenDefects: truth.hiddenDefects,
             pendingWorks,
             message: pendingWorks > 0
-              ? `Sans expertise, tu découvres après l'achat ${truth.hiddenDefects.join(', ') || 'des travaux non annoncés'} : ${pendingWorks.toFixed(0)} € de travaux supplémentaires à payer avant de pouvoir louer.`
+              ? `Sans expertise, tu découvres après l'achat ${truth.hiddenDefects.join(', ') || 'des travaux non annoncés'} : ${pendingWorks.toFixed(0)} InvestCoins de travaux supplémentaires à payer avant de pouvoir louer.`
               : null,
           },
         };

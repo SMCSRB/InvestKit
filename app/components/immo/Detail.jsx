@@ -158,7 +158,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
   };
 
   const canBuy = pv?.bank?.approved && pv?.coins?.affordable && access?.canBuy;
-  const bankTone = pv?.bank ? (pv.bank.approved ? (pv.bank.reasons?.length ? 'warn' : 'ok') : 'ko') : 'neutral';
+  const bankTone = pv?.bank ? (pv.bank.approved ? 'ok' : 'ko') : 'neutral';
   const description = describeListing(l, city, neighborhood);
 
   return (
@@ -282,9 +282,9 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               <>
                 <div className="rp-monthly"><span>Mensualité<HelpTip term="mensualite" /></span><strong>{eur2(pv.loan.monthlyPaymentWithInsurance)}</strong><small>assurance comprise · taux {pct(pv.loan.annualRatePct, 2)}</small></div>
                 <div className={`rp-bank rp-bank--${bankTone}`} role="status">
-                  <strong>{pv.bank.approved ? (pv.bank.reasons?.length ? 'La banque accepte, avec une réserve' : 'La banque accepte') : 'La banque refuse'}</strong>
+                  <strong>{pv.bank.approved ? 'La banque accepte' : 'La banque refuse'}</strong>
                   <p>Endettement<HelpTip term="endettement" /> : {pct(pv.bank.debtRatioPct)} (maximum accepté : {eur(pv.bank.maxMonthlyPayment)}/mois) · reste à vivre<HelpTip term="reste-a-vivre" /> : {eur(pv.bank.livingRemaining)}</p>
-                  {pv.bank.reasons?.map((r) => <p key={r.code} className="rp-bank__reason">• {r.message}</p>)}
+                  {!pv.bank.approved && pv.bank.reasons?.map((r) => <p key={r.code} className="rp-bank__reason">• {r.message}</p>)}
                 </div>
                 <dl className="rp-facts rp-facts--tight">
                   <Row label="Tu empruntes">{eur(pv.costs.loanPrincipal)}</Row>

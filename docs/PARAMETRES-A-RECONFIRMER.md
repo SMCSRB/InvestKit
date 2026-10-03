@@ -46,7 +46,8 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Durée maximale du prêt | 25 ans ; 27 ans avec gros travaux (≥ 10 % du prêt) | SOURCÉ | HCSF (même décision) |
 | Loyers retenus par la banque | 70 % | JEU / pratique | courtiers (pas de texte officiel) |
 | Reste à vivre minimal | étudiant 500 € ; salarié 1 200 € ; cadre 1 800 € | JEU | pratique bancaire (pas de texte officiel) |
-| Apport minimal | au moins les frais de notaire (100 %) | DÉCISION | — |
+| Apport minimal | frais de notaire (100 %) + 10 % du prix | JEU, NON SOURCÉE, À RECONFIRMER (les 10 %) ; DÉCISION produit | pratique bancaire (pas de texte officiel) |
+| Réserve de sécurité | 4 mensualités (assurance comprise, tous prêts) en pièces propres après l'opération (achat et prêt personnel) | JEU, NON SOURCÉE, À RECONFIRMER | règle d'équilibrage du jeu |
 | Assurance emprunteur | 0,36 % du capital par an | JEU | comparateurs publics ; CCSF |
 | Frais de dossier | max(200 €, 0,2 % du capital) | JEU | tarifs bancaires |
 | Expertise avant achat | 300 € + 0,15 % du prix | JEU | — |

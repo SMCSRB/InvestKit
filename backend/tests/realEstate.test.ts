@@ -26,6 +26,9 @@ const findListing = async (pred: (l: any) => boolean | Promise<boolean>) => {
 const notaryCoinsFor = (price: number, works: number, age: string) =>
   Math.ceil(((price) * (age === 'old' ? 0.075 : 0.025)) / EUROS_PER_COIN);
 
+// Apport minimum de la banque : frais de notaire + 10 % du prix (+ une marge pour les arrondis et les frais de dossier).
+const minDownCoins = (l: { price: number; age: string }, works = 0) => notaryCoinsFor(l.price, works, l.age) + Math.ceil(l.price * 0.1 / EUROS_PER_COIN) + 300;
+
 describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, expertise', () => {
   beforeAll(setupDb);
   afterAll(teardownDb);
@@ -96,7 +99,8 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const err = await rejects(svc.purchase(uid, { listingId: l.id, downPaymentCoins: legacyCoins(1000), months: 360 }));
       const codes = ((err.details as any).reasons as { code: string }[]).map((r) => r.code);
       expect(codes).toContain('LOAN_TERM_TOO_LONG');
-      expect(codes).toContain('DEBT_RATIO_TOO_HIGH');
+      // Les crédits en cours comptent : le dossier finit refusé pour endettement ou pour reste à vivre.
+      expect(codes.some((c) => c === 'DEBT_RATIO_TOO_HIGH' || c === 'LIVING_REMAINING_LOW')).toBe(true);
     });
     it('l\'aperçu ne modifie rien et détaille budget, prêt, TAEG et pièces', async () => {
       const uid = await newPlayer();
@@ -191,7 +195,8 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       }
       expect(refused?.code).toBe('BANK_REFUSED');
       const codes = ((refused!.details as any).reasons as { code: string }[]).map((r) => r.code);
-      expect(codes).toContain('DEBT_RATIO_TOO_HIGH');
+      // Les crédits en cours comptent : le dossier finit refusé pour endettement ou pour reste à vivre.
+      expect(codes.some((c) => c === 'DEBT_RATIO_TOO_HIGH' || c === 'LIVING_REMAINING_LOW')).toBe(true);
     });
 
     it('un autre joueur peut acheter le même bien (mondes séparés)', async () => {
@@ -241,7 +246,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const uid = await newPlayer({ balance: 100000 });
       const l = await defective();
       const truth = (await src.getExpertise(l.id, YEAR))!;
-      const coins = Math.max(700, notaryCoinsFor(l.price, l.advertisedWorks, l.age) + 300);
+      const coins = Math.max(700, minDownCoins(l, l.advertisedWorks));
       const res: any = await svc.purchase(uid, { listingId: l.id, downPaymentCoins: coins, months: 240 });
       expect(res.discovered.hiddenDefects.length).toBeGreaterThan(0);
       expect(res.discovered.pendingWorks).toBeCloseTo(truth.realWorks - l.advertisedWorks, 0);
@@ -261,7 +266,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const l = await defective();
       const truth = (await src.getExpertise(l.id, YEAR))!;
       await svc.buyExpertise(uid, l.id);
-      const coins = Math.max(700, notaryCoinsFor(l.price, truth.realWorks, l.age) + 300);
+      const coins = Math.max(700, minDownCoins(l, truth.realWorks));
       const p: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: coins, months: 240 });
       expect(p.expertised).toBe(true);
       expect(p.costs.works).toBeCloseTo(truth.realWorks, 0);
@@ -274,7 +279,7 @@ describe.skipIf(!hasDb)('Immobilier : achat avec prêt, refus expliqué, experti
       const owner = await newPlayer({ balance: 100000 });
       const attacker = await newPlayer({ balance: 100000 });
       const l = await defective();
-      await svc.purchase(owner, { listingId: l.id, downPaymentCoins: Math.max(700, notaryCoinsFor(l.price, 0, l.age) + 300), months: 240 });
+      await svc.purchase(owner, { listingId: l.id, downPaymentCoins: Math.max(700, minDownCoins(l)), months: 240 });
       const prop = (await svc.listProperties(owner)).properties[0];
       expect((await rejects(svc.payPendingWorks(attacker, prop.id))).code).toBe('NOT_FOUND');
       expect(await balanceOf(attacker)).toBe(100000);

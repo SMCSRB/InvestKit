@@ -90,3 +90,7 @@ export const setFlatFx = async (rate = 1): Promise<void> => {
     `INSERT INTO fx_rates (day, currency, per_eur, source, demo)
      SELECT d::date, 'USD', $1::numeric, 'test-taux-plat', TRUE FROM generate_series('2013-01-01'::date, '2026-12-31'::date, interval '1 day') AS d WHERE extract(isodow FROM d) < 6`, [rate]);
 };
+
+// Apport minimum de la banque (frais de notaire + 10 % du prix) en pièces, avec une petite marge d'arrondi. Pour les tests d'achat.
+export const minDownCoins = (l: { price: number; age: string }, margin = 50): number =>
+  Math.ceil((l.price * (l.age === 'old' ? 0.075 : 0.025) + l.price * 0.1) / EUROS_PER_COIN) + margin;

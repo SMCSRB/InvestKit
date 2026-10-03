@@ -301,7 +301,7 @@ describe.skipIf(!hasDb)('reventes, difficultés de paiement, DPE, classement', (
 
   describe('difficultés de paiement : amiable puis vente forcée', () => {
     const broke = async (seed: string) => {
-      const s = await setup({ seed, balance: 100000, apportShare: 0.1, pred: (l) => cheap(l) && l.price > 70000 });
+      const s = await setup({ seed, balance: 100000, apportShare: 0.2, pred: (l) => cheap(l) && l.price > 70000 });
       await query('UPDATE investcoins_balance SET balance = 0 WHERE user_id = $1', [s.uid]); // plus aucune pièce
       return s;
     };

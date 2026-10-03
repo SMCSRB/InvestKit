@@ -6,7 +6,7 @@ import { BANK_RULES, STARTING_PROFILES } from '../config/immoRules';
 import { EUROS_PER_COIN } from '../config/economy';
 import { RE_DOMAIN, requireGame, loadHousehold, source } from './realEstateService';
 import { monthTotal } from '../engine/immo';
-import { BankError, withTx, originateLoan, assertCanBorrow, ensureAccount } from './bankService';
+import { BankError, withTx, originateLoan, assertCanBorrow, ensureAccount, ownCoins } from './bankService';
 
 // ─────────────────────────────────────────────────────────────────────────
 // PRÊT PERSONNEL : plafonné (6 mois de revenus nets du profil), fléché Immobilier (apport, travaux, rénovation, découvert),
@@ -55,7 +55,16 @@ const evaluate = async (db: Db, userId: string, amountRaw: unknown, monthsRaw: u
   const livingRemaining = Math.round((household.salary + household.existingRentalIncome - household.livingCharges - totalDebt) * 100) / 100;
   const minLiving = BANK_RULES.livingRemainingByProfile[game.profile];
   if (debtRatioPct > BANK_RULES.maxDebtRatioPct) reasons.push({ code: 'DEBT_RATIO', message: `Endettement de ${debtRatioPct} % après ce prêt : la banque refuse au-delà de ${BANK_RULES.maxDebtRatioPct} % de tes revenus.` });
-  if (livingRemaining < minLiving) reasons.push({ code: 'LIVING_REMAINING', message: `Il te resterait ${fr(livingRemaining)} € par mois pour vivre : la banque exige au moins ${fr(minLiving)} € pour ton profil.` });
+  if (livingRemaining < minLiving) {
+    const maxForLiving = Math.max(0, Math.round((household.salary + household.existingRentalIncome - household.livingCharges - household.existingDebtPayments - minLiving) * 100) / 100);
+    reasons.push({ code: 'LIVING_REMAINING', message: `Reste à vivre insuffisant : il te resterait ${fr(livingRemaining)} InvestCoins par mois, la banque exige au moins ${fr(minLiving)} pour ton profil. Mensualité maximale compatible : ${fr(maxForLiving)} InvestCoins.` });
+  }
+  // Réserve de sécurité : pièces PROPRES (non empruntées) à garder pour payer quelques mensualités de TOUS les prêts.
+  if (BANK_RULES.reserveMonthlyPayments > 0) {
+    const own = (await ownCoins(db, userId)).own;
+    const requiredReserve = Math.round((household.existingDebtPayments + instalmentEuros) * BANK_RULES.reserveMonthlyPayments * 100) / 100;
+    if (own < requiredReserve) reasons.push({ code: 'RESERVE_LOW', message: `Réserve de sécurité insuffisante : tu as ${fr(own)} InvestCoins à toi (hors pièces empruntées), la banque veut que tu gardes ${BANK_RULES.reserveMonthlyPayments} mensualités, soit ${fr(requiredReserve)} InvestCoins. Il te manque ${fr(requiredReserve - own)} InvestCoins.` });
+  }
 
   return {
     game, clock, amount, months, ratePct, sched, instalmentCoins, capCoins, reasons, debtRatioPct, livingRemaining, minLiving, countedIncome,
@@ -97,7 +106,7 @@ export const bankPersonalService = {
       });
       return {
         loanId, amountCoins: e.amount, months: e.months, annualRatePct: e.ratePct, instalmentCoins: e.instalmentCoins,
-        message: `Prêt personnel accordé : ${fr(e.amount)} InvestCoins (${fr(e.amount * EUROS_PER_COIN)} €) à ${fr(e.ratePct)} % sur ${e.months} mois, ${fr(e.instalmentCoins)} InvestCoins par mois. Ces pièces ne servent que dans l'Immobilier.`,
+        message: `Prêt personnel accordé : ${fr(e.amount)} InvestCoins à ${fr(e.ratePct)} % sur ${e.months} mois, ${fr(e.instalmentCoins)} InvestCoins par mois. Ces pièces ne servent que dans l'Immobilier.`,
       };
     });
   },

@@ -15,7 +15,7 @@ describe.skipIf(!hasDb)('Immobilier : 1 InvestCoin = 1 €', () => {
 
   const listing = async () => {
     for (const l of await src.listListings(2010)) {
-      if (l.age === 'old' && l.advertisedWorks === 0 && l.price > 30000 && l.price < 50000 && (await src.getExpertise(l.id, 2010))!.hiddenDefects.length === 0) return l;
+      if (l.age === 'old' && l.advertisedWorks === 0 && l.price > 30000 && l.price < 36000 && (await src.getExpertise(l.id, 2010))!.hiddenDefects.length === 0) return l;
     }
     throw new Error('bien introuvable');
   };
@@ -24,7 +24,7 @@ describe.skipIf(!hasDb)('Immobilier : 1 InvestCoin = 1 €', () => {
     const uid = await createUser({ balance: STARTING_CAPITAL, freeDomain: 'real_estate' });
     await svc.startGame(uid, 'employee');
     const l = await listing();
-    const coins = Math.ceil(l.price * 0.3);
+    const coins = Math.ceil(l.price * 0.25);   // notaire (7,5 %) + 10 % du prix = 17,5 % minimum
     const prev: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: coins, months: 240 });
     expect(prev.costs.downPayment).toBe(coins * EUROS_PER_COIN);
     expect(prev.coins.total).toBe(coins + prev.coins.loanFees);

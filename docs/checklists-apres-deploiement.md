@@ -779,3 +779,14 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Bandeau de cours sous la barre du haut : prix en pièces ; survole un prix pour voir le dollar d'origine.
 5. Tableau de bord, liste de départ : sur « Terminer une leçon d'éducation », tu lis « checklist : +10 » et, sous la liste, la phrase sur les deux récompenses séparées. Réussis un quiz de chapitre : **+30** arrive tout de suite (bonus première leçon), puis récupère les **+10** de la checklist avec le bouton : ce sont deux versements différents.
 6. Écran de téléphone (390 px) : aucune barre de défilement horizontale sur l'Immobilier et la Crypto.
+
+## Banque aux règles françaises
+À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR (après les PR 5, 6, 7).
+
+1. Immobilier, fiche d'une annonce, simulateur de financement : mets en apport **seulement les frais de notaire**. La banque **refuse** et dit : « Apport insuffisant : … exige au moins … (… de frais de notaire + … soit 10 % du prix). Il te manque … InvestCoins. » Ajoute le montant manquant : le motif disparaît.
+2. Avec l'apport exact, mais presque plus de pièces libres après l'achat : refus « Réserve de sécurité insuffisante : … 4 mensualités … Il te manque … ». Ajoute des pièces (ou baisse l'apport si tu en as) : la banque accepte.
+3. Il n'y a plus de message « La banque accepte, avec une réserve » : c'est accepté ou refusé.
+4. Avec un profil étudiant et une grosse mensualité : refus « Reste à vivre insuffisant … Mensualité maximale compatible : … ». Réduis le prêt (apport plus grand ou durée plus longue) : accepté.
+5. Banque, prêt personnel : avec très peu de pièces à toi (hors pièces empruntées), la demande est refusée pour « Réserve de sécurité » avec le montant manquant.
+6. Aucun « € » dans ces messages : tout est en InvestCoins.
+7. Si tu veux changer les 10 % ou les 4 mensualités : `backend/src/config/immoRules.ts` (`minDownPaymentPctOfPrice`, `reserveMonthlyPayments`).
