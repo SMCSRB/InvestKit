@@ -79,6 +79,7 @@ export const ROUTES: Row[] = [
   ['get', '/trading/assets', 'Bourse / Crypto', 'Actifs disponibles'],
   ['get', '/trading/portfolio', 'Bourse / Crypto', 'Portefeuille virtuel'],
   ['get', '/trading/history', 'Bourse / Crypto', 'Historique d\'un titre (borné à l\'année simulée)'],
+  ['get', '/trading/orders', 'Bourse / Crypto', 'Mes ordres : achats, ventes, frais et impôts du domaine'],
   ['post', '/trading/buy', 'Bourse / Crypto', 'Acheter'],
   ['post', '/trading/sell', 'Bourse / Crypto', 'Vendre'],
   ['post', '/trading/quote', 'Bourse / Crypto', 'Aperçu d\'un ordre : frais, impôt sur la plus-value, explication'],
