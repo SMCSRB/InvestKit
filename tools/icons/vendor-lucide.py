@@ -11,7 +11,7 @@ party-popper clipboard-list pencil-line shield users landmark drama settings cre
 thumbs-down flag bell arrow-left-right megaphone flame sun moon newspaper award mail shield-check calendar handshake gift hand bot wrench
 circle-check circle-x triangle-alert timer piggy-bank scale leaf waves trees sunset baby droplet heart eye bug receipt-text monitor lock-open
 refresh-cw trash-2 log-out download upload circle-dot gamepad-2 search brain flower-2 snowflake globe sprout signal radio-tower battery-medium
-package pin map-pin hand-metal coins bitcoin info circle-alert check x star cake clock""".split()
+package pin map-pin hand-metal coins bitcoin zoom-in zoom-out maximize ruler door-open key-round building-2 sliders-horizontal list map layers calculator hammer wallet hourglass handshake house-plus info circle-alert check x star cake clock""".split()
 
 def num(s): return float(s)
 def fmt(v): return ('%.4f' % v).rstrip('0').rstrip('.')
