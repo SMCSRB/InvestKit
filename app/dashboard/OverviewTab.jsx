@@ -12,6 +12,7 @@ import ProgressCard from './ProgressCard';
 import HelpTip from '@/app/components/HelpTip';
 import { tone as riskTone } from '@/app/components/PortfolioRisk';
 import { fmtInt } from '@/app/lib/format';
+import { useCoins } from '@/app/lib/coinStore';
 
 const signed = (v) => `${Number(v) > 0 ? '+' : ''}${fmtInt(v)}`;
 const eur = (v) => `${fmtInt(v)} €`;
@@ -47,9 +48,15 @@ function Line({ label, value, tone }) {
 // Vue d'ensemble : uniquement des données réelles du serveur (/overview). Aucune valeur de démonstration.
 export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }) {
   const shell = useShell();
+  // Liquidités, titres, dettes et patrimoine viennent du portefeuille partagé (renvoyé par le serveur après chaque action) : ils changent
+  // dès qu'une récompense est récupérée ou qu'une dépense est faite, sans attendre le rechargement de la vue d'ensemble.
+  const { wallet: w } = useCoins();
   const loading = !ov && !failed;
   const t = ov?.totals;
-  const coins = ov?.coins ?? 0;
+  const coins = w?.balance ?? ov?.coins ?? 0;
+  const netWorth = w?.netWorth ?? t?.netWorth;
+  const tradingValue = w?.tradingValue ?? t?.tradingValue;
+  const debtCoins = w?.debtCoins ?? ov?.bank?.debtCoins;
   const stocks = ov?.trading?.stocks;
   const crypto = ov?.trading?.crypto;
   const re = ov?.realEstate;
@@ -75,24 +82,24 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
   }
   return (
     <div className="dash-overview">
-      <DashHero username={ov?.username} patrimoine={t?.coinsAndTrading} loading={loading} />
+      <DashHero username={ov?.username} patrimoine={netWorth} loading={loading && !w} />
       <UpgradeCard plan={shell?.user?.plan} />
 
       <OnboardingChecklist />
 
       <div className="ik-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
         <Reveal index={0} data-tilt="">
-          <StatCard hero icon="wallet" label="Patrimoine" value={loading ? NaN : t.coinsAndTrading} unit={<Coin size={26} />}
-            delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : 'liquidités + titres (Bourse, Crypto)'} />
+          <StatCard hero icon="wallet" label="Patrimoine" value={Number.isFinite(netWorth) ? netWorth : NaN} unit={<Coin size={26} />}
+            delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={Number.isFinite(netWorth) ? 'liquidités + titres − dettes' : undefined} />
         </Reveal>
         <Reveal index={1} data-tilt="">
-          <StatCard icon="coins" label="Liquidités" value={loading ? NaN : coins} unit={<Coin size={22} />} deltaLabel="à dépenser dans les domaines" href="/banque" />
+          <StatCard icon="coins" label="Liquidités" value={loading && !w ? NaN : coins} unit={<Coin size={22} />} deltaLabel="à dépenser dans les domaines" href="/banque" />
         </Reveal>
         <Reveal index={2} data-tilt="">
-          <StatCard icon="chart" label="Titres" value={loading ? NaN : t.tradingValue} unit={<Coin size={22} />} delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : invested > 0 ? 'depuis le début' : 'Bourse + Crypto'} />
+          <StatCard icon="chart" label="Titres" value={Number.isFinite(tradingValue) ? tradingValue : NaN} unit={<Coin size={22} />} delta={!loading && invested > 0 ? t.performancePct : undefined} deltaLabel={loading ? undefined : invested > 0 ? 'depuis le début' : 'Bourse + Crypto'} />
         </Reveal>
         <Reveal index={3} data-tilt="">
-          <StatCard icon="bank" label="Dette bancaire" value={loading ? NaN : ov.bank.debtCoins} unit={<Coin size={22} />} deltaLabel="à rembourser" href="/banque" />
+          <StatCard icon="bank" label="Dette bancaire" value={Number.isFinite(debtCoins) ? debtCoins : NaN} unit={<Coin size={22} />} deltaLabel="à rembourser" href="/banque" />
         </Reveal>
       </div>
 

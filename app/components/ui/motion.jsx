@@ -55,7 +55,7 @@ export function Reveal({ children, index = 0, as: Tag = 'div', className = '', s
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
 // Chiffre qui s'anime vers sa valeur (solde, patrimoine...). Formatage par `format`.
-export function AnimatedNumber({ value, format = fmtInt, duration = 900, className = '' }) {
+export function AnimatedNumber({ value, format = fmtInt, duration = 600, className = '' }) {
   const { motionEnabled } = useTheme();
   const [shown, setShown] = useState(value);
   const fromRef = useRef(value);

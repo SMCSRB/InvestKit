@@ -6,11 +6,12 @@ import { outstandingCoins } from './bankService';
 import { wealthMetrics } from './realEstateSaleService';
 import { riskService } from './riskService';
 import { EUROS_PER_COIN } from '../config/immoRules';
+import { netWorthCoins } from '../engine/wealth';
 
 // Vue d'ensemble RÉELLE du joueur (remplace les chiffres fictifs du tableau de bord). Chaque domaine garde son unité :
 // Bourse et Crypto en pièces (InvestCoins ≈ 1 € de cours dans le jeu), Immobilier en euros (1 InvestCoin = 20 €) — volontairement non additionnés
 // tant que l'unification des unités n'est pas faite (voir docs/banque.md).
-const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypto') => {
+export const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypto') => {
   const domain = getDomain(domainId)!;
   const row = (await query(`SELECT positions, simulated_year, total_bought, total_proceeds, tax_state FROM virtual_portfolios WHERE user_id = $1 AND mode = 'accelerated' AND domain = $2`, [userId, domainId])).rows[0];
   if (!row) return { started: false, positions: 0, marketValue: 0, invested: 0, proceeds: 0, gain: 0, performancePct: 0, simulatedYear: domain.minYear, feesPaid: 0, taxPaid: 0 };
@@ -67,11 +68,12 @@ export const overviewService = {
       totals: {
         tradingValue: stocks.marketValue + crypto.marketValue,
         coinsAndTrading: coins + stocks.marketValue + crypto.marketValue,
+        netWorth: netWorthCoins({ coins, tradingValue: stocks.marketValue + crypto.marketValue, debtCoins }),   // liquidités + titres − dettes
         invested, gain, performancePct: invested > 0 ? Math.round((gain / invested) * 1000) / 10 : 0,
         feesPaid: stocks.feesPaid + crypto.feesPaid, taxPaid: stocks.taxPaid + crypto.taxPaid,
       },
       realEstate, bank: { debtCoins }, risk,
-      notes: ['Bourse et Crypto sont en pièces ; l\'Immobilier est en euros (1 InvestCoin = 20 €) : les deux ne sont pas additionnés.'],
+      notes: ['Patrimoine = liquidités + titres (Bourse, Crypto) − dettes bancaires. Bourse et Crypto sont en pièces ; l\'Immobilier est en euros (1 InvestCoin = 20 €) : les deux ne sont pas additionnés.'],
     };
   },
 };

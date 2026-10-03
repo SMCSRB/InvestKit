@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useCoins, refreshCoins, claimDailyReward } from '@/app/lib/coinStore';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -14,20 +15,19 @@ const getJson = async (path) => {
 // Aucune valeur inventée : en cas d'échec, le champ reste vide et l'interface l'indique honnêtement.
 export default function useShellData() {
   const [user, setUser] = useState(null);
-  const [wallet, setWallet] = useState(null); // { balance, dailyStreak, canClaimToday }
+  const { wallet } = useCoins(); // portefeuille partagé par toute la page (source unique : voir app/lib/coinStore.js)
   const [notif, setNotif] = useState({ notifications: [], unread: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const refreshWallet = useCallback(() => getJson('/economy/balance').then(setWallet).catch(() => {}), []);
+  const refreshWallet = refreshCoins;
   const refreshNotifs = useCallback(() => getJson('/notifications?limit=10').then(setNotif).catch(() => {}), []);
 
   useEffect(() => {
     let alive = true;
-    Promise.allSettled([getJson('/auth/me'), getJson('/economy/balance'), getJson('/notifications?limit=10')]).then(([me, bal, nt]) => {
+    Promise.allSettled([getJson('/auth/me'), getJson('/notifications?limit=10')]).then(([me, nt]) => {
       if (!alive) return;
       if (me.status === 'fulfilled') { setUser(me.value.user); setIsAdmin(!!me.value.user?.isAdmin); }
-      if (bal.status === 'fulfilled') setWallet(bal.value);
       if (nt.status === 'fulfilled') setNotif(nt.value);
       setLoading(false);
     });
@@ -35,13 +35,7 @@ export default function useShellData() {
     return () => { alive = false; clearInterval(id); };
   }, [refreshNotifs]);
 
-  const claimDaily = useCallback(async () => {
-    const res = await fetch(`${API}/economy/daily-reward`, { method: 'POST' });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Récompense indisponible');
-    setWallet((w) => ({ ...(w || {}), balance: data.balance, dailyStreak: data.newStreak, canClaimToday: false }));
-    return data;
-  }, []);
+  const claimDaily = claimDailyReward;   // le portefeuille renvoyé par le serveur est affiché tout de suite partout
 
   const markAllRead = useCallback(async () => {
     await fetch(`${API}/notifications/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) }).catch(() => {});

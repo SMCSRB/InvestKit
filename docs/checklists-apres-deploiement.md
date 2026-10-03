@@ -642,3 +642,15 @@ La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.
 4. Contrôle en base (lecture seule) : `SELECT email, welcome_email_sent_at FROM users ORDER BY created_at DESC LIMIT 5;` : la date est remplie pour le compte de test.
 5. Ordre de fusion : après la PR sécurité #85 (le mail part depuis `save-preferences`, désormais protégée) et avec les mails de la PR #80.
 6. (Mail de bienvenue, reprise après panne) Si l'envoi échoue, le joueur est réessayé à la validation suivante de son profil, au plus 3 fois, avec 5 minutes d'écart ; le plafond d'un mail par adresse et par jour ne compte que les envois réussis.
+
+## InvestCoins : solde et patrimoine instantanés
+
+À tester chez toi, avec un compte de test :
+1. Tableau de bord : note le solde (barre du haut), le **Patrimoine** et les **Liquidités**. Clique « Récupérer ma récompense du jour » (même en double-cliquant) : les TROIS chiffres montent **ensemble, tout de suite** (petit compteur animé de moins d'une seconde), sans recharger. Un seul gain.
+2. Ouvre un deuxième onglet sur le tableau de bord, récupère une récompense dans le premier : le deuxième se met à jour tout seul.
+3. Fais un quiz de cours réussi pour la première fois : le solde monte aussitôt ; refais-le : rien de plus.
+4. Récupère une récompense de « Tes premiers pas » (mission) : idem.
+5. Achète des titres en Bourse puis reviens sur le tableau de bord : Liquidités ↓, Titres ↑, Patrimoine presque inchangé (seuls les frais le baissent).
+6. Prends un prêt à la Banque : Liquidités ↑ et Dette ↑ du même montant, **Patrimoine inchangé** (Patrimoine = liquidités + titres − dettes).
+7. Coupe ta connexion puis récupère la récompense : message d'erreur clair, le solde affiché reste la vraie valeur du serveur.
+8. Dans Paramètres > Affichage, mets « Animations » sur Non (ou active « réduire les animations » sur ton système) : les chiffres changent d'un coup, sans compteur.

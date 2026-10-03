@@ -19,6 +19,7 @@ import OnboardingChecklist from '@/app/components/OnboardingChecklist';
 import { useEducationProgress } from '@/app/context/EducationContext';
 import { useUser } from '@/app/context/UserContext';
 import { planLine } from '@/app/lib/plan';
+import { useCoins } from '@/app/lib/coinStore';
 import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
@@ -86,10 +87,6 @@ function DashboardContent() {
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState('');
   // InvestCoins (économie virtuelle)
-  const [coinsBalance, setCoinsBalance] = useState(null);
-  const [coinsStreak, setCoinsStreak] = useState(0);
-  const [canClaimDaily, setCanClaimDaily] = useState(false);
-  const [claimingDaily, setClaimingDaily] = useState(false);
   // Simulateur Bourse (trading accéléré)
   const [tradingDomain, setTradingDomain] = useState('stocks');
   const [tradingDomains, setTradingDomains] = useState([]);
@@ -371,44 +368,7 @@ function DashboardContent() {
     }
   };
 
-  // ============ InvestCoins (économie virtuelle) ============
-  useEffect(() => {
-    const token = getAuthToken();
-    if (!token) return;
-
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/economy/balance`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
-          setCoinsBalance(data.balance);
-          setCoinsStreak(data.dailyStreak);
-          setCanClaimDaily(data.canClaimToday);
-        }
-      })
-      .catch((err) => console.error('Erreur récupération solde InvestCoins:', err));
-  }, []);
-
-  const claimDailyCoins = async () => {
-    setClaimingDaily(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/economy/daily-reward`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setCoinsBalance(data.balance);
-      setCoinsStreak(data.newStreak);
-      setCanClaimDaily(false);
-      triggerConfetti();
-    } catch (err) {
-      console.error('Erreur réclamation quotidienne:', err);
-    } finally {
-      setClaimingDaily(false);
-    }
-  };
+  // InvestCoins : le solde et le patrimoine vivent dans le magasin partagé (app/lib/coinStore.js), mis à jour par le serveur après chaque action.
 
   // ============ Simulateur Bourse (trading accéléré) ============
   const loadTradingData = async (domain = tradingDomain) => {
@@ -1188,6 +1148,8 @@ function DashboardContent() {
   // Vue d'ensemble RÉELLE (serveur) : pièces, Bourse, Crypto, Immobilier, dette, risque. Aucune valeur de démonstration.
   const [overview, setOverview] = useState(null);
   const [overviewFailed, setOverviewFailed] = useState(false);
+  // Chaque nouveau portefeuille reçu du serveur (récompense, quiz, achat, prêt...) recharge aussi le reste de la vue d'ensemble (risque, domaines).
+  const { version: coinVersion } = useCoins();
   const loadOverview = useCallback(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/overview`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
       .then((r) => (r.ok ? r.json() : null))
@@ -1200,7 +1162,7 @@ function DashboardContent() {
 
   useEffect(() => {
     loadOverview();
-  }, [loadOverview, tradingPortfolio?.simulatedYear, tradingPortfolio?.cashBalance, tradingPortfolio?.positions?.length]);
+  }, [loadOverview, tradingPortfolio?.simulatedYear, tradingPortfolio?.cashBalance, tradingPortfolio?.positions?.length, coinVersion]);
   useEffect(() => {
     // Nom affiché : celui du compte, sauf si l'utilisateur en a saisi un autre dans son profil.
     if (overview?.username && !(typeof window !== 'undefined' && localStorage.getItem('userFullName'))) setFullName(overview.username);

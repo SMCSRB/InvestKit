@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { requireAdmin } from '../middleware/admin';
-import { userRepository } from '../repositories/userRepository';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
-import { claimDailyReward, canClaimDailyReward } from '../services/dailyRewardService';
+import { claimDailyReward } from '../services/dailyRewardService';
+import { walletService } from '../services/walletService';
 
 
 
@@ -25,14 +25,7 @@ export const economyController = {
         return;
       }
 
-      const balance = await investcoinsRepository.getBalance(req.user.userId);
-      const user = await userRepository.findById(req.user.userId);
-
-      res.json({
-        balance,
-        dailyStreak: user?.daily_streak ?? 0,
-        canClaimToday: canClaimDailyReward(user?.last_daily_claim_at),
-      });
+      res.json(await walletService.snapshot(req.user.userId));   // une seule définition des chiffres d'InvestCoins : voir services/walletService.ts
     } catch (error) {
       console.error('Get balance error:', error);
       res.status(500).json({ error: 'Erreur lors de la récupération du solde' });

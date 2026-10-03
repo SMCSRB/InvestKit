@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { walletEcho } from '../middleware/walletEcho';
 import { tradingController } from '../controllers/tradingController';
 import { authMiddleware } from '../middleware/auth';
 
 export const tradingRoutes = Router();
+tradingRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portefeuille à jour (`wallet`)
 
 tradingRoutes.get('/domains', authMiddleware, tradingController.getDomains);
 tradingRoutes.get('/assets', authMiddleware, tradingController.getAssets);
