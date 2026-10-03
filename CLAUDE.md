@@ -1,5 +1,24 @@
 # InvestKit - Plateforme Premium d'Investissement
 
+## Règles de travail sur le serveur (décidées par Andreja le 3 octobre 2026 : à respecter à chaque session)
+
+**Avant chaque action sur le serveur, dire en une phrase ce que tu vas faire. Si tu hésites sur une règle, tu t'arrêtes et tu demandes.**
+
+### PERMIS sans demander
+- **Fusionner dans `release/design-complet`** quand tout est vert (tests, tsc, build, contrôles GitHub) et sans conflit.
+- **Après chaque fusion, lancer `~/deploy-test.sh`** pour mettre à jour la **COPIE DE TEST seulement** (ports **3001** et **5001**, base **`investkit_design_test`**, dossier **`~/InvestKit-design`**).
+- **Lire les journaux `~/api-test.log` et `~/site-test.log`** pour vérifier que le déploiement a réussi, et le dire à Andreja.
+
+### INTERDIT sans le go explicite d'Andreja, quoi qu'il arrive
+- Toucher au **vrai site** : dossier `~/InvestKit`, ports **3000** et **5000**, base **`investkit`**, branche **`main`**, **PR #80**.
+- Toute commande sur une base autre que **`investkit_design_test`**.
+- Lire ou afficher des **secrets** (`.env`, mots de passe, clés, `JWT_SECRET`).
+- Modifier la **configuration du serveur** (nginx, systemd, pare-feu, sudoers, cron), installer des **paquets système**, ou toucher à d'autres dossiers que `~/InvestKit-design` et les fichiers `~/deploy-test.sh` et `~/start-test-api.sh`.
+- Lancer le **script de remise à zéro des comptes de test** ou l'**import des taux BCE** : c'est Andreja qui le fait.
+- **Supprimer** des fichiers ou des sauvegardes (`backup-test-*.sql`).
+
+> Ces règles remplacent, pour la copie de test et `release/design-complet`, la règle plus ancienne « rien n'est fusionné ni déployé sans accord » : la fusion dans `release/design-complet` et le déploiement de la copie de test sont désormais permis dans les conditions ci-dessus. Tout le reste (vrai site, `main`, autres bases) reste soumis à l'accord explicite d'Andreja.
+
 ## Vue d'Ensemble
 InvestKit est une plateforme web professionnel dédiée à l'investissement, la simulation de projets financiers et l'éducation. Le projet est pensé "API-first" pour permettre un déploiement futur en tant qu'application mobile.
 
