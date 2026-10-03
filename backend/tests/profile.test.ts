@@ -103,6 +103,16 @@ describe.skipIf(!hasDb)('profil : photo, nom, bio, changement d\'e-mail (base r�
     expect((await upload(id, png, 'text/plain')).status).toBe(200);
   });
 
+  it('PHOTO : un corps JSON (tableau, texte, objet) à la place des octets est refusé proprement, rien n\'est enregistré', async () => {
+    const id = await player();
+    for (const body of [['a', 'b'], 'texte', { avatar: 'x' }, [1, 2, 3], 42]) {
+      const r = await request(app).post('/api/v1/profile/avatar').set(as(id)).set('Content-Type', 'application/json').send(JSON.stringify(body));
+      expect(r.status, JSON.stringify(body)).toBe(400);
+      expect(['EMPTY', 'entity.parse.failed']).toContain(r.body.code);   // tableau/objet : notre contrôle ; texte ou nombre nu : refusé plus tôt par l'analyseur JSON
+    }
+    expect((await query('SELECT avatar_id FROM users WHERE id = $1', [id])).rows[0].avatar_id).toBeNull();
+  });
+
   it('PHOTO : fichier trop lourd refusé (413) ; image « bombe » (trop de pixels) refusée (422)', async () => {
     const id = await player();
     const big = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(3 * 1024 * 1024 + 10, 1)]);

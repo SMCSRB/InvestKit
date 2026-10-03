@@ -22,7 +22,8 @@ const run = (fallback: string, fn: (req: AuthRequest, userId: string) => Promise
 export const profileController = {
   get: run('Erreur lors de la lecture du profil', (_r, u) => profileService.get(u)),
   update: run('Erreur lors de l\'enregistrement du profil', (r, u) => profileService.update(u, r.body, r.ip)),
-  setAvatar: run('Erreur lors de l\'envoi de la photo', (r, u) => profileService.setAvatar(u, r.body, r.ip)),
+  // Le corps n'est transmis que s'il s'agit d'octets (Buffer, produit par express.raw) : un JSON (tableau, texte, objet) est écarté dès l'entrée.
+  setAvatar: run('Erreur lors de l\'envoi de la photo', (r, u) => profileService.setAvatar(u, Buffer.isBuffer(r.body) ? r.body : undefined, r.ip)),
   removeAvatar: run('Erreur lors de la suppression de la photo', (r, u) => profileService.removeAvatar(u, r.ip)),
   requestEmail: run('Erreur lors de la demande de changement d\'adresse', (r, u) => profileService.requestEmailChange(u, r.body ?? {}, r.ip)),
   confirmEmail: run('Erreur lors de la confirmation de l\'adresse', (r, u) => profileService.confirmEmailChange(u, r.body?.code, r.ip)),
