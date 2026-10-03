@@ -31,3 +31,13 @@ describe('ancien onglet Bourse du tableau de bord', () => {
     expect(read('app/dashboard/page.jsx')).toContain("router.replace('/bourse')");
   });
 });
+
+describe('page Bourse : journal des ordres', () => {
+  it('lit /orders sur le serveur et affiche frais et impôt en lignes séparées', () => {
+    const page = read('app/bourse/page.jsx');
+    expect(page).toContain('/orders?domain=');
+    expect(page).toContain('orders-table');
+    expect(page).toContain('Frais de courtage');
+    expect(page).toContain('Impôt sur la plus-value');
+  });
+});

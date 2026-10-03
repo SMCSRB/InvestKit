@@ -133,3 +133,21 @@ describe.skipIf(!hasDb)('achat / vente avec frais et impôts (base réelle)', ()
     expect(s.tax).toBe(0);
   });
 });
+
+describe.skipIf(!hasDb)('journal des ordres (base réelle)', () => {
+  beforeAll(setupDb);
+  afterAll(teardownDb);
+  it('liste achat, frais, vente, frais et impôt du domaine, sans toucher aux autres écritures', async () => {
+    const uid = await createUser({ tier: 'pro', balance: 100000 });
+    await tradingService.buy(uid, 'stocks', 'LVMH', 10, 'cto');
+    for (let i = 0; i < 3; i++) await tradingService.advanceYear(uid, 'stocks');
+    await tradingService.sell(uid, 'stocks', 'LVMH', 10, 'cto');
+    const { orders } = await tradingService.orders(uid, 'stocks');
+    const kinds = orders.map((o: any) => o.kind).sort();
+    expect(kinds).toEqual(['buy', 'fee', 'fee', 'sell', 'tax']);
+    const buy = orders.find((o: any) => o.kind === 'buy') as any;
+    expect(buy).toMatchObject({ symbol: 'LVMH', quantity: 10, price: 120, account: 'cto' });
+    expect(buy.amount).toBeLessThan(0);
+    expect((await tradingService.orders(uid, 'crypto')).orders).toEqual([]);
+  });
+});

@@ -890,3 +890,9 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 ## Bourse : ancien onglet du tableau de bord
 1. Ouvre `/dashboard?tab=trading` (ou un vieux favori) : tu arrives directement sur **/bourse**.
 2. Le tableau de bord (accueil) s'ouvre toujours normalement, sans onglet Bourse.
+
+## Bourse : onglet « Mes ordres »
+1. /bourse, onglet **Mes ordres** : vide au début (message d'explication).
+2. Achète un titre : une ligne « Achat » (prix, quantité, enveloppe PEA/CTO, montant négatif) et une ligne « Frais de courtage ».
+3. Vends-le : « Vente » en positif, « Frais de courtage » et, s'il y a un gain, « Impôt sur la plus-value ».
+4. Le total des lignes correspond à la variation de ton solde. Tout est en pièces, sans « € ».

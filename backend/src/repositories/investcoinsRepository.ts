@@ -200,4 +200,16 @@ export const investcoinsRepository = {
     );
     return result.rows;
   },
+
+  /** Journal des ordres d'un domaine : achats, ventes, courtage et impôt (plus récents d'abord). */
+  async getTradeJournal(userId: string, domain: string, limit = 100) {
+    const result = await query(
+      `SELECT amount, reason, metadata, created_at FROM investcoins_transactions
+       WHERE user_id = $1 AND reason IN ('trade_buy', 'trade_sell', 'fee_brokerage', 'tax_capital_gains')
+         AND metadata->>'domain' = $2
+       ORDER BY created_at DESC, ctid DESC LIMIT $3`,
+      [userId, domain, limit]
+    );
+    return result.rows;
+  },
 };
