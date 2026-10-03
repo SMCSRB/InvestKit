@@ -13,3 +13,9 @@ export const PASSWORD_POLICY = {
   maxLength: 128,              // au-delà, bcrypt ne lit de toute façon que 72 octets ; on borne pour éviter les abus
   common: ['password', 'motdepasse', 'azerty123', 'qwerty123', '12345678', '123456789', 'password1', 'motdepasse1', 'investkit', 'azertyuiop', 'iloveyou', 'azerty1234', 'qwertyuiop'],
 };
+
+// Réponses d'authentification à durée minimale constante : la durée ne doit pas révéler si une adresse a déjà un compte.
+// VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (réglable par AUTH_MIN_RESPONSE_MS ; 0 en test).
+export const AUTH_MIN_RESPONSE_MS = Number.isFinite(Number(process.env.AUTH_MIN_RESPONSE_MS)) && process.env.AUTH_MIN_RESPONSE_MS !== undefined && process.env.AUTH_MIN_RESPONSE_MS !== ''
+  ? Number(process.env.AUTH_MIN_RESPONSE_MS)
+  : 700;

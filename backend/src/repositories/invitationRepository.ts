@@ -61,6 +61,16 @@ export const invitationRepository = {
     return result.rows[0]?.id ?? null;
   },
 
+  // Lecture SEULE (ne consomme rien) : le code est-il utilisable ? Sert à prévenir tôt, avant la fin de l'inscription.
+  async isUsable(code: string): Promise<boolean> {
+    const result = await query(
+      `SELECT 1 FROM invitation_codes
+       WHERE code = $1 AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW()) AND uses < max_uses`,
+      [code]
+    );
+    return result.rows.length === 1;
+  },
+
   async revoke(code: string): Promise<boolean> {
     const result = await query(
       `UPDATE invitation_codes SET revoked_at = NOW() WHERE code = $1 AND revoked_at IS NULL RETURNING id`,

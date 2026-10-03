@@ -10,7 +10,6 @@ const TRANSLATIONS = {
     joinInvestors: 'Rejoignez des milliers d\'investisseurs',
     progress: 'Progression',
     email: 'Email',
-    emailAvailable: 'Email disponible',
     password: 'Mot de passe',
     passwordConfirm: 'Confirmer le mot de passe',
     passwordsMatch: 'Les mots de passe correspondent',
@@ -42,7 +41,6 @@ const TRANSLATIONS = {
     joinInvestors: 'Join thousands of investors',
     progress: 'Progress',
     email: 'Email',
-    emailAvailable: 'Email available',
     password: 'Password',
     passwordConfirm: 'Confirm password',
     passwordsMatch: 'Passwords match',
@@ -74,7 +72,6 @@ const TRANSLATIONS = {
     joinInvestors: 'Únete a miles de inversores',
     progress: 'Progreso',
     email: 'Correo electrónico',
-    emailAvailable: 'Correo disponible',
     password: 'Contraseña',
     passwordConfirm: 'Confirmar contraseña',
     passwordsMatch: 'Las contraseñas coinciden',
@@ -130,8 +127,6 @@ export default function SignupPage() {
       .then((c) => setInviteOnly(!!c.inviteOnly))
       .catch(() => {});
   }, []);
-  const [emailAvailable, setEmailAvailable] = useState(null);
-  const [checkingEmail, setCheckingEmail] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
@@ -141,7 +136,6 @@ export default function SignupPage() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   const captchaRef = useRef(null);
-  const emailCheckTimeoutRef = useRef(null);
   const formRef = useRef(null);
 
   const t = TRANSLATIONS[lang];
@@ -177,45 +171,6 @@ export default function SignupPage() {
     setEmail(suggestion);
     setEmailSuggestions([]);
   };
-
-  const checkEmailAvailability = async (emailToCheck) => {
-    if (!validateEmail(emailToCheck)) {
-      setEmailAvailable(null);
-      return;
-    }
-
-    setCheckingEmail(true);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check-email/${encodeURIComponent(emailToCheck)}`);
-      const data = await response.json();
-      setEmailAvailable(data.available);
-    } catch (error) {
-      console.error('Email check error:', error);
-      setEmailAvailable(null);
-    } finally {
-      setCheckingEmail(false);
-    }
-  };
-
-  useEffect(() => {
-    if (emailCheckTimeoutRef.current) {
-      clearTimeout(emailCheckTimeoutRef.current);
-    }
-
-    if (email) {
-      emailCheckTimeoutRef.current = setTimeout(() => {
-        checkEmailAvailability(email);
-      }, 500);
-    } else {
-      setEmailAvailable(null);
-    }
-
-    return () => {
-      if (emailCheckTimeoutRef.current) {
-        clearTimeout(emailCheckTimeoutRef.current);
-      }
-    };
-  }, [email]);
 
   const getPasswordStrength = (password) => {
     if (password.length < 6) return 'faible';
@@ -254,7 +209,8 @@ export default function SignupPage() {
   };
 
   const isEmailFormatValid = validateEmail(email);
-  const isEmailValid = isEmailFormatValid && emailAvailable === true;
+  // Pas de vérification « adresse déjà utilisée » en direct (elle permettait de lister les comptes) : le serveur répond pareil dans tous les cas.
+  const isEmailValid = isEmailFormatValid;
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password === passwordConfirm && password.length >= 6;
   const allRequirementsMet = Object.values(requirements).every(Boolean);
@@ -699,7 +655,6 @@ export default function SignupPage() {
                   if (!isEmailValid) e.target.style.borderColor = '#e2e8f0';
                 }}
               />
-              {checkingEmail && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px' }}>⏳</span>}
               {emailSuggestions.length > 0 && (
                 <div style={{
                   position: 'absolute',

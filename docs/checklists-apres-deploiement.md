@@ -311,6 +311,12 @@ Voir `docs/crypto-banque-classement.md` (section « À tester chez moi »).
 ## PR Crypto — éducation (glossaire, quiz, « ? »)
 Voir `docs/crypto-education.md` (section « À tester chez moi »).
 
+## Sécurité : plus d'« oracle » sur les adresses e-mail
+
+1. Page d'inscription : tape une adresse déjà utilisée puis une nouvelle : aucun message « déjà utilisé » ne s'affiche pendant la saisie.
+2. Valide l'inscription avec une adresse qui a déjà un compte : tu arrives sur la page de vérification comme pour une nouvelle adresse (même écran, même durée).
+3. La personne propriétaire de l'adresse reçoit un e-mail « Quelqu'un a essayé de créer un compte avec ton adresse » (au plus un par heure).
+4. Vérifie qu'un mauvais code ou une adresse inconnue donnent le même message « Code invalide ou expiré ».
 ## Sécurité : session ouverte seulement sur preuve
 
 1. Inscris un compte de test : le code arrive par e-mail ; tape-le sur la page de vérification, puis tu arrives sur « Choisis ton pseudo » **déjà connecté**.
