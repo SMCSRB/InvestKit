@@ -63,7 +63,7 @@ const evaluate = async (db: Db, userId: string, amountRaw: unknown, monthsRaw: u
   if (BANK_RULES.reserveMonthlyPayments > 0) {
     const own = (await ownCoins(db, userId)).own;
     const requiredReserve = Math.round((household.existingDebtPayments + instalmentEuros) * BANK_RULES.reserveMonthlyPayments * 100) / 100;
-    if (own < requiredReserve) reasons.push({ code: 'RESERVE_LOW', message: `Réserve de sécurité insuffisante : tu as ${fr(own)} InvestCoins à toi (hors pièces empruntées), la banque veut que tu gardes ${BANK_RULES.reserveMonthlyPayments} mensualités, soit ${fr(requiredReserve)} InvestCoins. Il te manque ${fr(requiredReserve - own)} InvestCoins.` });
+    if (own < requiredReserve) reasons.push({ code: 'RESERVE_LOW', message: `Réserve de sécurité insuffisante : tu as ${fr(own)} InvestCoins à toi (hors prêt personnel non remboursé et pièces empruntées), la banque veut que tu gardes ${BANK_RULES.reserveMonthlyPayments} mensualités, soit ${fr(requiredReserve)} InvestCoins. Il te manque ${fr(requiredReserve - own)} InvestCoins.` });
   }
 
   return {

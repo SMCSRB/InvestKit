@@ -825,3 +825,12 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Immobilier, Bilan : « valeur nette de revente » est **plus basse** que les fonds propres (frais d'agence, diagnostics, impôt…). Un bien **loué** vaut 10 % de moins en revente qu'un bien vide.
 5. Le pourcentage du classement Immobilier est le gain net de revente divisé par **10 000** (compte gratuit) ou **20 000** (compte Pro).
 6. Note de sécurité à garder : « jour actif » compte aujourd'hui toute requête connectée ; à resserrer à l'audit (`docs/classement-net-de-revente.md`).
+
+## Réserve de sécurité : pièces propres uniquement
+À dérouler chez toi sur ta copie de test, après les PR 8b (#107) et #109.
+
+1. Compte avec juste assez de pièces pour l'apport et les frais d'un bien, mais pas pour la réserve : la banque refuse (« Réserve de sécurité insuffisante … Il te manque … »).
+2. Prends un prêt personnel de 500 : « Pièces disponibles » monte de 500, mais le refus **reste** et le message ajoute que les pièces d'un prêt personnel non remboursé ne comptent pas dans la réserve (avec le capital restant dû). Le montant « à toi » affiché est le même qu'avant le prêt.
+3. Rembourse le prêt personnel : le message n'en parle plus et la réserve compte tes vraies pièces.
+4. Un achat payé avec l'argent du prêt est refusé de la même façon ; aucune pièce n'est débitée.
+5. Prêt personnel avec très peu de pièces à toi : refusé pour réserve (message chiffré), comme avant.

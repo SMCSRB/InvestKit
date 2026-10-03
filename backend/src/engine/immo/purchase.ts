@@ -21,7 +21,8 @@ export interface PurchaseInput {
   notaryRule: NotaryFeeRule;
   bankRules: BankRules;
   loanFees: (principal: number) => number; // frais de dossier
-  freeCoinsAfter?: number;       // pièces libres (non empruntées) après l'achat, pour la règle de réserve
+  freeCoinsAfter?: number;       // pièces PROPRES après l'achat (hors prêt personnel non remboursé), pour la règle de réserve
+  unpaidPersonalLoan?: number;   // capital restant dû d'un prêt personnel : seulement pour expliquer le refus
 }
 
 export interface PurchaseEvaluation {
@@ -68,6 +69,7 @@ export const evaluatePurchase = (input: PurchaseInput): PurchaseEvaluation => {
   const assessment = assessLoanApplication(input.household, payment, input.bankRules, input.projectedMonthlyRent, {
     price: input.price,
     freeCoinsAfter: input.freeCoinsAfter,
+    unpaidPersonalLoan: input.unpaidPersonalLoan,
     downPayment: input.downPayment,
     notaryFees: budget.notaryFees,
     loanMonths: input.loanMonths,
