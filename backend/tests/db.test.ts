@@ -5,6 +5,7 @@ import { query } from '../src/utils/db';
 import { investcoinsRepository, InsufficientFundsError } from '../src/repositories/investcoinsRepository';
 import { tradingService, TradingError } from '../src/services/tradingService';
 import { claimDailyReward } from '../src/services/dailyRewardService';
+import { STARTING_CAPITAL, RANKING_MIN_INVESTED } from '../src/config/economy';
 import { activateAccount } from '../src/services/verificationService';
 import { DOMAINS } from '../src/data/marketData';
 import { invitationRepository, normalizeInvitationCode } from '../src/repositories/invitationRepository';
@@ -117,7 +118,7 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       const big = await createUser({ balance: 5000, freeDomain: 'stocks' });
       const view = await tradingService.getPortfolioView(big, 'stocks');
       const symbol = Object.keys(view.prices).find((s) => view.prices[s] !== null)!;
-      const q = Math.ceil(500 / view.prices[symbol]!);
+      const q = Math.ceil(RANKING_MIN_INVESTED / view.prices[symbol]!);
       await tradingService.buy(big, 'stocks', symbol, q);
       const board = await tradingService.getLeaderboard(big, 'stocks', undefined);
       expect(board.me).not.toBeNull();
@@ -156,7 +157,7 @@ describe.skipIf(!hasDb)('base de données (concurrence)', () => {
       const user = (await userRepository.findById(uid))!;
       const results = await Promise.allSettled(Array.from({ length: 5 }, () => activateAccount(user, '123456')));
       expect(results.filter((r) => r.status === 'fulfilled' && r.value === true).length).toBe(1);
-      expect(await balanceOf(uid)).toBe(500);
+      expect(await balanceOf(uid)).toBe(STARTING_CAPITAL);
       expect(await balanceOf(referrer)).toBe(100);
     });
 

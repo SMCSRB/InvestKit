@@ -11,6 +11,8 @@
 //   bank_repayment  (−)  nature « repayment » : pièces détruites au remboursement (capital ET intérêts) ;
 // Le capital rembourse les pièces créées ; les intérêts et frais sont une destruction nette (puits d'inflation).
 // ─────────────────────────────────────────────────────────────────────────
+import { MAX_OUTSTANDING_DEBT_COINS, RECOVERY_BASE_CAPITAL } from './economy';
+
 export const COIN_DESIGN_RULE =
   'Les InvestCoins ne servent que dans le jeu : pas de boutique, de retrait, d\'achat avec de l\'argent réel ni d\'échange entre joueurs.';
 
@@ -19,7 +21,7 @@ export type BankProduct = 'personal' | 'portfolio' | 'mortgage';
 export const BANK_LIMITS = {
   // VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER
   maxActiveLoansPerUser: 3,
-  maxOutstandingPrincipalCoins: 50000,   // garde-fou global sur la dette en cours d'un joueur
+  maxOutstandingPrincipalCoins: MAX_OUTSTANDING_DEBT_COINS,   // garde-fou global sur la dette en cours d'un joueur (config/economy.ts)
   missedInstalmentsBeforeDefault: 3,     // 3 échéances impayées de suite = défaut
 };
 
@@ -93,7 +95,7 @@ export const LOMBARD_SIMPLIFICATION =
 // Toutes ces valeurs sont des VALEURS DE JEU, NON SOURCÉES, À RECONFIRMER. Les délais sont en temps RÉEL (jours), pas en temps de jeu :
 // c'est un garde-fou contre l'enchaînement « emprunter, perdre, recommencer », indépendant des horloges accélérées.
 export const RECOVERY = {
-  baseCapitalCoins: 500,          // capital de base (= capital de départ) : complété seulement si le joueur a moins
+  baseCapitalCoins: RECOVERY_BASE_CAPITAL,   // capital de base (= capital de départ, config/economy.ts) : complété seulement si le joueur a moins
   creditBanDays: 30,              // interdiction de nouveau crédit après la procédure
   cooldownDays: 30,               // délai minimum entre deux procédures
   maxLifetime: 3,                 // nombre maximum de procédures par compte

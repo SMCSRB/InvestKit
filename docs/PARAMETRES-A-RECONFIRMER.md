@@ -37,7 +37,7 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Prêt sur portefeuille : plafond / appel / liquidation | actions et ETF 50 / 65 / 80 % ; obligations 70 / 91 / 100 % ; crypto 30 / 39 / 48 % (bourse) et 30 / 65 / 80 % (module crypto) | DÉCISION + JEU | pratiques de prêts lombards (banques privées) ; pas de texte officiel |
 | Décote d'une vente forcée | 3 % | JEU | — |
 | Limites de dette | 3 prêts actifs ; 50 000 🪙 de dette ; 3 échéances impayées = défaut | JEU | — |
-| Rétablissement après défaut | capital de base 500 🪙 ; 30 jours d'interdiction ; 30 jours entre deux procédures ; 3 au maximum | JEU | inspiré de la procédure de rétablissement personnel (Code de la consommation L711-1 et suivants) |
+| Rétablissement après défaut | capital de base = capital de départ (10 000 🪙, `config/economy.ts`) ; 30 jours d'interdiction ; 30 jours entre deux procédures ; 3 au maximum | JEU | inspiré de la procédure de rétablissement personnel (Code de la consommation L711-1 et suivants) |
 
 ## C. Immobilier — règles bancaires, frais, loyers (`backend/src/config/immoRules.ts`)
 | Paramètre | Valeur actuelle | État | Source officielle à consulter |
@@ -100,8 +100,9 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 ## F. Économie du jeu (`backend/src/config/game.ts`, services)
 | Paramètre | Valeur actuelle | État | Source |
 |---|---|---|---|
-| Capital de départ | 500 🪙 | DÉCISION | — |
-| Capital Pro | ×2 (complément de 500 🪙, une seule fois) | DÉCISION | — |
+| Capital de départ | 10 000 🪙 (`config/economy.ts`) | DÉCISION | — |
+| Capital Pro | ×2 (complément de 10 000 🪙, une seule fois) | DÉCISION | — |
+| Seuil d'entrée au classement (tous les domaines) | 2 500 🪙 investis dans le domaine ET 5 jours actifs (`RANKING_MIN_INVESTED`, `RANKING_MIN_ACTIVE_DAYS`, `config/economy.ts`) | DÉCISION | — |
 | Capital minimal pour apparaître au classement | 100 🪙 ; 20 places | JEU | — |
 | Récompense quotidienne | 50 🪙 + 10 par jour de série, plafond 30 jours | JEU | — |
 | Chapitre / domaine d'éducation | 20 🪙 et 100 XP / 100 🪙 et 500 XP | JEU | — |

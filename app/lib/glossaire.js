@@ -126,7 +126,7 @@ export const GLOSSARY = [
   { id: 'retablissement', category: 'credit', term: 'Procédure de rétablissement',
     short: 'Un dernier recours après un défaut : la dette du domaine est effacée, mais tout ce domaine repart de zéro.',
     long: 'Pour éviter qu\'un joueur reste bloqué pour toujours, il peut demander l\'effacement d\'une dette qu\'il ne peut pas payer. En contrepartie, il perd ce qu\'il avait dans ce domaine (titres ou biens), son rang, et il ne peut plus emprunter pendant un mois. Ce n\'est pas gratuit, ni illimité.',
-    inGame: 'Au plus 3 procédures par compte, espacées de 30 jours (temps réel). Capital de base de 500  InvestCoins seulement si tu as moins. Les badges de domaine seront retirés quand ils seront rattachés au serveur.' },
+    inGame: 'Au plus 3 procédures par compte, espacées de 30 jours (temps réel). Capital de base de 10 000 InvestCoins (le capital de départ) seulement si tu as moins. Les badges de domaine seront retirés quand ils seront rattachés au serveur.' },
   { id: 'pret-portefeuille', category: 'credit', term: 'Prêt sur portefeuille (Lombard)',
     short: 'Un prêt garanti par tes titres : tu empruntes en gardant tes actions ou ta crypto.',
     long: 'La banque te prête une partie de la valeur de tes titres (moins pour les actifs très volatils). Tu paies des intérêts, et ta garantie est réévaluée : si les cours baissent trop, la banque te demande d\'ajouter de la garantie ou de rembourser, sinon elle vend tes titres à ta place. Le levier augmente les gains, mais aussi les pertes.',

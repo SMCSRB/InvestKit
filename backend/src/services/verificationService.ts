@@ -4,7 +4,7 @@ import { notify } from './notificationService';
 import { investcoinsRepository } from '../repositories/investcoinsRepository';
 
 import { Queryable } from '../repositories/investcoinsRepository';
-import { STARTING_CAPITAL, proStartingBonus } from '../config/game';
+import { STARTING_CAPITAL, proStartingBonus } from '../config/economy';
 
 export { STARTING_CAPITAL };
 export const REFERRAL_BONUS = 100;

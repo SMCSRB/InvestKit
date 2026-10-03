@@ -11,7 +11,7 @@ import { auditLog } from './auditService';
 //  - la dette du domaine est effacée (le prêt passe « written_off », l'écart est suivi pour l'administrateur) ;
 //  - le domaine est remis à zéro : titres ou biens perdus, partie repartant de la première année, RANG PERDU ;
 //  - les pièces empruntées non dépensées de ce domaine sont reprises ;
-//  - capital de base (500  InvestCoins) complété seulement si le joueur a moins ;
+//  - capital de base (le capital de départ, config/economy.ts) complété seulement si le joueur a moins ;
 //  - interdiction de nouveau crédit 30 jours (temps réel) ; au plus 3 procédures par compte, espacées de 30 jours.
 // Les badges de domaine sont aujourd'hui dans le navigateur du joueur, pas sur le serveur : ils ne peuvent pas être retirés d'ici
 // (voir docs/banque.md) ; la procédure est journalisée (table bank_recoveries) pour le faire quand ils seront rattachés au serveur.

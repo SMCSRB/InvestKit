@@ -5,9 +5,10 @@ import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { EDUCATION_CATALOG } from '../data/educationCatalog';
 import { EDUCATION_QUIZZES } from '../data/educationQuizzes';
 import { EDUCATION_CHAPTER_XP, EDUCATION_DOMAIN_XP } from '../config/game';
+import { EDUCATION_CHAPTER_COINS, EDUCATION_DOMAIN_COMPLETE_COINS } from '../config/economy';
 
-const CHAPTER_COINS = 20;
-const DOMAIN_COMPLETE_COINS = 100;
+const CHAPTER_COINS = EDUCATION_CHAPTER_COINS;
+const DOMAIN_COMPLETE_COINS = EDUCATION_DOMAIN_COMPLETE_COINS;
 const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
 export const educationController = {

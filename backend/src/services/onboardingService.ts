@@ -3,8 +3,9 @@ import { investcoinsRepository } from '../repositories/investcoinsRepository';
 import { notify } from './notificationService';
 
 // Checklist d'accueil : des étapes calculées À PARTIR DE L'ÉTAT RÉEL du compte (jamais déclarées par le client : impossible de se les attribuer),
-// chacune récompensée une seule fois. Pièces créées : petites récompenses (VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER), modifiables ici.
-export const CHECKLIST_REWARD_COINS = 10;
+// chacune récompensée une seule fois. Pièces créées : petites récompenses, réglées dans config/economy.ts.
+import { CHECKLIST_REWARD_COINS } from '../config/economy';
+export { CHECKLIST_REWARD_COINS };
 
 interface StepDef { key: string; title: string; description: string; link: string; done: (userId: string) => Promise<boolean> }
 const exists = async (sql: string, userId: string): Promise<boolean> => (await query(sql, [userId])).rows.length > 0;

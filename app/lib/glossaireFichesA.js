@@ -91,7 +91,7 @@ export const FICHES_A = {
     vs: [['vente-forcee', "Une vente forcée est imposée par un créancier, pas choisie."], ['decote', "La décote est le rabais lui-même."]] },
 
   // Dans le jeu
-  investcoin: { ex: "Tu commences avec 500 InvestCoins : tu peux les investir dans le jeu, mais jamais les retirer en euros.",
+  investcoin: { ex: "Tu commences avec 10 000 InvestCoins : tu peux les investir dans le jeu, mais jamais les retirer en euros.",
     vs: [['crypto', "Une crypto s'échange sur des marchés réels ; l'InvestCoin n'existe que dans le jeu."]] },
   "patrimoine-net": { ex: "Un bien à 200 000 € avec 150 000 € de prêt restant, plus 5 000 € en liquidités : patrimoine net = 55 000 €.",
     vs: [['valeur-positions', "La valeur des positions oublie les dettes et les liquidités."], ['performance', "La performance est un pourcentage."]] },
