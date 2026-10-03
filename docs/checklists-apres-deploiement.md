@@ -604,6 +604,18 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 7. Fiche : image plein cadre, chiffres clés, curseurs d'apport et de durée qui mettent à jour la mensualité, liens « Pour aller plus loin ».
 8. Aucun emoji nulle part sur l'écran Immobilier.
 
+## Glossaire refait
+
+1. Ouvre `/glossaire` : 110 mots, une barre de recherche, des boutons **Domaine** et **Niveau**, et un index A–Z.
+2. Tape « cash » puis « EPARGNE » (sans accent, en majuscules) : la liste se réduit **à chaque lettre**, le texte trouvé est surligné. Le bouton croix efface la recherche.
+3. Clique « Crypto » puis « Débutant » : seuls les mots des deux filtres restent ; « Tout réinitialiser » remet tout. Les lettres sans mot sont grisées.
+4. Clique une lettre de l'index : la page descend à cette lettre.
+5. Ouvre une fiche (« Voir la fiche complète ») : définition, **exemple concret**, « Dans le jeu », **« À ne pas confondre avec »** (cliquable : saute vers l'autre fiche), liens vers la leçon et le simulateur.
+6. Ouvre `/glossaire#pea` : la fiche PEA s'ouvre toute seule ; en bas, le bloc **source** (statut, date de contrôle, lien officiel).
+7. Dans le jeu, clique une icône « ? » puis « Voir l'explication complète » : tu arrives sur la bonne fiche, ouverte.
+8. Sur téléphone (390 px) : pas de défilement horizontal, boutons faciles à toucher.
+9. **À faire avant l'ouverture au public** : relire sur les sites officiels les fiches de `docs/glossaire.md` marquées « à relire » (taux de prélèvements sociaux, plafond de 35 %, calendrier DPE…) et mettre à jour la date de contrôle dans `app/lib/glossaireMeta.js`.
+
 ## Badge Pro doré, # personnalisé, boutons d'abonnement
 
 1. Avec un compte **Pro** et un compte **gratuit** qui sont amis : chacun voit la petite couronne dorée à côté du pseudo de l'autre s'il est Pro ; le compte gratuit n'en a pas. Survole la couronne (ou tabule dessus) : « Membre Pro ».
