@@ -101,7 +101,7 @@ export function Facts() {
 const STEPS = [
   { t: 'Je m\'inscris', d: 'Avec un code d\'invitation pendant la phase de test. Je choisis mon domaine de départ.' },
   { t: 'Je reçois des InvestCoins', d: 'Une monnaie virtuelle pour jouer. Elle n\'a aucune valeur réelle et ne se retire pas.' },
-  { t: 'Je simule comme dans la vraie vie', d: 'Crédit, loyers, impôts, frais, krachs, impayés : les règles ressemblent à la réalité, pas les pertes.' },
+  { t: 'Je m\'entraîne sur des règles inspirées du réel', d: 'Crédit, loyers, impôts, frais, krachs, impayés : les règles s\'inspirent de la réalité (en version simplifiée), les pertes restent virtuelles.' },
   { t: 'J\'apprends et je monte en niveau', d: 'Cours, vocabulaire, quiz, badges et classement m\'aident à comprendre ce que je fais.' },
 ];
 
@@ -224,7 +224,7 @@ function FeatureVisual({ kind }) {
 }
 
 const FEATURES = [
-  { kind: 'sim', t: 'Des simulations réalistes', d: 'Prêts bancaires, taux historiques, fiscalité, événements de marché, et les vrais risques : impayés, krachs, liquidation.' },
+  { kind: 'sim', t: 'Des simulations réalistes', d: 'Prêts bancaires, taux inspirés de l\'histoire, fiscalité, événements de marché, et les risques à comprendre : impayés, krachs, liquidation.' },
   { kind: 'risk', t: 'Analyse de risque et conseils', d: 'Un score de risque décomposé par cause, des crises passées rejouées sur ton portefeuille et des pistes pour l\'optimiser.' },
   { kind: 'time', t: 'Le temps en accéléré', d: 'Avance mois par mois ou année par année sur un historique de marché simulé. Le mode temps réel n\'est pas encore disponible.' },
   { kind: 'chart', t: 'Des graphiques professionnels', d: 'Bougies, volumes, indicateurs, outils de dessin, comparaison d\'actifs et plein écran, comme sur une vraie plateforme.' },

@@ -90,7 +90,7 @@ export default function MarketTab() {
       <Card>
         <CardHead title="Bourse et Immobilier" icon="chart" />
         <p className="ik-muted" style={{ margin: 0 }}>
-          Les indices boursiers et les références immobilières arrivent avec leurs données réelles. Rien n&apos;est affiché tant qu&apos;il n&apos;existe pas de source fiable.
+          Les indices boursiers et les références immobilières ne sont pas disponibles pour l&apos;instant : aucune source de données fiable n&apos;est branchée, donc rien n&apos;est affiché.
         </p>
       </Card>
     </div>

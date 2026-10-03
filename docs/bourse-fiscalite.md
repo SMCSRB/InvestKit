@@ -12,7 +12,7 @@ Tous les paramètres sont dans `backend/src/config/tradingRules.ts`, avec leur s
 ## Frais de courtage (achat et vente)
 | Actif | Taux | Minimum | Statut |
 |---|---|---|---|
-| Action | 0,5 % | 1 🪙 | plafond légal PEA en ligne (loi Pacte) |
+| Action | 0,5 % | 1 🪙 | plafond légal des ordres en ligne sur **PEA** (loi Pacte) ; appliqué aussi au compte-titres par simplification (VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER) |
 | ETF | 0,35 % | 1 🪙 | VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER |
 | Crypto | 0,5 % | 1 🪙 | VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (trading « pro » 0,1–0,26 %, interfaces simples plus cher) |
 

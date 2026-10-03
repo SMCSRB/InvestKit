@@ -52,7 +52,7 @@ export const cryptoTradingService = {
     if (qty === null || Number(qty) <= 0) throw bad('Quantité invalide (8 décimales maximum)');
     const ex = planMarket(m, side, Number(qty), stress);
     return { symbol, side, quantity: qty, refPrice: m.price, tier: m.tier, stale: m.stale, execution: { price: ex.price, spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
-      note: 'Estimation : le prix réel est celui de la date simulée ; l\'écart achat/vente et le glissement dépendent de la liquidité de l\'actif.' };
+      note: 'Estimation : le prix de référence est celui de la date simulée ; l\'écart achat/vente et le glissement dépendent de la liquidité de l\'actif.' };
   },
 
   async placeOrder(userId: string, input: OrderInput, ip?: string | null) {

@@ -738,3 +738,13 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Termine les 5 chapitres puis le quiz final : **+100** (quiz final) et **+40** (bonus « premier quiz réussi »).
 5. Dans l'historique (Banque et InvestCoins), les bonus apparaissent avec le motif `first_step_bonus`. Au total jamais plus de **100** pièces de bonus.
 6. Ouvre dans ton navigateur `…/api/v1/economy/first-steps` (connecté) : tu vois les trois bonus, ceux déjà reçus et les montants. Il n'existe aucun bouton ni aucune adresse pour « réclamer » un bonus.
+
+## Textes honnêtes (« simulé », pas « réel » ni « en direct »)
+À dérouler chez toi après avoir fusionné cette PR (dernière du lot « économie »).
+
+1. Connecté, avec un compte Crypto : le bandeau de cours sous la barre du haut commence par **« Marché »** (ou **« Données fictives »** si l'historique n'est pas importé : c'est alors écrit en toutes lettres). Passe la souris dessus : « cours historiques rejoués à ta date de jeu : ils ne sont pas en direct ».
+2. Page d'accueil du site (déconnecté), tout en haut : « …les règles s'inspirent de la vraie vie, en version simplifiée, et les pertes restent virtuelles. » Plus de « tout se passe comme dans la vraie vie ».
+3. Même page, étape 3 : « Je m'entraîne sur des règles inspirées du réel » ; bloc « Des simulations réalistes » : « taux inspirés de l'histoire … les risques à comprendre ».
+4. Tableau de bord, onglet Marché, en bas : « Les indices boursiers et les références immobilières ne sont pas disponibles pour l'instant : aucune source de données fiable n'est branchée, donc rien n'est affiché. »
+5. Crypto, estimation d'un ordre : la note parle du « prix de référence », plus du « prix réel ».
+6. Cherche dans le site les mots « en direct », « temps réel », « cours réels » : ils ne restent que pour dire que ce n'est PAS le cas.

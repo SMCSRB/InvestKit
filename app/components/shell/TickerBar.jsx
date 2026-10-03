@@ -11,14 +11,15 @@ const API = process.env.NEXT_PUBLIC_API_URL || '';
 const CACHE_KEY = 'ik-ticker-v1';
 const usd = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
-// Cours RÉELS du marché simulé du joueur (Crypto). Sans compte Crypto ou sans réponse : le bandeau disparaît.
+// Cours HISTORIQUES du marché crypto du joueur, rejoués à sa date de jeu (ils ne sont pas en direct ; les données peuvent être fictives tant
+// que l'historique n'est pas importé). Sans compte Crypto ou sans réponse : le bandeau disparaît.
 function useTickerItems() {
   const [items, setItems] = useState([]);
   useEffect(() => {
     let alive = true;
     try {
       const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
-      if (c && Date.now() - c.at < 10 * 60 * 1000) { setItems(c.items); return undefined; }
+      if (c && Date.now() - c.at < 10 * 60 * 1000) { setItems(c.items); return undefined; }   // (le drapeau « fictives » est porté par chaque élément)
     } catch { /* ignore */ }
     (async () => {
       try {
@@ -36,7 +37,7 @@ function useTickerItems() {
             const r = await fetch(`${API}/crypto/candles?symbol=${encodeURIComponent(a.symbol)}&tf=1d&limit=24`);
             if (r.ok) series = (await r.json()).candles.map((k) => k.c);
           } catch { /* mini-courbe absente : l'élément s'affiche quand même */ }
-          return { symbol: a.symbol, name: a.name, price: a.price, change: a.change1d, series };
+          return { symbol: a.symbol, name: a.name, price: a.price, change: a.change1d, series, synthetic: !!a.synthetic };
         }));
         const out = keepGenuineSparklines(raw);   // courbe retirée si elle ne vient pas d'une vraie série propre à l'actif
         if (!alive) return;
@@ -53,6 +54,7 @@ export default function TickerBar() {
   const items = useTickerItems();
   const { tickerVisible } = useTheme();
   if (!tickerVisible || !items.length) return null;
+  const synthetic = items.some((t) => t.synthetic);
   const row = (suffix) => items.map((t) => (
     <Link key={`${t.symbol}${suffix}`} href="/crypto" className="ik-tick" tabIndex={suffix ? -1 : 0} aria-hidden={suffix ? true : undefined}>
       <span className="ik-tick__sym" aria-hidden="true">{t.symbol.slice(0, 3)}</span>
@@ -63,9 +65,9 @@ export default function TickerBar() {
     </Link>
   ));
   return (
-    <div className="ik-ticker" role="region" aria-label="Cours du marché">
-      <span className="ik-ticker__intro">
-        Marché
+    <div className="ik-ticker" role="region" aria-label={synthetic ? 'Cours du marché simulé (données fictives, pas en direct)' : 'Cours du marché simulé (historique rejoué à ta date de jeu, pas en direct)'}>
+      <span className="ik-ticker__intro" title="Cours historiques rejoués à ta date de jeu : ils ne sont pas en direct.">
+        {synthetic ? 'Données fictives' : 'Marché'}
       </span>
       <div className="ik-ticker__track">
         <div className="ik-ticker__row">{row('')}{row('-bis')}</div>

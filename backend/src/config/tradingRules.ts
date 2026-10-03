@@ -11,7 +11,8 @@
 // - Crypto : article 150 VH bis du CGI, PFU 12,8 % + PS ; seuil de 305 € portant sur le TOTAL des cessions de l'année ;
 //   seules les cessions vers l'euro (ou un bien/service) sont imposables, pas les échanges crypto contre crypto.
 //   https://www.waltio.com/fr/tout-savoir-sur-la-fiscalite-crypto/ · https://kohenavocats.com/crypto-305-euros-cessions-exoneration-declaration-texte-reel/
-// - Courtage : la loi Pacte plafonne à 0,5 % les frais d'un ordre en ligne sur PEA ; courtiers en ligne de 1 € par ordre à 0,5 %.
+// - Courtage : le plafond de 0,5 % est celui des frais d'un ordre PASSÉ EN LIGNE SUR UN PEA (loi Pacte 2019, décret n° 2020-95 ; sources de presse à reconfirmer
+//   sur le texte officiel). Il ne s'applique pas au compte-titres : le jeu y applique le même taux par simplification (VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER).
 //   https://sinvestir.fr/ouvrir-un-pea-comparatif-banque-courtier-en-ligne/
 // - Échange crypto : environ 0,1 % à 0,26 % en trading « pro », davantage sur les interfaces simplifiées.
 //   https://www.kraken.com/fr/learn/kraken-vs-binance
@@ -22,7 +23,7 @@ export const TRADING_COSTS = {
 
   // Courtage : % du montant de l'ordre, minimum en pièces, appliqué à l'achat ET à la vente.
   brokerage: {
-    stock: { ratePct: 0.5, minCoins: 1 },  // plafond légal PEA en ligne (loi Pacte) ; courtiers réels 0,35 à 0,5 %
+    stock: { ratePct: 0.5, minCoins: 1 },  // plafond légal des ordres en ligne sur PEA ; repris pour le compte-titres par simplification (VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER)
     etf: { ratePct: 0.35, minCoins: 1 },   // VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : un peu moins cher que les actions
     crypto: { ratePct: 0.5, minCoins: 1 }, // VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : entre le trading « pro » (0,1–0,26 %) et l'interface simplifiée
   },

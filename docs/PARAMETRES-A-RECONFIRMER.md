@@ -22,7 +22,7 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | PEA : plafond de versements | 150 000 € | SOURCÉ | idem (CMF L221-30) |
 | Crypto : seuil annuel de cessions sans impôt | 305 € (total des cessions de l'année) | SOURCÉ | CGI art. 150 VH bis ; BOFiP « BOI-RPPM-PVBMC-30 » |
 | Crypto : échanges crypto contre crypto non imposés | oui (impôt à la sortie vers l'euro) | SOURCÉ | idem 150 VH bis |
-| Courtage actions | 0,5 % (minimum 1 🪙), à l'achat et à la vente | SOURCÉ (plafond PEA en ligne) | loi PACTE (2019) ; tarifs publics des courtiers ; AMF |
+| Courtage actions | 0,5 % (minimum 1 🪙), à l'achat et à la vente | SOURCÉ pour le PEA en ligne seulement (décret n° 2020-95) ; **JEU pour le compte-titres** (même taux par simplification) | loi PACTE (2019) ; décret 2020-95 ; tarifs publics des courtiers ; AMF |
 | Courtage ETF | 0,35 % (minimum 1 🪙) | JEU | grilles tarifaires de courtiers en ligne |
 | Courtage crypto | 0,5 % (minimum 1 🪙) | JEU | grilles tarifaires des plateformes (Kraken, Binance, Coinbase…) |
 
