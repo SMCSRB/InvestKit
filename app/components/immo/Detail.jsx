@@ -8,6 +8,7 @@ import ListingArt, { VIEWS } from './art';
 import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
 import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct } from './api';
 import Coin from '@/app/components/ui/Coin';
+import Link from 'next/link';
 
 // Signature chez le notaire : un stylo trace la signature, un tampon « Acte signé » tombe, puis les clés sont remises.
 function Signature({ phase, onClose, error }) {
@@ -35,13 +36,13 @@ function Signature({ phase, onClose, error }) {
   );
 }
 
-function Gallery({ listing, city }) {
+function Gallery({ listing, city, children }) {
   const [view, setView] = useState('facade');
   const idx = VIEWS.findIndex((v) => v.id === view);
   const move = (d) => setView(VIEWS[(idx + d + VIEWS.length) % VIEWS.length].id);
   return (
     <div className="rp-gallery" onKeyDown={(e) => { if (e.key === 'ArrowRight') { e.preventDefault(); move(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); } }}>
-      <div className="rp-gallery__main" key={view}><ListingArt listing={listing} view={view} alt={`${listingAlt(listing, city)} Vue : ${VIEWS[idx].label}.`} /></div>
+      <div className="rp-gallery__main" key={view}><ListingArt listing={listing} view={view} alt={`${listingAlt(listing, city)} Vue : ${VIEWS[idx].label}.`} />{children}</div>
       <div className="rp-gallery__thumbs" role="tablist" aria-label="Vues du bien">
         {VIEWS.map((v) => (
           <button key={v.id} type="button" role="tab" aria-selected={view === v.id} className={view === v.id ? 'is-on' : ''} onClick={() => setView(v.id)}>
@@ -68,7 +69,41 @@ function Tension({ value }) {
   );
 }
 
-export default function Detail({ listingId, game, balance, access, onBack, refresh, notify, onBought, eurosPerCoin }) {
+// Liens discrets vers les explications (glossaire) : pour comprendre un mot sans quitter la fiche pour longtemps.
+const LESSONS = {
+  mensualite: 'Comprendre la mensualité', dpe: 'Comprendre le DPE', 'rendement-brut': 'Rendement brut, c’est quoi ?', 'frais-notaire': 'Les frais de notaire', endettement: 'Le taux d’endettement',
+  apport: 'À quoi sert l’apport', loyer: 'Comment fonctionne le loyer', vacance: 'La vacance locative', 'zone-tendue': 'Zone tendue : ce que ça change', taeg: 'Le TAEG',
+};
+function LessonLinks({ ids }) {
+  return (
+    <nav className="rp-lessons" aria-label="Pour aller plus loin">
+      <span><Icon name="bookOpen" size={16} />Pour aller plus loin</span>
+      {ids.map((id) => <Link key={id} href={`/glossaire#${id}`}>{LESSONS[id]}</Link>)}
+      <Link href="/education">Parcours d’éducation</Link>
+    </nav>
+  );
+}
+
+// Louer ou acheter ? Mêmes chiffres que ceux du serveur (loyer estimé, mensualité du prêt, charges du bien) : on les met côte à côte.
+function RentVsBuy({ l, pv, rentMode, down }) {
+  if (!pv?.loan) return null;
+  const yearly = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
+  const owner = pv.loan.monthlyPaymentWithInsurance + yearly / 12;
+  const tenant = l.marketRentMonthly;
+  const diff = owner - tenant;
+  return (
+    <div className="rp-vs" data-testid="rent-vs-buy">
+      <h3>{rentMode ? 'Louer ou acheter ?' : 'Et si je louais ?'}</h3>
+      <div className="rp-vs__cols">
+        <div className="rp-vs__col"><span><Icon name="keyRound" size={16} />Locataire</span><strong>{eur(tenant)}<small>/mois</small></strong><p>Le loyer, et rien ne t’appartient à la fin.</p></div>
+        <div className="rp-vs__col is-own"><span><Icon name="house" size={16} />Propriétaire</span><strong>{eur(owner)}<small>/mois</small></strong><p>Mensualité {eur(pv.loan.monthlyPaymentWithInsurance)} + charges et taxes {eur(yearly / 12)}.</p></div>
+      </div>
+      <p className="rp-vs__note">{diff > 0 ? `Acheter coûte ${eur(diff)} de plus par mois que louer ce bien` : `Acheter coûte ${eur(-diff)} de moins par mois que louer ce bien`} : une partie de la mensualité rembourse le prêt, donc te constitue un patrimoine. Calcul avec un apport de {coins(down)}.</p>
+    </div>
+  );
+}
+
+export default function Detail({ listingId, game, balance, access, onBack, refresh, notify, onBought, eurosPerCoin, rentMode = false, onSwitchToBuy }) {
   const { advanced } = useImmoMode();
   const [d, setD] = useState(null);
   const [fav, setFav] = useState(false);
@@ -128,18 +163,29 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
   return (
     <div className="rp-detail rp-enter">
-      <div className="rp-detail__top"><Button variant="ghost" icon="chevronLeft" onClick={onBack}>Retour aux résultats</Button></div>
       <div className="rp-detail__grid">
         <div className="rp-detail__main">
-          <Gallery listing={l} city={city} />
-          <header className="rp-detail__head">
-            <div>
+          <Gallery listing={l} city={city}>
+            <div className="rp-hero__shade" aria-hidden="true" />
+            <div className="rp-hero__top"><Button variant="ghost" icon="chevronLeft" onClick={onBack}>Retour aux résultats</Button><Heart on={fav} onClick={toggleFav} label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'} /></div>
+            <header className="rp-hero__info">
+              <div className="rp-detail__pills">{rentMode && <Pill>À louer</Pill>}{l.urgentSale && !rentMode && <Pill tone="hot">Vente pressée</Pill>}{l.needsWorks && <Pill tone="warn">Travaux à prévoir</Pill>}<Pill>{CONDITION_LABEL[l.condition]}</Pill><Pill>{l.age === 'new' ? 'Neuf' : 'Ancien'}</Pill></div>
               <h2 className="rp-title">{TYPE_LABEL[l.type]} {l.surfaceSqm} m² · {l.neighborhoodName}</h2>
-              <p className="ik-muted">{city?.name} · {city?.region}{city?.tenseZone && <> · zone tendue<HelpTip term="zone-tendue" /></>}</p>
-              <div className="rp-detail__pills">{l.urgentSale && <Pill tone="hot">Vente pressée</Pill>}{l.needsWorks && <Pill tone="warn">Travaux à prévoir</Pill>}<Pill>{CONDITION_LABEL[l.condition]}</Pill><Pill>{l.age === 'new' ? 'Neuf' : 'Ancien'}</Pill></div>
-            </div>
-            <div className="rp-detail__price"><strong>{eur(l.price)}</strong><span>≈ {coins(l.priceCoins)}</span><small>{eur(l.pricePerSqm)}/m²</small><Heart on={fav} onClick={toggleFav} label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'} /></div>
-          </header>
+              <p className="rp-hero__where">{city?.name} · {city?.region}{city?.tenseZone && <> · zone tendue<HelpTip term="zone-tendue" /></>}</p>
+              <div className="rp-hero__price">
+                {rentMode ? <strong>{eur(l.marketRentMonthly)}<small>/mois</small></strong> : <strong>{eur(l.price)}</strong>}
+                {rentMode ? <span>à l’achat : {eur(l.price)}</span> : <span>≈ {coins(l.priceCoins)} · {eur(l.pricePerSqm)}/m²</span>}
+              </div>
+            </header>
+          </Gallery>
+
+          <ul className="rp-keyfacts" aria-label="Chiffres clés">
+            <li><Icon name="ruler" size={20} /><strong>{l.surfaceSqm} m²</strong><span>surface</span></li>
+            <li><Icon name="doorOpen" size={20} /><strong>{l.rooms}</strong><span>pièce{l.rooms > 1 ? 's' : ''}</span></li>
+            <li><Dpe cls={l.energyClass} /><strong>DPE {l.energyClass}</strong><span>énergie</span></li>
+            <li><Icon name="trendingUp" size={20} /><strong>{pct(l.grossYieldPct)}</strong><span>rendement brut</span></li>
+            <li><Icon name="keyRound" size={20} /><strong>{eur(l.marketRentMonthly)}</strong><span>loyer estimé /mois</span></li>
+          </ul>
 
           <section className="rp-section"><h2>Description</h2><p className="rp-desc">{description}</p></section>
 
@@ -211,16 +257,25 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               </dl>
             )}
           </section>
+          <LessonLinks ids={rentMode ? ['loyer', 'vacance', 'zone-tendue', 'rendement-brut'] : ['mensualite', 'apport', 'endettement', 'frais-notaire', 'dpe', 'rendement-brut']} />
         </div>
 
         <aside className="rp-detail__side">
           <Card className="rp-finance" flat id="rp-finance">
-            <h2>Simuler mon financement</h2>
+            <h2>{rentMode ? 'Et si j’achetais ce bien ?' : 'Simuler mon financement'}</h2>
             <div className="rp-finance__fields">
               <label className="rp-field"><span>Apport (<Coin />{eurosPerCoin ? `, 1 InvestCoin = ${eurosPerCoin} €` : ''})<HelpTip term="apport" /></span>
                 <span className="rp-field__box"><input className="ik-input" type="number" min="0" inputMode="numeric" value={plan.down} onChange={(e) => setPlan({ ...plan, down: e.target.value })} /><em><Coin /></em></span></label>
               <label className="rp-field"><span>Durée du prêt</span>
                 <select className="ik-select" value={plan.months} onChange={(e) => setPlan({ ...plan, months: e.target.value })}>{[120, 180, 240, 300, 360].map((m) => <option key={m} value={m}>{m / 12} ans</option>)}</select></label>
+            </div>
+            <div className="rp-sliders">
+              <label className="rp-slider"><span>Apport : <strong>{coins(Number(plan.down) || 0)}</strong></span>
+                <input type="range" min="0" max={Math.max(1, Math.ceil(l.priceCoins))} step={Math.max(1, Math.round(l.priceCoins / 200))} value={Math.min(Number(plan.down) || 0, Math.ceil(l.priceCoins))} onChange={(e) => setPlan({ ...plan, down: e.target.value })} aria-label="Apport en InvestCoins (curseur)" />
+              </label>
+              <label className="rp-slider"><span>Durée : <strong>{plan.months / 12} ans</strong></span>
+                <input type="range" min="120" max="360" step="60" value={plan.months} onChange={(e) => setPlan({ ...plan, months: Number(e.target.value) })} aria-label="Durée du prêt en années (curseur)" />
+              </label>
             </div>
             {pv?.error && <p className="ik-error" role="alert">{pv.error}</p>}
             {pv?.loan && (
@@ -249,17 +304,24 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
                 )}
               </>
             )}
-            {!access?.canBuy && <p className="rp-lock">L’achat demande d’avoir choisi Immobilier comme domaine gratuit, ou l’abonnement Pro.</p>}
-            <Button variant="primary" size="lg" block disabled={!canBuy || busy} onClick={() => setConfirm(true)}>Acheter ce bien</Button>
-            <Button block onClick={expertise} disabled={busy || !!d.expertise || !access?.canBuy}>{d.expertise ? 'Expertise réalisée' : `Faire expertiser · ${coins(d.expertiseCostCoins)}`}</Button>
+            {!rentMode && !access?.canBuy && <p className="rp-lock">L’achat demande d’avoir choisi Immobilier comme domaine gratuit, ou l’abonnement Pro.</p>}
+            <RentVsBuy l={l} pv={pv} rentMode={rentMode} down={Number(plan.down) || 0} />
+            {rentMode ? (
+              <Button variant="primary" size="lg" block onClick={onSwitchToBuy}>Voir ce bien à l’achat</Button>
+            ) : (
+              <>
+                <Button variant="primary" size="lg" block disabled={!canBuy || busy} onClick={() => setConfirm(true)}>Acheter ce bien</Button>
+                <Button block onClick={expertise} disabled={busy || !!d.expertise || !access?.canBuy}>{d.expertise ? 'Expertise réalisée' : <>Faire expertiser · {coins(d.expertiseCostCoins)}</>}</Button>
+              </>
+            )}
           </Card>
         </aside>
       </div>
 
       <Portal>
       <div className="rp-stickycta">
-        <div><strong>{eur(l.price)}</strong><span>≈ {coins(l.priceCoins)}</span></div>
-        <Button variant="primary" onClick={() => document.getElementById('rp-finance')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Simuler et acheter</Button>
+        <div><strong>{rentMode ? `${eur(l.marketRentMonthly)}/mois` : eur(l.price)}</strong><span>{rentMode ? `à l’achat : ${eur(l.price)}` : <>≈ {coins(l.priceCoins)}</>}</span></div>
+        <Button variant="primary" onClick={() => document.getElementById('rp-finance')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{rentMode ? 'Louer ou acheter ?' : 'Simuler et acheter'}</Button>
       </div>
 
       </Portal>

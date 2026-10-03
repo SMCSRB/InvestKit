@@ -10,7 +10,9 @@ import { round2 } from './money';
 export const SEARCH_TYPES = ['studio', 'apartment', 'house'] as const;
 export const SEARCH_CONDITIONS = ['good', 'to_refresh', 'to_renovate'] as const;
 export const SEARCH_ENERGY = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
-export const SEARCH_SORTS = ['relevance', 'price_asc', 'price_desc', 'ppsqm_asc', 'ppsqm_desc', 'yield_desc', 'newest'] as const;
+export const SEARCH_AGES = ['new', 'old'] as const;
+export const SEARCH_MODES = ['buy', 'rent'] as const;
+export const SEARCH_SORTS = ['relevance', 'price_asc', 'price_desc', 'ppsqm_asc', 'ppsqm_desc', 'yield_desc', 'newest', 'rent_asc', 'rent_desc', 'rentsqm_asc'] as const;
 export type SearchSort = (typeof SEARCH_SORTS)[number];
 
 export interface SearchParams {
@@ -23,6 +25,10 @@ export interface SearchParams {
   conditions?: string[];
   energy?: string[];
   minYieldPct?: number;
+  mode?: 'buy' | 'rent';      // « Acheter » ou « Louer » (loyers du marché : mêmes biens, vus sous l'angle du loyer)
+  minRent?: number; maxRent?: number;   // loyer mensuel estimé (hors charges), en €
+  maxPricePerSqm?: number;    // prix au m² maximum (€)
+  ages?: string[];            // 'new' (neuf) et/ou 'old' (ancien)
   urgentOnly?: boolean;
   worksOnly?: boolean;        // « travaux à prévoir » : travaux annoncés ou bien pas en bon état
   sort: SearchSort;
@@ -73,6 +79,14 @@ export const parseSearch = (raw: Record<string, unknown> = {}): SearchParams => 
   if (!empty(raw.minRooms)) p.minRooms = num(raw.minRooms, 'minRooms', { max: 50 });
   if (!empty(raw.conditions)) p.conditions = nonEmpty(list(raw.conditions, 'conditions', SEARCH_CONDITIONS));
   if (!empty(raw.energy)) p.energy = nonEmpty(list(raw.energy, 'energy', SEARCH_ENERGY));
+  if (!empty(raw.mode)) {
+    if (typeof raw.mode !== 'string' || !(SEARCH_MODES as readonly string[]).includes(raw.mode)) throw new SearchInputError('mode invalide');
+    if (raw.mode === 'rent') p.mode = 'rent';   // « buy » est le mode par défaut : pas besoin de le stocker
+  }
+  if (!empty(raw.minRent)) p.minRent = num(raw.minRent, 'minRent');
+  if (!empty(raw.maxRent)) p.maxRent = num(raw.maxRent, 'maxRent', { min: 1 });
+  if (!empty(raw.maxPricePerSqm)) p.maxPricePerSqm = num(raw.maxPricePerSqm, 'maxPricePerSqm', { min: 1 });
+  if (!empty(raw.ages)) p.ages = nonEmpty(list(raw.ages, 'ages', SEARCH_AGES));
   if (!empty(raw.minYieldPct)) p.minYieldPct = num(raw.minYieldPct, 'minYieldPct', { max: 100 });
   const flag = (v: unknown, name: string) => { if (v === true || v === 'true' || v === '1') return true; if (v === false || v === 'false' || v === '0') return false; throw new SearchInputError(`${name} invalide`); };
   if (!empty(raw.urgentOnly)) p.urgentOnly = flag(raw.urgentOnly, 'urgentOnly');
@@ -82,6 +96,7 @@ export const parseSearch = (raw: Record<string, unknown> = {}): SearchParams => 
     p.sort = raw.sort as SearchSort;
   }
   if (p.minPrice !== undefined && p.maxPrice !== undefined && p.minPrice > p.maxPrice) throw new SearchInputError('minPrice dépasse maxPrice');
+  if (p.minRent !== undefined && p.maxRent !== undefined && p.minRent > p.maxRent) throw new SearchInputError('minRent dépasse maxRent');
   if (p.minSurface !== undefined && p.maxSurface !== undefined && p.minSurface > p.maxSurface) throw new SearchInputError('minSurface dépasse maxSurface');
   return p;
 };
@@ -119,6 +134,10 @@ export const matchesSearch = (l: Listing, p: SearchParams, place?: Place): boole
   if (p.conditions && !p.conditions.includes(l.condition)) return false;
   if (p.energy && !p.energy.includes(l.energyClass)) return false;
   if (p.minYieldPct !== undefined && grossYieldPct(l) < p.minYieldPct) return false;
+  if (p.minRent !== undefined && l.marketRentMonthly < p.minRent) return false;
+  if (p.maxRent !== undefined && l.marketRentMonthly > p.maxRent) return false;
+  if (p.maxPricePerSqm !== undefined && pricePerSqm(l) > p.maxPricePerSqm) return false;
+  if (p.ages && !p.ages.includes(l.age)) return false;
   if (p.urgentOnly && !l.urgentSale) return false;
   if (p.worksOnly && !needsWorks(l)) return false;
   return true;
@@ -132,6 +151,8 @@ export const sortListings = (ls: Listing[], sort: SearchSort): Listing[] => {
     ppsqm_asc: (l) => pricePerSqm(l), ppsqm_desc: (l) => -pricePerSqm(l),
     yield_desc: (l) => -grossYieldPct(l),
     newest: (l) => -publicationRank(l),
+    rent_asc: (l) => l.marketRentMonthly, rent_desc: (l) => -l.marketRentMonthly,
+    rentsqm_asc: (l) => l.rentPerSqm,
   };
   const k = key[sort];
   return [...ls].sort((a, b) => k(a) - k(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

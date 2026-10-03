@@ -101,9 +101,9 @@ function ImmoInner() {
   let content = null;
   if (needStart && state?.profiles) content = <StartScreen profiles={state.profiles} onStart={start} busy={busy} />;
   else if (game && portfolio) {
-    if (listingId) content = <Detail key={listingId} listingId={listingId} game={game} balance={state.balance} access={state.access} eurosPerCoin={state.eurosPerCoin} refresh={refresh} notify={notify} onBack={() => go({})} onBought={() => go({ onglet: 'biens' })} />;
+    if (listingId) content = <Detail key={listingId} listingId={listingId} rentMode={params.get('mode') === 'louer'} onSwitchToBuy={() => go({ bien: listingId })} game={game} balance={state.balance} access={state.access} eurosPerCoin={state.eurosPerCoin} refresh={refresh} notify={notify} onBack={() => go({})} onBought={() => go({ onglet: 'biens' })} />;
     else if (propertyId) content = <PropertySheet p={ownedProperty} data={portfolio} game={game} onBack={() => go({ onglet: 'biens' })} refresh={refresh} notify={notify} act={act} busy={busy} />;
-    else if (tab === 'chercher') content = <Search state={search} setState={setSearch} onOpen={(id) => go({ bien: id })} notify={notify} game={game} />;
+    else if (tab === 'chercher') content = <Search state={search} setState={setSearch} onOpen={(id) => go(search.filters.mode === 'rent' ? { bien: id, mode: 'louer' } : { bien: id })} notify={notify} game={game} />;
     else if (tab === 'biens') content = <OwnedList data={portfolio} summary={summary} game={game} onOpen={(id) => go({ propriete: id })} act={act} busy={busy} goSearch={() => go({})} />;
     else if (tab === 'bilan') content = <Summary summary={summary} events={events} />;
     else content = <Leaderboard game={game} notify={notify} />;

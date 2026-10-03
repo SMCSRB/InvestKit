@@ -593,6 +593,17 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 5. Les messages venant du serveur (prêts, notifications, erreurs d'ordre) disent « InvestCoins », sans emoji.
 6. Compare avec `docs/refonte-emojis/comparaison.html`.
 
+## Immobilier : carte interactive, Acheter / Louer, fiche immersive
+
+1. Page Immobilier → « Carte » : tu vois les villes avec des **bulles numérotées**. Molette (ou +/−) : la carte zoome, les bulles se séparent en pastilles de prix. Glisse pour te déplacer. Clique une bulle : elle zoome sur le groupe.
+2. Clique une pastille : un **aperçu** s'ouvre (image, prix, surface, DPE). « Voir la fiche » ouvre la fiche.
+3. Clavier : clique sur la carte puis flèches (déplacement), `+` `-` (zoom), `0` (tout voir). Tab sur les pastilles : chacune se lit au lecteur d'écran.
+4. Sur téléphone : bascule **Liste / Carte** ; pince avec deux doigts pour zoomer ; la page ne défile pas quand tu bouges la carte.
+5. Onglet **Louer** : les cartes montrent le loyer, la fiche affiche « Louer ou acheter ? » et le bouton « Voir ce bien à l'achat ».
+6. **Filtres** : prix au m², neuf/ancien, loyer (en Louer) ; le panneau s'ouvre bien centré. Tri par loyer en mode Louer.
+7. Fiche : image plein cadre, chiffres clés, curseurs d'apport et de durée qui mettent à jour la mensualité, liens « Pour aller plus loin ».
+8. Aucun emoji nulle part sur l'écran Immobilier.
+
 ## Badge Pro doré, # personnalisé, boutons d'abonnement
 
 1. Avec un compte **Pro** et un compte **gratuit** qui sont amis : chacun voit la petite couronne dorée à côté du pseudo de l'autre s'il est Pro ; le compte gratuit n'en a pas. Survole la couronne (ou tabule dessus) : « Membre Pro ».

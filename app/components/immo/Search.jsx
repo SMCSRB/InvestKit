@@ -5,12 +5,15 @@ import Icon from '@/app/components/ui/Icon';
 import { Button, EmptyState, Segmented, Skeleton, Switch } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import { LazyListingArt } from './art';
-import CityMap from './CityMap';
+import ListingMap from './ListingMap';
 import { Dpe, Heart, Pill, Portal } from './bits';
 import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct } from './api';
+import Coin from '@/app/components/ui/Coin';
 
 export const DEFAULT_SEARCH = { filters: {}, view: 'grid', sort: 'relevance', favOnly: false };
 const SORTS = [['relevance', 'Pertinence'], ['price_asc', 'Prix croissant'], ['price_desc', 'Prix décroissant'], ['ppsqm_asc', 'Prix au m² croissant'], ['ppsqm_desc', 'Prix au m² décroissant'], ['yield_desc', 'Rendement décroissant'], ['newest', 'Plus récentes']];
+const RENT_SORTS = [['relevance', 'Pertinence'], ['rent_asc', 'Loyer croissant'], ['rent_desc', 'Loyer décroissant'], ['rentsqm_asc', 'Loyer au m² croissant'], ['newest', 'Plus récentes']];
+const AGE_LABEL = { new: 'Neuf', old: 'Ancien' };
 const ENERGY = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 const arr = (v) => (Array.isArray(v) ? v : v ? String(v).split(',') : []);
 const toggleIn = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -23,23 +26,38 @@ const toQuery = (f, sort) => {
   return p.toString();
 };
 
-export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onActive, variant = 'grid', eurosPerCoin }) {
+export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onActive, variant = 'grid', eurosPerCoin, mode = 'buy' }) {
+  const rent = mode === 'rent';
   return (
     <article className={`rp-card rp-card--${variant} ${active ? 'is-active' : ''}`} onMouseEnter={() => onActive?.(l.id)} onMouseLeave={() => onActive?.(null)} data-listing={l.id}>
       <div className="rp-card__media" onClick={() => onOpen(l.id)}>
         <LazyListingArt listing={l} alt={listingAlt(l, city)} badge={variant !== 'compact'} />
         <div className="rp-card__badges">
-          {l.urgentSale && <Pill tone="hot">Vente pressée</Pill>}
+          {rent && <Pill tone="neutral">À louer</Pill>}
+          {l.urgentSale && !rent && <Pill tone="hot">Vente pressée</Pill>}
           {l.needsWorks && <Pill tone="warn">Travaux à prévoir</Pill>}
         </div>
         <div className="rp-card__dpe"><Dpe cls={l.energyClass} /></div>
         <Heart on={favorite} onClick={() => onFavorite(l.id)} label={favorite ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`} />
       </div>
       <div className="rp-card__body">
-        <div className="rp-card__price"><strong>{eur(l.price)}</strong><span title={eurosPerCoin ? `Prix en InvestCoins (1 InvestCoin = ${eurosPerCoin} €)` : 'Prix en InvestCoins'}>≈ {coins(l.priceCoins)}</span></div>
+        <div className="rp-card__price">
+          {rent ? <strong>{eur(l.marketRentMonthly)}<small>/mois</small></strong> : <strong>{eur(l.price)}</strong>}
+          {!rent && <span title={eurosPerCoin ? `Prix en InvestCoins (1 InvestCoin = ${eurosPerCoin} €)` : 'Prix en InvestCoins'}>≈ {coins(l.priceCoins)}</span>}
+          {rent && <span className="rp-card__alt">à l’achat : {eur(l.price)}</span>}
+        </div>
         <h3 className="rp-card__title"><button type="button" onClick={() => onOpen(l.id)}>{TYPE_LABEL[l.type]} · {l.neighborhoodName}</button></h3>
-        <p className="rp-card__meta">{l.surfaceSqm} m² · {l.rooms} pièce{l.rooms > 1 ? 's' : ''} · {city?.name ?? l.cityId}</p>
-        <p className="rp-card__meta rp-card__meta--soft">{eur(l.pricePerSqm)}/m² · rendement brut {pct(l.grossYieldPct)} · {CONDITION_LABEL[l.condition]}</p>
+        <ul className="rp-card__facts" aria-label="Caractéristiques">
+          <li><Icon name="ruler" size={15} /><span>{l.surfaceSqm} m²</span></li>
+          <li><Icon name="doorOpen" size={15} /><span>{l.rooms} pièce{l.rooms > 1 ? 's' : ''}</span></li>
+          <li><Icon name="mapPin" size={15} /><span>{city?.name ?? l.cityId}</span></li>
+        </ul>
+        <div className="rp-card__foot">
+          {rent
+            ? <span className="rp-card__stat"><Icon name="ruler" size={14} />{Number(l.rentPerSqm).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} €/m²/mois</span>
+            : <span className="rp-card__stat rp-card__stat--yield" title="Loyer annuel estimé ÷ prix : avant charges et frais"><Icon name="trendingUp" size={14} />Rendement brut estimé {pct(l.grossYieldPct)}</span>}
+          <span className="rp-card__stat">{rent ? `${AGE_LABEL[l.age]} · ${CONDITION_LABEL[l.condition]}` : `${eur(l.pricePerSqm)}/m² · ${CONDITION_LABEL[l.condition]}`}</span>
+        </div>
       </div>
     </article>
   );
@@ -58,7 +76,7 @@ function NumberField({ label, value, onChange, placeholder, suffix, id }) {
   );
 }
 
-function FilterPanel({ f, set, onClose, count, onReset }) {
+function FilterPanel({ f, set, onClose, count, onReset, rent }) {
   const energyColors = { A: ['#2f9e5b', '#06210f'], B: ['#5fb04a', '#0c2208'], C: ['#a6c13a', '#1d2406'], D: ['#e6c52b', '#2a2305'], E: ['#f0a229', '#2e1c03'], F: ['#e8742a', '#2e1403'], G: ['#d6453d', '#fff'] };
   return (
     <div className="rp-filters" role="dialog" aria-label="Filtres de recherche">
@@ -68,14 +86,24 @@ function FilterPanel({ f, set, onClose, count, onReset }) {
           <div className="rp-chips">{Object.entries(TYPE_LABEL).map(([k, v]) => <Chip key={k} on={arr(f.types).includes(k)} onClick={() => set({ types: toggleIn(arr(f.types), k) })}>{v}</Chip>)}</div>
           <p className="rp-hint">Parkings et immeubles entiers n’existent pas encore dans le catalogue.</p>
         </fieldset>
-        <fieldset><legend>Budget</legend>
-          <div className="rp-pair"><NumberField id="f-minp" label="Min" value={f.minPrice} onChange={(v) => set({ minPrice: v })} suffix="€" /><NumberField id="f-maxp" label="Max" value={f.maxPrice} onChange={(v) => set({ maxPrice: v })} suffix="€" /></div>
-        </fieldset>
+        {rent ? (
+          <fieldset><legend>Loyer mensuel (hors charges)</legend>
+            <div className="rp-pair"><NumberField id="f-minr" label="Min" value={f.minRent} onChange={(v) => set({ minRent: v })} suffix="€" /><NumberField id="f-maxr" label="Max" value={f.maxRent} onChange={(v) => set({ maxRent: v })} suffix="€" /></div>
+          </fieldset>
+        ) : (
+          <fieldset><legend>Budget</legend>
+            <div className="rp-pair"><NumberField id="f-minp" label="Min" value={f.minPrice} onChange={(v) => set({ minPrice: v })} suffix="€" /><NumberField id="f-maxp" label="Max" value={f.maxPrice} onChange={(v) => set({ maxPrice: v })} suffix="€" /></div>
+            <NumberField id="f-maxm2" label="Prix au m² maximum" value={f.maxPricePerSqm} onChange={(v) => set({ maxPricePerSqm: v })} suffix="€/m²" />
+          </fieldset>
+        )}
         <fieldset><legend>Surface</legend>
           <div className="rp-pair"><NumberField id="f-mins" label="Min" value={f.minSurface} onChange={(v) => set({ minSurface: v })} suffix="m²" /><NumberField id="f-maxs" label="Max" value={f.maxSurface} onChange={(v) => set({ maxSurface: v })} suffix="m²" /></div>
         </fieldset>
         <fieldset><legend>Pièces (minimum)</legend>
           <div className="rp-chips">{[1, 2, 3, 4].map((n) => <Chip key={n} on={Number(f.minRooms) === n} onClick={() => set({ minRooms: Number(f.minRooms) === n ? '' : n })}>{n === 4 ? '4 et +' : n === 1 ? '1 et +' : `${n} et +`}</Chip>)}</div>
+        </fieldset>
+        <fieldset><legend>Construction</legend>
+          <div className="rp-chips">{Object.entries(AGE_LABEL).map(([k, v]) => <Chip key={k} on={arr(f.ages).includes(k)} onClick={() => set({ ages: toggleIn(arr(f.ages), k) })}>{v}</Chip>)}</div>
         </fieldset>
         <fieldset><legend>État</legend>
           <div className="rp-chips">{Object.entries(CONDITION_LABEL).map(([k, v]) => <Chip key={k} on={arr(f.conditions).includes(k)} onClick={() => set({ conditions: toggleIn(arr(f.conditions), k) })}>{v}</Chip>)}</div>
@@ -83,12 +111,14 @@ function FilterPanel({ f, set, onClose, count, onReset }) {
         <fieldset><legend>Classe DPE<HelpTip term="dpe" /></legend>
           <div className="rp-chips rp-chips--dpe">{ENERGY.map((c) => <Chip key={c} on={arr(f.energy).includes(c)} color={{ bg: energyColors[c][0], fg: energyColors[c][1] }} onClick={() => set({ energy: toggleIn(arr(f.energy), c) })}>{c}</Chip>)}</div>
         </fieldset>
-        <fieldset><legend>Rendement brut minimum<HelpTip term="rendement-brut" /></legend>
-          <div className="rp-chips">{[4, 5, 6, 7, 8].map((n) => <Chip key={n} on={Number(f.minYieldPct) === n} onClick={() => set({ minYieldPct: Number(f.minYieldPct) === n ? '' : n })}>{n} %</Chip>)}</div>
-        </fieldset>
+        {!rent && (
+          <fieldset><legend>Rendement brut minimum<HelpTip term="rendement-brut" /></legend>
+            <div className="rp-chips">{[4, 5, 6, 7, 8].map((n) => <Chip key={n} on={Number(f.minYieldPct) === n} onClick={() => set({ minYieldPct: Number(f.minYieldPct) === n ? '' : n })}>{n} %</Chip>)}</div>
+          </fieldset>
+        )}
         <fieldset><legend>Options</legend>
           <div className="rp-switches">
-            <div className="rp-switch"><Switch checked={f.urgentOnly === true} onChange={(v) => set({ urgentOnly: v })} label="Ventes pressées seulement" /><span>Ventes pressées seulement</span></div>
+            {!rent && <div className="rp-switch"><Switch checked={f.urgentOnly === true} onChange={(v) => set({ urgentOnly: v })} label="Ventes pressées seulement" /><span>Ventes pressées seulement</span></div>}
             <div className="rp-switch"><Switch checked={f.worksOnly === true} onChange={(v) => set({ worksOnly: v })} label="Travaux à prévoir" /><span>Travaux à prévoir</span></div>
           </div>
         </fieldset>
@@ -112,6 +142,10 @@ const FILTER_LABELS = (f, cities) => {
   arr(f.conditions).forEach((x) => out.push([`conditions:${x}`, CONDITION_LABEL[x]]));
   arr(f.energy).forEach((x) => out.push([`energy:${x}`, `DPE ${x}`]));
   if (f.minYieldPct) out.push(['minYieldPct', `rendement ≥ ${f.minYieldPct} %`]);
+  if (f.minRent) out.push(['minRent', `loyer dès ${eur(f.minRent)}`]);
+  if (f.maxRent) out.push(['maxRent', `loyer jusqu’à ${eur(f.maxRent)}`]);
+  if (f.maxPricePerSqm) out.push(['maxPricePerSqm', `≤ ${eur(f.maxPricePerSqm)}/m²`]);
+  arr(f.ages).forEach((x) => out.push([`ages:${x}`, AGE_LABEL[x]]));
   if (f.urgentOnly) out.push(['urgentOnly', 'Ventes pressées']);
   if (f.worksOnly) out.push(['worksOnly', 'Travaux à prévoir']);
   return out;
@@ -129,6 +163,8 @@ export default function Search({ state, setState, onOpen, notify, game }) {
   const [activeId, setActiveId] = useState(null);
   const [mobileMap, setMobileMap] = useState(false);
   const [qText, setQText] = useState(filters.q ?? '');
+  // Sur téléphone, passer en « Carte » amène directement la carte à l'écran (sans refaire défiler toute la page).
+  useEffect(() => { if (mobileMap && window.matchMedia('(max-width: 820px)').matches) setTimeout(() => document.querySelector('.rp-split__map')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60); }, [mobileMap]);
   const [filterError, setFilterError] = useState('');
   const reqRef = useRef(0);
   const savedRef = useRef(null);
@@ -198,13 +234,27 @@ export default function Search({ state, setState, onOpen, notify, game }) {
   const newTotal = saved.reduce((n, s) => n + s.newCount, 0);
 
   const cityPicked = filters.cityId;
+  const rent = filters.mode === 'rent';
+  const sortList = rent ? RENT_SORTS : SORTS;
+  const setMode = (m) => setState((st) => {
+    const f = { ...st.filters, mode: m === 'rent' ? 'rent' : undefined };
+    if (m === 'rent') { delete f.minPrice; delete f.maxPrice; delete f.maxPricePerSqm; delete f.minYieldPct; delete f.urgentOnly; } else { delete f.minRent; delete f.maxRent; }
+    const ok = (m === 'rent' ? RENT_SORTS : SORTS).some(([k]) => k === st.sort);
+    return { ...st, filters: f, sort: ok ? st.sort : 'relevance' };
+  });
   const mapNode = (
-    <CityMap cityId={cityPicked} cities={cities} listings={shown} allListings={all} activeId={activeId} onActive={setActiveId} onOpen={onOpen} favorites={favIds}
+    <ListingMap cities={cities} listings={shown} pool={all} mode={rent ? 'rent' : 'buy'} cityId={cityPicked} cityOf={cityOf} activeId={activeId} onActive={setActiveId} onOpen={onOpen} favorites={favIds}
       onCity={(id) => set({ cityId: id })} />
   );
 
   return (
     <div className="rp-search">
+
+      <div className="rp-modetabs" role="tablist" aria-label="Acheter ou louer">
+        <button type="button" role="tab" aria-selected={!rent} className={!rent ? 'is-on' : ''} onClick={() => setMode('buy')}><Icon name="house" size={18} />Acheter</button>
+        <button type="button" role="tab" aria-selected={rent} className={rent ? 'is-on' : ''} onClick={() => setMode('rent')}><Icon name="keyRound" size={18} />Louer</button>
+      </div>
+      {rent && <p className="rp-modenote"><Icon name="info" size={16} />Ici, les loyers du marché : mêmes biens, vus côté locataire. Pour comparer avec l’achat, ouvre une fiche ; pour devenir propriétaire, passe sur « Acheter ».</p>}
 
       <div className="rp-searchbar" role="search">
         <label className="rp-searchbar__input">
@@ -221,14 +271,14 @@ export default function Search({ state, setState, onOpen, notify, game }) {
 
       <div className="rp-quick">
         {Object.entries(TYPE_LABEL).map(([k, v]) => <Chip key={k} on={arr(filters.types).includes(k)} onClick={() => set({ types: toggleIn(arr(filters.types), k) })}>{v}</Chip>)}
-        <Chip on={filters.urgentOnly === true} onClick={() => set({ urgentOnly: !filters.urgentOnly })}>Ventes pressées</Chip>
-        <Chip on={favOnly} onClick={() => setState((s) => ({ ...s, favOnly: !s.favOnly }))}>♥ Favoris ({favIds.size})</Chip>
+        {!rent && <Chip on={filters.urgentOnly === true} onClick={() => set({ urgentOnly: !filters.urgentOnly })}>Ventes pressées</Chip>}
+        <Chip on={favOnly} onClick={() => setState((s) => ({ ...s, favOnly: !s.favOnly }))}><Icon name="heart" size={14} /> Favoris ({favIds.size})</Chip>
       </div>
 
       {panel && (
         <Portal>
           <div className="rp-backdrop" onClick={() => setPanel(false)} aria-hidden="true" />
-          <FilterPanel f={filters} set={set} onClose={() => setPanel(false)} count={shown.length} onReset={reset} />
+          <FilterPanel f={filters} set={set} onClose={() => setPanel(false)} count={shown.length} onReset={reset} rent={rent} />
         </Portal>
       )}
 
@@ -259,7 +309,7 @@ export default function Search({ state, setState, onOpen, notify, game }) {
             )}
           </div>
           <label className="rp-sort"><span className="ik-sr-only">Trier par</span>
-            <select className="ik-select" value={sort} onChange={(e) => setState((s) => ({ ...s, sort: e.target.value }))}>{SORTS.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <select className="ik-select" value={sort} onChange={(e) => setState((s) => ({ ...s, sort: e.target.value }))}>{sortList.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           </label>
           <Segmented ariaLabel="Affichage" value={view} onChange={(v) => setState((s) => ({ ...s, view: v }))} options={[{ value: 'grid', label: 'Grille' }, { value: 'list', label: 'Liste' }, { value: 'map', label: 'Carte' }]} />
         </div>
@@ -272,14 +322,14 @@ export default function Search({ state, setState, onOpen, notify, game }) {
         ) : view === 'map' ? (
           <div className={`rp-split ${mobileMap ? 'is-map' : ''}`}>
             <div className="rp-split__list">
-              {shown.map((l) => <ListingCard key={l.id} l={l} city={cityOf[l.cityId]} favorite={favIds.has(l.id)} onFavorite={toggleFav} onOpen={onOpen} active={activeId === l.id} onActive={setActiveId} variant="compact" eurosPerCoin={data?.eurosPerCoin} />)}
+              {shown.map((l) => <ListingCard key={l.id} l={l} city={cityOf[l.cityId]} favorite={favIds.has(l.id)} onFavorite={toggleFav} onOpen={onOpen} active={activeId === l.id} onActive={setActiveId} variant="compact" eurosPerCoin={data?.eurosPerCoin} mode={rent ? 'rent' : 'buy'} />)}
             </div>
-            <div className="rp-split__map">{mapNode}{!cityPicked && <p className="rp-hint">Choisis une ville sur la carte pour voir ses quartiers et ses annonces.</p>}</div>
+            <div className="rp-split__map">{mapNode}</div>
             <Portal><div className="rp-mapswitch"><Segmented ariaLabel="Liste ou carte" value={mobileMap ? 'map' : 'list'} onChange={(v) => setMobileMap(v === 'map')} options={[{ value: 'list', label: 'Liste' }, { value: 'map', label: 'Carte' }]} /></div></Portal>
           </div>
         ) : (
           <div className={view === 'list' ? 'rp-list' : 'rp-grid'}>
-            {shown.map((l, i) => <div key={l.id} className="rp-appear" style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}><ListingCard l={l} city={cityOf[l.cityId]} favorite={favIds.has(l.id)} onFavorite={toggleFav} onOpen={onOpen} variant={view} eurosPerCoin={data?.eurosPerCoin} /></div>)}
+            {shown.map((l, i) => <div key={l.id} className="rp-appear" style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}><ListingCard l={l} city={cityOf[l.cityId]} favorite={favIds.has(l.id)} onFavorite={toggleFav} onOpen={onOpen} variant={view} eurosPerCoin={data?.eurosPerCoin} mode={rent ? 'rent' : 'buy'} /></div>)}
           </div>
         )}
     </div>
