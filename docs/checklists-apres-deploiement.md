@@ -809,10 +809,10 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 À dérouler chez toi **sur ta copie de test**, après avoir fusionné cette PR (après les PR 5, 6, 7).
 
 1. Immobilier, fiche d'une annonce, simulateur de financement : mets en apport **seulement les frais de notaire**. La banque **refuse** et dit : « Apport insuffisant : … exige au moins … (… de frais de notaire + … soit 10 % du prix). Il te manque … InvestCoins. » Ajoute le montant manquant : le motif disparaît.
-2. Avec l'apport exact, mais presque plus de pièces libres après l'achat : refus « Réserve de sécurité insuffisante : … 4 mensualités … Il te manque … ». Ajoute des pièces (ou baisse l'apport si tu en as) : la banque accepte.
+2. (Remplacé) Avec l'apport exact mais presque plus de pièces après l'achat : la banque **accepte** et affiche un avertissement, voir la section « Banque : l'épargne restante n'est plus un refus ».
 3. Il n'y a plus de message « La banque accepte, avec une réserve » : c'est accepté ou refusé.
 4. Avec un profil étudiant et une grosse mensualité : refus « Reste à vivre insuffisant … Mensualité maximale compatible : … ». Réduis le prêt (apport plus grand ou durée plus longue) : accepté.
-5. Banque, prêt personnel : avec très peu de pièces à toi (hors pièces empruntées), la demande est refusée pour « Réserve de sécurité » avec le montant manquant.
+5. (Remplacé) Banque, prêt personnel : avec très peu de pièces à toi, un avertissement apparaît mais la demande n'est plus refusée pour la réserve.
 6. Aucun « € » dans ces messages : tout est en InvestCoins.
 7. Si tu veux changer les 10 % ou les 4 mensualités : `backend/src/config/immoRules.ts` (`minDownPaymentPctOfPrice`, `reserveMonthlyPayments`).
 
@@ -826,7 +826,7 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Le pourcentage du classement Immobilier est le gain net de revente divisé par **10 000** (compte gratuit) ou **20 000** (compte Pro).
 6. Note de sécurité à garder : « jour actif » compte aujourd'hui toute requête connectée ; à resserrer à l'audit (`docs/classement-net-de-revente.md`).
 
-## Réserve de sécurité : pièces propres uniquement
+## Réserve de sécurité : pièces propres uniquement (REMPLACÉE : la réserve ne refuse plus, voir « Banque : l'épargne restante n'est plus un refus »)
 À dérouler chez toi sur ta copie de test, après les PR 8b (#107) et #109.
 
 1. Compte avec juste assez de pièces pour l'apport et les frais d'un bien, mais pas pour la réserve : la banque refuse (« Réserve de sécurité insuffisante … Il te manque … »).
@@ -853,3 +853,15 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 4. Le dashboard affiche **deux chiffres** : **Patrimoine total** (grosse carte) et **Patrimoine financier**. Avec un bien immobilier, le total = financier + **valeur nette de revente** du bien (le prêt immobilier est déjà déduit, jamais compté deux fois). Un prêt personnel ne rend plus le patrimoine négatif si l'immobilier est compté.
 5. Carte Immobilier : « Valeur nette de revente » et « Dette bancaire » avec la pièce, **aucun €** nulle part sur le tableau de bord.
 6. Si tu avais aussi des positions dans l'**ancienne** Crypto, elles s'ajoutent à celles du nouveau marché (rien n'est perdu).
+
+
+## Banque : l'épargne restante n'est plus un refus, seulement un avertissement
+À dérouler chez toi sur ta copie de test, après avoir fusionné cette PR.
+
+1. Fiche d'un bien, financement : avec un apport qui ne te laisse presque aucune pièce après l'achat, la banque **accepte** (si l'apport minimal « notaire + 10 % », l'endettement 35 % et la durée sont respectés), et un message **orange** apparaît dans le cadre de la banque : « Attention : Après cet achat, il te restera X pièces, soit Y mensualités. Moins de 3 mensualités expose à un impayé. Tu peux acheter quand même. »
+2. Le bouton d'achat reste actif ; achète : l'achat passe.
+3. Avec beaucoup de pièces restantes : aucun message orange.
+4. Prends un prêt personnel de 500, puis regarde l'aperçu d'un achat : le message dit que les pièces d'un prêt personnel non remboursé ne comptent pas comme de l'épargne, avec le capital restant dû.
+5. Banque, prêt personnel : avec très peu de pièces à toi, un message orange « Après ce prêt, il te restera… » apparaît, mais le bouton « Emprunter » reste actif.
+6. Les refus qui restent : apport inférieur à notaire + 10 % du prix ; endettement au-dessus de 35 % ; durée trop longue ; reste à vivre insuffisant. Chacun avec ses chiffres, aucun « € ».
+7. Glossaire : le mot « Épargne restante (en mensualités) » existe.

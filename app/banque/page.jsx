@@ -124,6 +124,7 @@ function PersonalLoan({ onDone, notify }) {
             Banque : {quote.approved ? 'accord' : 'refus'} — endettement {num(quote.bank.debtRatioPct)} % (max {quote.bank.maxDebtRatioPct} %), reste à vivre {num(quote.bank.livingRemaining, 0)} <Coin /> (min {num(quote.bank.minLivingRemaining, 0)} <Coin />)
             {quote.reasons.map((r) => <div key={r.code} style={{ fontSize: 13 }}>• {r.message}</div>)}
           </div>
+          {quote.warnings?.map((w) => <div key={w.code} data-testid="bank-warning" role="note" style={{ color: 'var(--ik-warning)', fontSize: 13 }}><Icon name="triangleAlert" size={16} /> <strong>Attention :</strong> {w.message} Tu peux emprunter quand même.<HelpTip term="epargne-restante" /></div>)}
           <div><button style={btn(true)} disabled={busy || !quote.approved} onClick={borrow}>Emprunter</button></div>
         </div>
       )}

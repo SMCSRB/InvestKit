@@ -3,6 +3,7 @@ import { getBuyAccess } from '../utils/entitlements';
 import { buildCoinSchedule } from '../engine/bank';
 import { PERSONAL_LOAN, bankProductRatePct } from '../config/bankRules';
 import { BANK_RULES, STARTING_PROFILES } from '../config/immoRules';
+import { lowSavingsWarning } from '../engine/immo/affordability';
 import { EUROS_PER_COIN } from '../config/economy';
 import { RE_DOMAIN, requireGame, loadHousehold, source } from './realEstateService';
 import { monthTotal } from '../engine/immo';
@@ -59,15 +60,13 @@ const evaluate = async (db: Db, userId: string, amountRaw: unknown, monthsRaw: u
     const maxForLiving = Math.max(0, Math.round((household.salary + household.existingRentalIncome - household.livingCharges - household.existingDebtPayments - minLiving) * 100) / 100);
     reasons.push({ code: 'LIVING_REMAINING', message: `Reste à vivre insuffisant : il te resterait ${fr(livingRemaining)} InvestCoins par mois, la banque exige au moins ${fr(minLiving)} pour ton profil. Mensualité maximale compatible : ${fr(maxForLiving)} InvestCoins.` });
   }
-  // Réserve de sécurité : pièces PROPRES (non empruntées) à garder pour payer quelques mensualités de TOUS les prêts.
-  if (BANK_RULES.reserveMonthlyPayments > 0) {
-    const own = (await ownCoins(db, userId)).own;
-    const requiredReserve = Math.round((household.existingDebtPayments + instalmentEuros) * BANK_RULES.reserveMonthlyPayments * 100) / 100;
-    if (own < requiredReserve) reasons.push({ code: 'RESERVE_LOW', message: `Réserve de sécurité insuffisante : tu as ${fr(own)} InvestCoins à toi (hors prêt personnel non remboursé et pièces empruntées), la banque veut que tu gardes ${BANK_RULES.reserveMonthlyPayments} mensualités, soit ${fr(requiredReserve)} InvestCoins. Il te manque ${fr(requiredReserve - own)} InvestCoins.` });
-  }
+  // Épargne restante : AVERTISSEMENT seulement (pas de règle officielle, jamais un refus). Les pièces d'un prêt personnel non remboursé ne comptent pas comme de l'épargne.
+  const own = await ownCoins(db, userId);
+  const warning = lowSavingsWarning({ savings: own.own, monthlyPayments: household.existingDebtPayments + instalmentEuros, thresholdMonths: BANK_RULES.lowSavingsWarningMonths, unpaidPersonalLoan: own.unpaidPersonalLoan, moment: 'prêt' });
+  const warnings = warning ? [warning] : [];
 
   return {
-    game, clock, amount, months, ratePct, sched, instalmentCoins, capCoins, reasons, debtRatioPct, livingRemaining, minLiving, countedIncome,
+    game, clock, amount, months, ratePct, sched, instalmentCoins, capCoins, reasons, warnings, debtRatioPct, livingRemaining, minLiving, countedIncome,
     existingDebtEuros: household.existingDebtPayments, profileLabel: profile.label,
   };
 };
@@ -78,7 +77,7 @@ export const bankPersonalService = {
     return withTx(async (c) => {
       const e = await evaluate(c, userId, body?.amountCoins, body?.months);
       return {
-        approved: e.reasons.length === 0, reasons: e.reasons,
+        approved: e.reasons.length === 0, reasons: e.reasons, warnings: e.warnings,
         loan: {
           amountCoins: e.amount, months: e.months, annualRatePct: e.ratePct, instalmentCoins: e.instalmentCoins,
           totalInterestCoins: e.sched.totalInterestH / 100, totalRepaidCoins: e.sched.totalPaidH / 100,

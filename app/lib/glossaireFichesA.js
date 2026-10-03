@@ -55,6 +55,8 @@ export const FICHES_A = {
     vs: [['reste-a-vivre', "Le reste à vivre est un montant, l'endettement un pourcentage."], ['levier', "Le levier est l'effet du crédit sur ta performance, pas ta capacité à emprunter."]] },
   "reste-a-vivre": { ex: "Avec 2 500 € de revenus, 800 € de crédit et 900 € de dépenses, il te reste 800 € par mois.",
     vs: [['endettement', "Deux ménages peuvent avoir le même endettement et des restes à vivre très différents."], ['cash-flow', "Le cash-flow concerne un investissement, pas tout ton budget."]] },
+  "epargne-restante": { ex: "Avec une mensualité de 700 InvestCoins et 1 400 pièces à toi après l'achat, il te reste 2 mensualités : le jeu t'avertit, mais tu peux acheter.",
+    vs: [['reste-a-vivre', "Le reste à vivre est un montant par mois ; l'épargne restante est un stock de pièces mis en regard des mensualités."], ['pret-personnel', "Un prêt personnel non remboursé ne compte pas comme de l'épargne : il se rembourse."]] },
   "capital-restant": { ex: "Après 5 ans sur un prêt de 200 000 €, il peut rester environ 170 000 € à rembourser.",
     vs: [['capital-rembourse', "Le capital remboursé est la partie déjà payée."], ['patrimoine-net', "Le net retire cette dette de la valeur du bien."]] },
   levier: { ex: "Tu mets 20 000 € et tu empruntes 80 000 € pour un bien à 100 000 € : s'il gagne 10 %, ton gain est de 50 % de ta mise. Mais une perte est aussi multipliée.",

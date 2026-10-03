@@ -25,9 +25,9 @@ export const BANK_RULES: BankRules = {
   // et les banques demandent en pratique environ 10 % d'apport. 10 % = VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
   minDownPaymentPctOfNotaryFees: 100,
   minDownPaymentPctOfPrice: 10,
-  // Réserve de sécurité : 4 mensualités (assurance comprise, tous prêts) à garder en pièces libres après l'achat.
-  // 4 = VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (règle d'équilibrage, pas une règle bancaire officielle).
-  reserveMonthlyPayments: 4,
+  // Épargne restante après un achat ou un prêt : en dessous de 3 mensualités, on AVERTIT le joueur (jamais un refus).
+  // Aucune règle française officielle n'impose une réserve : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
+  lowSavingsWarningMonths: 3,
   // Durée : 25 ans, 27 ans pour un achat avec travaux importants (règle du HCSF,
   // vérifiée sur des sources de presse/courtage le 2026-09-29, pas sur le texte
   // officiel : à reconfirmer). Le HCSF cite aussi les VEFA (neuf) et la

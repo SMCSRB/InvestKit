@@ -45,7 +45,7 @@ export const spendableCoins = async (db: Db, userId: string, domain: string): Pr
   return Math.max(0, balance - Number(r.rows[0].s));
 };
 
-// Pièces PROPRES du joueur, pour la règle de réserve de sécurité : solde moins (1) les pièces empruntées encore réservées à un domaine (prêt sur portefeuille)
+// Pièces PROPRES du joueur, pour l'avertissement d'épargne restante : solde moins (1) les pièces empruntées encore réservées à un domaine (prêt sur portefeuille)
 // et moins (2) le capital restant dû d'un PRÊT PERSONNEL non remboursé. Une banque ne prend pas un prêt récent pour de l'épargne.
 // Règle prudente : on retire le capital restant dû même si les pièces ont déjà été dépensées (on ne peut pas suivre quelles pièces sont lesquelles).
 export const ownCoins = async (db: Db, userId: string): Promise<{ own: number; unpaidPersonalLoan: number; creditInDomain: (domain: string) => number }> => {

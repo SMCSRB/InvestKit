@@ -157,12 +157,12 @@ const buildPlan = async (game: GameRow, params: PurchaseParams, db: { query: Poo
   let evaluation: PurchaseEvaluation;
   try {
     evaluation = evaluatePurchase(evalInput);
-    // Réserve de sécurité : pièces PROPRES (non empruntées) qu'il restera après l'achat (apport + frais de dossier payés en pièces).
+    // Avertissement d'épargne (jamais un refus) : pièces PROPRES (hors prêt personnel non remboursé) qu'il restera après l'achat (apport + frais de dossier).
     const spent = params.downPaymentCoins + (evaluation.upfrontFees > 0 ? coinsFor(evaluation.upfrontFees) : 0);
     const own = await ownCoins(db as any, game.user_id);
     // Pièces insuffisantes pour payer l'achat : c'est l'erreur « solde insuffisant » qui doit s'afficher, pas un faux refus de réserve.
-    // Sinon, la réserve se mesure sur les pièces PROPRES après l'achat (hors prêt personnel non remboursé), qui peuvent être négatives :
-    // un achat payé avec l'argent d'un prêt ne reconstitue jamais la réserve.
+    // Sinon, l'épargne restante se mesure sur les pièces PROPRES après l'achat (hors prêt personnel non remboursé ; peut être nulle) :
+    // un achat payé avec l'argent d'un prêt ne compte jamais comme de l'épargne.
     if (spent <= await spendableCoins(db as any, game.user_id, RE_DOMAIN)) {
       evaluation = evaluatePurchase({ ...evalInput, freeCoinsAfter: own.own - spent, unpaidPersonalLoan: own.unpaidPersonalLoan });
     }
@@ -206,7 +206,7 @@ const summarize = (plan: Plan, balance: number) => {
     bank: {
       decision: e.assessment.decision, approved: e.approved, debtRatioPct: e.assessment.debtRatioPct,
       livingRemaining: e.assessment.livingRemaining, countedIncome: e.assessment.countedIncome,
-      maxMonthlyPayment: e.assessment.maxMonthlyPayment, reasons: e.assessment.reasons,
+      maxMonthlyPayment: e.assessment.maxMonthlyPayment, reasons: e.assessment.reasons, warnings: e.assessment.warnings,
     },
     coins: { ...plan.coins, balance, affordable: balance >= plan.coins.total },
   };
