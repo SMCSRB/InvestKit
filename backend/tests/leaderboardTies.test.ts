@@ -13,7 +13,7 @@ describe.skipIf(!hasDb)('classement : les ex æquo ne dépassent jamais la taill
 
   it('30 joueurs à 0 % (même rang 1) : 5 entrées renvoyées, total exact, appelant classé', async () => {
     const ids: string[] = [];
-    for (let i = 0; i < 30; i++) ids.push(await createUser());
+    for (let i = 0; i < 30; i++) ids.push(await createUser({ activeDays: 5 }));
     for (const id of ids) {
       await leaderboardRepository.upsertSnapshot({ query } as any, { userId: id, mode: 'test', domain, year: 2020, performancePct: 0, capitalCommitted: 500 });
     }

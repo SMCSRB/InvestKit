@@ -48,6 +48,8 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Reste à vivre minimal | étudiant 500 € ; salarié 1 200 € ; cadre 1 800 € | JEU | pratique bancaire (pas de texte officiel) |
 | Apport minimal | frais de notaire (100 %) + 10 % du prix | JEU, NON SOURCÉE, À RECONFIRMER (les 10 %) ; DÉCISION produit | pratique bancaire (pas de texte officiel) |
 | Réserve de sécurité | 4 mensualités (assurance comprise, tous prêts) en pièces propres après l'opération (achat et prêt personnel) | JEU, NON SOURCÉE, À RECONFIRMER | règle d'équilibrage du jeu |
+| Seuil de classement (tous domaines) | 2 500 InvestCoins investis ET 5 jours actifs | JEU, NON SOURCÉE, À RECONFIRMER | `config/economy.ts` |
+| Décote d'un bien loué à la revente (classement Immobilier) | 10 % | JEU, NON SOURCÉE, À RECONFIRMER | `SALE_PARAMS.occupiedDiscountPct` |
 | Assurance emprunteur | 0,36 % du capital par an | JEU | comparateurs publics ; CCSF |
 | Frais de dossier | max(200 €, 0,2 % du capital) | JEU | tarifs bancaires |
 | Expertise avant achat | 300 € + 0,15 % du prix | JEU | — |

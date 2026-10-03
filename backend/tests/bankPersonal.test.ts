@@ -48,7 +48,7 @@ describe.skipIf(!hasDb)('prêt personnel (fléché Immobilier)', () => {
   afterAll(teardownDb);
 
   const player = async (opts: { profile?: 'student' | 'employee' | 'executive'; balance?: number; tier?: 'free' | 'pro'; freeDomain?: string | null; seed?: string } = {}) => {
-    const uid = await createUser({ balance: opts.balance ?? legacyCoins(100), tier: opts.tier, freeDomain: opts.freeDomain === undefined ? 'real_estate' : opts.freeDomain });
+    const uid = await createUser({ balance: opts.balance ?? legacyCoins(100), tier: opts.tier, freeDomain: opts.freeDomain === undefined ? 'real_estate' : opts.freeDomain, activeDays: 5 });
     await svc.startGame(uid, opts.profile ?? 'executive');
     if (opts.seed) await query('UPDATE re_games SET seed = $2 WHERE user_id = $1', [uid, opts.seed]);
     return uid;

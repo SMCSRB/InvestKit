@@ -33,7 +33,7 @@ export const teardownDb = async (): Promise<void> => {
 };
 
 export const createUser = async (
-  opts: { id?: string; balance?: number; tier?: 'free' | 'pro'; proOverride?: boolean; freeDomain?: string | null; verified?: boolean; code?: string; referredBy?: string; firstStepsPending?: boolean } = {}
+  opts: { id?: string; balance?: number; tier?: 'free' | 'pro'; proOverride?: boolean; freeDomain?: string | null; verified?: boolean; code?: string; referredBy?: string; firstStepsPending?: boolean; activeDays?: number } = {}
 ): Promise<string> => {
   const id = opts.id ?? randomUUID();
   await query(
@@ -45,6 +45,7 @@ export const createUser = async (
       opts.verified ?? true, opts.code ?? null, opts.referredBy ?? null, id.slice(0, 8),
     ]
   );
+  if (opts.activeDays) await query('UPDATE users SET active_days = $2 WHERE id = $1', [id, opts.activeDays]);   // jours actifs (seuil de classement)
   if (opts.balance !== undefined) {
     await query('INSERT INTO investcoins_balance (user_id, balance) VALUES ($1, $2)', [id, opts.balance]);
   }
