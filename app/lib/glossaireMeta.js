@@ -88,7 +88,7 @@ export const GLOSSARY_TOOLS = {
   loan2: { label: 'Simulateur d\'investissement locatif', href: '/simulateurs/loan2', icon: 'calculator' },
   pea: { label: 'Simulateur PEA', href: '/simulateurs/pea', icon: 'calculator' },
   immo: { label: 'Immobilier du jeu', href: '/immobilier', icon: 'house' },
-  bourse: { label: 'Bourse du jeu', href: '/dashboard?tab=trading', icon: 'trendingUp' },
+  bourse: { label: 'Bourse du jeu', href: '/bourse', icon: 'trendingUp' },
   crypto: { label: 'Crypto du jeu', href: '/crypto', icon: 'bitcoin' },
   banque: { label: 'Banque du jeu', href: '/banque', icon: 'landmark' },
   education: { label: 'Tous les cours', href: '/education', icon: 'graduationCap' },

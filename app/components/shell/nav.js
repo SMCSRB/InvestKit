@@ -9,7 +9,7 @@ export const NAV_MAIN = [
     label: 'Domaines',
     icon: 'candles',
     children: [
-      { id: 'bourse', label: 'Bourse et PEA', href: '/dashboard?tab=trading', icon: 'chart' },
+      { id: 'bourse', label: 'Bourse et PEA', href: '/bourse', icon: 'chart' },
       { id: 'crypto', label: 'Crypto', href: '/crypto', icon: 'coins' },
       { id: 'immobilier', label: 'Immobilier', href: '/immobilier', icon: 'building' },
     ],
