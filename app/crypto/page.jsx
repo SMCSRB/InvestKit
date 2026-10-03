@@ -123,8 +123,10 @@ function OrderTicket({ symbol, asset, owned, committed, onDone }) {
       </div>
       {quote && (
         <div data-testid="quote" style={{ marginTop: 10, fontSize: 13, color: 'var(--ik-text-2)', lineHeight: 1.6 }}>
-          Prix estimé <b>{unitCoins(quote.execution.priceCoins)}</b> (marché {unitCoins(quote.refPriceCoins)}, soit {usd(quote.refPrice)}) · écart<HelpTip term="ecart-achat-vente" /> {quote.execution.spreadPct.toFixed(2)} % · glissement<HelpTip term="glissement" /> {quote.execution.slippagePct.toFixed(3)} %<br />
-          Montant <b>{coins(quote.execution.notionalCoins)}</b> · frais <b>{coins(quote.execution.feeCoins)}</b> · {side === 'buy' ? 'total débité' : 'net crédité (avant impôt)'} <b>{coins(quote.execution.totalCoins)}</b>
+          <div data-testid="quote-quantity">{side === 'buy' ? 'Tu recevras' : 'Tu vends'} <b>{quote.quantity} {symbol}</b></div>
+          Prix d&apos;exécution <b>{unitCoins(quote.execution.priceCoins)}</b> l&apos;unité (marché {unitCoins(quote.refPriceCoins)}, soit {usd(quote.refPrice)}) · écart<HelpTip term="ecart-achat-vente" /> {quote.execution.spreadPct.toFixed(2)} % · glissement<HelpTip term="glissement" /> {quote.execution.slippagePct.toFixed(3)} %<br />
+          <span data-testid="quote-detail">Prix × quantité = {Number(quote.execution.rawNotionalCoins).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}, arrondi {side === 'buy' ? 'à la pièce supérieure' : 'à la pièce inférieure'} : <b>{coins(quote.execution.notionalCoins)}</b>
+          {' '}· frais <b>{coins(quote.execution.feeCoins)}</b> (minimum 1 pièce) · {side === 'buy' ? 'total débité' : 'net crédité (avant impôt)'} <b>{coins(quote.execution.totalCoins)}</b></span>
           {side === 'buy' && quote.affordable === false && <div role="alert" data-testid="quote-unaffordable" style={{ color: 'var(--ik-negative)', marginTop: 4 }}>{quote.affordableMessage}</div>}
           {quote.stale && <div style={{ color: 'var(--ik-warning)' }}>Cet actif n&apos;est plus coté : dernier prix connu.</div>}
         </div>

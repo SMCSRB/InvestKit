@@ -222,7 +222,7 @@ export const processLoan = async (db: Queryable, account: CryptoAccount, fromMs:
       if (num(sold) <= 0) continue;
       const price = it.close * (1 - LOMBARD.haircutPct / 100);
       const notional = Math.floor((price * num(sold)) / it.fx + 1e-9);
-      const ex: Execution = { price, spreadPct: LOMBARD.haircutPct, slippagePct: 0, notionalCoins: notional, feeCoins: 0 };
+      const ex: Execution = { price, spreadPct: LOMBARD.haircutPct, slippagePct: 0, notionalCoins: notional, feeCoins: 0, rawNotionalCoins: (price * num(sold)) / it.fx };
       const ord = (await db.query(`INSERT INTO crypto_orders (user_id, client_order_id, asset_id, side, type, quantity, status, created_sim_at) VALUES ($1,$2,$3,'sell','market',$4::numeric,'open',to_timestamp($5::float8 / 1000.0)) RETURNING id`,
         [userId, `forced-${loan.id}-${toMs}-${it.symbol}`.slice(0, 64), it.assetId, sold, toMs])).rows[0];
       const m = await marketFor(db, it.symbol, toMs);

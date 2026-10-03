@@ -789,6 +789,12 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Un prêt sur portefeuille (Bourse ou Crypto) reste, lui, réservé à son domaine.
 6. Comptes de test qui ont déjà un prêt personnel : leur réserve existe encore tant que tu n'as pas choisi une des 3 options de `docs/crypto-solde-achat.md`.
 
+## Crypto : quantité d'un achat « pour X pièces »
+1. Fiche d'un actif, saisie d'un montant de 100 pièces : l'estimation dit « Tu recevras X BTC », puis « Prix × quantité = …, arrondi à la pièce supérieure : N · frais … (minimum 1 pièce) · total débité … ».
+2. Exécute l'ordre : la quantité reçue est **celle annoncée**, et le total débité est celui annoncé (100 au plus).
+3. Vérifie à la main : prix d'exécution × quantité ≈ montant avant arrondi ; l'écart avec le montant est inférieur à une pièce.
+4. Pour un même budget, la quantité reçue est maintenant ≈ (budget − 1) ÷ prix d'exécution (≈ 0,01545 BTC pour 100 pièces au 1er janvier 2020).
+
 ## Affichage en InvestCoins
 À dérouler chez toi **avec les PR taux BCE et Crypto en InvestCoins** (déploiement ensemble).
 
