@@ -26,6 +26,12 @@ describe('page Bourse', () => {
   });
 });
 
+describe('ancien onglet Bourse du tableau de bord', () => {
+  it('?tab=trading et ?tab=risk redirigent vers /bourse', () => {
+    expect(read('app/dashboard/page.jsx')).toContain("router.replace('/bourse')");
+  });
+});
+
 describe('page Bourse : journal des ordres', () => {
   it('lit /orders sur le serveur et affiche frais et impôt en lignes séparées', () => {
     const page = read('app/bourse/page.jsx');

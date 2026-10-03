@@ -63,10 +63,11 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   useEffect(() => {
-    // « risk » (ancien onglet vide) mène à l'analyse de risque réelle, qui vit dans le simulateur.
+    // L'ancien onglet Bourse du tableau de bord est remplacé par la page /bourse (marché, portefeuille, risque, ordres).
+    if (tabParam === 'trading' || tabParam === 'risk') { router.replace('/bourse'); return; }
     const target = tabParam === 'risk' ? 'trading' : tabParam === 'activity' ? 'friends' : (tabParam || 'overview');
     if (['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'settings'].includes(target)) setActiveTabState(target);
-  }, [tabParam]);
+  }, [tabParam, router]);
   const [expandedProject, setExpandedProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsModalOpen, setNewsModalOpen] = useState(false);

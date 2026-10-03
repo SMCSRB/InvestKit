@@ -887,6 +887,10 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 6. Compte gratuit sans domaine choisi : un bandeau propose de choisir la Bourse ; avec un autre domaine : message « domaine verrouillé ».
 7. Sur téléphone (390 px) : pas de défilement horizontal.
 
+## Bourse : ancien onglet du tableau de bord
+1. Ouvre `/dashboard?tab=trading` (ou un vieux favori) : tu arrives directement sur **/bourse**.
+2. Le tableau de bord (accueil) s'ouvre toujours normalement, sans onglet Bourse.
+
 ## Bourse : onglet « Mes ordres »
 1. /bourse, onglet **Mes ordres** : vide au début (message d'explication).
 2. Achète un titre : une ligne « Achat » (prix, quantité, enveloppe PEA/CTO, montant négatif) et une ligne « Frais de courtage ».
