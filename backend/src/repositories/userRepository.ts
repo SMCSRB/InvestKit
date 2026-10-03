@@ -107,6 +107,26 @@ export const userRepository = {
     return result.rows.length === 1;
   },
 
+  // Réserve l'envoi du mail de bienvenue (une seule fois par compte, même si deux requêtes arrivent en même temps).
+  // Renvoie l'adresse et le pseudo si CET appel a gagné, sinon null. Il faut un e-mail vérifié ET un pseudo.
+  // Après un échec d'envoi (réservation rendue), un nouvel essai n'est possible qu'après `retryDelayMs` et jusqu'à `maxAttempts` essais.
+  async claimWelcomeEmail(id: string, opts: { maxAttempts: number; retryDelayMs: number } = { maxAttempts: 3, retryDelayMs: 5 * 60 * 1000 }, db: Queryable = { query }): Promise<{ email: string; username: string } | null> {
+    const r = await db.query(
+      `UPDATE users SET welcome_email_sent_at = NOW(), welcome_email_attempts = welcome_email_attempts + 1, welcome_email_last_attempt_at = NOW()
+       WHERE id = $1 AND welcome_email_sent_at IS NULL AND verified = TRUE AND username IS NOT NULL
+         AND welcome_email_attempts < $2
+         AND (welcome_email_last_attempt_at IS NULL OR welcome_email_last_attempt_at < NOW() - make_interval(secs => $3::double precision))
+       RETURNING email, username`,
+      [id, opts.maxAttempts, opts.retryDelayMs / 1000]
+    );
+    return r.rows[0] ?? null;
+  },
+
+  // Rend la réservation si l'envoi n'a pas abouti (le compteur d'essais et l'heure du dernier essai restent).
+  async releaseWelcomeEmail(id: string, db: Queryable = { query }): Promise<void> {
+    await db.query('UPDATE users SET welcome_email_sent_at = NULL WHERE id = $1', [id]);
+  },
+
   async updateLastLogin(id: string): Promise<void> {
     await query(
       `UPDATE users

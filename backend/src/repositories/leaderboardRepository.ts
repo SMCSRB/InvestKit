@@ -4,6 +4,7 @@ import type { Queryable } from './investcoinsRepository';
 export interface BoardEntry {
   rank: number;
   username: string;
+  pro: boolean; // indicateur « membre Pro » (booléen seulement ; masqué si le joueur a choisi de le cacher)
   performancePct: number;
   leverage: number | null; // levier utilisé (capital investi / capital propre) ; null = non applicable
   isMe: boolean;
@@ -76,6 +77,7 @@ export const leaderboardRepository = {
       `WITH ranked AS (
          SELECT lr.user_id,
                 COALESCE(u.username, 'Investisseur anonyme') AS username,
+                ((u.subscription_tier = 'pro' OR u.pro_override = TRUE) AND (u.show_pro_badge = TRUE OR lr.user_id = $6)) AS pro,
                 lr.performance_pct,
                 lr.leverage,
                 RANK() OVER (ORDER BY lr.performance_pct DESC) AS rank,
@@ -85,7 +87,7 @@ export const leaderboardRepository = {
          WHERE lr.mode = $1 AND lr.domain = $2 AND lr.period = $3
            AND lr.capital_committed >= $4
        )
-       SELECT user_id, username, performance_pct, leverage, rank,
+       SELECT user_id, username, pro, performance_pct, leverage, rank,
               (SELECT COUNT(*) FROM ranked) AS total
        FROM ranked
        WHERE (rank <= $5 AND rn <= $5) OR user_id = $6
@@ -96,6 +98,7 @@ export const leaderboardRepository = {
     const toEntry = (row: any): BoardEntry => ({
       rank: Number(row.rank),
       username: row.username,
+      pro: row.pro === true,
       performancePct: Number(row.performance_pct),
       leverage: row.leverage === null || row.leverage === undefined ? null : Number(row.leverage),
       isMe: row.user_id === params.callerId,

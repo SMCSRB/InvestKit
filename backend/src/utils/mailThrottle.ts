@@ -13,4 +13,17 @@ export const allowMail = (kind: string, address: string, max: number, windowMs: 
   return true;
 };
 
+// Version « on regarde sans compter » : le plafond ne doit compter que les envois RÉUSSIS (mailRecorded après succès).
+export const mailAllowed = (kind: string, address: string, max: number, windowMs: number, now = Date.now()): boolean => {
+  const key = `${kind}:${address.trim().toLowerCase()}`;
+  return (sent.get(key) ?? []).filter((t) => now - t < windowMs).length < max;
+};
+export const mailRecorded = (kind: string, address: string, windowMs: number, now = Date.now()): void => {
+  const key = `${kind}:${address.trim().toLowerCase()}`;
+  const recent = (sent.get(key) ?? []).filter((t) => now - t < windowMs);
+  recent.push(now);
+  sent.delete(key); sent.set(key, recent);
+  if (sent.size > MAX_KEYS) sent.delete(sent.keys().next().value as string);
+};
+
 export const resetMailThrottle = (): void => sent.clear();
