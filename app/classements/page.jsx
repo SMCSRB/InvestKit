@@ -14,7 +14,7 @@ import RankingProgress from '@/app/components/ui/RankingProgress';
 const API = process.env.NEXT_PUBLIC_API_URL;
 const TABS = ['monde', 'amis', 'guilde'];
 const DOMAINES = {
-  bourse: { label: 'Bourse', path: '/trading/leaderboard?domain=stocks', go: '/dashboard?tab=trading', goLabel: 'Ouvrir la Bourse' },
+  bourse: { label: 'Bourse', path: '/trading/leaderboard?domain=stocks', go: '/bourse', goLabel: 'Ouvrir la Bourse' },
   crypto: { label: 'Crypto', path: '/crypto/leaderboard', go: '/crypto', goLabel: 'Ouvrir le marché Crypto' },
   immobilier: { label: 'Immobilier', path: '/realestate/leaderboard', go: '/immobilier', goLabel: 'Ouvrir l’Immobilier' },
 };

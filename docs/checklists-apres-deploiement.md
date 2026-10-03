@@ -877,3 +877,12 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 8. **Bourse** (tableau de bord) : plus de boutons Crypto ni Immobilier en doublon ; solde, valeur des positions et prix avec la pièce.
 9. **Démarrage de l'API** : la bannière affiche le vrai nom de la base (par exemple investkit_design_test).
 10. **Marché Crypto** : si aucune capitalisation n'est importée, la colonne « Capi. » et le tri par capitalisation disparaissent ; sur la fiche : « non importée ».
+
+## Bourse : nouvelle page /bourse (design refait)
+1. Menu « Bourse et PEA » : ouvre la page **/bourse** (plus l'ancien onglet du tableau de bord). Même chose depuis l'accueil du tableau de bord et le classement.
+2. En haut : le solde en pièces, la valeur des positions, le gain latent et l'année de jeu. Bouton « Avancer d'un an ».
+3. Onglet **Marché** : cherche une action ; clique « Voir le coût » : prix, montant, frais, total, tout en pièces, sans « € ». Confirme : l'achat apparaît dans « Mon portefeuille ».
+4. Onglet **Mon portefeuille** : chaque position avec sa valeur et son gain ; « Vendre » montre d'abord le détail, puis confirme.
+5. Onglet **Classement** : ta progression vers le seuil (2 500 investis, 5 jours actifs) et le tableau par année.
+6. Compte gratuit sans domaine choisi : un bandeau propose de choisir la Bourse ; avec un autre domaine : message « domaine verrouillé ».
+7. Sur téléphone (390 px) : pas de défilement horizontal.
