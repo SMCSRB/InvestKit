@@ -886,3 +886,9 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 5. Onglet **Classement** : ta progression vers le seuil (2 500 investis, 5 jours actifs) et le tableau par année.
 6. Compte gratuit sans domaine choisi : un bandeau propose de choisir la Bourse ; avec un autre domaine : message « domaine verrouillé ».
 7. Sur téléphone (390 px) : pas de défilement horizontal.
+
+## Bourse : onglet « Mes ordres »
+1. /bourse, onglet **Mes ordres** : vide au début (message d'explication).
+2. Achète un titre : une ligne « Achat » (prix, quantité, enveloppe PEA/CTO, montant négatif) et une ligne « Frais de courtage ».
+3. Vends-le : « Vente » en positif, « Frais de courtage » et, s'il y a un gain, « Impôt sur la plus-value ».
+4. Le total des lignes correspond à la variation de ton solde. Tout est en pièces, sans « € ».

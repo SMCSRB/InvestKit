@@ -175,6 +175,24 @@ export const tradingService = {
     return { symbol: rawSymbol, domain: domain.id, simulatedYear, illustrative: true, points };
   },
 
+  /** Mes ordres : lecture seule du registre, une ligne par achat, vente, frais ou impôt. */
+  async orders(userId: string, domainId: unknown) {
+    const domain = resolveDomainOrThrow(domainId);
+    await loadUser(userId);
+    const rows = await investcoinsRepository.getTradeJournal(userId, domain.id);
+    const kinds: Record<string, string> = { trade_buy: 'buy', trade_sell: 'sell', fee_brokerage: 'fee', tax_capital_gains: 'tax' };
+    return {
+      domain: domain.id,
+      orders: rows.map((r: any) => {
+        const m = typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata ?? {});
+        return {
+          kind: kinds[r.reason], symbol: m.symbol ?? null, quantity: m.quantity ?? null, price: m.price ?? null,
+          year: m.year ?? null, account: m.account ?? null, amount: Number(r.amount), createdAt: r.created_at,
+        };
+      }),
+    };
+  },
+
   async getPortfolioView(userId: string, domainId: unknown) {
     const domain = resolveDomainOrThrow(domainId);
     const user = await loadUser(userId);

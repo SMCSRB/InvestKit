@@ -266,6 +266,45 @@ function Portfolio({ p, onTraded, setError }) {
   );
 }
 
+// ── Mes ordres : journal lu sur le registre du serveur ──
+const KIND = { buy: 'Achat', sell: 'Vente', fee: 'Frais de courtage', tax: 'Impôt sur la plus-value' };
+function Orders({ refreshKey }) {
+  const [rows, setRows] = useState(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    let off = false;
+    call(`/orders?domain=${DOMAIN}`).then((r) => { if (!off) setRows(r.orders); }).catch((e) => { if (!off) setErr(e.message); });
+    return () => { off = true; };
+  }, [refreshKey]);
+  if (err) return <EmptyState icon="info" title="Journal indisponible">{err}</EmptyState>;
+  if (!rows) return <Skeleton height={160} />;
+  if (!rows.length) return <EmptyState icon="list" title="Aucun ordre pour l'instant">Tes achats et tes ventes apparaîtront ici, avec les frais et l&apos;impôt prélevés.</EmptyState>;
+  return (
+    <Card>
+      <CardHead title="Mes ordres" icon="list" />
+      <p className="ik-muted" style={{ margin: '0 0 10px' }}>Les frais de courtage et l'impôt sont de vraies lignes : ils sont retirés de ton solde et ne reviennent pas.</p>
+      <div style={{ overflowX: 'auto' }}>
+        <table className="ik-table" data-testid="orders-table">
+          <thead><tr><th>Type</th><th>Titre</th><th>Année</th><th>Quantité</th><th>Prix</th><th>Enveloppe</th><th>Montant</th></tr></thead>
+          <tbody>
+            {rows.map((o, i) => (
+              <tr key={i}>
+                <td>{KIND[o.kind] ?? o.kind}</td>
+                <td>{o.symbol ?? '—'}</td>
+                <td className="ik-num">{o.year ?? '—'}</td>
+                <td className="ik-num">{o.quantity ?? '—'}</td>
+                <td className="ik-num">{o.price != null ? <>{fr(o.price, 2)} <Coin size={14} /></> : '—'}</td>
+                <td>{o.account ? o.account.toUpperCase() : '—'}</td>
+                <td className="ik-num" style={{ color: o.amount >= 0 ? 'var(--ik-positive)' : 'var(--ik-negative)' }}>{o.amount >= 0 ? '+' : ''}{fr(o.amount, 2)} <Coin size={14} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
 // ── Classement ──
 function Board({ p }) {
   const [year, setYear] = useState(null);
@@ -345,9 +384,10 @@ function BourseInner() {
       <div style={{ display: 'grid', gap: 16 }}>
         <Stats p={p} />
         <AccessBanner p={p} onChoose={choose} busy={busy} />
-        <Tabs ariaLabel="Sections de la Bourse" value={tab} onChange={setTab} tabs={[{ value: 'market', label: 'Marché' }, { value: 'portfolio', label: 'Mon portefeuille' }, { value: 'board', label: 'Classement' }]} />
+        <Tabs ariaLabel="Sections de la Bourse" value={tab} onChange={setTab} tabs={[{ value: 'market', label: 'Marché' }, { value: 'portfolio', label: 'Mon portefeuille' }, { value: 'orders', label: 'Mes ordres' }, { value: 'board', label: 'Classement' }]} />
         {tab === 'market' && <Market assets={assets} p={p} onTraded={load} setError={setError} />}
         {tab === 'portfolio' && <Portfolio p={p} onTraded={load} setError={setError} />}
+        {tab === 'orders' && <Orders refreshKey={p.cashBalance} />}
         {tab === 'board' && <Board p={p} />}
         <p className="ik-muted" style={{ fontSize: 11 }}>Cours de clôture annuels d&apos;un jeu de données simplifié, rejoués à ta date de jeu : ils ne sont pas en direct. Frais et impôts : barème du jeu (valeurs de jeu à reconfirmer).</p>
       </div>

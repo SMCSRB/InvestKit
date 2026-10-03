@@ -71,6 +71,9 @@ export const tradingController = {
   history: handle('Erreur lors de la récupération de l\'historique', (req, uid) =>
     tradingService.history(uid, domainOf(req), req.query.symbol)),
 
+  orders: handle('Erreur lors de la récupération des ordres', (req, uid) =>
+    tradingService.orders(uid, domainOf(req))),
+
   buy: handle('Erreur lors de l\'achat', (req, uid) =>
     tradingService.buy(uid, domainOf(req), req.body?.symbol, req.body?.quantity, req.body?.account)),
 
