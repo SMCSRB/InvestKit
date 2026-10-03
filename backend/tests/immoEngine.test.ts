@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   computeMonthlyPayment, buildSchedule, computeTaegPct, totalCreditCost,
   computeNotaryFees, computeAcquisition, loanNeeded,
-  assessLoanApplication, maxPrincipalForPayment,
+  assessLoanApplication, maxPrincipalForPayment, lowSavingsWarning,
   livingRemainingFloor, computeIndicators, computeCapitalGain, computeSaleProceeds,
   EngineInputError, BankRules,
 } from '../src/engine/immo';
@@ -17,7 +17,7 @@ const bank: BankRules = {
   projectRentWeight: 0,
   minDownPaymentPctOfNotaryFees: 100,
   minDownPaymentPctOfPrice: 10,
-  reserveMonthlyPayments: 4,
+  lowSavingsWarningMonths: 3,
   maxLoanMonths: 300,
   maxLoanMonthsWithWorks: 324,
   majorWorksMinPctOfLoan: 10,
@@ -299,7 +299,7 @@ describe('plus-value (règles FICTIVES de test : le moteur ne contient aucun chi
   });
 });
 
-describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), réserve et durée', () => {
+describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), endettement 35 %, avertissement d\'épargne et durée', () => {
   const h = { profile: 'executive' as const, salary: 6000, livingCharges: 1000 };
   // Prix 150 000, notaire 15 000 : apport exigé = 15 000 + 15 000 = 30 000.
   const ctx = { price: 150000, downPayment: 10000, notaryFees: 15000, loanMonths: 240, loanPrincipal: 150000, works: 0 };
@@ -324,21 +324,33 @@ describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), rése
     expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 50, minDownPaymentPctOfPrice: 0 }, 0, ctx).decision).toBe('approved');
     expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 0, minDownPaymentPctOfPrice: 0 }, 0, { ...ctx, downPayment: 0 }).decision).toBe('approved');
   });
-  it('réserve de sécurité : 4 mensualités (assurance comprise, crédits existants compris) en pièces libres après l\'achat', () => {
+  it('épargne restante faible : AVERTISSEMENT non bloquant, jamais un refus', () => {
     const ok = { ...ctx, downPayment: 30000 };
-    // 700 de mensualité + 300 de crédit existant = 1 000 × 4 = 4 000 exigés
+    // 700 de mensualité + 300 de crédit existant = 1 000 par mois ; seuil 3 mensualités = 3 000 pièces
     const hh = { ...h, existingDebtPayments: 300 };
-    expect(assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 4000 }).decision).toBe('approved');
+    const none = assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 3000 });
+    expect(none.decision).toBe('approved'); expect(none.warnings).toEqual([]);
     const low = assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 1500 });
-    expect(low.decision).toBe('refused');
-    const r = low.reasons.find((x) => x.code === 'RESERVE_TOO_LOW')!;
-    expect(r.limit).toBe(4000);
-    expect(r.message).toContain('1500');
-    expect(r.message).toContain('4000');
-    expect(r.message).toContain('2500'); // il manque 2 500
-    // non évaluée si le contexte ne la fournit pas ; désactivable par la configuration
-    expect(assessLoanApplication(hh, 700, bank, 0, ok).decision).toBe('approved');
-    expect(assessLoanApplication(hh, 700, { ...bank, reserveMonthlyPayments: 0 }, 0, { ...ok, freeCoinsAfter: 0 }).decision).toBe('approved');
+    expect(low.decision).toBe('approved');                                              // JAMAIS refusé pour l'épargne
+    expect(low.reasons.map((r) => r.code)).not.toContain('RESERVE_TOO_LOW');
+    expect(low.warnings).toHaveLength(1);
+    expect(low.warnings[0]).toMatchObject({ code: 'LOW_SAVINGS', savings: 1500, months: 1.5, thresholdMonths: 3 });
+    expect(low.warnings[0].message.replace(/[\u202f\u00a0]/g, ' ')).toContain('il te restera 1 500 pièces, soit 1,5 mensualité');
+    expect(low.warnings[0].message).toContain('Moins de 3 mensualités expose à un impayé.');
+    const zero = assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 0 });
+    expect(zero.decision).toBe('approved'); expect(zero.warnings[0].message).toContain('0 pièces, soit 0,0 mensualité');
+    // non évaluée si le contexte ne la fournit pas ; désactivable par la configuration (seuil 0)
+    expect(assessLoanApplication(hh, 700, bank, 0, ok).warnings).toEqual([]);
+    expect(assessLoanApplication(hh, 700, { ...bank, lowSavingsWarningMonths: 0 }, 0, { ...ok, freeCoinsAfter: 0 }).warnings).toEqual([]);
+  });
+  it('avertissement : les pièces d\'un prêt personnel non remboursé sont signalées comme non comptées', () => {
+    const w = lowSavingsWarning({ savings: 500, monthlyPayments: 700, thresholdMonths: 3, unpaidPersonalLoan: 500 })!;
+    expect(w.message).toContain('prêt personnel non remboursé (500 InvestCoins restant dus) ne comptent pas comme de l\'épargne');
+    expect(lowSavingsWarning({ savings: 500, monthlyPayments: 700, thresholdMonths: 3 })!.message).not.toContain('prêt personnel');
+    expect(lowSavingsWarning({ savings: 5000, monthlyPayments: 700, thresholdMonths: 3 })).toBeNull();
+    expect(lowSavingsWarning({ savings: 10, monthlyPayments: 0, thresholdMonths: 3 })).toBeNull();           // aucune mensualité : rien à comparer
+    expect(lowSavingsWarning({ savings: -50, monthlyPayments: 700, thresholdMonths: 3 })!.savings).toBe(0);  // jamais d'épargne négative affichée
+    expect(lowSavingsWarning({ savings: 700, monthlyPayments: 700, thresholdMonths: 3, moment: 'prêt' })!.message).toContain('Après ce prêt, il te restera 700 pièces, soit 1,0 mensualité.');
   });
   it('durée > 25 ans refusée, sauf travaux importants (27 ans)', () => {
     const long = { ...ctx, downPayment: 30000, loanMonths: 312 };
@@ -351,11 +363,10 @@ describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), rése
     expect(assessLoanApplication(h, 700, bank, 0, { ...long, works: 20000, loanMonths: 336 }).decision).toBe('refused');
   });
   it('plusieurs motifs de refus cumulés dans la même réponse', () => {
-    const a = assessLoanApplication({ profile: 'student', salary: 900 }, 900, bank, 0, { ...ctx, loanMonths: 360, freeCoinsAfter: 0 });
+    const a = assessLoanApplication({ profile: 'student', salary: 900 }, 900, bank, 0, { ...ctx, loanMonths: 360 });
     const codes = a.reasons.map((r) => r.code);
     expect(codes).toContain('DEBT_RATIO_TOO_HIGH');
     expect(codes).toContain('DOWN_PAYMENT_TOO_LOW');
-    expect(codes).toContain('RESERVE_TOO_LOW');
     expect(codes).toContain('LOAN_TERM_TOO_LONG');
   });
 });

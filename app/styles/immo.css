@@ -463,3 +463,6 @@
 .rp-filters { left: 0; right: 0; margin-inline: auto; transform: none; }
 /* Mobile : la barre « Simuler et acheter » laisse la place au bouton flottant « Un retour ? ». */
 @media (max-width: 1100px) { .rp-stickycta { padding-right: 168px; } }
+
+/* Avertissement non bloquant (épargne restante faible) */
+.rp-bank__warning { color: var(--ik-warning); margin-top: 8px; }

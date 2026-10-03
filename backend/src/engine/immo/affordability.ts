@@ -16,7 +16,7 @@ import { computeMonthlyPayment } from './loan';
 //   - taux d'endettement > plafond (35 %)     → REFUSÉ
 //   - reste à vivre < seuil du profil          → REFUSÉ (plus de « caution » : un dossier fragile est refusé net)
 //   - apport < frais de notaire + part du prix  → REFUSÉ (règle française : on n'emprunte pas les frais de notaire)
-//   - réserve de sécurité insuffisante          → REFUSÉ (il faut garder de quoi payer quelques mensualités)
+//   - épargne restante faible après l'achat    → AVERTISSEMENT non bloquant (jamais un refus : ce n'est pas une règle officielle)
 //   - sinon                                   → ACCORDÉ
 // Chaque décision renvoie la liste des RAISONS chiffrées, pour l'expliquer.
 // ─────────────────────────────────────────────────────────────────────────
@@ -48,8 +48,9 @@ export interface BankRules {
   minDownPaymentPctOfNotaryFees: number;
   // … PLUS une part du prix du bien (10 = 10 % du prix, en plus des frais de notaire).
   minDownPaymentPctOfPrice: number;
-  // Réserve de sécurité : nombre de mensualités (assurance comprise, tous prêts confondus) à garder en pièces libres APRÈS l'opération. 0 = désactivée.
-  reserveMonthlyPayments: number;
+  // AVERTISSEMENT (jamais un refus) : en dessous de ce nombre de mensualités d'épargne restante après l'opération, on prévient le joueur.
+  // Aucune règle française officielle n'impose de réserve : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
+  lowSavingsWarningMonths: number;
   // Durée maximale d'un prêt, en mois (25 ans = 300). Exceptions éventuelles : voir maxLoanMonthsWithWorks.
   maxLoanMonths: number;
   // Durée maximale pour un achat avec travaux importants (0 = pas d'exception).
@@ -62,11 +63,35 @@ export interface BankRules {
 export type Decision = 'approved' | 'refused';
 
 export interface Reason {
-  code: 'DEBT_RATIO_TOO_HIGH' | 'LIVING_REMAINING_LOW' | 'NO_INCOME' | 'DOWN_PAYMENT_TOO_LOW' | 'LOAN_TERM_TOO_LONG' | 'RESERVE_TOO_LOW' | 'OK';
+  code: 'DEBT_RATIO_TOO_HIGH' | 'LIVING_REMAINING_LOW' | 'NO_INCOME' | 'DOWN_PAYMENT_TOO_LOW' | 'LOAN_TERM_TOO_LONG' | 'OK';
   message: string;
   value?: number;
   limit?: number;
 }
+
+// Avertissement non bloquant : le joueur peut acheter quand même.
+export interface Warning { code: 'LOW_SAVINGS'; message: string; savings: number; months: number | null; thresholdMonths: number }
+
+const frNum = (n: number, d = 0): string => n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// Avertissement « épargne restante faible » : combien de mensualités (tous prêts confondus, assurance comprise) couvrent les pièces PROPRES qui resteront.
+// Jamais bloquant. Retourne null si l'épargne couvre au moins le seuil, ou s'il n'y a aucune mensualité.
+export const lowSavingsWarning = (
+  i: { savings: number; monthlyPayments: number; thresholdMonths: number; unpaidPersonalLoan?: number; moment?: 'achat' | 'prêt' }
+): Warning | null => {
+  if (!(i.thresholdMonths > 0) || !(i.monthlyPayments > 0)) return null;
+  const savings = Math.max(0, i.savings);
+  const months = savings / i.monthlyPayments;
+  if (months >= i.thresholdMonths) return null;
+  const moment = i.moment ?? 'achat';
+  const loanNote = (i.unpaidPersonalLoan ?? 0) > 0
+    ? ` Les pièces d'un prêt personnel non remboursé (${frNum(i.unpaidPersonalLoan!)} InvestCoins restant dus) ne comptent pas comme de l'épargne.` : '';
+  return {
+    code: 'LOW_SAVINGS', savings: Math.round(savings), months: Math.round(months * 10) / 10, thresholdMonths: i.thresholdMonths,
+    message: `Après ${moment === 'achat' ? 'cet achat' : 'ce prêt'}, il te restera ${frNum(savings)} pièces, soit ${frNum(months, 1)} mensualité${months >= 2 ? 's' : ''}. ` +
+      `Moins de ${frNum(i.thresholdMonths)} mensualités expose à un impayé.${loanNote}`,
+  };
+};
 
 export interface Assessment {
   decision: Decision;
@@ -75,6 +100,7 @@ export interface Assessment {
   livingRemaining: number;
   maxMonthlyPayment: number; // mensualité maximale (assurance incluse) au plafond d'endettement
   reasons: Reason[];
+  warnings: Warning[];     // avertissements non bloquants (épargne restante faible)
 }
 
 // Seuil de reste à vivre applicable à ce foyer. Aujourd'hui : seul le profil
@@ -95,7 +121,7 @@ export interface PurchaseContext {
   notaryFees: number;     // frais de notaire
   // Pièces libres (non empruntées) qu'il restera après l'opération. Absent = règle de réserve non évaluée.
   freeCoinsAfter?: number;
-  unpaidPersonalLoan?: number;   // capital restant dû d'un prêt personnel (ne compte pas dans la réserve) : sert à expliquer le refus
+  unpaidPersonalLoan?: number;   // capital restant dû d'un prêt personnel : ne compte pas comme épargne, sert à expliquer l'avertissement
   loanMonths: number;     // durée demandée
   loanPrincipal: number;  // montant emprunté (€)
   works: number;          // travaux financés (€)
@@ -130,6 +156,7 @@ export const assessLoanApplication = (
   const maxMonthlyPayment = round2(Math.max(0, (countedIncome * rules.maxDebtRatioPct) / 100 - existingDebt));
 
   const reasons: Reason[] = [];
+  const warnings: Warning[] = [];
   let decision: Decision = 'approved';
 
   if (debtRatioPct === null) {
@@ -174,21 +201,6 @@ export const assessLoanApplication = (
         limit: requiredDownPayment,
       });
     }
-    if (rules.reserveMonthlyPayments > 0 && purchase.freeCoinsAfter !== undefined) {
-      const requiredReserve = round2((existingDebt + newMonthlyPaymentWithInsurance) * rules.reserveMonthlyPayments);
-      if (purchase.freeCoinsAfter < requiredReserve) {
-        decision = 'refused';
-        reasons.push({
-          code: 'RESERVE_TOO_LOW',
-          message: `Réserve de sécurité insuffisante : après cet achat il te resterait ${Math.max(0, purchase.freeCoinsAfter).toFixed(0)} InvestCoins à toi, ` +
-            `la banque veut que tu gardes ${rules.reserveMonthlyPayments} mensualités (${requiredReserve.toFixed(0)} InvestCoins). ` +
-            `Il te manque ${(requiredReserve - Math.max(0, purchase.freeCoinsAfter)).toFixed(0)} InvestCoins.` +
-            ((purchase.unpaidPersonalLoan ?? 0) > 0 ? ` Les pièces d'un prêt personnel non remboursé (${purchase.unpaidPersonalLoan!.toFixed(0)} InvestCoins restant dus) ne comptent pas dans la réserve : une banque ne prend pas un prêt récent pour de l'épargne.` : ''),
-          value: purchase.freeCoinsAfter,
-          limit: requiredReserve,
-        });
-      }
-    }
     const majorWorks = rules.maxLoanMonthsWithWorks > 0 && purchase.loanPrincipal > 0 &&
       (purchase.works / purchase.loanPrincipal) * 100 >= rules.majorWorksMinPctOfLoan;
     const maxMonths = majorWorks ? rules.maxLoanMonthsWithWorks : rules.maxLoanMonths;
@@ -208,7 +220,13 @@ export const assessLoanApplication = (
     reasons.push({ code: 'OK', message: 'Endettement et reste à vivre dans les limites de la banque.' });
   }
 
-  return { decision, countedIncome, debtRatioPct: debtRatioPct === null ? null : Math.round(debtRatioPct * 100) / 100, livingRemaining, maxMonthlyPayment, reasons };
+  // Épargne restante faible : AVERTISSEMENT seulement (la décision de la banque n'en dépend jamais).
+  if (purchase?.freeCoinsAfter !== undefined) {
+    const w = lowSavingsWarning({ savings: purchase.freeCoinsAfter, monthlyPayments: existingDebt + newMonthlyPaymentWithInsurance, thresholdMonths: rules.lowSavingsWarningMonths, unpaidPersonalLoan: purchase.unpaidPersonalLoan });
+    if (w) warnings.push(w);
+  }
+
+  return { decision, countedIncome, debtRatioPct: debtRatioPct === null ? null : Math.round(debtRatioPct * 100) / 100, livingRemaining, maxMonthlyPayment, reasons, warnings };
 };
 
 // Capital maximal finançable (en euros ENTIERS) pour une mensualité totale

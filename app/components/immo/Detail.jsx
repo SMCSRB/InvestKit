@@ -285,6 +285,8 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
                   <strong>{pv.bank.approved ? 'La banque accepte' : 'La banque refuse'}</strong>
                   <p>Endettement<HelpTip term="endettement" /> : {pct(pv.bank.debtRatioPct)} (maximum accepté : {eur(pv.bank.maxMonthlyPayment)}/mois) · reste à vivre<HelpTip term="reste-a-vivre" /> : {eur(pv.bank.livingRemaining)}</p>
                   {!pv.bank.approved && pv.bank.reasons?.map((r) => <p key={r.code} className="rp-bank__reason">• {r.message}</p>)}
+                  {pv.bank.warnings?.map((w) => <p key={w.code} className="rp-bank__warning" data-testid="bank-warning" role="note"><Icon name="alert" size={16} /> <strong>Attention :</strong> {w.message} Tu peux acheter quand même.<HelpTip term="epargne-restante" /></p>)}
+                  {pv.bank.warnings?.map((w) => <p key={w.code} className="rp-bank__warning" data-testid="bank-warning" role="note"><Icon name="alert" size={16} /> <strong>Attention :</strong> {w.message} Tu peux acheter quand même.<HelpTip term="epargne-restante" /></p>)}
                 </div>
                 <dl className="rp-facts rp-facts--tight">
                   <Row label="Tu empruntes">{eur(pv.costs.loanPrincipal)}</Row>

@@ -42,14 +42,14 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 ## C. Immobilier — règles bancaires, frais, loyers (`backend/src/config/immoRules.ts`)
 | Paramètre | Valeur actuelle | État | Source officielle à consulter |
 |---|---|---|---|
-| Taux d'endettement maximal | 35 % (assurance comprise) | SOURCÉ | HCSF, décision D-HCSF-2021-7 (à vérifier) ; economie.gouv.fr |
-| Durée maximale du prêt | 25 ans ; 27 ans avec gros travaux (≥ 10 % du prêt) | SOURCÉ | HCSF (même décision) |
-| Loyers retenus par la banque | 70 % | JEU / pratique | courtiers (pas de texte officiel) |
-| Reste à vivre minimal | étudiant 500 € ; salarié 1 200 € ; cadre 1 800 € | JEU | pratique bancaire (pas de texte officiel) |
-| Réserve de sécurité : pièces propres uniquement | Ne comptent PAS : le capital restant dû d'un prêt personnel non remboursé (et les pièces d'un prêt sur portefeuille fléché). Règle prudente : on retire le capital dû même si les pièces ont été dépensées. | DÉCISION produit (Andreja) | `ownCoins` dans `bankService.ts` |
+| Taux d'endettement maximal | 35 % (assurance comprise) | SOURCÉ (source secondaire ; texte officiel à relire) | HCSF, décision D-HCSF-2021-7 du 29/09/2021, applicable depuis le 01/01/2022 ; economie.gouv.fr / hcsf.fr (non consultés ici : accès bloqué) |
+| Durée maximale du prêt | 25 ans ; 27 ans avec gros travaux (≥ 10 % du prêt dans le code) | SOURCÉ pour 25/27 ans ; le seuil de travaux à reconfirmer | HCSF (même décision) |
+| Loyers retenus par la banque | 70 % | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | courtiers (pas de texte officiel) |
+| Reste à vivre minimal | étudiant 500 ; salarié 1 200 ; cadre 1 800 InvestCoins par mois | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | pratique bancaire (aucun seuil officiel) |
+| Avertissement d'épargne : pièces propres uniquement | Ne comptent PAS comme épargne : le capital restant dû d'un prêt personnel non remboursé (et les pièces d'un prêt sur portefeuille fléché). Règle prudente : on retire le capital dû même si les pièces ont été dépensées. | DÉCISION produit (Andreja) | `ownCoins` dans `bankService.ts` |
 | Crédit fléché : prêt personnel | NON affecté : pièces libres, dépensables partout (décision d'Andreja, comme un vrai prêt personnel). Le prêt immobilier reste attaché au bien (il ne crée aucune pièce). Le prêt sur portefeuille reste fléché vers son domaine. | DÉCISION produit | `bankPersonalService.ts` (`earmark: false`) |
-| Apport minimal | frais de notaire (100 %) + 10 % du prix | JEU, NON SOURCÉE, À RECONFIRMER (les 10 %) ; DÉCISION produit | pratique bancaire (pas de texte officiel) |
-| Réserve de sécurité | 4 mensualités (assurance comprise, tous prêts) en pièces propres après l'opération (achat et prêt personnel) | JEU, NON SOURCÉE, À RECONFIRMER | règle d'équilibrage du jeu |
+| Apport minimal | frais de notaire (100 %, pratique bancaire non sourcée) + **10 % du prix** | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (les 10 % et l'apport des frais de notaire) ; DÉCISION produit | pratique bancaire (aucun texte officiel) |
+| Avertissement d'épargne restante (NON bloquant) | « Après cet achat, il te restera X pièces, soit Y mensualités. Moins de 3 mensualités expose à un impayé. » Seuil : **3 mensualités** (`BANK_RULES.lowSavingsWarningMonths`). **La réserve de 4 mensualités qui refusait un achat est SUPPRIMÉE** : aucune règle française officielle ne l'impose. | VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER | repère de prudence du jeu |
 | Seuil de classement (tous domaines) | 2 500 InvestCoins investis ET 5 jours actifs | JEU, NON SOURCÉE, À RECONFIRMER | `config/economy.ts` |
 | Décote d'un bien loué à la revente (classement Immobilier) | 10 % | JEU, NON SOURCÉE, À RECONFIRMER | `SALE_PARAMS.occupiedDiscountPct` |
 | Assurance emprunteur | 0,36 % du capital par an | JEU | comparateurs publics ; CCSF |
