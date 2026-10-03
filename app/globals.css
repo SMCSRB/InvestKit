@@ -14,6 +14,7 @@
 @import './styles/sim.css';
 @import './styles/auth.css';
 @import './styles/immo.css';
+@import './styles/glossaire.css';
 
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-30px); }
