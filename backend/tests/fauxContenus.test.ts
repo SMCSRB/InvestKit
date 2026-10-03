@@ -92,3 +92,15 @@ describe('actualités et profil : plus de contenu inventé', () => {
     expect(t).toContain('downloadMyData');
   });
 });
+
+describe('suppression de compte : le bouton agit vraiment', () => {
+  it('formulaire relié à /auth/me/delete : mot de passe, 2FA, mot SUPPRIMER, session effacée', () => {
+    const t = read('app/components/profile/DeleteAccount.jsx');
+    expect(t).toContain('/auth/me/delete');
+    expect(t).toContain("CONFIRM_PHRASE = 'SUPPRIMER'");
+    expect(t).toContain('TWO_FACTOR_REQUIRED');
+    expect(t).toMatch(/disabled=\{busy \|\| confirm !== CONFIRM_PHRASE/);
+    expect(read('app/dashboard/page.jsx')).toContain('<DeleteAccount />');
+    expect(read('app/profile/page.jsx')).toContain('<DeleteAccount />');
+  });
+});

@@ -37,6 +37,7 @@
   .border-purple-400\/30{border-color:color-mix(in srgb, var(--ik-orchid) 30%, transparent)}
   .border-purple-400\/50{border-color:color-mix(in srgb, var(--ik-orchid) 50%, transparent)}
   .border-purple-500\/20{border-color:color-mix(in srgb, var(--ik-orchid) 20%, transparent)}
+  .border-red-500\/30{border-color:color-mix(in srgb, var(--ik-negative) 30%, transparent)}
   .border-t{border-top-width:1px;border-top-style:solid}
   .border-yellow-400\/30{border-color:color-mix(in srgb, var(--ik-warning) 30%, transparent)}
   .cursor-pointer{cursor:pointer}

@@ -12,6 +12,7 @@ import AppearanceSettings from '@/app/components/AppearanceSettings';
 import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
 import { AVATAR_TYPES, getProfile, saveProfile, uploadAvatar, removeAvatar } from '@/app/lib/profileApi';
+import DeleteAccount from '@/app/components/profile/DeleteAccount';
 import Avatar from '@/app/components/social/Avatar';
 import { downloadMyData } from '@/app/lib/exportData';
 import { endSession } from '@/app/lib/session';
@@ -349,6 +350,12 @@ export default function ProfilePage() {
                   <button type="button" onClick={exportMyData} className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300"> Exporter
                   </button>
                   {exportMsg && <p role="status" className="text-gray-400 text-sm mt-2">{exportMsg}</p>}
+                </div>
+
+                {/* Suppression réelle du compte */}
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-red-500/30">
+                  <h3 className="text-white font-semibold mb-3">Supprimer mon compte</h3>
+                  <DeleteAccount />
                 </div>
 
                 {/* Logout */}
