@@ -30,15 +30,18 @@ const bad = (m: string) => new CryptoDataError('INVALID_INPUT', m);
 // Chiffre un ordre AU MARCHÉ sans l'exécuter (aperçu des coûts affiché avant de valider).
 const planMarket = (m: Market, side: Side, qty: number, stress = 1): Execution => executeAt({ side, refPrice: m.price, quantity: qty, tier: m.tier, avgDailyVolumeUsd: m.adv, maker: false, stressMultiplier: stress, usdPerCoin: fxOf(m) });
 
+// Plus grande quantité (8 décimales) dont le total (montant arrondi + frais) tient dans le budget. Recherche dichotomique exacte : le total ne baisse jamais
+// quand la quantité monte, donc la plus grande quantité valable est unique. (L'ancienne réduction par paliers s'arrêtait à la première quantité valable,
+// souvent un peu trop basse : jusqu'à une pièce de budget restait inutilisée.)
 const quantityForBudget = (m: Market, budget: number, stress = 1): string => {
-  let q = Number(floorQty8((budget * fxOf(m)) / m.price));   // départ : budget entier sans frais ; on réduit jusqu'à ce que prix + frais tiennent dans le budget
-  for (let i = 0; i < 40 && q > 0; i++) {
-    const ex = planMarket(m, 'buy', q, stress);
-    const total = ex.notionalCoins + ex.feeCoins;
-    if (total <= budget) break;
-    q = Number(floorQty8(q * (budget / total) * 0.9999));
+  const total = (units: number): number => { const ex = planMarket(m, 'buy', units / 1e8, stress); return ex.notionalCoins + ex.feeCoins; };
+  let lo = 0;                                                         // quantité valable (0 = rien)
+  let hi = Math.floor(((budget * fxOf(m)) / m.price) * 1e8) + 1;      // borne haute : budget entier sans frais ni écart (toujours trop chère d'une unité)
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (total(mid) <= budget) lo = mid; else hi = mid;
   }
-  return floorQty8(q);
+  return floorQty8(lo / 1e8);
 };
 
 // Pièces dont le joueur dispose dans la Crypto : son solde moins les pièces EMPRUNTÉES encore réservées à un autre domaine (prêt Immobilier, etc.).
@@ -68,7 +71,7 @@ export const cryptoTradingService = {
     const funds = await fundsOf({ query }, userId);
     const totalNeeded = ex.notionalCoins + ex.feeCoins;
     return { symbol, side, quantity: qty, funds: { balanceCoins: funds.balance, spendableCoins: funds.spendable, reservedElsewhereCoins: funds.reservedElsewhere },
-      affordable: side === 'sell' ? true : funds.spendable >= totalNeeded, affordableMessage: side === 'buy' && funds.spendable < totalNeeded ? insufficientMessage(totalNeeded, funds) : null, refPrice: m.price, refPriceCoins: priceCoinsOf(m), fxUsdPerCoin: fxOf(m), tier: m.tier, stale: m.stale, execution: { price: ex.price, priceCoins: ex.price / fxOf(m), spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
+      affordable: side === 'sell' ? true : funds.spendable >= totalNeeded, affordableMessage: side === 'buy' && funds.spendable < totalNeeded ? insufficientMessage(totalNeeded, funds) : null, refPrice: m.price, refPriceCoins: priceCoinsOf(m), fxUsdPerCoin: fxOf(m), tier: m.tier, stale: m.stale, execution: { price: ex.price, priceCoins: ex.price / fxOf(m), rawNotionalCoins: ex.rawNotionalCoins, roundingCoins: Math.round((ex.notionalCoins - ex.rawNotionalCoins) * 1e8) / 1e8, spreadPct: ex.spreadPct, slippagePct: ex.slippagePct, notionalCoins: ex.notionalCoins, feeCoins: ex.feeCoins, totalCoins: side === 'buy' ? ex.notionalCoins + ex.feeCoins : ex.notionalCoins - ex.feeCoins },
       note: 'Estimation : le prix de référence est celui de la date simulée ; l\'écart achat/vente et le glissement dépendent de la liquidité de l\'actif.' };
   },
 

@@ -23,7 +23,7 @@ export const slippageFraction = (notionalUsd: number, avgDailyVolumeUsd: number)
 // `usdPerCoin` : dollars pour 1 InvestCoin (= 1 €) ce jour-là, d'après le taux de la BCE ; décidé par le serveur. Prix, écart et glissement restent en dollars ;
 // seul le montant final est converti en pièces. Défaut 1 : 1 InvestCoin = 1 $ (tests du moteur).
 export interface ExecInput { side: Side; refPrice: number; quantity: number; tier: number; avgDailyVolumeUsd: number; maker: boolean; stressMultiplier?: number; usdPerCoin?: number }
-export interface Execution { price: number; spreadPct: number; slippagePct: number; notionalCoins: number; feeCoins: number }
+export interface Execution { price: number; spreadPct: number; slippagePct: number; notionalCoins: number; feeCoins: number; rawNotionalCoins: number }   // rawNotionalCoins : prix d'exécution × quantité, avant l'arrondi à la pièce
 
 // Prix effectif : un achat paie plus cher, une vente reçoit moins (demi-écart + glissement). Un ordre maker s'exécute à son prix, sans écart ni glissement.
 // Montant en pièces entières, arrondi CONTRE le joueur (achat : supérieur ; vente : inférieur), comme le reste du registre.
@@ -38,7 +38,7 @@ export const executeAt = (i: ExecInput): Execution => {
   if (!(rate > 0) || !Number.isFinite(rate)) throw new Error('Taux de change invalide');
   const raw = (price * i.quantity) / rate;
   const notionalCoins = i.side === 'buy' ? Math.ceil(raw - 1e-9) : Math.floor(raw + 1e-9);
-  return { price, spreadPct, slippagePct: slip * 100, notionalCoins, feeCoins: feeCoins(notionalCoins, i.tier, i.maker) };
+  return { price, spreadPct, slippagePct: slip * 100, notionalCoins, feeCoins: feeCoins(notionalCoins, i.tier, i.maker), rawNotionalCoins: raw };
 };
 
 export interface Resting { side: Side; type: OrderType; triggerPrice: number }

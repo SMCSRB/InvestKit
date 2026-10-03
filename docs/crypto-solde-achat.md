@@ -31,3 +31,17 @@ Seul le prêt personnel a écrit dans `bank_credit_balances` pour `real_estate`.
 - **Rétablissement** : la procédure saisissait les pièces réservées avant d'effacer la dette. Avec un prêt libre, il n'y a plus rien à saisir : un joueur peut emprunter, dépenser ailleurs, puis faire effacer la dette. À traiter (saisie sur le solde libre ou limite du rétablissement) avant l'ouverture au public.
 - **Réserve de 4 mensualités** (PR 8b) : les pièces empruntées comptent maintenant comme des pièces propres ; un prêt personnel peut donc servir à constituer la réserve exigée pour un achat. À regarder si tu veux l'interdire.
 - **Classement Immobilier** : le levier affiché ne distingue plus la part financée par un prêt personnel non dépensé (réserve nulle).
+
+## Achat « pour X pièces » : la quantité était trop basse (corrigé)
+Cas d'Andreja (1er janvier 2020) : ordre de 100, BTC à 6 404,87 → 0,01530544 BTC reçus au lieu d'environ 0,015452.
+Ligne par ligne, avec le prix d'exécution 6 406,86 :
+| Ligne | Valeur |
+|---|---|
+| Quantité reçue | 0,01530544 |
+| Montant brut (prix × quantité) | 98,06 |
+| Arrondi à la pièce supérieure (contre le joueur) | 99 (+0,94) |
+| Frais (0,10 % = 0,10, minimum 1 pièce) | 1 |
+| Total débité | 100 |
+| Quantité attendue avec 99 de montant | 99 / 6 406,86 = 0,015452 (brut 99,00) |
+La pièce manquante est dans la **quantité** : la recherche « quelle quantité tient dans mon budget » s'arrêtait à la première quantité valable (réduction par paliers), souvent trop basse. Ici elle s'arrêtait à un brut de 98,06 et laissait 0,94 pièce inutilisée. Corrigé par une recherche dichotomique exacte : la quantité est la plus grande dont (montant arrondi + frais) tient dans le budget ; au plus une fraction de pièce (l'arrondi à la pièce) est perdue.
+L'estimation affiche maintenant la quantité attendue (« Tu recevras X BTC ») et chaque ligne : prix d'exécution, prix × quantité, arrondi, frais, total débité.
