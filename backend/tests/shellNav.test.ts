@@ -8,8 +8,8 @@ describe('menu latéral : entrées actives', () => {
     const actifs = flatNav().filter((n: any) => isActive('/dashboard', '', n.href)).map((n: any) => n.id);
     expect(actifs).toEqual(['dashboard']);
   });
-  it('avec ?tab=trading, seule « Bourse et PEA » est active', () => {
-    const actifs = flatNav().filter((n: any) => isActive('/dashboard', 'tab=trading', n.href)).map((n: any) => n.id);
+  it('sur la page /bourse, seule « Bourse et PEA » est active', () => {
+    const actifs = flatNav().filter((n: any) => isActive('/bourse', '', n.href)).map((n: any) => n.id);
     expect(actifs).toEqual(['bourse']);
   });
   it('une autre page active uniquement sa propre entrée', () => {
