@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { hasDb, setupDb, teardownDb, createUser, balanceOf, legacyCoins } from './helpers';
+import { hasDb, setupDb, teardownDb, createUser, balanceOf, legacyCoins, minDownCoins } from './helpers';
 import { query } from '../src/utils/db';
 import { investcoinsRepository, InsufficientFundsError } from '../src/repositories/investcoinsRepository';
 import { realEstateService as svc, RealEstateError } from '../src/services/realEstateService';
@@ -119,17 +119,17 @@ describe.skipIf(!hasDb)('prêt personnel (fléché Immobilier)', () => {
 
   it('les pièces empruntées financent un achat immobilier ; l\'aperçu compte seulement les pièces utilisables ici', async () => {
     const l = await goodListing();
-    const uid = await player({ profile: 'executive', balance: legacyCoins(60) });
+    const uid = await player({ profile: 'executive', balance: legacyCoins(200) });
     await personal.borrow(uid, { amountCoins: legacyCoins(700), months: 48 });
-    const down = Math.ceil((l.price * 0.1) / EUROS_PER_COIN);
+    const down = minDownCoins(l);
     const prev: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 });
-    expect(prev.coins.balance).toBe(legacyCoins(760));
+    expect(prev.coins.balance).toBe(legacyCoins(900));
     expect(prev.coins.affordable).toBe(true);
     // les pièces réservées à un autre domaine ne comptent pas : simulation d'un prêt fléché Bourse
     await query(`INSERT INTO bank_credit_balances (user_id, domain, coins) VALUES ($1, 'stocks', ${legacyCoins(500)}) ON CONFLICT (user_id, domain) DO UPDATE SET coins = ${legacyCoins(500)}`, [uid]);
     await investcoinsRepository.applyTransaction(uid, legacyCoins(500), 'bank_disburse', { domain: 'stocks' });
     const prev2: any = await svc.previewPurchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 });
-    expect(prev2.coins.balance).toBe(legacyCoins(760));            // 1 260 en portefeuille − 500 réservés à la Bourse
+    expect(prev2.coins.balance).toBe(legacyCoins(900));            // 1 400 en portefeuille − 500 réservés à la Bourse
     await svc.purchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 });
     expect((await query('SELECT coins FROM bank_credit_balances WHERE user_id = $1 AND domain = $2', [uid, 'real_estate'])).rows[0].coins).toBeLessThan(legacyCoins(700)); // consommé en premier
   });
@@ -160,9 +160,10 @@ describe.skipIf(!hasDb)('prêt personnel (fléché Immobilier)', () => {
   });
 
   it('IMPAYÉS : échéance non payée → avertissement dans le mois ; 3 de suite = défaut, blocage, aucun nouvel emprunt', async () => {
-    const uid = await player({ profile: 'employee', balance: 0 });
+    const own = legacyCoins(100);   // pièces à lui : la banque exige une réserve de 4 mensualités avant de prêter
+    const uid = await player({ profile: 'employee', balance: own });
     await personal.borrow(uid, { amountCoins: legacyCoins(300), months: 24 });
-    await investcoinsRepository.applyTransaction(uid, -legacyCoins(300), 're_exchange_pay_works', { domain: 'real_estate' });   // il dépense tout
+    await investcoinsRepository.applyTransaction(uid, -(legacyCoins(300) + own), 're_exchange_pay_works', { domain: 'real_estate' });   // il dépense tout
     let warned = false;
     for (let i = 0; i < 3; i++) {
       const r: any = await life.advanceTime(uid, 1);
@@ -182,10 +183,10 @@ describe.skipIf(!hasDb)('prêt personnel (fléché Immobilier)', () => {
   it('CLASSEMENT NET DE DETTES : levier affiché, intérêts déduits ; sans emprunt levier ×1', async () => {
     const l = await goodListing();
     const buyWith = async (uid: string, down: number) => { await svc.purchase(uid, { listingId: l.id, downPaymentCoins: down, months: 240 }); const p = (await svc.listProperties(uid)).properties[0]; await life.listForRent(uid, p.id, 0.9); await advance(uid, 12); };
-    const down = Math.ceil((l.price * 0.1) / EUROS_PER_COIN);
+    const down = minDownCoins(l);
     const own = await player({ profile: 'executive', balance: legacyCoins(2000), seed: 'levier' });
     await buyWith(own, down);
-    const debt = await player({ profile: 'executive', balance: legacyCoins(60), seed: 'levier' });
+    const debt = await player({ profile: 'executive', balance: legacyCoins(250), seed: 'levier' });
     await personal.borrow(debt, { amountCoins: legacyCoins(700), months: 60 });
     await buyWith(debt, down);
     const g = async (u: string) => (await query('SELECT * FROM re_games WHERE user_id = $1', [u])).rows[0];
@@ -198,7 +199,7 @@ describe.skipIf(!hasDb)('prêt personnel (fléché Immobilier)', () => {
     const board: any = await getRealEstateLeaderboard(debt, undefined);
     expect(board.mine.leverage).toBe(mDebt.leverage);
     expect(board.me.leverage).toBe(mDebt.leverage);
-    const snap = (await query(`SELECT leverage FROM leaderboard_rankings WHERE user_id = $1 AND domain = 'real_estate'`, [debt])).rows[0];
+    const snap = (await query(`SELECT leverage FROM leaderboard_rankings WHERE user_id = $1 AND domain = 'real_estate' ORDER BY period DESC LIMIT 1`, [debt])).rows[0];   // dernière période (l'avance de 12 mois peut en écrire deux)
     expect(Number(snap.leverage)).toBe(mDebt.leverage);
     // gain identique au bien seul, moins les intérêts : jamais supérieur au joueur sans dette en euros
     expect(mDebt.equity + mDebt.cumulativeCashFlow - mDebt.investedEuros - mDebt.bankInterestPaidEuros)

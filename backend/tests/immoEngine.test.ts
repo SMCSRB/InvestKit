@@ -16,6 +16,8 @@ const bank: BankRules = {
   rentalIncomeWeight: 1,
   projectRentWeight: 0,
   minDownPaymentPctOfNotaryFees: 100,
+  minDownPaymentPctOfPrice: 10,
+  reserveMonthlyPayments: 4,
   maxLoanMonths: 300,
   maxLoanMonthsWithWorks: 324,
   majorWorksMinPctOfLoan: 10,
@@ -156,10 +158,15 @@ describe('décision de la banque (expliquée)', () => {
     expect(a.debtRatioPct).toBe(37.5);
     expect(a.decision).toBe('refused');
   });
-  it('accord sous réserve : reste à vivre faible', () => {
+  it('reste à vivre trop faible : refus net (plus de « caution »), avec la mensualité maximale compatible', () => {
     const a = assessLoanApplication({ profile: 'employee', salary: 3000, livingCharges: 1200 }, 900, bank); // ratio 30 %, reste 900
-    expect(a.decision).toBe('caution');
-    expect(a.reasons.some((r) => r.code === 'LIVING_REMAINING_LOW')).toBe(true);
+    expect(a.decision).toBe('refused');
+    const r = a.reasons.find((x) => x.code === 'LIVING_REMAINING_LOW')!;
+    // revenu 3 000 − charges 1 200 − seuil 1 200 = 600 de mensualité maximale compatible
+    expect(r.message).toContain('900');
+    expect(r.message).toContain('1200');
+    expect(r.message).toContain('600');
+    expect(r.message).not.toContain('€');
   });
   it('sans revenu : refusé, sans division par zéro', () => {
     const a = assessLoanApplication({ profile: 'employee', salary: 0 }, 500, bank);
@@ -193,9 +200,9 @@ describe('reste à vivre par profil', () => {
     expect(livingRemainingFloor({ ...h, profile: 'executive' }, bank)).toBe(1800);
   });
   it('même dossier, décision différente selon le profil', () => {
-    // ratio 30 %, reste à vivre 900 : ok pour un étudiant (500), sous réserve pour un salarié (1 200)
+    // ratio 30 %, reste à vivre 900 : ok pour un étudiant (500), refusé pour un salarié (1 200)
     expect(assessLoanApplication({ ...h, profile: 'student' }, 900, bank).decision).toBe('approved');
-    expect(assessLoanApplication(h, 900, bank).decision).toBe('caution');
+    expect(assessLoanApplication(h, 900, bank).decision).toBe('refused');
   });
   it('majorations par foyer désactivées à 0, activables par la configuration', () => {
     const family = { ...h, adults: 2, children: 2 };
@@ -292,25 +299,49 @@ describe('plus-value (règles FICTIVES de test : le moteur ne contient aucun chi
   });
 });
 
-describe('règles d\'achat de la banque : apport minimum et durée', () => {
+describe('règles d\'achat de la banque : apport (notaire + 10 % du prix), réserve et durée', () => {
   const h = { profile: 'executive' as const, salary: 6000, livingCharges: 1000 };
-  const ctx = { downPayment: 10000, notaryFees: 15000, loanMonths: 240, loanPrincipal: 150000, works: 0 };
-  it('apport inférieur aux frais de notaire : refus expliqué avec le montant manquant', () => {
+  // Prix 150 000, notaire 15 000 : apport exigé = 15 000 + 15 000 = 30 000.
+  const ctx = { price: 150000, downPayment: 10000, notaryFees: 15000, loanMonths: 240, loanPrincipal: 150000, works: 0 };
+  it('apport insuffisant : refus expliqué, détail notaire + 10 % du prix et montant manquant', () => {
     const a = assessLoanApplication(h, 700, bank, 0, ctx);
     expect(a.decision).toBe('refused');
     const r = a.reasons.find((x) => x.code === 'DOWN_PAYMENT_TOO_LOW')!;
-    expect(r.message).toContain('15000');
-    expect(r.message).toContain('5000'); // il manque 5 000 €
+    expect(r.message).toContain('30000');
+    expect(r.message).toContain('15000 de frais de notaire');
+    expect(r.message).toContain('10 % du prix');
+    expect(r.message).toContain('20000'); // il manque 20 000
+    expect(r.limit).toBe(30000);
   });
-  it('apport égal aux frais de notaire : accepté', () => {
-    expect(assessLoanApplication(h, 700, bank, 0, { ...ctx, downPayment: 15000 }).decision).toBe('approved');
+  it('apport égal au minimum (notaire + 10 %) : accepté ; juste en dessous : refusé', () => {
+    expect(assessLoanApplication(h, 700, bank, 0, { ...ctx, downPayment: 30000 }).decision).toBe('approved');
+    expect(assessLoanApplication(h, 700, bank, 0, { ...ctx, downPayment: 29999 }).decision).toBe('refused');
   });
-  it('le seuil est configurable', () => {
-    expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 50 }, 0, ctx).decision).toBe('approved');
-    expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 0 }, 0, { ...ctx, downPayment: 0 }).decision).toBe('approved');
+  it('les frais de notaire ne se financent jamais : 10 % du prix seuls ne suffisent pas', () => {
+    expect(assessLoanApplication(h, 700, bank, 0, { ...ctx, downPayment: 15000 }).decision).toBe('refused');
+  });
+  it('les seuils sont configurables', () => {
+    expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 50, minDownPaymentPctOfPrice: 0 }, 0, ctx).decision).toBe('approved');
+    expect(assessLoanApplication(h, 700, { ...bank, minDownPaymentPctOfNotaryFees: 0, minDownPaymentPctOfPrice: 0 }, 0, { ...ctx, downPayment: 0 }).decision).toBe('approved');
+  });
+  it('réserve de sécurité : 4 mensualités (assurance comprise, crédits existants compris) en pièces libres après l\'achat', () => {
+    const ok = { ...ctx, downPayment: 30000 };
+    // 700 de mensualité + 300 de crédit existant = 1 000 × 4 = 4 000 exigés
+    const hh = { ...h, existingDebtPayments: 300 };
+    expect(assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 4000 }).decision).toBe('approved');
+    const low = assessLoanApplication(hh, 700, bank, 0, { ...ok, freeCoinsAfter: 1500 });
+    expect(low.decision).toBe('refused');
+    const r = low.reasons.find((x) => x.code === 'RESERVE_TOO_LOW')!;
+    expect(r.limit).toBe(4000);
+    expect(r.message).toContain('1500');
+    expect(r.message).toContain('4000');
+    expect(r.message).toContain('2500'); // il manque 2 500
+    // non évaluée si le contexte ne la fournit pas ; désactivable par la configuration
+    expect(assessLoanApplication(hh, 700, bank, 0, ok).decision).toBe('approved');
+    expect(assessLoanApplication(hh, 700, { ...bank, reserveMonthlyPayments: 0 }, 0, { ...ok, freeCoinsAfter: 0 }).decision).toBe('approved');
   });
   it('durée > 25 ans refusée, sauf travaux importants (27 ans)', () => {
-    const long = { ...ctx, downPayment: 15000, loanMonths: 312 };
+    const long = { ...ctx, downPayment: 30000, loanMonths: 312 };
     const refused = assessLoanApplication(h, 700, bank, 0, long);
     expect(refused.decision).toBe('refused');
     expect(refused.reasons.some((r) => r.code === 'LOAN_TERM_TOO_LONG')).toBe(true);
@@ -320,10 +351,11 @@ describe('règles d\'achat de la banque : apport minimum et durée', () => {
     expect(assessLoanApplication(h, 700, bank, 0, { ...long, works: 20000, loanMonths: 336 }).decision).toBe('refused');
   });
   it('plusieurs motifs de refus cumulés dans la même réponse', () => {
-    const a = assessLoanApplication({ profile: 'student', salary: 900 }, 900, bank, 0, { ...ctx, loanMonths: 360 });
+    const a = assessLoanApplication({ profile: 'student', salary: 900 }, 900, bank, 0, { ...ctx, loanMonths: 360, freeCoinsAfter: 0 });
     const codes = a.reasons.map((r) => r.code);
     expect(codes).toContain('DEBT_RATIO_TOO_HIGH');
     expect(codes).toContain('DOWN_PAYMENT_TOO_LOW');
+    expect(codes).toContain('RESERVE_TOO_LOW');
     expect(codes).toContain('LOAN_TERM_TOO_LONG');
   });
 });
