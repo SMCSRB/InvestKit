@@ -35,7 +35,7 @@ export default function HomePage() {
             <span className="lp-eyebrow"><Icon name="shield" size={14} />Simulation pédagogique · aucun argent réel</span>
             <h1 id="lp-title">Apprends à investir, <span className="lp-grad">sans risquer un centime.</span></h1>
             <p className="lp-hero__sub">
-              Entraîne-toi à l&apos;immobilier, à la crypto et à la Bourse avec les InvestCoins, une monnaie virtuelle. Crédits, impôts, krachs, loyers impayés : tout se passe comme dans la vraie vie, sauf les pertes.
+              Entraîne-toi à l&apos;immobilier, à la crypto et à la Bourse avec les InvestCoins, une monnaie virtuelle. Crédits, impôts, krachs, loyers impayés : les règles s&apos;inspirent de la vraie vie, en version simplifiée, et les pertes restent virtuelles.
             </p>
             <HeroDomains />
             <HeroActions />

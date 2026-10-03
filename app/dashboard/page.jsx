@@ -1387,7 +1387,7 @@ function DashboardContent() {
         <div key={activeTab} className="dash-tabpanel">
         {activeTab === 'overview' && <OverviewTab overview={overview} failed={overviewFailed} onRetry={() => { setOverviewFailed(false); loadOverview(); }} onOpenTab={setActiveTab} />}
 
-        {/* MARKET TAB : cours réels du marché simulé, aucune valeur en dur */}
+        {/* MARKET TAB : cours historiques rejoués à la date de jeu, aucune valeur en dur */}
         {activeTab === 'market' && <MarketTab />}
 
         {/* TRADING TAB - Simulateur Bourse (mode accéléré) */}
