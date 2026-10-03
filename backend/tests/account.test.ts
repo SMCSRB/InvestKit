@@ -67,8 +67,10 @@ describe.skipIf(!hasDb)('droits RGPD : export et suppression du compte', () => {
     }
     expect((await query('SELECT COUNT(*) AS n FROM users WHERE id = $1', [other])).rows[0].n).toBe('1');
     expect((await query('SELECT COUNT(*) AS n FROM bank_loans WHERE user_id = $1', [other])).rows[0].n).toBe('1');
-    const audit = (await query(`SELECT user_id FROM audit_logs WHERE action = 'account_deleted' AND entity_id = $1`, [uid])).rows;
-    expect(audit).toEqual([{ user_id: null }]);
+    // le journal de suppression est anonyme : ni auteur, ni identifiant, ni IP ; et plus aucune ligne ne désigne ce joueur
+    const audit = (await query(`SELECT user_id, entity_id, ip_address FROM audit_logs WHERE action = 'account_deleted' AND user_id IS NULL AND entity_id IS NULL AND ip_address IS NULL`)).rows;
+    expect(audit.length).toBeGreaterThanOrEqual(1);
+    expect((await query(`SELECT COUNT(*)::int AS n FROM audit_logs WHERE user_id = $1 OR entity_id = $1`, [uid])).rows[0].n).toBe(0);
   });
 
   it('2FA : le code (ou un code de secours) est exigé et vérifié avant toute suppression', async () => {

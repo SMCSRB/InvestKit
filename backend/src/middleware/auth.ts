@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, TokenPayload } from '../utils/jwt';
-import { isDisabled } from '../utils/userStatus';
+import { userStatus } from '../utils/userStatus';
 import {
   SESSION_COOKIE, CSRF_COOKIE, CSRF_HEADER, readCookie, isSafeMethod, csrfValid, csrfTokenFor, originAllowed, setSessionCookies,
 } from '../utils/session';
@@ -60,7 +60,12 @@ export const authMiddleware = async (
       }
     }
 
-    if (await isDisabled(payload.userId)) {
+    const status = await userStatus(payload.userId);
+    if (status.gone) {
+      res.status(401).json({ error: 'Compte introuvable ou supprimé.', code: 'ACCOUNT_GONE' });
+      return;
+    }
+    if (status.disabled) {
       res.status(403).json({ error: 'Ce compte est suspendu.', code: 'ACCOUNT_DISABLED' });
       return;
     }

@@ -23,6 +23,7 @@ import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
 import ProfileForm from '@/app/components/profile/ProfileForm';
 import NewsFeed from './NewsFeed';
+import DeleteAccount from '@/app/components/profile/DeleteAccount';
 import { downloadMyData } from '@/app/lib/exportData';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
@@ -2386,18 +2387,7 @@ function DashboardContent() {
                   <div>
                     <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ik-negative)', margin: '0 0 8px 0' }}> Zone Danger
                     </p>
-                    <button style={{
-                      padding: '10px 20px',
-                      background: 'color-mix(in srgb, var(--ik-negative) 15%, transparent)',
-                      border: '1px solid color-mix(in srgb, var(--ik-negative) 30%, transparent)',
-                      borderRadius: '8px',
-                      color: 'var(--ik-negative)',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}>
-                      Supprimer mon compte
-                    </button>
+                    <DeleteAccount />
                   </div>
                 </div>
               )}
