@@ -7,7 +7,7 @@ import Icon from '@/app/components/ui/Icon';
 import { Button, Popover } from '@/app/components/ui/primitives';
 import { AnimatedNumber, burstCoins } from '@/app/components/ui/motion';
 import { endSession } from '@/app/lib/session';
-import { readPhoto, onPhotoChange } from '@/app/lib/profilePhoto';
+import Avatar from '@/app/components/social/Avatar';
 import PlanBadge from '@/app/components/plan/PlanBadge';
 import { planLine } from '@/app/lib/plan';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -56,8 +56,6 @@ function Notifications({ notif, onRead }) {
 function ProfileMenu({ user, isAdmin, theme, onToggleTheme }) {
   const router = useRouter();
   const name = user?.username || user?.firstName || 'Mon compte';
-  const [photo, setPhoto] = useState(null);
-  useEffect(() => { setPhoto(readPhoto()); return onPhotoChange(() => setPhoto(readPhoto())); }, []);
   const logout = async () => {
     await endSession();
     router.push('/');
@@ -68,9 +66,7 @@ function ProfileMenu({ user, isAdmin, theme, onToggleTheme }) {
       label="Menu du compte"
       trigger={({ toggle, open }) => (
         <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="menu" aria-label={`Menu du compte : ${name}${user?.plan?.isPro ? ', Pro' : ''}`}>
-          {photo
-            ? <img className="ik-avatar" src={photo} alt="" aria-hidden="true" style={{ objectFit: 'cover' }} />
-            : <span className="ik-avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>}
+          <Avatar avatarId={user?.avatarId} name={name} size={32} />
           <span className="ik-profile__name">{name}</span>
           <PlanBadge plan={user?.plan} size="sm" />
           <Icon name="chevronDown" size={16} />

@@ -3,7 +3,7 @@
 // routes réellement montées dans l'application : ajouter une route sans la
 // décrire ici fait échouer les tests.
 
-type Row = [method: 'get' | 'post' | 'put' | 'delete', path: string, tag: string, summary: string, access?: 'public' | 'admin'];
+type Row = [method: 'get' | 'post' | 'put' | 'patch' | 'delete', path: string, tag: string, summary: string, access?: 'public' | 'admin'];
 
 export const ROUTES: Row[] = [
   ['get', '/auth/signup-config', 'Compte', 'Configuration de l\'inscription (invitation ou non)', 'public'],
@@ -47,6 +47,13 @@ export const ROUTES: Row[] = [
   ['get', '/social/tag', 'Social', 'Mon identifiant Pseudo#tag (et mes droits de changement)'],
   ['post', '/social/tag', 'Social', 'Choisir mon # (membres Pro : 1 changement par mois, règles vérifiées par le serveur)'],
   ['get', '/social/tag/history', 'Social', 'Historique de mes #'],
+  ['get', '/profile', 'Profil', 'Mon profil : nom, bio, e-mail, pseudo, photo'],
+  ['patch', '/profile', 'Profil', 'Modifier mon nom et ma bio (un champ absent n\'est pas touché ; l\'e-mail ne se change pas ici)'],
+  ['post', '/profile/avatar', 'Profil', 'Envoyer ma photo (corps brut JPG/PNG/WebP, 3 Mo max ; ré-encodée et nettoyée côté serveur)'],
+  ['delete', '/profile/avatar', 'Profil', 'Supprimer ma photo'],
+  ['get', '/profile/avatar/{avatarId}', 'Profil', 'Image d\'une photo (identifiant secret)', 'public'],
+  ['post', '/profile/email/request', 'Profil', 'Demander un changement d\'e-mail (mot de passe ; code envoyé à la nouvelle adresse)'],
+  ['post', '/profile/email/confirm', 'Profil', 'Confirmer le changement d\'e-mail avec le code reçu'],
   ['post', '/social/privacy', 'Social', 'Montrer ou masquer ma couronne Pro aux autres joueurs'],
   ['get', '/social/friends', 'Social', 'Mes amis (nom, niveau, XP)'],
   ['get', '/social/friends/ranking', 'Social', 'Classement entre amis (moi + amis, par XP d\'éducation)'],

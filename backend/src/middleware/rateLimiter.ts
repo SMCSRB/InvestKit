@@ -97,3 +97,8 @@ export const quizLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Trop de tentatives de quiz en peu de temps. Relis le chapitre et réessaie dans quelques minutes.' },
 });
+
+// Profil : enregistrement des champs (30 par 15 min), photo (10 par heure : le traitement d'image coûte), changement d'e-mail (6 par heure).
+export const profileWriteLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de modifications. Réessaie dans quelques minutes.' } });
+export const avatarLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop d\'envois de photo. Réessaie dans une heure.' } });
+export const emailChangeLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 6, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de demandes. Réessaie dans une heure.' } });

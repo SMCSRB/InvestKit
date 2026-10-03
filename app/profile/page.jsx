@@ -11,7 +11,8 @@ import AppShell from '@/app/components/shell/AppShell';
 import AppearanceSettings from '@/app/components/AppearanceSettings';
 import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
-import { readPhoto, onPhotoChange, savePhotoFromFile, clearPhoto, PHOTO_TYPES } from '@/app/lib/profilePhoto';
+import { AVATAR_TYPES, getProfile, saveProfile, uploadAvatar, removeAvatar } from '@/app/lib/profileApi';
+import Avatar from '@/app/components/social/Avatar';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 export default function ProfilePage() {
@@ -28,22 +29,31 @@ export default function ProfilePage() {
     emailNotifications: false,
   });
   const [activeSettingsTab, setActiveSettingsTab] = useState('display');
-  const [profileData, setProfileData] = useState({
-    username: 'InvestKitUser',
-    bio: 'Passionné par l\'investissement et l\'apprentissage',
-    avatar: 'user',
-  });
+  // Pseudo, bio et photo viennent du serveur (jamais de valeur d'exemple) ; seul le choix d'icône de secours reste local.
+  const [profileData, setProfileData] = useState({ username: '', bio: '', avatar: 'user', avatarId: null });
+  const [profileError, setProfileError] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [photo, setPhoto] = useState(null);
   const [photoError, setPhotoError] = useState('');
+  const [photoBusy, setPhotoBusy] = useState(false);
   const photoInput = useRef(null);
-  useEffect(() => { setPhoto(readPhoto()); return onPhotoChange(() => setPhoto(readPhoto())); }, []);
   const choosePhoto = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     setPhotoError('');
-    const r = await savePhotoFromFile(file);
-    if (!r.ok) setPhotoError(r.error);
+    if (!file || photoBusy) return;
+    setPhotoBusy(true);
+    const r = await uploadAvatar(file);
+    setPhotoBusy(false);
+    if (!r.ok) { setPhotoError(r.error); return; }
+    setProfileData((d) => ({ ...d, avatarId: r.data.avatarId }));
+  };
+  const dropPhoto = async () => {
+    setPhotoError('');
+    setPhotoBusy(true);
+    const r = await removeAvatar();
+    setPhotoBusy(false);
+    if (!r.ok) { setPhotoError(r.error); return; }
+    setProfileData((d) => ({ ...d, avatarId: null }));
   };
 
   useEffect(() => {
@@ -62,18 +72,22 @@ export default function ProfilePage() {
     }
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) {
-      setProfileData((prev) => ({
-        ...prev,
-        ...JSON.parse(savedProfile),
-      }));
+      try { const { avatar } = JSON.parse(savedProfile); if (avatar) setProfileData((prev) => ({ ...prev, avatar })); } catch { /* ignore */ }
     }
+    getProfile().then((r) => {
+      if (!r.ok) { setProfileError('Impossible de charger ton profil pour le moment.'); return; }
+      setProfileData((prev) => ({ ...prev, username: r.data.username || '', bio: r.data.bio || '', avatarId: r.data.avatarId }));
+    });
   }, [router]);
 
-  const saveProfileData = (newData) => {
-    setProfileData(newData);
-    localStorage.setItem('userProfile', JSON.stringify(newData));
+  const saveProfileData = async (newData) => {
+    const r = await saveProfile({ bio: newData.bio });
+    if (!r.ok) { setProfileError(r.error); return; }
+    setProfileError('');
+    setProfileData((prev) => ({ ...prev, bio: r.data.bio }));
+    try { localStorage.setItem('userProfile', JSON.stringify({ avatar: newData.avatar })); } catch { /* ignore */ }
     setIsEditingProfile(false);
-    addNotification('Profil mis à jour ✓', 'success', 2000);
+    addNotification('Profil mis à jour', 'success', 2000);
   };
 
   const updateSetting = (key, value) => {
@@ -133,12 +147,13 @@ export default function ProfilePage() {
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <div className="flex items-center gap-6 flex-wrap" style={{ minWidth: 0 }}>
-                {photo
-                  ? <img src={photo} alt="Ta photo de profil" data-testid="profile-photo" style={{ width: 'clamp(72px, 20vw, 128px)', height: 'clamp(72px, 20vw, 128px)', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--ik-primary)' }} />
+                {profileData.avatarId
+                  ? <span data-testid="profile-photo" style={{ display: 'inline-flex', border: '2px solid var(--ik-primary)', borderRadius: '50%' }}><Avatar avatarId={profileData.avatarId} name={profileData.username} size={112} /></span>
                   : <div className="text-8xl" style={{ fontSize: 'clamp(64px, 20vw, 128px)', lineHeight: 1 }}><Glyph g={profileData.avatar} size={96} /></div>}
                 <div style={{ minWidth: 0 }}>
-                  <h1 className="text-4xl font-bold text-white mb-2" style={{ overflowWrap: 'anywhere' }}>{profileData.username}</h1>
-                  <p className="text-gray-400 mb-3">{profileData.bio}</p>
+                  <h1 className="text-4xl font-bold text-white mb-2" style={{ overflowWrap: 'anywhere' }}>{profileData.username || 'Mon profil'}</h1>
+                  {profileError && <p role="alert" style={{ color: 'var(--ik-negative)', fontSize: 13 }}>{profileError}</p>}
+                  {profileData.bio ? <p className="text-gray-400 mb-3">{profileData.bio}</p> : null}
                   <button
                     onClick={() => setIsEditingProfile(true)}
                     className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300"
@@ -159,14 +174,14 @@ export default function ProfilePage() {
                     <div>
                       <label className="block text-white font-semibold mb-2">Photo de profil</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        {photo
-                          ? <img src={photo} alt="Aperçu de ta photo" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
+                        {profileData.avatarId
+                          ? <Avatar avatarId={profileData.avatarId} name={profileData.username} size={64} />
                           : <span aria-hidden="true" style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 30, background: 'var(--ik-surface-3)' }}><Glyph g={profileData.avatar} size={32} /></span>}
-                        <input ref={photoInput} type="file" accept={PHOTO_TYPES.join(',')} onChange={choosePhoto} data-testid="photo-input" style={{ display: 'none' }} aria-label="Choisir une photo de profil" />
-                        <button type="button" onClick={() => photoInput.current?.click()} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">{photo ? 'Changer la photo' : 'Choisir une photo'}</button>
-                        {photo && <button type="button" onClick={() => { setPhotoError(''); clearPhoto(); }} className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">Retirer</button>}
+                        <input ref={photoInput} type="file" accept={AVATAR_TYPES.join(',')} onChange={choosePhoto} data-testid="photo-input" style={{ display: 'none' }} aria-label="Choisir une photo de profil" />
+                        <button type="button" onClick={() => photoInput.current?.click()} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">{photoBusy ? 'Envoi…' : profileData.avatarId ? 'Changer la photo' : 'Choisir une photo'}</button>
+                        {profileData.avatarId && <button type="button" onClick={dropPhoto} disabled={photoBusy} className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">Supprimer ma photo</button>}
                       </div>
-                      <p className="text-gray-400" style={{ fontSize: 12, margin: '8px 0 0' }}>JPG, PNG ou WebP. La photo reste sur cet appareil : les autres joueurs ne la voient pas.</p>
+                      <p className="text-gray-400" style={{ fontSize: 12, margin: '8px 0 0' }}>JPG, PNG ou WebP. Elle est visible par les autres joueurs (classements, amis, guildes).</p>
                       {photoError && <p role="alert" style={{ color: 'var(--ik-negative)', fontSize: 13, margin: '6px 0 0' }}>{photoError}</p>}
                     </div>
 
@@ -190,16 +205,10 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    {/* Username */}
+                    {/* Pseudo : affiché, non modifiable ici (choisi à l'inscription) */}
                     <div>
-                      <label className="block text-white font-semibold mb-2">Username</label>
-                      <input
-                        type="text"
-                        value={profileData.username}
-                        onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
-                        placeholder="Votre username"
-                      />
+                      <label className="block text-white font-semibold mb-2" htmlFor="profile-username">Pseudo</label>
+                      <input id="profile-username" type="text" readOnly value={profileData.username} className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-gray-600 text-white" style={{ opacity: 0.8, cursor: 'not-allowed' }} />
                     </div>
 
                     {/* Bio */}
@@ -209,10 +218,10 @@ export default function ProfilePage() {
                         value={profileData.bio}
                         onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                         className="w-full px-4 py-2 rounded-lg bg-slate-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400"
-                        placeholder="Parlez-nous de vous..."
-                        rows="3"
+                        placeholder="Facultatif : présente-toi en une phrase"
+                        rows="3" maxLength={280}
                       />
-                      <p className="text-gray-400 text-xs mt-1">{profileData.bio.length}/150 caractères</p>
+                      <p className="text-gray-400 text-xs mt-1">{profileData.bio.length}/280 caractères</p>
                     </div>
 
                     {/* Buttons */}

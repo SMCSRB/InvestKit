@@ -549,6 +549,8 @@ export const authController = {
           firstName: user.first_name,
           lastName: user.last_name,
           username: user.username,
+          bio: (user as any).bio ?? '',
+          avatarId: (user as any).avatar_id ?? null,
           subscriptionTier: user.subscription_tier,
           freeDomain: user.free_domain,
           hasProAccess: hasProAccess(user),

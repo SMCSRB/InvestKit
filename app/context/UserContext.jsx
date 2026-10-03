@@ -12,8 +12,8 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState({
     friendCode: '', // le vrai code ami vient du serveur (/api/v1/social/me)
     fullName: '',
-    bio: 'Investisseur Premium',
-    profilePhoto: '',
+    bio: '',
+    avatarId: null,
     friends: [], // { userId, friendCode, name, status: 'confirmed', addedDate }
     friendRequests: {
       sent: [], // { userId, friendCode, name, sentDate }
@@ -65,7 +65,9 @@ export function UserProvider({ children }) {
             ...prev,
             email: data.user.email,
             username: data.user.username,
-            fullName: data.user.username || prev.fullName,
+            fullName: [data.user.firstName, data.user.lastName].filter((x) => x && !/^(user|unknown)$/i.test(x.trim())).join(' '),
+            bio: data.user.bio || '',
+            avatarId: data.user.avatarId || null,
             subscriptionTier: data.user.subscriptionTier,
             freeDomain: data.user.freeDomain,
             enable2FA: data.user.enable2FA,
@@ -86,7 +88,7 @@ export function UserProvider({ children }) {
         ...prev,
         friendCode: '', // le vrai code ami vient du serveur (/api/v1/social/me)
         fullName: '',
-        bio: 'Investisseur Premium',
+        bio: '',
       }));
     }
   };
