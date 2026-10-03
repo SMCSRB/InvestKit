@@ -9,7 +9,7 @@ import HistoryChart from '@/app/components/HistoryChart';
 import SocialHub from '@/app/components/social/SocialHub';
 import ProBadgePrivacy from '@/app/components/plan/ProBadgePrivacy';
 
-import { PRICES, formatEuro } from '@/app/lib/plans';
+import { PRICES, formatEuro, yearlySavingPct } from '@/app/lib/plans';
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -22,6 +22,8 @@ import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
 import ProfileForm from '@/app/components/profile/ProfileForm';
+import NewsFeed from './NewsFeed';
+import { downloadMyData } from '@/app/lib/exportData';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 // Transparence d'une couleur quelconque (hexadécimale ou variable de design).
@@ -106,12 +108,6 @@ function DashboardContent() {
   const [showDomainChooser, setShowDomainChooser] = useState(false);
   const [tradingBoard, setTradingBoard] = useState(null);
   const [tradingBoardYear, setTradingBoardYear] = useState(null); // null = mon année simulée
-  const [profileVisibility, setProfileVisibility] = useState('public');
-  const [hideStats, setHideStats] = useState(false);
-  const [shareProgress, setShareProgress] = useState(true);
-  const [preferredDomain, setPreferredDomain] = useState('crypto');
-  const [difficultyLevel, setDifficultyLevel] = useState('intermediate');
-  const [academyNotifications, setAcademyNotifications] = useState(true);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [friendsTab, setFriendsTab] = useState('friends'); // friends, search, pending, leaderboard, messages, guildes
@@ -218,14 +214,12 @@ function DashboardContent() {
   const [selectedDisplayBadges, setSelectedDisplayBadges] = useState(['first_step', 'crypto_novice']); // Max 3 badges to display
   const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)');
   const [userBio, setUserBio] = useState('Investisseur passionné en crypto et finance');
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [exportNote, setExportNote] = useState('');
   const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
   const [bioEditInput, setBioEditInput] = useState('Investisseur passionné en crypto et finance');
   const [baggeBackgroundInput, setBaggeBackgroundInput] = useState('');
   // Level tracking - synchronized with localStorage
   const [userLevel, setUserLevel] = useState(1); // Default 1, loads from localStorage
-  const [dailyXP, setDailyXP] = useState(Math.floor(Math.random() * 500) + 150); // Random XP 150-650
-  const [totalXP, setTotalXP] = useState((userLevel || 1) * 1000 + dailyXP);
   const [xpToNextLevel, setXpToNextLevel] = useState(1000);
   const [recentLevelUp, setRecentLevelUp] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -1246,49 +1240,7 @@ function DashboardContent() {
       setIsAuthenticated(true);
     }
 
-    // Load visibility settings
-    const savedVisibility = typeof window !== 'undefined' ? localStorage.getItem('profileVisibility') : null;
-    if (savedVisibility) {
-      setProfileVisibility(savedVisibility);
-    }
-    const savedHideStats = typeof window !== 'undefined' ? localStorage.getItem('hideStats') : null;
-    if (savedHideStats) {
-      setHideStats(JSON.parse(savedHideStats));
-    }
-    const savedShareProgress = typeof window !== 'undefined' ? localStorage.getItem('shareProgress') : null;
-    if (savedShareProgress !== null) {
-      setShareProgress(JSON.parse(savedShareProgress));
-    }
-
-    // Load learning preferences
-    const savedDomain = typeof window !== 'undefined' ? localStorage.getItem('preferredDomain') : null;
-    if (savedDomain) {
-      setPreferredDomain(savedDomain);
-    }
-    const savedDifficulty = typeof window !== 'undefined' ? localStorage.getItem('difficultyLevel') : null;
-    if (savedDifficulty) {
-      setDifficultyLevel(savedDifficulty);
-    }
-    const savedNotifications = typeof window !== 'undefined' ? localStorage.getItem('academyNotifications') : null;
-    if (savedNotifications !== null) {
-      setAcademyNotifications(JSON.parse(savedNotifications));
-    }
   }, [router]);
-
-  // Préférences locales (visibilité, apprentissage) : enregistrées dans ce navigateur dès qu'on les change.
-  // Le profil (photo, nom, e-mail, bio) est géré par <ProfileForm /> et enregistré sur le serveur.
-  const prefsReady = useRef(false);
-  useEffect(() => {
-    if (!prefsReady.current) { prefsReady.current = true; return; }
-    try {
-      localStorage.setItem('profileVisibility', profileVisibility);
-      localStorage.setItem('hideStats', JSON.stringify(hideStats));
-      localStorage.setItem('shareProgress', JSON.stringify(shareProgress));
-      localStorage.setItem('preferredDomain', preferredDomain);
-      localStorage.setItem('difficultyLevel', difficultyLevel);
-      localStorage.setItem('academyNotifications', JSON.stringify(academyNotifications));
-    } catch { /* stockage indisponible */ }
-  }, [profileVisibility, hideStats, shareProgress, preferredDomain, difficultyLevel, academyNotifications]);
 
   // Le thème est désormais commun à tout le site (bascule dans le menu latéral, le profil et ici).
   const toggleTheme = () => toggleGlobalTheme();
@@ -1842,7 +1794,7 @@ function DashboardContent() {
                     <Icon name="star" size={18} /> {progress.totalXP} XP
                   </span>
                   {progress.streak > 0 && (
-                    <span style={{ color: 'var(--ik-warning)' }}> Racha: {progress.streak}
+                    <span style={{ color: 'var(--ik-warning)' }}> Série : {progress.streak}
                     </span>
                   )}
                   {progress.badges && progress.badges.length > 0 && (
@@ -2169,22 +2121,10 @@ function DashboardContent() {
                         Devise
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        EUR (€)
+                        EUR (€) · les montants du jeu sont en InvestCoins
                       </p>
                     </div>
-                    <select style={{
-                      padding: '8px 12px',
-                      background: `${currentTheme.border}`,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}>
-                      <option>EUR (€)</option>
-                      <option>USD ($)</option>
-                      <option>GBP (£)</option>
-                    </select>
+                    <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Fixe pour l&apos;instant</span>
                   </div>
 
                   {/* Format de date */}
@@ -2198,22 +2138,10 @@ function DashboardContent() {
                         Format de date
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Jour/Mois/Année
+                        Jour/Mois/Année (autres formats : bientôt)
                       </p>
                     </div>
-                    <select style={{
-                      padding: '8px 12px',
-                      background: `${currentTheme.border}`,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}>
-                      <option>JJ/MM/AAAA</option>
-                      <option>MM/JJ/AAAA</option>
-                      <option>AAAA-MM-JJ</option>
-                    </select>
+                    <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Fixe pour l&apos;instant</span>
                   </div>
                 </div>
               )}
@@ -2287,7 +2215,7 @@ function DashboardContent() {
                         background: currentTheme.border,
                         borderRadius: '8px',
                       }}>
-                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Racha</p>
+                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Série</p>
                         <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}><Icon name="flame" size={18} /> {progress.streak}</p>
                       </div>
                       <div style={{
@@ -2301,265 +2229,9 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  {/* Visibility Settings */}
-                  <div style={{
-                    paddingTop: '16px',
-                    borderTop: `1px solid ${currentTheme.border}`,
-                  }}>
-                    <h4 style={{
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      color: currentTheme.text,
-                      margin: '0 0 16px 0',
-                    }}> Visibilité du Profil
-                    </h4>
-                    <div style={{ display: 'grid', gap: '12px' }}>
-                      {/* Profile Visibility */}
-                      <div style={{
-                        padding: '12px',
-                        background: currentTheme.border,
-                        borderRadius: '8px',
-                      }}>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.textSecondary,
-                          marginBottom: '6px',
-                        }}>
-                          Visibilité du profil
-                        </label>
-                        <select
-                          value={profileVisibility}
-                          onChange={(e) => setProfileVisibility(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            background: currentTheme.border,
-                            border: `1px solid ${currentTheme.border}`,
-                            borderRadius: '8px',
-                            color: currentTheme.text,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                          }}>
-                          <option value="public">Public</option>
-                          <option value="private">Privé</option>
-                          <option value="friends">Amis seulement</option>
-                        </select>
-                      </div>
-
-                      {/* Hide Stats */}
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '12px',
-                        background: currentTheme.border,
-                        borderRadius: '8px',
-                      }}>
-                        <div>
-                          <p style={{ fontSize: '12px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                            Masquer les statistiques
-                          </p>
-                          <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: 0 }}>
-                            Cacher votre XP et niveau publiquement
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setHideStats(!hideStats)}
-                          style={{
-                            position: 'relative',
-                            width: '40px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            background: hideStats ? 'var(--ik-primary)' : '#6b7280',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                          }}>
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '2px',
-                              left: hideStats ? '20px' : '2px',
-                              width: '20px',
-                              height: '20px',
-                              background: 'white',
-                              borderRadius: '50%',
-                              transition: 'left 0.3s ease',
-                            }}
-                          />
-                        </button>
-                      </div>
-
-                      {/* Share Progress */}
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '12px',
-                        background: currentTheme.border,
-                        borderRadius: '8px',
-                      }}>
-                        <div>
-                          <p style={{ fontSize: '12px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                            Partager la progression
-                          </p>
-                          <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: 0 }}>
-                            Autoriser le partage de vos données
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setShareProgress(!shareProgress)}
-                          style={{
-                            position: 'relative',
-                            width: '40px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            background: shareProgress ? 'var(--ik-primary)' : '#6b7280',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                          }}>
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '2px',
-                              left: shareProgress ? '20px' : '2px',
-                              width: '20px',
-                              height: '20px',
-                              background: 'white',
-                              borderRadius: '50%',
-                              transition: 'left 0.3s ease',
-                            }}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Learning Preferences */}
-                  <div style={{
-                    paddingTop: '16px',
-                    borderTop: `1px solid ${currentTheme.border}`,
-                  }}>
-                    <h4 style={{
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      color: currentTheme.text,
-                      margin: '0 0 16px 0',
-                    }}> Préférences d'Apprentissage
-                    </h4>
-                    <div style={{ display: 'grid', gap: '12px' }}>
-                      {/* Preferred Domain */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.textSecondary,
-                          marginBottom: '6px',
-                        }}>
-                          Domaine d'investissement préféré
-                        </label>
-                        <select
-                          value={preferredDomain}
-                          onChange={(e) => setPreferredDomain(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            background: currentTheme.border,
-                            border: `1px solid ${currentTheme.border}`,
-                            borderRadius: '8px',
-                            color: currentTheme.text,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                          }}>
-                          <option value="crypto">InvestCoins Crypto-monnaies</option>
-                          <option value="stocks">Actions/Bourse</option>
-                          <option value="real-estate">Immobilier</option>
-                          <option value="bonds">Obligations</option>
-                          <option value="forex">Forex</option>
-                          <option value="general">Tous les domaines</option>
-                        </select>
-                      </div>
-
-                      {/* Difficulty Level */}
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: currentTheme.textSecondary,
-                          marginBottom: '6px',
-                        }}>
-                          Niveau de difficulté préféré
-                        </label>
-                        <select
-                          value={difficultyLevel}
-                          onChange={(e) => setDifficultyLevel(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            background: currentTheme.border,
-                            border: `1px solid ${currentTheme.border}`,
-                            borderRadius: '8px',
-                            color: currentTheme.text,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                          }}>
-                          <option value="beginner">Débutant</option>
-                          <option value="intermediate">Intermédiaire</option>
-                          <option value="advanced">Avancé</option>
-                          <option value="expert">Expert</option>
-                        </select>
-                      </div>
-
-                      {/* Academy Notifications */}
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '12px',
-                        background: currentTheme.border,
-                        borderRadius: '8px',
-                      }}>
-                        <div>
-                          <p style={{ fontSize: '12px', fontWeight: '600', color: currentTheme.text, margin: '0 0 4px 0' }}>
-                            Notifications d'académie
-                          </p>
-                          <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: 0 }}>
-                            Recevoir les rappels d'apprentissage
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setAcademyNotifications(!academyNotifications)}
-                          style={{
-                            position: 'relative',
-                            width: '40px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            background: academyNotifications ? 'var(--ik-primary)' : '#6b7280',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                          }}>
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: '2px',
-                              left: academyNotifications ? '20px' : '2px',
-                              width: '20px',
-                              height: '20px',
-                              background: 'white',
-                              borderRadius: '50%',
-                              transition: 'left 0.3s ease',
-                            }}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Réglages de visibilité et d'apprentissage retirés : ils n'étaient enregistrés que dans le navigateur et n'agissaient sur rien
+                      (un profil « privé » ne l'était pas). Ils reviendront quand le serveur les appliquera vraiment. */}
+                  <p className="ik-muted" style={{ margin: 0, fontSize: 13 }}>Les réglages de visibilité du profil (public, privé, masquer mes stats) arriveront bientôt : ils seront appliqués par le serveur, pas seulement affichés.</p>
                 </div>
               )}
 
@@ -2586,10 +2258,10 @@ function DashboardContent() {
                         Changer le mot de passe
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Mettez à jour votre mot de passe
+                        Un lien de changement t'est envoyé par e-mail
                       </p>
                     </div>
-                    <button style={{
+                    <button type="button" onClick={() => router.push('/forgot-password')} style={{
                       padding: '8px 16px',
                       background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
@@ -2637,14 +2309,6 @@ function DashboardContent() {
                     </button>
                   </div>
 
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 12px 0' }}>
-                      Sessions actives
-                    </p>
-                    <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                      Gérez vos sessions de connexion
-                    </p>
-                  </div>
                 </div>
               )}
 
@@ -2673,10 +2337,10 @@ function DashboardContent() {
                         Export mes données
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Téléchargez vos données personnelles
+                        {exportNote || 'Télécharge toutes tes données personnelles (fichier JSON)'}
                       </p>
                     </div>
-                    <button style={{
+                    <button type="button" onClick={async () => { const r = await downloadMyData(); setExportNote(r.ok ? 'Fichier téléchargé.' : r.error); }} style={{
                       padding: '8px 16px',
                       background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
@@ -2705,7 +2369,7 @@ function DashboardContent() {
                         Consultez nos conditions
                       </p>
                     </div>
-                    <button style={{
+                    <button type="button" onClick={() => router.push('/privacy')} style={{
                       padding: '8px 16px',
                       background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
@@ -2847,7 +2511,7 @@ function DashboardContent() {
                             padding: '4px 10px',
                             borderRadius: '20px',
                           }}>
-                            2 mois offerts
+                            −{yearlySavingPct()} % par rapport au mensuel
                           </span>
                           <p style={{ fontSize: '13px', fontWeight: '600', color: currentTheme.textSecondary, margin: 0, textTransform: 'uppercase' }}>Annuel</p>
                           <p style={{ fontSize: '28px', fontWeight: '800', color: currentTheme.text, margin: 0 }}>{formatEuro(PRICES.yearly)}<span style={{ fontSize: '13px', fontWeight: '500', color: currentTheme.textSecondary }}>/an</span></p>
@@ -3210,219 +2874,7 @@ function DashboardContent() {
               gap: '16px',
               scrollBehavior: 'smooth',
             }}>
-              {newsModalTab === 'news' && (
-                <>
-                  {/* News Item 1 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-primary)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="trendingUp" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: 'var(--ik-accent)',
-                          margin: '0 0 4px 0',
-                        }}>
-                          CAC 40 en hausse
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          L'indice gagne 1.2% aujourd'hui
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      À l'instant
-                    </span>
-                  </div>
-
-                  {/* News Item 2 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-positive) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-positive)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="lightbulb" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: '#86efac',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Conseil du jour
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          Diversifiez pour réduire les risques
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 2h
-                    </span>
-                  </div>
-
-                  {/* News Item 3 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-orchid)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="bookOpen" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: '#d8b4fe',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Nouvelle formation
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          Maîtrisez la crypto
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 5h
-                    </span>
-                  </div>
-
-                  {/* News Item 4 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-warning) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-warning)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="triangleAlert" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: '#fcd34d',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Alerte BTC
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          Prix en baisse, opportunité?
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 1h
-                    </span>
-                  </div>
-
-                  {/* News Item 5 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-primary)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="trophy" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: 'var(--ik-accent)',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Objectif atteint!
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          +€5k de gains ce mois
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 3h
-                    </span>
-                  </div>
-                </>
-              )}
+              {newsModalTab === 'news' && <NewsFeed />}
 
               {newsModalTab === 'tips' && (
                 <>
@@ -3491,352 +2943,6 @@ function DashboardContent() {
                 borderRadius: '2px',
                 margin: '0 auto',
               }} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PROFILE CUSTOMIZATION MODAL */}
-      {showProfileMenu && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 51,
-        }}
-        onClick={() => setShowProfileMenu(false)}
-        >
-          <div style={{
-            background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-text) 95%, transparent) 0%, rgba(15, 52, 96, 0.95) 100%)',
-            borderRadius: '20px',
-            padding: '0',
-            border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
-            backdropFilter: 'blur(20px)',
-            maxWidth: '600px',
-            width: '90%',
-            maxHeight: '80vh',
-            overflow: 'auto',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8)',
-          }}
-          onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div style={{
-              padding: '24px',
-              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: '900',
-                color: 'var(--ik-text)',
-                margin: 0,
-              }}>
-                Mon Profil
-              </h2>
-              <button
-                onClick={() => setShowProfileMenu(false)}
-                style={{
-                  background: 'color-mix(in srgb, var(--ik-text) 10%, transparent)',
-                  border: '1px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
-                  borderRadius: '8px',
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--ik-text)',
-                  cursor: 'pointer',
-                  fontSize: '20px',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 15%, transparent)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Tabs */}
-            <div style={{
-              display: 'flex',
-              gap: '0',
-              padding: '0 24px',
-              borderBottom: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
-              background: 'rgba(0, 0, 0, 0.2)',
-            }}>
-              {[
-                { id: 'badges', label: 'Badges', icon: 'award' },
-                { id: 'bio', label: 'Bio', icon: 'pencilLine' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setProfileMenuTab(tab.id)}
-                  style={{
-                    flex: 1,
-                    padding: '16px',
-                    background: profileMenuTab === tab.id ? 'color-mix(in srgb, var(--ik-primary) 20%, transparent)' : 'transparent',
-                    border: 'none',
-                    borderBottom: profileMenuTab === tab.id ? '2px solid var(--ik-primary)' : '2px solid transparent',
-                    color: profileMenuTab === tab.id ? 'var(--ik-accent)' : 'color-mix(in srgb, var(--ik-text) 50%, transparent)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (profileMenuTab !== tab.id) {
-                      e.currentTarget.style.color = 'color-mix(in srgb, var(--ik-text) 70%, transparent)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (profileMenuTab !== tab.id) {
-                      e.currentTarget.style.color = 'color-mix(in srgb, var(--ik-text) 50%, transparent)';
-                    }
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '24px' }}>
-              {profileMenuTab === 'badges' && (
-                <div>
-                  <div style={{ marginBottom: '24px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: 'var(--ik-text-2)',
-                      marginBottom: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}> Fond du Badge (Sélectionnez max 3 badges)
-                    </label>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)',
-                      gap: '8px',
-                      marginBottom: '16px',
-                    }}>
-                      {[
-                        { id: 'blue', name: 'Bleu', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)' },
-                        { id: 'purple', name: 'Violet', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 15%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)' },
-                        { id: 'gold', name: 'Or', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-warning) 10%, transparent) 0%, color-mix(in srgb, var(--ik-warning) 10%, transparent) 100%)' },
-                        { id: 'green', name: 'Vert', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-positive) 10%, transparent) 0%, color-mix(in srgb, var(--ik-positive) 10%, transparent) 100%)' },
-                        { id: 'pink', name: 'Rose', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 0%, rgba(190, 24, 93, 0.1) 100%)' },
-                        { id: 'red', name: 'Rouge', value: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-negative) 10%, transparent) 0%, rgba(190, 24, 93, 0.1) 100%)' },
-                      ].map((color) => (
-                        <button
-                          key={color.id}
-                          onClick={() => setBadgeBackgroundColor(color.value)}
-                          style={{
-                            padding: '12px',
-                            background: color.value,
-                            border: badgeBackgroundColor === color.value ? '2px solid var(--ik-accent)' : '2px solid color-mix(in srgb, var(--ik-text) 20%, transparent)',
-                            borderRadius: '12px',
-                            color: 'var(--ik-text-2)',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          {color.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: 'var(--ik-text-2)',
-                      marginBottom: '12px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}> Vos Badges ({selectedDisplayBadges.length}/3)
-                    </label>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-                      gap: '12px',
-                    }}>
-                      {userBadges.map((badgeId) => {
-                        const badge = badgeDefinitions[badgeId];
-                        if (!badge) return null;
-                        const isSelected = selectedDisplayBadges.includes(badgeId);
-                        const rarityColors = {
-                          common: 'var(--ik-text-3)',
-                          rare: 'var(--ik-primary)',
-                          very_rare: 'var(--ik-orchid)',
-                          unique: 'var(--ik-warning)',
-                        };
-                        return (
-                          <button
-                            key={badgeId}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedDisplayBadges(selectedDisplayBadges.filter(b => b !== badgeId));
-                              } else if (selectedDisplayBadges.length < 3) {
-                                setSelectedDisplayBadges([...selectedDisplayBadges, badgeId]);
-                              }
-                            }}
-                            style={{
-                              padding: '12px',
-                              background: isSelected ? `${alpha(rarityColors[badge.rarity], 19)}` : 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
-                              border: `2px solid ${isSelected ? rarityColors[badge.rarity] : 'color-mix(in srgb, var(--ik-text) 10%, transparent)'}`,
-                              borderRadius: '12px',
-                              textAlign: 'center',
-                              cursor: selectedDisplayBadges.length >= 3 && !isSelected ? 'not-allowed' : 'pointer',
-                              transition: 'all 0.2s ease',
-                              opacity: selectedDisplayBadges.length >= 3 && !isSelected ? 0.5 : 1,
-                            }}
-                          >
-                            <div style={{ fontSize: '28px', marginBottom: '4px' }}><BadgeMedal icon={badge.icon} rarity={badge.rarity} size={48} /></div>
-                            <p style={{
-                              fontSize: '9px',
-                              color: rarityColors[badge.rarity],
-                              fontWeight: '600',
-                              margin: 0,
-                            }}>
-                              {badge.name}
-                            </p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {profileMenuTab === 'bio' && (
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: 'var(--ik-text-2)',
-                    marginBottom: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}> Ma Bio
-                  </label>
-                  <textarea
-                    value={bioEditInput}
-                    onChange={(e) => setBioEditInput(e.target.value.slice(0, 150))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
-                      border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
-                      borderRadius: '12px',
-                      color: 'var(--ik-text)',
-                      fontSize: '14px',
-                      fontFamily: 'inherit',
-                      minHeight: '100px',
-                      resize: 'vertical',
-                      boxSizing: 'border-box',
-                      outline: 'none',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
-                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 5%, transparent)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
-                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 5%, transparent)';
-                    }}
-                    placeholder="Parlez-nous de vous..."
-                  />
-                  <p style={{
-                    fontSize: '11px',
-                    color: 'var(--ik-text-3)',
-                    margin: '6px 0 0 0',
-                  }}>
-                    {bioEditInput.length}/150 caractères
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Footer - Save Button */}
-            <div style={{
-              padding: '24px',
-              borderTop: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
-              background: 'rgba(0, 0, 0, 0.2)',
-              display: 'flex',
-              gap: '12px',
-            }}>
-              <button
-                onClick={() => setShowProfileMenu(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  background: 'color-mix(in srgb, var(--ik-text) 5%, transparent)',
-                  border: '1px solid color-mix(in srgb, var(--ik-text) 10%, transparent)',
-                  borderRadius: '10px',
-                  color: 'var(--ik-text-3)',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 10%, transparent)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-text) 5%, transparent)';
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => {
-                  setUserBio(bioEditInput);
-                  setShowProfileMenu(false);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)',
-                  border: '2px solid color-mix(in srgb, var(--ik-primary) 50%, transparent)',
-                  borderRadius: '10px',
-                  color: 'var(--ik-accent)',
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 40%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 40%, transparent) 100%)';
-                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 70%, transparent)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 30%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 30%, transparent) 100%)';
-                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ik-primary) 50%, transparent)';
-                }}
-              >
-                ✓ Sauvegarder & Synchroniser
-              </button>
             </div>
           </div>
         </div>

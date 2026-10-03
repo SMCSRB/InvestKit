@@ -655,3 +655,13 @@ La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.
 7. **Changer l'e-mail** : bouton « Changer mon adresse e-mail » → nouvelle adresse + mot de passe → un code arrive sur la NOUVELLE adresse, et un message d'alerte sur l'ANCIENNE. Tant que le code n'est pas saisi, l'adresse de connexion ne change pas. Après confirmation, un second message prévient l'ancienne adresse.
 8. Avec la double authentification activée, le formulaire demande aussi le code de l'appli.
 9. Après déploiement : l'API crée toute seule les tables `user_avatars` et `email_change_requests` et les colonnes `bio`, `avatar_id` (migration 042, rien à faire). Les photos sont stockées **dans la base** (donc sauvegardées avec elle et jamais sur le disque de l'application). Nouvelle dépendance du serveur : `sharp` (traitement d'image, licence Apache-2.0, version fixée) : lance `npm ci` dans `backend/`.
+
+## Chasse aux faux contenus
+
+À vérifier chez toi :
+1. Tableau de bord > « Actualités » : plus de CAC 40 / Alerte BTC / +5 k€. Soit les vraies annonces publiées dans l'administration, soit « Aucune actualité pour le moment ». Publie une annonce de test dans /admin : elle apparaît.
+2. /profile > Compte : ton VRAI e-mail (plus l'adresse écrite en dur) ; « Exporter » télécharge un fichier JSON ; « Se déconnecter » te déconnecte ; « Modifier l'email » ouvre Paramètres > Profil ; « Changer le mot de passe » ouvre « mot de passe oublié ».
+3. /profile : plus de calendrier aux cases aléatoires (recharge plusieurs fois : le texte ne change pas) ; « Série » écrit en français.
+4. Paramètres > Affichage : Devise et Format de date sont du texte (« Fixe pour l'instant »), plus de listes qui ne font rien. Paramètres > Sécurité : plus de « Sessions actives ». Paramètres > Données : « Exporter » télécharge le fichier, « Lire » ouvre la politique de confidentialité.
+5. Bandeau des cours : lance `cd backend && npm run crypto:check-series -- --symbols BTC,ETH,BNB,XRP --days 24` sur ton serveur : tu vois les 24 derniers cours et la corrélation entre actifs (jamais 1,000 pour de vrais cours).
+6. Lis `docs/faux-contenus.md`, section « À ton choix » : décisions attendues.

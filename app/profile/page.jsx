@@ -13,6 +13,8 @@ import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
 import { AVATAR_TYPES, getProfile, saveProfile, uploadAvatar, removeAvatar } from '@/app/lib/profileApi';
 import Avatar from '@/app/components/social/Avatar';
+import { downloadMyData } from '@/app/lib/exportData';
+import { endSession } from '@/app/lib/session';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 export default function ProfilePage() {
@@ -30,12 +32,15 @@ export default function ProfilePage() {
   });
   const [activeSettingsTab, setActiveSettingsTab] = useState('display');
   // Pseudo, bio et photo viennent du serveur (jamais de valeur d'exemple) ; seul le choix d'icône de secours reste local.
-  const [profileData, setProfileData] = useState({ username: '', bio: '', avatar: 'user', avatarId: null });
+  const [profileData, setProfileData] = useState({ username: '', bio: '', avatar: 'user', avatarId: null, email: '' });
   const [profileError, setProfileError] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [photoBusy, setPhotoBusy] = useState(false);
   const photoInput = useRef(null);
+  const [exportMsg, setExportMsg] = useState('');
+  const exportMyData = async () => { setExportMsg(''); const r = await downloadMyData(); setExportMsg(r.ok ? 'Fichier téléchargé.' : r.error); };
+  const logout = async () => { await endSession(); router.push('/'); };
   const choosePhoto = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -76,7 +81,7 @@ export default function ProfilePage() {
     }
     getProfile().then((r) => {
       if (!r.ok) { setProfileError('Impossible de charger ton profil pour le moment.'); return; }
-      setProfileData((prev) => ({ ...prev, username: r.data.username || '', bio: r.data.bio || '', avatarId: r.data.avatarId }));
+      setProfileData((prev) => ({ ...prev, username: r.data.username || '', bio: r.data.bio || '', avatarId: r.data.avatarId, email: r.data.email || '' }));
     });
   }, [router]);
 
@@ -255,11 +260,11 @@ export default function ProfilePage() {
                 <p className="text-white text-3xl font-bold">{progress.totalXP}</p>
               </div>
               <div className="bg-orange-900/30 border border-orange-400/30 rounded-lg p-4">
-                <p className="text-orange-300 text-sm font-semibold">Racha Actuelle</p>
+                <p className="text-orange-300 text-sm font-semibold">Série actuelle</p>
                 <p className="text-white text-3xl font-bold"><Icon name="flame" size={18} /> {progress.streak}</p>
               </div>
               <div className="bg-purple-900/30 border border-purple-400/30 rounded-lg p-4">
-                <p className="text-purple-300 text-sm font-semibold">Max Racha</p>
+                <p className="text-purple-300 text-sm font-semibold">Meilleure série</p>
                 <p className="text-white text-3xl font-bold"><Icon name="star" size={18} /> {progress.maxStreak}</p>
               </div>
             </div>
@@ -273,8 +278,6 @@ export default function ProfilePage() {
             <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-700">
               {[
                 { id: 'display', label: 'Affichage', icon: 'palette' },
-                { id: 'notifications', label: 'Notifications', icon: 'bell' },
-                { id: 'privacy', label: 'Confidentialité', icon: 'lock' },
                 { id: 'account', label: 'Compte', icon: 'user' },
               ].map((tab) => (
                 <button
@@ -314,152 +317,7 @@ export default function ProfilePage() {
                   </button>
                 </div>
 
-                {/* Animation Settings */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Animations</h3>
-                    <p className="text-gray-400 text-sm">Activer les animations et transitions</p>
-                  </div>
-                  <button className="relative w-14 h-8 rounded-full bg-blue-600">
-                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-7" />
-                  </button>
-                </div>
-
-                {/* Compact Mode */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Mode Compact</h3>
-                    <p className="text-gray-400 text-sm">Interface condensée pour petits écrans</p>
-                  </div>
-                  <button className="relative w-14 h-8 rounded-full bg-gray-600">
-                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-1" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Notification Settings */}
-            {activeSettingsTab === 'notifications' && (
-              <div className="space-y-6">
-                {/* Enable Notifications */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Notifications In-App</h3>
-                    <p className="text-gray-400 text-sm">Recevoir les notifications dans l'application</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('notificationsEnabled', !settings.notificationsEnabled)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.notificationsEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.notificationsEnabled ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Sound Notifications */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Son</h3>
-                    <p className="text-gray-400 text-sm">Son pour les notifications importantes</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.soundEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.soundEnabled ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Daily Reminders */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Rappels Quotidiens</h3>
-                    <p className="text-gray-400 text-sm">Rappels d'apprentissage quotidiens</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('remindersEnabled', !settings.remindersEnabled)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.remindersEnabled ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.remindersEnabled ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Email Notifications */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Notifications par Email</h3>
-                    <p className="text-gray-400 text-sm">Résumé hebdomadaire de vos progrès</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('emailNotifications', !settings.emailNotifications)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.emailNotifications ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.emailNotifications ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Privacy Settings */}
-            {activeSettingsTab === 'privacy' && (
-              <div className="space-y-6">
-                {/* Public Profile */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Profil Public</h3>
-                    <p className="text-gray-400 text-sm">Permettre aux autres de voir votre profil</p>
-                  </div>
-                  <button
-                    onClick={() => updateSetting('profilePublic', !settings.profilePublic)}
-                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
-                      settings.profilePublic ? 'bg-blue-600' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
-                        settings.profilePublic ? 'left-7' : 'left-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Hide XP Publicly */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
-                  <div>
-                    <h3 className="text-white font-semibold">Masquer votre XP publiquement</h3>
-                    <p className="text-gray-400 text-sm">Vos statistiques ne seront pas visibles</p>
-                  </div>
-                  <button className="relative w-14 h-8 rounded-full bg-gray-600">
-                    <div className="absolute top-1 w-6 h-6 bg-white rounded-full left-1" />
-                  </button>
-                </div>
-
-                {/* Delete Data */}
-                <button className="w-full p-4 rounded-lg bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-400 font-semibold transition-all duration-300"> Supprimer toutes mes données
-                </button>
+                <p className="text-gray-400 text-sm">Les animations se règlent dans la carte « Apparence » ci-dessus.</p>
               </div>
             )}
 
@@ -469,31 +327,32 @@ export default function ProfilePage() {
                 {/* Change Email */}
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
                   <h3 className="text-white font-semibold mb-3">Email</h3>
-                  <p className="text-gray-400 text-sm mb-3">andrejasimic05@gmail.com</p>
-                  <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300">
+                  <p className="text-gray-400 text-sm mb-3">{profileData.email || 'Adresse indisponible pour le moment'}</p>
+                  <Link href="/dashboard?tab=settings&section=profile" className="inline-block px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300">
                     Modifier l'email
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Change Password */}
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
                   <h3 className="text-white font-semibold mb-3">Mot de Passe</h3>
-                  <p className="text-gray-400 text-sm mb-3">Dernière modification il y a 3 mois</p>
-                  <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300">
+                  <p className="text-gray-400 text-sm mb-3">Tu recevras un lien de changement par e-mail.</p>
+                  <Link href="/forgot-password" className="inline-block px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-300">
                     Changer le mot de passe
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Export Progress */}
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">
                   <h3 className="text-white font-semibold mb-3">Exporter Mes Données</h3>
-                  <p className="text-gray-400 text-sm mb-3">Télécharger vos données de progression en JSON</p>
-                  <button className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300"> Exporter
+                  <p className="text-gray-400 text-sm mb-3">Télécharge toutes tes données personnelles (fichier JSON)</p>
+                  <button type="button" onClick={exportMyData} className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-all duration-300"> Exporter
                   </button>
+                  {exportMsg && <p role="status" className="text-gray-400 text-sm mt-2">{exportMsg}</p>}
                 </div>
 
                 {/* Logout */}
-                <button className="w-full p-4 rounded-lg bg-slate-700/50 border border-gray-600/50 hover:border-gray-500 text-gray-300 font-semibold transition-all duration-300"> Se déconnecter
+                <button type="button" onClick={logout} className="w-full p-4 rounded-lg bg-slate-700/50 border border-gray-600/50 hover:border-gray-500 text-gray-300 font-semibold transition-all duration-300"> Se déconnecter
                 </button>
               </div>
             )}
@@ -625,12 +484,7 @@ export default function ProfilePage() {
                       <h3 className="text-white font-bold mb-1">Certificat</h3>
                       <p className="text-amber-300 font-semibold mb-3">{domain.name}</p>
                       <p className="text-gray-400 text-sm mb-4">Complété le {formattedDate}</p>
-                      <div className="flex gap-2">
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all duration-300"> Télécharger
-                        </button>
-                        <button className="flex-1 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all duration-300"> Partager
-                        </button>
-                      </div>
+                      {/* Boutons Télécharger / Partager retirés : aucun certificat réel à exporter pour l'instant. */}
                     </div>
                   );
                 })}
@@ -640,41 +494,22 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Learning Calendar */}
+          {/* Calendrier d'activité : retiré tant qu'il n'est pas alimenté par de vrais jours d'étude (il affichait des cases tirées au hasard). */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Activité d'Apprentissage</h2>
-            <div className="bg-slate-800/50 p-6 rounded-lg border border-gray-700/50">
-              <p className="text-gray-400 mb-4">Jours d'étude ce mois-ci: <span className="text-blue-400 font-bold">{Math.min(progress.completedChapters.length, 30)}/30</span></p>
-              <div className="grid grid-cols-7 gap-1">
-                {[...Array(42)].map((_, i) => {
-                  const isActive = Math.random() > 0.6 || i < progress.completedChapters.length;
-                  return (
-                    <div
-                      key={i}
-                      className={`w-6 h-6 rounded transition-all duration-300 ${
-                        isActive
-                          ? 'bg-green-500 hover:ring-2 ring-green-300'
-                          : 'bg-gray-700 hover:bg-gray-600'
-                      }`}
-                      title={`Jour ${i + 1}`}
-                    />
-                  );
-                })}
-              </div>
-              <p className="text-gray-400 text-xs mt-4">= Jour d'étude · = Jour sans activité</p>
-            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Activité d'apprentissage</h2>
+            <p className="text-gray-400">Chapitres terminés : <span className="text-blue-400 font-bold">{totalChaptersCompleted}</span>. Le calendrier de tes jours d'étude arrive bientôt.</p>
           </div>
 
           {/* Statistics Section */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl border border-gray-700/50 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Statistiques Mensuelles</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Statistiques</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* XP Progress */}
               <div className="p-6 rounded-lg bg-slate-800/50 border border-gray-700/50">
                 <h3 className="text-white font-bold mb-4">Progression XP</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">XP ce mois</p>
+                    <p className="text-gray-400 text-sm mb-1">XP total</p>
                     <p className="text-3xl font-bold text-yellow-400">{progress.totalXP}</p>
                   </div>
                   <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
@@ -724,14 +559,14 @@ export default function ProfilePage() {
 
               {/* Time Stats */}
               <div className="p-6 rounded-lg bg-slate-800/50 border border-gray-700/50 md:col-span-2">
-                <h3 className="text-white font-bold mb-4">Temps d'Apprentissage</h3>
+                <h3 className="text-white font-bold mb-4">Série et niveau</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-gray-400 text-sm mb-2">Racha actuelle</p>
+                    <p className="text-gray-400 text-sm mb-2">Série actuelle</p>
                     <p className="text-3xl font-bold text-orange-400"><Icon name="flame" size={18} /> {progress.streak}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-2">Max racha</p>
+                    <p className="text-gray-400 text-sm mb-2">Meilleure série</p>
                     <p className="text-3xl font-bold text-yellow-400"><Icon name="star" size={18} /> {progress.maxStreak}</p>
                   </div>
                   <div>
