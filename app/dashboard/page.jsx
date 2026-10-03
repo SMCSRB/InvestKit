@@ -22,6 +22,8 @@ import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
 import ProfileForm from '@/app/components/profile/ProfileForm';
+import NewsFeed from './NewsFeed';
+import { downloadMyData } from '@/app/lib/exportData';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 // Transparence d'une couleur quelconque (hexadécimale ou variable de design).
@@ -219,13 +221,12 @@ function DashboardContent() {
   const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('linear-gradient(135deg, color-mix(in srgb, var(--ik-primary) 10%, transparent) 0%, color-mix(in srgb, var(--ik-orchid) 10%, transparent) 100%)');
   const [userBio, setUserBio] = useState('Investisseur passionné en crypto et finance');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [exportNote, setExportNote] = useState('');
   const [profileMenuTab, setProfileMenuTab] = useState('badges'); // badges, bio
   const [bioEditInput, setBioEditInput] = useState('Investisseur passionné en crypto et finance');
   const [baggeBackgroundInput, setBaggeBackgroundInput] = useState('');
   // Level tracking - synchronized with localStorage
   const [userLevel, setUserLevel] = useState(1); // Default 1, loads from localStorage
-  const [dailyXP, setDailyXP] = useState(Math.floor(Math.random() * 500) + 150); // Random XP 150-650
-  const [totalXP, setTotalXP] = useState((userLevel || 1) * 1000 + dailyXP);
   const [xpToNextLevel, setXpToNextLevel] = useState(1000);
   const [recentLevelUp, setRecentLevelUp] = useState(false);
   const [particles, setParticles] = useState([]);
@@ -1842,7 +1843,7 @@ function DashboardContent() {
                     <Icon name="star" size={18} /> {progress.totalXP} XP
                   </span>
                   {progress.streak > 0 && (
-                    <span style={{ color: 'var(--ik-warning)' }}> Racha: {progress.streak}
+                    <span style={{ color: 'var(--ik-warning)' }}> Série : {progress.streak}
                     </span>
                   )}
                   {progress.badges && progress.badges.length > 0 && (
@@ -2169,22 +2170,10 @@ function DashboardContent() {
                         Devise
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        EUR (€)
+                        EUR (€) · les montants du jeu sont en InvestCoins
                       </p>
                     </div>
-                    <select style={{
-                      padding: '8px 12px',
-                      background: `${currentTheme.border}`,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}>
-                      <option>EUR (€)</option>
-                      <option>USD ($)</option>
-                      <option>GBP (£)</option>
-                    </select>
+                    <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Fixe pour l&apos;instant</span>
                   </div>
 
                   {/* Format de date */}
@@ -2198,22 +2187,10 @@ function DashboardContent() {
                         Format de date
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Jour/Mois/Année
+                        Jour/Mois/Année (autres formats : bientôt)
                       </p>
                     </div>
-                    <select style={{
-                      padding: '8px 12px',
-                      background: `${currentTheme.border}`,
-                      border: `1px solid ${currentTheme.border}`,
-                      borderRadius: '8px',
-                      color: currentTheme.text,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}>
-                      <option>JJ/MM/AAAA</option>
-                      <option>MM/JJ/AAAA</option>
-                      <option>AAAA-MM-JJ</option>
-                    </select>
+                    <span style={{ fontSize: '12px', color: currentTheme.textSecondary }}>Fixe pour l&apos;instant</span>
                   </div>
                 </div>
               )}
@@ -2287,7 +2264,7 @@ function DashboardContent() {
                         background: currentTheme.border,
                         borderRadius: '8px',
                       }}>
-                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Racha</p>
+                        <p style={{ fontSize: '11px', color: currentTheme.textSecondary, margin: '0 0 4px 0' }}>Série</p>
                         <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ik-warning)', margin: 0 }}><Icon name="flame" size={18} /> {progress.streak}</p>
                       </div>
                       <div style={{
@@ -2586,10 +2563,10 @@ function DashboardContent() {
                         Changer le mot de passe
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Mettez à jour votre mot de passe
+                        Un lien de changement t'est envoyé par e-mail
                       </p>
                     </div>
-                    <button style={{
+                    <button type="button" onClick={() => router.push('/forgot-password')} style={{
                       padding: '8px 16px',
                       background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
@@ -2637,14 +2614,6 @@ function DashboardContent() {
                     </button>
                   </div>
 
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: currentTheme.text, margin: '0 0 12px 0' }}>
-                      Sessions actives
-                    </p>
-                    <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                      Gérez vos sessions de connexion
-                    </p>
-                  </div>
                 </div>
               )}
 
@@ -2673,10 +2642,10 @@ function DashboardContent() {
                         Export mes données
                       </p>
                       <p style={{ fontSize: '12px', color: currentTheme.textSecondary, margin: 0 }}>
-                        Téléchargez vos données personnelles
+                        {exportNote || 'Télécharge toutes tes données personnelles (fichier JSON)'}
                       </p>
                     </div>
-                    <button style={{
+                    <button type="button" onClick={async () => { const r = await downloadMyData(); setExportNote(r.ok ? 'Fichier téléchargé.' : r.error); }} style={{
                       padding: '8px 16px',
                       background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
@@ -2705,7 +2674,7 @@ function DashboardContent() {
                         Consultez nos conditions
                       </p>
                     </div>
-                    <button style={{
+                    <button type="button" onClick={() => router.push('/privacy')} style={{
                       padding: '8px 16px',
                       background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
                       border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
@@ -3210,219 +3179,7 @@ function DashboardContent() {
               gap: '16px',
               scrollBehavior: 'smooth',
             }}>
-              {newsModalTab === 'news' && (
-                <>
-                  {/* News Item 1 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-primary)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="trendingUp" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: 'var(--ik-accent)',
-                          margin: '0 0 4px 0',
-                        }}>
-                          CAC 40 en hausse
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          L'indice gagne 1.2% aujourd'hui
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      À l'instant
-                    </span>
-                  </div>
-
-                  {/* News Item 2 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-positive) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-positive)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="lightbulb" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: '#86efac',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Conseil du jour
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          Diversifiez pour réduire les risques
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 2h
-                    </span>
-                  </div>
-
-                  {/* News Item 3 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-orchid) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-orchid)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="bookOpen" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: '#d8b4fe',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Nouvelle formation
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          Maîtrisez la crypto
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 5h
-                    </span>
-                  </div>
-
-                  {/* News Item 4 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-warning) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-warning)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="triangleAlert" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: '#fcd34d',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Alerte BTC
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          Prix en baisse, opportunité?
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 1h
-                    </span>
-                  </div>
-
-                  {/* News Item 5 */}
-                  <div style={{
-                    background: 'color-mix(in srgb, var(--ik-primary) 15%, transparent)',
-                    borderLeft: '4px solid var(--ik-primary)',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    flex: '0 0 auto',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      alignItems: 'start',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '24px', marginTop: '2px' }}><Icon name="trophy" size={18} /></span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '15px',
-                          fontWeight: '700',
-                          color: 'var(--ik-accent)',
-                          margin: '0 0 4px 0',
-                        }}>
-                          Objectif atteint!
-                        </p>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--ik-text-2)',
-                          margin: 0,
-                          lineHeight: '1.4',
-                        }}>
-                          +€5k de gains ce mois
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--ik-text-3)',
-                    }}>
-                      Il y a 3h
-                    </span>
-                  </div>
-                </>
-              )}
+              {newsModalTab === 'news' && <NewsFeed />}
 
               {newsModalTab === 'tips' && (
                 <>

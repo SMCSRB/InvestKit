@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Card, CardHead, Delta, EmptyState, Button, Skeleton } from '@/app/components/ui/primitives';
 import { Sparkline } from '@/app/components/ui/charts';
+import { keepGenuineSparklines } from '@/app/lib/sparklines';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 const usd = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -25,7 +26,7 @@ export default function MarketTab() {
         if (!res.ok) throw new Error('assets');
         const { assets } = await res.json();
         const top = assets.filter((a) => !a.stable && !a.collapsed).slice(0, 8);
-        const items = await Promise.all(top.map(async (a) => {
+        const raw = await Promise.all(top.map(async (a) => {
           let series = [];
           try {
             const r = await fetch(`${API}/crypto/candles?symbol=${encodeURIComponent(a.symbol)}&tf=1d&limit=30`);
@@ -33,6 +34,7 @@ export default function MarketTab() {
           } catch { /* courbe absente : la carte s'affiche quand même */ }
           return { symbol: a.symbol, name: a.name, price: a.price, change: a.change1d, series };
         }));
+        const items = keepGenuineSparklines(raw);   // courbe retirée si elle ne vient pas d'une vraie série propre à l'actif
         if (alive) setState({ status: items.length ? 'ok' : 'empty', items });
       } catch {
         if (alive) setState({ status: 'error', items: [] });
