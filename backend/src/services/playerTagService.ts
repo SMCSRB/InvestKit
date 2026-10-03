@@ -11,7 +11,7 @@ const DAY = 24 * 3600 * 1000;
 const PRO_SQL = `(subscription_tier = 'pro' OR pro_override = TRUE)`;
 type Db = { query: (sql: string, params?: unknown[]) => Promise<any> };
 
-export interface TagCard { userId: string; username: string | null; tag: string | null; identity: string | null; pro: boolean }
+export interface TagCard { userId: string; username: string | null; tag: string | null; identity: string | null; pro: boolean; avatarId: string | null }
 
 // ─── Mise à jour des # après la fin (ou le retour) du Pro ───
 // Règle (voir docs/pro-badge-tag.md) : le # choisi est gardé 30 jours après la fin du Pro (carte refusée, oubli : on ne casse rien tout de suite),
@@ -47,7 +47,7 @@ const reconcileRow = async (db: Db, u: any, now: Date): Promise<void> => {
   await db.query(`INSERT INTO player_tag_history (user_id, old_tag, new_tag, reason, username_key, old_tag_key) VALUES ($1,$2::text,$3,'expired',ik_fold($4::text),ik_fold($2::text))`, [u.id, u.player_tag, auto, u.username]);
 };
 
-const COLS = 'id, username, player_tag, tag_custom, tag_grace_until, tag_restore, tag_restore_until, subscription_tier, pro_override';
+const COLS = 'id, username, player_tag, tag_custom, tag_grace_until, tag_restore, tag_restore_until, subscription_tier, pro_override, avatar_id';
 let lastSweep = 0;
 
 export const playerTagService = {
@@ -96,7 +96,7 @@ export const playerTagService = {
       const pro = hasProAccess(u);
       const customShown = !u.tag_custom || customTagVisible({ isPro: pro, graceUntil: u.tag_grace_until ? new Date(u.tag_grace_until) : null }, now);
       const tag = u.username ? (u.player_tag && customShown ? u.player_tag : autoTagFor(u.id)) : null;
-      out.set(u.id, { userId: u.id, username: u.username, tag, identity: identityOf(u.username, tag), pro: pro && (u.show_pro_badge !== false || u.id === viewerId) });
+      out.set(u.id, { userId: u.id, username: u.username, tag, identity: identityOf(u.username, tag), pro: pro && (u.show_pro_badge !== false || u.id === viewerId), avatarId: u.avatar_id ?? null });
     }
     return out;
   },

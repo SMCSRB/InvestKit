@@ -46,14 +46,14 @@ const xpFor = async (ids: string[]): Promise<Map<string, number>> => {
   return m;
 };
 
-type Card = { userId: string; name: string; tag: string | null; identity: string | null; pro: boolean; level: number; xp: number };
+type Card = { userId: string; name: string; tag: string | null; identity: string | null; pro: boolean; avatarId: string | null; level: number; xp: number };
 // Fiche publique : nom de joueur, # (Pseudo#tag), indicateur « Pro » (simple booléen, jamais de détail d'abonnement), niveau, XP.
 const cardsFor = async (ids: string[], viewerId?: string) => {
   if (!ids.length) return new Map<string, Card>();
   const [users, xp, tags] = [(await query('SELECT id, username FROM users WHERE id = ANY($1::uuid[])', [ids])).rows, await xpFor(ids), await playerTagService.cards(ids, viewerId)];
   return new Map<string, Card>(users.map((u: any) => {
     const t = tags.get(u.id);
-    return [u.id, { userId: u.id, name: nameOf(u), tag: t?.tag ?? null, identity: t?.identity ?? null, pro: t?.pro ?? false, level: levelFromXp(xp.get(u.id) ?? 0), xp: xp.get(u.id) ?? 0 }];
+    return [u.id, { userId: u.id, name: nameOf(u), tag: t?.tag ?? null, identity: t?.identity ?? null, pro: t?.pro ?? false, avatarId: t?.avatarId ?? null, level: levelFromXp(xp.get(u.id) ?? 0), xp: xp.get(u.id) ?? 0 }];
   }));
 };
 
@@ -120,7 +120,7 @@ export const socialService = {
     let rank = 0;
     const entries = list.map((c, i) => {
       if (i === 0 || c.xp !== list[i - 1].xp) rank = i + 1;
-      return { rank, userId: c.userId, name: c.name, tag: c.tag, identity: c.identity, pro: c.pro, level: c.level, xp: c.xp, isMe: c.userId === userId };
+      return { rank, userId: c.userId, name: c.name, tag: c.tag, identity: c.identity, pro: c.pro, avatarId: c.avatarId, level: c.level, xp: c.xp, isMe: c.userId === userId };
     });
     return { entries, total: entries.length, friendsCount: Math.max(0, entries.length - 1) };
   },
@@ -258,7 +258,7 @@ export const socialService = {
     const list = members.map((x: any) => {
       const c = cards.get(x.user_id)!;
       const hidden = blocked.has(x.user_id);
-      return { userId: x.user_id, name: hidden ? 'Joueur masqué' : c.name, tag: hidden ? null : c.tag, identity: hidden ? null : c.identity, pro: hidden ? false : c.pro, level: hidden ? undefined : c.level, xp: hidden ? undefined : c.xp, hidden, sortXp: c.xp,
+      return { userId: x.user_id, name: hidden ? 'Joueur masqué' : c.name, tag: hidden ? null : c.tag, identity: hidden ? null : c.identity, pro: hidden ? false : c.pro, avatarId: hidden ? null : c.avatarId, level: hidden ? undefined : c.level, xp: hidden ? undefined : c.xp, hidden, sortXp: c.xp,
         role: x.role as 'owner' | 'member', joinedAt: x.joined_at, isMe: x.user_id === userId };
     }).sort((a: any, b: any) => b.sortXp - a.sortXp || a.userId.localeCompare(b.userId)).map(({ sortXp, ...rest }: any, i: number) => ({ ...rest, rank: i + 1 }));
     const me = list.find((x: any) => x.isMe);

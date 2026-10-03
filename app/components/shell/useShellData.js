@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { onUserChanged } from '@/app/lib/profileApi';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -20,6 +21,9 @@ export default function useShellData() {
   const [loading, setLoading] = useState(true);
 
   const refreshWallet = useCallback(() => getJson('/economy/balance').then(setWallet).catch(() => {}), []);
+  // Recharge le compte (nom, photo...) depuis le serveur : appelée après chaque enregistrement du profil, sans recharger la page.
+  const refreshUser = useCallback(() => getJson('/auth/me').then((me) => { setUser(me.user); setIsAdmin(!!me.user?.isAdmin); }).catch(() => {}), []);
+  useEffect(() => onUserChanged(refreshUser), [refreshUser]);
   const refreshNotifs = useCallback(() => getJson('/notifications?limit=10').then(setNotif).catch(() => {}), []);
 
   useEffect(() => {
@@ -48,5 +52,5 @@ export default function useShellData() {
     setNotif((n) => ({ notifications: n.notifications.map((x) => ({ ...x, read: true })), unread: 0 }));
   }, []);
 
-  return { user, wallet, notif, isAdmin, loading, refreshWallet, refreshNotifs, claimDaily, markAllRead };
+  return { user, wallet, notif, isAdmin, loading, refreshWallet, refreshNotifs, refreshUser, claimDaily, markAllRead };
 }

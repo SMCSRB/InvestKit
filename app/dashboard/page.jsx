@@ -21,6 +21,7 @@ import { useUser } from '@/app/context/UserContext';
 import { planLine } from '@/app/lib/plan';
 import { educationDomains } from '@/data/education';
 import Coin from '@/app/components/ui/Coin';
+import ProfileForm from '@/app/components/profile/ProfileForm';
 import Icon, { Glyph, BadgeMedal } from '@/app/components/ui/Icon';
 
 // Transparence d'une couleur quelconque (hexadécimale ou variable de design).
@@ -105,10 +106,6 @@ function DashboardContent() {
   const [showDomainChooser, setShowDomainChooser] = useState(false);
   const [tradingBoard, setTradingBoard] = useState(null);
   const [tradingBoardYear, setTradingBoardYear] = useState(null); // null = mon année simulée
-  const [profilePhoto, setProfilePhoto] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [fullName, setFullName] = useState('Investisseur');
-  const [email, setEmail] = useState('jean.dupont@example.com');
   const [profileVisibility, setProfileVisibility] = useState('public');
   const [hideStats, setHideStats] = useState(false);
   const [shareProgress, setShareProgress] = useState(true);
@@ -1203,7 +1200,6 @@ function DashboardContent() {
   }, [loadOverview, tradingPortfolio?.simulatedYear, tradingPortfolio?.cashBalance, tradingPortfolio?.positions?.length]);
   useEffect(() => {
     // Nom affiché : celui du compte, sauf si l'utilisateur en a saisi un autre dans son profil.
-    if (overview?.username && !(typeof window !== 'undefined' && localStorage.getItem('userFullName'))) setFullName(overview.username);
   }, [overview?.username]);
 
   const [dailyTips] = useState([
@@ -1250,22 +1246,6 @@ function DashboardContent() {
       setIsAuthenticated(true);
     }
 
-    // Load profile photo
-    const savedPhoto = typeof window !== 'undefined' ? localStorage.getItem('profilePhoto') : null;
-    if (savedPhoto) {
-      setPhotoPreview(savedPhoto);
-    }
-
-    // Load profile data (name, email)
-    const savedName = typeof window !== 'undefined' ? localStorage.getItem('userFullName') : null;
-    if (savedName) {
-      setFullName(savedName);
-    }
-    const savedEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
-    if (savedEmail) {
-      setEmail(savedEmail);
-    }
-
     // Load visibility settings
     const savedVisibility = typeof window !== 'undefined' ? localStorage.getItem('profileVisibility') : null;
     if (savedVisibility) {
@@ -1295,37 +1275,20 @@ function DashboardContent() {
     }
   }, [router]);
 
-  // Handle photo upload
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result;
-        setPhotoPreview(base64);
-        setProfilePhoto(file);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('profilePhoto', base64);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Save profile changes
-  const saveProfileChanges = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userFullName', fullName);
-      localStorage.setItem('userEmail', email);
+  // Préférences locales (visibilité, apprentissage) : enregistrées dans ce navigateur dès qu'on les change.
+  // Le profil (photo, nom, e-mail, bio) est géré par <ProfileForm /> et enregistré sur le serveur.
+  const prefsReady = useRef(false);
+  useEffect(() => {
+    if (!prefsReady.current) { prefsReady.current = true; return; }
+    try {
       localStorage.setItem('profileVisibility', profileVisibility);
       localStorage.setItem('hideStats', JSON.stringify(hideStats));
       localStorage.setItem('shareProgress', JSON.stringify(shareProgress));
       localStorage.setItem('preferredDomain', preferredDomain);
       localStorage.setItem('difficultyLevel', difficultyLevel);
       localStorage.setItem('academyNotifications', JSON.stringify(academyNotifications));
-    }
-    alert('Profil mis à jour avec succès!');
-  };
+    } catch { /* stockage indisponible */ }
+  }, [profileVisibility, hideStats, shareProgress, preferredDomain, difficultyLevel, academyNotifications]);
 
   // Le thème est désormais commun à tout le site (bascule dans le menu latéral, le profil et ici).
   const toggleTheme = () => toggleGlobalTheme();
@@ -2284,180 +2247,7 @@ function DashboardContent() {
                     </a>
                   </div>
 
-                  {/* Profile Photo Upload */}
-                  <div style={{
-                    display: 'flex',
-                    gap: '16px',
-                    paddingBottom: '16px',
-                    borderBottom: `1px solid ${currentTheme.border}`,
-                    alignItems: 'center',
-                  }}>
-                    <div style={{
-                      width: '100px',
-                      height: '100px',
-                      borderRadius: '12px',
-                      background: currentTheme.border,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      fontSize: '40px',
-                    }}>
-                      {photoPreview ? (
-                        <img src={photoPreview} alt="Profile" style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }} />
-                      ) : (
-                        <Icon name="user" size={20} />
-                      )}
-                    </div>
-                    <div style={{
-                      display: 'grid',
-                      gap: '8px',
-                      flex: 1,
-                    }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        marginBottom: '0px',
-                      }}>
-                        Photo de Profil
-                      </label>
-                      <p style={{
-                        fontSize: '12px',
-                        color: currentTheme.textSecondary,
-                        margin: '0 0 8px 0',
-                      }}>
-                        Cliquez pour uploader une photo (JPG, PNG)
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        style={{
-                          padding: '8px 12px',
-                          background: currentTheme.border,
-                          border: `1px solid ${currentTheme.border}`,
-                          borderRadius: '8px',
-                          color: currentTheme.text,
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Profile Info */}
-                  <div style={{
-                    display: 'grid',
-                    gap: '12px',
-                    paddingBottom: '16px',
-                    borderBottom: `1px solid ${currentTheme.border}`,
-                  }}>
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        marginBottom: '6px',
-                      }}>
-                        Nom complet
-                      </label>
-                      <input
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          background: currentTheme.border,
-                          border: `1px solid ${currentTheme.border}`,
-                          borderRadius: '8px',
-                          color: currentTheme.text,
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                        }} />
-                    </div>
-
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        marginBottom: '6px',
-                      }}>
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          background: currentTheme.border,
-                          border: `1px solid ${currentTheme.border}`,
-                          borderRadius: '8px',
-                          color: currentTheme.text,
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                        }} />
-                    </div>
-
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        color: currentTheme.textSecondary,
-                        marginBottom: '6px',
-                      }}>
-                        Bio
-                      </label>
-                      <textarea defaultValue="Passionné par l'investissement et l'apprentissage" style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        background: currentTheme.border,
-                        border: `1px solid ${currentTheme.border}`,
-                        borderRadius: '8px',
-                        color: currentTheme.text,
-                        fontSize: '13px',
-                        boxSizing: 'border-box',
-                        fontFamily: 'inherit',
-                        resize: 'vertical',
-                        minHeight: '80px',
-                      }} />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={saveProfileChanges}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 30%, transparent)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'color-mix(in srgb, var(--ik-primary) 20%, transparent)';
-                    }}
-                    style={{
-                      padding: '10px 20px',
-                      background: 'color-mix(in srgb, var(--ik-primary) 20%, transparent)',
-                      border: '1px solid color-mix(in srgb, var(--ik-primary) 30%, transparent)',
-                      borderRadius: '8px',
-                      color: currentTheme.accent,
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                    }}>
-                    Enregistrer les modifications
-                  </button>
+                  <ProfileForm />
 
                   {/* Stats Section */}
                   <div style={{

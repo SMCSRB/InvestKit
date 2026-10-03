@@ -642,3 +642,16 @@ La liste d'insultes interdites dans les # choisis (`backend/src/config/tagRules.
 4. Contrôle en base (lecture seule) : `SELECT email, welcome_email_sent_at FROM users ORDER BY created_at DESC LIMIT 5;` : la date est remplie pour le compte de test.
 5. Ordre de fusion : après la PR sécurité #85 (le mail part depuis `save-preferences`, désormais protégée) et avec les mails de la PR #80.
 6. (Mail de bienvenue, reprise après panne) Si l'envoi échoue, le joueur est réessayé à la validation suivante de son profil, au plus 3 fois, avec 5 minutes d'écart ; le plafond d'un mail par adresse et par jour ne compte que les envois réussis.
+
+## Paramètres > Profil : photo, nom, e-mail, bio (vrais enregistrements)
+
+À tester chez toi, avec un compte de test :
+1. Paramètres > Profil : le champ **Adresse e-mail** montre TON adresse (grisée, non modifiable), **Nom complet** et **Bio** sont vides si tu n'as rien saisi (texte grisé d'aide seulement). Plus de « jean.dupont@example.com » ni de bio d'exemple.
+2. Clique « Enregistrer les modifications » sans rien changer : message « Aucune modification à enregistrer ». Rien n'a bougé (recharge la page pour vérifier).
+3. Saisis un nom et une bio, enregistre, recharge : ils sont toujours là. Vide la bio, enregistre, recharge : elle reste vide.
+4. **Photo** : « Choisir une photo » → la photo apparaît **tout de suite** dans le rond en haut à droite, sans recharger. Ouvre le menu profil, Classements > Amis, Amis : elle y est aussi.
+5. Essaie un faux fichier (un .txt renommé en .png) : message clair, rien n'est enregistré. Essaie une image de plus de 15 Mo : refusée.
+6. « Supprimer ma photo » : la lettre de ton pseudo revient partout.
+7. **Changer l'e-mail** : bouton « Changer mon adresse e-mail » → nouvelle adresse + mot de passe → un code arrive sur la NOUVELLE adresse, et un message d'alerte sur l'ANCIENNE. Tant que le code n'est pas saisi, l'adresse de connexion ne change pas. Après confirmation, un second message prévient l'ancienne adresse.
+8. Avec la double authentification activée, le formulaire demande aussi le code de l'appli.
+9. Après déploiement : l'API crée toute seule les tables `user_avatars` et `email_change_requests` et les colonnes `bio`, `avatar_id` (migration 042, rien à faire). Les photos sont stockées **dans la base** (donc sauvegardées avec elle et jamais sur le disque de l'application). Nouvelle dépendance du serveur : `sharp` (traitement d'image, licence Apache-2.0, version fixée) : lance `npm ci` dans `backend/`.

@@ -75,22 +75,23 @@ describe('Mentions « fictif / exemple / simulation » : une seule mention discr
   });
 });
 
-describe('Photo de profil : modifiable dans la page Profil', () => {
+describe('Photo de profil : modifiable dans la page Profil, enregistrée sur le serveur', () => {
   const profile = read('app/profile/page.jsx');
-  it('la page Profil permet de choisir et de retirer une photo', () => {
-    expect(profile).toContain('savePhotoFromFile');
-    expect(profile).toContain('clearPhoto');
+  it('la page Profil permet de choisir et de retirer une photo (envoi au serveur, plus de stockage local)', () => {
+    expect(profile).toContain('uploadAvatar');
+    expect(profile).toContain('removeAvatar');
     expect(profile).toContain('data-testid="photo-input"');
+    expect(profile).not.toContain('localStorage.setItem(\'profilePhoto\'');
   });
-  it('le contrôle du fichier refuse les formats et poids non prévus ; la photo est réduite avant d\'être enregistrée', () => {
-    const lib = read('app/lib/profilePhoto.js');
+  it('le contrôle du fichier refuse les formats et poids non prévus ; la photo est réduite avant l\'envoi', () => {
+    const lib = read('app/lib/profileApi.js');
     expect(lib).toMatch(/image\/jpeg/);
-    expect(lib).toMatch(/PHOTO_MAX_BYTES/);
+    expect(lib).toMatch(/AVATAR_PICK_MAX_BYTES/);
     expect(lib).toContain('canvas');
-    expect(existsSync(join(APP, 'lib/profilePhoto.js'))).toBe(true);
+    expect(existsSync(join(APP, 'lib/profilePhoto.js'))).toBe(false);   // l'ancien stockage dans le navigateur n'existe plus
   });
-  it('le menu du haut affiche la photo quand elle existe', () => {
-    expect(read('app/components/shell/Topbar.jsx')).toContain('readPhoto');
+  it('le menu du haut affiche la photo du serveur quand elle existe', () => {
+    expect(read('app/components/shell/Topbar.jsx')).toContain('avatarId');
   });
 });
 
