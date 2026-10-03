@@ -583,3 +583,12 @@ les bandeaux d'annonce / « voir comme », le bouton « Un retour ? » et les me
 4. Dans un navigateur sans session, ouvre `/onboarding` et valide : message d'erreur, aucune connexion.
 5. Après déploiement : lance `ops/sql/detecter-session-sans-preuve.sql` (voir `docs/faille-session-sans-preuve.md`) et envisage de changer `JWT_SECRET`.
 6. Déploie le site et l'API ensemble.
+
+## Mail de bienvenue (une seule fois)
+
+1. Après déploiement, les comptes existants ne reçoivent AUCUN mail de bienvenue (la migration 039 les marque comme déjà servis, une seule fois).
+2. Crée un compte de test, vérifie l'e-mail, choisis un pseudo : le mail « Bienvenue sur InvestKit » arrive, avec ton pseudo.
+3. Reviens dans Paramètres, change ton pseudo : aucun second mail. Connecte-toi, déconnecte-toi : aucun mail.
+4. Contrôle en base (lecture seule) : `SELECT email, welcome_email_sent_at FROM users ORDER BY created_at DESC LIMIT 5;` : la date est remplie pour le compte de test.
+5. Ordre de fusion : après la PR sécurité #85 (le mail part depuis `save-preferences`, désormais protégée) et avec les mails de la PR #80.
+6. (Mail de bienvenue, reprise après panne) Si l'envoi échoue, le joueur est réessayé à la validation suivante de son profil, au plus 3 fois, avec 5 minutes d'écart ; le plafond d'un mail par adresse et par jour ne compte que les envois réussis.
