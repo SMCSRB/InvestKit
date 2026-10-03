@@ -46,7 +46,7 @@ describe('économie : valeurs de départ', () => {
 
   it('tous les montants sont des entiers positifs', () => {
     for (const [k, v] of Object.entries(E)) {
-      if (typeof v === 'number') { expect(Number.isInteger(v), k).toBe(true); expect(v, k).toBeGreaterThan(0); }
+      if (typeof v === 'number') { if (k !== 'FX_DEMO_USD_PER_EUR') expect(Number.isInteger(v), k).toBe(true); expect(v, k).toBeGreaterThan(0); }   // le taux de démonstration est un nombre à virgule
     }
   });
 });
@@ -59,7 +59,7 @@ describe('économie : pas de montant en dur ailleurs', () => {
   const files = walk(join(__dirname, '..', 'src')).filter((f) => !f.endsWith(join('config', 'economy.ts')));
 
   it('aucune autre définition du capital de départ, du seuil de classement ou des récompenses', () => {
-    const bad = /\b(export\s+)?const\s+(EUROS_PER_COIN|DAILY_REWARD_COINS|DAILY_REWARD_MAX_DAYS_PER_WEEK|FIRST_STEP_MIN_INVESTMENT_COINS|STARTING_CAPITAL|PRO_STARTING_BONUS|RANKING_MIN_INVESTED|RANKING_MIN_ACTIVE_DAYS|MIN_RANKED_CAPITAL|CHECKLIST_REWARD_COINS|EDUCATION_CHAPTER_COINS|EDUCATION_DOMAIN_COMPLETE_COINS)\s*=\s*[0-9_]+/;
+    const bad = /\b(export\s+)?const\s+(EUROS_PER_COIN|FX_MAX_STALE_DAYS|FX_DEMO_USD_PER_EUR|DAILY_REWARD_COINS|DAILY_REWARD_MAX_DAYS_PER_WEEK|FIRST_STEP_MIN_INVESTMENT_COINS|STARTING_CAPITAL|PRO_STARTING_BONUS|RANKING_MIN_INVESTED|RANKING_MIN_ACTIVE_DAYS|MIN_RANKED_CAPITAL|CHECKLIST_REWARD_COINS|EDUCATION_CHAPTER_COINS|EDUCATION_DOMAIN_COMPLETE_COINS)\s*=\s*[0-9_]+/;
     expect(files.filter((f) => /const\s+FIRST_STEP_BONUSES\s*=/.test(readFileSync(f, 'utf8')))).toEqual([]);
     const hits = files.filter((f) => bad.test(readFileSync(f, 'utf8')));
     expect(hits).toEqual([]);
