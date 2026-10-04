@@ -96,7 +96,7 @@ describe.skipIf(!hasDb)('journal d\'XP (base réelle)', () => {
     expect([a.status, b.status].sort()).toEqual([200, 200]);
     const progress = (await query('SELECT xp_earned FROM education_progress WHERE user_id = $1', [u])).rows;
     expect(progress.length).toBe(1);
-    const events = (await query('SELECT amount, source, domain FROM xp_events WHERE user_id = $1', [u])).rows;
+    const events = (await query(`SELECT amount, source, domain FROM xp_events WHERE user_id = $1 AND source IN ('quiz', 'domain_final')`, [u])).rows;   // (les badges ajoutent leurs propres événements, source « badge »)
     expect(events.length).toBe(1);
     expect(events[0]).toMatchObject({ amount: progress[0].xp_earned, source: 'quiz', domain: 'education' });
   });

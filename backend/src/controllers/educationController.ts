@@ -1,3 +1,4 @@
+import { badgeService } from '../services/badgeService';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { educationProgressRepository } from '../repositories/educationProgressRepository';
@@ -72,7 +73,10 @@ export const educationController = {
         firstStepBonus = await grantFirstStep(userId, isFinal ? 'first_quiz' : 'first_lesson');
         if (firstStepBonus > 0) balance = await investcoinsRepository.getBalance(userId);
       }
-      res.json({ ...base, rewarded: first, coinsEarned: first ? coins : 0, xpEarned: first ? xp : 0, firstStepBonus, balance });
+      // Les badges ne doivent jamais faire échouer une récompense déjà versée : en cas d'erreur, on les évaluera à la prochaine lecture.
+      let newBadges: string[] = [];
+      if (first) { try { newBadges = await badgeService.evaluate(userId); } catch (e) { console.error('Évaluation des badges :', e); } }
+      res.json({ ...base, rewarded: first, coinsEarned: first ? coins : 0, xpEarned: first ? xp : 0, firstStepBonus, balance, newBadges });
     } catch (error) {
       console.error('Submit quiz error:', error);
       res.status(500).json({ error: 'Erreur lors de la correction du quiz' });
