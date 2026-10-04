@@ -50,7 +50,7 @@
 ### P2 — produit
 13. **« Projets illimités »** (voir section 4) : sinon le plan reste sans cette promesse.
 14. **Parkings** dans l'Immobilier (section 5).
-15. **Données réelles Bourse/PEA** : cours quotidiens importés (aujourd'hui annuels et simplifiés) ; bougies, plus bas de l'année pour les appels de marge.
+15. **Données réelles Bourse/PEA** : cours quotidiens importés (aujourd'hui annuels et simplifiés) ; bougies, plus bas de l'année pour les appels de marge. Comparaison des sources légales : `docs/sources-cours-bourse.md` (rien n'est lancé, décision attendue).
 16. **Données réelles Crypto** : lancer l'import ; vérifier les conditions d'utilisation de la source.
 17. **Source DVF** pour l'Immobilier (`REAL_ESTATE_SOURCE=dvf`, interface déjà prête).
 18. **Export PDF** réel (au-delà de l'impression du navigateur) et **alertes personnalisées** : à spécifier si on veut les remettre dans le plan.
