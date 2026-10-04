@@ -72,12 +72,13 @@ describe('émoluments et total', () => {
     expect(NOTARY_NEW_PCT).toBe(2.5);
     expect(() => notaryFeesOld(0, '75', '2025-06-01')).toThrow();
   });
-  it('aucun moteur ni route ne lit encore ce calcul (catalogue fictif sans département) : seuls les scripts et tests l\'utilisent', () => {
+  it('aucun moteur ni route ne lit encore ce calcul (catalogue fictif sans département) : seule la règle d\'une annonce avec département l\'utilise', () => {
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(path.join(__dirname, '..', 'src'));
     const own = /notaryDepartment\.ts$|notaryRules\.ts$/;
-    expect(files.filter((f) => /notaryDepartment|notaryRules/.test(readFileSync(f, 'utf8')) && !own.test(f))).toEqual([]);
+    // Branchement 5/6 : seul le service des annonces (realEstateService) l'importe, et il ne l'applique qu'aux annonces qui portent un département (annonces réelles, désactivées) ; le catalogue fictif garde le taux forfaitaire.
+    expect(files.filter((f) => /notaryDepartment|notaryRules/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f))).toEqual(['realEstateService.ts']);
   });
 });
 

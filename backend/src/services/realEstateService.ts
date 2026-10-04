@@ -1,5 +1,6 @@
 import { withRealRent, ListingRent } from '../engine/immo/listingRent';
 import { withRealTax, ListingTax } from '../engine/immo/listingTax';
+import { notaryRuleFor } from '../engine/immo/notaryDepartment';
 import { getClient, query } from '../utils/db';
 import type { PoolClient } from 'pg';
 import { investcoinsRepository, InsufficientFundsError } from '../repositories/investcoinsRepository';
@@ -72,11 +73,17 @@ export const scenarioContext = async (year: number): Promise<ScenarioContext> =>
   insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES,
 });
 
+// Règle de notaire d'une annonce : par DÉPARTEMENT et par date (annonces réelles, qui portent leur département) ; le catalogue fictif garde le taux forfaitaire du jeu.
+// `day` = jour de jeu (AAAA-MM-JJ) ; par défaut le 1er janvier de l'année de l'annonce.
+export const notaryRuleOf = (l: Pick<Listing, 'price' | 'year' | 'department'>, day?: string) =>
+  (l.department ? notaryRuleFor(l.price, l.department, day ?? `${l.year}-01-01`) : NOTARY_RULE);
+export const gameDay = (year: number, month: number): string => `${year}-${String(month).padStart(2, '0')}-01`;
+
 // `rent` : undefined = loyer du catalogue (comportement actuel) ; un loyer réel (ListingRent) ou null (source réelle SANS loyer connu : aucune rentabilité, jamais un loyer inventé).
 export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: ListingRent | null, tax?: ListingTax | null) => {
   const l = withRealTax(rent === undefined ? listing : withRealRent(listing, rent), tax ?? null);   // tax absent ou null : taxe du catalogue / valeur de jeu inchangée
   const noRent = l.rentAvailable === false;
-  const scenario = ctx && !noRent ? standardScenario(l, ctx) : null;
+  const scenario = ctx && !noRent ? standardScenario(l, l.department ? { ...ctx, notaryRule: notaryRuleOf(l, ctx.day) } : ctx) : null;
   return {
     ...l,
     pricePerSqm: pricePerSqm(l),
@@ -93,12 +100,12 @@ export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: 
 // uniquement le moteur existant (computeIndicators), aucun nouveau calcul.
 export const listingEconomics = (l: Listing) => {
   if (l.rentAvailable === false) {     // pas de loyer connu : aucun rendement, ni brut ni net, jamais calculé sur un loyer de 0
-    const notaryFees = computeNotaryFees(l.price, l.age, NOTARY_RULE);
+    const notaryFees = computeNotaryFees(l.price, l.age, notaryRuleOf(l));
     const annualCharges = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
     return { notaryFees, totalInvestment: l.price + notaryFees + l.advertisedWorks, annualCharges,
       potentialAnnualRent: null, collectedAnnualRent: null, grossYieldPct: null, netYieldPct: null, monthlyCashFlow: null, annualCashFlow: null, breakevenOccupancyPct: null };
   }
-  const notary = computeNotaryFees(l.price, l.age, NOTARY_RULE);
+  const notary = computeNotaryFees(l.price, l.age, notaryRuleOf(l));
   const annualCharges = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
   const ind = computeIndicators({
     totalInvestment: l.price + notary + l.advertisedWorks, loanPrincipal: 0, monthlyRent: l.marketRentMonthly,
@@ -177,7 +184,7 @@ const buildPlan = async (game: GameRow, params: PurchaseParams, db: { query: Poo
     household, price: listing.price, age: listing.age, works: worksFinanced,
     projectedMonthlyRent: listing.marketRentMonthly,
     downPayment: downPaymentEuros, loanMonths: params.months, annualRatePct: rate,
-    insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES, loanFees: loanApplicationFee,
+    insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: notaryRuleOf(listing, gameDay(game.simulated_year, game.simulated_month)), bankRules: BANK_RULES, loanFees: loanApplicationFee,
   };
   let evaluation: PurchaseEvaluation;
   try {

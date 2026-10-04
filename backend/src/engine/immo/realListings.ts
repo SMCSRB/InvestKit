@@ -6,7 +6,7 @@ import { REAL_UNIT_KINDS, REAL_KIND_LABEL, REAL_LISTINGS_PER_KIND, REAL_CONDITIO
 
 export interface ZonePrice { medianEurM2: number; p25EurM2: number; p75EurM2: number }
 export interface ZoneInput {
-  zoneCode: string; zoneLabel: string; cityId: string; year: number;
+  zoneCode: string; zoneLabel: string; cityId: string; department: string; year: number;
   apartment: ZonePrice | null; house: ZonePrice | null;        // null = pas de prix fiable : aucune annonce de ce type (jamais un prix inventé)
 }
 
@@ -32,7 +32,7 @@ export const generateZoneListings = (z: ZoneInput): Listing[] => {
       const perM2 = prices.p25EurM2 + rng() * (prices.p75EurM2 - prices.p25EurM2);       // jamais hors des quartiles réels
       out.push({
         id: `r-${z.zoneCode}-${kind.id}-${n + 1}`,
-        cityId: z.cityId, neighborhoodId: `${z.cityId}:${z.zoneCode}`, neighborhoodName: z.zoneLabel,
+        cityId: z.cityId, department: z.department, neighborhoodId: `${z.cityId}:${z.zoneCode}`, neighborhoodName: z.zoneLabel,
         year: z.year, type: kind.type, title: `${REAL_KIND_LABEL[kind.id]} — ${z.zoneLabel}`, urgentSale: false,
         surfaceSqm: surface, rooms: kind.rooms, age, energyClass: energy, condition: cond.condition,
         price: roundPrice(surface * perM2 * cond.priceFactor),
