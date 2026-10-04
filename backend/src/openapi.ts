@@ -84,6 +84,7 @@ export const ROUTES: Row[] = [
   ['get', '/clock', 'Horloge', 'Ma date de jeu unique (décidée par le serveur), dernier jour jouable et départs proposés'],
   ['post', '/clock/start', 'Horloge', 'Choisir la date de départ de la partie (une seule fois, liste fermée)'],
   ['post', '/clock/advance', 'Horloge', 'Avancer le temps pour tous les domaines : day, week, month, quarter, year ou next_event (récapitulatif et arrêt sur événement important)'],
+  ['get', '/wealth/history', 'Tableau de bord', 'Historique de mon patrimoine (gratuit : 30 derniers points ; Pro : tout), décidé par le serveur'],
   ['get', '/trading/assets', 'Bourse / Crypto', 'Actifs disponibles'],
   ['get', '/trading/portfolio', 'Bourse / Crypto', 'Portefeuille virtuel'],
   ['get', '/trading/history', 'Bourse / Crypto', 'Historique d\'un titre (borné à l\'année simulée)'],
