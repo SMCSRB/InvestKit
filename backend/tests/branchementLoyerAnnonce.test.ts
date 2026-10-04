@@ -57,14 +57,14 @@ describe('garde : rien dans le moteur actuel ne reçoit encore de loyer réel', 
   it('drapeau désactivé ; le service de loyer d\'annonce n\'est importé par personne ; le module pur seulement par la décoration des annonces', () => {
     expect(RENT_MARKET_ENABLED).toBe(false);
     const own = /listingRentService\.ts$|engine[\\/]immo[\\/]listingRent\.ts$/;
-    const service = srcFiles().filter((f) => /listingRentService/.test(readFileSync(f, 'utf8')) && !own.test(f));
-    expect(service, 'aucune route ni aucun moteur ne doit appeler le service du loyer d\'annonce').toEqual([]);
-    const pure = srcFiles().filter((f) => /immo\/listingRent'/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f));
-    expect(pure).toEqual(['realEstateService.ts']);
+    const service = srcFiles().filter((f) => /listingRentService/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f));
+    expect(service, 'seul le service des annonces réelles (désactivé, appelé par personne) lit le loyer d\'annonce').toEqual(['realListingService.ts']);
+    const pure = srcFiles().filter((f) => /immo\/listingRent'/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f)).sort();
+    expect(pure).toEqual(['realEstateService.ts', 'realListingService.ts']);
   });
   it('aucun appelant ne passe de loyer réel à decorateListing (3e argument) : le catalogue actuel garde son loyer', () => {
     for (const f of srcFiles()) {
-      if (/realEstateService\.ts$/.test(f)) continue;
+      if (/realEstateService\.ts$|realListingService\.ts$/.test(f)) continue;       // le service des annonces réelles est désactivé et n'est appelé par personne (branchementAnnoncesDvf.test.ts)
       const counts = argCounts(readFileSync(f, 'utf8'), 'decorateListing');
       expect(counts.every((n) => n <= 2), `${path.basename(f)} : ${counts.join(',')}`).toBe(true);
     }

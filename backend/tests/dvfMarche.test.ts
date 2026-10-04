@@ -32,7 +32,7 @@ describe('activation', () => {
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(src);
-    const users = files.filter((f) => /dvfMarketService|dvfMarketRules|marketFile/.test(readFileSync(f, 'utf8')) && !/dvfMarketService\.ts$|dvfMarketRules\.ts$|marketFile\.ts$/.test(f));
+    const users = files.filter((f) => /dvfMarketService|dvfMarketRules|marketFile/.test(readFileSync(f, 'utf8')) && !/dvfMarketService\.ts$|dvfMarketRules\.ts$|marketFile\.ts$|realListingService\.ts$/.test(f));   // realListingService : branchement 3/6, désactivé et appelé par personne (voir branchementAnnoncesDvf.test.ts)
     expect(users, 'aucun moteur ni route ne doit importer le service DVF tant que le point 2 n\'est pas validé').toEqual([]);
   });
 });

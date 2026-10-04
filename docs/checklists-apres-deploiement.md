@@ -1236,3 +1236,11 @@ Méthode : « Create a merge commit ».
 ## Branchement 2/6 : rentabilité et mentions avec un loyer réel (préparation)
 
 Rien ne change sur le site tant que le drapeau est désactivé (aucune annonce ne reçoit encore de loyer réel). Quand il sera activé sur la copie de test (PR 6) : la fiche d'une annonce d'une commune **avec** loyer ANIL affiche « Loyer moyen de la commune », le millésime, la fourchette et l'attribution **« Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin »** ; une commune **sans** loyer affiche « — » à la place du loyer, « Pas de loyer connu pour cette commune » et « Rentabilité non disponible » (ni rendement brut, ni net, ni flux mensuel). **Choix à relire** : le loyer ANIL est « charges comprises », donc ces annonces n'ont aucune charge récupérable en plus (pas de double compte) ; les charges de copropriété restent des valeurs de jeu.
+
+## Branchement 3/6 : annonces issues des prix DVF (préparation)
+
+Rien à tester sur le site : le service est **désactivé** (`DVF_MARKET_ENABLED = false`) et aucune route ni aucun moteur ne l'appelle. Il pourra être activé **sur la copie de test seulement** (PR 6), avec les données importées (`ops/immo-telecharger.py`, `docs/telechargement-donnees-immo.md`). Règles à vérifier alors :
+1. **Réel** : le prix au m² de chaque annonce est tiré **entre le 1er et le 3e quartile** des ventes réelles de la zone (arrondissement ou code postal), au dernier mois entièrement passé ; le loyer est celui d'ANIL pour la commune (série T1-T2, T3+ ou maisons).
+2. **Valeur de jeu** (marquée à l'écran) : surfaces, état, âge, classe énergie, travaux, charges de copropriété, assurance, entretien, vacance, durée des baux, **taxe foncière** (jusqu'à son branchement).
+3. **Rien d'inventé** : zone sans prix DVF pour un type de bien = aucune annonce de ce type (ni maison à Paris si pas de prix de maison) ; commune sans loyer = « Rentabilité non disponible ». **Pas de parking** (aucune donnée réelle).
+4. La date de jeu d'une année est le **1er janvier** : le prix de décembre précédent et le millésime ANIL de l'automne précédent (loyer constant dans l'année).
