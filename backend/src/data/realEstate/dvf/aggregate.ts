@@ -5,10 +5,19 @@ import { minOf, maxOf } from './arrays';
 import { DVF_CITIES, cityOfCode } from './cities';
 
 export const WINDOW_MONTHS = 12;
-export const MIN_SALES = 10;                 // en dessous, la médiane n'est pas fiable : repli sur la ville, puis « aucun »
+export const MIN_SALES = 10;                 // « zone fiable » (rapports) et seuil de la médiane de la VILLE ; la zone, elle, suit la règle de crédibilité ci-dessous
+// Lissage par crédibilité (décision d'Andreja, 5 octobre 2026) : pour une zone qui a n ventes sur la fenêtre,
+//   n >= 30 : médiane de la zone seule ; 5 <= n < 30 : (n/30) × médiane zone + (1 − n/30) × médiane ville ; n < 5 : médiane de la ville seule (marquée « ~ »).
+// Les quartiles sont mélangés avec les mêmes poids (quartile 1 <= médiane <= quartile 3 est conservé). Aucune vente inventée : seulement un poids entre deux médianes observées.
+export const CREDIBILITY_FULL = 30;
+export const CREDIBILITY_FLOOR = 5;
+// Plausibilité : un prix de zone ne s'écarte jamais de plus de 40 % de la médiane de la ville sans être marqué « ~ » (c'est alors le prix de la ville).
+export const PLAUSIBILITY_BAND = 0.4;
 
-export type Fallback = null | 'ville' | 'aucun';
-export interface MarketRow { key: string; month: string; type: DvfType; n: number; median: number | null; p25: number | null; p75: number | null; fallback: Fallback }
+// null = zone seule · 'mixte' = zone et ville mélangées (5 à 29 ventes) · 'ville' = ville seule (moins de 5 ventes, ou écart de plus de 40 %) · 'aucun' = pas de prix fiable
+export type Fallback = null | 'mixte' | 'ville' | 'aucun';
+export interface MarketRow { key: string; month: string; type: DvfType; n: number; median: number | null; p25: number | null; p75: number | null; fallback: Fallback; capped?: boolean }
+export type Method = 'credibilite' | 'seuil';   // « seuil » = ancienne règle (10 ventes, sinon ville), gardée pour comparer avant/après
 
 const monthIndex = (ym: string): number => Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5, 7)) - 1;
 const monthLabel = (i: number): string => `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
@@ -25,14 +34,18 @@ const bucket = (sales: DvfSale[], keyOf: (s: DvfSale) => string | null): Map<str
   return out;
 };
 
+// Première position dont le mois est > m (la liste est triée par mois) : recherche dichotomique, pour ne pas relire 1,5 million de ventes à chaque mois.
+const firstAfter = (list: { m: number }[], m: number): number => { let lo = 0; let hi = list.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid].m <= m) lo = mid + 1; else hi = mid; } return lo; };
 const windowStats = (list: { m: number; p: number }[], month: number): { n: number; med: number | null; p25: number | null; p75: number | null } => {
-  const v = list.filter((x) => x.m <= month && x.m > month - WINDOW_MONTHS).map((x) => x.p);
+  const from = firstAfter(list, month - WINDOW_MONTHS); const to = firstAfter(list, month);        // ventes des mois (month − 11) à month
+  const v: number[] = [];
+  for (let i = from; i < to; i++) v.push(list[i].p);
   if (!v.length) return { n: 0, med: null, p25: null, p75: null };
   return { n: v.length, med: Math.round(median(v)), p25: Math.round(quantile(v, 0.25)), p75: Math.round(quantile(v, 0.75)) };
 };
 
 // months : [premier, dernier] au format AAAA-MM. Une ligne par (zone, type, mois).
-export const monthlyMarket = (sales: DvfSale[], range: { from: string; to: string }): MarketRow[] => {
+export const monthlyMarket = (sales: DvfSale[], range: { from: string; to: string }, method: Method = 'credibilite'): MarketRow[] => {
   const zone = bucket(sales, (s) => s.zone || null);
   const city = bucket(sales, (s) => cityOfCode(s.code)?.id ?? null);
   const a = monthIndex(range.from); const b = monthIndex(range.to);
@@ -40,14 +53,25 @@ export const monthlyMarket = (sales: DvfSale[], range: { from: string; to: strin
   for (const c of DVF_CITIES) {
     for (const type of ['appartement', 'maison'] as const) {
       const cityList = city.get(`${c.id}|${type}`) ?? [];
+      const cityStats = new Map<number, ReturnType<typeof windowStats>>();      // médiane de la ville : calculée UNE fois par mois (et non par zone : 1,5 million de ventes)
+      const cityAt = (m: number) => { let v = cityStats.get(m); if (!v) { v = windowStats(cityList, m); cityStats.set(m, v); } return v; };
       for (const code of c.zones) {
         const own = zone.get(`${code}|${type}`) ?? [];
         for (let m = a; m <= b; m++) {
-          const w = windowStats(own, m);
-          if (w.n >= MIN_SALES) { rows.push({ key: code, month: monthLabel(m), type, n: w.n, median: w.med, p25: w.p25, p75: w.p75, fallback: null }); continue; }
-          const cw = windowStats(cityList, m);
-          if (cw.n >= MIN_SALES) rows.push({ key: code, month: monthLabel(m), type, n: cw.n, median: cw.med, p25: cw.p25, p75: cw.p75, fallback: 'ville' });
-          else rows.push({ key: code, month: monthLabel(m), type, n: w.n, median: null, p25: null, p75: null, fallback: 'aucun' });
+          const month = monthLabel(m);
+          const w = windowStats(own, m); const cw = cityAt(m);
+          const cityOk = cw.n >= MIN_SALES;
+          const asCity = (capped = false): MarketRow => ({ key: code, month, type, n: cw.n, median: cw.med, p25: cw.p25, p75: cw.p75, fallback: 'ville', ...(capped ? { capped: true } : {}) });
+          const none: MarketRow = { key: code, month, type, n: w.n, median: null, p25: null, p75: null, fallback: 'aucun' };
+          const alone: MarketRow = { key: code, month, type, n: w.n, median: w.med, p25: w.p25, p75: w.p75, fallback: null };
+          if (method === 'seuil') { rows.push(w.n >= MIN_SALES ? alone : cityOk ? asCity() : none); continue; }
+          if (!cityOk) { rows.push(w.n >= CREDIBILITY_FULL ? alone : none); continue; }   // pas de médiane de ville fiable : la zone n'est gardée que si elle est crédible à 100 %
+          if (w.n < CREDIBILITY_FLOOR) { rows.push(asCity()); continue; }
+          const weight = Math.min(w.n, CREDIBILITY_FULL) / CREDIBILITY_FULL;
+          const mix = (z: number | null, v: number | null): number => Math.round(weight * z! + (1 - weight) * v!);
+          const med = mix(w.med, cw.med);
+          if (Math.abs(med / cw.med! - 1) > PLAUSIBILITY_BAND) { rows.push(asCity(true)); continue; }   // plausibilité : trop loin de la ville, on prend la ville (marquée « ~ »)
+          rows.push({ key: code, month, type, n: w.n, median: med, p25: mix(w.p25, cw.p25), p75: mix(w.p75, cw.p75), fallback: weight >= 1 ? null : 'mixte' });
         }
       }
     }

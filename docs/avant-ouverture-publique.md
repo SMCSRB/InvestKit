@@ -12,3 +12,4 @@ Liste des points à régler **avant** d'ouvrir le site au public (hors paramètr
 - [ ] Source de **cours réels pour la Bourse** (aucun scénario Bourse gratuit avant).
 - [ ] Licences et sources de l'Immobilier réel (DVF : Licence Ouverte 2.0 ; contours de zones à choisir : licence à vérifier).
 - [ ] Relire sur leurs pages d'origine les faits cités dans les scénarios (étiquette **[sûr]** = résumé de recherche, page à relire).
+- [ ] **Loyers de l'Immobilier** : aujourd'hui des valeurs de jeu. Avant d'activer les prix DVF réels, éviter une rentabilité qui mélange un prix réel et un loyer de jeu : afficher « loyer : valeur de jeu », recaler les loyers de base, ou sourcer de vrais loyers (licence à vérifier).

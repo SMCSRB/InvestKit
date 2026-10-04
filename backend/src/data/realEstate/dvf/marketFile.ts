@@ -38,7 +38,7 @@ export const parseMarketFile = (raw: unknown, now: Date = new Date()): ParsedMar
     if (month > nowMonth) { fail(`${at} : mois ${month} dans le futur.`); return; }
     if (t !== 'a' && t !== 'm') { fail(`${at} : type de bien inconnu.`); return; }
     if (!isInt(n) || n < 0) { fail(`${at} : nombre de ventes invalide.`); return; }
-    if (fb !== null && fb !== 'ville' && fb !== 'aucun') { fail(`${at} : repli inconnu.`); return; }
+    if (fb !== null && fb !== 'mixte' && fb !== 'ville' && fb !== 'aucun') { fail(`${at} : repli inconnu.`); return; }
     const key = `${zone}|${month}|${t}`;
     if (seen.has(key)) { fail(`${at} : doublon (${key}).`); return; }
     seen.add(key);
