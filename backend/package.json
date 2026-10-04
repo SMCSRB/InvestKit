@@ -25,7 +25,8 @@
     "cutover:m1": "ts-node scripts/cutover-m1.ts",
     "immo:download-dvf": "ts-node scripts/immo-download-dvf.ts",
     "immo:import-dvf": "ts-node scripts/immo-import-dvf.ts",
-    "immo:load-dvf": "ts-node scripts/immo-load-dvf.ts"
+    "immo:load-dvf": "ts-node scripts/immo-load-dvf.ts",
+    "immo:simulate-niveau": "ts-node scripts/immo-simulate-niveau.ts"
   },
   "keywords": [
     "investissement",
