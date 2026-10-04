@@ -180,3 +180,6 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 
 ## Confidentialité du profil (6a-5)
 - Défaut « public » pour tous les comptes (le comportement actuel ne change pour personne) : décision de continuité. Le libellé « Joueur anonyme » et la règle « privé = introuvable par pseudo, joignable par code ami » suivent la décision d'Andreja (question 12 de l'analyse 6a). Rien de chiffré, aucune valeur de jeu.
+
+## Disposition du tableau de bord (6g-G4)
+- Composition des trois modèles de départ (Débutant, Investisseur, Complet) et taille maximale de la disposition : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/dashboardLayout.ts`). Choix d'ergonomie, aucun fait sourcé.

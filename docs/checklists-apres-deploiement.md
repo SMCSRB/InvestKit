@@ -998,6 +998,14 @@ Aucune page du jeu ne change. Après déploiement :
 3. Au clavier : Tab jusqu'au graphique puis flèche droite/gauche.
 4. Sur téléphone (390 px) : pas de défilement horizontal.
 
+## PR 6g-G4 — Disposition du tableau de bord (serveur seulement)
+
+Aucun écran ne change. Après déploiement :
+
+1. Connecte-toi : le tableau de bord s'affiche comme avant.
+2. Dans l'export de ton compte, vérifie « dashboardLayout » (vide tant que rien n'est enregistré).
+3. (Optionnel, technique) un compte gratuit qui demande une liste de blocs reçoit un refus « plan Pro » ; un compte Pro est accepté.
+
 ## PR 6c-analyse — Horloge et modes de jeu (document seulement)
 
 Aucun test à faire sur le site (rien ne change).
