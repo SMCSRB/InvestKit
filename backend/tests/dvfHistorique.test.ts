@@ -16,7 +16,7 @@ import { filterToFiles, openDvfStream } from '../src/data/realEstate/dvf/filter'
 import { downloadYear, realFetcher, renderReport } from '../src/data/realEstate/dvf/download';
 import { DvfSource } from '../src/data/realEstate/dvf/sources';
 import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
-import { yearCityStats } from '../src/data/realEstate/dvf/aggregate';
+import { yearCityStats, compressYears, qualityReport, monthlyMarket } from '../src/data/realEstate/dvf/aggregate';
 
 const ETALAB_HEAD = 'id_mutation,date_mutation,numero_disposition,nature_mutation,valeur_fonciere,adresse_numero,adresse_nom_voie,code_postal,code_commune,nom_commune,code_departement,id_parcelle,nombre_lots,code_type_local,type_local,surface_reelle_bati,nombre_pieces_principales,longitude,latitude';
 const etalab = (rows: { id: string; date: string; nature?: string; value: string; code: string; type?: string; surface?: string }[]) =>
@@ -271,7 +271,7 @@ describe('import de bout en bout avec un fichier brut latin1', () => {
     expect(out).toContain('60 ventes retenues');
     expect(out).toMatch(/Bordeaux\s+30\s+30\s*$/m);
     expect(out).toContain('Ventes retenues par année et par ville');
-    expect(out).toContain('Années SANS aucune vente lue : 2014, 2015, 2017, 2018, 2019, 2020');
+    expect(out).toContain('Années présentes : 2016, 2021. Années absentes : 2014 à 2015, 2017 à 2020');
   }, 90_000);
 });
 
@@ -297,4 +297,41 @@ describe('adresse imposée', () => {
     expect(rep).toMatchObject({ state: 'telecharge', method: 'url-imposee' });
     expect(hits).toEqual(['/mien/2017.csv.gz']);
   });
+});
+
+describe('rapport qualité : années absentes à part', () => {
+  const mk = (code: string, date: string, p: number) => ({ id: `${code}${date}${p}${Math.random()}`, date, code, type: 'appartement' as const, surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
+  it('compressYears : plages et années isolées', () => {
+    expect(compressYears([2014, 2015, 2016, 2017, 2018, 2019, 2020])).toBe('2014 à 2020');
+    expect(compressYears([2014, 2016, 2017, 2018, 2021])).toBe('2014, 2016 à 2018, 2021');
+    expect(compressYears([])).toBe('aucune');
+  });
+  it('les pourcentages ne comptent QUE les années présentes ; les années absentes sont listées à part', () => {
+    // Bordeaux : 12 ventes par mois de 2021 à 2025 ; rien avant.
+    const sales = [];
+    for (let y = 2021; y <= 2025; y++) for (let m = 1; m <= 12; m++) for (let i = 0; i < 12; i++) sales.push(mk('33063', `${y}-${String(m).padStart(2, '0')}-1${i % 9}`, 4000 + i));
+    const rows = monthlyMarket(sales, { from: '2014-01', to: '2025-12' });      // même si on demande aussi les années absentes
+    const rep = qualityReport(sales, rows);
+    expect(rep.presentYears).toEqual([2021, 2022, 2023, 2024, 2025]);
+    expect(rep.absentYears).toEqual([2014, 2015, 2016, 2017, 2018, 2019, 2020]);
+    const bx = rep.perCity.find((c) => c.id === 'bordeaux')!;
+    expect(bx.noneShare).toBe(0);                                         // avant : 7 années absentes sur 12 donnaient 58 %
+    expect(bx.coveredShare).toBe(1);
+    expect(rep.warnings.some((w) => w.startsWith('Bordeaux : ') && w.includes('sans médiane'))).toBe(false);
+    expect(rep.startYears.map((y) => y.year)).toEqual([2021, 2022, 2023, 2024, 2025]);
+  });
+});
+
+describe('import : message explicite quand aucun quartier n\'est sous le seuil', () => {
+  it('« Aucun quartier sous 10 ventes sur l\'année, pour aucune ville » et années absentes à part', () => {
+    const dir = tmp(); mkdirSync(path.join(dir, '2021'), { recursive: true });
+    const lines: string[] = [];
+    for (const c of DVF_CITIES) for (const code of c.codes) for (let i = 0; i < 12; i++) lines.push([`${code}-${i}`, `2021-0${1 + (i % 6)}-1${i % 9}`, '1', 'Vente', String(250000 + i * 1000), '1', 'Rue', '00000', code, 'V', code.slice(0, 2), `${code}P${i}`, '1', '2', 'Appartement', '50', '2', '0', '0'].join(','));
+    // Un seul fichier suffit : l'import lit tous les .csv du dossier de l'année et range les ventes par code commune.
+    writeFileSync(path.join(dir, '2021', 'tout.csv'), [ETALAB_HEAD, ...lines].join('\n') + '\n');
+    const out = execFileSync('npx', ['ts-node', 'scripts/immo-import-dvf.ts', '--dir', dir, '--check'], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
+    expect(out).toContain("Aucun quartier sous 10 ventes sur l'année, pour aucune ville");
+    expect(out).toContain('Années présentes : 2021. Années absentes : 2014 à 2020');
+    expect(out).toContain('Mois de chauffe');
+  }, 90_000);
 });

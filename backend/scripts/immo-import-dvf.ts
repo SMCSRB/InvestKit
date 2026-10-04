@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import path from 'path';
 import { readDvfText, cleanRows, trimOutliers, DvfSale, RejectReason } from '../src/data/realEstate/dvf/clean';
 import { decodeText } from '../src/data/realEstate/dvf/csv';
-import { monthlyMarket, qualityReport, yearCityStats, WINDOW_MONTHS, MIN_SALES } from '../src/data/realEstate/dvf/aggregate';
+import { monthlyMarket, qualityReport, yearCityStats, compressYears, WINDOW_MONTHS, MIN_SALES } from '../src/data/realEstate/dvf/aggregate';
 import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
 
 const arg = (n: string): string | undefined => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? process.argv[i + 1] : undefined; };
@@ -28,7 +28,8 @@ const main = () => {
   const trimmed = trimOutliers(sales);
   rejected.valeur_aberrante = (rejected.valeur_aberrante ?? 0) + trimmed.removed;
   const last = trimmed.kept.map((s) => s.date.slice(0, 7)).sort().pop()!;
-  const range = { from: arg('from') ?? '2014-01', to: arg('to') ?? last };
+  const firstYear = Math.min(...trimmed.kept.map((x) => Number(x.date.slice(0, 4))));
+  const range = { from: arg('from') ?? `${firstYear}-01`, to: arg('to') ?? last };   // les années absentes ne produisent aucune ligne
   const rows = monthlyMarket(trimmed.kept, range);
   const rep = qualityReport(trimmed.kept, rows);
 
@@ -40,15 +41,21 @@ const main = () => {
   console.log('\nDépart en janvier de l\'année (ok = médianes fiables sur au moins la moitié des quartiers) :');
   for (const y of rep.startYears) console.log(`  ${y.year} : ${y.cities.filter((c) => c.ok).length}/${DVF_CITIES.length} villes${y.cities.some((c) => !c.ok) ? ` (manque : ${y.cities.filter((c) => !c.ok).map((c) => c.id).join(', ')})` : ''}`);
   // Par année et par ville : ce qui tient réellement.
-  const years = [...new Set(trimmed.kept.map((s) => Number(s.date.slice(0, 4))))].sort();
+  const years = rep.presentYears;
   const stats = yearCityStats(trimmed.kept, years);
-  const absent: number[] = []; for (let y = 2014; y <= Number((range.to || '2022').slice(0, 4)); y++) if (!years.includes(y)) absent.push(y);
+  console.log(`\nAnnées présentes : ${compressYears(years)}. Années absentes : ${compressYears(rep.absentYears)}${rep.absentYears.length ? ' (aucun fichier : elles ne comptent dans aucun pourcentage ci-dessus)' : ''}.`);
+  console.log(`Mois de chauffe : janvier à novembre ${years[0]} reposent sur moins de ${WINDOW_MONTHS} mois de ventes (la fenêtre se remplit peu à peu) ; ils sont à lire avec prudence.`);
   console.log(`\nVentes retenues par année et par ville (le signe « * » = année maigre : plus de la moitié des quartiers sous ${MIN_SALES} ventes sur l'année) :`);
   console.log('Ville'.padEnd(16) + years.map((y) => String(y).padStart(8)).join(''));
   for (const c of DVF_CITIES) console.log(c.name.padEnd(16) + years.map((y) => { const s = stats.find((x) => x.year === y && x.cityId === c.id)!; return `${s.sales}${s.thin ? '*' : ' '}`.padStart(8); }).join(''));
   console.log('\nQuartiers sous ' + MIN_SALES + ' ventes sur l\'année (sur le nombre de quartiers de la ville) :');
-  for (const c of DVF_CITIES) { const bad = stats.filter((x) => x.cityId === c.id && x.zonesBelowMin > 0); if (bad.length) console.log(`  ${c.name.padEnd(14)} ${bad.map((x) => `${x.year}: ${x.zonesBelowMin}/${x.zones}`).join('  ')}`); }
-  if (absent.length) console.log(`\nAnnées SANS aucune vente lue : ${absent.join(', ')} (fichiers absents : lancer immo:download-dvf).`);
+  const citiesBelow = DVF_CITIES.filter((c) => stats.some((x) => x.cityId === c.id && x.zonesBelowMin > 0));
+  if (!citiesBelow.length) console.log(`  Aucun quartier sous ${MIN_SALES} ventes sur l'année, pour aucune ville, sur les années présentes.`);
+  else {
+    for (const c of citiesBelow) console.log(`  ${c.name.padEnd(14)} ${stats.filter((x) => x.cityId === c.id && x.zonesBelowMin > 0).map((x) => `${x.year}: ${x.zonesBelowMin}/${x.zones}`).join('  ')}`);
+    const fine = DVF_CITIES.filter((c) => !citiesBelow.includes(c)).map((c) => c.name);
+    console.log(`  Aucun quartier sous ${MIN_SALES} ventes pour : ${fine.length ? fine.join(', ') : 'aucune ville'}.`);
+  }
   const thinYears = years.filter((y) => stats.filter((x) => x.year === y && x.thin).length >= 3);
   if (thinYears.length) console.log(`Années maigres pour au moins 3 villes : ${thinYears.join(', ')}.`);
   if (rep.warnings.length) console.log('\nÀ regarder :\n- ' + rep.warnings.join('\n- '));

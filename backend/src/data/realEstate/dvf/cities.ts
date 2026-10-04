@@ -35,3 +35,11 @@ export const DVF_FIRST_YEAR = 2014;
 // Fichier par commune et par année (DVF géolocalisées, DGFiP via data.gouv.fr, Licence Ouverte 2.0). [connu, à vérifier au premier téléchargement]
 export const dvfUrl = (year: number, code: string, department = code.startsWith('97') ? code.slice(0, 3) : code.slice(0, 2)): string =>
   `https://files.data.gouv.fr/geo-dvf/latest/csv/${year}/communes/${department}/${code}.csv`;
+
+const ORDINAL = (n: number): string => (n === 1 ? '1er' : `${n}e`);
+// Nom lisible d'un quartier : « Paris 11e », « Lyon 3e », « Marseille 8e », sinon le nom de la ville. JAMAIS une rue ni un numéro.
+export const zoneLabel = (code: string): string | null => {
+  const city = cityOfCode(code);
+  if (!city) return null;
+  return city.districts ? `${city.name} ${ORDINAL(city.codes.indexOf(code) + 1)}` : city.name;
+};

@@ -54,15 +54,36 @@ export const monthlyMarket = (sales: DvfSale[], range: { from: string; to: strin
   return rows;
 };
 
+// 2014, 2015, 2016 -> « 2014 à 2016 » ; liste vide -> « aucune ».
+export const compressYears = (years: number[]): string => {
+  const ys = [...new Set(years)].sort((x, y) => x - y);
+  if (!ys.length) return 'aucune';
+  const parts: string[] = [];
+  for (let i = 0; i < ys.length;) {
+    let j = i; while (j + 1 < ys.length && ys[j + 1] === ys[j] + 1) j++;
+    parts.push(j - i >= 1 ? `${ys[i]} à ${ys[j]}` : String(ys[i]));
+    i = j + 1;
+  }
+  return parts.join(', ');
+};
+
 export interface QualityReport {
+  presentYears: number[];
+  absentYears: number[];
   perCity: { id: string; name: string; sales: number; byType: Record<DvfType, number>; coveredShare: number; fallbackShare: number; noneShare: number; jumps: number; minPerM2: number | null; maxPerM2: number | null }[];
   startYears: { year: number; cities: { id: string; ok: boolean }[] }[];
   warnings: string[];
 }
 
 // « Les vraies données tiennent-elles ? » : couverture par ville, part de mois sans médiane fiable, sauts suspects d'un mois à l'autre, et aptitude à chaque année de départ.
-export const qualityReport = (sales: DvfSale[], rows: MarketRow[]): QualityReport => {
+export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear = 2014): QualityReport => {
   const warnings: string[] = [];
+  // Les années ABSENTES (fichiers inexistants) ne comptent dans aucun pourcentage : elles sont listées à part.
+  const presentYears = [...new Set(sales.map((s) => Number(s.date.slice(0, 4))))].sort((x, y) => x - y);
+  const lastYear = presentYears.length ? presentYears[presentYears.length - 1] : firstYear;
+  const absentYears: number[] = [];
+  for (let y = firstYear; y <= lastYear; y++) if (!presentYears.includes(y)) absentYears.push(y);
+  const rows = allRows.filter((x) => presentYears.includes(Number(x.month.slice(0, 4))));
   const perCity = DVF_CITIES.map((c) => {
     const mine = sales.filter((s) => cityOfCode(s.code)?.id === c.id);
     const r = rows.filter((x) => c.codes.includes(x.key) && x.type === 'appartement');
@@ -76,13 +97,12 @@ export const qualityReport = (sales: DvfSale[], rows: MarketRow[]): QualityRepor
     const meds = r.map((x) => x.median).filter((x): x is number => x !== null);
     const byType = { appartement: mine.filter((s) => s.type === 'appartement').length, maison: mine.filter((s) => s.type === 'maison').length };
     if (mine.length === 0) warnings.push(`${c.name} : aucune vente retenue (fichiers manquants ou codes communes à vérifier).`);
-    else if (none / total > 0.2) warnings.push(`${c.name} : ${(none / total * 100).toFixed(0)} % des mois sans médiane fiable (appartements).`);
+    else if (none / total > 0.2) warnings.push(`${c.name} : ${(none / total * 100).toFixed(0)} % des mois sans médiane fiable (appartements, sur les années présentes seulement).`);
     if (jumps > 0) warnings.push(`${c.name} : ${jumps} saut(s) de plus de 15 % d'un mois à l'autre sur une médiane glissante (à lisser avant l'étape 3).`);
     return { id: c.id, name: c.name, sales: mine.length, byType, coveredShare: 1 - none / total, fallbackShare: fb / total, noneShare: none / total, jumps, minPerM2: meds.length ? Math.min(...meds) : null, maxPerM2: meds.length ? Math.max(...meds) : null };
   });
   // Un départ en janvier de l'année Y a besoin de médianes fiables dès ce mois, pour au moins un type de bien, sur au moins la moitié des zones de la ville.
-  const years = [...new Set(rows.map((x) => Number(x.month.slice(0, 4))))].sort();
-  const startYears = years.map((year) => ({
+  const startYears = presentYears.map((year) => ({
     year,
     cities: DVF_CITIES.map((c) => {
       const jan = rows.filter((x) => c.codes.includes(x.key) && x.month === `${year}-01` && x.median !== null);
@@ -90,7 +110,7 @@ export const qualityReport = (sales: DvfSale[], rows: MarketRow[]): QualityRepor
       return { id: c.id, ok: zones.size >= Math.ceil(c.codes.length / 2) };
     }),
   }));
-  return { perCity, startYears, warnings };
+  return { presentYears, absentYears, perCity, startYears, warnings };
 };
 
 // Qualité par ANNÉE et par ville : combien de ventes, combien de quartiers sous le seuil de fiabilité, quelles années sont maigres.
