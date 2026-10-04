@@ -21,7 +21,7 @@ const FILES = [
 
 const FORBIDDEN: RegExp[] = [
   /cours réels?/i, /prix réels?/i, /données réelles?/i, /vrais (cours|prix|données)/i, /marché réel/i,
-  /en direct/i, /temps réel/i, /taux historiques/i, /comme dans la vraie vie/i, /\bcotations? en direct/i,
+  /historiques réels/i, /en direct/i, /temps réel/i, /taux historiques/i, /comme dans la vraie vie/i, /\bcotations? en direct/i,
 ];
 // Lignes qui contiennent la formulation mais pour dire exactement le contraire, ou qui parlent du temps réel du monde (pas du jeu).
 const ALLOWED_LINE: RegExp[] = [
@@ -72,5 +72,12 @@ describe('textes honnêtes : aucune promesse de cours réels, en direct ou « co
     expect(rules).toMatch(/PASSÉ EN LIGNE SUR UN PEA/);
     expect(rules).toMatch(/Il ne s'applique pas au compte-titres/);
     expect(rules).not.toMatch(/courtiers réels/);
+  });
+
+  it('la fiche « Action » du glossaire ne parle plus de « cours historiques réels », et la fiche InvestCoin porte la phrase permanente sur l\'absence de valeur réelle', () => {
+    const g = fs.readFileSync(path.join(root, 'app', 'lib', 'glossaire.js'), 'utf8');
+    expect(g).not.toMatch(/cours historiques réels/i);
+    expect(g).toContain('sur des cours annuels simplifiés (illustratifs, pas de vrais cours de Bourse)');
+    expect(g).toContain("Les InvestCoins n\\'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs.");
   });
 });
