@@ -39,7 +39,8 @@ describe('nettoyage des ventes', () => {
     expect(clean(line({ nature_mutation: 'Echange' })).rejected.pas_une_vente).toBe(1);
     expect(clean(line({ nature_mutation: 'Vente en l\'état futur d\'achèvement' })).rejected.vefa).toBe(1);
     expect(clean(line({}), line({ id_parcelle: 'B2', type_local: 'Maison' })).rejected.plusieurs_logements).toBe(1);
-    expect(clean(line({ type_local: 'Local industriel. commercial ou assimilé' })).rejected.sans_logement).toBe(1);
+    expect(clean(line({ type_local: 'Dépendance', surface_reelle_bati: '' })).rejected.sans_logement).toBe(1);
+    expect(clean(line({}), line({ id_parcelle: 'C3', type_local: 'Local industriel. commercial ou assimilé', surface_reelle_bati: 80 })).rejected.local_commercial).toBe(1);
   });
   it('rejette surface, prix et prix au m² impossibles, et une date invalide', () => {
     expect(clean(line({ surface_reelle_bati: 3 })).rejected.surface_invalide).toBe(1);

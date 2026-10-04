@@ -1,6 +1,9 @@
 // Nettoyage des DVF géolocalisées (fonctions pures : aucun accès réseau, disque ni base).
 // Une ligne du fichier = un « local » d'une mutation (vente) ; la valeur foncière est répétée sur chaque ligne de la mutation.
 // On ne garde que les ventes SIMPLES : un seul logement (appartement ou maison), pas de vente en l'état futur d'achèvement, surface et prix plausibles.
+import { CsvStream } from './csv';
+import { DvfFormat, makeStandardizer } from './format';
+
 export type DvfType = 'appartement' | 'maison';
 
 export interface DvfSale {
@@ -16,37 +19,31 @@ export interface DvfSale {
   lat: number | null;
 }
 
-export type RejectReason = 'pas_une_vente' | 'vefa' | 'sans_logement' | 'plusieurs_logements' | 'date_invalide' | 'surface_invalide' | 'prix_invalide' | 'prix_m2_hors_bornes' | 'valeur_aberrante' | 'doublon';
+export type RejectReason = 'pas_une_vente' | 'vefa' | 'sans_logement' | 'plusieurs_logements' | 'local_commercial' | 'date_invalide' | 'surface_invalide' | 'prix_invalide' | 'prix_m2_hors_bornes' | 'valeur_aberrante' | 'doublon';
 
 export const BOUNDS = { minSurface: 9, maxSurface: 400, minPrice: 10_000, maxPrice: 20_000_000, minPerM2: 500, maxPerM2: 40_000, outlierLow: 0.35, outlierHigh: 3, outlierMinSales: 20 } as const;
 
-// Lecteur CSV (guillemets, virgules et guillemets doublés dans les champs).
+// Lecteur CSV (voir csv.ts) : objets indexés par le nom d'en-tête tel qu'écrit dans le fichier.
 export const parseCsv = (text: string): Record<string, string>[] => {
-  const rows: string[][] = [];
-  let row: string[] = []; let field = ''; let quoted = false;
-  const src = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  for (let i = 0; i < src.length; i++) {
-    const c = src[i];
-    if (quoted) {
-      if (c === '"') { if (src[i + 1] === '"') { field += '"'; i++; } else quoted = false; } else field += c;
-    } else if (c === '"') quoted = true;
-    else if (c === ',') { row.push(field); field = ''; }
-    else if (c === '\n' || c === '\r') {
-      if (c === '\r' && src[i + 1] === '\n') i++;
-      row.push(field); field = '';
-      if (row.length > 1 || row[0] !== '') rows.push(row);
-      row = [];
-    } else field += c;
-  }
-  if (field !== '' || row.length) { row.push(field); if (row.length > 1 || row[0] !== '') rows.push(row); }
+  const st = new CsvStream();
+  const rows = [...st.push(text), ...st.end()];
   if (!rows.length) return [];
   const head = rows[0].map((h) => h.trim());
   return rows.slice(1).map((r) => Object.fromEntries(head.map((h, i) => [h, (r[i] ?? '').trim()])));
 };
 
+// Lit un fichier DVF de n'importe quel format reconnu (voir format.ts) et le ramène au format standard. FormatError si une colonne indispensable manque.
+export const readDvfText = (text: string): { rows: Record<string, string>[]; format: DvfFormat } => {
+  const st = new CsvStream();
+  const records = [...st.push(text), ...st.end()];
+  if (!records.length) return { rows: [], format: 'etalab' };
+  const std = makeStandardizer(records[0]);
+  return { rows: records.slice(1).map((r) => std.standardize(r)), format: std.format };
+};
+
 const num = (s: string | undefined): number | null => {
   if (s === undefined || s === '') return null;
-  const n = Number(s.replace(',', '.'));
+  const n = Number(s.replace(/[\s\u00a0\u202f]/g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 };
 
@@ -64,7 +61,7 @@ export const quantile = (v: number[], q: number): number => {
 };
 
 export interface CleanResult { sales: DvfSale[]; rejected: Record<RejectReason, number>; mutations: number }
-const emptyRejected = (): Record<RejectReason, number> => ({ pas_une_vente: 0, vefa: 0, sans_logement: 0, plusieurs_logements: 0, date_invalide: 0, surface_invalide: 0, prix_invalide: 0, prix_m2_hors_bornes: 0, valeur_aberrante: 0, doublon: 0 });
+const emptyRejected = (): Record<RejectReason, number> => ({ pas_une_vente: 0, vefa: 0, sans_logement: 0, plusieurs_logements: 0, local_commercial: 0, date_invalide: 0, surface_invalide: 0, prix_invalide: 0, prix_m2_hors_bornes: 0, valeur_aberrante: 0, doublon: 0 });
 
 export const cleanRows = (rows: Record<string, string>[]): CleanResult => {
   const byMutation = new Map<string, Record<string, string>[]>();
@@ -81,6 +78,7 @@ export const cleanRows = (rows: Record<string, string>[]): CleanResult => {
     // Lignes identiques (même lot lu deux fois) : un seul logement.
     const homes = [...new Map(lines.filter((l) => (l.type_local === 'Appartement' || l.type_local === 'Maison') && (num(l.surface_reelle_bati) ?? 0) > 0)
       .map((l) => [`${l.type_local}|${l.id_parcelle}|${l.surface_reelle_bati}|${l.nombre_pieces_principales}|${l.nombre_lots}`, l])).values()];
+    if (lines.some((l) => l.type_local === 'Local industriel. commercial ou assimilé')) { rejected.local_commercial++; continue; }   // logement + local d'activité vendus ensemble : le prix ne dit rien du logement
     if (homes.length === 0) { rejected.sans_logement++; continue; }
     if (homes.length > 1) { rejected.plusieurs_logements++; continue; }
     const h = homes[0];

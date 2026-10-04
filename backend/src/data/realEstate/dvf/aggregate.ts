@@ -92,3 +92,19 @@ export const qualityReport = (sales: DvfSale[], rows: MarketRow[]): QualityRepor
   }));
   return { perCity, startYears, warnings };
 };
+
+// Qualité par ANNÉE et par ville : combien de ventes, combien de quartiers sous le seuil de fiabilité, quelles années sont maigres.
+export interface YearCityStat { year: number; cityId: string; sales: number; zones: number; zonesBelowMin: number; thin: boolean }
+export const yearCityStats = (sales: DvfSale[], years: number[]): YearCityStat[] => {
+  const out: YearCityStat[] = [];
+  for (const year of years) {
+    for (const c of DVF_CITIES) {
+      const mine = sales.filter((s) => s.date.startsWith(String(year)) && c.codes.includes(s.code));
+      const zones = c.codes.length;
+      const below = c.codes.filter((code) => mine.filter((s) => s.code === code).length < MIN_SALES).length;
+      // Année maigre : moins de la moitié des quartiers atteint le seuil sur l'année entière (donc, au mois le mois, la médiane glissante sera souvent en repli).
+      out.push({ year, cityId: c.id, sales: mine.length, zones, zonesBelowMin: below, thin: below > zones / 2 });
+    }
+  }
+  return out;
+};
