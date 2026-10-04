@@ -39,6 +39,7 @@ export const socialController = {
   tag: handle('Erreur lors de la lecture de ton #', (_r, u) => playerTagService.mine(u)),
   changeTag: handle('Erreur lors du changement de #', (r, u) => playerTagService.changeTag(u, r.body?.tag, r.ip)),
   tagHistory: handle('Erreur lors de la lecture de l\'historique', (_r, u) => playerTagService.history(u)),
+  visibility: handle('Erreur lors de l\'enregistrement de la confidentialité', (r, u) => playerTagService.setProfileVisibility(u, r.body?.visibility)),
   privacy: handle('Erreur lors de l\'enregistrement', (r, u) => playerTagService.setProBadgeVisible(u, r.body?.showProBadge)),
   disband: handle('Erreur lors de la dissolution', (r, u) => socialService.disband(u, r.ip)),
 };

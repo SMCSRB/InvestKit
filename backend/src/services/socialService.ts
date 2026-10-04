@@ -95,7 +95,8 @@ export const socialService = {
               COUNT(*) FILTER (WHERE status = 'pending' AND requested_by <> $1)::int AS incoming
        FROM friendships WHERE user_low = $1 OR user_high = $1`, [userId])).rows[0];
     const identity = await playerTagService.mine(userId);
-    return { friendCode, identity, friends: c.friends, incoming: c.incoming, limits: { maxFriends: SOCIAL.maxFriends, maxPendingOut: SOCIAL.maxPendingOut } };
+    const vis = (await query('SELECT profile_visibility FROM users WHERE id = $1', [userId])).rows[0]?.profile_visibility ?? 'public';
+    return { friendCode, identity, profileVisibility: vis, friends: c.friends, incoming: c.incoming, limits: { maxFriends: SOCIAL.maxFriends, maxPendingOut: SOCIAL.maxPendingOut } };
   },
 
   async friends(userId: string) {
@@ -141,7 +142,8 @@ export const socialService = {
     let target: { id: string; username: string | null } | undefined;
     if (ident) {
       await playerTagService.sweep();
-      const cand = (await query('SELECT id, username FROM users WHERE lower(username) = lower($1)', [ident.name])).rows;
+      // Un profil « privé » est introuvable par son pseudo : seul son code ami permet de le trouver (même message qu'un inconnu).
+      const cand = (await query("SELECT id, username FROM users WHERE lower(username) = lower($1) AND profile_visibility <> 'prive'", [ident.name])).rows;
       const tags = await playerTagService.cards(cand.map((c: any) => c.id));
       target = cand.find((c: any) => (tags.get(c.id)?.tag ?? '').toLowerCase() === ident.tag.toLowerCase());
     } else {

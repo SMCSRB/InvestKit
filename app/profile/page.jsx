@@ -13,6 +13,7 @@ import { useTheme } from '@/app/context/ThemeContext';
 import Link from 'next/link';
 import { AVATAR_TYPES, getProfile, saveProfile, uploadAvatar, removeAvatar } from '@/app/lib/profileApi';
 import DeleteAccount from '@/app/components/profile/DeleteAccount';
+import ProfileVisibility from '@/app/components/profile/ProfileVisibility';
 import Avatar from '@/app/components/social/Avatar';
 import { downloadMyData } from '@/app/lib/exportData';
 import { endSession } from '@/app/lib/session';
@@ -342,6 +343,9 @@ export default function ProfilePage() {
                     Changer le mot de passe
                   </Link>
                 </div>
+
+                {/* Confidentialité du profil : public, amis ou privé (appliqué par le serveur) */}
+                <ProfileVisibility />
 
                 {/* Export Progress */}
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-gray-700/50">

@@ -36,6 +36,7 @@ export const social = {
   changeTag: (tag) => call('/tag', 'POST', { tag }),
   tagHistory: () => call('/tag/history'),
   setProBadgeVisible: (showProBadge) => call('/privacy', 'POST', { showProBadge }),
+  setProfileVisibility: (visibility) => call('/visibility', 'POST', { visibility }),
 };
 
 export const copyText = async (text) => {

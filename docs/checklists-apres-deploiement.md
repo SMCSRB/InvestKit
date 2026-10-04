@@ -959,3 +959,10 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 ## 6b-lite : textes honnêtes sur les cours et la valeur des InvestCoins
 1. Glossaire, mot « Action » : « Dans le jeu » dit que les cours sont annuels, simplifiés et illustratifs (plus « cours historiques réels »).
 2. Glossaire, mot « InvestCoin » : la phrase « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs » apparaît dans « Dans le jeu ».
+
+## 6a-5 : confidentialité du profil
+1. Profil, rubrique « Confidentialité du profil » : trois choix (Public, Amis, Privé) avec une phrase simple chacun. Par défaut : Public.
+2. Choisis « Amis » ou « Privé », puis ouvre un classement de la Bourse (ou de la Crypto, ou de l'Immobilier) avec un **autre compte** : ton rang est là, mais sous le nom « Joueur anonyme », sans photo ni couronne Pro. Sur ton propre compte, tu te vois toujours avec ton nom.
+3. Avec « Privé » : l'autre compte ne te trouve plus en tapant ton Pseudo#tag, mais te trouve avec ton code ami.
+4. Tes amis et ta guilde te voient toujours normalement.
+5. Rebascule en « Public » : tout redevient visible, rien n'a été perdu.
