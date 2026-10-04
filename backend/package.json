@@ -30,7 +30,9 @@
     "immo:zones-report": "ts-node scripts/immo-zones-report.ts",
     "immo:jumps": "ts-node scripts/immo-jumps.ts",
     "immo:import-loyers": "ts-node scripts/immo-import-loyers.ts",
-    "immo:load-loyers": "ts-node scripts/immo-load-loyers.ts"
+    "immo:load-loyers": "ts-node scripts/immo-load-loyers.ts",
+    "immo:import-irl": "ts-node scripts/immo-import-irl.ts",
+    "immo:load-irl": "ts-node scripts/immo-load-irl.ts"
   },
   "keywords": [
     "investissement",

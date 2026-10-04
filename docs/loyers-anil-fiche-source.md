@@ -1,6 +1,6 @@
 # Fiche de source : « Carte des loyers » (ANIL)
 
-**À lire par Andreja sur la page officielle AVANT tout import** (règle du 5 octobre 2026). Mon environnement ne peut pas ouvrir les pages : tout ce qui suit vient de **résumés de recherche** et reste **à confirmer** ; chaque doute est listé ici et dans le rapport.
+**À lire par Andreja sur la page officielle AVANT tout import** (règle du 5 octobre 2026). Mon environnement ne peut pas ouvrir les pages (accès réseau bloqué, testé le 5 octobre 2026 : `data.gouv.fr` et `insee.fr`) : tout ce qui suit vient de **résumés de recherche** et reste **à confirmer** ; **la liste numérotée des lignes à relire toi-même est dans `docs/loyers-irl-fiche-source.md` (lignes 1 à 10)** ; chaque doute est listé ici et dans le rapport.
 
 | À vérifier sur la page du jeu de données | Ce que disent mes sources (non confirmé) | Doute |
 |---|---|---|

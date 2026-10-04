@@ -1193,3 +1193,12 @@ Rien à tester sur le site (aucun changement pour les joueurs : le jeu garde 7,5
 2. Envoie-moi la sortie.
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+## PR Immobilier réel : IRL réel (Insee), préparation (PR 3)
+
+Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 059** crée deux tables vides). **Avant tout import, lis la page de la série** (`docs/loyers-irl-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
+
+1. Télécharge **toi-même** le CSV de la série IRL dans `backend/data/irl-brut/`.
+2. `npm --prefix backend run immo:import-irl -- --file backend/data/irl-brut/<fichier>.csv --check` : si le format n'est pas celui attendu, le script refuse et le dit ; sinon compare les « 3e trimestres récents » avec la page de l'Insee et envoie-moi le rapport.
+3. Sans `--check` : écrit `backend/data/irl-insee.json`. Puis `npm --prefix backend run immo:load-irl -- --file backend/data/irl-insee.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
+
+Ordre de fusion : après la PR 2. Méthode : « Create a merge commit ».
