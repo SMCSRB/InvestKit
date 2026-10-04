@@ -105,7 +105,7 @@ describe('garde : le moteur actuel ne lit pas la taxe foncière réelle', () => 
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(path.join(__dirname, '..', 'src'));
-    const own = /propertyTaxService\.ts$|propertyTaxRules\.ts$|engine[\\/]immo[\\/]propertyTax\.ts$|taxes[\\/]rei\.ts$|taxes[\\/]rateFile\.ts$/;
+    const own = /propertyTaxService\.ts$|propertyTaxRules\.ts$|engine[\\/]immo[\\/]propertyTax\.ts$|taxes[\\/]rei\.ts$|taxes[\\/]rateFile\.ts$|engine[\\/]immo[\\/]listingTax\.ts$|realListingService\.ts$/;   // listingTax et realListingService : branchement 4/6, désactivés (voir branchementTaxeFonciere.test.ts)
     const users = files.filter((f) => /propertyTaxService|propertyTaxRules|immo\/propertyTax'|taxes\/rei|taxes\/rateFile/.test(readFileSync(f, 'utf8')) && !own.test(f));
     expect(users, 'aucun moteur ni route ne doit lire la taxe foncière réelle tant que ce n\'est pas décidé').toEqual([]);
     expect(GAME_VALUE_FIELDS).toContain('propertyTax');

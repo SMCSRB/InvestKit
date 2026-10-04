@@ -3,6 +3,9 @@
 // Règles : jamais un prix inventé (zone sans prix fiable : aucune annonce de ce type) ; jamais un loyer inventé (sans loyer ANIL : rent = null, donc aucune rentabilité) ; jamais une donnée postérieure à la date de jeu.
 import { dvfMarketService } from './dvfMarketService';
 import { listingRentService } from './listingRentService';
+import { propertyTaxService } from './propertyTaxService';
+import { taxCommuneOf } from '../data/realEstate/taxes/rei';
+import { listingTaxFrom, ListingTax } from '../engine/immo/listingTax';
 import { allZones, cityOfZone, zoneLabel } from '../data/realEstate/dvf/cities';
 import { generateZoneListings, ZonePrice } from '../engine/immo/realListings';
 import { DVF_MARKET_ENABLED } from '../config/dvfMarketRules';
@@ -11,7 +14,7 @@ import type { ScenarioContext } from '../engine/immo';
 import type { Listing } from '../data/realEstate/types';
 import type { ListingRent } from '../engine/immo/listingRent';
 
-export interface RealListingEntry { listing: Listing; rent: ListingRent | null }
+export interface RealListingEntry { listing: Listing; rent: ListingRent | null; tax: ListingTax | null }       // tax null : aucun taux communal connu à cette date, la taxe reste une valeur de jeu marquée
 export interface RealListingOptions { force?: boolean }       // force : tests et copie de test seulement ; sinon DVF_MARKET_ENABLED décide
 
 // Date de jeu d'une année = 1er janvier (comme le catalogue actuel, par année) : dernier mois entièrement passé = décembre précédent.
@@ -26,13 +29,18 @@ export const realListingService = {
     if (!realListingService.enabled(opts)) return [];
     const year = new Date(simulatedMs).getUTCFullYear();
     const out: RealListingEntry[] = [];
+    const day = new Date(simulatedMs).toISOString().slice(0, 10);
+    const rates = new Map<string, Awaited<ReturnType<typeof propertyTaxService.rateAt>>>();     // un taux par commune de taxe (Paris, Lyon, Marseille : la commune entière)
     for (const zone of allZones()) {
       const city = cityOfZone(zone); const label = zoneLabel(zone);
       if (!city || !label) continue;
       const [apt, house] = await Promise.all([dvfMarketService.priceAt(zone, 'apartment', simulatedMs), dvfMarketService.priceAt(zone, 'house', simulatedMs)]);
       for (const listing of generateZoneListings({ zoneCode: zone, zoneLabel: label, cityId: city.id, year, apartment: toPrice(apt), house: toPrice(house) })) {
         const rent = await listingRentService.rentFor({ zoneCode: zone, type: listing.type, rooms: listing.rooms, surfaceSqm: listing.surfaceSqm, pricePerM2: listing.price / listing.surfaceSqm }, simulatedMs);
-        out.push({ listing, rent });
+        const taxCommune = taxCommuneOf(city.id);
+        if (!rates.has(taxCommune)) rates.set(taxCommune, await propertyTaxService.rateAt(taxCommune, day));
+        const rate = rates.get(taxCommune) ?? null;
+        out.push({ listing, rent, tax: rate ? listingTaxFrom(listing.surfaceSqm, rate, city.name) : null });
       }
     }
     return out;
@@ -40,6 +48,6 @@ export const realListingService = {
 
   // Annonces prêtes pour l'écran : loyer ANIL et mentions (decorateListing), ou « aucun loyer » (aucune rentabilité) quand la commune n'a pas de loyer.
   async decoratedAt(simulatedMs: number, ctx?: ScenarioContext, opts: RealListingOptions = {}) {
-    return (await realListingService.listAt(simulatedMs, opts)).map((e) => decorateListing(e.listing, ctx, e.rent));
+    return (await realListingService.listAt(simulatedMs, opts)).map((e) => decorateListing(e.listing, ctx, e.rent, e.tax));
   },
 };

@@ -1244,3 +1244,7 @@ Rien à tester sur le site : le service est **désactivé** (`DVF_MARKET_ENABLED
 2. **Valeur de jeu** (marquée à l'écran) : surfaces, état, âge, classe énergie, travaux, charges de copropriété, assurance, entretien, vacance, durée des baux, **taxe foncière** (jusqu'à son branchement).
 3. **Rien d'inventé** : zone sans prix DVF pour un type de bien = aucune annonce de ce type (ni maison à Paris si pas de prix de maison) ; commune sans loyer = « Rentabilité non disponible ». **Pas de parking** (aucune donnée réelle).
 4. La date de jeu d'une année est le **1er janvier** : le prix de décembre précédent et le millésime ANIL de l'automne précédent (loyer constant dans l'année).
+
+## Branchement 4/6 : taxe foncière réelle (préparation)
+
+Rien à tester sur le site (service d'annonces réelles **désactivé**). Quand il sera activé sur la copie de test (PR 6), avec les taux Terralyse importés : la fiche d'une annonce affiche sous « Charges et taxes » : « Taxe foncière : taux de la commune (…) x,xx % en AAAA, appliqué à une base cadastrale ESTIMÉE (valeur de jeu…) Source : Terralyse », et la ligne « Taxe foncière » **perd** la marque « valeur de jeu ». Sans taux connu à la date (avant le premier taux importé, ou commune absente) : la taxe reste une valeur de jeu **marquée**. Règles : taux de l'année utilisable à partir du **1er octobre** de cette année (le taux précédent jusque-là) ; Paris, Lyon et Marseille : taux de la **commune entière** ; base estimée = 30 par m² de base nette, **la même partout** (valeur de jeu à reconfirmer).

@@ -30,3 +30,13 @@ export const yieldAvailable = (grossYieldPct) => typeof grossYieldPct === 'numbe
 // Loyer connu ? (source réelle sans loyer : pas de loyer, donc pas de rentabilité)
 export const rentKnown = (sources) => !(sources && sources.rent && sources.rent.kind === 'none');
 export const NO_YIELD_TEXT = 'Rentabilité non disponible : pas de loyer connu pour cette commune.';
+
+// Taxe foncière : taux communal RÉEL (Terralyse) appliqué à une base cadastrale ESTIMÉE ; sinon valeur de jeu (voir isGameValue).
+const pct2 = (n) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+export const taxInfo = (sources) => {
+  const t = sources && sources.propertyTax;
+  if (t && t.kind === 'terralyse') {
+    return { real: true, text: `Taxe foncière : taux de la commune (${t.communeLabel}) ${pct2(t.ratePct)} % en ${t.rateYear}, appliqué à une base cadastrale ESTIMÉE (valeur de jeu : ${t.baseNetEurPerSqm} par m², ce n’est pas la base du vrai bien).`, attribution: t.attribution };
+  }
+  return { real: false, text: null, attribution: null };
+};

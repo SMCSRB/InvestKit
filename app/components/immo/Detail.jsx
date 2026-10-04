@@ -6,7 +6,7 @@ import { Button, Card, Modal, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { viewsFor } from './art';
 import { Dpe, Heart, Pill, Portal, Row, GameValueTag, useImmoMode } from './bits';
-import { isGameValue, rentInfo, yieldAvailable, NO_YIELD_TEXT } from '@/app/lib/immoSources';
+import { isGameValue, rentInfo, yieldAvailable, NO_YIELD_TEXT, taxInfo } from '@/app/lib/immoSources';
 import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct, eurText, signedEur } from './api';
 import Coin from '@/app/components/ui/Coin';
 import Link from 'next/link';
@@ -229,6 +229,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               <Row label="Entretien courant" game={isGameValue(l.dataSources, 'maintenance')}>{eur(l.annualCharges.maintenance)}/an</Row>
               <Row label="Charges récupérables (avancées)" game={isGameValue(l.dataSources, 'recoverableCharges')}>{eur(l.recoverableChargesMonthly)}/mois</Row>
             </dl>
+            {taxInfo(l.dataSources).real && <p className="rp-source" data-testid="tax-source">{taxInfo(l.dataSources).text} {taxInfo(l.dataSources).attribution}</p>}
           </section>
 
           <section className="rp-section">
