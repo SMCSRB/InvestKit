@@ -42,7 +42,10 @@ export const BANK_RULES: BankRules = {
 // valeurs de JEU. Frais de dossier repris du simulateur de référence
 // (max(200 €, 0,2 % du capital)). Pas de frais de garantie pour l'instant.
 export const LOAN_INSURANCE_RATE_PCT = 0.36;
-export const loanApplicationFee = (principal: number): number => Math.max(200, Math.round(principal * 0.002 * 100) / 100);
+// Plafonné à 25 % du capital emprunté pour les très petits emprunts (un parking peut ne demander que quelques centaines d'euros de crédit).
+// VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : ce plafond.
+export const loanApplicationFee = (principal: number): number =>
+  Math.min(Math.max(200, Math.round(principal * 0.002 * 100) / 100), Math.max(0, Math.round(principal * 0.25 * 100) / 100));
 
 // Expertise avant achat : coût en euros (converti en pièces, arrondi au-dessus).
 export const expertiseCostEuros = (price: number): number => Math.round(300 + price * 0.0015);
@@ -84,7 +87,18 @@ export const VACANCY_MODEL: VacancyParams = {
 };
 
 // Durée moyenne d'un bail avant changement de locataire (mois), par type.
-export const TENANCY_MONTHS: Record<UnitType, number> = { studio: 24, apartment: 36, house: 48 };
+export const TENANCY_MONTHS: Record<UnitType, number> = { studio: 24, apartment: 36, house: 48, parking: 48 };
+
+// Parking (garage fermé, box, place extérieure). VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : tous les chiffres ci-dessous.
+// Idée : ticket d'entrée faible, charges faibles, vacance faible, bon rendement brut, pas de DPE, pas de travaux lourds.
+// Règles juridiques (bail de parking ≠ bail d'habitation : pas de trêve hivernale, préavis libre) à sourcer avant l'ouverture au public.
+export const PARKING_RULES = {
+  priceFactor: 0.40,          // prix au m² d'un parking = 40 % du prix au m² d'un appartement du même quartier
+  rentFactor: 0.34,           // loyer au m² = 34 % de celui d'un appartement (la majoration des petites surfaces s'applique aussi : rendement brut visé 5 à 9 %)
+  tensionBoost: 0.12,         // la demande de stationnement est forte : tension +0,12 (vacance plus faible)
+  chargesScale: 0.35,         // charges (copropriété, taxe, entretien, assurance) = 35 % de celles d'un logement de même surface
+  neutralEnergyClass: 'D' as const,   // pas de DPE pour un parking : classe neutre, sans effet sur le loyer, le prix ni l'interdiction de louer
+};
 
 // Rénovation lourde (règle de JEU) : un bien « à rénover » dont les travaux sont
 // payés passe en bon état et gagne 2 classes énergétiques, sans dépasser C.
@@ -135,6 +149,7 @@ export const EVENT_PARAMS: EventParams = {
     studio: { student: 0.65, worker: 0.3, family: 0.05 },
     apartment: { student: 0.2, worker: 0.5, family: 0.3 },
     house: { student: 0.02, worker: 0.13, family: 0.85 },
+    parking: { student: 0.1, worker: 0.6, family: 0.3 },
   },
   standardNoticeMonths: 3,
   reducedNoticeMonths: 1,
@@ -254,7 +269,8 @@ export const GREEN_VALUE_FACTORS: { apartment: Record<EnergyClass, number>; hous
   apartment: { A: 1.12, B: 1.08, C: 1.04, D: 1, E: 0.96, F: 0.92, G: 0.88 },
   house: { A: 1.17, B: 1.12, C: 1.06, D: 1, E: 0.92, F: 0.84, G: 0.75 },
 };
-export const greenValueFactor = (type: 'studio' | 'apartment' | 'house', energyClass: EnergyClass): number => {
+export const greenValueFactor = (type: UnitType, energyClass: EnergyClass): number => {
+  if (type === 'parking') return 1;   // pas de DPE pour un parking
   const f = (type === 'house' ? GREEN_VALUE_FACTORS.house : GREEN_VALUE_FACTORS.apartment)[energyClass];
   if (f === undefined) throw new RangeError(`Classe énergie inconnue : ${energyClass}`);
   return f;

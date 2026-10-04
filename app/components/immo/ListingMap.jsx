@@ -262,8 +262,8 @@ export default function ListingMap({ cities, listings, pool, mode = 'buy', activ
             <div className="rp-map2__popmedia"><LazyListingArt listing={sel} alt={listingAlt(sel, cityOf?.[sel.cityId])} /></div>
             <div className="rp-map2__popbody">
               <strong>{rent ? `${eurText(sel.marketRentMonthly)}/mois` : eur(sel.price)}</strong>
-              <span>{TYPE_LABEL[sel.type]} · {sel.surfaceSqm} m² · {sel.rooms} p. · {sel.neighborhoodName}</span>
-              <span className="rp-map2__popmeta"><Dpe cls={sel.energyClass} size="sm" /> {rent ? `${eurText(sel.price)} à l’achat` : `rendement ${pct(sel.grossYieldPct)}`}</span>
+              <span>{TYPE_LABEL[sel.type]} · {sel.surfaceSqm} m²{sel.type === 'parking' ? '' : ` · ${sel.rooms} p.`} · {sel.neighborhoodName}</span>
+              <span className="rp-map2__popmeta">{sel.type !== 'parking' && <Dpe cls={sel.energyClass} size="sm" />} {rent ? `${eurText(sel.price)} à l’achat` : `rendement ${pct(sel.grossYieldPct)}`}</span>
               <Button size="sm" variant="primary" onClick={() => onOpen(sel.id)}>Voir la fiche</Button>
             </div>
           </div>

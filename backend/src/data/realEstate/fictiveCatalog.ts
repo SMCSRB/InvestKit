@@ -1,5 +1,5 @@
 import { round2, estimateMarketRent, averageVacancyPct } from '../../engine/immo';
-import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION, greenValueFactor } from '../../config/immoRules';
+import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION, PARKING_RULES, greenValueFactor } from '../../config/immoRules';
 import { createRng, hashString, approxGaussian } from '../../utils/seededRandom';
 import type {
   City, CityMarket, Neighborhood, CityTier, Condition, EnergyClass, Expertise, Listing, ListingFilter,
@@ -152,6 +152,13 @@ const TYPE_SPECS: { type: PropertyType; label: string; rooms: number; min: numbe
   { type: 'apartment', label: 'T3', rooms: 3, min: 54, max: 70, priceFactor: 0.95, condoPerSqm: 18 },
   { type: 'house', label: 'Maison T4', rooms: 4, min: 85, max: 110, priceFactor: 0.9, condoPerSqm: 0 },
 ];
+// Parkings : toujours en bon état, sans DPE (classe neutre), sans travaux ; surface et prix propres à chaque forme.
+// VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (voir PARKING_RULES dans config/immoRules.ts).
+const PARKING_SPECS: { label: string; min: number; max: number; priceMul: number }[] = [
+  { label: 'Garage fermé', min: 12, max: 15, priceMul: 1.15 },
+  { label: 'Box', min: 10, max: 13, priceMul: 1.0 },
+  { label: 'Place de parking', min: 10, max: 12, priceMul: 0.8 },
+];
 const RENOVATION_PROJECT = { type: 'apartment' as PropertyType, label: 'T2 à rénover', rooms: 2, min: 36, max: 48 };
 
 const HIDDEN_DEFECTS = [
@@ -214,24 +221,45 @@ for (const city of CITIES) {
   // Un second studio/T2 dans chaque ville pour élargir le choix.
   pushTemplate(TYPE_SPECS[0], TYPE_SPECS[0].priceFactor * 0.92, 'good');
   pushTemplate(TYPE_SPECS[1], TYPE_SPECS[1].priceFactor * 1.05, 'good');
+  // Parkings : ajoutés APRÈS les logements pour ne pas changer les tirages des biens existants.
+  for (const spec of PARKING_SPECS) {
+    n += 1;
+    TEMPLATES.push({
+      id: `${city.id}-${n}`,
+      cityId: city.id,
+      neighborhoodId: pickNeighborhood(rng, city.id),
+      type: 'parking',
+      title: `${spec.label} — ${city.name}`,
+      surfaceSqm: Math.round(spec.min + rng() * (spec.max - spec.min)),
+      rooms: 0,
+      age: rng() < 0.12 ? 'new' : 'old',
+      energyClass: PARKING_RULES.neutralEnergyClass,
+      condition: 'good',
+      priceFactor: round2(PARKING_RULES.priceFactor * spec.priceMul * (0.95 + rng() * 0.1)),
+      advertisedWorksPerSqm: 0,
+      realWorksPerSqm: 0,
+      hiddenDefects: [],
+    });
+  }
 }
 
-const roundPrice = (p: number): number => Math.round(p / 500) * 500;
+const roundPrice = (p: number, step = 500): number => Math.round(p / step) * step;   // un parking (quelques milliers de pièces) s'arrondit à la centaine
 
 const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
   const city = CITIES.find((c) => c.id === t.cityId)!;
   const nbh = neighborhoodsOf(city.id).find((n) => n.id === t.neighborhoodId)!;
   const market = scaledMarket(city, year);
   const condoSpec = TYPE_SPECS.find((s) => s.label === t.title.split(' — ')[0]);
-  const condoPerSqm = condoSpec?.condoPerSqm ?? 20;
+  const condoPerSqm = condoSpec?.condoPerSqm ?? 20;   // un parking : 20, puis réduit par chargesScale
   const inflation = Math.pow(1.015, year - MIN_YEAR);
 
   // Le loyer est CALCULÉ : surface × loyer au m² du quartier × taille × état × énergie.
   const rent = estimateMarketRent(
-    { surfaceSqm: t.surfaceSqm, cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier, condition: t.condition, energyClass: t.energyClass },
+    { surfaceSqm: t.surfaceSqm, cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier, condition: t.condition, energyClass: t.energyClass, unitRentFactor: t.type === 'parking' ? PARKING_RULES.rentFactor : 1 },
     RENT_MODEL
   );
-  const tension = round2(clamp(market.rentalTension + nbh.tensionOffset, 0, 1));
+  const tension = round2(clamp(market.rentalTension + nbh.tensionOffset + (t.type === 'parking' ? PARKING_RULES.tensionBoost : 0), 0, 1));
+  const chargesScale = t.type === 'parking' ? PARKING_RULES.chargesScale : 1;
   const urgent = CATALOG_CALIBRATION.urgentSaleFactor[t.id];
   const tenancyMonths = TENANCY_MONTHS[t.type];
 
@@ -249,19 +277,19 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     age: t.age,
     energyClass: t.energyClass,
     condition: t.condition,
-    price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition] * greenValueFactor(t.type, t.energyClass) * (urgent ?? 1)),
+    price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition] * greenValueFactor(t.type, t.energyClass) * (urgent ?? 1), t.type === 'parking' ? 100 : 500),
     advertisedWorks: Math.round(t.advertisedWorksPerSqm * t.surfaceSqm * inflation),
     rentPerSqm: rent.rentPerSqm,
     marketRentMonthly: Math.round(rent.monthlyRent),
     rentalTension: tension,
     vacancyPct: averageVacancyPct(tension, tenancyMonths, VACANCY_MODEL),
     tenancyMonths,
-    recoverableChargesMonthly: Math.round(t.surfaceSqm * 1.2 * inflation),
+    recoverableChargesMonthly: Math.round(t.surfaceSqm * 1.2 * inflation * chargesScale),
     annualCharges: {
-      condoFees: Math.round(t.surfaceSqm * condoPerSqm * 0.35 * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale), // part non récupérable
-      propertyTax: Math.round(t.surfaceSqm * city.taxPerSqm * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale),
-      insurance: Math.round(120 * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale),
-      maintenance: Math.round(t.surfaceSqm * 6 * inflation * CATALOG_CALIBRATION.nonRecoverableChargeScale),
+      condoFees: Math.round(t.surfaceSqm * condoPerSqm * 0.35 * inflation * chargesScale * CATALOG_CALIBRATION.nonRecoverableChargeScale), // part non récupérable
+      propertyTax: Math.round(t.surfaceSqm * city.taxPerSqm * inflation * chargesScale * CATALOG_CALIBRATION.nonRecoverableChargeScale),
+      insurance: Math.round(120 * inflation * chargesScale * CATALOG_CALIBRATION.nonRecoverableChargeScale),
+      maintenance: Math.round(t.surfaceSqm * 6 * inflation * chargesScale * CATALOG_CALIBRATION.nonRecoverableChargeScale),
     },
   };
 };
@@ -334,7 +362,7 @@ export const fictiveDataSource: RealEstateDataSource = {
     const city = CITIES.find((c) => c.id === input.cityId);
     const nbh = neighborhoodsOf(input.cityId).find((n) => n.id === input.neighborhoodId);
     if (!city || !nbh) throw new RangeError('Bien inconnu');
-    const typeFactor = TYPE_SPECS.find((s) => s.type === input.type)?.priceFactor ?? 1;
+    const typeFactor = input.type === 'parking' ? PARKING_RULES.priceFactor : TYPE_SPECS.find((s) => s.type === input.type)?.priceFactor ?? 1;
     const market = scaledMarket(city, year);
     const green = input.energyClass ? greenValueFactor(input.type, input.energyClass) : 1;
     return Math.round(input.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * typeFactor * CONDITION_PRICE_FACTOR[input.condition] * green);

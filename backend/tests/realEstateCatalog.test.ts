@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { getRealEstateDataSource } from '../src/data/realEstate';
 import { computeAcquisition, evaluatePurchase, ProfileId } from '../src/engine/immo';
-import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
+import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, loanApplicationFee, PARKING_RULES } from '../src/config/immoRules';
 import { EUROS_PER_COIN } from '../src/config/economy';
 import { legacyCoins } from './helpers';
 import { hashString, createRng } from '../src/utils/seededRandom';
@@ -23,9 +23,9 @@ describe('catalogue fictif : intégrité', () => {
       expect(listings.length).toBeGreaterThanOrEqual(40);
       expect(new Set(listings.map((l) => l.id)).size).toBe(listings.length);
       for (const l of listings) {
-        expect(l.price).toBeGreaterThan(5000);
-        expect(l.surfaceSqm).toBeGreaterThan(10);
-        expect(l.marketRentMonthly).toBeGreaterThan(50);
+        expect(l.price).toBeGreaterThan(l.type === 'parking' ? 1500 : 5000);   // un parking coûte quelques milliers de pièces
+        expect(l.surfaceSqm).toBeGreaterThanOrEqual(10);
+        expect(l.marketRentMonthly).toBeGreaterThan(l.type === 'parking' ? 15 : 50);   // un parking se loue quelques dizaines d'euros
         expect(l.advertisedWorks).toBeGreaterThanOrEqual(0);
         expect(Object.values(l.annualCharges).every((v) => v >= 0)).toBe(true);
         expect(await src.getCity(l.cityId)).not.toBeNull();
@@ -190,7 +190,7 @@ describe('catalogue : loyer calculé à partir du lieu, jamais figé', () => {
         const market = (await src.getMarket(l.cityId, year))!;
         const nbh = (await src.listNeighborhoods(l.cityId)).find((n) => n.id === l.neighborhoodId)!;
         const expected = estimateMarketRent(
-          { surfaceSqm: l.surfaceSqm, cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier, condition: l.condition, energyClass: l.energyClass },
+          { surfaceSqm: l.surfaceSqm, cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier, condition: l.condition, energyClass: l.energyClass, unitRentFactor: l.type === 'parking' ? PARKING_RULES.rentFactor : 1 },
           RENT_MODEL
         );
         expect(l.rentPerSqm).toBe(expected.rentPerSqm);
@@ -320,13 +320,18 @@ describe('valeur verte : la classe énergétique (DPE) influence le prix et la v
   });
   it('le prix des annonces en tient compte : il reste cohérent avec la valeur estimée (classe comprise)', async () => {
     const ls = await src.listListings(2020);
-    const same = ls.filter((l) => l.condition === 'good' && !l.title.includes('vente pressée'));
+    const same = ls.filter((l) => l.condition === 'good' && l.type !== 'parking' && !l.title.includes('vente pressée'));
     expect(same.length).toBeGreaterThan(5);
     for (const l of same) {
       const perSqm = l.price / l.surfaceSqm;
       const est = await src.estimateValue({ cityId: l.cityId, neighborhoodId: l.neighborhoodId, type: l.type, surfaceSqm: l.surfaceSqm, condition: l.condition, energyClass: l.energyClass }, 2020);
       expect(Math.abs(l.price - est) / est).toBeLessThan(0.15);   // le prix reste autour de la valeur estimée (bruit propre à chaque annonce, hors ventes pressées)
       expect(perSqm).toBeGreaterThan(0);
+    }
+    // Parking : la forme (garage, box, place) ajoute ±20 % autour de la valeur de base du type.
+    for (const l of ls.filter((x) => x.type === 'parking' && !x.title.includes('vente pressée'))) {
+      const est = await src.estimateValue({ cityId: l.cityId, neighborhoodId: l.neighborhoodId, type: 'parking', surfaceSqm: l.surfaceSqm, condition: 'good', energyClass: l.energyClass }, 2020);
+      expect(Math.abs(l.price - est) / est).toBeLessThan(0.3);
     }
   });
 });

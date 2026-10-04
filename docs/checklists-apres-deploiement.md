@@ -907,6 +907,15 @@ Rien à tester sur le site. Lis `docs/sources-cours-bourse.md` et choisis : A (B
 3. Profil / Mes données, bouton d'export : le fichier contient une section **cryptoMarket** (compte, positions, ordres, exécutions, événements). Aucun mot de passe ni secret.
 4. Si le taux de change du jour de jeu manque, la position est ignorée dans le risque (jamais une valeur devinée).
 
+
+
+## Immobilier : les parkings
+1. Immobilier, Chercher : filtre « Type de bien » → **Parking**. Tu vois des garages fermés, des box et des places, à quelques milliers de pièces, avec un rendement brut correct.
+2. Une carte de parking n'affiche **ni pièces ni DPE**. La fiche d'un parking n'a pas de section « Diagnostics » (une phrase explique pourquoi) ; la galerie n'a que Façade et Plan.
+3. Filtre par classe DPE (ex. D) : aucun parking dans les résultats, une petite phrase l'explique.
+4. Achète un parking (apport minimal affiché) : il apparaît dans « Mes biens » ; mets-le en location : loyer de quelques dizaines de pièces par mois.
+5. Dans Mes biens, un parking n'a pas la tuile « Rénover (énergie) ».
+6. Un parking, comme un logement : relevés mensuels, vente, bilan. Les règles juridiques propres au bail de parking ne sont pas encore codées (voir `docs/immo-parkings.md`).
 ## Ménage : ancien onglet Bourse du tableau de bord supprimé
 1. Tableau de bord, carte « Bourse » : le bouton ouvre la page **/bourse** (ou « Voir l'offre Pro » si le domaine est verrouillé).
 2. Carte « Risque de ton portefeuille » : « Voir l'analyse » mène à /bourse, ou à /crypto si ton plus gros portefeuille est en Crypto.

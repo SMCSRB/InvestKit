@@ -37,7 +37,7 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
           {l.urgentSale && !rent && <Pill tone="hot">Vente pressée</Pill>}
           {l.needsWorks && <Pill tone="warn">Travaux à prévoir</Pill>}
         </div>
-        <div className="rp-card__dpe"><Dpe cls={l.energyClass} /></div>
+        {l.type !== 'parking' && <div className="rp-card__dpe"><Dpe cls={l.energyClass} /></div>}
         <Heart on={favorite} onClick={() => onFavorite(l.id)} label={favorite ? `Retirer ${l.title} des favoris` : `Ajouter ${l.title} aux favoris`} />
       </div>
       <div className="rp-card__body">
@@ -48,7 +48,7 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
         <h3 className="rp-card__title"><button type="button" onClick={() => onOpen(l.id)}>{TYPE_LABEL[l.type]} · {l.neighborhoodName}</button></h3>
         <ul className="rp-card__facts" aria-label="Caractéristiques">
           <li><Icon name="ruler" size={15} /><span>{l.surfaceSqm} m²</span></li>
-          <li><Icon name="doorOpen" size={15} /><span>{l.rooms} pièce{l.rooms > 1 ? 's' : ''}</span></li>
+          {l.type !== 'parking' && <li><Icon name="doorOpen" size={15} /><span>{l.rooms} pièce{l.rooms > 1 ? 's' : ''}</span></li>}
           <li><Icon name="mapPin" size={15} /><span>{city?.name ?? l.cityId}</span></li>
         </ul>
         <div className="rp-card__foot">
@@ -83,7 +83,7 @@ function FilterPanel({ f, set, onClose, count, onReset, rent }) {
       <div className="rp-filters__grid">
         <fieldset><legend>Type de bien</legend>
           <div className="rp-chips">{Object.entries(TYPE_LABEL).map(([k, v]) => <Chip key={k} on={arr(f.types).includes(k)} onClick={() => set({ types: toggleIn(arr(f.types), k) })}>{v}</Chip>)}</div>
-          <p className="rp-hint">Parkings et immeubles entiers n’existent pas encore dans le catalogue.</p>
+          <p className="rp-hint">Les immeubles entiers n’existent pas encore dans le catalogue.</p>
         </fieldset>
         {rent ? (
           <fieldset><legend>Loyer mensuel (hors charges)</legend>
@@ -108,6 +108,7 @@ function FilterPanel({ f, set, onClose, count, onReset, rent }) {
           <div className="rp-chips">{Object.entries(CONDITION_LABEL).map(([k, v]) => <Chip key={k} on={arr(f.conditions).includes(k)} onClick={() => set({ conditions: toggleIn(arr(f.conditions), k) })}>{v}</Chip>)}</div>
         </fieldset>
         <fieldset><legend>Classe DPE<HelpTip term="dpe" /></legend>
+          <p className="rp-hint">Un parking n’a pas de DPE : il n’apparaît pas quand tu filtres par classe.</p>
           <div className="rp-chips rp-chips--dpe">{ENERGY.map((c) => <Chip key={c} on={arr(f.energy).includes(c)} color={{ bg: energyColors[c][0], fg: energyColors[c][1] }} onClick={() => set({ energy: toggleIn(arr(f.energy), c) })}>{c}</Chip>)}</div>
         </fieldset>
         {!rent && (

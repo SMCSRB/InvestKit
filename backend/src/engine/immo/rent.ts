@@ -11,7 +11,7 @@ import { round2, assertNonNegative, assertFinite, EngineInputError } from './mon
 // ─────────────────────────────────────────────────────────────────────────
 export type Condition = 'good' | 'to_refresh' | 'to_renovate';
 export type EnergyClass = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
-export type UnitType = 'studio' | 'apartment' | 'house';
+export type UnitType = 'studio' | 'apartment' | 'house' | 'parking';
 
 export interface RentModelParams {
   conditionFactors: Record<Condition, number>;   // ex. 1 / 0,93 / 0,85
@@ -26,6 +26,7 @@ export interface MarketRentInput {
   neighborhoodRentMultiplier: number;
   condition: Condition;
   energyClass: EnergyClass;
+  unitRentFactor?: number;         // multiplicateur propre au type de bien (ex. parking) ; 1 par défaut
 }
 
 export interface MarketRent {
@@ -46,7 +47,9 @@ export const estimateMarketRent = (input: MarketRentInput, params: RentModelPara
   const shortfall = Math.max(0, params.smallSurfaceThresholdSqm - input.surfaceSqm) / params.smallSurfaceThresholdSqm;
   const sizeFactor = 1 + shortfall * (params.smallSurfaceMaxBonusPct / 100);
 
-  const rentPerSqm = input.cityRentPerSqm * input.neighborhoodRentMultiplier * sizeFactor * cf * ef;
+  const unitFactor = input.unitRentFactor ?? 1;
+  assertNonNegative(unitFactor, 'unitRentFactor');
+  const rentPerSqm = input.cityRentPerSqm * input.neighborhoodRentMultiplier * sizeFactor * cf * ef * unitFactor;
   return { rentPerSqm: round2(rentPerSqm), monthlyRent: round2(rentPerSqm * input.surfaceSqm) };
 };
 

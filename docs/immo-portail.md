@@ -19,7 +19,7 @@ Consultés par recherche web (les pages des portails eux-mêmes sont bloquées d
 - **Mode Simple / Avancé** (mémorisé, Simple par défaut) : Avancé ajoute TAEG, intérêts, assurance, frais, indicateurs d'économie, relevés.
 
 ## Limites assumées (rien n'est inventé pour l'affichage)
-- **Parkings et immeubles entiers** n'existent pas dans le catalogue (studio, appartement, maison seulement) : les filtres correspondants ne sont pas affichés (une note le dit).
+- **Immeubles entiers** n'existent pas dans le catalogue (studio, appartement, maison et **parking**) : une note le dit dans les filtres. Les **parkings** (garage fermé, box, place de parking) existent depuis `docs/immo-parkings.md`.
 - **Pastille « loué »** : aucune annonce n'est déjà louée ; le statut « Loué » existe pour les biens possédés.
 - **« Plus récentes »** : le catalogue n'a pas de date de publication ; on utilise le rang de publication (numéro à la fin de l'identifiant).
 - **Alertes « nouvelle annonce »** : le catalogue se renouvelle quand l'année de jeu avance ; une recherche enregistrée signale alors les annonces correspondantes pas encore vues.

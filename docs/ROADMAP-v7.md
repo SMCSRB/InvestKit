@@ -49,7 +49,7 @@
 
 ### P2 — produit
 13. **« Projets illimités »** (voir section 4) : sinon le plan reste sans cette promesse.
-14. **Parkings** dans l'Immobilier (section 5).
+14. ~~**Parkings** dans l'Immobilier (section 5).~~ **Fait** : voir `docs/immo-parkings.md` (valeurs de jeu non sourcées ; règles juridiques du bail de parking à sourcer avant l'ouverture au public).
 15. **Données réelles Bourse/PEA** : cours quotidiens importés (aujourd'hui annuels et simplifiés) ; bougies, plus bas de l'année pour les appels de marge. Comparaison des sources légales : `docs/sources-cours-bourse.md` (rien n'est lancé, décision attendue).
 16. **Données réelles Crypto** : lancer l'import ; vérifier les conditions d'utilisation de la source.
 17. **Source DVF** pour l'Immobilier (`REAL_ESTATE_SOURCE=dvf`, interface déjà prête).

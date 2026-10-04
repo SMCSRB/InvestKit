@@ -52,6 +52,13 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Avertissement d'épargne restante (NON bloquant) | « Après cet achat, il te restera X pièces, soit Y mensualités. Moins de 3 mensualités expose à un impayé. » Seuil : **3 mensualités** (`BANK_RULES.lowSavingsWarningMonths`). **La réserve de 4 mensualités qui refusait un achat est SUPPRIMÉE** : aucune règle française officielle ne l'impose. | VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER | repère de prudence du jeu |
 | Seuil de classement (tous domaines) | 2 500 InvestCoins investis ET 5 jours actifs | JEU, NON SOURCÉE, À RECONFIRMER | `config/economy.ts` |
 | Décote d'un bien loué à la revente (classement Immobilier) | 10 % | JEU, NON SOURCÉE, À RECONFIRMER | `SALE_PARAMS.occupiedDiscountPct` |
+| Parking : prix au m² | 40 % de celui d'un appartement du quartier (±20 % selon garage, box ou place) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.priceFactor` |
+| Parking : loyer au m² | 34 % de celui d'un appartement (rendement brut visé 5 à 9 %) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.rentFactor` |
+| Parking : tension locative | +0,12 (demande de stationnement forte, vacance plus faible) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.tensionBoost` |
+| Parking : charges | 35 % de celles d'un logement de même surface | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.chargesScale` |
+| Parking : durée moyenne d'un bail | 48 mois | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `TENANCY_MONTHS.parking` |
+| Parking : règles du bail (préavis, pas de trêve hivernale, pas d'assurance loyers impayés « habitation ») | Non codées : le parking suit les mêmes mécanismes que les logements, sans DPE | **À SOURCER avant l'ouverture au public** | — |
+| Frais de dossier d'un très petit emprunt | Plafonnés à 25 % du capital emprunté (le minimum de 200 € reste pour les emprunts normaux) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `loanApplicationFee` |
 | Assurance emprunteur | 0,36 % du capital par an | JEU | comparateurs publics ; CCSF |
 | Frais de dossier | max(200 €, 0,2 % du capital) | JEU | tarifs bancaires |
 | Expertise avant achat | 300 € + 0,15 % du prix | JEU | — |

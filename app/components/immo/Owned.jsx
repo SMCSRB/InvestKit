@@ -9,7 +9,7 @@ import { Dpe, Pill, Row, useImmoMode } from './bits';
 import { GliPanel, RenovationPanel, SalePanel, Statements } from './Panels';
 import { MONTHS, STATUS_LABEL, TYPE_LABEL, call, coins, eur, eur2, eurText, eurText2 } from './api';
 
-const artOf = (p) => ({ id: p.listing_id, cityId: p.city_id, type: p.property_type, condition: p.condition, energyClass: p.energy_class, surfaceSqm: Number(p.surface_sqm), rooms: 2 });
+const artOf = (p) => ({ id: p.listing_id, cityId: p.city_id, type: p.property_type, condition: p.condition, energyClass: p.energy_class, surfaceSqm: Number(p.surface_sqm), rooms: 2, title: p.title });
 const nextMonth = (game) => MONTHS[game.month % 12];
 
 // Alertes du bien : discrètes, lisibles, et toujours accompagnées de la prochaine action possible.
@@ -30,7 +30,7 @@ export function PropertyCard({ p, data, game, onOpen, act, busy }) {
   const next = p.l_payment && p.l_status === 'active' ? `mensualité ${eurText2(p.l_payment)}` : null;
   return (
     <article className={`rp-own ${alerts.some((a) => a.tone === 'bad') ? 'has-bad' : ''}`}>
-      <div className="rp-own__media" onClick={() => onOpen(p.id)}><LazyListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} badge={false} /><div className="rp-card__dpe"><Dpe cls={p.energy_class} /></div></div>
+      <div className="rp-own__media" onClick={() => onOpen(p.id)}><LazyListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} badge={false} />{p.property_type !== 'parking' && <div className="rp-card__dpe"><Dpe cls={p.energy_class} /></div>}</div>
       <div className="rp-own__body">
         <div className="rp-own__head"><h3><button type="button" onClick={() => onOpen(p.id)}>{p.title}</button></h3><Pill tone={p.status === 'let' ? 'ok' : p.status === 'notice' ? 'warn' : 'neutral'}>{STATUS_LABEL[p.status] ?? p.status}</Pill></div>
         <p className="rp-own__nums">Valeur {eur(p.value)} · Dette {eur(p.remainingLoan)} · Fonds propres <strong>{eur(p.equity)}</strong></p>
@@ -80,7 +80,7 @@ export function PropertySheet({ p, data, game, onBack, refresh, notify, act, bus
     p.status === 'vacant' && !p.searching && Number(p.pending_works_eur) === 0 && { id: 'rent', label: 'Mettre en location', hint: 'au loyer du marché' },
     p.searching && { id: 'reprice', label: 'Baisser le loyer de 5 %', hint: 'pour louer plus vite' },
     p.status !== 'sold' && { id: 'sale', label: p.saleSearch ? 'Modifier le prix de vente' : 'Vendre', hint: 'choisir le prix demandé' },
-    p.status !== 'sold' && { id: 'reno', label: 'Rénover (énergie)', hint: 'devis et rentabilité' },
+    p.status !== 'sold' && p.property_type !== 'parking' && { id: 'reno', label: 'Rénover (énergie)', hint: 'devis et rentabilité' },
     p.status !== 'sold' && p.gli && { id: 'gli', label: p.gli.active ? 'Assurance loyers : active' : 'Assurance loyers', hint: 'se protéger des impayés' },
     data.missedMonths >= 3 && { id: 'distress', label: 'Vendre à l’amiable (−12 %)', hint: 'éviter la vente forcée' },
   ].filter(Boolean);
@@ -93,7 +93,7 @@ export function PropertySheet({ p, data, game, onBack, refresh, notify, act, bus
   return (
     <div className="rp-detail rp-enter">
       <div className="rp-detail__top"><Button variant="ghost" icon="chevronLeft" onClick={onBack}>Mes biens</Button></div>
-      <div className="rp-sheet__hero"><ListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} /><div><h2>{p.title}</h2><p className="ik-muted">{TYPE_LABEL[p.property_type]} {Number(p.surface_sqm)} m² · <Pill tone={p.status === 'let' ? 'ok' : 'neutral'}>{STATUS_LABEL[p.status] ?? p.status}</Pill> · <Dpe cls={p.energy_class} size="sm" /></p></div></div>
+      <div className="rp-sheet__hero"><ListingArt listing={artOf(p)} alt={`Illustration de ${p.title}`} /><div><h2>{p.title}</h2><p className="ik-muted">{TYPE_LABEL[p.property_type]} {Number(p.surface_sqm)} m² · <Pill tone={p.status === 'let' ? 'ok' : 'neutral'}>{STATUS_LABEL[p.status] ?? p.status}</Pill> {p.property_type !== 'parking' && <> · <Dpe cls={p.energy_class} size="sm" /></>}</p></div></div>
       <div className="rp-kpis rp-kpis--big">
         <div><span>Valeur</span><strong>{eur(p.value)}</strong></div>
         <div><span>Dette restante</span><strong>{eur(p.remainingLoan)}</strong></div>
