@@ -1,6 +1,6 @@
 // Médianes glissantes par mois (fonctions pures). RÈGLE D'OR : la valeur d'un mois M n'utilise que des ventes datées au plus tard à la fin de M
 // (jamais le futur) : le jeu pourra donc afficher le marché à la date du joueur sans rien lui révéler de la suite.
-import { DvfSale, DvfType, median, quantile } from './clean';
+import { DvfSale, DvfType } from './clean';
 import { minOf, maxOf } from './arrays';
 import { DVF_CITIES, cityOfCode } from './cities';
 
@@ -36,12 +36,16 @@ const bucket = (sales: DvfSale[], keyOf: (s: DvfSale) => string | null): Map<str
 
 // Première position dont le mois est > m (la liste est triée par mois) : recherche dichotomique, pour ne pas relire 1,5 million de ventes à chaque mois.
 const firstAfter = (list: { m: number }[], m: number): number => { let lo = 0; let hi = list.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid].m <= m) lo = mid + 1; else hi = mid; } return lo; };
+// Médiane et quartiles d'un tableau DÉJÀ trié (même interpolation linéaire que clean.ts : median / quantile).
+const sortedQuantile = (a: Float64Array, q: number): number => { const pos = (a.length - 1) * q; const lo = Math.floor(pos); const hi = Math.ceil(pos); return a[lo] + (a[hi] - a[lo]) * (pos - lo); };
 const windowStats = (list: { m: number; p: number }[], month: number): { n: number; med: number | null; p25: number | null; p75: number | null } => {
   const from = firstAfter(list, month - WINDOW_MONTHS); const to = firstAfter(list, month);        // ventes des mois (month − 11) à month
-  const v: number[] = [];
-  for (let i = from; i < to; i++) v.push(list[i].p);
-  if (!v.length) return { n: 0, med: null, p25: null, p75: null };
-  return { n: v.length, med: Math.round(median(v)), p25: Math.round(quantile(v, 0.25)), p75: Math.round(quantile(v, 0.75)) };
+  const n = to - from;
+  if (n <= 0) return { n: 0, med: null, p25: null, p75: null };
+  const v = new Float64Array(n);
+  for (let i = 0; i < n; i++) v[i] = list[from + i].p;
+  v.sort();                                                                                          // tri numérique natif, une seule fois pour la médiane et les deux quartiles (1,5 million de ventes : le test de volume ne doit pas bloquer le processus de test)
+  return { n, med: Math.round(sortedQuantile(v, 0.5)), p25: Math.round(sortedQuantile(v, 0.25)), p75: Math.round(sortedQuantile(v, 0.75)) };
 };
 
 // months : [premier, dernier] au format AAAA-MM. Une ligne par (zone, type, mois).
