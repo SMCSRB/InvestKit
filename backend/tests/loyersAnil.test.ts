@@ -68,7 +68,7 @@ describe('activation', () => {
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(path.join(__dirname, '..', 'src'));
-    const own = /rentMarketService\.ts$|rentMarketRules\.ts$|rents[\\/]rentFile\.ts$|rents[\\/]anil\.ts$/;
+    const own = /rentMarketService\.ts$|rentMarketRules\.ts$|rents[\\/]rentFile\.ts$|rents[\\/]anil\.ts$|listingRentService\.ts$|engine[\\/]immo[\\/]listingRent\.ts$/;   // le service d'annonce (branchement 1/6, non appelé par le moteur : voir branchementLoyerAnnonce.test.ts)
     const users = files.filter((f) => /rentMarketService|rentMarketRules|rents\/rentFile|rents\/anil/.test(readFileSync(f, 'utf8')) && !own.test(f));
     expect(users, 'aucun moteur ni route ne doit importer les loyers tant qu\'ils ne sont pas branchés').toEqual([]);
   });
