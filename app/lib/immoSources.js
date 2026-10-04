@@ -21,9 +21,12 @@ export const rentInfo = (sources) => {
       attribution: r.attribution,
     };
   }
+  if (r && r.kind === 'none') return { real: false, unavailable: true, label: 'Loyer', source: null, approximation: null, estimate: null, attribution: null };
   return { real: false, label: 'Loyer de référence', source: null, approximation: null, estimate: null, attribution: null };
 };
 
 // Rentabilité : jamais affichée sans loyer (pas de loyer ANIL pour la commune).
 export const yieldAvailable = (grossYieldPct) => typeof grossYieldPct === 'number' && Number.isFinite(grossYieldPct);
+// Loyer connu ? (source réelle sans loyer : pas de loyer, donc pas de rentabilité)
+export const rentKnown = (sources) => !(sources && sources.rent && sources.rent.kind === 'none');
 export const NO_YIELD_TEXT = 'Rentabilité non disponible : pas de loyer connu pour cette commune.';

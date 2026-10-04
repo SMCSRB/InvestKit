@@ -39,3 +39,11 @@ export const listingRentFrom = (rent: RentFacts, surfaceSqm: number, pricePerM2?
     source: { kind: 'anil', communeLabel: rent.communeLabel, vintage: rent.vintage, snapshotDate: rent.snapshotDate, estimate: rent.estimate, lowEurM2: rent.lowEurM2, highEurM2: rent.highEurM2, attribution: rent.attribution, nature: rent.nature, approximation: rent.approximation },
   };
 };
+
+// Applique un loyer RÉEL à une annonce (PR 2 sur 6 du branchement). Aucun loyer inventé :
+//  - loyer connu : loyer du mois et loyer au m² ANIL (charges comprises, donc AUCUNE charge récupérable en plus : pas de double compte) ;
+//  - loyer inconnu (null) : rentAvailable = false, loyer 0 ; rendement, flux et rentabilité nette ne sont jamais calculés.
+export const withRealRent = <L extends { marketRentMonthly: number; rentPerSqm: number; recoverableChargesMonthly: number; rentAvailable?: boolean; rentIncludesCharges?: boolean }>(l: L, rent: ListingRent | null): L => {
+  if (!rent) return { ...l, marketRentMonthly: 0, rentPerSqm: 0, recoverableChargesMonthly: 0, rentAvailable: false, rentIncludesCharges: false };
+  return { ...l, marketRentMonthly: Math.round(rent.monthlyRent), rentPerSqm: rent.rentPerSqm, recoverableChargesMonthly: 0, rentAvailable: true, rentIncludesCharges: true };
+};

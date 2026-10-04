@@ -1232,3 +1232,7 @@ Rien à tester sur le site (aucun appel depuis le moteur, drapeau désactivé). 
 3. Logement classé F ou G : « Loyer gelé », comme avant.
 
 Méthode : « Create a merge commit ».
+
+## Branchement 2/6 : rentabilité et mentions avec un loyer réel (préparation)
+
+Rien ne change sur le site tant que le drapeau est désactivé (aucune annonce ne reçoit encore de loyer réel). Quand il sera activé sur la copie de test (PR 6) : la fiche d'une annonce d'une commune **avec** loyer ANIL affiche « Loyer moyen de la commune », le millésime, la fourchette et l'attribution **« Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin »** ; une commune **sans** loyer affiche « — » à la place du loyer, « Pas de loyer connu pour cette commune » et « Rentabilité non disponible » (ni rendement brut, ni net, ni flux mensuel). **Choix à relire** : le loyer ANIL est « charges comprises », donc ces annonces n'ont aucune charge récupérable en plus (pas de double compte) ; les charges de copropriété restent des valeurs de jeu.

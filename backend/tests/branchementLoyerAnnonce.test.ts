@@ -30,15 +30,46 @@ describe('conversion du loyer au m² en loyer mensuel', () => {
   });
 });
 
-describe('garde : rien dans le moteur actuel n\'appelle ce branchement', () => {
-  it('drapeau désactivé ; seuls le service et lui-même importent le module du loyer d\'annonce', () => {
-    expect(RENT_MARKET_ENABLED).toBe(false);
+describe('garde : rien dans le moteur actuel ne reçoit encore de loyer réel', () => {
+  const srcFiles = (): string[] => {
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(path.join(__dirname, '..', 'src'));
+    return files;
+  };
+  // Nombre d'arguments de chaque appel « name( … ) » d'un texte (virgules du premier niveau).
+  const argCounts = (text: string, name: string): number[] => {
+    const out: number[] = []; let i = text.indexOf(`${name}(`);
+    while (i !== -1) {
+      let depth = 0; let commas = 0; let j = i + name.length; let any = false;
+      for (; j < text.length; j++) {
+        const c = text[j];
+        if (c === '(' || c === '[' || c === '{') depth++;
+        else if (c === ')' || c === ']' || c === '}') { depth--; if (depth === 0) break; }
+        else if (c === ',' && depth === 1) commas++;
+        else if (depth >= 1 && !/\s/.test(c)) any = true;
+      }
+      out.push(any ? commas + 1 : 0);
+      i = text.indexOf(`${name}(`, j);
+    }
+    return out;
+  };
+  it('drapeau désactivé ; le service de loyer d\'annonce n\'est importé par personne ; le module pur seulement par la décoration des annonces', () => {
+    expect(RENT_MARKET_ENABLED).toBe(false);
     const own = /listingRentService\.ts$|engine[\\/]immo[\\/]listingRent\.ts$/;
-    const users = files.filter((f) => /listingRentService|immo\/listingRent'/.test(readFileSync(f, 'utf8')) && !own.test(f));
-    expect(users, 'aucune route ni aucun moteur ne doit appeler le loyer d\'annonce tant que le drapeau est désactivé').toEqual([]);
+    const service = srcFiles().filter((f) => /listingRentService/.test(readFileSync(f, 'utf8')) && !own.test(f));
+    expect(service, 'aucune route ni aucun moteur ne doit appeler le service du loyer d\'annonce').toEqual([]);
+    const pure = srcFiles().filter((f) => /immo\/listingRent'/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f));
+    expect(pure).toEqual(['realEstateService.ts']);
+  });
+  it('aucun appelant ne passe de loyer réel à decorateListing (3e argument) : le catalogue actuel garde son loyer', () => {
+    for (const f of srcFiles()) {
+      if (/realEstateService\.ts$/.test(f)) continue;
+      const counts = argCounts(readFileSync(f, 'utf8'), 'decorateListing');
+      expect(counts.every((n) => n <= 2), `${path.basename(f)} : ${counts.join(',')}`).toBe(true);
+    }
+    const own = readFileSync(path.join(__dirname, '..', 'src', 'services', 'realEstateService.ts'), 'utf8');
+    expect(argCounts(own.replace(/export const decorateListing[^\n]*\n/, ''), 'decorateListing').every((n) => n <= 2)).toBe(true);
   });
 });
 

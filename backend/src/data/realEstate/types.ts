@@ -65,6 +65,8 @@ export interface Listing {
   vacancyPct: number;             // vacance moyenne attendue de ce bien (%)
   tenancyMonths: number;          // durée moyenne d'un bail avant changement de locataire
   recoverableChargesMonthly: number; // charges récupérables avancées puis refacturées (€/mois)
+  rentAvailable?: boolean;           // false : source RÉELLE sans loyer connu pour cette commune (loyer et rendement absents, jamais inventés) ; absent = loyer du catalogue
+  rentIncludesCharges?: boolean;     // true : loyer ANIL (charges comprises) ; aucune charge récupérable en plus
   annualCharges: {
     condoFees: number;            // copropriété NON récupérable (€/an)
     propertyTax: number;          // taxe foncière (€/an)

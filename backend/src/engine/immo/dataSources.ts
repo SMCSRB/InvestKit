@@ -2,6 +2,7 @@
 // Règle d'Andreja (5 octobre 2026) : ce qui n'a pas de source ouverte porte la marque « valeur de jeu » ; un loyer réel porte l'attribution de sa source.
 export type RentSource =
   | { kind: 'jeu' }
+  | { kind: 'none' }      // source réelle sans loyer pour cette commune : aucun loyer, aucune rentabilité
   | { kind: 'anil'; communeLabel: string; vintage: number; snapshotDate: string; estimate: 'commune' | 'maille'; lowEurM2: number; highEurM2: number; attribution: string; nature: string; approximation?: string | null };
 
 // Champs d'une fiche qui restent des VALEURS DE JEU (clé = ce que l'écran marque). À retirer d'ici quand une source réelle est branchée (taxe foncière : PR 5).
@@ -11,8 +12,8 @@ export type GameValueField = (typeof GAME_VALUE_FIELDS)[number];
 
 export interface ListingDataSources { rent: RentSource; gameValues: GameValueField[] }
 
-// Un loyer réel retire « rent » des valeurs de jeu ; tout le reste reste marqué.
+// Un loyer réel (ou l'absence assumée de loyer) retire « rent » des valeurs de jeu ; tout le reste reste marqué.
 export const listingDataSources = (rent: RentSource = { kind: 'jeu' }): ListingDataSources => ({
   rent,
-  gameValues: GAME_VALUE_FIELDS.filter((f) => !(f === 'rent' && rent.kind === 'anil')),
+  gameValues: GAME_VALUE_FIELDS.filter((f) => !(f === 'rent' && (rent.kind === 'anil' || rent.kind === 'none'))),
 });

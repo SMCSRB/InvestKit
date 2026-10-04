@@ -1,3 +1,4 @@
+import { withRealRent, ListingRent } from '../engine/immo/listingRent';
 import { getClient, query } from '../utils/db';
 import type { PoolClient } from 'pg';
 import { investcoinsRepository, InsufficientFundsError } from '../repositories/investcoinsRepository';
@@ -70,15 +71,19 @@ export const scenarioContext = async (year: number): Promise<ScenarioContext> =>
   insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES,
 });
 
-export const decorateListing = (l: Listing, ctx?: ScenarioContext) => {
-  const scenario = ctx ? standardScenario(l, ctx) : null;
+// `rent` : undefined = loyer du catalogue (comportement actuel) ; un loyer réel (ListingRent) ou null (source réelle SANS loyer connu : aucune rentabilité, jamais un loyer inventé).
+export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: ListingRent | null) => {
+  const l = rent === undefined ? listing : withRealRent(listing, rent);
+  const noRent = l.rentAvailable === false;
+  const scenario = ctx && !noRent ? standardScenario(l, ctx) : null;
   return {
     ...l,
     pricePerSqm: pricePerSqm(l),
-    grossYieldPct: grossYieldPct(l),
+    grossYieldPct: noRent ? null : grossYieldPct(l),
     priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
     needsWorks: needsWorks(l),
-    dataSources: listingDataSources(),            // origine des chiffres : aujourd'hui le catalogue fictif (loyers et charges = valeurs de jeu) ; un loyer réel (ANIL) s'y branchera
+    // origine des chiffres : catalogue fictif (loyers et charges = valeurs de jeu) ; loyer ANIL réel avec sa mention ; ou « aucun loyer » (pas de rentabilité)
+    dataSources: listingDataSources(rent === undefined ? undefined : rent === null ? { kind: 'none' } : rent.source),
     ...(scenario ? { netYieldPct: scenario.netYieldPct, monthlyCashFlow: scenario.monthlyCashFlow, scenario } : {}),
   };
 };
@@ -86,6 +91,12 @@ export const decorateListing = (l: Listing, ctx?: ScenarioContext) => {
 // Rendements estimés d'une annonce AVANT crédit (loyer de marché, vacance attendue, charges du catalogue, frais de notaire) :
 // uniquement le moteur existant (computeIndicators), aucun nouveau calcul.
 export const listingEconomics = (l: Listing) => {
+  if (l.rentAvailable === false) {     // pas de loyer connu : aucun rendement, ni brut ni net, jamais calculé sur un loyer de 0
+    const notaryFees = computeNotaryFees(l.price, l.age, NOTARY_RULE);
+    const annualCharges = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
+    return { notaryFees, totalInvestment: l.price + notaryFees + l.advertisedWorks, annualCharges,
+      potentialAnnualRent: null, collectedAnnualRent: null, grossYieldPct: null, netYieldPct: null, monthlyCashFlow: null, annualCashFlow: null, breakevenOccupancyPct: null };
+  }
   const notary = computeNotaryFees(l.price, l.age, NOTARY_RULE);
   const annualCharges = l.annualCharges.condoFees + l.annualCharges.propertyTax + l.annualCharges.insurance + l.annualCharges.maintenance;
   const ind = computeIndicators({
