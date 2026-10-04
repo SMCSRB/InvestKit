@@ -3,7 +3,7 @@
 //  - rentAt : loyer à la date D du joueur = dernier millésime dont le 3e trimestre est TERMINÉ au jour D (jamais un millésime futur) ; null si aucun (donc aucune rentabilité).
 // Le loyer exposé ne contient JAMAIS d'adresse ni de coordonnées : seulement commune, série, millésime, loyer, fourchette et nature de l'estimation.
 import { query, getClient } from '../utils/db';
-import { ParsedRentFile } from '../data/realEstate/rents/marketFile';
+import { ParsedRentFile } from '../data/realEstate/rents/rentFile';
 import { zoneLabel, cityOfCode, cityOfZone } from '../data/realEstate/dvf/cities';
 import { RENT_SOURCE_ID, RentGroup, RENT_ATTRIBUTION, RENT_NATURE } from '../config/rentMarketRules';
 
