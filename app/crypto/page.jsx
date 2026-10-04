@@ -338,7 +338,7 @@ function BoardView({ simulatedAt }) {
 function StartScreen({ starts, onStart, busy }) {
   const [pick, setPick] = useState(() => starts.find((s) => s.available)?.id ?? 'y2017');   // le premier départ qui a des données (jamais un départ sans données par défaut)
   return (
-    <div>
+    <div data-tour="crypto-start">
       <h2 style={{ color: 'var(--ik-text)', marginTop: 0 }}>Commence ta partie Crypto</h2>
       <p style={{ color: 'var(--ik-text-3)' }}>Choisis la date de départ de ta simulation. Tu reverras l&apos;histoire réelle du marché, jour après jour : tu ne verras jamais ce qui se passe après ta date, et tu ne peux pas revenir en arrière.</p>
       <div style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
@@ -427,7 +427,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
   if (err && !a) return <div style={card}><p style={{ color: 'var(--ik-negative)' }}>{err}</p><button style={btn(false)} onClick={onBack}>← Retour au marché</button></div>;
   if (!a) return <div style={{ color: 'var(--ik-text-3)' }}>Chargement…</div>;
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 14, minWidth: 0 }}>
+    <div data-tour="asset-sheet" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 14, minWidth: 0 }}>
       <button style={{ ...btn(false), justifySelf: 'start' }} onClick={onBack}>← Retour au marché</button>
       {a.synthetic && <div role="alert" data-testid="synthetic-banner" style={{ ...card, borderColor: 'var(--ik-warning)', color: 'var(--ik-warning)' }}>DONNÉES FICTIVES — ces cours sont générés pour essayer l&apos;interface, ils ne représentent aucun marché réel.</div>}
       <div style={card}>
@@ -459,7 +459,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
         <PriceChart key={symbol} symbol={symbol} tf={tf} candleLoader={loader} refreshKey={refreshKey} markers={markers} levels={levels} />
       </div>
 
-      <OrderTicket symbol={symbol} asset={a} owned={mine.position?.quantity} committed={(mine.open || []).filter((o) => o.side === 'sell').reduce((t, o) => t + Number(o.quantity), 0)} onDone={() => { reloadMine(); onTraded(); }} />
+      <div data-tour="order-ticket"><OrderTicket symbol={symbol} asset={a} owned={mine.position?.quantity} committed={(mine.open || []).filter((o) => o.side === 'sell').reduce((t, o) => t + Number(o.quantity), 0)} onDone={() => { reloadMine(); onTraded(); }} /></div>
 
       <div style={card}>
         <h3 style={{ margin: '0 0 8px', color: 'var(--ik-text)', fontSize: 16 }}>Comparer avec d&apos;autres actifs<HelpTip term="base-100" /></h3>
@@ -532,7 +532,7 @@ export default function CryptoPage() {
           : <div style={card}><p style={{ color: 'var(--ik-text-2)', margin: 0 }}>Les données de marché ne sont pas encore importées : ce domaine ouvrira dès que l&apos;historique sera chargé sur le serveur.</p></div>
       ) : (
         <>
-          <div style={{ ...card, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+          <div data-tour="crypto-clock" style={{ ...card, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
             <div style={{ flex: '1 1 200px' }}>
               <div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase' }}>Date simulée</div>
               <div data-testid="sim-date" style={{ fontSize: 20, fontWeight: 800, color: 'var(--ik-text)' }}>{dateFr(simulatedAt)}</div>

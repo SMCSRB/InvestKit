@@ -284,6 +284,7 @@ export default function ProfilePage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
+                  data-tour={`settings-tab-${tab.id}`}
                   onClick={() => setActiveSettingsTab(tab.id)}
                   className={`px-4 py-3 font-semibold transition-all duration-300 border-b-2 ${
                     activeSettingsTab === tab.id

@@ -65,7 +65,7 @@ function ProfileMenu({ user, isAdmin, theme, onToggleTheme }) {
       menu
       label="Menu du compte"
       trigger={({ toggle, open }) => (
-        <button type="button" className="ik-profile" onClick={toggle} aria-expanded={open} aria-haspopup="menu" aria-label={`Menu du compte : ${name}${user?.plan?.isPro ? ', Pro' : ''}`}>
+        <button type="button" className="ik-profile" data-tour="account-menu" onClick={toggle} aria-expanded={open} aria-haspopup="menu" aria-label={`Menu du compte : ${name}${user?.plan?.isPro ? ', Pro' : ''}`}>
           <Avatar avatarId={user?.avatarId} name={name} size={32} />
           <span className="ik-profile__name">{name}</span>
           <PlanBadge plan={user?.plan} size="sm" />
@@ -131,12 +131,12 @@ export default function Topbar({ data, theme, onToggleTheme, onOpenSearch, onOpe
     <div className="ik-topbar" role="banner">
       <Button variant="ghost" icon="menu" className="ik-mobile-only" onClick={onOpenMenu} aria-label="Ouvrir le menu" aria-controls="ik-sidebar" />
       <span className="ik-topbar__label">InvestCoins</span>
-      <Link href="/banque" className="ik-balance" ref={balanceRef} aria-label={wallet ? `Solde : ${fmtCoins(wallet.balance)} InvestCoins` : 'Solde indisponible'}>
+      <Link href="/banque" className="ik-balance" data-tour="coins-balance" ref={balanceRef} aria-label={wallet ? `Solde : ${fmtCoins(wallet.balance)} InvestCoins` : 'Solde indisponible'}>
         <span className="ik-balance__coin" aria-hidden="true" />
         {wallet ? <AnimatedNumber value={wallet.balance} format={fmtCoins} /> : <span className="ik-num">–</span>}
       </Link>
       <span ref={rewardRef} className="ik-quick" style={{ display: 'inline-flex', gap: 8 }}>
-        <Button variant="primary" icon="gift" onClick={reward} className={`ik-rewardbtn ${wallet?.canClaimToday ? 'is-ready' : ''}`} aria-label={wallet?.canClaimToday ? `Récupérer la récompense du jour : ${wallet.dailyRewardCoins} InvestCoins` : 'Récompense du jour'} title={wallet?.canClaimToday ? `Récupérer la récompense du jour : ${wallet.dailyRewardCoins} InvestCoins` : (wallet && wallet.claimedThisWeek >= wallet.maxClaimsPerWeek ? 'Prochaine récompense lundi' : 'Récompense du jour déjà récupérée')} />
+        <Button variant="primary" icon="gift" onClick={reward} data-tour="reward-btn" className={`ik-rewardbtn ${wallet?.canClaimToday ? 'is-ready' : ''}`} aria-label={wallet?.canClaimToday ? `Récupérer la récompense du jour : ${wallet.dailyRewardCoins} InvestCoins` : 'Récompense du jour'} title={wallet?.canClaimToday ? `Récupérer la récompense du jour : ${wallet.dailyRewardCoins} InvestCoins` : (wallet && wallet.claimedThisWeek >= wallet.maxClaimsPerWeek ? 'Prochaine récompense lundi' : 'Récompense du jour déjà récupérée')} />
         <Button variant="secondary" icon="arrowUpRight" href="/crypto" aria-label="Investir : marché Crypto" title="Investir" />
         <Button variant="secondary" icon="swap" href="/banque" aria-label="Banque : prêts et échéances" title="Banque" />
       </span>

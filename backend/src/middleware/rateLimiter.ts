@@ -102,3 +102,5 @@ export const quizLimiter = rateLimit({
 export const profileWriteLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de modifications. Réessaie dans quelques minutes.' } });
 export const avatarLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop d\'envois de photo. Réessaie dans une heure.' } });
 export const emailChangeLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 6, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop de demandes. Réessaie dans une heure.' } });
+// Visite guidée : quelques enregistrements par étape franchie (60 par 15 min : largement assez pour une visite complète, sans peser sur la limite générale).
+export const guideLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false, message: { error: 'Trop d\'enregistrements de la visite guidée. Réessaie dans quelques minutes.' } });

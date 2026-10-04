@@ -11,6 +11,7 @@ function Item({ item, pathname, search, collapsed, onNavigate }) {
   const active = isActive(pathname, search, item.href);
   const props = {
     className: 'ik-navitem',
+    'data-tour': `nav-${item.id}`,
     'aria-current': active ? 'page' : undefined,
     title: collapsed ? item.label : undefined,
     onClick: onNavigate,

@@ -248,21 +248,22 @@ export default function BanquePage() {
     <AppShell>
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        <Link href={back.href} data-testid="bank-back" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← {back.label}</Link>
+        <div data-tour="bank-head"><Link href={back.href} data-testid="bank-back" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← {back.label}</Link>
         <h1 style={{ margin: '6px 0 4px', color: 'var(--ik-text)', fontSize: 'clamp(24px, 5vw, 32px)' }}>Ma banque</h1>
         <p style={{ color: 'var(--ik-text-3)', marginTop: 0, fontSize: 14 }}>Les pièces ne servent que dans le jeu : elles ne s&apos;échangent pas entre joueurs et ne s&apos;achètent pas avec de l&apos;argent réel. Les taux sont fictifs, calés sur l&apos;histoire (à titre pédagogique).</p>
+        </div>
         {toast && <div role="status" style={{ ...card, marginBottom: 14, borderColor: toast.isError ? 'var(--ik-negative)' : 'var(--ik-positive)' }}>{toast.msg}</div>}
 
         {data && (
           <>
             {data.account.creditBlocked && <div style={{ ...card, borderColor: 'var(--ik-negative)', marginBottom: 14 }}><Icon name="ban" size={18} /> <strong>Crédit bloqué :</strong> {data.account.blockedReason === 'recovery' ? `suite à une procédure de rétablissement, aucun nouveau crédit avant le ${new Date(data.account.blockedUntil).toLocaleDateString('fr-FR')}.` : 'un de tes prêts est en défaut. Tu ne peux plus emprunter tant qu\'il n\'est pas soldé.'}<HelpTip term="defaut-paiement" /></div>}
             {(() => { const ds = [...new Set(data.loans.filter((l) => l.status === 'defaulted').map((l) => l.domain))]; return ds.length > 0 ? <Recovery domains={ds} onDone={refresh} notify={notify} /> : null; })()}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div data-tour="bank-stats" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
               <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase' }}>Dette en cours</div><div style={{ fontSize: 24, fontWeight: 800, color: 'var(--ik-text)' }}>{num(data.totals.outstandingCoins)} <Coin /></div><div style={{ fontSize: 12, color: 'var(--ik-text-3)' }}>{data.totals.activeLoans} prêt(s) sur {data.totals.maxActiveLoans} possibles</div></div>
               <div style={{ ...card, flex: '1 1 200px' }}><div style={{ fontSize: 12, color: 'var(--ik-text-3)', textTransform: 'uppercase' }}>Crédit fléché non dépensé<HelpTip term="credit-fleche" /></div>
                 {data.reservedCredit.length === 0 ? <div style={{ fontSize: 18, color: 'var(--ik-text-2)', marginTop: 4 }}>—</div> : data.reservedCredit.map((r) => <div key={r.domain} style={{ fontSize: 18, fontWeight: 700, color: 'var(--ik-warning)' }}>{num(r.coins, 0)} <Coin /> <span style={{ fontSize: 13, color: 'var(--ik-text-3)' }}>utilisables en {DOMAIN_LABEL[r.domain] || r.domain} seulement</span></div>)}</div>
             </div>
-            <PersonalLoan onDone={refresh} notify={notify} />
+            <div data-tour="bank-loans"><PersonalLoan onDone={refresh} notify={notify} /></div>
             <PortfolioLoan onDone={refresh} notify={notify} />
             <h3 style={{ color: 'var(--ik-text)', margin: '20px 0 8px' }}>Mes prêts</h3>
             {data.loans.length === 0 && <p style={{ color: 'var(--ik-text-3)' }}>Aucun prêt pour l&apos;instant.</p>}

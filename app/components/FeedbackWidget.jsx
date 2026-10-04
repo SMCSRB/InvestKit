@@ -62,7 +62,7 @@ export default function FeedbackWidget() {
           {state.error && <p role="alert" className="ik-error" style={{ margin: '8px 0 0' }}>{state.error}</p>}
         </div>
       )}
-      <button type="button" className="ik-btn ik-btn--sm ik-fb__btn" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button type="button" className="ik-btn ik-btn--sm ik-fb__btn" data-tour="feedback" onClick={() => setOpen(!open)} aria-expanded={open}>
         <Icon name="mail" size={16} />Un retour ?
       </button>
     </div>
