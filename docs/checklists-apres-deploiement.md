@@ -1220,6 +1220,9 @@ Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 0
 
 Ordre de fusion : après la PR 4. Méthode : « Create a merge commit ».
 
+## Branchement 1/6 : loyer ANIL d'une annonce (préparation)
+
+Rien à tester sur le site (aucun appel depuis le moteur, drapeau désactivé). Vue d'ensemble : `docs/plan-branchement-immobilier-reel.md`.
 ## PR Immobilier réel : IRL réel branché à la révision des loyers
 
 **À faire avant de tester** : importer l'IRL sur la copie de test (`~/InvestKit-design`, après `~/deploy-test.sh`) : `immo:import-irl` (CSV Insee téléchargé par toi) puis `immo:load-irl -- --apply`. **Sans IRL, aucun loyer n'est révisé.**
