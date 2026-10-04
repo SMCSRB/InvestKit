@@ -15,5 +15,6 @@ Liste des points à régler **avant** d'ouvrir le site au public (hors paramètr
 - [ ] **Loyers de l'Immobilier** : aujourd'hui des valeurs de jeu. Avant d'activer les prix DVF réels, éviter une rentabilité qui mélange un prix réel et un loyer de jeu : afficher « loyer : valeur de jeu », recaler les loyers de base, ou sourcer de vrais loyers (licence à vérifier).
 
 - [ ] **Carte des loyers (ANIL)** : lire la page de chaque millésime (licence, attribution exacte, trimestre, colonnes) avant l'import, puis recopier l'attribution dans `RENT_ATTRIBUTION` (voir `docs/loyers-anil-fiche-source.md`).
+- [ ] **Frais de notaire par département** : relire le tableau officiel des droits de mutation, la date de la hausse à Paris et dans le Nord, le barème des émoluments, la CSI (voir `docs/frais-notaire-fiche-source.md`).
 - [ ] **IRL (Insee)** : lire les conditions de réutilisation et le format du CSV de la série, confirmer les dates de publication (voir `docs/loyers-irl-fiche-source.md`, lignes 8 à 10).
 - [ ] **Fiscalité des revenus fonciers** : relire sur impots.gouv.fr l'abattement et le plafond du micro-foncier, le plafond du déficit foncier, les prélèvements sociaux (voir `docs/fiscalite-fonciere-fiche-source.md`), puis décider du branchement au moteur.
