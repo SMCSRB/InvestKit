@@ -1184,3 +1184,12 @@ Après `~/deploy-test.sh` (aucune migration), connecté avec un compte Immobilie
 3. **Rien de plus ne change aujourd'hui** : le catalogue reste fictif, donc aucun loyer ANIL n'est affiché. Quand un loyer réel sera branché, la fiche dira « Loyer moyen de la commune » avec la nature du loyer (loyer d'annonce, charges comprises), le millésime, la fourchette et l'attribution ANIL ; avant le 30 septembre du premier millésime, elle ajoutera en gras « Estimation ANIL 2022, 3e trimestre (approximation avant cette date) » ; une commune sans loyer n'affichera **aucune rentabilité** (« Rentabilité non disponible »).
 
 Ordre de fusion : après la PR 1 (loyers ANIL). Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : frais de notaire par département (PR 4)
+
+Rien à tester sur le site (aucun changement pour les joueurs : le jeu garde 7,5 % et 2,5 % forfaitaires). **Avant de t'y fier, lis `docs/frais-notaire-fiche-source.md`** (tableau des sources et des lignes à relire). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
+
+1. `npm --prefix backend run immo:simulate-niveau` (et `-- --capital 10000 --profile employee`) : une ligne « Notaire : calculé par DÉPARTEMENT … » et, par ville, le plafond d'achat et le **taux de notaire effectif** de son département. Les prix et les plafonds de l'étudiant à 2 500 pièces **baissent** par rapport à avant (frais fixes sur les petits prix) : lis le tableau de sensibilité de la fiche et dis-moi si tu veux garder 1 000 euros de frais divers.
+2. Envoie-moi la sortie.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».

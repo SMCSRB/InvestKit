@@ -55,6 +55,12 @@ describe('émoluments et total', () => {
     expect(n.total).toBeLessThan(g.total);
     expect(g.total - n.total).toBeCloseTo((200_000 * (6.32 - 5.80665)) / 100, 0);
   });
+  it('frais divers réglables (sensibilité) : plus ils sont élevés, plus le total et le taux effectif montent', () => {
+    const at = (m: number) => notaryFeesOld(100_000, '33', '2025-06-01', m);
+    expect(at(0).total).toBeLessThan(at(500).total); expect(at(500).total).toBeLessThan(at(1000).total);
+    expect(at(1000).total - at(0).total).toBeCloseTo(1000, 5);
+    expect(at(1000).misc).toBe(NOTARY_MISC_EUR);
+  });
   it('le taux effectif baisse quand le prix monte (frais fixes et barème dégressif) et reste dans la fourchette connue (7 à 9 %, un peu plus pour un très petit prix)', () => {
     const at = (p: number) => notaryFeesOld(p, '75', '2025-06-01').pct;
     expect(at(50_000)).toBeGreaterThan(at(300_000));

@@ -22,10 +22,10 @@ export const emolumentsHT = (price: number): number => {
 export interface NotaryBreakdown { dmto: number; emoluments: number; vat: number; csi: number; misc: number; total: number; pct: number; dmtoPct: number }
 const r2 = (n: number): number => Math.round(n * 100) / 100;
 
-export const notaryFeesOld = (price: number, department: string, day: string): NotaryBreakdown => {
+export const notaryFeesOld = (price: number, department: string, day: string, miscEur: number = NOTARY_MISC_EUR): NotaryBreakdown => {
   if (!(price > 0)) throw new Error('Prix invalide.');
   const dmtoPct = dmtoPctAt(department, day);
   const dmto = (price * dmtoPct) / 100; const em = emolumentsHT(price); const vat = (em * NOTARY_VAT_PCT) / 100; const csi = (price * CSI_PCT) / 100;
-  const total = dmto + em + vat + csi + NOTARY_MISC_EUR;
-  return { dmto: r2(dmto), emoluments: r2(em), vat: r2(vat), csi: r2(csi), misc: NOTARY_MISC_EUR, total: r2(total), pct: r2((total / price) * 100), dmtoPct };
+  const total = dmto + em + vat + csi + miscEur;
+  return { dmto: r2(dmto), emoluments: r2(em), vat: r2(vat), csi: r2(csi), misc: miscEur, total: r2(total), pct: r2((total / price) * 100), dmtoPct };
 };

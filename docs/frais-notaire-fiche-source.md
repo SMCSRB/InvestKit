@@ -23,3 +23,13 @@ Le **neuf** reste à **2,5 %** (milieu de la fourchette de 2 à 3 % citée par u
 - **Avant le 1er avril 2025** (ou dans un département resté à 4,5 %) : taux de base 5,80665 % ; **jamais un taux relevé avant sa date**.
 - Le taux effectif **baisse quand le prix monte** (barème dégressif, frais fixes) : entre 7 et 9 % pour des prix de 80 000 à 600 000 euros, un peu plus pour un très petit prix.
 - **Rien n'est téléchargé**, aucune base n'est lue.
+
+## Sensibilité : l'effet des « frais divers » (valeur de jeu) sur le plafond d'achat
+Les frais divers sont un montant **fixe** : ils pèsent peu sur un achat de 200 000 euros (0,5 %), mais beaucoup sur un petit prix (un parking à 6 000 euros : près de 17 %). Comme la banque du jeu exige **les frais de notaire en entier** dans l'apport, ils font baisser le plafond d'achat des profils à petit capital. Plafond d'achat de la banque (calcul pur, ancien, taux de crédit 2,15 %, Côte-d'Or, janvier 2022) :
+| Profil et capital | Notaire forfaitaire 7,5 % (avant) | Frais divers 0 € | 500 € | **1 000 € (valeur retenue)** |
+|---|---|---|---|---|
+| Étudiant, 2 500 | 13 123 | 11 903 | 9 095 | **6 319** |
+| Étudiant, 5 000 | 24 629 | 24 415 | 23 347 | **20 448** |
+| Étudiant, 10 000 | 29 267 | 29 084 | 28 626 | **28 169** |
+| Salarié, 10 000 | 55 970 | 55 360 | 52 461 | **49 532** |
+**Décision à prendre (Andreja)** : garder 1 000 euros, ou choisir un autre montant, ou le remplacer par une source (les débours réels varient selon l'acte). C'est le seul paramètre inventé de ce calcul ; tout le reste vient d'un barème ou d'un taux (à relire).
