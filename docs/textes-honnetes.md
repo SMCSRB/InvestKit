@@ -13,6 +13,9 @@ Principe : le jeu rejoue des données **simplifiées, fictives ou historiques**.
 | Estimation d'un ordre Crypto | « le prix réel est celui de la date simulée » | « le prix de référence est celui de la date simulée » |
 | Courtage de 0,5 % | présenté comme « plafond légal PEA en ligne » pour tout | plafond légal des ordres **en ligne sur PEA** (loi Pacte, décret n° 2020-95) ; repris pour le compte-titres **par simplification** (VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER) |
 
+| Glossaire, fiche « Action » (6b-lite) | « aux cours historiques réels de l'année simulée » | « sur des cours annuels simplifiés (illustratifs, pas de vrais cours de Bourse), jusqu'à ton année simulée » |
+| Glossaire, fiche « InvestCoin » (6b-lite) | pas de rappel de la valeur | phrase permanente : « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs. » |
+
 Déjà honnêtes (inchangés) : bandeau « DONNÉES FICTIVES » de la page Crypto, FAQ « D'où viennent les données de marché ? », « Cours historiques, rejoués à ta date de jeu (ils ne sont pas en direct) » sur l'onglet Marché, « Le mode temps réel n'est pas encore disponible ».
 
 ## Garde-fou

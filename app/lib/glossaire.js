@@ -36,7 +36,7 @@ export const GLOSSARY = [
   { id: 'action', category: 'bourse', term: 'Action',
     short: 'Une petite part d\'une entreprise. Si l\'entreprise vaut plus, ta part vaut plus.',
     long: 'En achetant une action, tu deviens copropriétaire d\'une entreprise cotée en Bourse. Son prix monte et descend selon les résultats de l\'entreprise et l\'humeur des investisseurs. Tu peux gagner, mais aussi perdre.',
-    inGame: 'Tu achètes et vends avec tes InvestCoins, aux cours historiques réels de l\'année simulée.' },
+    inGame: 'Tu achètes et vends avec tes InvestCoins, sur des cours annuels simplifiés (illustratifs, pas de vrais cours de Bourse), jusqu\'à ton année simulée.' },
   { id: 'etf', category: 'bourse', term: 'ETF (fonds indiciel)',
     short: 'Un « panier » d\'actions achetable en une seule fois, qui copie un grand indice.',
     long: 'Au lieu de choisir une entreprise, tu achètes un panier qui en contient des centaines. C\'est un moyen simple de répartir ton risque. Le prix du panier varie avec la moyenne des entreprises qu\'il contient.' },
@@ -286,7 +286,8 @@ export const GLOSSARY = [
   // ── Dans le jeu
   { id: 'investcoin', category: 'jeu', term: 'InvestCoin (InvestCoins)',
     short: 'La monnaie du jeu : 1 InvestCoin vaut 1 € de jeu, dans tous les domaines.',
-    long: 'Tous les achats, ventes et revenus sont convertis en pièces entières, avec un petit reliquat conservé pour ne rien perdre ni créer.' },
+    long: 'Tous les achats, ventes et revenus sont convertis en pièces entières, avec un petit reliquat conservé pour ne rien perdre ni créer. Les prix du jeu suivent les ordres de grandeur du marché, en InvestCoins, la monnaie du jeu.',
+    inGame: 'Les InvestCoins n\'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs.' },
   { id: 'patrimoine-net', category: 'jeu', term: 'Patrimoine net (fonds propres)',
     short: 'La valeur de tes biens moins ce que tu dois à la banque.',
     long: 'C\'est ce qui t\'appartient vraiment. Il augmente quand tu rembourses le capital et quand les prix montent.' },
