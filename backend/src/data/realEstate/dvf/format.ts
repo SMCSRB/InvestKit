@@ -54,7 +54,10 @@ export const code5 = (code: string, dep: string | undefined, format: DvfFormat):
   return c.length >= 5 ? c : c.padStart(5, '0');
 };
 
-export const STANDARD_COLUMNS = ['id_mutation', 'date_mutation', 'nature_mutation', 'valeur_fonciere', 'code_commune', 'id_parcelle', 'nombre_lots', 'type_local', 'surface_reelle_bati', 'nombre_pieces_principales', 'longitude', 'latitude'] as const;
+// Code postal sur 5 chiffres (« 6000 » -> « 06000 ») ; toute autre valeur devient « » (la vente n'aura alors pas de zone fine).
+export const postal = (v: string): string => { const t = v.trim().replace(/\.0+$/, ''); return /^\d{4,5}$/.test(t) ? t.padStart(5, '0') : ''; };
+
+export const STANDARD_COLUMNS = ['id_mutation', 'date_mutation', 'nature_mutation', 'valeur_fonciere', 'code_commune', 'code_postal', 'id_parcelle', 'nombre_lots', 'type_local', 'surface_reelle_bati', 'nombre_pieces_principales', 'longitude', 'latitude'] as const;
 
 export const makeStandardizer = (header: string[]) => {
   const info = detectFormat(header);
@@ -70,7 +73,7 @@ export const makeStandardizer = (header: string[]) => {
     const id = format === 'etalab' ? get(r, 'id_mutation') : `${date}|${code}|${value}`;
     const parcel = format === 'etalab' ? get(r, 'id_parcelle') : `${code}|${get(r, 'prefixe_de_section')}|${get(r, 'section')}|${get(r, 'no_plan')}`;
     return {
-      id_mutation: id, date_mutation: date, nature_mutation: get(r, 'nature_mutation'), valeur_fonciere: value, code_commune: code, id_parcelle: parcel,
+      id_mutation: id, date_mutation: date, nature_mutation: get(r, 'nature_mutation'), valeur_fonciere: value, code_commune: code, code_postal: postal(get(r, 'code_postal')), id_parcelle: parcel,
       nombre_lots: get(r, 'nombre_lots'), type_local: canonType(get(r, 'type_local')), surface_reelle_bati: get(r, 'surface_reelle_bati'),
       nombre_pieces_principales: get(r, 'nombre_pieces_principales'), longitude: get(r, 'longitude'), latitude: get(r, 'latitude'),
     };

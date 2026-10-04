@@ -248,14 +248,14 @@ describe('téléchargement d\'une année', () => {
 
 describe('qualité par année et par ville', () => {
   it('compte les ventes, les quartiers sous le seuil, marque l\'année maigre', () => {
-    const mk = (code: string, date: string, n: number) => Array.from({ length: n }, (_, i) => ({ id: `${code}${date}${i}`, date, code, type: 'appartement' as const, surface: 50, price: 250000, pricePerM2: 5000, rooms: 2, lon: null, lat: null }));
+    const mk = (code: string, date: string, n: number) => Array.from({ length: n }, (_, i) => ({ id: `${code}${date}${i}`, date, code, zone: code === '33063' ? '33000' : code, postal: '', section: '', type: 'appartement' as const, surface: 50, price: 250000, pricePerM2: 5000, rooms: 2, lon: null, lat: null }));
     const sales = [...mk('33063', '2019-03-01', 40), ...mk('75101', '2019-05-01', 12), ...mk('75102', '2019-05-01', 3), ...mk('75103', '2020-05-01', 50)];
     const st = yearCityStats(sales, [2019, 2020]);
     const bx19 = st.find((s) => s.cityId === 'bordeaux' && s.year === 2019)!;
-    expect(bx19).toMatchObject({ sales: 40, zones: 1, zonesBelowMin: 0, thin: false });
+    expect(bx19).toMatchObject({ sales: 40, zones: 5, zonesBelowMin: 4, thin: true });   // 5 codes postaux, tout dans 33000
     const pa19 = st.find((s) => s.cityId === 'paris' && s.year === 2019)!;
     expect(pa19).toMatchObject({ sales: 15, zones: 20, zonesBelowMin: 19, thin: true });
-    expect(st.find((s) => s.cityId === 'bordeaux' && s.year === 2020)).toMatchObject({ sales: 0, zonesBelowMin: 1, thin: true });
+    expect(st.find((s) => s.cityId === 'bordeaux' && s.year === 2020)).toMatchObject({ sales: 0, zonesBelowMin: 5, thin: true });
     expect(DVF_CITIES).toHaveLength(12);
   });
 });
@@ -269,7 +269,7 @@ describe('import de bout en bout avec un fichier brut latin1', () => {
     writeFileSync(path.join(dir, '2021', '33063.csv'), etalab(rows21));
     const out = execFileSync('npx', ['ts-node', 'scripts/immo-import-dvf.ts', '--dir', dir, '--check'], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
     expect(out).toContain('60 ventes retenues');
-    expect(out).toMatch(/Bordeaux\s+30\s+30\s*$/m);
+    expect(out).toMatch(/Bordeaux\s+30\*?\s+30\*?\s*$/m);
     expect(out).toContain('Ventes retenues par année et par ville');
     expect(out).toContain('Années présentes : 2016, 2021. Années absentes : 2014 à 2015, 2017 à 2020');
   }, 90_000);
@@ -300,7 +300,7 @@ describe('adresse imposée', () => {
 });
 
 describe('rapport qualité : années absentes à part', () => {
-  const mk = (code: string, date: string, p: number) => ({ id: `${code}${date}${p}${Math.random()}`, date, code, type: 'appartement' as const, surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
+  const mk = (code: string, date: string, p: number) => ({ id: `${code}${date}${p}${Math.random()}`, date, code, zone: code === '33063' ? '33000' : code, postal: '', section: '', type: 'appartement' as const, surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
   it('compressYears : plages et années isolées', () => {
     expect(compressYears([2014, 2015, 2016, 2017, 2018, 2019, 2020])).toBe('2014 à 2020');
     expect(compressYears([2014, 2016, 2017, 2018, 2021])).toBe('2014, 2016 à 2018, 2021');
@@ -326,7 +326,7 @@ describe('import : message explicite quand aucun quartier n\'est sous le seuil',
   it('« Aucun quartier sous 10 ventes sur l\'année, pour aucune ville » et années absentes à part', () => {
     const dir = tmp(); mkdirSync(path.join(dir, '2021'), { recursive: true });
     const lines: string[] = [];
-    for (const c of DVF_CITIES) for (const code of c.codes) for (let i = 0; i < 12; i++) lines.push([`${code}-${i}`, `2021-0${1 + (i % 6)}-1${i % 9}`, '1', 'Vente', String(250000 + i * 1000), '1', 'Rue', '00000', code, 'V', code.slice(0, 2), `${code}P${i}`, '1', '2', 'Appartement', '50', '2', '0', '0'].join(','));
+    for (const c of DVF_CITIES) for (const zone of c.zones) for (let i = 0; i < 12; i++) lines.push([`${zone}-${i}`, `2021-0${1 + (i % 6)}-1${i % 9}`, '1', 'Vente', String(250000 + i * 1000), '1', 'Rue', zone, c.districts ? zone : c.codes[0], 'V', c.department, `${zone}P${i}`, '1', '2', 'Appartement', '50', '2', '0', '0'].join(','));
     // Un seul fichier suffit : l'import lit tous les .csv du dossier de l'année et range les ventes par code commune.
     writeFileSync(path.join(dir, '2021', 'tout.csv'), [ETALAB_HEAD, ...lines].join('\n') + '\n');
     const out = execFileSync('npx', ['ts-node', 'scripts/immo-import-dvf.ts', '--dir', dir, '--check'], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });

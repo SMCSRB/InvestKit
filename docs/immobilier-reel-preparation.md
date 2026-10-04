@@ -78,3 +78,40 @@ Le téléchargement a été refait ainsi :
 4. **Relecture juridique** (quelqu'un de compétent) : adresses de ventes réelles dans DVF, absence d'identification de personnes, mentions de source (« DGFiP, Demandes de valeurs foncières », date de mise à jour).
 5. **Équilibrage banque** avec les vrais prix de 2021, et sous-décision sur les mois de chauffe de 2021.
 6. **Fin du jeu** : les DVF finissent en 2025 et se mettent à jour par semestre ; l'Immobilier réel fixe la fin pour tous si on garde la règle « plus petit plafond des domaines ».
+
+
+## Zones fines : un prix par zone dans chaque ville (5 octobre 2026)
+
+**Demande d'Andreja.** Des vrais prix selon l'endroit du bien. Avant : seules Paris (20 arrondissements), Lyon (9) et Marseille (16) avaient plusieurs zones ; les neuf autres villes n'avaient qu'un prix. Ce n'était pas suffisant.
+
+### Ce qui est fait dans cette PR
+- **Zone = code postal** pour les neuf autres villes, **arrondissement** pour Paris, Lyon et Marseille. Le fichier DVF contient déjà le code postal de chaque vente (colonne `code_postal`), mais nos fichiers filtrés ne le gardaient pas : `STANDARD_COLUMNS` le garde maintenant (un seul champ de plus, jamais la rue ni le numéro).
+- **Règle des médianes inchangée** : médiane glissante sur 12 mois, au moins **10 ventes** dans la zone, sinon repli sur la médiane de la **ville** (champ `scope = city`, marqué `~` dans la simulation), sinon « aucun » (jamais de chiffre inventé). La vente du mois M n'utilise que des ventes datées au plus tard à la fin de M (testé par zone).
+- **Zones connues par ville** (`cities.ts`, **[connu, à vérifier au premier rapport]**) : Bordeaux 5 (33000, 33100, 33200, 33300, 33800) · Toulouse 6 (31000 à 31500) · Nantes 4 (44000 à 44300) · Lille 4 (59000, 59160 Lomme, 59260 Hellemmes, 59800) · Montpellier 4 (34000, 34070, 34080, 34090) · Nice 4 (06000 à 06300) · Rennes 3 (35000, 35200, 35700) · Dijon 1 (21000) · Saint-Étienne 3 (42000, 42100, 42230). Soit **79 zones** au total (45 arrondissements + 34 codes postaux). Une vente dont le code postal n'est pas dans la liste de sa ville ne sert qu'à la médiane de la ville, et le rapport liste ces codes inattendus pour qu'on les ajoute si utile.
+- **Rapport de découpage** : `npm --prefix backend run immo:zones-report` (lecture seule) : par ville, nombre de zones, ventes par zone et par année, zones « fiables » (au moins 10 appartements sur les 12 derniers mois), et un **essai par section cadastrale**. Texte aussi écrit dans `backend/data/dvf-zones-rapport.txt`.
+- **`immo:simulate-niveau`** affiche maintenant, ville par ville, **chaque zone** : nombre de ventes, prix médian au m² (appartement et maison), et si la banque accepte chaque type de bien (parking, studio, T2, T3, maison). `~` = prix de la ville faute de ventes dans la zone.
+
+### Découpage plus fin que le code postal : ce que montre l'analyse
+| Piste | Avantage | Limite |
+|---|---|---|
+| **Code postal** (retenu) | nom lisible (« Bordeaux 33100 »), déjà dans les fichiers, 3 à 6 zones par ville | une zone par code postal : Dijon n'en a qu'une |
+| **Section cadastrale** (2 lettres dans l'identifiant de parcelle, déjà dans nos fichiers) | beaucoup plus fine (centaines par grande ville) | **aucun nom lisible** pour le joueur ; sur 10 à 30 ventes par an et par section, la règle des 10 ventes échouerait souvent (à mesurer : le rapport donne la part des ventes qui tombent dans une section fiable). Utilisable seulement pour regrouper en « quartiers » avec un nom |
+| **Quartier officiel** (contours des quartiers de la ville, par point dans un polygone avec la latitude/longitude de la vente) | nom lisible, plus fin que le code postal | il faut un jeu de contours par ville (données ouvertes des villes, **licence propre à chacune, à vérifier**) ; les coordonnées servent seulement au calcul hors ligne, jamais montrées ; à étudier ville par ville après lecture du rapport |
+
+**Recommandation.** Partir des **codes postaux** (fait). Ne passer au quartier officiel que dans les villes où le rapport montre des codes postaux trop larges (Dijon n'en a qu'un, par exemple), avec une licence vérifiée.
+
+### Chiffres par ville : à lire dans TON rapport, pas dans le mien
+Je n'ai pas les fichiers DVF (ils sont sur ton serveur de test) : **je ne peux donc pas te donner honnêtement le nombre de ventes par zone et par année.** Ce que je sais : ton rapport précédent donne entre **2 400 et 33 000 ventes retenues par ville et par an**. Avec 3 à 6 zones par ville, la plus petite ville (2 400 par an) garde en moyenne plus de 400 ventes par zone et par an : **le seuil de 10 ventes ne devrait être un problème que pour de petites zones** (Hellemmes, Lomme, 33300 et autres) **[estimation, à vérifier]**. La mesure exacte : `immo:zones-report` (voir la checklist).
+
+### Les fichiers déjà téléchargés n'ont pas le code postal
+Le téléchargement ne réécrit **jamais** un fichier existant. Pour avoir le code postal, retélécharge dans un **nouveau dossier** (l'ancien n'est pas touché ni supprimé) : `npm --prefix backend run immo:download-dvf -- --from 2021 --to 2025 --dir backend/data/dvf-brut-cp`, puis `immo:import-dvf -- --dir backend/data/dvf-brut-cp` et `immo:zones-report -- --dir backend/data/dvf-brut-cp`. Sans code postal, l'import et le rapport le disent (« fichiers téléchargés avant l'ajout du code postal »), et les villes hors Paris-Lyon-Marseille retombent sur un seul prix, comme avant.
+
+### Ce que le joueur verra (jamais plus)
+Zone lisible (« Bordeaux 33000 », « Paris 11e »), type de bien, mois, nombre de ventes, prix au m². **Jamais** de rue, de numéro ni de coordonnées exactes : le fichier de médianes n'a que 8 colonnes (zone, mois, type, ventes, médiane, deux quartiles, repli) et la base n'a aucune colonne d'adresse, de coordonnées, de parcelle ou de section (test automatique). La section cadastrale et la latitude/longitude ne servent qu'au rapport hors ligne, en mémoire.
+
+### Reste à faire : les annonces du jeu (point 3 de la demande), PR suivante
+Aujourd'hui les annonces viennent du **catalogue fictif** et la « zone » de la carte est « centre / péricentre / périphérie » (`app/lib/mapGeo.js`) ; les prix DVF ne sont lus par rien (`DVF_MARKET_ENABLED = false`, et la décision sur l'horloge unique reste à prendre). Quand elle le sera :
+1. chaque annonce reçoit un `zoneCode` (arrondissement ou code postal de sa ville) ;
+2. son prix au m² = `priceAt(zoneCode, type, date du joueur)` (médiane de **sa** zone, repli ville si trop peu de ventes), jamais celui de la ville entière quand la zone a assez de ventes ;
+3. l'annonce affiche « Bordeaux 33100 » ; la carte place l'annonce dans **sa** zone et colore les zones selon leur prix au m². Il faut pour cela des **contours de zones** (codes postaux : jeu de contours ouvert à trouver, **licence à vérifier** ; arrondissements : contours des communes déjà prévus, décision n° 1 du lot B) ; en attendant les contours, la carte peut afficher des pastilles de zone.
+Rien de cela n'est dans cette PR.

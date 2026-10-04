@@ -43,6 +43,8 @@ const main = () => {
   }
   const thinYears = years.filter((y) => stats.filter((x) => x.year === y && x.thin).length >= 3);
   if (thinYears.length) console.log(`Années maigres pour au moins 3 villes : ${thinYears.join(', ')}.`);
+  const noPostal = trimmed.kept.filter((x) => !x.zone && !DVF_CITIES.find((c) => c.codes.includes(x.code))?.districts).length;
+  if (noPostal) console.log(`\nZones : ${noPostal} vente(s) hors arrondissement sans code postal connu (elles ne servent qu'à la médiane de la ville). Si ce nombre est très grand, les fichiers datent d'avant l'ajout du code postal : voir docs/immobilier-reel-preparation.md. Détail : npm run immo:zones-report.`);
   if (rep.warnings.length) console.log('\nÀ regarder :\n- ' + rep.warnings.join('\n- '));
   if (flag('check')) return;
   const out = path.resolve(arg('out') ?? path.join(__dirname, '..', 'data', 'dvf-marche.json'));

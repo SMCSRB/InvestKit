@@ -26,7 +26,8 @@
     "immo:download-dvf": "ts-node scripts/immo-download-dvf.ts",
     "immo:import-dvf": "ts-node scripts/immo-import-dvf.ts",
     "immo:load-dvf": "ts-node scripts/immo-load-dvf.ts",
-    "immo:simulate-niveau": "ts-node scripts/immo-simulate-niveau.ts"
+    "immo:simulate-niveau": "ts-node scripts/immo-simulate-niveau.ts",
+    "immo:zones-report": "ts-node scripts/immo-zones-report.ts"
   },
   "keywords": [
     "investissement",
