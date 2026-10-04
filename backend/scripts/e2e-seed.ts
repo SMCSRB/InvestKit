@@ -15,7 +15,6 @@ import { FIRST_STEP_BONUSES } from '../src/config/economy';
 import { realEstateService } from '../src/services/realEstateService';
 import { fictiveDataSource } from '../src/data/realEstate/fictiveCatalog';
 import { simClockService } from '../src/services/simClockService';
-import { clockService as cryptoClock } from '../src/services/crypto/clockService';
 
 export const seedE2e = async (urlForCheck: string | undefined, email: string, password: string): Promise<string> => {
   const database = assertTestDatabase(urlForCheck);
@@ -41,9 +40,9 @@ export const seedE2e = async (urlForCheck: string | undefined, email: string, pa
   }
 
   // Une partie Immobilier avec un bien en bon état, sans travaux : le tableau de bord a de quoi expliquer sa « performance ».
-  // Une seule horloge pour les trois domaines : départ au 1er janvier 2020 (le jeu Crypto fictif y est coté), Crypto et Immobilier à cette date.
+  // Une seule horloge pour les trois domaines : départ au 1er janvier 2020 (le jeu Crypto fictif y est coté). Le compte Crypto n'est PAS créé ici : le parcours Crypto le crée par l'écran de départ, comme un joueur
+  // (et le bandeau des prix, qui coûte une dizaine de requêtes par page, reste éteint pour les autres parcours : limite de requêtes de l'API).
   await simClockService.ensure(id, 'y2020');
-  await cryptoClock.createAt(id, Date.parse('2020-01-01T00:00:00Z'));
   await realEstateService.startGame(id, 'employee');
   let choisi: Awaited<ReturnType<typeof fictiveDataSource.listListings>>[number] | undefined;
   for (const l of await fictiveDataSource.listListings(2020)) {

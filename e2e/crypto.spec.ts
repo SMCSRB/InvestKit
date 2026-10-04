@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 
 test('Crypto : après +1 mois, la liste, la fiche et le bandeau des prix suivent la nouvelle date, sans recharger la page', async ({ page }) => {
   await page.goto('/crypto');
+  // Comme un joueur : écran de départ (la date de la partie est déjà fixée pour tout le jeu : 1er janvier 2020), puis la partie Crypto s'ouvre.
+  await page.getByRole('button', { name: 'Démarrer à cette date' }).click();
   const date = page.getByTestId('sim-date');
   await expect(date).toContainText('2020');
   const lignes = page.locator('tbody tr[data-testid^="row-"]');

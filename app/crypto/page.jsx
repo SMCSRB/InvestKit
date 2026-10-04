@@ -336,7 +336,7 @@ function BoardView({ simulatedAt }) {
 }
 
 function StartScreen({ starts, onStart, busy }) {
-  const [pick, setPick] = useState('y2017');
+  const [pick, setPick] = useState(() => starts.find((s) => s.available)?.id ?? 'y2017');   // le premier départ qui a des données (jamais un départ sans données par défaut)
   return (
     <div>
       <h2 style={{ color: 'var(--ik-text)', marginTop: 0 }}>Commence ta partie Crypto</h2>
@@ -506,7 +506,7 @@ export default function CryptoPage() {
     return () => { off = true; clearTimeout(t); };
   }, [simulatedAt, filters, refreshKey]);
 
-  const start = async (id) => { setBusy(true); setMsg(''); try { await call('/account', 'POST', { start: id }); await loadState(); } catch (e) { setMsg(e.message); } setBusy(false); };
+  const start = async (id) => { setBusy(true); setMsg(''); try { await call('/account', 'POST', { start: id }); await loadState(); notifyClockAdvanced(); } catch (e) { setMsg(e.message); } setBusy(false); };
   const advance = async (step) => {
     if (busy) return;
     setBusy(true); setMsg(''); setInfo('');
