@@ -938,5 +938,12 @@ Rien à tester sur le site. Sur la PR, vérifie que le contrôle GitHub **e2e** 
 1. Carte Immobilier : une ligne « **Valeur de tes biens** » (leur prix sur le marché) puis « Valeur nette de revente », « Dette bancaire » et « **Résultat si tu revendais aujourd'hui** ».
 2. Sous ces lignes, une phrase précise que le résultat n'est pas la valeur du bien.
 
+
 ## Note : analyse du catalogue Immobilier (docs seulement)
 Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau par bien : rendement, flux mensuel, résultat de revente à 5 ans et à long terme) pour décider s'il faut rééquilibrer le catalogue.
+
+## Biens « à rénover » : valeur selon les travaux payés et plafond des travaux
+1. Immobilier, Chercher : les annonces « à rénover » des petites villes (ex. Ternelle) ont des travaux annoncés nettement plus bas qu'avant (au plus 35 % de la valeur du bien une fois rénové). Les grandes villes (Marvelle) ne changent pas.
+2. Fiche d'un bien « à rénover » : « Expertise avant achat » montre des travaux réels au plus égaux à 55 % de la valeur rénovée.
+3. Achète un bien « à rénover » sans expertise, quand il a des défauts cachés (Ternelle) : après l'achat, la valeur de ton bien est entre « non rénové » et « rénové », selon la part des travaux déjà payée. Paie les travaux restants : le bien passe en bon état et sa valeur monte.
+4. Tableau de bord, carte Immobilier : le « Résultat si tu revendais aujourd'hui » de ce cas est moins négatif qu'avant (environ −107 % au lieu de −285 % pour le cas de Ternelle de mes essais).

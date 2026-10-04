@@ -104,6 +104,11 @@ export const PARKING_RULES = {
 // payés passe en bon état et gagne 2 classes énergétiques, sans dépasser C.
 export const RENOVATION_RULES: { levels: number; bestClass: EnergyClass } = { levels: 2, bestClass: 'C' };
 
+// Plafond des travaux d'un bien « à rénover » (décision d'Andreja) : dans la vraie vie, personne ne rénove à un coût supérieur à ce que le bien vaudra rénové.
+// Les travaux annoncés ne dépassent pas 35 % de la valeur du bien rénové ; les travaux réels (défauts cachés compris) 55 %.
+// VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : ces deux pourcentages.
+export const RENOVATION_BUDGET_CAPS = { advertisedPctOfRenovatedValue: 35, realPctOfRenovatedValue: 55 };
+
 // ── Fiscalité des loyers (voir engine/immo/rent.ts pour la base de calcul) ──
 // Taux = tranche marginale de l'impôt sur le revenu du profil + prélèvements sociaux.
 // Barème de l'impôt sur le revenu 2026 (revenus 2025), part unique : 0 % jusqu'à 11 600 €,

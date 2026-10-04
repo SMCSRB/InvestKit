@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
 import { getRealEstateDataSource } from '../src/data/realEstate';
 import { computeAcquisition, evaluatePurchase, ProfileId } from '../src/engine/immo';
-import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, loanApplicationFee, PARKING_RULES } from '../src/config/immoRules';
+import { BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, loanApplicationFee, PARKING_RULES, RENOVATION_BUDGET_CAPS, RENOVATION_RULES } from '../src/config/immoRules';
 import { EUROS_PER_COIN } from '../src/config/economy';
 import { legacyCoins } from './helpers';
 import { hashString, createRng } from '../src/utils/seededRandom';
@@ -15,6 +15,20 @@ describe('catalogue fictif : intégrité', () => {
     expect(cities.length).toBeGreaterThanOrEqual(6);
     expect(new Set(cities.map((c) => c.id)).size).toBe(cities.length);
     expect(cities.every((c) => c.fictive)).toBe(true);
+  });
+
+  it('biens à rénover : travaux annoncés ≤ 35 % et réels ≤ 55 % de la valeur rénovée (toutes années), réels ≥ annoncés', async () => {
+    const { applyRenovation } = await import('../src/engine/immo');
+    for (const year of YEARS) {
+      for (const l of (await src.listListings(year)).filter((x) => x.condition === 'to_renovate')) {
+        const after = applyRenovation('to_renovate', l.energyClass, RENOVATION_RULES);
+        const vRen = await src.estimateValue({ cityId: l.cityId, neighborhoodId: l.neighborhoodId, type: l.type, surfaceSqm: l.surfaceSqm, condition: after.condition, energyClass: after.energyClass }, year);
+        const real = (await src.getExpertise(l.id, year))!.realWorks;
+        expect(l.advertisedWorks, l.id).toBeLessThanOrEqual(Math.round((RENOVATION_BUDGET_CAPS.advertisedPctOfRenovatedValue / 100) * vRen) + 2);
+        expect(real, l.id).toBeLessThanOrEqual(Math.round((RENOVATION_BUDGET_CAPS.realPctOfRenovatedValue / 100) * vRen) + 2);
+        expect(real, l.id).toBeGreaterThanOrEqual(l.advertisedWorks);
+      }
+    }
   });
 
   it('annonces : identifiants uniques, valeurs saines pour toutes les années', async () => {
