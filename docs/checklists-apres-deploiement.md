@@ -932,3 +932,8 @@ Rien à tester sur le site. Sur la PR, vérifie que le contrôle GitHub **e2e** 
 2. **Tes premiers pas** (compte Pro) : plus d'étape « Choisir ton domaine gratuit », et le compteur d'étapes baisse d'un. Sur un compte gratuit, l'étape reste.
 3. **Banque** : le lien en haut s'appelle « ← » suivi de la page d'où tu viens (Bourse et PEA, Immobilier, Crypto…). Arrivé directement : « ← Tableau de bord ».
 4. **Bourse** : plus de badge « Données illustratives » à côté du titre du graphique. Une courte note (avec « Compris ») apparaît la première fois, puis plus jamais ; la mention reste en petit sous le graphique.
+
+
+## Carte Immobilier du tableau de bord : valeur du bien et résultat de revente séparés
+1. Carte Immobilier : une ligne « **Valeur de tes biens** » (leur prix sur le marché) puis « Valeur nette de revente », « Dette bancaire » et « **Résultat si tu revendais aujourd'hui** ».
+2. Sous ces lignes, une phrase précise que le résultat n'est pas la valeur du bien.

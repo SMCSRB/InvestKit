@@ -52,6 +52,8 @@ test('Immobilier : les descriptions des six premières annonces n\'affichent jam
 test('tableau de bord, carte Immobilier : la performance a un libellé clair et un calcul expliqué', async ({ page }) => {
   await page.goto('/dashboard');
   await expect(page.getByText('Résultat si tu revendais aujourd’hui')).toBeVisible();
+  await expect(page.getByText('Valeur de tes biens', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('dash-re-values-note')).toContainText('ce n’est pas la valeur de ton bien');
   const bloc = page.getByTestId('dash-re-explain');
   await expect(bloc).toBeVisible();
   await bloc.locator('summary').click();
