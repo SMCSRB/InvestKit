@@ -169,7 +169,8 @@ def apply_guard():
 
 
 def guard_root():
-    if os.path.basename(ROOT) == 'InvestKit' and os.environ.get('IMMO_ALLOW_REAL_SITE_DIR') != '1':
+    real = os.path.realpath(os.path.expanduser('~/InvestKit'))      # le VRAI site (chemin exact, pas seulement le nom du dossier)
+    if os.path.realpath(ROOT) == real and os.environ.get('IMMO_ALLOW_REAL_SITE_DIR') != '1':
         raise Stop("Tu es dans ~/InvestKit (le VRAI site). Lance ce script depuis ~/InvestKit-design.")
 
 

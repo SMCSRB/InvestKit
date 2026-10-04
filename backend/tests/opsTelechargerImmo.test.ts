@@ -28,8 +28,16 @@ describe.skipIf(!hasPython)('ops/immo-telecharger.py', () => {
     expect(py(['irl', '--file', f, '--apply'], { DATABASE_URL: 'postgresql://u:p@localhost:5432/investkit' }).stdout).toContain('seule « investkit_design_test » est permise');
     expect(py(['irl', '--file', f, '--apply'], { DATABASE_URL: 'postgresql://u:p@localhost:5432/autre_base' }).stdout).toContain('refusée');
   }, 120_000);
-  it('le dossier du vrai site (~/InvestKit) est refusé', () => {
-    const src = require('fs').readFileSync(path.join(root, 'ops', 'immo-telecharger.py'), 'utf8') as string;
-    expect(src).toContain("os.path.basename(ROOT) == 'InvestKit'");
+  it('le dossier du vrai site (~/InvestKit, chemin exact) est refusé ; un autre dossier du même nom (ex. la CI) ne l\'est pas', () => {
+    const fake = mkdtempSync(path.join(tmpdir(), 'home-'));
+    require('fs').mkdirSync(path.join(fake, 'InvestKit'));
+    // HOME pointe sur un faux dossier personnel : ~/InvestKit y existe, mais ce n'est PAS le dossier du script, donc pas de refus.
+    const r = py(['bidule'], { HOME: fake });
+    expect(r.stdout).toContain('Source inconnue');
+    // On simule le vrai site : HOME = parent du dossier du script, nom du dossier = InvestKit (lien symbolique).
+    const home = mkdtempSync(path.join(tmpdir(), 'home2-'));
+    require('fs').symlinkSync(root, path.join(home, 'InvestKit'));
+    const real = py(['bidule'], { HOME: home });
+    expect(real.stdout).toContain('VRAI site');
   });
 });
