@@ -2,6 +2,8 @@
 
 *4 octobre 2026. Suite de `docs/analyse-carte-immobiliere-reelle.md`. Rien ne change pour les joueurs : aucune page, aucune règle, aucune base.*
 
+> **Mise à jour du 4 octobre 2026 (soir) : voir la fin du document.** Les DVF 2014 à 2020 n'existent plus sur les sites officiels : l'Immobilier réel part de **2021**, sans aucune source non officielle. Les passages ci-dessous qui parlent de 2014 à 2022 sont l'état de départ.
+
 ## Décisions d'Andreja (4 octobre 2026)
 1. **Fond de carte** : contours de communes en **SVG d'abord** (gratuit, aucun service extérieur). MapLibre seulement si le SVG limite vraiment.
 2. **Douze villes** : Paris, Lyon, Marseille (par arrondissement), Bordeaux, Toulouse, Nantes, Lille, Montpellier, Nice, Rennes, Dijon, Saint-Étienne (`backend/src/data/realEstate/dvf/cities.ts`).
@@ -53,3 +55,26 @@ Le téléchargement a été refait ainsi :
 
 ### Rapport qualité par année et par ville
 `npm --prefix backend run immo:import-dvf -- --check` affiche maintenant, en plus du reste : le **nombre de ventes par année et par ville** (un « * » marque une année maigre : plus de la moitié des quartiers sous 10 ventes sur l'année), **les quartiers sous 10 ventes par année**, les **années sans aucune vente lue** et les années maigres pour au moins trois villes. L'import lit tout format reconnu, y compris tes fichiers 2021 et 2022 déjà là.
+
+## Constats réels et état d'avancement (4 octobre 2026, soir)
+**Résultat du téléchargement et du rapport qualité (lancés par Andreja sur la copie de test).**
+- **2021 à 2025** téléchargés pour les 54 codes (communes et arrondissements) : de 2 400 à 33 000 ventes retenues par ville et par an. Les arrondissements fonctionnent très bien.
+- **2014 à 2020 n'existent plus** sur les sites officiels (le jeu DGFiP de data.gouv.fr et celui d'Etalab/geo-dvf ne contiennent que 2021 à 2025 ; la page cadastre.data.gouv.fr/dvf ne donne plus de lien).
+- **Décision d'Andreja : l'Immobilier réel part de 2021, aucune source non officielle.** Le téléchargement des années anciennes (adresses à essayer, filtrage en continu, formats bruts) reste dans le code mais ne servira que si une source officielle réapparaît ; il est inoffensif (il écrit un rapport « échec »).
+
+**Rapport qualité corrigé.** Le pourcentage « X % des mois sans médiane fiable » comptait les années absentes (7 sur 12 = 58 %, identique partout). Il se calcule maintenant **uniquement sur les années présentes**, et le rapport affiche à part « Années absentes : 2014 à 2020 ». Quand aucun quartier n'est sous 10 ventes, le rapport le dit explicitement. Il affiche aussi un rappel sur les « mois de chauffe » (janvier à novembre de la première année : la fenêtre de 12 mois n'est pas encore pleine). La période du fichier de médianes commence à la première année présente.
+
+**Étape 3 : prête, NON activée.**
+- Migration 057 : `immo_dvf_imports` (journal des imports, source « dvf », somme de contrôle) et `immo_dvf_market` (médiane, quartiles, nombre de ventes, repli sur la ville ou non, par quartier, type de bien et mois). **Aucune colonne d'adresse ni de coordonnées** (un test le vérifie dans la base).
+- `npm --prefix backend run immo:load-dvf` : **simulation par défaut** (valide le fichier, n'ouvre aucune base) ; `--apply` n'écrit que si la base visée finit par « _test » (sinon refus avant toute connexion) ; rejouable (le même fichier n'est jamais importé deux fois). Le fichier est lu **strictement** : un seul quartier inconnu, mois futur, prix incohérent, doublon ou seuil de ventes non respecté fait **refuser tout le fichier**.
+- **Règle d'or testée** : le mois M n'utilise que des ventes datées au plus tard à la fin de M ; en plus, à la date D du joueur, le service ne lit que le **dernier mois entièrement passé** (jamais le mois de D, qui contient des ventes postérieures à D).
+- **Jamais de rue ni de numéro** : le pipeline ne lit aucune colonne d'adresse (test sur le code), les tables n'en ont pas, et le prix exposé est une liste fermée de champs (quartier lisible comme « Paris 11e », type de bien, mois, nombre de ventes, prix au m²). Les coordonnées des fichiers bruts restent sur le serveur, hors base.
+- **Activation** : `DVF_MARKET_ENABLED = false`, et un test vérifie qu'aucun moteur ni aucune route n'importe le service. Rien ne change pour les joueurs tant que le point « horloge » n'est pas validé : voir `docs/analyse-immobilier-reel-et-horloge.md`.
+
+**Points restants**
+1. **Décision horloge** (options A à E, recommandation A) : `docs/analyse-immobilier-reel-et-horloge.md`.
+2. **Licence des contours de communes et arrondissements** (Etalab / IGN) : jeu exact non vérifié, présence des arrondissements à confirmer ; pas d'OpenStreetMap.
+3. **Loyers** : la Carte des loyers existe pour 2018 et 2022 à 2025, donc 2021 est à estimer (marqué comme tel) ; taxe foncière et zones tendues : licence à vérifier.
+4. **Relecture juridique** (quelqu'un de compétent) : adresses de ventes réelles dans DVF, absence d'identification de personnes, mentions de source (« DGFiP, Demandes de valeurs foncières », date de mise à jour).
+5. **Équilibrage banque** avec les vrais prix de 2021, et sous-décision sur les mois de chauffe de 2021.
+6. **Fin du jeu** : les DVF finissent en 2025 et se mettent à jour par semestre ; l'Immobilier réel fixe la fin pour tous si on garde la règle « plus petit plafond des domaines ».

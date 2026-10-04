@@ -1113,3 +1113,15 @@ Rien à tester sur le site. Sur la copie de test, dans `~/InvestKit-design`, apr
 Aucun fichier n'est supprimé par ces commandes. Les gros fichiers ne sont pas enregistrés (filtrés au fil de l'eau).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : rapport corrigé, analyse horloge, étape 3 prête (non activée)
+
+Rien à tester sur le site (aucun changement pour les joueurs). Après `~/deploy-test.sh` (qui applique la **migration 057** : deux nouvelles tables vides), dans `~/InvestKit-design` :
+
+1. `npm --prefix backend run immo:import-dvf -- --check` : le rapport doit maintenant afficher « Années présentes : 2021 à 2025. Années absentes : 2014 à 2020 », des pourcentages calculés sur les années présentes seulement (plus de 58 % partout), et « Aucun quartier sous 10 ventes… » quand c'est le cas.
+2. `npm --prefix backend run immo:import-dvf` : écrit `backend/data/dvf-marche.json`.
+3. `npm --prefix backend run immo:load-dvf` : **simulation**, n'écrit rien (liste le nombre de lignes par ville). Si le fichier est refusé, copie-moi les erreurs.
+4. Si tu veux voir les médianes en base : `npm --prefix backend run immo:load-dvf -- --apply` (accepté seulement sur la base de test ; il affiche « Base visée : … »). Relancé, il dit « Déjà importé ».
+5. Lis `docs/analyse-immobilier-reel-et-horloge.md` et choisis une option (A recommandée) : c'est la seule décision qui bloque l'activation.
+
+Aucun joueur ne voit ces prix (activation désactivée dans le code). Ordre de fusion : après les PR #146 à #148 (déjà fusionnées). Méthode : « Create a merge commit ».

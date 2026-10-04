@@ -24,7 +24,8 @@
     "education-abuse": "ts-node scripts/education-abuse.ts",
     "cutover:m1": "ts-node scripts/cutover-m1.ts",
     "immo:download-dvf": "ts-node scripts/immo-download-dvf.ts",
-    "immo:import-dvf": "ts-node scripts/immo-import-dvf.ts"
+    "immo:import-dvf": "ts-node scripts/immo-import-dvf.ts",
+    "immo:load-dvf": "ts-node scripts/immo-load-dvf.ts"
   },
   "keywords": [
     "investissement",
