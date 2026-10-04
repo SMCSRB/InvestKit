@@ -1,3 +1,4 @@
+import type { RentSource, TaxSource } from '../../engine/immo/dataSources';
 import type { PropertyAge, Condition, EnergyClass, UnitType } from '../../engine/immo';
 
 export type { Condition, EnergyClass };
@@ -67,6 +68,7 @@ export interface Listing {
   recoverableChargesMonthly: number; // charges récupérables avancées puis refacturées (€/mois)
   department?: string;               // département de l'annonce (source réelle) : les frais de notaire de l'ancien sont alors calculés par département et par date ; absent = taux forfaitaire du jeu
   rentAvailable?: boolean;           // false : source RÉELLE sans loyer connu pour cette commune (loyer et rendement absents, jamais inventés) ; absent = loyer du catalogue
+  realSources?: { rent: RentSource; tax?: TaxSource };   // origine des chiffres d'une annonce RÉELLE (loyer ANIL, taxe Terralyse) ; absent = catalogue
   rentIncludesCharges?: boolean;     // true : loyer ANIL (charges comprises) ; aucune charge récupérable en plus
   annualCharges: {
     condoFees: number;            // copropriété NON récupérable (€/an)

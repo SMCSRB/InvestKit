@@ -81,7 +81,10 @@ export const gameDay = (year: number, month: number): string => `${year}-${Strin
 
 // `rent` : undefined = loyer du catalogue (comportement actuel) ; un loyer réel (ListingRent) ou null (source réelle SANS loyer connu : aucune rentabilité, jamais un loyer inventé).
 export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: ListingRent | null, tax?: ListingTax | null) => {
-  const l = withRealTax(rent === undefined ? listing : withRealRent(listing, rent), tax ?? null);   // tax absent ou null : taxe du catalogue / valeur de jeu inchangée
+  // Annonce déjà « réelle » (source dvf : loyer et taxe appliqués à la lecture, origine dans realSources) : rien à réappliquer.
+  const applied = rent === undefined && listing.realSources !== undefined;
+  const { realSources, ...bare } = listing;
+  const l = applied ? bare : withRealTax(rent === undefined ? bare : withRealRent(bare, rent), tax ?? null);   // tax absent ou null : taxe du catalogue / valeur de jeu inchangée
   const noRent = l.rentAvailable === false;
   const scenario = ctx && !noRent ? standardScenario(l, l.department ? { ...ctx, notaryRule: notaryRuleOf(l, ctx.day) } : ctx) : null;
   return {
@@ -91,7 +94,7 @@ export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: 
     priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
     needsWorks: needsWorks(l),
     // origine des chiffres : catalogue fictif (loyers et charges = valeurs de jeu) ; loyer ANIL réel avec sa mention ; ou « aucun loyer » (pas de rentabilité)
-    dataSources: listingDataSources(rent === undefined ? undefined : rent === null ? { kind: 'none' } : rent.source, tax ? tax.source : undefined),
+    dataSources: applied ? listingDataSources(realSources!.rent, realSources!.tax) : listingDataSources(rent === undefined ? undefined : rent === null ? { kind: 'none' } : rent.source, tax ? tax.source : undefined),
     ...(scenario ? { netYieldPct: scenario.netYieldPct, monthlyCashFlow: scenario.monthlyCashFlow, scenario } : {}),
   };
 };
