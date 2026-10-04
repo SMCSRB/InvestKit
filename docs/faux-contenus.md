@@ -6,7 +6,7 @@ Un test automatique (`backend/tests/fauxContenus.test.ts`) échoue si une valeur
 ## Page d'accueil et bandeau
 | Où | Ce qui s'affichait | Statut |
 |---|---|---|
-| Accueil, chiffres | « 10K+ investisseurs actifs », « 99.9 % uptime garanti » | **Déjà supprimés** (PR « retours design ») ; chiffres actuels = comptes réels (110 actifs, 110 termes) ; test `landing.test.ts` + nouveau test |
+| Accueil, chiffres | « 10K+ investisseurs actifs », « 99.9 % uptime garanti » | **Déjà supprimés** (PR « retours design ») ; chiffres actuels = comptes réels (110 termes du glossaire ; **plus de « 110 actifs crypto »** : seuls les actifs aux cours importés existent dans le jeu) ; test `landing.test.ts` + nouveau test |
 | Accueil, aperçu du produit (`HeroPreview`) | Patrimoine 12 480, +6,4 %, « Série de 7 jours », « Niveau 3 », courbe sur 8 mois | **Corrigé** (reco validée) : légende « Aperçu illustratif » sous la maquette. |
 | Accueil, vignettes de domaines (mensualité 62/28/10, score de risque 62, « Joueur A/B/C ») | Valeurs illustratives, certaines marquées « (exemple) » | Déjà marquées « (exemple) » pour les chiffres (mensualité, score de risque) ; inchangé. |
 | Bandeau du haut (cours) | Cours et mini-courbes | **Réel** : cours du marché Crypto simulé du joueur (`/crypto/state`, `/crypto/assets`, `/crypto/candles?symbol=` pour CHAQUE actif) ; le bandeau disparaît sans compte Crypto ou sans réponse. |

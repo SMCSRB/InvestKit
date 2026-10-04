@@ -340,7 +340,7 @@ function StartScreen({ starts, onStart, busy }) {
   return (
     <div data-tour="crypto-start">
       <h2 style={{ color: 'var(--ik-text)', marginTop: 0 }}>Commence ta partie Crypto</h2>
-      <p style={{ color: 'var(--ik-text-3)' }}>Choisis la date de départ de ta simulation. Tu reverras l&apos;histoire réelle du marché, jour après jour : tu ne verras jamais ce qui se passe après ta date, et tu ne peux pas revenir en arrière.</p>
+      <p style={{ color: 'var(--ik-text-3)' }}>Choisis la date de départ de ta simulation. Tu reverras l&apos;histoire réelle des cryptos dont les cours ont été importés (pas tout le catalogue), jour après jour : tu ne verras jamais ce qui se passe après ta date, et tu ne peux pas revenir en arrière.</p>
       <div style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
         {starts.map((s) => (
           <label key={s.id} style={{ ...card, display: 'flex', gap: 10, alignItems: 'center', cursor: s.available ? 'pointer' : 'not-allowed', opacity: s.available ? 1 : 0.5, borderColor: pick === s.id ? 'color-mix(in srgb, var(--ik-primary) 80%, transparent)' : undefined }}>
@@ -386,6 +386,9 @@ function AssetList({ assets, onOpen, filters, setFilters, categories }) {
           </tbody>
         </table>
       </div>
+      <p data-testid="coverage-note" style={{ margin: 0, padding: '10px 12px', fontSize: 12, color: 'var(--ik-text-3)', borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)' }}>
+        {assets.length} crypto{assets.length > 1 ? 's' : ''} avec un historique de cours importé à ta date de jeu. Le jeu ne propose que les cryptos dont l&apos;historique a été importé ; les autres n&apos;apparaissent pas (pas de prix inventé), et une crypto n&apos;apparaît qu&apos;à partir de sa première cotation.
+      </p>
     </div>
   );
 }

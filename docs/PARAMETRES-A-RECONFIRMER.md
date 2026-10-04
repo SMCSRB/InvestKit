@@ -195,3 +195,6 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 
 ## Guide du site : parcours du premier lancement, page Guide, Aide et support (lot A)
 - La visite guidée (refaite en visite interactive) n'écrit **aucun chiffre en dur** : un test le vérifie. Les valeurs de jeu restent à leur place dans `app/lib/siteFacts.js` (accueil, connexion) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**.
+
+## Crypto qui disparaît (proposé, pas encore dans le code)
+- Position comptée à **zéro** après environ **30 jours sans cotation** (vente fermée et position gelée d'ici là, message au Journal) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** ; proposition validée par Andreja comme « proposée » le 4 octobre 2026, **pas de code avant qu'un scénario concerné soit possible** (voir `docs/analyse-scenarios-et-parties.md`, chapitre 4.0 bis). Aujourd'hui : achats fermés après 7 jours sans cotation (`staleDays`, `backend/src/config/cryptoMarketRules.ts`), vente possible au dernier prix.

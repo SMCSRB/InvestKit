@@ -1,4 +1,4 @@
-// Faits affichés sur l'accueil. Aucun chiffre n'est recopié dans les composants : un test compare CRYPTO_ASSET_COUNT au catalogue réel.
+// Faits affichés sur l'accueil. Aucun chiffre n'est recopié dans les composants.
 
 // Domaines ouverts aujourd'hui (l'ordre est celui de l'affichage).
 export const AVAILABLE_DOMAINS = [
@@ -7,8 +7,7 @@ export const AVAILABLE_DOMAINS = [
   { icon: 'chart', name: 'Bourse et PEA', sub: 'Actions, ETF, fiscalité du PEA' },
 ];
 
-// Nombre d'actifs du catalogue Crypto simulé (backend/src/data/crypto/catalog.ts).
-export const CRYPTO_ASSET_COUNT = 110;
+// Aucun nombre d'actifs Crypto n'est annoncé sur l'accueil : le catalogue en prévoit ~110, mais seuls ceux dont les cours réels sont importés apparaissent dans le jeu (aujourd'hui une poignée).
 
 const WORDS = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six'];
 export const countWord = (n) => WORDS[n] ?? String(n);
