@@ -86,7 +86,7 @@ describe('formats des fichiers', () => {
     b.push(...parts.push(dec.end()), ...parts.end());
     expect(b).toEqual(a);
     expect(a[1]).toEqual(['1', 'x, "y" é', '3']);
-    expect(a[2]).toEqual(['4\nz'.replace('\n', '\r\n'), '5', '6']);
+    expect(a[2]).toEqual(['4\r\nz', '5', '6']);
   });
 });
 
