@@ -2,13 +2,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createHash } from 'crypto';
 import { execFileSync } from 'child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { mkdtempSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { hasDb, setupDb, teardownDb } from './helpers';
 import { query } from '../src/utils/db';
 import { parseAnilCsv, groupOfFileName, communeCode } from '../src/data/realEstate/rents/anil';
-import { parseRentFile } from '../src/data/realEstate/rents/marketFile';
+import { parseRentFile } from '../src/data/realEstate/rents/rentFile';
 import { allCodes } from '../src/data/realEstate/dvf/cities';
 import { rentMarketService, communeOfZone, RENT_VIEW_KEYS } from '../src/services/rentMarketService';
 import { realGrossYield } from '../src/engine/immo/rentYield';
@@ -56,6 +56,18 @@ describe('lecture de la carte des loyers', () => {
   });
   it('type de bien du jeu → série ; le parking n\'a aucune série (valeur de jeu)', () => {
     expect([rentGroupOf('studio'), rentGroupOf('t2'), rentGroupOf('t3'), rentGroupOf('house'), rentGroupOf('apartment'), rentGroupOf('parking')]).toEqual(['t12', 't12', 't3', 'house', 'all', null]);
+  });
+});
+
+describe('activation', () => {
+  it('les loyers ANIL ne sont PAS activés pour les joueurs : aucun moteur ni route ne les lit', () => {
+    expect(RENT_MARKET_ENABLED).toBe(false);
+    const files: string[] = [];
+    const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
+    walk(path.join(__dirname, '..', 'src'));
+    const own = /rentMarketService\.ts$|rentMarketRules\.ts$|rents[\\/]rentFile\.ts$|rents[\\/]anil\.ts$/;
+    const users = files.filter((f) => /rentMarketService|rentMarketRules|rents\/rentFile|rents\/anil/.test(readFileSync(f, 'utf8')) && !own.test(f));
+    expect(users, 'aucun moteur ni route ne doit importer les loyers tant qu\'ils ne sont pas branchés').toEqual([]);
   });
 });
 

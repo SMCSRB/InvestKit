@@ -7,7 +7,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { parseAnilCsv, groupOfFileName, RentRow } from '../src/data/realEstate/rents/anil';
-import { parseRentFile } from '../src/data/realEstate/rents/marketFile';
+import { parseRentFile } from '../src/data/realEstate/rents/rentFile';
 import { DVF_CITIES, allCodes, zoneLabel } from '../src/data/realEstate/dvf/cities';
 import { RENT_GROUPS, RENT_GROUP_LABEL, RentGroup, rentSnapshotDate, RENT_ATTRIBUTION } from '../src/config/rentMarketRules';
 
