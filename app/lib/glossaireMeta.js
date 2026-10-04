@@ -68,7 +68,7 @@ export const DOMAINS_OVERRIDE = {
 // Niveaux : 1 débutant, 2 intermédiaire, 3 avancé. Tout mot absent de ces listes est intermédiaire.
 export const LEVEL_1 = [
   'courtage', 'pea', 'action', 'etf', 'crypto', 'volatilite', 'diversification', 'credit', 'mensualite', 'interets', 'taux',
-  'apport', 'frais-notaire', 'cash-flow', 'loyer', 'rendement-brut', 'vacance', 'depot-garantie', 'preavis', 'taxe-fonciere',
+  'apport', 'frais-notaire', 'cash-flow', 'loyer', 'rendement-brut', 'rendement-net', 'vacance', 'depot-garantie', 'preavis', 'taxe-fonciere',
   'impot-loyers', 'investcoin', 'patrimoine-net', 'blockchain', 'wallet', 'cle-privee', 'stablecoin', 'capitalisation',
   'bougie', 'flat-tax', 'compte-titres', 'capital-rembourse', 'capital-restant', 'reste-a-vivre', 'plus-value', 'dpe',
   'ordre-marche', 'annee-simulee', 'valeur-positions', 'performance', 'obligation', 'pret-personnel',
@@ -101,7 +101,7 @@ export const TOOLS_BY_ID = {
   levier: ['loan2'], 'reste-a-vivre': ['loan1'], 'remboursement-anticipe': ['loan1'], ira: ['loan1'], 'frais-notaire': ['loan1', 'immo'],
   'frais-dossier': ['loan1'], 'pret-personnel': ['banque'], 'credit-fleche': ['banque'], 'taux-base': ['banque'], retablissement: ['banque'],
   'pret-portefeuille': ['banque'], 'appel-de-marge': ['banque'], 'defaut-paiement': ['banque'],
-  'cash-flow': ['loan2', 'immo'], 'effort-epargne': ['loan2', 'immo'], loyer: ['loan2'], 'rendement-brut': ['loan2'],
+  'cash-flow': ['loan2', 'immo'], 'effort-epargne': ['loan2', 'immo'], loyer: ['loan2'], 'rendement-brut': ['loan2'], 'rendement-net': ['loan2'],
   'rendement-metropole': ['loan2'], vacance: ['loan2'], 'revenus-fonciers': ['loan2'], 'impot-loyers': ['loan2'],
   'taxe-fonciere': ['loan2'], 'charges-recuperables': ['loan2'], 'charges-non-recuperables': ['loan2'],
   courtage: ['pea', 'bourse'], pea: ['pea'], 'compte-titres': ['pea'], 'flat-tax': ['pea'], 'impot-crypto': ['crypto'],

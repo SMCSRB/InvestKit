@@ -93,3 +93,28 @@ test('Bourse : plus de badge « Données illustratives », une note discrète à
   await expect(page.getByTestId('hist-first-note')).toHaveCount(0);                 // plus jamais affichée
   await expect(page.getByText('Données illustratives : cours de clôture annuels').first()).toBeVisible();   // la mention reste en pied de graphique
 });
+
+// ── Rendement net et flux mensuel sur la carte et la fiche d'une annonce ──
+test('Immobilier : la carte montre le net et le flux mensuel avec l\'infobulle « Pourquoi le net est plus bas que le brut »', async ({ page }) => {
+  await ouvrirImmobilier(page);
+  const carte = page.locator('.rp-card').first();
+  await expect(carte.getByTestId('card-net-yield')).toContainText(/Net \d/);
+  await expect(carte.getByTestId('card-monthly-flow')).toContainText(/flux [+-−]?\s?[\d\s ]+/);
+  await carte.getByRole('button', { name: 'Pourquoi le net est plus bas que le brut' }).click();
+  const bulle = page.getByRole('dialog').filter({ hasText: 'Pourquoi le net est plus bas que le brut' });
+  await expect(bulle).toBeVisible();
+  await expect(bulle).toContainText('mois sans locataire');
+  await pasDeValeurCassee(page, 'Carte d\'annonce');
+});
+
+test('Immobilier : la fiche d\'un bien montre rendement net, flux mensuel et son hypothèse', async ({ page }) => {
+  await ouvrirImmobilier(page);
+  await page.locator('.rp-card').first().locator('.rp-card__title button').click();
+  await expect(page.getByTestId('sheet-net-yield')).toContainText('%');
+  await expect(page.getByTestId('sheet-monthly-flow')).toContainText('/mois');
+  const note = page.getByTestId('sheet-scenario-note');
+  await expect(note).toContainText('apport minimal');
+  await expect(note).toContainText('prêt de 25 ans');
+  await pasDeValeurCassee(page, 'Fiche d\'un bien');
+  await pasDEurosDansLeJeu(page, 'Fiche d\'un bien');
+});

@@ -1,7 +1,7 @@
 import { query } from '../utils/db';
 import { getRealEstateDataSource } from '../data/realEstate';
 import { parseSearch, searchListings, toStoredFilters, SearchInputError } from '../engine/immo';
-import { RealEstateError, requireGame, decorateListing } from './realEstateService';
+import { RealEstateError, requireGame, decorateListing, scenarioContext } from './realEstateService';
 
 // Favoris et recherches enregistrées (« alerte nouvelle annonce »). Chaque requête filtre sur user_id : un joueur ne lit, ne
 // modifie et ne supprime jamais les lignes d'un autre (anti-IDOR). Aucune donnée de jeu n'est modifiée ici.
@@ -42,7 +42,8 @@ export const realEstateWatchService = {
     const owned = new Set((await query(`SELECT listing_id FROM re_properties WHERE game_id = $1 AND status <> 'sold'`, [game.id])).rows.map((r: any) => r.listing_id));
     const byId = new Map((await source().listListings(game.simulated_year)).map((l) => [l.id, l]));
     const order = rows.filter((r: any) => r.year === game.simulated_year).map((r: any) => r.listing_id);
-    const listings = order.filter((id: string) => current.has(id) && !owned.has(id) && byId.has(id)).map((id: string) => decorateListing(byId.get(id)!));
+    const ctx = await scenarioContext(game.simulated_year);
+    const listings = order.filter((id: string) => current.has(id) && !owned.has(id) && byId.has(id)).map((id: string) => decorateListing(byId.get(id)!, ctx));
     return { year: game.simulated_year, ids: listings.map((l) => l.id), listings, pastCount: rows.length - current.size };
   },
 

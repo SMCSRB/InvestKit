@@ -42,6 +42,10 @@ export const BANK_RULES: BankRules = {
 // valeurs de JEU. Frais de dossier repris du simulateur de référence
 // (max(200 €, 0,2 % du capital)). Pas de frais de garantie pour l'instant.
 export const LOAN_INSURANCE_RATE_PCT = 0.36;
+
+// Durée de prêt de référence pour le « flux mensuel » affiché sur les annonces (apport minimal, assurance comprise). Simple repère d'affichage :
+// le joueur choisit sa durée dans la simulation d'achat. VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
+export const STANDARD_LOAN_MONTHS = 300;
 // Plafonné à 25 % du capital emprunté pour les très petits emprunts (un parking peut ne demander que quelques centaines d'euros de crédit).
 // VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER : ce plafond.
 export const loanApplicationFee = (principal: number): number =>
