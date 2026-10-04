@@ -1101,3 +1101,15 @@ Rien à tester sur le site (aucun changement visible, aucune migration). Pour sa
 Dans `~/InvestKit-design` seulement, comme les autres scripts de la copie de test. Lis `docs/immobilier-reel-preparation.md` (chapitres « Point de vigilance » et « Ce qui n'est pas vérifié »).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : années 2014 à 2020 (téléchargement refait)
+
+Rien à tester sur le site. Sur la copie de test, dans `~/InvestKit-design`, après le redéploiement (jamais sur le vrai site) :
+
+1. `npm --prefix backend run immo:download-dvf -- --from 2014 --to 2020 --dry` : affiche, par année, les adresses qui seront essayées (rien n'est téléchargé).
+2. `npm --prefix backend run immo:download-dvf -- --from 2014 --to 2020` : 2021 et 2022 ne sont pas retouchés. Lis le rapport : chaque adresse essayée avec son résultat. Si une année échoue, copie-moi la liste « ADRESSES À VÉRIFIER », ou donne l'adresse exacte vue sur cadastre.data.gouv.fr/dvf avec `--url "https://…/{year}/…"` (ou télécharge le fichier et utilise `--file … --year AAAA`).
+3. `npm --prefix backend run immo:import-dvf -- --check` et envoie-moi le rapport (tableau par année et par ville).
+
+Aucun fichier n'est supprimé par ces commandes. Les gros fichiers ne sont pas enregistrés (filtrés au fil de l'eau).
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
