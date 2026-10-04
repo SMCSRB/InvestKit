@@ -127,3 +127,19 @@ Rien de cela n'est dans cette PR.
    - **Avant de coder** : (a) lire la licence et les noms exacts sur les pages ; (b) vérifier que les quartiers couvrent toute la commune (une vente hors polygone n'a pas de quartier) ; (c) mesurer, avec une variante du rapport de zones, combien de quartiers atteignent 10 appartements sur 12 mois (Dijon a environ **2 400 ventes par an** d'après ton premier rapport, **donc de l'ordre de 100 à 300 par quartier s'il y en a 10 à 20 : plausible, à mesurer**) ; (d) si un quartier est trop petit, le regrouper avec un voisin.
    - **Ce que ça demande côté code** (environ une journée) : fichier de contours dans le dépôt avec mention de la source ; fonction « point dans un polygone » ; une liste de quartiers par ville dans `cities.ts` à côté des codes postaux ; **une migration** : `zone_code` n'accepte aujourd'hui que 5 chiffres (`^[0-9]{5}$`), il faudra un code de quartier d'un autre format ; tests (aucune coordonnée ni rue en sortie, aucune fuite du futur). La même méthode pourrait affiner d'autres villes plus tard.
    - **Section cadastrale : non retenue** (décision d'Andreja).
+
+
+### Sauts de plus de 15 % sur la médiane glissante (Lille, 5 octobre 2026)
+**Constat d'Andreja** : après le découpage de Lille à 5 zones, l'import signale 3 sauts de plus de 15 % d'un mois à l'autre.
+
+**Ce que je peux dire sans tes fichiers** : je ne peux pas te nommer les zones ni les mois (les DVF sont sur ton serveur). J'ai donc ajouté `npm --prefix backend run immo:jumps -- --city lille --dir backend/data/dvf-brut-cp` (lecture seule) : pour chaque saut, la zone, les deux mois, les deux médianes, le nombre de ventes dans la fenêtre, **les ventes entrées et sorties de la fenêtre avec leur prix médian**, et une cause :
+- **BASCULE zone ↔ ville** : le nombre de ventes de la zone a franchi 10, donc le prix est passé de « sa » médiane à celle de la ville (ou l'inverse). Ce n'est pas un mouvement de marché : c'est le repli qui change de source.
+- **BRUIT (peu de ventes)** : moins de 30 ventes dans la fenêtre ; une poignée de ventes qui entrent ou sortent suffit à déplacer la médiane de 15 %. Attendu pour 59160 (Lomme) et 59260 (Hellemmes).
+- **MARCHÉ (volume suffisant)** : au moins 30 ventes dans les deux fenêtres ; le mouvement est réel (les ventes entrées sont vraiment plus chères ou moins chères que celles qui sortent). Les seuils de 30 et de 15 % sont des repères de diagnostic, pas des règles du jeu.
+
+**Lissage honnête : propositions (rien n'est codé ; à décider après la lecture du diagnostic).** Règle commune : aucun chiffre inventé, seulement de vraies ventes ; jamais de vente postérieure au mois affiché.
+1. **Hystérésis du repli (recommandé si la cause est « bascule »)** : une zone qui utilise sa propre médiane (au moins 10 ventes) ne retombe sur la ville que sous **8 ventes**. Cela supprime les allers-retours autour du seuil sans toucher aux prix.
+2. **Fenêtre élargie pour les petites zones (recommandé si la cause est « bruit »)** : pour une zone qui a entre 10 et 29 ventes sur 12 mois, médiane sur **24 mois** de ses propres ventes (toujours passées). **Limite honnête** : les premiers mois de 2022 n'ont que 12 mois de données derrière eux (les DVF commencent en 2021) : le lissage n'agit qu'à partir de 2023, et il retarde un peu le marché (un prix de 24 mois réagit moins vite quand les taux montent). Le nombre de ventes réellement utilisé est toujours affiché.
+3. **Ne rien lisser pour les sauts « marché »** : ce sont de vrais mouvements (Lille a connu la hausse des taux de 2022-2023).
+4. **Transparence côté joueur, sans lissage** : afficher le nombre de ventes et l'intervalle entre quartiles (déjà stockés) pour qu'une zone à 12 ventes ne paraisse pas aussi sûre qu'une zone à 300.
+*Non retenu* : une moyenne mobile de médianes ou un mélange avec la médiane de la ville (chiffre dérivé que personne n'a observé) ; on préfère un prix qui bouge un peu, mais qui vient de vraies ventes.
