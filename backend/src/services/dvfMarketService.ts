@@ -1,10 +1,11 @@
 // Médianes de prix DVF en base (source « dvf »). PRÉPARATION : ce service n'est branché sur aucune route ni sur le moteur Immobilier (DVF_MARKET_ENABLED = false).
 //  - importMarket : enregistre un fichier déjà validé (transaction, rejouable : même fichier = rien de plus) ;
 //  - priceAt : prix à la date D du joueur = dernier mois ENTIÈREMENT passé avant D (le mois de D n'est jamais utilisé : il contiendrait des ventes postérieures à D).
+// zoneCode = arrondissement (Paris, Lyon, Marseille) ou code postal de la ville : « Paris 11e », « Bordeaux 33000 ».
 // Le prix exposé ne contient JAMAIS de rue, de numéro ni de coordonnées : seulement quartier, type de bien, mois, nombre de ventes et prix au m².
 import { query, getClient } from '../utils/db';
 import { ParsedMarketFile } from '../data/realEstate/dvf/marketFile';
-import { zoneLabel, cityOfCode } from '../data/realEstate/dvf/cities';
+import { zoneLabel, cityOfZone } from '../data/realEstate/dvf/cities';
 import { DVF_SOURCE_ID } from '../config/dvfMarketRules';
 
 export interface DvfPriceView {
@@ -61,7 +62,7 @@ export const dvfMarketService = {
   },
 
   async priceAt(zoneCode: string, type: 'apartment' | 'house', simulatedMs: number): Promise<DvfPriceView | null> {
-    const label = zoneLabel(zoneCode); const city = cityOfCode(zoneCode);
+    const label = zoneLabel(zoneCode); const city = cityOfZone(zoneCode);
     if (!label || !city) return null;
     const r = (await query(
       `SELECT to_char(month, 'YYYY-MM') AS m, sales_count, median_eur_m2, p25_eur_m2, p75_eur_m2, scope

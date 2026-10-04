@@ -4,6 +4,7 @@
 import { CsvStream } from './csv';
 import { pushAll } from './arrays';
 import { DvfFormat, makeStandardizer } from './format';
+import { zoneOf } from './cities';
 
 export type DvfType = 'appartement' | 'maison';
 
@@ -11,6 +12,9 @@ export interface DvfSale {
   id: string;
   date: string;           // AAAA-MM-JJ
   code: string;           // commune ou arrondissement
+  zone: string;           // zone de prix : arrondissement, ou code postal connu de la ville ; '' = pas de zone fine (sert seulement à la médiane de la ville)
+  postal: string;         // code postal de la vente (usage interne : jamais écrit dans le fichier de médianes ni en base)
+  section: string;        // section cadastrale (2 lettres ou chiffres ; usage interne, pour le rapport de découpage seulement)
   type: DvfType;
   surface: number;        // m² bâtis
   price: number;          // euros
@@ -40,6 +44,13 @@ export const readDvfText = (text: string): { rows: Record<string, string>[]; for
   if (!records.length) return { rows: [], format: 'etalab' };
   const std = makeStandardizer(records[0]);
   return { rows: records.slice(1).map((r) => std.standardize(r)), format: std.format };
+};
+
+// Section cadastrale d'un identifiant de parcelle : « 33063000KT0012 » -> « KT » ; format standardisé du fichier brut : « commune|préfixe|section|numéro ».
+export const sectionOf = (parcel: string | undefined): string => {
+  const p = (parcel ?? '').trim();
+  if (p.includes('|')) return (p.split('|')[2] ?? '').trim().toUpperCase();
+  return /^[0-9AB]{5}[0-9]{3}[0-9A-Z]{2}[0-9]{4}$/.test(p) ? p.slice(8, 10) : '';
 };
 
 const num = (s: string | undefined): number | null => {
@@ -94,7 +105,7 @@ export const cleanRows = (rows: Record<string, string>[]): CleanResult => {
     if (seen.has(key)) { rejected.doublon++; continue; }
     seen.add(key);
     sales.push({
-      id, date, code: h.code_commune, type: h.type_local === 'Appartement' ? 'appartement' : 'maison', surface, price: Math.round(price), pricePerM2: Math.round(pricePerM2 * 100) / 100,
+      id, date, code: h.code_commune, zone: zoneOf(h.code_commune, h.code_postal ?? ''), postal: h.code_postal ?? '', section: sectionOf(h.id_parcelle), type: h.type_local === 'Appartement' ? 'appartement' : 'maison', surface, price: Math.round(price), pricePerM2: Math.round(pricePerM2 * 100) / 100,
       rooms: num(h.nombre_pieces_principales), lon: num(h.longitude), lat: num(h.latitude),
     });
   }

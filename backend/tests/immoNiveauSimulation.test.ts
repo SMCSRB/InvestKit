@@ -6,7 +6,7 @@ import path from 'path';
 import { execFileSync } from 'child_process';
 import { assessPurchase, maxApprovedPrice, maxSurfaceAt, unitPrice, UNIT_KINDS, LevelScenario } from '../src/engine/immo/levelSimulation';
 import { BANK_RULES, STARTING_PROFILES, NOTARY_RULE, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
-import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
+import { DVF_CITIES, allZones } from '../src/data/realEstate/dvf/cities';
 
 const mk = (capital: number, profile: 'student' | 'employee' | 'executive', age: 'old' | 'new' = 'old', rentYieldPct = 0, rate = 2): LevelScenario => ({
   capital, profile, salary: STARTING_PROFILES[profile].netMonthlyIncome, livingCharges: STARTING_PROFILES[profile].livingCharges, months: 300, annualRatePct: rate,
@@ -53,16 +53,18 @@ describe('script de simulation (fichier fabriqué)', () => {
   it('affiche le tableau par ville et un verdict : tout refusé pour des prix de grande ville, parkings acceptés pour une ville bon marché', () => {
     const rows: unknown[] = [];
     const price = (id: string) => (id === 'saint-etienne' ? 800 : id === 'dijon' ? 1_500 : 6_000);       // prix FABRIQUÉS
-    for (const c of DVF_CITIES) for (const code of c.districts ? c.codes : [c.codes[0]]) rows.push([code, '2022-01', 'a', 30, price(c.id), price(c.id) - 100, price(c.id) + 100, null], [code, '2022-01', 'm', 30, price(c.id), price(c.id) - 100, price(c.id) + 100, null]);
+    for (const c of DVF_CITIES) for (const code of c.zones) rows.push([code, '2022-01', 'a', 30, price(c.id), price(c.id) - 100, price(c.id) + 100, null], [code, '2022-01', 'm', 30, price(c.id), price(c.id) - 100, price(c.id) + 100, null]);
     const f = path.join(mkdtempSync(path.join(tmpdir(), 'niv-')), 'marche.json');
     writeFileSync(f, JSON.stringify({ source: 'DVF fabriqué', windowMonths: 12, minSales: 10, range: { from: '2022-01', to: '2022-01' }, rows }));
     const out = execFileSync('npx', ['ts-node', 'scripts/immo-simulate-niveau.ts', '--file', f], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
     expect(out).toContain('Étudiant, 2500 pièces');
     expect(out).toContain('2022-01');
-    expect(out).toMatch(/Paris\s+6000\s/);
-    expect(out).toMatch(/Saint-Étienne\s+800\s/);
-    expect(out).toMatch(/Saint-Étienne\s+800\s.*\s1\/1\s+0\/1\s+0\/1\s+0\/1\s+0\/1/);   // parking à 3 520 euros accepté, aucun logement
-    expect(out).toContain('0 sur 54 × 4 types ; parkings : 2 sur 54');
+    expect(out).toMatch(/Paris — 20 zones, 6000 €\/m²/);
+    expect(out).toMatch(/Paris 11e\s+30\s+6000\s+6000\s+✗\s+✗\s+✗\s+✗\s+✗/);                 // le prix est affiché ZONE PAR ZONE
+    expect(out).toMatch(/Bordeaux 33100\s+30\s+6000/);                                              // code postal lisible, jamais une rue
+    expect(out).toMatch(/Saint-Étienne 42000\s+30\s+800\s+800\s+✓\s+✗\s+✗\s+✗\s+✗/);        // parking à 3 520 euros accepté, aucun logement
+    expect(out).toContain(`parkings finançables : 4 sur ${allZones().length} zones avec prix`);       // les 3 zones de Saint-Étienne et celle de Dijon
+    expect(out).toContain('où un LOGEMENT (studio, T2, T3 ou maison) est finançable à la médiane : 0');
     expect(out).toContain('VERDICT : la banque refuse tout logement');
     expect(out).toContain('VERDICT');
   }, 90_000);
