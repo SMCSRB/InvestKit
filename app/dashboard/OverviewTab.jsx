@@ -210,9 +210,11 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
           {loading ? <div className="ik-skeleton" style={{ height: 206 }} /> : re?.started ? (
             <>
               <Line label="Biens" value={re.properties} />
+              <Line label="Valeur de tes biens" value={<>{fmtInt(re.performanceExplain?.marketValueCoins ?? 0)} <Coin /></>} />
               <Line label="Valeur nette de revente" value={<>{fmtInt(re.netLiquidationCoins ?? 0)} <Coin /></>} />
               <Line label="Dette bancaire" value={<>{fmtInt(re.bankDebtCoins ?? 0)} <Coin /></>} />
               <Line label="Résultat si tu revendais aujourd’hui" value={`${re.performancePct > 0 ? '+' : ''}${String(re.performancePct).replace('.', ',')} %`} tone={re.performancePct > 0 ? 'ik-up' : undefined} />
+              <p className="ik-muted" style={{ margin: '2px 0 0', fontSize: 'var(--ik-fs-xs)' }} data-testid="dash-re-values-note">« Valeur de tes biens » : leur prix sur le marché. Le résultat ci-dessus est ce qu’il te resterait après revente (frais, prêt, décote d’un bien loué) : ce n’est pas la valeur de ton bien.</p>
               <RealEstateExplain re={re} />
             </>
           ) : <p className="ik-muted" style={{ margin: 0 }}>Pas encore commencé : choisis ton profil.</p>}

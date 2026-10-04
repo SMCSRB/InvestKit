@@ -55,7 +55,10 @@ describe.skipIf(!hasDb)('1) tableau de bord : la performance Immobilier est expl
       // Coûts d'une revente immédiate : tous positifs ou nuls ; la décote d'un bien loué n'existe que s'il est loué.
       for (const k of ['occupiedDiscountCoins', 'agencyFeesCoins', 'diagnosticsCoins', 'earlyRepaymentCoins', 'taxesCoins', 'depositCoins']) expect(e[k], k).toBeGreaterThanOrEqual(0);
       expect(e.agencyFeesCoins).toBeGreaterThan(0);
-      if (rented) expect(e.occupiedDiscountCoins).toBeGreaterThan(0); else expect(e.occupiedDiscountCoins).toBe(0);
+      // La décote ne s'applique que si le bien est réellement occupé à cet instant (la recherche d'un locataire est aléatoire : on lit le vrai statut).
+      const status = (await svc.listProperties(uid)).properties[0].status;
+      if (status === 'let') expect(e.occupiedDiscountCoins).toBeGreaterThan(0); else expect(e.occupiedDiscountCoins).toBe(0);
+      if (!rented) expect(status).not.toBe('let');
     });
   }
 
@@ -65,6 +68,9 @@ describe.skipIf(!hasDb)('1) tableau de bord : la performance Immobilier est expl
     expect(t).toContain('data-testid="dash-re-explain"');
     for (const mot of ['frais de notaire', 'apport', 'décote d’un bien loué', 'prix d’achat', 'capital de départ']) expect(t).toContain(mot);
     expect(t).not.toMatch(/label="Performance"/);
+    // Deux lignes séparées : la valeur du bien (marché) et le résultat d'une revente, pour ne pas lire le pourcentage comme la valeur du bien.
+    expect(t).toContain('label="Valeur de tes biens"');
+    expect(t).toContain('data-testid="dash-re-values-note"');
   });
 });
 
