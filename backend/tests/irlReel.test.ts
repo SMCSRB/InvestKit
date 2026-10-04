@@ -1,4 +1,4 @@
-// IRL réel (Insee) : lecture stricte du fichier, publication (aucun futur), recalage d'un loyer, garde « le moteur ne le lit pas », scripts. Les valeurs ci-dessous sont des VALEURS FABRIQUÉES de test.
+// IRL réel (Insee) : lecture stricte du fichier, publication (aucun futur), recalage d'un loyer, garde « seuls la vie du bien et les loyers le lisent », scripts. Les valeurs ci-dessous sont des VALEURS FABRIQUÉES de test.
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'child_process';
 import { mkdtempSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'fs';
@@ -82,14 +82,14 @@ describe('fichier préparé et activation', () => {
     expect(parseIrlFile({ ...ok, rows: rows.filter((_, i) => i !== 5) }).ok).toBe(false);
     expect(parseIrlFile({ ...ok, rows: rows.map((r, i) => (i === 0 ? [r[0], 7, r[2]] : r)) }).ok).toBe(false);
   });
-  it('l\'IRL réel n\'est PAS lu par le moteur actuel : seuls le service de loyers et lui-même l\'importent', () => {
-    expect(IRL_ENABLED).toBe(false);
+  it('l\'IRL réel est lu par le moteur de vie du bien (révision des loyers) et le service de loyers, et par rien d\'autre', () => {
+    expect(IRL_ENABLED).toBe(true);
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(path.join(__dirname, '..', 'src'));
-    const own = /irlService\.ts$|irlRules\.ts$|engine[\\/]immo[\\/]irl\.ts$|irl[\\/]insee\.ts$|irl[\\/]irlFile\.ts$|rentMarketService\.ts$|rentMarketRules\.ts$/;
+    const own = /irlService\.ts$|irlRules\.ts$|engine[\\/]immo[\\/]irl\.ts$|irl[\\/]insee\.ts$|irl[\\/]irlFile\.ts$|rentMarketService\.ts$|rentMarketRules\.ts$|realEstateLifeService\.ts$/;
     const users = files.filter((f) => /irlService|irlRules|immo\/irl'|irl\/insee|irl\/irlFile/.test(readFileSync(f, 'utf8')) && !own.test(f));
-    expect(users, 'aucun moteur ni route ne doit lire l\'IRL réel tant que ce n\'est pas décidé').toEqual([]);
+    expect(users, 'seuls le moteur de vie du bien et le service de loyers lisent l\'IRL réel').toEqual([]);
   });
 });
 

@@ -19,7 +19,12 @@
 ## À quoi sert l'IRL réel dans le jeu (décision d'Andreja, 5 octobre 2026)
 - **Recalage du loyer d'avant le 3e trimestre du premier millésime** : le loyer ANIL 2022 (3e trimestre) est utilisé dès janvier 2022 ; avec l'IRL, il est **recalé sur l'évolution réelle de l'IRL** entre la date de jeu (dernière valeur publiée) et le 3e trimestre 2022 : `loyer × IRL(date de jeu) ÷ IRL(3e trimestre 2022)`, fourchette comprise, et la mention le dit (« Loyer recalé sur l'évolution réelle de l'IRL entre la date de jeu et le 3e trimestre 2022 (−x,xx %). »). Sans IRL importé : loyer du millésime tel quel, mention d'approximation seule.
 - **Entre deux millésimes : loyer constant** (un seul changement par an, au 30 septembre), jamais de valeur inventée ni interpolée.
-- **Pas encore branché au moteur actuel** (`IRL_ENABLED = false`) : le catalogue fictif garde sa **série fictive** de révision annuelle des baux tant que les annonces réelles ne sont pas branchées (brancher l'IRL réel sur la révision des baux changerait les loyers du jeu actuel ; à décider avec le branchement). Le bouclier de 3,5 % (plafond légal de la hausse des loyers de 2022 à 2024) **n'est pas modélisé**.
+- **Branché à la révision annuelle des loyers** (décision d'Andreja, 6 octobre 2026, `IRL_ENABLED = true`) ; **la série fictive est supprimée**. Règles (`backend/src/engine/immo/irl.ts`, `leaseRevision`) :
+  - **Date de révision = anniversaire du bail** (jamais le premier mois), une fois par an.
+  - **Trimestre de référence = dernier IRL PUBLIÉ au début du bail** (premier jour du mois de début). À chaque anniversaire, hausse = IRL de ce même trimestre cette année ÷ IRL de ce trimestre l'an dernier. Exemple : bail de mai 2025, référence T1 2025 ; anniversaire de mai 2026 : IRL T1 2026 ÷ IRL T1 2025. L'explication du relevé cite les deux trimestres.
+  - **Aucune valeur inventée** : si l'IRL réel n'est pas importé, ou si une valeur manque ou n'est pas encore publiée, **aucune révision n'a lieu**, le loyer reste inchangé et le relevé le dit (« Indexation impossible cette année… rien n'est inventé »). **Il faut donc importer l'IRL de l'Insee (série complète depuis 1999) pour que les loyers évoluent.**
+  - **Bouclier de 3,5 %** (modélisé, [à relire]) : pour une révision dont le mois d'anniversaire est entre **juillet 2022 et juin 2024**, la hausse est plafonnée à 3,5 % (métropole ; les 12 villes le sont) ; le relevé affiche l'indice réel et le plafonnement. Simplification : granularité au mois.
+  - Classe énergie F ou G : loyer gelé (règle inchangée). Variation négative : aucune baisse.
 
 ## Ce que tu dois relire toi-même (aucune page n'est ouvrable depuis ma session)
 ### Carte des loyers (ANIL) : `docs/loyers-anil-fiche-source.md`

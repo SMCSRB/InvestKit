@@ -1219,3 +1219,13 @@ Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 0
 3. Sans `--check` : écrit `backend/data/taxe-fonciere-dgfip.json`. Puis `npm --prefix backend run immo:load-taxe-fonciere -- --file backend/data/taxe-fonciere-dgfip.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
 
 Ordre de fusion : après la PR 4. Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : IRL réel branché à la révision des loyers
+
+**À faire avant de tester** : importer l'IRL sur la copie de test (`~/InvestKit-design`, après `~/deploy-test.sh`) : `immo:import-irl` (CSV Insee téléchargé par toi) puis `immo:load-irl -- --apply`. **Sans IRL, aucun loyer n'est révisé.**
+
+1. Acheter un bien, le mettre en location, avancer de 12 mois : au 13e mois du bail, le relevé affiche « Indexation annuelle (IRL) de +x,xx % (IRL du T… comparé à celui de T…) » ; un bail dans la fenêtre juillet 2022 – juin 2024 affiche « plafonné par le bouclier loyers » si l'indice dépassait 3,5 %.
+2. Sans IRL importé (base vide) : « Indexation impossible cette année… rien n'est inventé », loyer inchangé.
+3. Logement classé F ou G : « Loyer gelé », comme avant.
+
+Méthode : « Create a merge commit ».
