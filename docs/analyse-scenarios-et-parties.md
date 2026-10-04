@@ -98,62 +98,160 @@ Je propose **trois niveaux** : **Normal** (gratuit), **Difficile**, **Expert** (
 ```
 id: crypto-terra-2022
 domain: crypto            # un domaine par scénario ; « libre » pour les comptes existants
-title: Terra, FTX : l'année où tout s'effondre
-startDate: 2022-01-01
-endDate: 2023-06-30       # au plus tard le dernier jour de données
-freeScenario: true        # le scénario gratuit de son domaine (exactement un par domaine, vérifié par test)
+title: Terra / Luna : la stablecoin qui s'effondre
+startDate: 2022-04-01
+endDate: 2022-08-31       # au plus tard le dernier jour de données
+freeScenario: false       # exactement UN scénario gratuit par domaine (vérifié par test)
 levels:                   # trois niveaux, mêmes règles, conditions de départ différentes (chapitre 2.3)
   normal:    { startingCapital: 10000, startPosition: null, objectives: [ … ] }        # seul niveau gratuit
   difficile: { startingCapital: 5000,  startPosition: { asset: BTC, share: 0.5 }, objectives: [ … ] }
   expert:    { startingCapital: 2500,  startPosition: { asset: BTC, share: 0.5 }, startLoan: { coins: 500 }, objectives: [ … ] }
-story: >                  # le contexte JUSQU'À startDate seulement (pas de spoiler)
-  Début 2022, les cryptos viennent de passer leur sommet de novembre 2021. …
-# étoiles de réussite par niveau, calculées par le serveur à partir des relevés de patrimoine, par exemple (niveau Normal) :
+storyFacts:               # le CONTEXTE affiché au départ : chaque fait est daté AVANT OU LE JOUR de startDate (test automatique)
+  - { date: 2021-11-10, text: "Le bitcoin a atteint son record de l'époque, près de 69 000 dollars.", source: "…", certainty: sûr }
+events:                   # le JOURNAL : chaque fait n'apparaît qu'à sa date, strictement après startDate et au plus tard endDate (test automatique)
+  - { date: 2022-05-09, text: "…", source: "…", certainty: sûr }
+objectives: # étoiles de réussite par niveau, calculées par le serveur à partir des relevés de patrimoine, par exemple (niveau Normal) :
 #   { stars: 1, text: "Termine le scénario", rule: finish }
-#   { stars: 2, text: "Finis avec plus de pièces qu'au départ", rule: net_worth_gte_start }
-#   { stars: 3, text: "Ne perds jamais plus de la moitié de ton patrimoine", rule: max_drawdown_lte, value: 0.5 }
+#   { stars: 2, text: "Fais mieux que « acheter et garder » l'actif de référence", rule: beats_buy_and_hold, asset: BTC }
+#   { stars: 3, text: "Finis avec au moins 70 % de ton capital de départ", rule: net_worth_gte_start_pct, value: 70 }
 assets: [BTC, ETH, LUNA, ...]   # cours à l'appui (renvoie au catalogue de données)
-events:                         # journal : un fait n'apparaît qu'à sa date
-  - { date: 2022-05-09, text: "…", source: "…", certainty: connu }
 sources: [ … ]                  # références publiques
 ```
 
-Règles : français simple, **aucun spoiler** (les événements arrivent dans le journal à leur date), objectifs **sans pression** (pas de compte à rebours, pas de culpabilité), capital et seuils marqués **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** et ajoutés à `docs/PARAMETRES-A-RECONFIRMER.md`, rubrique « cours à l'appui » qui indique la source des données (et dit clairement « simulé » quand ce n'est pas un cours réel).
+Règles : français simple, **aucun fait postérieur à la date de départ dans le contexte** (le texte d'introduction ne s'appuie que sur `storyFacts`, tous datés au plus tard à `startDate` ; tout ce qui se passe ensuite arrive dans le journal, à sa date : un test automatique vérifie ces deux règles pour chaque fiche), objectifs **sans pression** (pas de compte à rebours, pas de culpabilité), capital et seuils marqués **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** et ajoutés à `docs/PARAMETRES-A-RECONFIRMER.md`, rubrique « cours à l'appui » qui indique la source des données (et dit clairement « simulé » quand ce n'est pas un cours réel).
 
-## 4. Scénarios réels possibles
+## 4. Scénarios retenus : des événements historiques connus, domaine par domaine
+*Liste finale proposée (rien n'est figé avant ta validation). Chaque scénario est centré sur un **gros événement réel**, avec : un nom parlant, une date de départ et de fin, l'événement en quelques phrases, ce que le joueur doit gérer, l'objectif et les étoiles du niveau Normal. Les niveaux Difficile et Expert suivent le chapitre 2.3 (mêmes règles, conditions de départ plus dures).*
+
+**Étiquettes des faits.** **[sûr]** = vérifié dans le code du dépôt, ou confirmé par au moins un résumé de recherche web qui cite une source (la page n'a pas pu être ouverte depuis ma session : **relecture de la page citée avant toute publication dans le jeu**) ; **[connu]** = je le connais mais je ne l'ai pas revérifié ; **[à vérifier]** = chiffre ou date incertain.
+
+**Règle de rédaction.** Dans chaque scénario, la rubrique **« Contexte au départ »** ne contient que des faits datés **au plus tard à la date de départ**. Tout ce qui arrive ensuite est dans **« Pendant la partie »** (journal, affiché à sa date). Les objectifs de ce document sont des **valeurs de jeu non sourcées, à calibrer par simulation sur les vrais cours avant ouverture** (comme le niveau Expert de l'Immobilier, chapitre 8) : on ne fige aucun seuil sans avoir vérifié qu'il est atteignable.
+
+**Gratuit ou Pro.** Un seul scénario gratuit par domaine, au niveau Normal : **le premier de la liste de ce domaine** ; tout le reste (autres scénarios, autres niveaux) est Pro. Marqué **GRATUIT** ci-dessous.
 
 ### Ce que les données permettent aujourd'hui
 | Domaine | Données présentes | Verdict |
 |---|---|---|
-| **Crypto** | **Vrais** cours journaliers importés (CryptoCompare), départs déjà proposés : 2014, 2017, 2020, 2021, 2022 **[sûr]** (le code les propose) ; plage exacte à confirmer par le rapport d'import sur le serveur | **Faisable maintenant** |
-| **Bourse** | Séries **annuelles « plausibles », pas des cours réels** (en-tête de `stockPrices.ts`) **[sûr]**. Aucun jeu de cours réels journaliers ou mensuels | **Pas faisable honnêtement** : un scénario « fait réel » avec de faux cours serait trompeur. Il faut d'abord **choisir une source de cours réels** (licence à vérifier, **aucune dépense sans ton accord**) |
-| **Immobilier** | DVF officielles **2021 à 2025** **[sûr]** (rapport réel d'Andreja) ; médianes à fenêtre de 12 mois pleine à partir de décembre 2021, donc scénarios **de 2022 à fin des données** ; non activé (décision horloge en attente) | **Faisable après activation** (voir plus bas) |
+| **Crypto** | **Vrais** cours journaliers importés (CryptoCompare) **[sûr]** (`scripts/crypto-import.ts`) ; départs déjà proposés dans le code : 2014, 2017, 2020, 2021, 2022 **[sûr]** ; la plage exacte et la présence de chaque actif (par exemple LUNA, FTT) sont à confirmer par le rapport d'import sur le serveur | **Faisable maintenant**, sous réserve du catalogue d'actifs |
+| **Bourse** | Séries **annuelles « plausibles », pas des cours réels** (en-tête de `stockPrices.ts`, à partir de 2010) **[sûr]** | **En attente d'une source de cours réels**, couvrant au moins **1999 à aujourd'hui** pour tous les scénarios ci-dessous |
+| **Immobilier** | DVF officielles **2021 à 2025** **[sûr]** (rapport d'Andreja) ; médianes à fenêtre de 12 mois pleine dès décembre 2021 **[sûr]** (rapport) | Scénarios **2022 à 2025**, après l'activation des prix DVF (`DVF_MARKET_ENABLED`) |
 
-### Crypto (faisables dès que la partie par scénario existe)
-| Scénario | Début → fin | Faits à l'appui |
-|---|---|---|
-| Après la première bulle | 2014-01-01 → 2015-12-31 | Faillite de Mt. Gox en février 2014 **[connu]** ; sommet de décembre 2013 autour de 1 100 dollars **[à vérifier]** |
-| La bulle des ICO | 2017-01-01 → 2018-12-31 | Sommet proche de 20 000 dollars en décembre 2017, puis chute d'environ 80 % en 2018 **[connu, chiffres à vérifier]** |
-| Le krach du Covid | 2020-01-01 → 2021-12-31 | Chute brutale du 12 mars 2020 **[connu]** ; halving du 11 mai 2020 **[connu]** ; sommet de novembre 2021 **[connu]** |
-| Terra, FTX | 2022-01-01 → 2023-06-30 | Effondrement de Terra/UST en mai 2022 **[connu]** ; faillite de FTX le 11 novembre 2022 **[connu]** ; « The Merge » d'Ethereum le 15 septembre 2022 **[connu]** |
-| Le retour des ETF | 2023-07-01 → 2025-… | ETF bitcoin au comptant approuvés aux États-Unis le 10 janvier 2024 **[connu]** ; halving d'avril 2024 **[connu]** ; fin des données **[à vérifier]** |
+### 4.1 Crypto (7 scénarios, dans l'ordre du temps)
 
-### Bourse (à faire seulement avec de vrais cours : source à choisir)
-| Scénario possible | Début → fin | Faits **[connu]**, dates à revérifier |
-|---|---|---|
-| Brexit et pétrole bas | 2015-07-01 → 2016-12-31 | Référendum britannique du 23 juin 2016 |
-| Le krach du Covid et le rebond | 2020-01-01 → 2021-12-31 | Chute de février-mars 2020, rebond massif ensuite |
-| La guerre et la remontée des taux | 2022-01-01 → 2023-06-30 | Invasion de l'Ukraine le 24 février 2022 ; première hausse des taux de la Fed en mars 2022 et de la BCE en juillet 2022 ; faillite de Silicon Valley Bank en mars 2023 |
-| La vague de l'intelligence artificielle | 2023-01-01 → 2025-… | Hausse portée par quelques grandes valeurs **[à vérifier]** |
+**C1. « Mt. Gox : la chute de 2014 »** — **GRATUIT (Normal)** · 2014-01-01 → 2015-01-31
+- *Contexte au départ.* Le bitcoin a connu sa première grande bulle fin 2013, la plus grosse plateforme d'échange est Mt. Gox **[connu]**. Peu d'actifs existent (bitcoin et quelques « altcoins ») **[à vérifier : liste du catalogue en 2014]**.
+- *Pendant la partie.* Mt. Gox bloque les retraits le 7 février 2014, suspend les échanges le 24 février, puis demande sa mise en faillite à Tokyo le 28 février **[sûr]** (bitcoin.it, NBC News, bitcoin.com). Le bitcoin passe d'environ 800 à moins de 600 dollars en quelques jours **[sûr, ordres de grandeur]** ; environ 850 000 bitcoins ont disparu **[sûr]**. La baisse se prolonge ensuite **[connu : jusqu'en janvier 2015]**.
+- *À gérer.* Un marché qui baisse longtemps : réduire le risque, garder des liquidités, éviter de tout miser sur un seul actif. *Limite honnête : le risque de plateforme (retraits bloqués) n'est pas simulé dans le jeu aujourd'hui ; il apparaît dans le journal du marché, pas comme une mécanique.*
+- *Objectif Normal.* ★ terminer ; ★★ faire mieux que « acheter et garder » le bitcoin ; ★★★ finir avec au moins 70 % du capital de départ. **[à calibrer]**
+- *Remarque.* Le premier scénario gratuit est ici un **krach** : c'est pédagogique (le risque d'abord) mais rude pour un débutant. Si tu préfères une entrée plus douce, mets C2 en premier : il suffit de changer l'ordre de la liste.
 
-### Immobilier (à partir de 2022, après la décision horloge)
-| Scénario possible | Début → fin | Faits |
-|---|---|---|
-| Le crédit se resserre | 2022-01-01 → 2023-12-31 | Règles du Haut Conseil de stabilité financière (35 % d'endettement, 25 ans) appliquées strictement dès janvier 2022 **[connu, à vérifier]** ; hausse des taux de crédit de l'ordre de 1 % à plus de 4 % **[à vérifier : Observatoire Crédit Logement ou Banque de France, licence à contrôler]** |
-| Le retournement du marché | 2023-01-01 → 2024-12-31 | Baisse des ventes et recul des prix dans certaines villes : **à mesurer avec nos propres médianes DVF** (le rapport donne la réponse, donc ce fait deviendra **[sûr]** une fois mesuré) |
-| Les passoires thermiques | 2024-01-01 → 2025-… | Interdiction de louer les logements classés G à partir du 1er janvier 2025 **[connu]** ; F en 2028 et E en 2034 **[connu]** |
+**C2. « La bulle de 2017 »** · 2017-01-01 → 2017-12-31
+- *Contexte au départ.* Le bitcoin repart à la hausse depuis fin 2015, autour de 1 000 dollars au 1er janvier 2017 **[à vérifier]** ; l'Ethereum existe depuis 2015 **[connu]**.
+- *Pendant la partie.* Une année de hausse très rapide : de 900 à près de 20 000 dollars **[sûr]** (CoinDesk) ; record le 17 décembre 2017, environ 19 783 dollars **[sûr]** ; vague d'ICO (levées de fonds en jetons) **[connu]**.
+- *À gérer.* L'euphorie : savoir prendre des profits, ne pas emprunter pour acheter plus haut, repérer les actifs trop petits et peu liquides (écarts d'achat et de vente, glissement de prix du jeu).
+- *Objectif Normal.* ★ terminer ; ★★ au moins doubler le capital ; ★★★ idem avec une perte maximale d'au plus 40 % en cours de route. **[à calibrer]**
 
-Remarque : les scénarios Immobilier ayant chacun leurs dates, **le problème « l'Immobilier ouvre en 2021 mais l'horloge part de 2014 » disparaît** : l'Immobilier n'existe que dans des scénarios à partir de 2022, ce qui correspond à l'option B/C de l'analyse horloge, sans règle d'exception sur les autres domaines. Je ne décide pas à ta place : c'est une conséquence à valider avec ton choix.
+**C3. « Le krach de 2018 »** · 2018-01-01 → 2018-12-31
+- *Contexte au départ.* Le record de décembre 2017 (près de 20 000 dollars) vient d'être atteint **[sûr]**.
+- *Pendant la partie.* En un an, le bitcoin perd environ 84 % depuis son sommet de décembre 2017, pour retomber autour de 3 100 à 3 500 dollars en décembre 2018 **[sûr]** (NBC News, Bitcoin Magazine).
+- *À gérer.* Un marché baissier long : sortir à temps, ne pas « moyenner à la baisse » sans règle, garder de quoi attendre.
+- *Objectif Normal.* ★ terminer ; ★★ faire mieux que « acheter et garder » ; ★★★ finir avec au moins 60 % du capital. **[à calibrer]**
+
+**C4. « Jeudi noir : mars 2020 »** · 2020-01-01 → 2020-06-30
+- *Contexte au départ.* Début 2020, le marché est calme ; aucun fait lié au virus n'est affiché au départ.
+- *Pendant la partie.* Le 12 mars 2020, le bitcoin perd plus de 40 % en une journée (de 7 939 à 4 346 dollars sur BitMEX, environ −45 %), entraîné par la chute des marchés traditionnels et des liquidations en chaîne **[sûr]** (Cointelegraph, Wikipédia) ; il rebondit d'environ 50 % le lendemain **[sûr]**. Le « halving » (récompense des mineurs divisée par deux) a lieu le 11 mai 2020 **[connu]**.
+- *À gérer.* Une chute brutale en une seule journée : les ordres et les appels de marge (prêts sur portefeuille) ; ne pas vendre au plus bas, ni acheter avec de l'argent emprunté.
+- *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ idem sans jamais perdre plus de 50 %. **[à calibrer]**
+
+**C5. « La montée de 2021 »** · 2021-01-01 → 2021-12-31
+- *Contexte au départ.* Le bitcoin vient de dépasser son record de 2017 fin 2020 **[connu]**.
+- *Pendant la partie.* Hausse jusqu'au record du 10 novembre 2021, environ 69 000 dollars (68 982) **[sûr]** (Bloomberg, CNBC) ; fin mai, la Chine annonce un durcissement contre le minage et les échanges : le bitcoin chute d'environ 30 % **[sûr]** (Fortune, TechNode) ; 90 % de la capacité de minage chinoise disparaît **[sûr, à relire]**.
+- *À gérer.* Des allers-retours violents au sein d'une grande hausse : rester investi sans s'emballer.
+- *Objectif Normal.* ★ terminer ; ★★ finir au-dessus de 1,5 fois le capital ; ★★★ idem avec une perte maximale d'au plus 40 %. **[à calibrer]**
+
+**C6. « Terra / Luna : la chute d'une stablecoin »** · 2022-04-01 → 2022-08-31
+- *Contexte au départ.* Le record de novembre 2021 est passé (environ 69 000 dollars) **[sûr]** ; une stablecoin « algorithmique » (UST, adossée à Luna) est très populaire **[connu]**.
+- *Pendant la partie.* UST décroche une première fois le 7 mai 2022, puis définitivement le 9 mai ; plus de 90 % de la valeur de l'écosystème part en une semaine (9 au 15 mai) **[sûr]** (Riksbank, ScienceDirect, Baker Institute). Des faillites en chaîne suivent (juin-juillet) **[connu : à détailler et sourcer avant d'écrire le journal]**.
+- *À gérer.* La contagion : un actif qui s'effondre fait baisser tout le marché ; diversifier, contrôler la taille d'une position.
+- *Objectif Normal.* ★ terminer ; ★★ faire mieux que « acheter et garder » le bitcoin ; ★★★ finir avec au moins 70 % du capital. **[à calibrer]**
+- *Dépendance.* Il faut que Luna et UST soient dans le catalogue importé **[à vérifier]** ; sinon le scénario reste valable (le bitcoin et l'Ethereum ont baissé aussi) mais perd son actif vedette.
+
+**C7. « FTX : la faillite de novembre 2022 »** · 2022-10-15 → 2023-02-28
+- *Contexte au départ.* Le marché est déjà bas après la chute de Terra et la hausse des taux **[sûr]** ; FTX est une des plus grandes plateformes **[connu]**.
+- *Pendant la partie.* Le 2 novembre, un article de CoinDesk révèle les liens financiers entre FTX et Alameda ; le 6 novembre, Binance annonce vendre ses FTT (1 milliard de dollars de retraits en un jour) ; le 8 novembre, FTX bloque les retraits ; le 11 novembre, FTX demande sa mise en faillite et son fondateur démissionne **[sûr]** (The Block, Wikipédia, EBSCO).
+- *À gérer.* La perte de confiance dans un acteur central : diversification, liquidités, ne pas confondre prix et solidité.
+- *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ idem avec une perte maximale d'au plus 30 %. **[à calibrer]**
+
+### 4.2 Bourse (4 scénarios ; **aucun scénario gratuit tant que la source de cours réels n'est pas tranchée**)
+*Tous dépendent de vrais cours (et, pour 1999 à 2009, d'une source qui remonte à 1999). Quand la source sera choisie, **le premier scénario que ses données permettent sera le gratuit** (la bulle internet si elle remonte à 1999, sinon la crise de 2008).*
+
+**B1. « La bulle internet »** · 1999-10-01 → 2002-12-31
+- *Contexte au départ.* Les valeurs technologiques montent depuis le milieu des années 1990 **[connu]**.
+- *Pendant la partie.* Le Nasdaq atteint 5 048,62 points le 10 mars 2000, puis perd environ 78 % jusqu'à 1 114 points en octobre 2002 **[sûr]** (Wikipédia, Goldman Sachs). Le CAC 40 atteint son record de clôture le 4 septembre 2000, 6 922,33 points **[sûr]** (record battu seulement en 2021).
+- *À gérer.* Les valorisations excessives, la concentration sur un secteur, tenir sur la durée ou sortir.
+- *Objectif Normal.* ★ terminer ; ★★ faire mieux que l'indice ; ★★★ finir au-dessus de 80 % du capital. **[à calibrer]**
+- *Dépendances.* Données dès 1999 **[à vérifier]** ; instruments disponibles à l'époque en PEA (actions ; fonds indiciels peu répandus) **[à vérifier]**.
+
+**B2. « La crise de 2008 »** · 2007-10-01 → 2009-06-30
+- *Contexte au départ.* Des tensions sur les crédits immobiliers américains apparaissent depuis l'été 2007 **[connu]**.
+- *Pendant la partie.* Lehman Brothers dépose le bilan le 15 septembre 2008 **[sûr]** (History.com, Wikipédia) ; le CAC 40 touche son plus bas le 9 mars 2009, vers 2 464 à 2 519 points selon intrajournalier ou clôture **[à vérifier : valeur exacte]**, soit environ −58 % depuis fin 2007 **[à vérifier]**.
+- *À gérer.* Une crise bancaire : liquidités, secteur financier, résister à la panique, et savoir quand racheter.
+- *Objectif Normal.* ★ terminer ; ★★ faire mieux que l'indice ; ★★★ finir avec au moins 60 % du capital. **[à calibrer]**
+
+**B3. « Le krach du Covid : 2020 »** · 2020-01-01 → 2020-12-31
+- *Contexte au départ.* Les marchés sont à des niveaux élevés ; aucun fait lié au virus n'est affiché au départ.
+- *Pendant la partie.* Chute des marchés mondiaux de fin février à mars 2020 **[sûr]** ; le 12 mars 2020 est la plus forte baisse en une séance de l'histoire de la Bourse de Paris **[sûr, à relire]** ; rebond massif ensuite **[connu]**.
+- *À gérer.* Une chute éclair puis un rebond : ne pas vendre au plus bas, rester diversifié.
+- *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ idem sans jamais perdre plus de 40 %. **[à calibrer]**
+
+**B4. « Inflation et hausse des taux : 2022 »** · 2022-01-01 → 2022-12-31
+- *Contexte au départ.* L'inflation monte depuis 2021 **[connu]**, les taux directeurs sont à leur plus bas **[connu]**.
+- *Pendant la partie.* Invasion de l'Ukraine le 24 février **[connu]** ; la Fed relève ses taux pour la première fois le 16 mars 2022 (de 0 à 0,25–0,50 %) **[sûr]** (CNBC) ; la BCE le fait le 27 juillet 2022, de 50 points de base, sa première hausse depuis plus de dix ans **[sûr]** (BCE, CNBC).
+- *À gérer.* Les actions « de croissance » souffrent de la hausse des taux ; arbitrer entre secteurs, garder des liquidités qui rapportent de nouveau.
+- *Objectif Normal.* ★ terminer ; ★★ faire mieux que l'indice ; ★★★ finir au-dessus du capital. **[à calibrer]**
+
+*Pistes pour plus tard (non retenues pour l'instant)* : la crise de la dette européenne 2011, le référendum britannique de juin 2016 **[sûr : 23 juin 2016, à sourcer]**, la faillite de Silicon Valley Bank en mars 2023 **[connu]**.
+
+### 4.3 Immobilier (3 scénarios réels, à partir de 2022)
+
+**I1. « La remontée des taux »** — **GRATUIT (Normal)** · 2022-01-01 → 2023-12-31
+- *Contexte au départ.* Depuis le 1er janvier 2022, la décision du Haut Conseil de stabilité financière (29 septembre 2021) est **contraignante** : endettement limité à 35 % des revenus nets, assurance comprise, durée maximale de 25 ans (27 ans en VEFA ou travaux d'au moins 10 % du coût) **[sûr]** (Assemblée nationale, sites de courtage ; à relire sur le texte officiel). Taux moyen des crédits : **1,06 % en décembre 2021** **[sûr]** (Observatoire Crédit Logement/CSA).
+- *Pendant la partie.* Le taux moyen passe à **2,35 % en décembre 2022 puis 4,20 % en décembre 2023** (hors assurance et garantie) **[sûr]** (Observatoire Crédit Logement/CSA, résumés de recherche) ; la Fed (mars 2022) et la BCE (juillet 2022) relèvent leurs taux **[sûr]**. Le prix des logements anciens se met à baisser fin 2023 après trois années de hausse **[sûr]** (Notaires-Insee).
+- *À gérer.* La capacité d'emprunt fond quand les taux montent : acheter tôt ou attendre, durée du prêt, apport, rendement locatif face au coût du crédit.
+- *Objectif Normal.* ★ terminer ; ★★ acheter un bien et le garder jusqu'à la fin ; ★★★ idem avec un loyer qui couvre au moins la mensualité. **[à calibrer par simulation, voir ci-dessous]**
+- *Limites.* Le jeu utilise sa **propre courbe de taux fictive** (2,0 % en 2022, 4,0 % en 2023 dans `fictiveCatalog.ts` **[sûr]**) : à **recaler sur l'Observatoire Crédit Logement** (licence à vérifier) pour que le scénario soit honnête. **Le niveau Normal doit lui aussi être simulé** (capital 10 000, profil salarié : plafond d'achat d'environ 56 000 euros, chapitre 8) avant d'être ouvert : seules les villes bon marché et les parkings risquent d'être accessibles.
+
+**I2. « Le retournement du marché »** · 2023-01-01 → 2024-12-31
+- *Contexte au départ.* Le taux moyen est de **2,35 % fin 2022** et monte **[sûr]** ; les prix viennent de plusieurs années de hausse **[sûr]**.
+- *Pendant la partie.* Les prix des logements anciens baissent : −0,2 % au premier trimestre 2023, −1,6 % au premier trimestre 2024 (en un trimestre) **[sûr]** (Insee, Informations rapides) ; les ventes reculent fortement (environ −24 % au premier trimestre 2024 sur un an ; 792 000 ventes en 2024, soit −9 % sur 2023) **[à vérifier : sources de presse]** ; le taux atteint 4,20 % en décembre 2023 **[sûr]**.
+- *À gérer.* Acheter dans un marché qui baisse : négocier, attendre, éviter de s'endetter au plus haut ; l'effet sur la valeur d'un bien déjà acheté.
+- *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ acheter au moins une fois sous le prix médian du quartier. **[à calibrer]**
+- *Mesure.* Les baisses par ville se **mesurent avec nos propres médianes DVF** (le rapport) : ce fait deviendra **[sûr]** une fois mesuré.
+
+**I3. « Les passoires thermiques »** · 2024-01-01 → 2025-… (fin à fixer selon le dernier mois DVF)
+- *Contexte au départ.* La loi Climat et Résilience prévoit d'interdire progressivement la location des logements les moins performants (étiquettes G, F puis E) **[connu]**.
+- *Pendant la partie.* Interdiction de louer les logements classés G à partir du 1er janvier 2025 **[connu, à sourcer]** ; F en 2028 et E en 2034 **[connu, à sourcer]**.
+- *À gérer.* La valeur verte : rénover ou éviter les biens « G » ; arbitrer travaux et loyer (mécanique déjà dans le jeu : valeur verte, rénovation).
+- *Objectif Normal.* ★ terminer ; ★★ ne posséder aucun bien interdit à la location à la fin ; ★★★ rendement net positif. **[à calibrer]**
+- *Remarque.* Ce scénario s'appuie sur les **étiquettes énergétiques simulées** du jeu (aucune source ouverte fiable ne les rattache aux ventes DVF) : à dire clairement à l'écran. Il est le moins « réel » de la liste ; on peut le retirer.
+
+### 4.4 Immobilier avant 2021 : ce que permettraient les indices officiels Notaires-Insee (aucune décision)
+*Pour 2008 (après Lehman) ou 2014, il n'y a **pas de vraies ventes** (les DVF ne couvrent que 2021 et après). L'alternative serait un **indice de prix**, pas des ventes.*
+
+| | Indices Notaires-Insee (logements anciens) |
+|---|---|
+| Ce que c'est | Indice de prix **à qualité constante** (pas des transactions), **trimestriel**, appartements et maisons anciens **[sûr]** (Insee, notaires.fr) |
+| Couverture | Séries disponibles **depuis 1996** **[sûr]** ; Paris et Île-de-France (base BIEN des notaires) et province **[sûr]** ; le détail par région, par grande ville ou par arrondissement **[à vérifier]** |
+| Base | Base 100 = moyenne annuelle 2015 **[sûr]** |
+| Licence | Données Insee sous **Licence Ouverte**, réutilisation autorisée, **y compris commerciale** **[sûr]** (Insee, conditions d'utilisation) ; mention de la source et de la date à afficher **[à vérifier : texte exact]** |
+| Ce que ça permettrait | Faire **évoluer le niveau de prix** d'une zone mois après mois et **revaloriser un bien déjà acheté** (le moteur sait déjà le faire avec `valueFromMarket`), pour des scénarios « après Lehman, 2008-2010 » ou « 2014, taux bas et marché atone » **[à étudier]** |
+| Ce que ça ne permettrait PAS | Des **annonces réelles** : les biens à vendre resteraient **simulés** (catalogue du jeu recalé sur l'indice) ; pas de prix par quartier ; pas de loyers ni de taux (il faudrait d'autres sources : Observatoire Crédit Logement, Banque de France, indice des loyers) |
+| Mention obligatoire à l'écran | « Évolution des prix réelle (indice Notaires-Insee), annonces simulées » |
+
+Rien n'est décidé : ce tableau dit seulement ce que la donnée permettrait, avec sa licence et sa couverture.
+
+### Sources consultées
+Ces sources viennent de **résumés de recherche web** (les pages n'ont pas pu être ouvertes) ; elles sont à relire avant publication : [Collapse of Mt. Gox (Bitcoin Wiki)](https://en.bitcoin.it/wiki/Collapse_of_Mt._Gox) · [NBC News, Mt. Gox](https://www.nbcnews.com/news/amp/wbna54505295) · [CoinDesk, 2017](https://www.coindesk.com/markets/2017/12/29/from-900-to-20000-bitcoins-historic-2017-price-run-revisited) · [NBC News, 2018](https://www.nbcnews.com/business/markets/bitcoin-high-2017-decline-2018-data-n949576) · [Cointelegraph, Black Thursday](https://cointelegraph.com/news/black-thursday-anniversary-can-crypto-markets-see-another-huge-crash) · [Bloomberg, record 2021](https://www.bloomberg.com/news/articles/2021-11-10/bitcoin-hits-record-as-inflation-hedge-drumbeat-grows-louder) · [Fortune, Chine 2021](https://fortune.com/2021/05/21/china-ban-bitcoin-price-bubble-crypto/) · [Riksbank, Terra](https://www.riksbank.se/globalassets/media/konferenser/2023/session-1-liu_makarov_schoar-anatomy_of_a_run-_the_terra_luna_crash.pdf) · [The Block, FTX](https://www.theblock.co/post/256106/a-complete-timeline-of-ftx-from-alamedas-spiraling-debt-to-its-dramatic-implosion) · [Wikipédia, bulle internet](https://en.wikipedia.org/wiki/Dot-com_bubble) · [History.com, Lehman](https://www.history.com/this-day-in-history/september-15/lehman-brothers-collapses) · [CNBC, Fed 2022](https://www.cnbc.com/2022/03/16/federal-reserve-meeting.html) · [BCE, juillet 2022](https://www.ecb.europa.eu/press/pr/date/2022/html/ecb.mp220721~53e5bdd317.en.html) · [Moneyvox, record du CAC 40](https://www.moneyvox.fr/bourse/actualites/86273/le-cac-40-bat-un-record-datant-du-4-septembre-2000) · [Observatoire Crédit Logement](https://lobservatoire.creditlogement.fr/) · [Assemblée nationale, HCSF](https://questions.assemblee-nationale.fr/q15/15-41747QE.htm) · [Insee, indice des prix des logements anciens](https://www.insee.fr/fr/metadonnees/source/indicateur/p1643/description) · [Insee, conditions d'utilisation des données](https://www.insee.fr/fr/information/2381863) · [Insee, T1 2024](https://www.insee.fr/fr/statistiques/8190571)
 
 ## 5. Écran de choix et changement de partie
 Un seul parcours, qui prolonge l'écran de choix du mode (idée 41) : **Mode** (Histoire disponible ; En ligne et Bac à sable affichés « pas encore disponibles », règles d'accès déjà décidées) → **Domaine** → **Scénarios** → confirmation.
@@ -202,7 +300,11 @@ Estimation globale : **environ 48 jours (± 30 %)** (40 avant la nouvelle règle
 | P7 | **Étape « Choisir ton domaine gratuit »** de la liste de premiers pas : supprimée (pièces déjà gagnées conservées) |
 | P8 | **Colonnes `free_domain*`** : ignorées d'abord, supprimées dans une PR séparée plus tard |
 
-**Ouvertes** : niveau Expert de l'Immobilier (chapitre 8) ; source de cours réels pour la Bourse.
+| P9 | **Liste finale des scénarios** du chapitre 4 (7 Crypto, 4 Bourse en attente de cours, 3 Immobilier) ; premier scénario gratuit : C1 (Crypto), I1 (Immobilier), et pour la Bourse celui que la source de données permettra en premier |
+| P10 | **Objectifs et étoiles** : tous « à calibrer par simulation sur les vrais cours » avant l'ouverture d'un scénario |
+| P11 | **Immobilier avant 2021** : aucun scénario tant que tu n'as pas tranché la piste des indices Notaires-Insee (chapitre 4.4) |
+
+**Ouvertes** : niveau Expert de l'Immobilier (chapitre 8) ; source de cours réels pour la Bourse ; le premier scénario gratuit Crypto est-il un krach (C1) ou une entrée plus douce (C2 en premier) ?
 
 ## 8. Simulation : le niveau Expert de l'Immobilier est-il jouable ?
 *Demande : simuler « étudiant sans apport, 2 500 de capital, nos règles de banque (10 % d'apport, notaire, 35 %) » avec les vrais prix DVF, ville par ville. Le niveau n'est **pas figé** avant ta lecture.*
