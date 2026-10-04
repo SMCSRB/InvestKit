@@ -1219,3 +1219,7 @@ Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 0
 3. Sans `--check` : écrit `backend/data/taxe-fonciere-terralyse.json`. Puis `npm --prefix backend run immo:load-taxe-fonciere -- --file backend/data/taxe-fonciere-terralyse.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
 
 Ordre de fusion : après la PR 4. Méthode : « Create a merge commit ».
+
+## Branchement 1/6 : loyer ANIL d'une annonce (préparation)
+
+Rien à tester sur le site (aucun appel depuis le moteur, drapeau désactivé). Vue d'ensemble : `docs/plan-branchement-immobilier-reel.md`.
