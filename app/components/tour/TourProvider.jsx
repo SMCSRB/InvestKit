@@ -200,14 +200,26 @@ export default function TourProvider({ children }) {
   // L'élément a disparu de la page (rafraîchissement) : on le cherche de nouveau, sauf si l'action de l'étape est faite.
   useEffect(() => {
     if (!el || done) return undefined;
-    const id = setInterval(() => { if (!el.isConnected) setResolveKey((k) => k + 1); }, 400);
+    const id = setInterval(() => {
+      if (el.isConnected) return;
+      // La cible a disparu PARCE QUE l'action est faite (la liste cède la place à la fiche) : on le constate avant de la chercher de nouveau, sinon l'étape serait sautée.
+      const appears = step?.action?.done?.appears;
+      if (appears && resolveTarget(appears, queryAll, isVisible)) { setDone(true); return; }
+      setResolveKey((k) => k + 1);
+    }, 400);
     return () => clearInterval(id);
-  }, [el, done]);
+  }, [el, done, step]);
 
   // ── Étapes actives : on attend une vraie action du joueur ───────────────────
   useEffect(() => {
     const cond = step?.action?.done;
-    if (!run || !cond || !el || done) return undefined;
+    if (!run || !cond || done) return undefined;
+    // « Un élément apparaît » ne dépend pas de la cible mise en lumière : elle peut disparaître au moment même où l'action est faite.
+    if (cond.appears) {
+      const id = setInterval(() => { if (resolveTarget(cond.appears, queryAll, isVisible)) { setDone(true); clearInterval(id); } }, 200);
+      return () => clearInterval(id);
+    }
+    if (!el) return undefined;
     if (cond.event) {
       const on = () => setDone(true);
       window.addEventListener(cond.event, on);
@@ -217,10 +229,6 @@ export default function TourProvider({ children }) {
       const on = (e) => { if (e.target instanceof Element && e.target.closest(cond.click)) setDone(true); };
       document.addEventListener('click', on, true);
       return () => document.removeEventListener('click', on, true);
-    }
-    if (cond.appears) {
-      const id = setInterval(() => { if (resolveTarget(cond.appears, queryAll, isVisible)) { setDone(true); clearInterval(id); } }, 200);
-      return () => clearInterval(id);
     }
     return undefined;
   }, [run?.index, step, el, done]); // eslint-disable-line react-hooks/exhaustive-deps
