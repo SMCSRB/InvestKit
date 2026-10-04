@@ -972,6 +972,16 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 1. Glossaire, mot « Action » : « Dans le jeu » dit que les cours sont annuels, simplifiés et illustratifs (plus « cours historiques réels »).
 2. Glossaire, mot « InvestCoin » : la phrase « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs » apparaît dans « Dans le jeu ».
 
+## PR 6g-G1 — Historique du patrimoine
+
+Après déploiement (aucun écran ne change) :
+
+1. Connecte-toi et ouvre le tableau de bord : tout s'affiche comme avant.
+2. Dans l'export de ton compte (Paramètres), vérifie la présence de « wealthHistory » avec un point du jour.
+3. Fais un achat, rouvre ton export : toujours un seul point pour aujourd'hui, avec le nouveau total.
+
+Ordre de fusion : après #130. Méthode : « Create a merge commit ».
+
 ## 6a-5 : confidentialité du profil
 1. Profil, rubrique « Confidentialité du profil » : trois choix (Public, Amis, Privé) avec une phrase simple chacun. Par défaut : Public.
 2. Choisis « Amis » ou « Privé », puis ouvre un classement de la Bourse (ou de la Crypto, ou de l'Immobilier) avec un **autre compte** : ton rang est là, mais sous le nom « Joueur anonyme », sans photo ni couronne Pro. Sur ton propre compte, tu te vois toujours avec ton nom.
@@ -987,5 +997,12 @@ Aucune page du jeu ne change. Après déploiement :
 2. Survole (ou touche) le graphique : une infobulle donne les valeurs de la date.
 3. Au clavier : Tab jusqu'au graphique puis flèche droite/gauche.
 4. Sur téléphone (390 px) : pas de défilement horizontal.
+
+## PR 6c-analyse — Horloge et modes de jeu (document seulement)
+
+Aucun test à faire sur le site (rien ne change).
+
+1. Ouvre `docs/analyse-horloge-et-modes.md` et lis « En deux phrases » et le tableau du chapitre 1.
+2. Réponds aux 4 questions du chapitre 5 (A à D).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
