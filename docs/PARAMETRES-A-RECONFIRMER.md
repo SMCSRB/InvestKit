@@ -183,3 +183,6 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 
 ## Disposition du tableau de bord (6g-G4)
 - Composition des trois modèles de départ (Débutant, Investisseur, Complet) et taille maximale de la disposition : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/dashboardLayout.ts`). Choix d'ergonomie, aucun fait sourcé.
+
+## Historique du patrimoine : lecture 30 points / Pro (valeur de jeu, 6g-G3)
+- Nombre de points visibles par un compte gratuit (30) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/wealthHistoryRules.ts`), choix d'équilibrage gratuit / Pro.

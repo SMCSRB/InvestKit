@@ -13,3 +13,10 @@
 - Suppression du compte : l'historique est effacé (cascade). Il apparaît dans l'export du compte (`wealthHistory`).
 
 Aucune valeur de jeu non sourcée ici. Aucun affichage n'est modifié dans ce lot (la courbe vient avec G2).
+
+## Lecture par le joueur (G3)
+`GET /api/v1/wealth/history?limit=N` : l'historique de **ton** patrimoine (identifiant pris dans le jeton), du plus ancien au plus récent.
+- **Plan Pro** : tout l'historique. **Compte gratuit** : les 30 points les plus récents ; la réponse indique combien de points sont masqués (`hiddenPoints`) pour pouvoir l'expliquer, sans pression.
+- Le droit est lu en base par le serveur ; aucune option de la requête ne l'élargit.
+- Le graphique sur le tableau de bord (et le mode édition G5) attendent la refonte du tableau de bord : ils utiliseront cette route et le composant `StackedArea`.
+- Le second chiffre « patrimoine total » (G6, option C) existe déjà dans le portefeuille (`financialWealth` et `totalWealth`) et dans chaque point de l'historique.
