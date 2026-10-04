@@ -989,6 +989,14 @@ Ordre de fusion : après #130. Méthode : « Create a merge commit ».
 4. Tes amis et ta guilde te voient toujours normalement.
 5. Rebascule en « Public » : tout redevient visible, rien n'a été perdu.
 
+## PR 6g-G4 — Disposition du tableau de bord (serveur seulement)
+
+Aucun écran ne change. Après déploiement :
+
+1. Connecte-toi : le tableau de bord s'affiche comme avant.
+2. Dans l'export de ton compte, vérifie « dashboardLayout » (vide tant que rien n'est enregistré).
+3. (Optionnel, technique) un compte gratuit qui demande une liste de blocs reçoit un refus « plan Pro » ; un compte Pro est accepté.
+
 ## PR 6c-analyse — Horloge et modes de jeu (document seulement)
 
 Aucun test à faire sur le site (rien ne change).

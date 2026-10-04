@@ -77,6 +77,8 @@ export const ROUTES: Row[] = [
   ['post', '/social/guilds/invite/regenerate', 'Social', 'Changer le code d\'invitation (propriétaire)'],
   ['delete', '/social/guilds', 'Social', 'Dissoudre la guilde (propriétaire)'],
   ['get', '/trading/domains', 'Bourse / Crypto', 'Domaines de trading'],
+  ['get', '/dashboard-layout', 'Tableau de bord', 'Ma disposition du tableau de bord (modèle ou blocs choisis)'],
+  ['put', '/dashboard-layout', 'Tableau de bord', 'Choisir un modèle (tous) ou ses propres blocs (Pro) ; validé et enregistré par le serveur'],
   ['get', '/xp/badges', 'Progression', 'Mes badges : catalogue et état, attribués par le serveur (rareté réelle masquée sous 50 joueurs)'],
   ['get', '/xp',  'Progression', 'Mon XP : total, niveau avec titre, progression et XP par domaine (calculés par le serveur)'],
   ['get', '/trading/assets', 'Bourse / Crypto', 'Actifs disponibles'],
