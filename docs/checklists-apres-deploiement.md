@@ -971,3 +971,13 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 3. Avec « Privé » : l'autre compte ne te trouve plus en tapant ton Pseudo#tag, mais te trouve avec ton code ami.
 4. Tes amis et ta guilde te voient toujours normalement.
 5. Rebascule en « Public » : tout redevient visible, rien n'a été perdu.
+
+## PR 6g-G4 — Disposition du tableau de bord (serveur seulement)
+
+Aucun écran ne change. Après déploiement :
+
+1. Connecte-toi : le tableau de bord s'affiche comme avant.
+2. Dans l'export de ton compte, vérifie « dashboardLayout » (vide tant que rien n'est enregistré).
+3. (Optionnel, technique) un compte gratuit qui demande une liste de blocs reçoit un refus « plan Pro » ; un compte Pro est accepté.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».

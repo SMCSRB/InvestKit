@@ -78,6 +78,8 @@ export const ROUTES: Row[] = [
   ['delete', '/social/guilds', 'Social', 'Dissoudre la guilde (propriétaire)'],
   ['get', '/trading/domains', 'Bourse / Crypto', 'Domaines de trading'],
   ['get', '/xp', 'Progression', 'Mon XP : total, niveau avec titre, progression et XP par domaine (calculés par le serveur)'],
+  ['get', '/dashboard-layout', 'Tableau de bord', 'Ma disposition du tableau de bord (modèle ou blocs choisis)'],
+  ['put', '/dashboard-layout', 'Tableau de bord', 'Choisir un modèle (tous) ou ses propres blocs (Pro) ; validé et enregistré par le serveur'],
   ['get', '/trading/assets', 'Bourse / Crypto', 'Actifs disponibles'],
   ['get', '/trading/portfolio', 'Bourse / Crypto', 'Portefeuille virtuel'],
   ['get', '/trading/history', 'Bourse / Crypto', 'Historique d\'un titre (borné à l\'année simulée)'],
