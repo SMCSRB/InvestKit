@@ -28,6 +28,16 @@ describe('les zones de chaque ville', () => {
     expect(cityOfZone('33100')?.id).toBe('bordeaux');
     expect(allZones().every((z) => /^[A-Za-zÀ-ÿ' -]+ (\d{5}|\d{1,2}(er|e))$/.test(zoneLabel(z)!))).toBe(true);
   });
+  it('Lille : Euralille (59777) est une zone ; Saint-Étienne 42230, trop petite, prend la médiane de la ville', () => {
+    expect(zoneOf('59350', '59777')).toBe('59777');
+    expect(zoneLabel('59777')).toBe('Lille 59777');
+    expect(DVF_CITIES.find((c) => c.id === 'lille')!.zones).toHaveLength(5);
+    expect(allZones()).toHaveLength(80);
+    const s = [...many('42218', '42000', '2022-01', 30, 2000), ...many('42218', '42230', '2022-01', 4, 1500)];
+    const r = monthlyMarket(s, { from: '2022-02', to: '2022-02' }).find((x) => x.key === '42230' && x.type === 'appartement')!;
+    expect(r.fallback).toBe('ville');
+    expect(r.n).toBe(34);
+  });
   it('zoneOf : arrondissement tel quel ; code postal connu de la ville ; sinon aucune zone', () => {
     expect(zoneOf('75111', '75011')).toBe('75111');
     expect(zoneOf('33063', '33100')).toBe('33100');
