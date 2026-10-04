@@ -12,7 +12,7 @@ import { parseRentFile } from '../src/data/realEstate/rents/rentFile';
 import { allCodes } from '../src/data/realEstate/dvf/cities';
 import { rentMarketService, communeOfZone, RENT_VIEW_KEYS } from '../src/services/rentMarketService';
 import { realGrossYield } from '../src/engine/immo/rentYield';
-import { rentGroupOf, rentSnapshotDate, RENT_MARKET_ENABLED, RENT_ATTRIBUTION } from '../src/config/rentMarketRules';
+import { rentGroupOf, rentSnapshotDate, RENT_MARKET_ENABLED, RENT_ATTRIBUTION, RENT_LICENCE, RENT_DATASET_UPDATED } from '../src/config/rentMarketRules';
 import { irlService } from '../src/services/irlService';
 import { parseIrlFile } from '../src/data/realEstate/irl/irlFile';
 import { recalibrate, changePct } from '../src/engine/immo/irl';
@@ -100,7 +100,8 @@ describe('fichier de loyers préparé', () => {
     expect(communeOfZone('99999')).toBeNull();
     expect(rentSnapshotDate(2025)).toBe('2025-09-30');
     expect(RENT_MARKET_ENABLED).toBe(false);                      // aucun joueur ne voit ces loyers tant que ce n'est pas décidé
-    expect(RENT_ATTRIBUTION).toMatch(/ANIL.*Licence Ouverte 2\.0/);
+    expect(RENT_ATTRIBUTION).toBe('Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin');
+    expect(RENT_LICENCE).toBe('Licence Ouverte 2.0'); expect(RENT_DATASET_UPDATED).toBe('2025-12-11');
   });
 });
 

@@ -3,8 +3,10 @@
 export const RENT_MARKET_ENABLED = false;
 export const RENT_SOURCE_ID = 'anil';
 
-// Attribution demandée par la Licence Ouverte 2.0. [à relire sur la page du jeu de données avant l'ouverture publique : formule exacte, millésime affiché]
-export const RENT_ATTRIBUTION = 'Loyers : « Carte des loyers », ANIL estimations, à partir de données Groupe SeLoger et leboncoin (Licence Ouverte 2.0).';
+// Attribution À AFFICHER, mot pour mot (relue par Andreja sur la page du jeu de données, 6 octobre 2026). Licence Ouverte 2.0 ; jeu de données mis à jour le 11 décembre 2025 ; 4 fichiers CSV (appartements, T1-T2, T3 et plus, maisons).
+export const RENT_ATTRIBUTION = 'Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin';
+export const RENT_LICENCE = 'Licence Ouverte 2.0';
+export const RENT_DATASET_UPDATED = '2025-12-11';
 export const RENT_NATURE = 'Loyer moyen de la commune : loyer d\'annonce, charges comprises, logements non meublés.';
 
 // Chaque millésime décrit les biens mis en location au 3e TRIMESTRE de son année : la valeur d'un millésime n'est donc utilisable qu'à partir de la fin de ce trimestre (30 septembre),
