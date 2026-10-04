@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import HelpTip from '../components/HelpTip';
+import PortfolioRisk from '../components/PortfolioRisk';
 import RankingProgress from '../components/ui/RankingProgress';
 import AppShell from '@/app/components/shell/AppShell';
 import Coin from '@/app/components/ui/Coin';
@@ -540,7 +541,10 @@ export default function CryptoPage() {
             : tab === 'bank' ? <LoanView simulatedAt={simulatedAt} refreshKey={refreshKey} onChanged={() => setRefreshKey((k) => k + 1)} />
             : tab === 'board' ? <BoardView simulatedAt={simulatedAt} />
             : tab === 'portfolio'
-            ? <PortfolioView simulatedAt={simulatedAt} refreshKey={refreshKey} assets={allAssets} onOpen={(sym) => { setTab('market'); setSelected(sym); }} />
+            ? <>
+              <PortfolioView simulatedAt={simulatedAt} refreshKey={refreshKey} assets={allAssets} onOpen={(sym) => { setTab('market'); setSelected(sym); }} />
+              <div style={{ marginTop: 16 }}><PortfolioRisk domain="crypto_market" refreshKey={`${simulatedAt}-${refreshKey}`} /></div>
+            </>
             : selected
               ? <AssetView symbol={selected} state={state} simulatedAt={simulatedAt} refreshKey={refreshKey} allAssets={allAssets} onBack={() => setSelected(null)} onTraded={() => setRefreshKey((k) => k + 1)} />
               : <AssetList assets={allAssets} onOpen={setSelected} filters={filters} setFilters={setFilters} categories={state.categories} />}

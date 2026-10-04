@@ -112,9 +112,11 @@ export const overviewService = {
 
     // Risque du domaine de trading le plus important (si des positions existent).
     let risk: any = null;
-    const oldCrypto = await tradingSummary(userId, 'crypto');   // l'analyse de risque ne lit que les portefeuilles Bourse et ancienne Crypto
-    const biggest = stocks.marketValue >= oldCrypto.marketValue ? 'stocks' : 'crypto';
-    if (stocks.marketValue + oldCrypto.marketValue > 0) {
+    const oldCrypto = await tradingSummary(userId, 'crypto');
+    const marketCrypto = await cryptoMarketSummary(userId);
+    const candidates: [string, number][] = [['stocks', stocks.marketValue], ['crypto', oldCrypto.marketValue], ['crypto_market', marketCrypto.marketValue]];
+    const [biggest, biggestValue] = candidates.reduce((a, b) => (b[1] > a[1] ? b : a));
+    if (biggestValue > 0) {
       const r: any = await riskService.portfolioRisk(userId, biggest);
       if (!r.empty) risk = { domain: biggest, score: r.score.score, label: r.score.label, volatilityPct: r.score.portfolioVolPct, worstCrisis: r.score.worstStress };
     }
