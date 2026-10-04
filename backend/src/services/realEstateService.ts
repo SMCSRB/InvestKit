@@ -261,10 +261,13 @@ export const realEstateService = {
     if (typeof profile !== 'string' || !PROFILES.includes(profile as ProfileId)) {
       throw new RealEstateError('INVALID_INPUT', 'Profil inconnu');
     }
+    // La partie rejoint la date de l'horloge unique du joueur (année et mois) ; sans horloge (anciens tests), elle commence à la première année du catalogue.
+    const clock = (await query(`SELECT EXTRACT(YEAR FROM current_day)::int AS y, EXTRACT(MONTH FROM current_day)::int AS m FROM sim_clocks WHERE user_id = $1 AND mode = 'history'`, [userId])).rows[0];
+    if (!clock) await query(`INSERT INTO sim_clocks (user_id, mode, start_day, current_day) VALUES ($1, 'history', make_date($2, 1, 1), make_date($2, 1, 1)) ON CONFLICT DO NOTHING`, [userId, source().minYear]);   // pas de partie sans horloge unique
     const res = await query(
       `INSERT INTO re_games (user_id, profile, data_source, simulated_year, simulated_month)
-       VALUES ($1, $2, $3, $4, 1) ON CONFLICT (user_id) DO NOTHING RETURNING id`,
-      [userId, profile, source().id, source().minYear]
+       VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id) DO NOTHING RETURNING id`,
+      [userId, profile, source().id, clock ? Math.max(source().minYear, clock.y) : source().minYear, clock ? clock.m : 1]
     );
     if (res.rows.length === 0) throw new RealEstateError('GAME_EXISTS', 'Ton profil immobilier est déjà choisi');
     return this.getState(userId);

@@ -11,7 +11,7 @@ import { readTaxState } from '../../engine/trading/costs';
 import { CryptoDataError } from './dataService';
 import { num, Market, marketFor, fmtQty, takeFromPosition, applyFill, availableQty, toAccount, fxOf, priceCoinsOf } from './core';
 import { fxService } from '../fxService';
-import { clockService, CryptoAccount } from './clockService';
+import { clockService, CryptoAccount, dataEnd } from './clockService';
 import { activeEffects, processEvents } from './eventsService';
 import { collateralRelease, repayFromSale, processLoan } from './loanService';
 import { snapshotLeaderboard } from './rankingService';
@@ -294,13 +294,23 @@ export const cryptoTradingService = {
 
   // ── Avance du temps : exécute les ordres en attente sur les bougies de la période, puis déplace l'horloge, le tout dans UNE transaction.
   async advance(userId: string, step: unknown) {
+    const row = (await query('SELECT * FROM crypto_accounts WHERE user_id = $1', [userId])).rows[0];
+    if (!row) throw new CryptoDataError('NOT_FOUND', 'Compte Crypto non créé');
+    return this.advanceTo(userId, await clockService.nextDate(toAccount(row), step));
+  },
+
+  // Avance le compte Crypto jusqu'à une date précise (utilisée par l'horloge unique, qui décide de la date). Jamais en arrière.
+  async advanceTo(userId: string, targetMs: number) {
     const client = await getClient();
     try {
       await client.query('BEGIN');
       const row = (await client.query('SELECT * FROM crypto_accounts WHERE user_id = $1 FOR UPDATE', [userId])).rows[0];
       if (!row) throw new CryptoDataError('NOT_FOUND', 'Compte Crypto non créé');
       const account = toAccount(row);
-      const target = await clockService.nextDate(account, step);
+      const target = targetMs;
+      if (!(target > account.simulatedAt)) throw new CryptoDataError('INVALID_INPUT', 'La date cible doit être postérieure à la date actuelle.');
+      const end = await dataEnd();
+      if (end === null || target > end) throw new CryptoDataError('INVALID_INPUT', 'Fin des données disponibles : tu ne peux pas avancer davantage.');
       const events = await processResting(client, account, account.simulatedAt, target);
       const marketEvents = await processEvents(client, userId, account.simulatedAt, target);
       const loanEvents = await processLoan(client, account, account.simulatedAt, target);

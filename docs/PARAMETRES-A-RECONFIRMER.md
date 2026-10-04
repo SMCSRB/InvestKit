@@ -183,3 +183,6 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 
 ## Disposition du tableau de bord (6g-G4)
 - Composition des trois modèles de départ (Débutant, Investisseur, Complet) et taille maximale de la disposition : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/dashboardLayout.ts`). Choix d'ergonomie, aucun fait sourcé.
+
+## Horloge de jeu unique : plafonds (6c)
+- Plafond d'une avance « jusqu'au prochain événement » (366 jours) et d'une avance en mois (12) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/clockRules.ts`), garde-fous de charge du serveur.

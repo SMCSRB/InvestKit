@@ -1014,3 +1014,15 @@ Aucun test à faire sur le site (rien ne change).
 2. Réponds aux 4 questions du chapitre 5 (A à D).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR 6c-1 — Horloge de jeu unique (noyau)
+
+**Attention : les parties d'avant l'horloge unique doivent être migrées (PR suivante) avant de rejouer.** À tester sur un compte NEUF :
+
+1. Crée un compte, ouvre Bourse, Crypto puis Immobilier : tous démarrent à la même date (2017, ou 2020 si les données 2017 ne sont pas importées).
+2. Sur Crypto, clique « jour suivant » : va voir Bourse et Immobilier, la date de jeu est la même partout (l'Immobilier change de mois en passant le 1er du mois).
+3. Sur Bourse, clique « année suivante » : la Crypto et l'Immobilier avancent d'un an aussi.
+4. Avance jusqu'à ce qu'un ordre Crypto en attente s'exécute : l'avance s'arrête à ce moment-là (message explicatif).
+5. Ouvre deux onglets, avance dans l'un puis dans l'autre : le second refuse (« ta date de jeu a changé »).
+
+Ordre de fusion : après #138 et #139. Méthode : « Create a merge commit ».

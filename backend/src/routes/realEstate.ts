@@ -3,9 +3,11 @@ import { walletEcho } from '../middleware/walletEcho';
 import { realEstateController as c } from '../controllers/realEstateController';
 import { watchLimiter } from '../middleware/rateLimiter';
 import { authMiddleware } from '../middleware/auth';
+import { clockController, clockGate } from '../controllers/clockController';
 
 export const realEstateRoutes = Router();
 realEstateRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portefeuille à jour (`wallet`)
+realEstateRoutes.use(authMiddleware, clockGate);   // horloge de jeu unique
 
 realEstateRoutes.get('/state', authMiddleware, c.getState);
 realEstateRoutes.post('/start', authMiddleware, c.start);
@@ -26,7 +28,7 @@ realEstateRoutes.post('/properties/:id/pay-works', authMiddleware, c.payWorks);
 realEstateRoutes.post('/properties/:id/list', authMiddleware, c.listForRent);
 realEstateRoutes.post('/properties/:id/reprice', authMiddleware, c.reprice);
 realEstateRoutes.get('/properties/:id/statements', authMiddleware, c.statements);
-realEstateRoutes.post('/time/advance', authMiddleware, c.advance);
+realEstateRoutes.post('/time/advance', authMiddleware, clockController.legacyImmo);   // ancien bouton : avance l'horloge unique
 realEstateRoutes.get('/summary', authMiddleware, c.summary);
 realEstateRoutes.post('/properties/:id/gli', authMiddleware, c.setGli);
 realEstateRoutes.post('/properties/:id/landlord-notice', authMiddleware, c.landlordNotice);
