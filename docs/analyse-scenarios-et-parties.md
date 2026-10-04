@@ -152,7 +152,7 @@ Règles : français simple, **aucun spoiler** (les événements arrivent dans le
 
 Remarque : les scénarios Immobilier ayant chacun leurs dates, **le problème « l'Immobilier ouvre en 2021 mais l'horloge part de 2014 » disparaît** : l'Immobilier n'existe que dans des scénarios à partir de 2022, ce qui correspond à l'option B/C de l'analyse horloge, sans règle d'exception sur les autres domaines. Je ne décide pas à ta place : c'est une conséquence à valider avec ton choix.
 
-## 6. Écran de choix et changement de partie
+## 5. Écran de choix et changement de partie
 Un seul parcours, qui prolonge l'écran de choix du mode (idée 41) : **Mode** (Histoire disponible ; En ligne et Bac à sable affichés « pas encore disponibles », règles d'accès déjà décidées) → **Domaine** → **Scénarios** → confirmation.
 - **Carte de scénario** : titre, période et durée, étoiles de difficulté, capital de départ, deux lignes d'histoire, bouton « Commencer », ou « Reprendre » (avec la date de jeu atteinte) si une partie existe déjà. Les scénarios Immobilier ou Bourse non disponibles sont grisés avec la raison.
 - **Cadenas Pro** : un scénario ou un niveau réservé au Pro reste **visible et cliquable** ; le clic ouvre la carte d'explication du chapitre 2.2 (ce que le gratuit peut jouer dans ce domaine, ce que le Pro ouvre, bouton vers le plan), jamais un message d'erreur. Pour un compte gratuit qui a déjà une partie active dans le domaine : « Termine ta partie en cours pour en recommencer une, ou reprends-la » (avec les deux boutons), sans perte.
@@ -160,7 +160,7 @@ Un seul parcours, qui prolonge l'écran de choix du mode (idée 41) : **Mode** (
 - **Changer de partie à tout moment** : un sélecteur permanent dans la barre du haut (« Partie : Crypto, Terra 2022 ▾ ») et une page « Mes parties » (date de jeu, niveau, patrimoine, état, dernière partie jouée ; reprendre, terminer, archiver ; compte gratuit : une ligne par domaine, avec « Terminer pour recommencer »). Sur 390 px : feuille en bas de l'écran, comme les autres fenêtres. Le bandeau des prix, le tableau de bord et les classements suivent **la partie active** et affichent sa date, pour qu'on ne confonde jamais deux parties.
 - Accessibilité : clavier complet, focus géré, pas d'information portée par la couleur seule (comme la visite guidée).
 
-## 7. Taille du chantier et petites PR
+## 6. Taille du chantier et petites PR
 Estimation globale : **environ 48 jours (± 30 %)** (40 avant la nouvelle règle d'accès, plus 8 jours : retrait propre du domaine gratuit et niveaux), risque **élevé** sur le point 1 (refonte large de la clé « propriétaire »), moyen ensuite.
 
 | # | Petite PR | Jours | Notes |
@@ -184,7 +184,7 @@ Estimation globale : **environ 48 jours (± 30 %)** (40 avant la nouvelle règle
 
 **Risques** : refonte large mais mécanique (tout service qui reçoit `userId`) ; anti-accès à la donnée d'autrui à tester partout ; invariants du registre de pièces (totaux par partie) ; migration des comptes existants ; limite de requêtes de l'API (les écrans de parties ne doivent pas multiplier les appels).
 
-## 8. À décider avant tout code
+## 7. À décider avant tout code
 *(Remplace la liste précédente ; la décision « limites par plan » est tranchée par le chapitre 2.)*
 1. **Niveaux** : trois (Normal, Difficile, Expert) ou quatre avec « Découverte » ? Valeurs proposées : capital 10 000 / 5 000 / 2 500, position héritée, prêt de départ, profil de revenus (chapitre 2.3). *Recommandé : trois niveaux.*
 2. **Bonus de départ du Pro** (+10 000, une fois) : le retirer des parties de scénario pour des classements équitables, en gardant ce que les comptes ont déjà reçu ? *(recommandé)*
