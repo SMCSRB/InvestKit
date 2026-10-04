@@ -48,3 +48,6 @@
 3. **Frais de notaire par département**, **taxe foncière par commune** (taux réels, base estimée), **vacance** par observatoire quand il existe : OK, avec « valeur de jeu » marquée pour **charges de copropriété** (aucune source ouverte par commune) et pour les **parkings** ?
 4. Avant tout import : **lecture de la page de chaque jeu de données** (licence, attribution, millésime) et ajout au `docs/avant-ouverture-publique.md`.
 5. Effort estimé : **petites PR** (import hors ligne comme pour les DVF : fichier lu, validé, jamais de chiffre inventé, aucune écriture hors test sans ton accord) : (a) loyers ANIL, (b) IRL, (c) notaire par département, (d) taxe foncière, (e) fiscalité micro-foncier/réel, (f) mentions à l'écran.
+
+## 6. Avancement du plan (décisions d'Andreja du 5 octobre 2026)
+Plan validé, dans cet ordre : **1) loyers** (PR « préparation » : lecture, import hors ligne, tables, service, règle « pas de loyer, pas de rentabilité ») ; **2) mentions à l'écran** ; 3) IRL ; 4) notaire par département ; 5) taxe foncière ; 6) fiscalité (micro-foncier et réel). Règle pour chaque jeu de données : relire la page officielle (licence, attribution, date) avant tout import et signaler tout doute. Voir `docs/loyers-anil-fiche-source.md`.
