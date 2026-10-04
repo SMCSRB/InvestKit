@@ -132,24 +132,52 @@ Règles : français simple, **aucun fait postérieur à la date de départ dans 
 ### Ce que les données permettent aujourd'hui
 | Domaine | Données présentes | Verdict |
 |---|---|---|
-| **Crypto** | **Vrais** cours journaliers importés (CryptoCompare) **[sûr]** (`scripts/crypto-import.ts`) ; départs déjà proposés dans le code : 2014, 2017, 2020, 2021, 2022 **[sûr]** ; la plage exacte et la présence de chaque actif (par exemple LUNA, FTT) sont à confirmer par le rapport d'import sur le serveur | **Faisable maintenant**, sous réserve du catalogue d'actifs |
+| **Crypto** | Vrais cours journaliers importés. **Correction** : j'avais écrit « CryptoCompare depuis 2010 [sûr] » ; c'était ce que **le script d'import sait faire**, pas ce qui est **dans la base**. Ce qui compte est la date de début réelle par actif (`crypto_assets.first_candle_at`, affichée « coté depuis … » sur la page de l'actif). Pour le bitcoin : **17 août 2017**, ce qui correspond au début des données publiques Binance Vision **[sûr : code ; début Binance : résumé de recherche]**. Dates des autres actifs : requête du chapitre 4.0, **à me renvoyer** | Faisable : **bulle 2017 (dès le 17 août), krach 2018, jeudi noir 2020, montée 2021** pour le bitcoin. **Mt. Gox 2014 : bloqué.** **Terra/Luna et FTX : à confirmer par la requête** |
 | **Bourse** | Séries **annuelles « plausibles », pas des cours réels** (en-tête de `stockPrices.ts`, à partir de 2010) **[sûr]** | **En attente d'une source de cours réels**, couvrant au moins **1999 à aujourd'hui** pour tous les scénarios ci-dessous |
 | **Immobilier** | DVF officielles **2021 à 2025** **[sûr]** (rapport d'Andreja) ; médianes à fenêtre de 12 mois pleine dès décembre 2021 **[sûr]** (rapport) | Scénarios **2022 à 2025**, après l'activation des prix DVF (`DVF_MARKET_ENABLED`) |
 
-### 4.1 Crypto (7 scénarios, dans l'ordre du temps)
+### 4.0 Données Crypto : vérification, blocages et options
+**Requête en lecture seule pour la copie de test** (base `investkit_design_test` uniquement ; à lancer par Andreja, je n'y touche pas) : lister pour chaque actif la date du premier et du dernier cours importé, et dire si la série est synthétique.
+```
+SELECT symbol, first_candle_at::date AS debut, last_candle_at::date AS fin, synthetic
+FROM crypto_assets
+ORDER BY first_candle_at NULLS LAST, symbol;
+```
+À envoyer : la sortie complète, ou au moins les lignes BTC, ETH, LUNA, UST, FTT. *(Si une colonne porte un autre nom, le message d'erreur le dira : on corrigera, la requête ne modifie rien.)*
 
-**C1. « Mt. Gox : la chute de 2014 »** — **GRATUIT (Normal)** · 2014-01-01 → 2015-01-31
+| Scénario | État avec les données actuelles |
+|---|---|
+| C1 Bulle 2017 (gratuit) | Faisable **à partir du 17 août 2017** (départ redéfini) |
+| C2 Mt. Gox 2014 | **Bloqué : données manquantes** (rien avant 2017) |
+| C3 Krach 2018, C4 Jeudi noir 2020, C5 Montée 2021 | Faisables pour le bitcoin ; autres actifs selon leur date de début |
+| C6 Terra/Luna | **À confirmer par les données** (présence et continuité de LUNA et d'UST en mai 2022) |
+| C7 FTX | **À confirmer par les données** (FTT autour du 8 novembre 2022) |
+
+**Options pour ce qui est bloqué (aucune décision, aucune dépense).**
+1. **CryptoCompare / CoinDesk Data** (le script d'import le gère déjà) : l'offre gratuite est réservée à un usage **non commercial** ; l'usage commercial est payant (environ 80 à 200 dollars par mois selon un résumé de recherche) ; un résumé indique aussi que l'offre gratuite aurait été retirée le 21 mai 2026 **[à vérifier sur le site]**. Payant : **je ne le prends pas sans ton accord**.
+2. **CoinGecko** : la clé gratuite « demo » ne donne qu'environ **365 jours** d'historique ; l'historique complet est payant : **exclu sans ton accord**.
+3. **Bitstamp** (bitcoin seul, dollar) : l'API publique donne des chandeliers depuis **2011**, gratuite et sans compte **[résumé de recherche ; conditions d'utilisation à lire avant tout usage]** ; un jeu de données ouvert (minute par minute depuis 2012, licence **CC BY-SA 4.0**, attribution à son auteur) existe aussi. Cela suffirait pour Mt. Gox **sur le bitcoin seul** (les altcoins de 2014 ne seraient pas couverts, ou autre source par actif). La licence « partage dans les mêmes conditions » est à faire valider.
+4. **Coin Metrics (données communautaires)** : licence **CC BY-NC 4.0**, donc **non commerciale** : risqué pour un plan Pro payant **[à vérifier]**.
+5. **Retirer** le scénario (ou le reporter) : aucune donnée inventée, aucun coût.
+
+Règle : **un scénario sans cours réels n'est ni promis ni ouvert.**
+
+### 4.1 Crypto (7 scénarios ; le premier, gratuit, est la bulle de 2017)
+
+**C1. « La bulle de 2017 »** — **GRATUIT (Normal)** · 2017-08-17 → 2017-12-31 *(décision d'Andreja : premier scénario Crypto gratuit ; le départ est reculé du 1er janvier au 17 août 2017, premier jour de cours importés)*
+- *Contexte au départ (au plus tard le 17 août 2017).* Le bitcoin est en hausse depuis fin 2015 **[connu]** ; l'Ethereum existe depuis 2015 **[connu]** ; le bitcoin s'est scindé en deux le 1er août 2017 (naissance du Bitcoin Cash) **[connu]**. Cours de départ : **lus dans les données importées**, pas écrits ici.
+- *Pendant la partie.* Sur toute l'année 2017, le bitcoin est passé d'environ 900 à près de 20 000 dollars **[sûr]** (CoinDesk) ; **la partie n'en couvre que la fin, depuis le 17 août** ; record le 17 décembre 2017, environ 19 783 dollars **[sûr]** ; vague d'ICO (levées de fonds en jetons) **[connu]**.
+- *À gérer.* L'euphorie : savoir prendre des profits, ne pas emprunter pour acheter plus haut, repérer les actifs trop petits et peu liquides (écarts d'achat et de vente, glissement de prix du jeu).
+- *Objectif Normal.* ★ terminer ; ★★ au moins doubler le capital ; ★★★ idem avec une perte maximale d'au plus 40 % en cours de route. **[à calibrer]**
+
+- *Données.* Faisable avec les cours importés (début 17 août 2017) **[sûr pour le bitcoin ; autres actifs : début à confirmer par la requête du chapitre 4.0]**. Les actifs qui ne sont pas cotés à une date ne sont pas proposés ce jour-là.
+
+**C2. « Mt. Gox : la chute de 2014 »** — **bloqué : données manquantes** · 2014-01-01 → 2015-01-31
+- *Statut.* Les cours importés commencent le **17 août 2017** pour le bitcoin (page Bitcoin : « coté depuis le 17 août 2017 »). **Aucun cours réel de 2014 n'est dans la base** : on ne promet pas ce scénario et on ne l'ouvre pas. Options au chapitre 4.0.
 - *Contexte au départ.* Le bitcoin a connu sa première grande bulle fin 2013, la plus grosse plateforme d'échange est Mt. Gox **[connu]**. Peu d'actifs existent (bitcoin et quelques « altcoins ») **[à vérifier : liste du catalogue en 2014]**.
 - *Pendant la partie.* Mt. Gox bloque les retraits le 7 février 2014, suspend les échanges le 24 février, puis demande sa mise en faillite à Tokyo le 28 février **[sûr]** (bitcoin.it, NBC News, bitcoin.com). Le bitcoin passe d'environ 800 à moins de 600 dollars en quelques jours **[sûr, ordres de grandeur]** ; environ 850 000 bitcoins ont disparu **[sûr]**. La baisse se prolonge ensuite **[connu : jusqu'en janvier 2015]**.
 - *À gérer.* Un marché qui baisse longtemps : réduire le risque, garder des liquidités, éviter de tout miser sur un seul actif. *Limite honnête : le risque de plateforme (retraits bloqués) n'est pas simulé dans le jeu aujourd'hui ; il apparaît dans le journal du marché, pas comme une mécanique.*
 - *Objectif Normal.* ★ terminer ; ★★ faire mieux que « acheter et garder » le bitcoin ; ★★★ finir avec au moins 70 % du capital de départ. **[à calibrer]**
-- *Remarque.* Le premier scénario gratuit est ici un **krach** : c'est pédagogique (le risque d'abord) mais rude pour un débutant. Si tu préfères une entrée plus douce, mets C2 en premier : il suffit de changer l'ordre de la liste.
-
-**C2. « La bulle de 2017 »** · 2017-01-01 → 2017-12-31
-- *Contexte au départ.* Le bitcoin repart à la hausse depuis fin 2015, autour de 1 000 dollars au 1er janvier 2017 **[à vérifier]** ; l'Ethereum existe depuis 2015 **[connu]**.
-- *Pendant la partie.* Une année de hausse très rapide : de 900 à près de 20 000 dollars **[sûr]** (CoinDesk) ; record le 17 décembre 2017, environ 19 783 dollars **[sûr]** ; vague d'ICO (levées de fonds en jetons) **[connu]**.
-- *À gérer.* L'euphorie : savoir prendre des profits, ne pas emprunter pour acheter plus haut, repérer les actifs trop petits et peu liquides (écarts d'achat et de vente, glissement de prix du jeu).
-- *Objectif Normal.* ★ terminer ; ★★ au moins doubler le capital ; ★★★ idem avec une perte maximale d'au plus 40 % en cours de route. **[à calibrer]**
 
 **C3. « Le krach de 2018 »** · 2018-01-01 → 2018-12-31
 - *Contexte au départ.* Le record de décembre 2017 (près de 20 000 dollars) vient d'être atteint **[sûr]**.
@@ -169,18 +197,19 @@ Règles : français simple, **aucun fait postérieur à la date de départ dans 
 - *À gérer.* Des allers-retours violents au sein d'une grande hausse : rester investi sans s'emballer.
 - *Objectif Normal.* ★ terminer ; ★★ finir au-dessus de 1,5 fois le capital ; ★★★ idem avec une perte maximale d'au plus 40 %. **[à calibrer]**
 
-**C6. « Terra / Luna : la chute d'une stablecoin »** · 2022-04-01 → 2022-08-31
+**C6. « Terra / Luna : la chute d'une stablecoin »** — **à confirmer par les données** · 2022-04-01 → 2022-08-31
 - *Contexte au départ.* Le record de novembre 2021 est passé (environ 69 000 dollars) **[sûr]** ; une stablecoin « algorithmique » (UST, adossée à Luna) est très populaire **[connu]**.
 - *Pendant la partie.* UST décroche une première fois le 7 mai 2022, puis définitivement le 9 mai ; plus de 90 % de la valeur de l'écosystème part en une semaine (9 au 15 mai) **[sûr]** (Riksbank, ScienceDirect, Baker Institute). Des faillites en chaîne suivent (juin-juillet) **[connu : à détailler et sourcer avant d'écrire le journal]**.
 - *À gérer.* La contagion : un actif qui s'effondre fait baisser tout le marché ; diversifier, contrôler la taille d'une position.
 - *Objectif Normal.* ★ terminer ; ★★ faire mieux que « acheter et garder » le bitcoin ; ★★★ finir avec au moins 70 % du capital. **[à calibrer]**
-- *Dépendance.* Il faut que Luna et UST soient dans le catalogue importé **[à vérifier]** ; sinon le scénario reste valable (le bitcoin et l'Ethereum ont baissé aussi) mais perd son actif vedette.
+- *Dépendance.* LUNA et UST figurent dans le **catalogue du code** **[sûr : `catalog.ts`]**, mais cela ne prouve pas que leurs cours sont dans la base. Sur Binance, l'ancien LUNA a été retiré le 13 mai 2022 et le nouveau LUNA (Terra 2.0) a été coté le 31 mai 2022 avec l'historique de Terra Classic sous le même symbole **[sûr, résumés de recherche ; à relire]** : la série peut donc être coupée ou mélangée. **Sans cours réels de LUNA et d'UST sur mai 2022, le scénario est « bloqué : données manquantes »** (pas de version avec des cours inventés).
 
-**C7. « FTX : la faillite de novembre 2022 »** · 2022-10-15 → 2023-02-28
+**C7. « FTX : la faillite de novembre 2022 »** — **à confirmer par les données** · 2022-10-15 → 2023-02-28
 - *Contexte au départ.* Le marché est déjà bas après la chute de Terra et la hausse des taux **[sûr]** ; FTX est une des plus grandes plateformes **[connu]**.
 - *Pendant la partie.* Le 2 novembre, un article de CoinDesk révèle les liens financiers entre FTX et Alameda ; le 6 novembre, Binance annonce vendre ses FTT (1 milliard de dollars de retraits en un jour) ; le 8 novembre, FTX bloque les retraits ; le 11 novembre, FTX demande sa mise en faillite et son fondateur démissionne **[sûr]** (The Block, Wikipédia, EBSCO).
 - *À gérer.* La perte de confiance dans un acteur central : diversification, liquidités, ne pas confondre prix et solidité.
 - *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ idem avec une perte maximale d'au plus 30 %. **[à calibrer]**
+- *Dépendance.* Le jeton FTT est dans le catalogue du code **[sûr]** ; ses cours réels autour du 8 novembre 2022 sont à confirmer dans la base (Binance a retiré les produits à terme sur FTT les 13 et 14 novembre 2022 **[sûr, résumé de recherche]**). Sinon : « bloqué : données manquantes », ou scénario centré sur le bitcoin et l'Ethereum seulement, à ton choix.
 
 ### 4.2 Bourse (4 scénarios ; **aucun scénario gratuit tant que la source de cours réels n'est pas tranchée**)
 *Tous dépendent de vrais cours (et, pour 1999 à 2009, d'une source qui remonte à 1999). Quand la source sera choisie, **le premier scénario que ses données permettent sera le gratuit** (la bulle internet si elle remonte à 1999, sinon la crise de 2008).*
@@ -212,7 +241,7 @@ Règles : français simple, **aucun fait postérieur à la date de départ dans 
 
 *Pistes pour plus tard (non retenues pour l'instant)* : la crise de la dette européenne 2011, le référendum britannique de juin 2016 **[sûr : 23 juin 2016, à sourcer]**, la faillite de Silicon Valley Bank en mars 2023 **[connu]**.
 
-### 4.3 Immobilier (3 scénarios réels, à partir de 2022)
+### 4.3 Immobilier (2 scénarios réels, à partir de 2022 ; « passoires thermiques » retiré sur ta décision)
 
 **I1. « La remontée des taux »** — **GRATUIT (Normal)** · 2022-01-01 → 2023-12-31
 - *Contexte au départ.* Depuis le 1er janvier 2022, la décision du Haut Conseil de stabilité financière (29 septembre 2021) est **contraignante** : endettement limité à 35 % des revenus nets, assurance comprise, durée maximale de 25 ans (27 ans en VEFA ou travaux d'au moins 10 % du coût) **[sûr]** (Assemblée nationale, sites de courtage ; à relire sur le texte officiel). Taux moyen des crédits : **1,06 % en décembre 2021** **[sûr]** (Observatoire Crédit Logement/CSA).
@@ -228,14 +257,9 @@ Règles : français simple, **aucun fait postérieur à la date de départ dans 
 - *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ acheter au moins une fois sous le prix médian du quartier. **[à calibrer]**
 - *Mesure.* Les baisses par ville se **mesurent avec nos propres médianes DVF** (le rapport) : ce fait deviendra **[sûr]** une fois mesuré.
 
-**I3. « Les passoires thermiques »** · 2024-01-01 → 2025-… (fin à fixer selon le dernier mois DVF)
-- *Contexte au départ.* La loi Climat et Résilience prévoit d'interdire progressivement la location des logements les moins performants (étiquettes G, F puis E) **[connu]**.
-- *Pendant la partie.* Interdiction de louer les logements classés G à partir du 1er janvier 2025 **[connu, à sourcer]** ; F en 2028 et E en 2034 **[connu, à sourcer]**.
-- *À gérer.* La valeur verte : rénover ou éviter les biens « G » ; arbitrer travaux et loyer (mécanique déjà dans le jeu : valeur verte, rénovation).
-- *Objectif Normal.* ★ terminer ; ★★ ne posséder aucun bien interdit à la location à la fin ; ★★★ rendement net positif. **[à calibrer]**
-- *Remarque.* Ce scénario s'appuie sur les **étiquettes énergétiques simulées** du jeu (aucune source ouverte fiable ne les rattache aux ventes DVF) : à dire clairement à l'écran. Il est le moins « réel » de la liste ; on peut le retirer.
+### 4.4 Immobilier avant 2022 : **aucun scénario pour la bêta** ; indices Notaires-Insee à rouvrir plus tard
+*Décision d'Andreja : rien avant 2022 pour la bêta. Ce chapitre est conservé pour mémoire.*
 
-### 4.4 Immobilier avant 2021 : ce que permettraient les indices officiels Notaires-Insee (aucune décision)
 *Pour 2008 (après Lehman) ou 2014, il n'y a **pas de vraies ventes** (les DVF ne couvrent que 2021 et après). L'alternative serait un **indice de prix**, pas des ventes.*
 
 | | Indices Notaires-Insee (logements anciens) |
@@ -300,11 +324,11 @@ Estimation globale : **environ 48 jours (± 30 %)** (40 avant la nouvelle règle
 | P7 | **Étape « Choisir ton domaine gratuit »** de la liste de premiers pas : supprimée (pièces déjà gagnées conservées) |
 | P8 | **Colonnes `free_domain*`** : ignorées d'abord, supprimées dans une PR séparée plus tard |
 
-| P9 | **Liste finale des scénarios** du chapitre 4 (7 Crypto, 4 Bourse en attente de cours, 3 Immobilier) ; premier scénario gratuit : C1 (Crypto), I1 (Immobilier), et pour la Bourse celui que la source de données permettra en premier |
+| P9 | **Liste finale des scénarios** du chapitre 4 (7 Crypto dont 1 bloqué et 2 à confirmer par les données, 4 Bourse en attente de cours, 2 Immobilier) ; premier scénario gratuit : **C1 bulle de 2017 (Crypto, décidé)**, I1 (Immobilier), et pour la Bourse celui que la source de données permettra en premier |
 | P10 | **Objectifs et étoiles** : tous « à calibrer par simulation sur les vrais cours » avant l'ouverture d'un scénario |
-| P11 | **Immobilier avant 2021** : aucun scénario tant que tu n'as pas tranché la piste des indices Notaires-Insee (chapitre 4.4) |
+| P11 | **Immobilier avant 2022** : aucun scénario pour la bêta (décidé) ; indices Notaires-Insee à rouvrir plus tard (chapitre 4.4) |
 
-**Ouvertes** : niveau Expert de l'Immobilier (chapitre 8) ; source de cours réels pour la Bourse ; le premier scénario gratuit Crypto est-il un krach (C1) ou une entrée plus douce (C2 en premier) ?
+**Ouvertes** : niveau Expert de l'Immobilier (chapitre 8) ; source de cours réels pour la Bourse ; **données Crypto** : réponse à la requête du chapitre 4.0, puis choix pour Mt. Gox, Terra/Luna et FTX (autre source, retirer). *Réglé : premier scénario Crypto gratuit = bulle de 2017 ; passoires thermiques retirées ; seuils d'étoiles calibrés par simulation avant chaque ouverture.*
 
 ## 8. Simulation : le niveau Expert de l'Immobilier est-il jouable ?
 *Demande : simuler « étudiant sans apport, 2 500 de capital, nos règles de banque (10 % d'apport, notaire, 35 %) » avec les vrais prix DVF, ville par ville. Le niveau n'est **pas figé** avant ta lecture.*
