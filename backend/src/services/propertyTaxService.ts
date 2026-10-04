@@ -1,4 +1,4 @@
-// Taux de taxe foncière RÉELS en base (source « dgfip-rei »). PRÉPARATION : le moteur actuel ne lit pas ce service (PROPERTY_TAX_ENABLED = false).
+// Taux de taxe foncière RÉELS en base (source « terralyse »). PRÉPARATION : le moteur actuel ne lit pas ce service (PROPERTY_TAX_ENABLED = false).
 //  - importRates : enregistre un fichier déjà validé (transaction, rejouable : même fichier = rien de plus) ;
 //  - rateAt : taux en vigueur à une date de jeu (jamais une année dont la date d'usage est postérieure) ; null avant la première année.
 import { query, getClient } from '../utils/db';
@@ -19,8 +19,9 @@ export const propertyTaxService = {
         [PROPERTY_TAX_SOURCE_ID, Math.min(...years), Math.max(...years), parsed.rows.length, checksum])).rows[0];
       for (const r of parsed.rows) {
         await client.query(
-          `INSERT INTO immo_property_tax_rates (commune_code, year, rate_pct, import_id) VALUES ($1, $2, $3, $4)
-           ON CONFLICT (commune_code, year) DO UPDATE SET rate_pct = EXCLUDED.rate_pct, import_id = EXCLUDED.import_id`, [r.commune, r.year, r.ratePct, imp.id]);
+          `INSERT INTO immo_property_tax_rates (commune_code, year, rate_pct, communal_pct, intercommunal_pct, teom_pct, import_id) VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (commune_code, year) DO UPDATE SET rate_pct = EXCLUDED.rate_pct, communal_pct = EXCLUDED.communal_pct, intercommunal_pct = EXCLUDED.intercommunal_pct, teom_pct = EXCLUDED.teom_pct, import_id = EXCLUDED.import_id`,
+          [r.commune, r.year, r.ratePct, r.communalPct, r.intercommunalPct, r.teomPct, imp.id]);
       }
       await client.query('COMMIT');
       return { imported: true, importId: Number(imp.id), rows: parsed.rows.length };
