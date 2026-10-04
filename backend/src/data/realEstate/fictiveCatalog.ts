@@ -70,7 +70,7 @@ const NATIONAL_PRICE_CYCLE: Record<number, number> = {
   2019: 4.5, 2020: 5.0, 2021: 6.5, 2022: 3.0, 2023: -3.0, 2024: -4.0, 2025: -1.0, 2026: 1.5,
 };
 
-// L'IRL (indice de référence des loyers) n'est plus fictif : le moteur lit la série RÉELLE de l'Insee (table immo_irl, voir services/irlService.ts).
+// L'IRL (indice de référence des loyers) n'est plus fictif : le moteur lit la série RÉELLE de l'Insee (table immo_irl).
 
 // Taux nominal FICTIF des crédits sur 20 ans (%, hors assurance).
 const LOAN_RATE_20Y: Record<number, number> = {
