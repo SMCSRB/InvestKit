@@ -43,7 +43,7 @@ describe('origine des chiffres : textes de l\'écran', () => {
     expect(r.source).toContain('30/09/2025');
     expect(r.source).toContain('10,2 à 17,5');
     expect(r.attribution).toMatch(/ANIL/);
-    expect(r.attribution).toMatch(/Licence Ouverte 2\.0/);
+    expect(r.attribution).toBe('Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin');
     expect(r.estimate).toBeNull();
     expect(r.approximation).toBeNull();
     const early = rentInfo(listingDataSources({ ...anil, approximation: 'Estimation ANIL 2022, 3e trimestre (approximation avant cette date)' }));
