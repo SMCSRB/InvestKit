@@ -63,7 +63,7 @@ describe('script de simulation (fichier fabriqué)', () => {
     expect(out).toMatch(/Paris 11e\s+30\s+6000\s+6000\s+✗\s+✗\s+✗\s+✗\s+✗/);                 // le prix est affiché ZONE PAR ZONE
     expect(out).toMatch(/Bordeaux 33100\s+30\s+6000/);                                              // code postal lisible, jamais une rue
     expect(out).toMatch(/Saint-Étienne 42000\s+30\s+800\s+800\s+✓\s+✗\s+✗\s+✗\s+✗/);        // parking à 3 520 euros accepté, aucun logement
-    expect(out).toContain(`parkings finançables : 3 sur ${allZones().length} zones avec prix`);       // les 3 zones de Saint-Étienne ; Dijon n'y arrive plus avec le notaire réel (frais fixes sur un petit prix)
+    expect(out).toContain(`parkings finançables : 4 sur ${allZones().length} zones avec prix`);       // les 3 zones de Saint-Étienne et la zone de Dijon (notaire réel sans forfait de frais divers)
     expect(out).toContain('Notaire : calculé par DÉPARTEMENT');
     expect(out).toMatch(/Dijon — 1 zone.*plafond [\d\s\u00a0\u202f]+ €, notaire [\d,]+ %/);
     expect(out).toContain('où un LOGEMENT (studio, T2, T3 ou maison) est finançable à la médiane : 0');

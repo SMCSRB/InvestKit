@@ -1,9 +1,10 @@
-// Frais de notaire de l'ancien calculés par département et par date de jeu : droits de mutation (taux du département, aucun futur) + émoluments (barème) + TVA + CSI + frais divers.
+// Frais de notaire de l'ancien calculés par département et par date de jeu : droits de mutation (taux du département, aucun futur) + émoluments (barème) + TVA + CSI (aucun forfait de frais divers).
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 import { dmtoPctAt, emolumentsHT, notaryFeesOld } from '../src/engine/immo/notaryDepartment';
-import { DMTO_RAISED_PCT, DMTO_STANDARD_PCT, DMTO_STAYED_STANDARD, DMTO_RAISED_FROM, EMOLUMENTS_BRACKETS, NOTARY_MISC_EUR, NOTARY_NEW_PCT } from '../src/config/notaryRules';
+import { DMTO_RAISED_PCT, DMTO_STANDARD_PCT, DMTO_STAYED_STANDARD, DMTO_RAISED_FROM, EMOLUMENTS_BRACKETS, NOTARY_NEW_PCT } from '../src/config/notaryRules';
+import * as rules from '../src/config/notaryRules';
 import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
 import { assessPurchase, maxApprovedPrice, LevelScenario } from '../src/engine/immo/levelSimulation';
 import { BANK_RULES, STARTING_PROFILES, NOTARY_RULE, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
@@ -14,7 +15,7 @@ describe('droits de mutation par département et par date', () => {
     expect(DMTO_STAYED_STANDARD).toHaveLength(11);
     expect(DMTO_STAYED_STANDARD).toContain('06');
   });
-  it('avant le 1er avril 2025 : taux de base partout ; après : 6,32 % sauf les départements restés à 4,5 % ; Bouches-du-Rhône et Gironde : à partir du 1er mai', () => {
+  it('avant le 1er avril 2025 : taux de base partout ; après : 6,32 % sauf les départements restés à 4,5 % ; Bouches-du-Rhône, Gironde et Nord : à partir du 1er mai', () => {
     expect(dmtoPctAt('33', '2025-03-31')).toBe(5.80665);
     expect(dmtoPctAt('69', '2025-03-31')).toBe(5.80665);
     expect(dmtoPctAt('69', '2025-04-01')).toBe(6.32);
@@ -22,6 +23,10 @@ describe('droits de mutation par département et par date', () => {
     expect(dmtoPctAt('33', '2025-05-01')).toBe(6.32);
     expect(dmtoPctAt('13', '2025-04-30')).toBe(5.80665);
     expect(dmtoPctAt('13', '2025-05-01')).toBe(6.32);
+    expect(dmtoPctAt('75', '2025-03-31')).toBe(5.80665);            // Paris : 1er avril 2025
+    expect(dmtoPctAt('75', '2025-04-01')).toBe(6.32);
+    expect(dmtoPctAt('59', '2025-04-30')).toBe(5.80665);            // Nord : 1er mai 2025 (à confirmer sur la délibération du département)
+    expect(dmtoPctAt('59', '2025-05-01')).toBe(6.32);
     expect(dmtoPctAt('06', '2026-06-01')).toBe(5.80665);             // Alpes-Maritimes : jamais augmenté
     expect(dmtoPctAt('99', '2022-01-01')).toBe(5.80665);             // jamais un taux élevé avant la date légale
   });
@@ -47,21 +52,20 @@ describe('émoluments et total', () => {
     expect(g.emoluments).toBeCloseTo(1_995.25, 2);
     expect(g.vat).toBeCloseTo(399.05, 2);
     expect(g.csi).toBe(200);
-    expect(g.misc).toBe(NOTARY_MISC_EUR);
-    expect(g.total).toBeCloseTo(12_640 + 1_995.25 + 399.05 + 200 + 1_000, 1);
-    expect(g.pct).toBeGreaterThan(7.9); expect(g.pct).toBeLessThan(8.3);
+    expect(g).not.toHaveProperty('misc');
+    expect(g.total).toBeCloseTo(12_640 + 1_995.25 + 399.05 + 200, 1);
+    expect(g.pct).toBeGreaterThan(7.4); expect(g.pct).toBeLessThan(7.9);
     const n = notaryFeesOld(200_000, '06', '2026-01-01');
     expect(n.dmtoPct).toBe(5.80665);
     expect(n.total).toBeLessThan(g.total);
     expect(g.total - n.total).toBeCloseTo((200_000 * (6.32 - 5.80665)) / 100, 0);
   });
-  it('frais divers réglables (sensibilité) : plus ils sont élevés, plus le total et le taux effectif montent', () => {
-    const at = (m: number) => notaryFeesOld(100_000, '33', '2025-06-01', m);
-    expect(at(0).total).toBeLessThan(at(500).total); expect(at(500).total).toBeLessThan(at(1000).total);
-    expect(at(1000).total - at(0).total).toBeCloseTo(1000, 5);
-    expect(at(1000).misc).toBe(NOTARY_MISC_EUR);
+  it('aucun forfait de frais divers : total = droits + émoluments + TVA + CSI, au centime près', () => {
+    const f = notaryFeesOld(100_000, '33', '2025-06-01');
+    expect(f.total).toBeCloseTo(f.dmto + f.emoluments + f.vat + f.csi, 1);
+    expect('NOTARY_MISC_EUR' in rules).toBe(false);          // plus aucun forfait dans la config
   });
-  it('le taux effectif baisse quand le prix monte (frais fixes et barème dégressif) et reste dans la fourchette connue (7 à 9 %, un peu plus pour un très petit prix)', () => {
+  it('le taux effectif baisse quand le prix monte (barème dégressif) et reste dans la fourchette connue (7 à 9 %, un peu plus pour un très petit prix)', () => {
     const at = (p: number) => notaryFeesOld(p, '75', '2025-06-01').pct;
     expect(at(50_000)).toBeGreaterThan(at(300_000));
     for (const p of [80_000, 150_000, 300_000, 600_000]) { expect(at(p)).toBeGreaterThan(7); expect(at(p)).toBeLessThan(9.5); }
