@@ -956,13 +956,18 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 5. Rien n'a changé dans les prix, loyers et charges du catalogue (décision : le catalogue actuel sera remplacé par de vraies villes).
 
 
+
 ## 6a-1 : journal d'XP côté serveur (rien ne change à l'écran)
 1. Rien de nouveau à voir dans l'interface. Ton niveau d'éducation, tes classements d'amis et de guilde sont inchangés.
 2. Après déploiement, les joueurs existants ont gardé exactement la même XP (importée une fois depuis leur progression). Valide un chapitre d'éducation sur un compte de test : un nouvel événement apparaît (voir `docs/xp-et-niveaux.md`).
 3. Facultatif : `GET /api/v1/xp` (connecté) renvoie ton XP, ton niveau avec son titre et la progression vers le suivant.
 
 
+
 ## 6a-2 : badges attribués par le serveur (rien ne change à l'écran)
 1. Valide un chapitre d'éducation sur un compte de test : une notification « Badge obtenu : Première leçon » apparaît **une seule fois**, même si tu rouvres la page ou revalides.
 2. `GET /api/v1/xp/badges` (connecté) liste les 19 badges, ceux que tu as et la date ; la rareté est vide tant qu'il y a moins de 50 joueurs vérifiés.
 3. L'ancien affichage des badges du tableau de bord n'a pas changé (il sera refait) ; rien n'est gagné en pièces avec les badges.
+## 6b-lite : textes honnêtes sur les cours et la valeur des InvestCoins
+1. Glossaire, mot « Action » : « Dans le jeu » dit que les cours sont annuels, simplifiés et illustratifs (plus « cours historiques réels »).
+2. Glossaire, mot « InvestCoin » : la phrase « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs » apparaît dans « Dans le jeu ».
