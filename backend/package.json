@@ -22,7 +22,9 @@
     "format": "prettier --write src",
     "encrypt-totp": "ts-node scripts/encrypt-totp-secrets.ts",
     "education-abuse": "ts-node scripts/education-abuse.ts",
-    "cutover:m1": "ts-node scripts/cutover-m1.ts"
+    "cutover:m1": "ts-node scripts/cutover-m1.ts",
+    "immo:download-dvf": "ts-node scripts/immo-download-dvf.ts",
+    "immo:import-dvf": "ts-node scripts/immo-import-dvf.ts"
   },
   "keywords": [
     "investissement",

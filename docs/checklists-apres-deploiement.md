@@ -1090,3 +1090,14 @@ Avant : applique la migration 056 (table `guide_progress`, ajout seulement) en r
 8. Vérifie la lisibilité en mode clair et sombre, et à 390 px (aucun défilement horizontal). L'ancienne page « Guide du site » n'existe plus : `/guide` renvoie vers « Aide et support ».
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR Immobilier réel, étapes 1 et 2 (préparation et pipeline de données)
+
+Rien à tester sur le site (aucun changement visible, aucune migration). Pour savoir si les vraies données tiennent, **toi seul peux** lancer ces deux commandes (elles téléchargent depuis files.data.gouv.fr, n'utilisent aucune base ni aucun secret, et écrivent seulement dans `backend/data/`, ignoré par git) :
+
+1. `npm --prefix backend run immo:download-dvf -- --from 2014 --to 2022`
+2. `npm --prefix backend run immo:import-dvf -- --check` puis envoie-moi le rapport affiché.
+
+Dans `~/InvestKit-design` seulement, comme les autres scripts de la copie de test. Lis `docs/immobilier-reel-preparation.md` (chapitres « Point de vigilance » et « Ce qui n'est pas vérifié »).
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».

@@ -55,3 +55,7 @@ backend/mail-preview/
 e2e/.etat/
 e2e/resultats/
 e2e/rapport/
+
+# Données brutes DVF et fichier de marché (générés hors ligne, jamais dans le dépôt)
+backend/data/dvf-brut/
+backend/data/dvf-marche.json
