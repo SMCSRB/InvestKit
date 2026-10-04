@@ -1132,7 +1132,7 @@ Rien à tester sur le site (aucun changement pour les joueurs). Sur la copie de 
 
 1. Retélécharge avec le code postal, dans un **nouveau dossier** (l'ancien reste intact) : `npm --prefix backend run immo:download-dvf -- --from 2021 --to 2025 --dir backend/data/dvf-brut-cp`
 2. `npm --prefix backend run immo:zones-report -- --dir backend/data/dvf-brut-cp` : envoie-moi le rapport (nombre de zones, ventes par zone et par année, zones fiables, codes postaux inattendus, essai par section cadastrale).
-3. `npm --prefix backend run immo:import-dvf -- --dir backend/data/dvf-brut-cp` : doit écrire **79 zones × 2 types × 60 mois = 9 480 lignes** (moins si une zone n'a aucune donnée ; les mois sans prix fiable restent dans le fichier avec « aucun »).
+3. `npm --prefix backend run immo:import-dvf -- --dir backend/data/dvf-brut-cp` : doit écrire **80 zones × 2 types × 60 mois = 9 600 lignes** (79 avant l'ajout du code postal 59777 de Lille) (moins si une zone n'a aucune donnée ; les mois sans prix fiable restent dans le fichier avec « aucun »).
 4. `npm --prefix backend run immo:simulate-niveau` : le tableau détaille chaque zone (prix au m², ventes, ✓/✗ banque). Envoie-moi la sortie, et celle de `-- --capital 10000 --profile employee`.
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
