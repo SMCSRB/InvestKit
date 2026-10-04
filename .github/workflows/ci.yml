@@ -49,3 +49,45 @@ jobs:
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
         continue-on-error: true
+
+  # Parcours navigateur (Playwright) : base de test PostgreSQL, API et site lancés par la configuration (voir docs/tests-navigateur.md).
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: investkit_test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: investkit_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U investkit_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgresql://investkit_test:test@localhost:5432/investkit_test
+      NEXT_PUBLIC_API_URL: http://localhost:5100/api/v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+      - run: npm ci
+      - run: npm --prefix backend ci
+      - run: npm --prefix backend run build
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: rapport-parcours-navigateur
+          path: |
+            e2e/rapport
+            e2e/resultats
+          retention-days: 7

@@ -16,6 +16,7 @@
     "invite": "ts-node scripts/invite.ts",
     "coins-stats": "ts-node scripts/coins-stats.ts",
     "test:give-coins": "ts-node scripts/test-give-coins.ts",
+    "e2e:seed": "ts-node scripts/e2e-seed.ts",
     "mail:preview": "ts-node scripts/mail-preview.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
