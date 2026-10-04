@@ -236,7 +236,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
             <p className="ik-muted">{city?.description}</p>
             <dl className="rp-facts">
               <Row label="Tension locative"><Tension value={l.rentalTension} /></Row>
-              <Row label={rentSrc.label} game={isGameValue(l.dataSources, 'rent')}>{eur2(l.rentPerSqm)}/m²/mois</Row>
+              <Row label={rentSrc.label} game={isGameValue(l.dataSources, 'rent')}>{rentSrc.unavailable ? '—' : `${eur2(l.rentPerSqm)}/m²/mois`}</Row>
               <Row label="Vacance attendue" help={<HelpTip term="vacance" />} game={isGameValue(l.dataSources, 'vacancy')}>{pct(l.vacancyPct)} du temps</Row>
               <Row label="Durée moyenne d’un bail" game={isGameValue(l.dataSources, 'tenancy')}>{l.tenancyMonths} mois</Row>
             </dl>
@@ -245,9 +245,9 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           <section className="rp-section">
             <h2>Loyer et rentabilité</h2>
             <div className="rp-kpis">
-              <div><span>{rentSrc.real ? 'Loyer moyen de la commune' : 'Loyer estimé'}{isGameValue(l.dataSources, 'rent') && <GameValueTag compact />}</span><strong>{eur(l.marketRentMonthly)}/mois</strong></div>
+              <div><span>{rentSrc.real ? 'Loyer moyen de la commune' : 'Loyer estimé'}{isGameValue(l.dataSources, 'rent') && <GameValueTag compact />}</span><strong>{rentSrc.unavailable ? '—' : `${eur(l.marketRentMonthly)}/mois`}</strong>{rentSrc.unavailable && <small data-testid="rent-unavailable">Pas de loyer connu pour cette commune.</small>}</div>
               <div><span>Rendement brut<HelpTip term="rendement-brut" /></span><strong>{yieldAvailable(l.grossYieldPct) ? pct(l.grossYieldPct) : '—'}</strong><small>{yieldAvailable(l.grossYieldPct) ? 'loyer × 12 ÷ prix' : NO_YIELD_TEXT}</small></div>
-              <div data-testid="sheet-net"><span>Rendement net estimé<HelpTip term="rendement-net" label="Pourquoi le net est plus bas que le brut" /></span><strong data-testid="sheet-net-yield">{ec.netYieldPct === null ? '—' : pct(ec.netYieldPct)}</strong><small>après vacance, charges et frais de notaire</small></div>
+              <div data-testid="sheet-net"><span>Rendement net estimé<HelpTip term="rendement-net" label="Pourquoi le net est plus bas que le brut" /></span><strong data-testid="sheet-net-yield">{ec.netYieldPct === null ? '—' : pct(ec.netYieldPct)}</strong><small>{ec.netYieldPct === null ? NO_YIELD_TEXT : 'après vacance, charges et frais de notaire'}</small></div>
               {l.scenario && (
                 <div data-testid="sheet-flow"><span>Flux mensuel estimé<HelpTip term="cash-flow" /></span>
                   <strong className={l.scenario.monthlyCashFlow < 0 ? 'ik-down' : 'ik-up'} data-testid="sheet-monthly-flow">{signedEur(l.scenario.monthlyCashFlow)}/mois</strong>
@@ -268,10 +268,10 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               <dl className="rp-facts rp-facts--adv">
                 <Row label="Coût total (prix + notaire + travaux annoncés)">{eur(ec.totalInvestment)}</Row>
                 <Row label="Frais de notaire" help={<HelpTip term="frais-notaire" />}>{eur(ec.notaryFees)}</Row>
-                <Row label="Loyers encaissés par an (vacance déduite)">{eur(ec.collectedAnnualRent)}</Row>
+                <Row label="Loyers encaissés par an (vacance déduite)">{ec.collectedAnnualRent === null ? '—' : eur(ec.collectedAnnualRent)}</Row>
                 <Row label="Charges par an">{eur(ec.annualCharges)}</Row>
                 <Row label="Rendement brut sur coût total">{ec.grossYieldPct === null ? '—' : pct(ec.grossYieldPct)}</Row>
-                <Row label="Résultat annuel avant crédit">{eur(ec.annualCashFlow)}</Row>
+                <Row label="Résultat annuel avant crédit">{ec.annualCashFlow === null ? '—' : eur(ec.annualCashFlow)}</Row>
                 <Row label="Occupation minimale pour ne pas perdre d’argent (hors crédit)">{ec.breakevenOccupancyPct === null ? '—' : pct(ec.breakevenOccupancyPct)}</Row>
               </dl>
             )}
