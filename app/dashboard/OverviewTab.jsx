@@ -137,7 +137,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
 
         <Reveal index={1}>
           <Card glow style={{ height: '100%' }}>
-            <CardHead title="Risque de ton portefeuille" icon="shield" help={<HelpTip term="volatilite" />} actions={<Button size="sm" variant="ghost" onClick={() => onOpenTab('trading')}>Voir l&apos;analyse</Button>} />
+            <CardHead title="Risque de ton portefeuille" icon="shield" help={<HelpTip term="volatilite" />} actions={<Button size="sm" variant="ghost" href={risk?.domain === 'crypto_market' || risk?.domain === 'crypto' ? '/crypto' : '/bourse'}>Voir l&apos;analyse</Button>} />
             {loading ? <div className="ik-skeleton" style={{ height: 290 }} /> : !risk ? (
               <EmptyState icon="shield" title="Pas encore de risque à mesurer">Achète un premier titre dans le simulateur : le score de risque apparaît ici.</EmptyState>
             ) : (
@@ -158,7 +158,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
 
       <div className="dash-domains">
         <DomainCard index={0} icon="chart" name="Bourse et PEA" locked={lockedStocks} free={!loading && ov.tier !== 'pro' && ov.freeDomain === 'stocks'}
-          action={<Button size="sm" onClick={() => (lockedStocks ? onOpenTab('settings') : onOpenTab('trading'))}>{lockedStocks ? 'Voir l\'offre Pro' : 'Ouvrir le simulateur'}</Button>}>
+          action={lockedStocks ? <Button size="sm" onClick={() => onOpenTab('settings')}>Voir l&apos;offre Pro</Button> : <Button size="sm" href="/bourse">Ouvrir la Bourse</Button>}>
           {loading ? <div className="ik-skeleton" style={{ height: 104 }} /> : stocks.started ? (
             <>
               <Line label="Positions" value={stocks.positions} />
@@ -222,7 +222,7 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
               <h3 style={{ margin: '14px 0 6px', fontSize: 'var(--ik-fs-lg)' }}>Comprends ce qui menace ton portefeuille</h3>
               <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', lineHeight: 1.55 }}>Score décomposé, crises passées rejouées sur tes positions et pistes pour réduire le risque.</p>
             </div>
-            <div><Button onClick={() => onOpenTab('trading')} style={{ background: '#fff', color: '#2c1d7a', border: 0 }}>Ouvrir l&apos;analyse</Button></div>
+            <div><Button href="/bourse" style={{ background: '#fff', color: '#2c1d7a', border: 0 }}>Ouvrir l&apos;analyse</Button></div>
           </Card>
         </Reveal>
       </div>

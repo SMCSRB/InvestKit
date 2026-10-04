@@ -31,14 +31,14 @@ describe('tableau de bord : données réelles, pas de valeurs factices', () => {
     const list = page.match(/\[('overview'[^\]]*)\]\.includes\(target\)/);
     expect(list, 'liste des sections autorisées').toBeTruthy();
     const tabs = [...list![1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]);
-    expect(tabs).toEqual(['overview', 'market', 'trading', 'education', 'friends', 'notifications', 'settings']);
+    expect(tabs).toEqual(['overview', 'market', 'education', 'friends', 'notifications', 'settings']);
     const overview = read('dashboard/OverviewTab.jsx');
     for (const m of overview.matchAll(/onOpenTab\('([a-z]+)'\)/g)) expect(tabs, `onglet ${m[1]}`).toContain(m[1]);
   });
 
   it('plus d\'onglet « Section en développement » accessible', () => {
     expect(page).not.toContain('Section en développement');
-    expect(page).toMatch(/tabParam === 'risk' \? 'trading'/); // les anciens liens ?tab=risk mènent à l'analyse réelle
+    expect(page).toContain("router.replace('/bourse')"); // les anciens liens ?tab=trading et ?tab=risk mènent à la page Bourse (analyse de risque comprise)
   });
 
   it('le texte sur surface utilise les jetons de thème (lisible en clair comme en sombre)', () => {
