@@ -194,4 +194,4 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 - Nombre de mois d'Histoire qui débloquent la période de départ pour le Bac à sable gratuit (12) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/clockRules.ts`, `PERIOD_UNLOCK_MONTHS`).
 
 ## Guide du site : parcours du premier lancement, page Guide, Aide et support (lot A)
-- Le guide cite le capital de départ, la récompense du jour, les jours payés par semaine, le seuil de classement, les jours actifs et le nombre de niveaux **depuis `app/lib/siteFacts.js`** (comparé par un test aux réglages du serveur). Ces valeurs restent : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**.
+- La visite guidée (refaite en visite interactive) n'écrit **aucun chiffre en dur** : un test le vérifie. Les valeurs de jeu restent à leur place dans `app/lib/siteFacts.js` (accueil, connexion) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**.

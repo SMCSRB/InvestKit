@@ -1076,15 +1076,17 @@ Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 
 Rien à tester sur le site. Lis `docs/analyse-carte-immobiliere-reelle.md` (en deux phrases, puis les chapitres 1 et 2) et réponds aux 4 questions du chapitre 6.
 
-## PR Lot A — Guide du site (parcours de bienvenue, page Guide, Aide et support)
+## PR Visite guidée interactive (remplace le guide de lecture)
 
-À tester sur la copie de test (téléphone et ordinateur) :
+Avant : applique la migration 056 (table `guide_progress`, ajout seulement) en redéployant la COPIE DE TEST (`~/deploy-test.sh`). À tester sur la copie de test, téléphone **et** ordinateur :
 
-1. Connecte-toi avec un compte qui n'a jamais vu le parcours (ou vide la clé `ik-guide-seen-v1` du navigateur) : le **parcours de bienvenue** s'ouvre sur le tableau de bord, six étapes, sans défilement horizontal à 390 px.
-2. Clique « Passer » (ou Échap) : il se ferme et **ne revient pas** quand tu recharges la page.
-3. Menu « Aide et support » : la page propose « Relancer le parcours » (il se rouvre à l'étape 1), « Ouvrir le guide », glossaire, cours et contact.
-4. Menu « Guide du site » : les six rubriques sont lisibles. **Modes** : Histoire « Disponible aujourd'hui » ; Bac à sable et En ligne « Pas encore disponible », avec « réservé au plan Pro » pour En ligne.
-5. Relis les textes : ils doivent être clairs pour un débutant total (1 InvestCoin = 1 euro de jeu, aucun argent réel ; les boutons +1 jour / +1 semaine / +1 mois ; bêta et bouton « Un retour ? »). Dis-moi ce qui n'est pas assez simple.
-6. Les liens du guide mènent aux bons mots du glossaire et aux bons cours.
+1. Va dans **Aide et support** > « Mon parcours de découverte » > « Tout remettre à zéro », puis ouvre le **tableau de bord** : la visite démarre toute seule (« Bienvenue sur InvestKit »). L'écran s'assombrit sauf l'élément expliqué (cerclé), avec une bulle (en bas de l'écran sur téléphone).
+2. Clique **Suivant** : patrimoine, liquidités, récompense du jour (le guide ne la clique pas), prochaine étape. Puis le guide **clique lui-même le menu** (sur téléphone il ouvre le menu) et t'emmène sur Bourse et PEA, Crypto, Immobilier, Banque, Éducation, Classements, Profil, et finit sur « Un retour ? ».
+3. **Étapes actives** (Crypto) : « Choisis ta date de départ », « +1 semaine » (il n'y a pas de bouton Suivant, il attend ton clic ; après le clic : « Bien joué »), « ouvre la fiche Bitcoin ». Vérifie que le texte annonce que le temps avance pour tout le jeu et ne coûte aucune pièce, et que **le guide n'achète, n'emprunte et ne récupère rien à ta place**. Le lien « Passer cette étape » doit toujours marcher.
+4. **Clavier** : flèche droite / Entrée = suivant, flèche gauche = précédent, Échap = pause, Tab reste dans la bulle. Avec « Animations : Non » (ou réglage système « réduire les animations »), plus aucun mouvement.
+5. **Pause / reprise** : appuie sur Échap en plein milieu, recharge, puis « Reprendre la visite » dans Aide et support : elle repart de la bonne étape. Connecte-toi avec le même compte sur un autre appareil : l'état est le même (enregistré côté serveur).
+6. **Mini-visites** : sur une page jamais visitée (Bourse, Crypto, Immobilier, Banque), une petite invitation propose 3 ou 4 étapes ; « Non merci » ne la fait pas revenir. Le bouton **« ? Guide de cette page »** (en bas à gauche) est toujours là et relance la mini-visite. À côté, la petite cible ouvre « Mon parcours de découverte » (cases cochées au fur et à mesure).
+7. **Jamais coincé** : si un élément manque (par exemple pas de partie Crypto commencée), l'étape est sautée toute seule en moins de 5 secondes, sans écran noir.
+8. Vérifie la lisibilité en mode clair et sombre, et à 390 px (aucun défilement horizontal). L'ancienne page « Guide du site » n'existe plus : `/guide` renvoie vers « Aide et support ».
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».

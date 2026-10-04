@@ -40,6 +40,12 @@ export default function AppShell({ children }) {
   }, []);
 
   useEffect(() => { setMenuOpen(false); }, [pathname, search]);
+  // La visite guidée ouvre le menu du téléphone quand elle doit en montrer une entrée.
+  useEffect(() => {
+    const on = (e) => setMenuOpen(!!e.detail?.open);
+    window.addEventListener('ik:tour-menu', on);
+    return () => window.removeEventListener('ik:tour-menu', on);
+  }, []);
   useEffect(() => { trackPage(pathname); }, [pathname]);   // mémorise la page précédente (lien « retour » de la Banque)
 
   // Hauteur réelle de la barre du haut + bande de cours (toutes deux collées en haut de l'écran) : publiée dans --ik-sticky-offset.

@@ -15,6 +15,7 @@ import { FIRST_STEP_BONUSES } from '../src/config/economy';
 import { realEstateService } from '../src/services/realEstateService';
 import { fictiveDataSource } from '../src/data/realEstate/fictiveCatalog';
 import { simClockService } from '../src/services/simClockService';
+import { GUIDE_TOURS, GUIDE_SECTIONS } from '../src/config/guideRules';
 
 export const seedE2e = async (urlForCheck: string | undefined, email: string, password: string): Promise<string> => {
   const database = assertTestDatabase(urlForCheck);
@@ -38,6 +39,9 @@ export const seedE2e = async (urlForCheck: string | undefined, email: string, pa
   for (const [key, coins] of Object.entries(FIRST_STEP_BONUSES)) {
     await query('INSERT INTO first_step_bonuses (user_id, step_key, coins) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [id, key, coins]);
   }
+
+  // La visite guidée est marquée « terminée » pour ce compte : elle ne s'ouvre pas toute seule dans les autres parcours (guide.spec.ts la remet à zéro par l'écran Aide et support).
+  await query('INSERT INTO guide_progress (user_id, state) VALUES ($1, $2::jsonb)', [id, JSON.stringify({ tours: Object.fromEntries(GUIDE_TOURS.map((t) => [t, { status: 'done', step: null }])), seen: [...GUIDE_SECTIONS] })]);
 
   // Une partie Immobilier avec un bien en bon état, sans travaux : le tableau de bord a de quoi expliquer sa « performance ».
   // Une seule horloge pour les trois domaines : départ au 1er janvier 2020 (le jeu Crypto fictif y est coté). Le compte Crypto n'est PAS créé ici : le parcours Crypto le crée par l'écran de départ, comme un joueur

@@ -55,7 +55,7 @@ export default function OnboardingChecklist() {
   const openStep = (s) => { if (s.link === '#profil') setShowProfile(true); else router.push(s.link); };
 
   return (
-    <section style={card} aria-label="Premiers pas">
+    <section style={card} aria-label="Premiers pas" data-tour="dash-next-step">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <h2 style={{ margin: 0, fontSize: 17, color: 'var(--ik-text)' }}>Tes premiers pas {allDone && '— terminés, bravo !'}</h2>
         <div style={{ fontSize: 13, color: 'var(--ik-text-2)' }}>{data.doneCount} / {data.total} étapes</div>

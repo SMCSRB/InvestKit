@@ -1,18 +1,25 @@
-# Guide du site (lot A)
+# Visite guidée interactive
 
-Un guide pour un **débutant total**, en deux formats qui partagent **la même source** (`app/lib/guide.js`) :
-- **Le parcours du premier lancement** : six cartes courtes (InvestKit c'est quoi, le temps, les modes, les domaines, récompenses et classements, bêta). Il s'ouvre une seule fois, pour un joueur connecté, sur une page du jeu (pas sur la connexion, l'administration ni l'accueil). On peut le **passer** (bouton Passer, croix ou touche Échap) et il ne revient pas tout seul. Mémorisé dans le navigateur (`ik-guide-seen-v1`) : sur un autre appareil il s'ouvre une fois de plus.
-- **La page d'aide complète** : `/guide`, mêmes rubriques en détail, avec la liste des modes (disponible ou non), les quatre domaines, et des liens vers le glossaire et les cours.
-- **« Aide et support »** (`/support`, avant : simple redirection vers Contact) : relancer le parcours, ouvrir le guide, glossaire et cours, contact. « Guide du site » a aussi son entrée dans le menu.
+Remplace le guide de lecture (fenêtre de texte + page « Guide du site », refusés). Le joueur apprend **en pratiquant** : le guide désigne les vrais éléments de l'écran et l'emmène de page en page.
 
-## Règles de rédaction
-- Français simple, tutoiement, mobile (testé à 390 px). Aucun emoji ; l'icône de pièce remplace le symbole de l'euro pour les montants du jeu (on écrit « 1 InvestCoin vaut 1 euro de jeu » avec la précision « aucune valeur réelle »).
-- **Le guide pointe, il ne répète pas** : mots du glossaire, cours de chaque domaine, pages du site. Les règles détaillées restent à leur place.
-- **Aucun chiffre écrit en dur** : ils viennent de `app/lib/siteFacts.js`, et un test les compare aux réglages du serveur (capital de départ, récompense du jour, jours payés par semaine, seuil de classement, jours actifs, nombre de niveaux, nombre d'actifs Crypto).
-- **Modes** : Histoire « disponible aujourd'hui » ; Bac à sable et En ligne « pas encore disponibles », avec les règles d'accès décidées (En ligne : plan Pro ; Bac à sable : périodes déjà jouées pour un compte gratuit, choix libre pour le Pro). La liste vient de `MODE_AVAILABILITY` (`backend/src/config/clockRules.ts`), la même que celle du serveur : quand un mode ouvrira, on change cette seule valeur et un test rappelle de mettre le guide à jour.
+## Ce que fait la visite
+- **Projecteur** : l'écran est assombri (quatre rectangles autour d'un trou) sauf l'élément expliqué, cerclé ; bulle à flèche avec titre court, une ou deux phrases, « étape n sur N », barre d'avancement, Suivant / Précédent / Passer. Sur téléphone (≤ 640 px) la bulle devient un panneau en bas de l'écran et l'élément est amené au-dessus.
+- **Elle navigue vraiment** : étapes « Direction : … » où le guide clique lui-même l'entrée du menu (sur téléphone il ouvre d'abord le menu, événement `ik:tour-menu` écouté par `AppShell`). Parcours : tableau de bord (patrimoine, liquidités, récompense, prochaine étape) → Bourse et PEA → Crypto → Immobilier → Banque → Éducation → Classements → Profil et confidentialité → « Un retour ? ».
+- **Étapes actives** : le guide attend une vraie action (événement `ik:clock-advanced` pour « +1 semaine », clic, ou apparition d'un élément : départ Crypto, fiche Bitcoin, profil Immobilier). Pas de bouton Suivant pendant l'attente, mais toujours « Passer cette étape ». Le trou du projecteur laisse passer le clic.
+- **Honnêteté** : aucune étape ne fait dépenser de pièces ni n'agit à la place du joueur ; les actions qui avancent le temps sont annoncées (tout le jeu, sans retour en arrière, gratuit). Achat, emprunt, récompense du jour : le guide les montre, ne les clique jamais.
+- **Mini-visites** (3 à 4 étapes) Bourse, Crypto, Immobilier, Banque : petite invitation non bloquante au premier passage (« Non merci » ne revient pas) et bouton **« ? Guide de cette page »** toujours visible (en bas à gauche), plus une petite cible vers « Mon parcours de découverte ».
+- **Reprise et contrôle** : Échap / croix = pause, « Passer la visite » = arrêt ; reprise ou relance dans **Aide et support** (panneau « Mon parcours de découverte » : cases cochées par rubrique, Reprendre, Recommencer, Tout remettre à zéro).
+- **Jamais coincé** : élément absent ou caché → l'étape est sautée après ~4 s (jamais de voile pendant la recherche) ; une page qui nous renvoie ailleurs → étape sautée ; un sélecteur invalide → on passe au suivant.
+- **Accessibilité** : flèches, Entrée, Échap ; focus déplacé dans la bulle à chaque étape (`role="dialog"`, titre et texte reliés, zone `aria-live` pour les consignes), Tab piégé dans la bulle tant que la page est masquée (étapes non actives) ; boutons ≥ 40 px ; `prefers-reduced-motion` et le réglage « Animations : Non » coupent mouvement et défilement doux.
+- **Design** : jetons du site (`tokens.css`, clair et sombre), pas d'emoji, pas de symbole d'euro, mots simples, tutoiement. *Hypothèse : le point 8 de la demande étant coupé, j'ai repris l'identité du site.*
 
-## Valeurs de jeu citées
-Récompense du jour, jours payés par semaine, seuil de classement, jours actifs, nombre de niveaux, capital de départ : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (déjà listées dans `docs/PARAMETRES-A-RECONFIRMER.md` ; le guide les affiche depuis `siteFacts.js`).
+## Architecture
+- Étapes : **une seule source**, `app/lib/tour/steps.js` (sélecteurs `data-tour="…"` posés sur les vraies pages, avec repli sur des `data-testid`/aria-label existants). Calculs purs testables : `app/lib/tour/engine.js`.
+- Composants : `app/components/tour/` (`TourProvider` logique, `TourOverlay` projecteur + bulle, `TourLauncher`, `TourInvite`, `TourChecklist`).
+- **État par compte, côté serveur** : table `guide_progress` (migration 056), API `/api/v1/guide` (GET, PUT, POST /reset, limite 60 par 15 min, identité prise dans le jeton, listes fermées validées dans `backend/src/config/guideRules.ts`, jamais d'autre donnée). Écritures regroupées (2,5 s) et envoyées à la mise en pause/fermeture de l'onglet. L'état est inclus dans l'export des données du compte et supprimé avec le compte.
+- L'ancienne page `/guide` redirige vers `/support`.
 
 ## Tests
-`backend/tests/guideDuSite.test.ts` (17) : rubriques, exactitude des chiffres, modes, tous les liens existent, aucun emoji ni « € », parcours passable. `e2e/guide.spec.ts` (4, exécution à part à 390 px) : six étapes sans défilement horizontal, Passer et Échap, relance depuis « Aide et support », page Guide.
+- `backend/tests/visiteGuideeMoteur.test.ts` (21) : moteur, parité des identifiants d'étapes avec le serveur, tous les éléments visés existent dans le code, textes (pas d'emoji, d'euro, de chiffre en dur), mini-visites de 3 à 4 étapes.
+- `backend/tests/visiteGuideeApi.test.ts` (9) : validation fermée, isolation entre joueurs, remise à zéro.
+- `e2e/guide.spec.ts` (390 px, exécution à part) : visite complète sans blocage, pause/reprise/passer, clavier, mini-visite et invitation. `e2e/crypto.spec.ts` : étape active « +1 semaine » et fiche.

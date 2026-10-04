@@ -21,7 +21,7 @@ const TABS = ['chercher', 'biens', 'bilan', 'classement'];
 
 function StartScreen({ profiles, onStart, busy }) {
   return (
-    <div className="rp-start rp-enter">
+    <div className="rp-start rp-enter" data-tour="immo-start">
       <h2>Commence ta partie Immobilier</h2>
       <p className="ik-muted">Choisis ta situation de départ : elle décide de tes revenus, et donc de ce que la banque acceptera de te prêter. Tu joues en mode accéléré.</p>
       <div className="rp-start__grid">
@@ -118,8 +118,8 @@ function ImmoInner() {
             <>
               <span className="rp-date" title="Mode accéléré : un mois passe quand tu le décides"><strong>{MONTHS[game.month - 1]} {game.year}</strong><HelpTip term="mode-accelere" /></span>
               <span className="rp-balance">{Number(state.balance).toLocaleString('fr-FR')} <Coin /><HelpTip term="investcoin" /></span>
-              <Button variant="primary" size="sm" icon="calendar" loading={busy} disabled={busy} onClick={() => advance(1)}>Avancer d’un mois</Button>
-              <Button size="sm" disabled={busy} onClick={() => advance(12)}>Avancer d’un an</Button>
+              <span data-tour="immo-advance" style={{ display: 'inline-flex', gap: 8 }}><Button variant="primary" size="sm" icon="calendar" loading={busy} disabled={busy} onClick={() => advance(1)}>Avancer d’un mois</Button>
+              <Button size="sm" disabled={busy} onClick={() => advance(12)}>Avancer d’un an</Button></span>
             </>
           )} />
 

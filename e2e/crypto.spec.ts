@@ -34,3 +34,27 @@ test('Crypto : après +1 mois, la liste, la fiche et le bandeau des prix suivent
   await expect(date).not.toHaveText(dateFiche);
   await expect.poll(prix, { message: 'la fiche doit afficher le prix de la nouvelle date, sans rechargement' }).not.toBe(prixAvant);
 });
+
+// Étape active de la visite guidée : le guide attend une vraie action (+1 semaine) et ne coûte aucune pièce.
+test('visite guidée Crypto : étape active « +1 semaine » (le guide attend le clic), puis fiche Bitcoin', async ({ page }) => {
+  await page.goto('/crypto');
+  const date = page.getByTestId('sim-date');
+  await expect(date).toBeVisible();
+  await page.getByTestId('tour-page-guide').click();
+  await expect(page.getByTestId('tour')).toHaveAttribute('data-step', 'crypto-date');
+  await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour')).toHaveAttribute('data-step', 'crypto-semaine');
+  await expect(page.getByTestId('tour-hint')).toContainText('+1 semaine');
+  await expect(page.getByTestId('tour-next')).toHaveCount(0);                      // pas de « Suivant » : on attend l'action
+  const avant = await date.innerText();
+  await page.getByTestId('adv-week').click();                                      // le trou du projecteur laisse passer le clic
+  await expect(date).not.toHaveText(avant);
+  await expect(page.getByTestId('tour-ok')).toContainText('une semaine a passé');
+  await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour')).toHaveAttribute('data-step', 'crypto-fiche');
+  await page.locator('tbody tr[data-testid^="row-"]').first().click();
+  await expect(page.getByTestId('tour-ok')).toBeVisible();
+  await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour')).toHaveAttribute('data-step', 'crypto-achat');
+  await page.keyboard.press('Escape');
+});

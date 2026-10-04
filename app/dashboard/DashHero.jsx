@@ -74,7 +74,7 @@ export default function DashHero({ username, patrimoine, loading }) {
   return (
     <>
       <Reveal>
-        <section ref={ref} className="dh" aria-label="Accueil du tableau de bord">
+        <section ref={ref} className="dh" data-tour="dash-hero" aria-label="Accueil du tableau de bord">
           <div className="dh__copy">
             <p className="dh__eyebrow">{hello}{username ? ',' : ''}</p>
             <h2 className="dh__title">{username || 'Investisseur'}<PlanBadge plan={shell?.user?.plan} /></h2>
@@ -94,7 +94,7 @@ export default function DashHero({ username, patrimoine, loading }) {
             <div className="dh__layer dh__layer--mini2" style={{ '--d': 0.8 }}><div className="dh__float dh__float--slower"><Coin3D size={28} /></div></div>
             {!loading && Number.isFinite(patrimoine) && (
               <div className="dh__layer dh__layer--glass" style={{ '--d': 2.2 }}>
-                <div className="dh__glass">
+                <div className="dh__glass" data-tour="dash-patrimoine">
                   <span>Patrimoine total</span>
                   <strong className="ik-num"><AnimatedNumber value={patrimoine} /> <Coin /></strong>
                 </div>

@@ -20,6 +20,7 @@ import { profileRoutes } from './routes/profile';
 import { socialRoutes } from './routes/social';
 import { xpRoutes } from './routes/xp';
 import { clockRoutes } from './routes/clock';
+import { guideRoutes } from './routes/guide';
 import { wealthRoutes } from './routes/wealth';
 import { dashboardLayoutRoutes } from './routes/dashboardLayout';
 import { buildOpenApiSpec } from './openapi';
@@ -80,7 +81,7 @@ if (!env.isProd || process.env.DOCS_ENABLED === 'true') {
 // déjà déployé pointant vers l'ancienne URL le temps de la transition.
 // Les données de jeu (date simulée, prix, portefeuille, solde) ne doivent JAMAIS être gardées en mémoire par le navigateur ni par un relais :
 // après une avance du temps, la même adresse doit renvoyer la valeur à la nouvelle date.
-app.use(['/api/v1/trading', '/api/v1/crypto', '/api/v1/realestate', '/api/v1/bank', '/api/v1/clock', '/api/v1/economy', '/api/v1/wealth', '/api/v1/xp', '/api/v1/dashboard-layout', '/api/v1/overview'], (req: Request, res: Response, next: NextFunction) => {
+app.use(['/api/v1/trading', '/api/v1/crypto', '/api/v1/realestate', '/api/v1/bank', '/api/v1/clock', '/api/v1/economy', '/api/v1/wealth', '/api/v1/xp', '/api/v1/dashboard-layout', '/api/v1/overview', '/api/v1/guide'], (req: Request, res: Response, next: NextFunction) => {
   if (req.method === 'GET') res.set('Cache-Control', 'no-store');
   next();
 });
@@ -103,6 +104,7 @@ app.use('/api/v1/flags', flagsRoutes);
 app.use('/api/v1', contentRoutes);
 app.use('/api/v1/xp', xpRoutes);
 app.use('/api/v1/clock', clockRoutes);
+app.use('/api/v1/guide', guideRoutes);
 app.use('/api/v1/wealth', wealthRoutes);
 app.use('/api/v1/dashboard-layout', dashboardLayoutRoutes);
 app.use('/api/v1/tools', toolsRoutes);

@@ -17,7 +17,7 @@ export const countWord = (n) => WORDS[n] ?? String(n);
 // VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER.
 export const STARTING_COINS = 10000;
 
-// Chiffres cités par le guide du site (app/lib/guide.js). Jamais recopiés dans le texte : un test les compare à backend/src/config/*.ts.
+// Chiffres cités par le site (accueil, connexion) ; la visite guidée n'en écrit aucun en dur. Jamais recopiés dans le texte : un test les compare à backend/src/config/*.ts.
 // VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER (récompenses, seuil de classement, courbe de niveaux : choix d'équilibrage).
 export const DAILY_REWARD_COINS = 10;            // backend/src/config/economy.ts : DAILY_REWARD_COINS
 export const DAILY_REWARD_MAX_DAYS = 3;          // backend/src/config/economy.ts : DAILY_REWARD_MAX_DAYS_PER_WEEK

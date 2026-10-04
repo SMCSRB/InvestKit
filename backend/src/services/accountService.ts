@@ -57,6 +57,7 @@ export const exportUserData = async (userId: string) => {
     },
     dashboardLayout: await one('SELECT template, layout, version, updated_at FROM dashboard_layouts WHERE user_id = $1'),
     wealthHistory: await one('SELECT day, liquidity, stocks, crypto, real_estate_net, debts, financial, total, game_clock FROM wealth_snapshots WHERE user_id = $1 ORDER BY day'),
+    guide: await one('SELECT state, updated_at FROM guide_progress WHERE user_id = $1'),
     leaderboard: await one('SELECT mode, domain, period, performance_pct, capital_committed, leverage, computed_at FROM leaderboard_rankings WHERE user_id = $1'),
     projects: { projects, riskAnalyses: projects.length ? await one('SELECT * FROM risk_analysis WHERE project_id = ANY($1)', [projects.map((p: any) => p.id)]) : [] },
     social: {
