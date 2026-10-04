@@ -1153,3 +1153,13 @@ Rien à tester sur le site. Sur la copie de test, dans `~/InvestKit-design`, apr
 2. Pour une autre ville : `-- --city bordeaux` (ou toute autre).
 
 Lecture seule, rien n'est écrit. Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : loyers ANIL (préparation, PR 1)
+
+Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 058** crée deux tables vides). **Avant tout import, lis la page du jeu de données** (`docs/loyers-anil-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
+
+1. Télécharge **toi-même** les quatre fichiers du millésime 2025 dans `backend/data/loyers-brut/2025/`.
+2. `npm --prefix backend run immo:import-loyers -- --vintage 2025 --dir backend/data/loyers-brut/2025 --check` : si les colonnes ne sont pas celles attendues, le script refuse et **affiche les colonnes trouvées** : envoie-les-moi. Sinon, envoie-moi le rapport de couverture (communes et arrondissements sans loyer, séries non fournies, estimations « maille »).
+3. Sans `--check` : écrit `backend/data/loyers-anil-2025.json`. Puis `npm --prefix backend run immo:load-loyers -- --file backend/data/loyers-anil-2025.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
+
+Ordre de fusion : après les PR de zones (#157, #159). Méthode : « Create a merge commit ».
