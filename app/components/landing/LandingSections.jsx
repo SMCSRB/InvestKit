@@ -9,7 +9,7 @@ import { Donut, SegmentedBar } from '@/app/components/ui/charts';
 import { BILLING_OPEN, PLANS, PRICES, formatEuro, yearlySavingPct } from '@/app/lib/plans';
 import { GLOSSARY } from '@/app/lib/glossaire';
 import { SITE_INFO } from '@/app/lib/siteInfo';
-import { AVAILABLE_DOMAINS as AVAILABLE, CRYPTO_ASSET_COUNT, countWord } from '@/app/lib/siteFacts';
+import { AVAILABLE_DOMAINS as AVAILABLE, countWord } from '@/app/lib/siteFacts';
 import useVisitor from './useVisitor';
 
 // Les chiffres affichés sont des comptes réels (glossaire, catalogue) ; aucun nombre d'utilisateurs ni témoignage.
@@ -78,7 +78,6 @@ export function DomainStrip() {
 export function Facts() {
   const facts = [
     { v: AVAILABLE.length, label: 'domaines' },
-    { v: CRYPTO_ASSET_COUNT, label: 'actifs crypto', plus: true },
     { v: GLOSSARY.length, label: 'termes expliqués au glossaire' },
     { v: 0, label: 'euro réel en jeu', unit: '€' },
   ];

@@ -1125,3 +1125,13 @@ Rien à tester sur le site (aucun changement pour les joueurs). Après `~/deploy
 5. Lis `docs/analyse-immobilier-reel-et-horloge.md` et choisis une option (A recommandée) : c'est la seule décision qui bloque l'activation.
 
 Aucun joueur ne voit ces prix (activation désactivée dans le code). Ordre de fusion : après les PR #146 à #148 (déjà fusionnées). Méthode : « Create a merge commit ».
+
+## PR Crypto : honnêteté sur les cryptos disponibles
+
+Après `~/deploy-test.sh` (aucune migration), connecté avec un compte Crypto :
+
+1. Accueil : la rangée de chiffres n'affiche plus « 110+ actifs crypto » (trois chiffres : domaines, termes du glossaire, euro réel en jeu).
+2. Page Crypto, écran de départ : le texte parle des cryptos dont les cours ont été importés, pas de « tout le marché ».
+3. Page Crypto, liste : sous le tableau, une ligne indique « N cryptos avec des cours réels à ta date de jeu » (N = nombre de lignes). Les cryptos sans cours n'apparaissent pas.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».

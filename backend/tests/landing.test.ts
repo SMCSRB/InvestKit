@@ -4,7 +4,7 @@ import { join } from 'path';
 // @ts-expect-error module JavaScript du frontend
 import { PLANS, PRICES, yearlySavingPct } from '../../app/lib/plans.js';
 // @ts-expect-error module JavaScript du frontend
-import { AVAILABLE_DOMAINS, CRYPTO_ASSET_COUNT, STARTING_COINS } from '../../app/lib/siteFacts.js';
+import { AVAILABLE_DOMAINS, STARTING_COINS } from '../../app/lib/siteFacts.js';
 import { CATALOG } from '../src/data/crypto/catalog';
 import { STARTING_CAPITAL } from '../src/config/economy';
 
@@ -62,8 +62,10 @@ describe('offres : source unique', () => {
 });
 
 describe('chiffres affichés : jamais recopiés à la main', () => {
-  it('le nombre d\'actifs crypto annoncé est celui du catalogue réel', () => {
-    expect(CRYPTO_ASSET_COUNT).toBe(CATALOG.length);
+  it('l\'accueil n\'annonce PAS « 110 actifs » : seules les cryptos aux cours réels importés existent dans le jeu', () => {
+    const pages = publicFiles.map(read).join('\n');
+    expect(pages).not.toMatch(/CRYPTO_ASSET_COUNT|\b1[01]\d\+? actifs/);
+    expect(CATALOG.length).toBeGreaterThan(100);                 // le catalogue prévoit plus de cryptos qu'il n'y en a d'importées : on ne l'affiche pas comme un fait
   });
   it('les domaines annoncés « disponibles » existent vraiment (une page chacun)', () => {
     const pages: Record<string, string> = { Immobilier: 'immobilier', Crypto: 'crypto', 'Bourse et PEA': 'dashboard' };

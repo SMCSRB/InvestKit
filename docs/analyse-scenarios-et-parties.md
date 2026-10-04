@@ -137,21 +137,21 @@ Règles : français simple, **aucun fait postérieur à la date de départ dans 
 | **Immobilier** | DVF officielles **2021 à 2025** **[sûr]** (rapport d'Andreja) ; médianes à fenêtre de 12 mois pleine dès décembre 2021 **[sûr]** (rapport) | Scénarios **2022 à 2025**, après l'activation des prix DVF (`DVF_MARKET_ENABLED`) |
 
 ### 4.0 Données Crypto : vérification, blocages et options
-**Requête en lecture seule pour la copie de test** (base `investkit_design_test` uniquement ; à lancer par Andreja, je n'y touche pas) : lister pour chaque actif la date du premier et du dernier cours importé, et dire si la série est synthétique.
-```
-SELECT symbol, first_candle_at::date AS debut, last_candle_at::date AS fin, synthetic
-FROM crypto_assets
-ORDER BY first_candle_at NULLS LAST, symbol;
-```
-À envoyer : la sortie complète, ou au moins les lignes BTC, ETH, LUNA, UST, FTT. *(Si une colonne porte un autre nom, le message d'erreur le dira : on corrigera, la requête ne modifie rien.)*
+**Résultat réel de la requête (copie de test, 4 octobre 2026, envoyé par Andreja).** Seules **5 cryptos** ont des cours importés : **BTC et ETH** (2017-08-17 → 2026-08-31), **BNB** (depuis 2017-11-06), **XRP** (depuis 2018-05-04), **SOL** (depuis 2020-08-11). Les **105 autres** du catalogue (1INCH, AAVE, ADA… LUNA, UST, FTT…) n'ont **aucun cours** : `first_candle_at` et `last_candle_at` sont vides. Le catalogue (~110 actifs) est une liste d'actifs **prévus**, pas de données.
 
-| Scénario | État avec les données actuelles |
+**Ce que fait le jeu pour une crypto sans cours (lu dans le code, `dataService.listAssets`).** La liste du marché relie chaque actif à sa dernière bougie journalière : **sans bougie, l'actif n'apparaît pas du tout**. Pas de prix fictif, pas de ligne vide, et `synthetic` reste faux (il ne vaut vrai que pour les actifs de démonstration `DEMO*`). La fiche d'un tel actif répond « introuvable ou pas encore coté ». Une crypto n'apparaît donc qu'à partir de sa première cotation. Ce qui était faux, c'étaient **les textes**, pas le marché : « 110 actifs crypto » sur l'accueil (corrigé dans cette PR).
+
+| Scénario | Cryptos qui ont des cours à ses dates (données actuelles) |
 |---|---|
-| C1 Bulle 2017 (gratuit) | Faisable **à partir du 17 août 2017** (départ redéfini) |
-| C2 Mt. Gox 2014 | **Bloqué : données manquantes** (rien avant 2017) |
-| C3 Krach 2018, C4 Jeudi noir 2020, C5 Montée 2021 | Faisables pour le bitcoin ; autres actifs selon leur date de début |
-| C6 Terra/Luna | **À confirmer par les données** (présence et continuité de LUNA et d'UST en mai 2022) |
-| C7 FTX | **À confirmer par les données** (FTT autour du 8 novembre 2022) |
+| C1 Bulle 2017 (2017-08-17 → 2017-12-31), **gratuit** | BTC, ETH ; BNB à partir du 6 novembre. **Seulement 2 cryptos au départ** : marché très mince |
+| C2 Mt. Gox 2014 | **aucune** : bloqué (aucune donnée avant août 2017) |
+| C3 Krach 2018 | BTC, ETH, BNB ; XRP à partir du 4 mai 2018 |
+| C4 Jeudi noir (2020-01-01 → 2020-06-30) | BTC, ETH, BNB, XRP (SOL arrive le 11 août 2020 : absente) |
+| C5 Montée 2021 | BTC, ETH, BNB, XRP, SOL |
+| C6 Terra/Luna (2022-04-01 → 2022-08-31) | BTC, ETH, BNB, XRP, SOL **mais ni LUNA ni UST** : **bloqué : données manquantes** (le scénario sans son sujet n'a pas de sens) |
+| C7 FTX (2022-10-15 → 2023-02-28) | BTC, ETH, BNB, XRP, SOL **mais pas FTT** : **bloqué : données manquantes** |
+
+**Conséquence pour le premier scénario gratuit.** La bulle de 2017 est faisable, mais avec **2 cryptos** : à décider si c'est assez pour un premier contact (voir la liste prioritaire plus bas).
 
 **Options pour ce qui est bloqué (aucune décision, aucune dépense).**
 1. **CryptoCompare / CoinDesk Data** (le script d'import le gère déjà) : l'offre gratuite est réservée à un usage **non commercial** ; l'usage commercial est payant (environ 80 à 200 dollars par mois selon un résumé de recherche) ; un résumé indique aussi que l'offre gratuite aurait été retirée le 21 mai 2026 **[à vérifier sur le site]**. Payant : **je ne le prends pas sans ton accord**.
@@ -161,6 +161,33 @@ ORDER BY first_candle_at NULLS LAST, symbol;
 5. **Retirer** le scénario (ou le reporter) : aucune donnée inventée, aucun coût.
 
 Règle : **un scénario sans cours réels n'est ni promis ni ouvert.**
+
+### 4.0 bis Importer LUNA, UST et FTT depuis la même source que BTC : analyse (rien n'est codé)
+
+**Dates réelles côté Binance** (résumés de recherche citant les annonces Binance ; **pages non ouvertes, à relire avant toute décision**) :
+| Paire | Ce qui s'est passé | Conséquence pour les données |
+|---|---|---|
+| LUNA (ancien) /USDT, /BTC, /ETH… | Marchés au comptant retirés le **13 mai 2022 à 00:50 UTC** (marge 00:40) **[sûr]** ([Decrypt](https://decrypt.co/100290/binance-halts-trading-terra-delists-luna-ust), [Cointelegraph](https://cointelegraph.com/news/binance-will-delist-luna-usdt-contracts-as-price-falls-below-0-005)). Reprise vers 14:00 UTC le même jour, **contre BUSD seulement** **[sûr]** | La chute du 9 au 12 mai est dans la paire **LUNA/USDT** (jusqu'au 13 mai 00:50) ; après, seule **LUNA/BUSD** continue (BUSD ≈ 1 dollar) |
+| Nouveau LUNA (Terra 2.0) /USDT et /BUSD | Coté le **31 mai 2022 à 06:00 UTC** ; l'ancien LUNA est renommé **LUNC** ; Binance dit que l'historique de Terra Classic reste affiché sous le nouveau LUNA **[sûr]** ([annonce Binance](https://www.binance.com/en/support/announcement/binance-will-list-terra-2-0-luna-in-the-innovation-zone-luna-old-renamed-as-lunc-d044a6742e484b77a170111460b0eed3)) | **Deux actifs différents sous un même symbole** : il faut les séparer (ancien = « LUNA classic », nouveau = « LUNA 2.0 ») pour ne jamais coller une chute à 0,0001 dollar à un cours de 6 dollars |
+| UST /USDT, BTC/UST, ETH/UST, BNB/UST… | Retirées le **13 mai 2022 à 00:50 UTC** ; reprise contre BUSD seulement **[sûr]** (mêmes sources). **Date d'ouverture d'UST/USDT : non trouvée [à vérifier]** | Même schéma que LUNA : USDT jusqu'au 13 mai, puis BUSD |
+| FTT /USDT, /BTC, /ETH, /BNB | Retirées le **15 novembre 2022** ; **FTT/BUSD** est restée ouverte **[sûr, une seule source : Cointelegraph]**. FTT reste cotée sur Binance au moins jusqu'en 2025 (vote de retrait d'avril 2025 non suivi d'effet immédiat) **[sûr]** | La chute du 6 au 11 novembre est bien dans FTT/USDT ; après le 15 novembre, FTT/BUSD |
+| Dates d'ouverture de LUNA, UST et FTT sur Binance | Non trouvées **[à vérifier]** | Binance Vision commence à la **première cotation de chaque paire** (comme BTC au 17 août 2017) : pas de cours avant cette date |
+
+**Coût.** Zéro : le script d'import sait déjà lire Binance Vision (`binance-vision`), sans clé.
+
+**Licence : point bloquant à trancher.** Je t'avais écrit « données MIT » : c'était **inexact**. **MIT est la licence du dépôt GitHub `binance-public-data` (le code et la documentation), pas celle des données.** Les données de `data.binance.vision` ont leurs **propres conditions d'utilisation**, et les résumés de recherche disent que Binance **interdit sans accord écrit** : les services qui utilisent ses données de marché pour du trading, qui les diffusent en flux, ou **« les sites, applications et services qui font payer ou tirent profit »** de ces données ; une clause autorise le **test historique à usage purement personnel et de recherche** **[résumé de recherche ; texte exact à lire sur data.binance.vision avant tout]**. Des questions du même type (usage commercial en SaaS) sont ouvertes sur le dépôt de Binance ([#478](https://github.com/binance/binance-public-data/issues/478), [#482](https://github.com/binance/binance-public-data/issues/482), [#502](https://github.com/binance/binance-public-data/issues/502)). **Notre jeu a un plan Pro payant : le risque est réel, y compris pour BTC et ETH déjà importés.** Options, sans décision : (1) demander l'accord écrit à Binance (ou la licence entreprise) ; (2) ne diffuser que des courbes et jamais les chandeliers bruts, après avis ; (3) autre source avec licence claire (chapitre 4.0 : CryptoCompare/CoinDesk Data payant, etc.) ; (4) rester en bêta fermée gratuite en attendant. **Je n'importe plus rien de nouveau depuis Binance Vision tant que tu n'as pas tranché.**
+
+**Faisabilité technique si la licence est réglée.** Terra/Luna : **faisable** avec LUNA (USDT puis BUSD) et UST, ancien et nouveau LUNA séparés. FTX : **faisable** avec FTT (USDT jusqu'au 15 novembre, puis BUSD). Dans les deux cas il faut un petit travail de mapping (symboles, paires de repli BUSD, deux séries pour LUNA) et un contrôle avec `crypto:check-series`.
+
+**Comment le jeu doit montrer une crypto qui s'effondre puis disparaît.** Déjà en place **[sûr : code]** : l'explication de la faillite n'est révélée qu'**après** la date (`collapse`) ; sans cotation depuis 7 jours, l'actif est « plus coté : dernier prix connu » et **les achats sont fermés** ; la **vente reste possible au dernier prix connu**. Pour rester réaliste (propositions, à valider) : (a) le prix suit les vrais cours jusqu'à la dernière bougie ; (b) badge « cotation arrêtée le … » avec la date, et la fiche garde l'historique ; (c) **vente fermée** quand la cotation s'arrête **sur la seule plateforme du jeu** (la position est gelée et valorisée au dernier prix, avec un message clair dans le Journal), alors qu'aujourd'hui elle reste vendable au dernier prix, ce qui est trop généreux ; (d) après un délai (par exemple 30 jours sans cotation, **valeur de jeu non sourcée, à reconfirmer**), la position est **comptée à zéro** (« perdue ») dans le patrimoine ; (e) jamais de prix inventé après la dernière bougie.
+
+### 4.0 ter Quelles cryptos importer en priorité (proposition)
+**Principe : un marché crédible = les plus grosses cryptos de chaque époque, avec une date de début vraie.** Avec Binance Vision, chaque crypto commence à sa **première cotation contre USDT** : on ne peut pas avoir « le top 20 de 2017 » complet, seulement ce que Binance cotait.
+- **Lot 1 (les 5 déjà là + 5)** : BTC, ETH, BNB, XRP, SOL **+ LTC, ADA, DOGE, TRX, LINK** : la plupart sont connues du grand public, cotées chez Binance depuis 2017-2020 **[connu : dates exactes à lire dans les données importées]**.
+- **Lot 2 (pour Terra et FTX)** : **LUNA classic, LUNA 2.0, UST, FTT** (si la licence le permet), plus **USDT/USDC** qui n'ont pas de cours « contre USDT » (prix de référence 1 dollar, à traiter à part).
+- **Lot 3 (marché large)** : environ 10 de plus parmi les premières capitalisations (par exemple DOT, AVAX, MATIC, BCH, XLM, ATOM, UNI, ETC) pour atteindre ~20.
+- **Effort (estimation, pas une promesse)** : l'import est un script existant, **une commande par crypto** (quelques minutes, quelques Mo) ; le travail est dans le **mapping** (LUNA, paires BUSD), la **vérification des séries** (`crypto:check-series`), la **licence** (le vrai point bloquant) et la relecture des fiches du catalogue. Environ **½ journée de code** pour le mapping et un contrôle automatique, plus **le temps des commandes sur ton serveur**.
+- **Avant tout import de plus** : trancher la licence (chapitre 4.0 bis). Et décider si la bulle de 2017 gratuite avec **2 cryptos** convient, ou s'il vaut mieux ouvrir d'abord C3/C4/C5 (3 à 5 cryptos).
 
 ### 4.1 Crypto (7 scénarios ; le premier, gratuit, est la bulle de 2017)
 
@@ -172,7 +199,7 @@ Règle : **un scénario sans cours réels n'est ni promis ni ouvert.**
 
 - *Données.* Faisable avec les cours importés (début 17 août 2017) **[sûr pour le bitcoin ; autres actifs : début à confirmer par la requête du chapitre 4.0]**. Les actifs qui ne sont pas cotés à une date ne sont pas proposés ce jour-là.
 
-**C2. « Mt. Gox : la chute de 2014 »** — **bloqué : données manquantes** · 2014-01-01 → 2015-01-31
+**C2. « Mt. Gox : la chute de 2014 »** — **bloqué : aucune donnée avant août 2017** · 2014-01-01 → 2015-01-31
 - *Statut.* Les cours importés commencent le **17 août 2017** pour le bitcoin (page Bitcoin : « coté depuis le 17 août 2017 »). **Aucun cours réel de 2014 n'est dans la base** : on ne promet pas ce scénario et on ne l'ouvre pas. Options au chapitre 4.0.
 - *Contexte au départ.* Le bitcoin a connu sa première grande bulle fin 2013, la plus grosse plateforme d'échange est Mt. Gox **[connu]**. Peu d'actifs existent (bitcoin et quelques « altcoins ») **[à vérifier : liste du catalogue en 2014]**.
 - *Pendant la partie.* Mt. Gox bloque les retraits le 7 février 2014, suspend les échanges le 24 février, puis demande sa mise en faillite à Tokyo le 28 février **[sûr]** (bitcoin.it, NBC News, bitcoin.com). Le bitcoin passe d'environ 800 à moins de 600 dollars en quelques jours **[sûr, ordres de grandeur]** ; environ 850 000 bitcoins ont disparu **[sûr]**. La baisse se prolonge ensuite **[connu : jusqu'en janvier 2015]**.
@@ -197,19 +224,19 @@ Règle : **un scénario sans cours réels n'est ni promis ni ouvert.**
 - *À gérer.* Des allers-retours violents au sein d'une grande hausse : rester investi sans s'emballer.
 - *Objectif Normal.* ★ terminer ; ★★ finir au-dessus de 1,5 fois le capital ; ★★★ idem avec une perte maximale d'au plus 40 %. **[à calibrer]**
 
-**C6. « Terra / Luna : la chute d'une stablecoin »** — **à confirmer par les données** · 2022-04-01 → 2022-08-31
+**C6. « Terra / Luna : la chute d'une stablecoin »** — **bloqué : données manquantes** · 2022-04-01 → 2022-08-31
 - *Contexte au départ.* Le record de novembre 2021 est passé (environ 69 000 dollars) **[sûr]** ; une stablecoin « algorithmique » (UST, adossée à Luna) est très populaire **[connu]**.
 - *Pendant la partie.* UST décroche une première fois le 7 mai 2022, puis définitivement le 9 mai ; plus de 90 % de la valeur de l'écosystème part en une semaine (9 au 15 mai) **[sûr]** (Riksbank, ScienceDirect, Baker Institute). Des faillites en chaîne suivent (juin-juillet) **[connu : à détailler et sourcer avant d'écrire le journal]**.
 - *À gérer.* La contagion : un actif qui s'effondre fait baisser tout le marché ; diversifier, contrôler la taille d'une position.
 - *Objectif Normal.* ★ terminer ; ★★ faire mieux que « acheter et garder » le bitcoin ; ★★★ finir avec au moins 70 % du capital. **[à calibrer]**
-- *Dépendance.* LUNA et UST figurent dans le **catalogue du code** **[sûr : `catalog.ts`]**, mais cela ne prouve pas que leurs cours sont dans la base. Sur Binance, l'ancien LUNA a été retiré le 13 mai 2022 et le nouveau LUNA (Terra 2.0) a été coté le 31 mai 2022 avec l'historique de Terra Classic sous le même symbole **[sûr, résumés de recherche ; à relire]** : la série peut donc être coupée ou mélangée. **Sans cours réels de LUNA et d'UST sur mai 2022, le scénario est « bloqué : données manquantes »** (pas de version avec des cours inventés).
+- *Dépendance.* LUNA et UST figurent dans le **catalogue du code** **[sûr : `catalog.ts`]**, mais **aucun cours n'est importé** (résultat de la requête). Sur Binance, l'ancien LUNA a été retiré le 13 mai 2022 et le nouveau LUNA (Terra 2.0) a été coté le 31 mai 2022 avec l'historique de Terra Classic sous le même symbole **[sûr, résumés de recherche ; à relire]** : la série peut donc être coupée ou mélangée. **Sans cours réels de LUNA et d'UST sur mai 2022, le scénario est « bloqué : données manquantes »** (pas de version avec des cours inventés).
 
-**C7. « FTX : la faillite de novembre 2022 »** — **à confirmer par les données** · 2022-10-15 → 2023-02-28
+**C7. « FTX : la faillite de novembre 2022 »** — **bloqué : données manquantes** · 2022-10-15 → 2023-02-28
 - *Contexte au départ.* Le marché est déjà bas après la chute de Terra et la hausse des taux **[sûr]** ; FTX est une des plus grandes plateformes **[connu]**.
 - *Pendant la partie.* Le 2 novembre, un article de CoinDesk révèle les liens financiers entre FTX et Alameda ; le 6 novembre, Binance annonce vendre ses FTT (1 milliard de dollars de retraits en un jour) ; le 8 novembre, FTX bloque les retraits ; le 11 novembre, FTX demande sa mise en faillite et son fondateur démissionne **[sûr]** (The Block, Wikipédia, EBSCO).
 - *À gérer.* La perte de confiance dans un acteur central : diversification, liquidités, ne pas confondre prix et solidité.
 - *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ idem avec une perte maximale d'au plus 30 %. **[à calibrer]**
-- *Dépendance.* Le jeton FTT est dans le catalogue du code **[sûr]** ; ses cours réels autour du 8 novembre 2022 sont à confirmer dans la base (Binance a retiré les produits à terme sur FTT les 13 et 14 novembre 2022 **[sûr, résumé de recherche]**). Sinon : « bloqué : données manquantes », ou scénario centré sur le bitcoin et l'Ethereum seulement, à ton choix.
+- *Dépendance.* Le jeton FTT est dans le catalogue du code **[sûr]** ; aucun cours n'est importé (Binance a retiré les produits à terme sur FTT les 13 et 14 novembre 2022 **[sûr, résumé de recherche]**). Sinon : « bloqué : données manquantes », ou scénario centré sur le bitcoin et l'Ethereum seulement, à ton choix.
 
 ### 4.2 Bourse (4 scénarios ; **aucun scénario gratuit tant que la source de cours réels n'est pas tranchée**)
 *Tous dépendent de vrais cours (et, pour 1999 à 2009, d'une source qui remonte à 1999). Quand la source sera choisie, **le premier scénario que ses données permettent sera le gratuit** (la bulle internet si elle remonte à 1999, sinon la crise de 2008).*
