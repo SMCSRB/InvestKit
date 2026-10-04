@@ -329,7 +329,9 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const uid = await newPlayer(600000);
       const l = await pick((x) => x.age === 'old' && x.price < 100000 && x.condition === 'to_renovate' && ['E', 'F', 'G'].includes(x.energyClass), 2010, false);
       expect(l, 'il faut un bien à rénover E/F/G dans le catalogue de test').toBeDefined();
-      const prop = await buy(uid, l, legacyCoins(2500));
+      // Apport ajusté au coût réel du projet (les travaux sont plafonnés : un apport démesuré serait refusé par la banque).
+      const down = Math.ceil(l.price * 0.075 + l.price * 0.1 + l.advertisedWorks * 0.1) + 100;
+      const prop = await buy(uid, l, down);
       const before = await life.getPortfolio(uid);
       const beforeRent = before.properties[0].marketRent;
       if (Number(prop.pending_works_eur) > 0) await svc.payPendingWorks(uid, prop.id);
