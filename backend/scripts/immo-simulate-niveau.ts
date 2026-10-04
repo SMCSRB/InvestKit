@@ -40,14 +40,16 @@ const main = async () => {
     const ceiling = maxApprovedPrice(s);
     console.log(`── ${month} · taux ${rate} % · la banque accepte au plus ${ceiling.toLocaleString('fr-FR')} euros ──`);
     console.log('Zone'.padEnd(22) + 'ventes'.padStart(7) + 'prix m² appart.'.padStart(17) + 'prix m² maison'.padStart(16) + UNIT_KINDS.map((k) => k.id.padStart(9)).join(''));
-    console.log('(« ~ » = trop peu de ventes dans la zone : prix de la ville entière ; « - » = pas de prix fiable ; colonnes de droite : le bien est-il accepté par la banque, ✓ ou ✗)');
+    console.log('(« ~ » = prix de la ville entière (moins de 5 ventes dans la zone, ou écart de plus de 40 % à la ville) ; sans signe : zone seule (30 ventes ou plus) ou zone et ville mélangées (5 à 29 ventes) ; « - » = pas de prix fiable ; colonnes de droite : le bien est-il accepté par la banque, ✓ ou ✗)');
     let anyHousing = 0; let anyParking = 0; let zonesTotal = 0;
+    const summary: string[] = [];
     for (const c of DVF_CITIES) {
       const find = (z: string, type: 'apartment' | 'house') => parsed.rows.find((x) => x.zone === z && x.month === month && x.type === type);
       const cityApt = c.zones.map((z) => find(z, 'apartment')).filter((r) => r);
       if (!cityApt.length) { console.log(`${c.name}`.padEnd(22) + 'pas de prix fiable ce mois-là'); continue; }
       const meds = cityApt.map((r) => r!.median); const lo = minOf(meds); const hi = maxOf(meds);
       console.log(`${c.name} — ${c.zones.length} zone${c.zones.length > 1 ? 's' : ''}, ${Math.round(lo)}${hi !== lo ? ` à ${Math.round(hi)}` : ''} €/m² ; la banque finance ${maxSurfaceAt(ceiling, hi)}${hi !== lo ? ` à ${maxSurfaceAt(ceiling, lo)}` : ''} m² à ce prix`);
+      let studioOk = 0; let parkingOk = 0; let priced = 0;
       for (const z of c.zones) {
         const a = find(z, 'apartment'); const h = find(z, 'house');
         const fmt = (r: typeof a) => (r ? `${Math.round(r.median)}${r.scope === 'city' ? '~' : ''}` : '-');
@@ -55,13 +57,18 @@ const main = async () => {
           const r = k.marketType === 'a' ? a : h;
           if (!r) return '-'.padStart(9);
           const ok = assessPurchase(s, unitPrice(k, r.median)).approved;
-          if (k.id === 'parking') { if (ok) anyParking++; } else if (ok) anyHousing++;
+          if (k.id === 'parking') { if (ok) { anyParking++; parkingOk++; } } else if (ok) anyHousing++;
+          if (k.id === 'studio' && ok) studioOk++;
           return (ok ? '✓' : '✗').padStart(9);
         });
-        if (a) zonesTotal++;
+        if (a) { zonesTotal++; priced++; }
         console.log('  ' + (zoneLabel(z) ?? z).padEnd(20) + String(a?.salesCount ?? '-').padStart(7) + fmt(a).padStart(17) + fmt(h).padStart(16) + marks.join(''));
       }
+      summary.push(c.name.padEnd(16) + `${Math.round(lo)}${hi !== lo ? ` à ${Math.round(hi)}` : ''}`.padEnd(26) + `${maxSurfaceAt(ceiling, hi)}${hi !== lo ? ` à ${maxSurfaceAt(ceiling, lo)}` : ''}`.padEnd(18) + `${studioOk}/${priced} zones`.padStart(14) + `${parkingOk}/${priced}`.padStart(10));
     }
+    console.log('\nPlafond de ce profil, ville par ville (le plus petit bien du catalogue : studio de 17 m², parking de 11 m²) :');
+    console.log('Ville'.padEnd(16) + 'prix m² médian (zones)'.padEnd(26) + 'm² finançables'.padEnd(18) + 'studio 17 m²'.padStart(14) + 'parking'.padStart(10));
+    for (const line of summary) console.log(line);
     console.log(`\nCouples (zone, bien) où un LOGEMENT (studio, T2, T3 ou maison) est finançable à la médiane : ${anyHousing} ; parkings finançables : ${anyParking} sur ${zonesTotal} zones avec prix.`);
     console.log(anyHousing === 0 ? 'VERDICT : la banque refuse tout logement à la médiane ; seuls les parkings (s\'il y en a) sont accessibles.' : 'VERDICT : certains logements restent accessibles (voir le tableau).');
     console.log('(Repère : un logement décent demande au moins 9 m² ; un studio du jeu fait 17 à 24 m².)\n');

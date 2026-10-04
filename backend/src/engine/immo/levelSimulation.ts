@@ -54,13 +54,14 @@ export const maxApprovedPrice = (s: LevelScenario, hi = 2_000_000): number => {
 };
 
 export interface UnitKind { id: string; label: string; surface: number; priceFactor: number; marketType: 'a' | 'm' }
-// Surfaces et facteurs de prix repris du catalogue du jeu (fictiveCatalog) : studio 20 m², T2 40, T3 60, maison 95 ; parking 11 m² à 40 % du prix au m² (PARKING_RULES).
+// Surfaces et facteurs de prix repris du catalogue du jeu (fictiveCatalog) : on prend le PLUS PETIT bien de chaque type, celui que le joueur le plus contraint pourrait viser
+// (studio de 17 à 24 m², T2 de 34 à 46, T3 de 54 à 70, maison de 85 à 110) ; parking de 11 m² à 40 % du prix au m² (PARKING_RULES).
 export const UNIT_KINDS: UnitKind[] = [
   { id: 'parking', label: 'Parking (11 m²)', surface: 11, priceFactor: 0.4, marketType: 'a' },
-  { id: 'studio', label: 'Studio (20 m²)', surface: 20, priceFactor: 1.15, marketType: 'a' },
-  { id: 't2', label: 'T2 (40 m²)', surface: 40, priceFactor: 1.0, marketType: 'a' },
-  { id: 't3', label: 'T3 (60 m²)', surface: 60, priceFactor: 0.95, marketType: 'a' },
-  { id: 'house', label: 'Maison (95 m²)', surface: 95, priceFactor: 0.9, marketType: 'm' },
+  { id: 'studio', label: 'Studio (17 m², le plus petit du catalogue)', surface: 17, priceFactor: 1.15, marketType: 'a' },
+  { id: 't2', label: 'T2 (34 m²)', surface: 34, priceFactor: 1.0, marketType: 'a' },
+  { id: 't3', label: 'T3 (54 m²)', surface: 54, priceFactor: 0.95, marketType: 'a' },
+  { id: 'house', label: 'Maison (85 m²)', surface: 85, priceFactor: 0.9, marketType: 'm' },
 ];
 
 export const unitPrice = (k: UnitKind, pricePerM2: number): number => Math.round(k.surface * pricePerM2 * k.priceFactor);

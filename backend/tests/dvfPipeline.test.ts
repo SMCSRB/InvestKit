@@ -86,11 +86,11 @@ describe('médianes glissantes', () => {
     const c = monthlyMarket([...base, ...future], { from: '2019-01', to: '2020-03' });
     expect(c.filter((r) => r.month <= '2020-01')).toEqual(a);
   });
-  it('trop peu de ventes dans un arrondissement : repli sur la ville, sinon « aucun » (jamais un chiffre inventé)', () => {
+  it('peu de ventes dans un arrondissement : mélange avec la ville (5 à 29), ville seule (moins de 5), sinon « aucun » (jamais un chiffre inventé)', () => {
     const s = [...many('75101', '2020-01', 3, 12000), ...many('75111', '2020-01', 15, 9000), ...many('75112', '2020-01', 15, 8000)];
     const rows = monthlyMarket(s, { from: '2020-02', to: '2020-02' });
-    expect(get(rows, '75111', '2020-02').fallback).toBeNull();
-    expect(get(rows, '75101', '2020-02')).toMatchObject({ fallback: 'ville' });
+    expect(get(rows, '75111', '2020-02').fallback).toBe('mixte');                 // 15 ventes : moitié zone, moitié ville
+    expect(get(rows, '75101', '2020-02')).toMatchObject({ fallback: 'ville' });   // 3 ventes : la ville seule
     expect(get(rows, '75101', '2020-02').n).toBeGreaterThanOrEqual(MIN_SALES);
     const none = monthlyMarket(many('33063', '2020-01', 3, 4000), { from: '2020-02', to: '2020-02' });
     expect(get(none, '33000', '2020-02')).toMatchObject({ fallback: 'aucun', median: null, p25: null });

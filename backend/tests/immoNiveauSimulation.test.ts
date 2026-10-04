@@ -41,8 +41,8 @@ describe('plafond d\'achat selon les règles de banque du jeu', () => {
     const ceil = maxApprovedPrice(s);
     for (const p of [1_000, ceil / 4, ceil / 2, ceil - 100]) expect(assessPurchase(s, Math.round(p)).approved).toBe(true);
   });
-  it('surfaces et prix des types de bien repris du catalogue du jeu', () => {
-    expect(UNIT_KINDS.map((k) => [k.id, k.surface])).toEqual([['parking', 11], ['studio', 20], ['t2', 40], ['t3', 60], ['house', 95]]);
+  it('surfaces des types de bien : le plus petit bien de chaque type du catalogue du jeu', () => {
+    expect(UNIT_KINDS.map((k) => [k.id, k.surface])).toEqual([['parking', 11], ['studio', 17], ['t2', 34], ['t3', 54], ['house', 85]]);
     expect(unitPrice(UNIT_KINDS[0], 1000)).toBe(4400);                   // 11 m² × 1 000 × 0,40
     expect(maxSurfaceAt(13_000, 1_300)).toBe(10);
     expect(maxSurfaceAt(13_000, 0)).toBe(0);
@@ -65,6 +65,8 @@ describe('script de simulation (fichier fabriqué)', () => {
     expect(out).toMatch(/Saint-Étienne 42000\s+30\s+800\s+800\s+✓\s+✗\s+✗\s+✗\s+✗/);        // parking à 3 520 euros accepté, aucun logement
     expect(out).toContain(`parkings finançables : 4 sur ${allZones().length} zones avec prix`);       // les 3 zones de Saint-Étienne et celle de Dijon
     expect(out).toContain('où un LOGEMENT (studio, T2, T3 ou maison) est finançable à la médiane : 0');
+    expect(out).toContain('Plafond de ce profil, ville par ville');
+    expect(out).toMatch(/Saint-Étienne\s+800\s+\d+(\.\d+)?\s+0\/3 zones\s+3\/3/);          // le plus petit studio (17 m²) refusé dans les 3 zones, parking accepté dans les 3
     expect(out).toContain('VERDICT : la banque refuse tout logement');
     expect(out).toContain('VERDICT');
   }, 90_000);
