@@ -16,3 +16,4 @@ Liste des points à régler **avant** d'ouvrir le site au public (hors paramètr
 
 - [ ] **Carte des loyers (ANIL)** : lire la page de chaque millésime (licence, attribution exacte, trimestre, colonnes) avant l'import, puis recopier l'attribution dans `RENT_ATTRIBUTION` (voir `docs/loyers-anil-fiche-source.md`).
 - [ ] **IRL (Insee)** : lire les conditions de réutilisation et le format du CSV de la série, confirmer les dates de publication (voir `docs/loyers-irl-fiche-source.md`, lignes 8 à 10).
+- [ ] **Taxe foncière (DGFiP)** : lire la page du jeu de données (licence, attribution, colonne du taux global de taxe foncière bâtie, Paris/Lyon/Marseille au niveau commune) avant l'import (voir `docs/taxe-fonciere-fiche-source.md`).
