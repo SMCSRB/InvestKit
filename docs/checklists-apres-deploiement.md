@@ -900,6 +900,7 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 
 ## Note : sources de cours pour la Bourse (docs seulement)
 Rien à tester sur le site. Lis `docs/sources-cours-bourse.md` et choisis : A (Bourse officielle), B (API commerciale) ou rester sur des cours fictifs améliorés. Aucun import n'est lancé tant que tu n'as pas décidé.
+
 ## Risque et export de compte sur le nouveau marché Crypto
 1. Page Crypto, onglet **Mon portefeuille** : après un achat, un encadré « Risque du portefeuille » apparaît (score sur 100, allocation, pire crise). Sans position : message « Aucune position ».
 2. Tableau de bord, carte de risque : elle apparaît aussi quand tu n'as que le nouveau marché Crypto.
