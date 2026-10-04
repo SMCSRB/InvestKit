@@ -84,7 +84,7 @@ export class CsvStream {
   }
   end(): string[][] {
     const out: string[][] = [];
-    if (this.sep === null && this.buffered) { this.sep = detectSep(this.buffered); const t = this.buffered; this.buffered = ''; out.push(...this.push(t)); }
+    if (this.sep === null && this.buffered) { this.sep = detectSep(this.buffered); const t = this.buffered; this.buffered = ''; const rest = this.push(t); for (let i = 0; i < rest.length; i++) out.push(rest[i]); }
     if (this.pendingQuote) { this.pendingQuote = false; this.quoted = false; }
     if (this.field !== '' || this.row.length) { this.row.push(this.field); if (this.row.length > 1 || this.row[0] !== '') out.push(this.row); }
     this.field = ''; this.row = [];

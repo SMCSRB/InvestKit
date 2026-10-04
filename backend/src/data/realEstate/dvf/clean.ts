@@ -2,6 +2,7 @@
 // Une ligne du fichier = un « local » d'une mutation (vente) ; la valeur foncière est répétée sur chaque ligne de la mutation.
 // On ne garde que les ventes SIMPLES : un seul logement (appartement ou maison), pas de vente en l'état futur d'achèvement, surface et prix plausibles.
 import { CsvStream } from './csv';
+import { pushAll } from './arrays';
 import { DvfFormat, makeStandardizer } from './format';
 
 export type DvfType = 'appartement' | 'maison';
@@ -106,7 +107,7 @@ export const trimOutliers = (sales: DvfSale[]): { kept: DvfSale[]; removed: numb
   for (const s of sales) { const k = `${s.code}|${s.type}|${s.date.slice(0, 4)}`; const l = groups.get(k); if (l) l.push(s); else groups.set(k, [s]); }
   const kept: DvfSale[] = []; let removed = 0;
   for (const list of groups.values()) {
-    if (list.length < BOUNDS.outlierMinSales) { kept.push(...list); continue; }
+    if (list.length < BOUNDS.outlierMinSales) { pushAll(kept, list); continue; }
     const m = median(list.map((s) => s.pricePerM2));
     for (const s of list) { if (s.pricePerM2 < m * BOUNDS.outlierLow || s.pricePerM2 > m * BOUNDS.outlierHigh) removed++; else kept.push(s); }
   }

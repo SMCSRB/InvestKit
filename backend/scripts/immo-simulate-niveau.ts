@@ -9,6 +9,7 @@ import path from 'path';
 import { parseMarketFile } from '../src/data/realEstate/dvf/marketFile';
 import { DVF_CITIES, zoneLabel } from '../src/data/realEstate/dvf/cities';
 import { BANK_RULES, STARTING_PROFILES, NOTARY_RULE, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
+import { minOf, maxOf } from '../src/data/realEstate/dvf/arrays';
 import { fictiveDataSource } from '../src/data/realEstate/fictiveCatalog';
 import { assessPurchase, maxApprovedPrice, maxSurfaceAt, unitPrice, UNIT_KINDS, LevelScenario } from '../src/engine/immo/levelSimulation';
 import type { ProfileId } from '../src/engine/immo';
@@ -45,7 +46,7 @@ const main = async () => {
       const apt = rowsOf('a');
       if (!apt.length) { console.log(c.name.padEnd(15) + 'pas de prix fiable ce mois-là'); continue; }
       const meds = apt.map((x) => x.r!.median);
-      const lo = Math.min(...meds); const hi = Math.max(...meds);
+      const lo = minOf(meds); const hi = maxOf(meds);
       const cnt: Record<string, string> = {};
       for (const k of UNIT_KINDS) {
         const list = rowsOf(k.marketType);
