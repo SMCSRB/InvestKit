@@ -10,5 +10,7 @@ setup('connexion du compte de test', async ({ page }) => {
   await page.getByRole('button', { name: 'Se connecter' }).click();
   await page.waitForURL('**/dashboard', { timeout: 30_000 });
   await expect(page.locator('main, [role="main"]').first()).toBeVisible();
+  // Le parcours de bienvenue s'ouvre au premier lancement : on le passe ici, pour que les autres parcours ne soient jamais gênés (il a son propre test : guide.spec.ts).
+  await page.getByTestId('guide-skip').click({ timeout: 10_000 }).catch(() => undefined);
   await page.context().storageState({ path: 'e2e/.etat/session.json' });
 });
