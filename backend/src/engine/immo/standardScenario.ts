@@ -24,6 +24,7 @@ export interface ScenarioContext {
   insuranceRatePct: number;
   notaryRule: NotaryFeeRule;
   bankRules: BankRules;
+  day?: string;                   // jour de jeu (AAAA-MM-JJ) pour les frais de notaire par département (annonces réelles) ; absent = 1er janvier de l'année de l'annonce
 }
 
 export interface StandardScenario {

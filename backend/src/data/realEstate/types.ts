@@ -65,6 +65,7 @@ export interface Listing {
   vacancyPct: number;             // vacance moyenne attendue de ce bien (%)
   tenancyMonths: number;          // durée moyenne d'un bail avant changement de locataire
   recoverableChargesMonthly: number; // charges récupérables avancées puis refacturées (€/mois)
+  department?: string;               // département de l'annonce (source réelle) : les frais de notaire de l'ancien sont alors calculés par département et par date ; absent = taux forfaitaire du jeu
   rentAvailable?: boolean;           // false : source RÉELLE sans loyer connu pour cette commune (loyer et rendement absents, jamais inventés) ; absent = loyer du catalogue
   rentIncludesCharges?: boolean;     // true : loyer ANIL (charges comprises) ; aucune charge récupérable en plus
   annualCharges: {

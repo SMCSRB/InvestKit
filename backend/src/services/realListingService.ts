@@ -35,7 +35,7 @@ export const realListingService = {
       const city = cityOfZone(zone); const label = zoneLabel(zone);
       if (!city || !label) continue;
       const [apt, house] = await Promise.all([dvfMarketService.priceAt(zone, 'apartment', simulatedMs), dvfMarketService.priceAt(zone, 'house', simulatedMs)]);
-      for (const listing of generateZoneListings({ zoneCode: zone, zoneLabel: label, cityId: city.id, year, apartment: toPrice(apt), house: toPrice(house) })) {
+      for (const listing of generateZoneListings({ zoneCode: zone, zoneLabel: label, cityId: city.id, department: city.department, year, apartment: toPrice(apt), house: toPrice(house) })) {
         const rent = await listingRentService.rentFor({ zoneCode: zone, type: listing.type, rooms: listing.rooms, surfaceSqm: listing.surfaceSqm, pricePerM2: listing.price / listing.surfaceSqm }, simulatedMs);
         const taxCommune = taxCommuneOf(city.id);
         if (!rates.has(taxCommune)) rates.set(taxCommune, await propertyTaxService.rateAt(taxCommune, day));

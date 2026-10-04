@@ -1,5 +1,6 @@
 // Frais de notaire d'un achat dans l'ancien, par département et par date de jeu (fonctions pures). Voir config/notaryRules.ts pour les sources (toutes à relire).
-import { CSI_PCT, DMTO_RAISED_FROM, DMTO_RAISED_FROM_DEFAULT, DMTO_RAISED_PCT, DMTO_STANDARD_PCT, DMTO_STAYED_STANDARD, EMOLUMENTS_BRACKETS, NOTARY_VAT_PCT } from '../../config/notaryRules';
+import type { NotaryFeeRule } from './acquisition';
+import { NOTARY_NEW_PCT, CSI_PCT, DMTO_RAISED_FROM, DMTO_RAISED_FROM_DEFAULT, DMTO_RAISED_PCT, DMTO_STANDARD_PCT, DMTO_STAYED_STANDARD, EMOLUMENTS_BRACKETS, NOTARY_VAT_PCT } from '../../config/notaryRules';
 
 // Taux global des droits de mutation du département à la date de jeu (AAAA-MM-JJ). Avant la hausse (ou dans un département resté à 4,5 %) : 5,80665 %. Jamais une date future.
 export const dmtoPctAt = (department: string, day: string): number => {
@@ -28,4 +29,12 @@ export const notaryFeesOld = (price: number, department: string, day: string): N
   const dmto = (price * dmtoPct) / 100; const em = emolumentsHT(price); const vat = (em * NOTARY_VAT_PCT) / 100; const csi = (price * CSI_PCT) / 100;
   const total = dmto + em + vat + csi;
   return { dmto: r2(dmto), emoluments: r2(em), vat: r2(vat), csi: r2(csi), total: r2(total), pct: r2((total / price) * 100), dmtoPct };
+};
+
+// Règle de notaire (en % du prix) EXACTE pour un achat dans l'ancien : le taux effectif est total ÷ prix, NON arrondi, donc computeNotaryFees (prix × taux, arrondi au centime) redonne le total au centime près.
+// Le neuf reste au taux forfaitaire (NOTARY_NEW_PCT). Le prix compte : le barème est dégressif.
+export const notaryRuleFor = (price: number, department: string, day: string): NotaryFeeRule => {
+  if (!(price > 0)) throw new Error('Prix invalide.');
+  const f = notaryFeesOld(price, department, day);
+  return { oldRatePct: (f.total / price) * 100, newRatePct: NOTARY_NEW_PCT };
 };
