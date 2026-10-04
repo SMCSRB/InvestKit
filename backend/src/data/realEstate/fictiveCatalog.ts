@@ -1,5 +1,5 @@
-import { round2, estimateMarketRent, averageVacancyPct } from '../../engine/immo';
-import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION, PARKING_RULES, greenValueFactor } from '../../config/immoRules';
+import { round2, estimateMarketRent, averageVacancyPct, applyRenovation } from '../../engine/immo';
+import { RENT_MODEL, VACANCY_MODEL, TENANCY_MONTHS, CATALOG_CALIBRATION, PARKING_RULES, RENOVATION_RULES, RENOVATION_BUDGET_CAPS, greenValueFactor } from '../../config/immoRules';
 import { createRng, hashString, approxGaussian } from '../../utils/seededRandom';
 import type {
   City, CityMarket, Neighborhood, CityTier, Condition, EnergyClass, Expertise, Listing, ListingFilter,
@@ -243,6 +243,27 @@ for (const city of CITIES) {
   }
 }
 
+// Valeur du bien APRÈS rénovation (bon état, classe énergie améliorée) : base du plafond des travaux d'un bien « à rénover ».
+const renovatedValue = (t: PropertyTemplate, year: number): number => {
+  const city = CITIES.find((c) => c.id === t.cityId)!;
+  const nbh = neighborhoodsOf(city.id).find((n) => n.id === t.neighborhoodId)!;
+  const after = applyRenovation(t.condition, t.energyClass, RENOVATION_RULES);
+  const typeFactor = TYPE_SPECS.find((s) => s.type === t.type)?.priceFactor ?? 1;
+  return t.surfaceSqm * scaledMarket(city, year).pricePerSqm * nbh.priceMultiplier * typeFactor * CONDITION_PRICE_FACTOR[after.condition] * greenValueFactor(t.type, after.energyClass);
+};
+
+// Travaux annoncés et réels d'un bien pour une année, avec le plafond des biens « à rénover » (les autres biens ne sont pas plafonnés).
+const worksFor = (t: PropertyTemplate, year: number): { advertised: number; real: number } => {
+  const inflation = Math.pow(1.015, year - MIN_YEAR);
+  const advertised = Math.round(t.advertisedWorksPerSqm * t.surfaceSqm * inflation);
+  const real = Math.round(t.realWorksPerSqm * t.surfaceSqm * inflation);
+  if (t.condition !== 'to_renovate') return { advertised, real };
+  const vRen = renovatedValue(t, year);
+  const cappedAdvertised = Math.min(advertised, Math.round((RENOVATION_BUDGET_CAPS.advertisedPctOfRenovatedValue / 100) * vRen));
+  const cappedReal = Math.min(real, Math.round((RENOVATION_BUDGET_CAPS.realPctOfRenovatedValue / 100) * vRen));
+  return { advertised: cappedAdvertised, real: Math.max(cappedAdvertised, cappedReal) };   // le réel n'est jamais inférieur à l'annoncé
+};
+
 const roundPrice = (p: number, step = 500): number => Math.round(p / step) * step;   // un parking (quelques milliers de pièces) s'arrondit à la centaine
 
 const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
@@ -278,7 +299,7 @@ const priceTemplate = (t: PropertyTemplate, year: number): Listing => {
     energyClass: t.energyClass,
     condition: t.condition,
     price: roundPrice(t.surfaceSqm * market.pricePerSqm * nbh.priceMultiplier * t.priceFactor * CONDITION_PRICE_FACTOR[t.condition] * greenValueFactor(t.type, t.energyClass) * (urgent ?? 1), t.type === 'parking' ? 100 : 500),
-    advertisedWorks: Math.round(t.advertisedWorksPerSqm * t.surfaceSqm * inflation),
+    advertisedWorks: worksFor(t, year).advertised,
     rentPerSqm: rent.rentPerSqm,
     marketRentMonthly: Math.round(rent.monthlyRent),
     rentalTension: tension,
@@ -378,10 +399,9 @@ export const fictiveDataSource: RealEstateDataSource = {
     assertYear(year);
     const t = TEMPLATES.find((x) => x.id === listingId);
     if (!t) return null;
-    const inflation = Math.pow(1.015, year - MIN_YEAR);
     return {
       listingId,
-      realWorks: Math.round(t.realWorksPerSqm * t.surfaceSqm * inflation),
+      realWorks: worksFor(t, year).real,
       hiddenDefects: t.hiddenDefects,
     };
   },

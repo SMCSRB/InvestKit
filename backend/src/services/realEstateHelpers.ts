@@ -1,9 +1,9 @@
 import { createRng, hashString } from '../utils/seededRandom';
 import { source, RealEstateError } from './realEstateService';
 import {
-  estimateMarketRent, buildSchedule, round2, valueFromMarket, interpolateByMonth, LoanSchedule, Condition, EnergyClass,
+  estimateMarketRent, buildSchedule, round2, valueFromMarket, interpolateByMonth, applyRenovation, LoanSchedule, Condition, EnergyClass,
 } from '../engine/immo';
-import { RENT_MODEL, PARKING_RULES } from '../config/immoRules';
+import { RENT_MODEL, PARKING_RULES, RENOVATION_RULES } from '../config/immoRules';
 
 // Petits utilitaires partagés par les services de la vie du bien et des reventes.
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -41,7 +41,7 @@ export const scheduleOf = (loan: any): LoanSchedule =>
 
 // Valeur d'un bien à une date (année, mois) : prix payé × évolution du marché de la ville, ramenée à
 // l'état actuel, interpolée mois par mois entre deux années.
-export const valueOfProperty = async (p: any, y: number, m: number): Promise<number> => {
+const marketValueOf = async (p: any, y: number, m: number): Promise<number> => {
   const at = async (year: number) => {
     const now = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.condition, energyClass: String(p.energy_class).trim() as EnergyClass }, year);
     const then = await source().estimateValue({ cityId: p.city_id, neighborhoodId: p.neighborhood_id, type: p.property_type, surfaceSqm: Number(p.surface_sqm), condition: p.initial_condition, energyClass: String(p.initial_energy_class ?? p.energy_class).trim() as EnergyClass }, p.purchase_year);
@@ -50,4 +50,18 @@ export const valueOfProperty = async (p: any, y: number, m: number): Promise<num
   const thisYear = await at(y);
   const nextYear = y + 1 <= source().maxYear ? await at(y + 1) : null;
   return interpolateByMonth(thisYear, nextYear, m);
+};
+
+// Valeur d'un bien. Un bien « à rénover » acheté sans expertise, dont les travaux annoncés sont financés mais dont les travaux cachés restent à payer,
+// vaut selon la part de travaux déjà payée : valeur « non rénové » + (valeur rénovée − valeur « non rénové ») × part payée (décision d'Andreja :
+// le joueur n'est pas pénalisé deux fois). Une fois tous les travaux payés, le bien est rénové et vaut sa valeur rénovée.
+export const valueOfProperty = async (p: any, y: number, m: number): Promise<number> => {
+  const asIs = await marketValueOf(p, y, m);
+  const spent = Number(p.works_financed ?? 0);
+  const pending = Number(p.pending_works_eur ?? 0);
+  if (p.condition !== 'to_renovate' || !(pending > 0) || !(spent > 0)) return asIs;
+  const after = applyRenovation('to_renovate', String(p.energy_class).trim() as EnergyClass, RENOVATION_RULES);
+  const renovated = await marketValueOf({ ...p, condition: after.condition, energy_class: after.energyClass }, y, m);
+  const progress = spent / (spent + pending);
+  return round2(Math.max(asIs, asIs + (renovated - asIs) * progress));
 };
