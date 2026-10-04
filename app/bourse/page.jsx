@@ -1,5 +1,6 @@
 'use client';
 
+import { notifyClockAdvanced } from '@/app/lib/gameClock';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -360,7 +361,7 @@ function BourseInner() {
 
   const advance = async () => {
     setBusy(true); setError('');
-    try { const r = await call('/advance-year', 'POST', { domain: DOMAIN }); await load(); if (r.bankEvents?.length) setError(r.bankEvents.map((e) => e.message).join(' ')); }
+    try { const r = await call('/advance-year', 'POST', { domain: DOMAIN }); await load(); notifyClockAdvanced(); if (r.bankEvents?.length) setError(r.bankEvents.map((e) => e.message).join(' ')); }
     catch (e) { setError(e.message); }
     setBusy(false);
   };

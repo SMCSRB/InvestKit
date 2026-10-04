@@ -63,7 +63,8 @@ export const installApiFetch = () => {
       const csrf = readCsrfCookie();
       if (csrf) headers.set('X-CSRF-Token', csrf);
     }
-    const done = nativeFetch(input, { ...init, headers, credentials: 'include' });
+    // Jamais de réponse gardée en mémoire par le navigateur pour les données du jeu : après une avance du temps, il faut la valeur d'aujourd'hui.
+    const done = nativeFetch(input, { ...init, headers, credentials: 'include', cache: init.cache ?? 'no-store' });
     // Toute action qui écrit et réussit peut renvoyer le portefeuille à jour (`wallet`) : on l'affiche tout de suite, partout.
     // Réseau coupé pendant une écriture : on ne sait pas si elle est passée, on relit la vraie valeur du serveur.
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {

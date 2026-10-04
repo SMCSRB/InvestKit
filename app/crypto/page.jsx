@@ -16,6 +16,8 @@ import Icon from '@/app/components/ui/Icon';
 const PriceChart = dynamic(() => import('./PriceChart'), { ssr: false, loading: () => <div style={{ color: 'var(--ik-text-3)' }}>Chargement du graphique…</div> });
 const CompareChart = dynamic(() => import('./PriceChart').then((m) => m.CompareChart), { ssr: false });
 
+import { notifyClockAdvanced } from '@/app/lib/gameClock';
+
 const API = `${process.env.NEXT_PUBLIC_API_URL}/crypto`;
 const card = { minWidth: 0, background: 'var(--ik-surface-2)', border: '1px solid color-mix(in srgb, var(--ik-text) 12%, transparent)', borderRadius: 14, padding: 16 };
 const btn = (primary) => ({ padding: '9px 14px', borderRadius: 10, border: primary ? 'none' : '1px solid color-mix(in srgb, var(--ik-primary) 60%, transparent)', background: primary ? 'var(--ik-primary)' : 'color-mix(in srgb, var(--ik-primary) 15%, transparent)', color: primary ? 'var(--ik-text-on-primary)' : 'var(--ik-text)', fontWeight: 700, fontSize: 13, cursor: 'pointer' });
@@ -39,6 +41,7 @@ const Pct = ({ v }) => (v == null ? <span style={{ color: 'var(--ik-text-3)' }}>
 async function call(path, method = 'GET', body) {
   const res = await fetch(`${API}${path}`, {
     method,
+    cache: 'no-store',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -408,7 +411,7 @@ function AssetView({ symbol, state, simulatedAt, refreshKey, allAssets, onBack, 
     let off = false;
     call(`/assets/${encodeURIComponent(symbol)}`).then((r) => { if (!off) { setInfo(r); setErr(''); } }).catch((e) => { if (!off) setErr(e.message); });
     return () => { off = true; };
-  }, [symbol, simulatedAt]);
+  }, [symbol, simulatedAt, refreshKey]);
 
   useEffect(() => {
     if (!cmpWith.length) { setCmpData(null); return undefined; }
@@ -491,20 +494,23 @@ export default function CryptoPage() {
   useEffect(() => { if (!localStorage.getItem('token')) { router.push('/login'); return; } loadState(); }, [loadState, router]);
 
   const simulatedAt = state?.account?.simulatedAt;
+  // Liste des actifs à la date de jeu : rechargée à chaque changement de date ou d'action (refreshKey) ; une réponse plus ancienne n'écrase jamais
+  // une plus récente, et en cas d'erreur la liste déjà affichée reste (au lieu d'afficher « aucun actif »).
   useEffect(() => {
     if (!simulatedAt) return undefined;
+    let off = false;
     const t = setTimeout(() => {
       const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString();
-      call(`/assets?${qs}`).then((r) => setAssets(r.assets)).catch((e) => setMsg(e.message));
+      call(`/assets?${qs}`).then((r) => { if (!off && Array.isArray(r.assets)) setAssets(r.assets); }).catch((e) => { if (!off) setMsg(e.message); });
     }, 200);
-    return () => clearTimeout(t);
-  }, [simulatedAt, filters]);
+    return () => { off = true; clearTimeout(t); };
+  }, [simulatedAt, filters, refreshKey]);
 
   const start = async (id) => { setBusy(true); setMsg(''); try { await call('/account', 'POST', { start: id }); await loadState(); } catch (e) { setMsg(e.message); } setBusy(false); };
   const advance = async (step) => {
     if (busy) return;
     setBusy(true); setMsg(''); setInfo('');
-    try { const r = await call('/time/advance', 'POST', { step }); await loadState(); setRefreshKey((k) => k + 1); const f = (r.events || []).filter((e) => e.status === 'filled').length; const c = (r.events || []).filter((e) => e.status === 'cancelled').length; const ev = (r.marketEvents || []).length; const le = (r.loanEvents || []).map((x) => x.message.split('.')[0]); if (le.length) setMsg(le.join(' · ')); if (f || c || ev) setInfo(`${f || c ? `Ordres en attente : ${f} exécuté(s)${c ? `, ${c} annulé(s)` : ''}. ` : ''}${ev ? `${ev} événement(s) de marché : ouvre le Journal du marché pour lire l'explication.` : ''}`); } catch (e) { setMsg(e.message); }
+    try { const r = await call('/time/advance', 'POST', { step }); await loadState(); setRefreshKey((k) => k + 1); notifyClockAdvanced(); const f = (r.events || []).filter((e) => e.status === 'filled').length; const c = (r.events || []).filter((e) => e.status === 'cancelled').length; const ev = (r.marketEvents || []).length; const le = (r.loanEvents || []).map((x) => x.message.split('.')[0]); if (le.length) setMsg(le.join(' · ')); if (f || c || ev) setInfo(`${f || c ? `Ordres en attente : ${f} exécuté(s)${c ? `, ${c} annulé(s)` : ''}. ` : ''}${ev ? `${ev} événement(s) de marché : ouvre le Journal du marché pour lire l'explication.` : ''}`); } catch (e) { setMsg(e.message); }
     setBusy(false);
   };
 

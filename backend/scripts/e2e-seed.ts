@@ -14,6 +14,8 @@ import { importDemo } from '../src/services/crypto/importer';
 import { FIRST_STEP_BONUSES } from '../src/config/economy';
 import { realEstateService } from '../src/services/realEstateService';
 import { fictiveDataSource } from '../src/data/realEstate/fictiveCatalog';
+import { simClockService } from '../src/services/simClockService';
+import { clockService as cryptoClock } from '../src/services/crypto/clockService';
 
 export const seedE2e = async (urlForCheck: string | undefined, email: string, password: string): Promise<string> => {
   const database = assertTestDatabase(urlForCheck);
@@ -39,10 +41,13 @@ export const seedE2e = async (urlForCheck: string | undefined, email: string, pa
   }
 
   // Une partie Immobilier avec un bien en bon état, sans travaux : le tableau de bord a de quoi expliquer sa « performance ».
+  // Une seule horloge pour les trois domaines : départ au 1er janvier 2020 (le jeu Crypto fictif y est coté), Crypto et Immobilier à cette date.
+  await simClockService.ensure(id, 'y2020');
+  await cryptoClock.createAt(id, Date.parse('2020-01-01T00:00:00Z'));
   await realEstateService.startGame(id, 'employee');
   let choisi: Awaited<ReturnType<typeof fictiveDataSource.listListings>>[number] | undefined;
-  for (const l of await fictiveDataSource.listListings(2010)) {
-    if (l.type === 'studio' && l.condition === 'good' && l.advertisedWorks === 0 && (await fictiveDataSource.getExpertise(l.id, 2010))!.hiddenDefects.length === 0) { choisi = l; break; }
+  for (const l of await fictiveDataSource.listListings(2020)) {
+    if (l.type === 'studio' && l.condition === 'good' && l.advertisedWorks === 0 && (await fictiveDataSource.getExpertise(l.id, 2020))!.hiddenDefects.length === 0) { choisi = l; break; }
   }
   if (!choisi) throw new Error('Aucune annonce de départ adaptée dans le catalogue.');
   const apport = Math.ceil(choisi.price * (choisi.age === 'old' ? 0.075 : 0.025) + choisi.price * 0.1) + 50;   // notaire + 10 % du prix, avec une marge
