@@ -1,6 +1,7 @@
 // Médianes glissantes par mois (fonctions pures). RÈGLE D'OR : la valeur d'un mois M n'utilise que des ventes datées au plus tard à la fin de M
 // (jamais le futur) : le jeu pourra donc afficher le marché à la date du joueur sans rien lui révéler de la suite.
 import { DvfSale, DvfType, median, quantile } from './clean';
+import { minOf, maxOf } from './arrays';
 import { DVF_CITIES, cityOfCode } from './cities';
 
 export const WINDOW_MONTHS = 12;
@@ -84,8 +85,10 @@ export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear 
   const absentYears: number[] = [];
   for (let y = firstYear; y <= lastYear; y++) if (!presentYears.includes(y)) absentYears.push(y);
   const rows = allRows.filter((x) => presentYears.includes(Number(x.month.slice(0, 4))));
+  const salesByCity = new Map<string, DvfSale[]>();                       // une seule passe sur les ventes (et non une par ville)
+  for (let i = 0; i < sales.length; i++) { const id = cityOfCode(sales[i].code)?.id; if (!id) continue; const l = salesByCity.get(id); if (l) l.push(sales[i]); else salesByCity.set(id, [sales[i]]); }
   const perCity = DVF_CITIES.map((c) => {
-    const mine = sales.filter((s) => cityOfCode(s.code)?.id === c.id);
+    const mine = salesByCity.get(c.id) ?? [];
     const r = rows.filter((x) => c.codes.includes(x.key) && x.type === 'appartement');
     const total = r.length || 1;
     const fb = r.filter((x) => x.fallback === 'ville').length; const none = r.filter((x) => x.fallback === 'aucun').length;
@@ -99,7 +102,7 @@ export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear 
     if (mine.length === 0) warnings.push(`${c.name} : aucune vente retenue (fichiers manquants ou codes communes à vérifier).`);
     else if (none / total > 0.2) warnings.push(`${c.name} : ${(none / total * 100).toFixed(0)} % des mois sans médiane fiable (appartements, sur les années présentes seulement).`);
     if (jumps > 0) warnings.push(`${c.name} : ${jumps} saut(s) de plus de 15 % d'un mois à l'autre sur une médiane glissante (à lisser avant l'étape 3).`);
-    return { id: c.id, name: c.name, sales: mine.length, byType, coveredShare: 1 - none / total, fallbackShare: fb / total, noneShare: none / total, jumps, minPerM2: meds.length ? Math.min(...meds) : null, maxPerM2: meds.length ? Math.max(...meds) : null };
+    return { id: c.id, name: c.name, sales: mine.length, byType, coveredShare: 1 - none / total, fallbackShare: fb / total, noneShare: none / total, jumps, minPerM2: meds.length ? minOf(meds) : null, maxPerM2: meds.length ? maxOf(meds) : null };
   });
   // Un départ en janvier de l'année Y a besoin de médianes fiables dès ce mois, pour au moins un type de bien, sur au moins la moitié des zones de la ville.
   const startYears = presentYears.map((year) => ({
@@ -116,14 +119,18 @@ export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear 
 // Qualité par ANNÉE et par ville : combien de ventes, combien de quartiers sous le seuil de fiabilité, quelles années sont maigres.
 export interface YearCityStat { year: number; cityId: string; sales: number; zones: number; zonesBelowMin: number; thin: boolean }
 export const yearCityStats = (sales: DvfSale[], years: number[]): YearCityStat[] => {
+  // Comptage en UNE passe : (année, quartier) -> nombre de ventes.
+  const count = new Map<string, number>();
+  for (let i = 0; i < sales.length; i++) { const k = `${sales[i].date.slice(0, 4)}|${sales[i].code}`; count.set(k, (count.get(k) ?? 0) + 1); }
   const out: YearCityStat[] = [];
   for (const year of years) {
     for (const c of DVF_CITIES) {
-      const mine = sales.filter((s) => s.date.startsWith(String(year)) && c.codes.includes(s.code));
+      const perZone = c.codes.map((code) => count.get(`${year}|${code}`) ?? 0);
+      const total = perZone.reduce((a, b) => a + b, 0);
       const zones = c.codes.length;
-      const below = c.codes.filter((code) => mine.filter((s) => s.code === code).length < MIN_SALES).length;
+      const below = perZone.filter((n) => n < MIN_SALES).length;
       // Année maigre : moins de la moitié des quartiers atteint le seuil sur l'année entière (donc, au mois le mois, la médiane glissante sera souvent en repli).
-      out.push({ year, cityId: c.id, sales: mine.length, zones, zonesBelowMin: below, thin: below > zones / 2 });
+      out.push({ year, cityId: c.id, sales: total, zones, zonesBelowMin: below, thin: below > zones / 2 });
     }
   }
   return out;

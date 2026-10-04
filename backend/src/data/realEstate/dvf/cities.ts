@@ -28,7 +28,9 @@ export const DVF_CITIES: readonly DvfCity[] = [
   { id: 'saint-etienne', name: 'Saint-Étienne', department: '42', kind: 'petite', codes: ['42218'], districts: false },
 ];
 
-export const cityOfCode = (code: string): DvfCity | undefined => DVF_CITIES.find((c) => c.codes.includes(code));
+const CITY_BY_CODE = new Map<string, DvfCity>(DVF_CITIES.flatMap((c) => c.codes.map((code) => [code, c] as const)));
+// Recherche en une opération (appelée pour chaque vente : 1,2 million de fois).
+export const cityOfCode = (code: string): DvfCity | undefined => CITY_BY_CODE.get(code);
 export const allCodes = (): string[] => DVF_CITIES.flatMap((c) => c.codes);
 
 export const DVF_FIRST_YEAR = 2014;

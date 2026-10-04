@@ -3,11 +3,10 @@
 //   npm run immo:import-dvf                      (écrit backend/data/dvf-marche.json + rapport qualité)
 //   npm run immo:import-dvf -- --check           (rapport qualité seulement, n'écrit rien)
 // Options : --dir <dossier des fichiers bruts> · --out <fichier> · --from AAAA-MM · --to AAAA-MM (défaut : 2014-01 à la dernière vente lue)
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import { readDvfText, cleanRows, trimOutliers, DvfSale, RejectReason } from '../src/data/realEstate/dvf/clean';
-import { decodeText } from '../src/data/realEstate/dvf/csv';
-import { monthlyMarket, qualityReport, yearCityStats, compressYears, WINDOW_MONTHS, MIN_SALES } from '../src/data/realEstate/dvf/aggregate';
+import { yearCityStats, compressYears, WINDOW_MONTHS, MIN_SALES } from '../src/data/realEstate/dvf/aggregate';
+import { loadSalesFromDir, buildFromSales } from '../src/data/realEstate/dvf/pipeline';
 import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
 
 const arg = (n: string): string | undefined => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? process.argv[i + 1] : undefined; };
@@ -15,23 +14,9 @@ const flag = (n: string) => process.argv.includes(`--${n}`);
 
 const main = () => {
   const dir = path.resolve(arg('dir') ?? path.join(__dirname, '..', 'data', 'dvf-brut'));
-  if (!existsSync(dir)) throw new Error(`Dossier introuvable : ${dir}. Lance d'abord « npm run immo:download-dvf ».`);
-  const sales: DvfSale[] = []; const rejected: Partial<Record<RejectReason, number>> = {}; let files = 0; let mutations = 0;
-  for (const year of readdirSync(dir).filter((d) => /^\d{4}$/.test(d)).sort()) {
-    for (const f of readdirSync(path.join(dir, year)).filter((x) => x.endsWith('.csv'))) {
-      const r = cleanRows(readDvfText(decodeText(readFileSync(path.join(dir, year, f)))).rows);   // tout format reconnu (virgule ou « | », UTF-8 ou latin1, virgule décimale)
-      files++; mutations += r.mutations; sales.push(...r.sales);
-      for (const [k, v] of Object.entries(r.rejected)) rejected[k as RejectReason] = (rejected[k as RejectReason] ?? 0) + v;
-    }
-  }
-  if (!files) throw new Error('Aucun fichier .csv trouvé : rien n\'est écrit.');
-  const trimmed = trimOutliers(sales);
-  rejected.valeur_aberrante = (rejected.valeur_aberrante ?? 0) + trimmed.removed;
-  const last = trimmed.kept.map((s) => s.date.slice(0, 7)).sort().pop()!;
-  const firstYear = Math.min(...trimmed.kept.map((x) => Number(x.date.slice(0, 4))));
-  const range = { from: arg('from') ?? `${firstYear}-01`, to: arg('to') ?? last };   // les années absentes ne produisent aucune ligne
-  const rows = monthlyMarket(trimmed.kept, range);
-  const rep = qualityReport(trimmed.kept, rows);
+  const { sales, rejected: rejectedIn, files, mutations } = loadSalesFromDir(dir);
+  const { kept, rejected, range, rows, report: rep } = buildFromSales(sales, rejectedIn, { from: arg('from'), to: arg('to') });
+  const trimmed = { kept };
 
   console.log(`${files} fichier(s), ${mutations} mutations lues, ${trimmed.kept.length} ventes retenues.`);
   console.log('Rejets : ' + (Object.entries(rejected).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(', ') || 'aucun'));
