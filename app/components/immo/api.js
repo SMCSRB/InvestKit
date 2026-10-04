@@ -33,7 +33,7 @@ export const coins = (n) => createElement(Fragment, null, coinNumber(n), ' ', cr
 export const coinsText = (n) => `${coinNumber(n)} InvestCoins`;
 export const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
-export const TYPE_LABEL = { studio: 'Studio', apartment: 'Appartement', house: 'Maison' };
+export const TYPE_LABEL = { studio: 'Studio', apartment: 'Appartement', house: 'Maison', parking: 'Parking' };
 export const CONDITION_LABEL = { good: 'Bon état', to_refresh: 'À rafraîchir', to_renovate: 'À rénover' };
 export const STATUS_LABEL = { let: 'Loué', vacant: 'Vide', notice: 'Préavis donné' };
 export const DPE_COLORS = { A: '#2f9e5b', B: '#5fb04a', C: '#a6c13a', D: '#e6c52b', E: '#f0a229', F: '#e8742a', G: '#d6453d' };
@@ -42,4 +42,4 @@ export const DPE_TEXT = { A: '#06210f', B: '#0c2208', C: '#1d2406', D: '#2a2305'
 import { hash, rng, describeListing } from './describe';
 export { hash, rng, describeListing };
 
-export const listingAlt = (l, city) => `Illustration d’un ${TYPE_LABEL[l.type]?.toLowerCase()} de ${l.surfaceSqm} m² à ${city?.name ?? l.cityId}, ${CONDITION_LABEL[l.condition]?.toLowerCase()}, DPE ${l.energyClass}.`;
+export const listingAlt = (l, city) => `Illustration d’un ${TYPE_LABEL[l.type]?.toLowerCase()} de ${l.surfaceSqm} m² à ${city?.name ?? l.cityId}, ${CONDITION_LABEL[l.condition]?.toLowerCase()}${l.type === 'parking' ? '' : `, DPE ${l.energyClass}`}.`;

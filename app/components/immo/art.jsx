@@ -23,7 +23,59 @@ function Sky({ id, p, night }) {
   );
 }
 
+// Parking : garage fermé (porte basculante), box (porte de box dans une rangée), place extérieure (marquage au sol).
+function ParkingFacade({ l, uid }) {
+  const p = pal(l.cityId);
+  const form = String(l.title ?? '').startsWith('Garage') ? 'garage' : String(l.title ?? '').startsWith('Box') ? 'box' : 'place';
+  return (
+    <g>
+      <rect y="200" width="400" height="60" fill="#8f8aa3" />
+      {form === 'place' ? (
+        <g>
+          <rect x="120" y="150" width="160" height="90" rx="3" fill="#a7a2ba" stroke="#fff" strokeWidth="4" />
+          <path d="M150 232 v-60 M250 232 v-60" stroke="#fff" strokeWidth="5" strokeDasharray="10 8" />
+          <rect x="165" y="188" width="70" height="30" rx="8" fill={p[0]} /><rect x="175" y="180" width="50" height="14" rx="5" fill="#cfe6ff" />
+          <circle cx="178" cy="220" r="7" fill="#2a2740" /><circle cx="222" cy="220" r="7" fill="#2a2740" />
+        </g>
+      ) : (
+        <g>
+          <rect x={form === 'box' ? 30 : 90} y="110" width={form === 'box' ? 340 : 220} height="95" rx="3" fill={`url(#wall-${uid})`} />
+          <rect x={form === 'box' ? 24 : 84} y="102" width={form === 'box' ? 352 : 232} height="10" rx="2" fill={p[1]} />
+          {(form === 'box' ? [0, 1, 2] : [0]).map((i) => {
+            const w = form === 'box' ? 96 : 150; const x = form === 'box' ? 44 + i * 112 : 125;
+            return (
+              <g key={i}>
+                <rect x={x} y="128" width={w} height="77" rx="2" fill={p[0]} />
+                {[0, 1, 2, 3, 4].map((k) => <line key={k} x1={x + 4} x2={x + w - 4} y1={138 + k * 13} y2={138 + k * 13} stroke="#fff" strokeOpacity=".35" strokeWidth="2" />)}
+                <circle cx={x + w / 2} cy="196" r="3" fill="#ffd86b" />
+              </g>
+            );
+          })}
+        </g>
+      )}
+    </g>
+  );
+}
+
+function ParkingPlan({ l }) {
+  const w = 300; const h = 150;
+  return (
+    <g>
+      <rect width="400" height="260" fill="#f4f0fc" />
+      <g transform="translate(50 40)" stroke="#6d4ff0" strokeWidth="3" fill="#fff">
+        <rect width={w} height={h} rx="4" />
+        <rect x="90" y="25" width="120" height="100" fill="#efe9ff" strokeDasharray="8 6" strokeWidth="2" />
+        <text x={w / 2} y="82" textAnchor="middle" fontSize="13" fill="#3a2b82" stroke="none" fontWeight="700">1 véhicule</text>
+        <path d="M0 140 h40" stroke="#e8742a" strokeWidth="5" />
+        <text x="46" y="144" fontSize="11" fill="#3a2b82" stroke="none" fontWeight="700">Accès</text>
+      </g>
+      <text x="200" y="240" textAnchor="middle" fontSize="13" fill="#4a3b8a" fontWeight="700">{l.surfaceSqm} m² · plan indicatif</text>
+    </g>
+  );
+}
+
 function Facade({ l, uid }) {
+  if (l.type === 'parking') return <ParkingFacade l={l} uid={uid} />;
   const r = rng(hash(l.id));
   const p = pal(l.cityId);
   const worn = l.condition === 'to_renovate'; const tired = l.condition === 'to_refresh';
@@ -146,6 +198,8 @@ function Plan({ l }) {
   );
 }
 
+// Un parking n'a ni séjour ni cuisine : seulement la façade et le plan.
+export const viewsFor = (l) => (l?.type === 'parking' ? VIEWS.filter((v) => v.id === 'facade' || v.id === 'plan') : VIEWS);
 export const VIEWS = [
   { id: 'facade', label: 'Façade' }, { id: 'living', label: 'Séjour' }, { id: 'kitchen', label: 'Cuisine' }, { id: 'plan', label: 'Plan' },
 ];
@@ -153,7 +207,7 @@ export const VIEWS = [
 export default function ListingArt({ listing, view = 'facade', alt, className = '', badge = true }) {
   const uid = `${listing.id}-${view}`.replace(/[^a-z0-9-]/gi, '');
   const p = pal(listing.cityId);
-  const Scene = { facade: Facade, living: Living, kitchen: Kitchen, plan: Plan }[view] ?? Facade;
+  const Scene = { facade: Facade, living: Living, kitchen: Kitchen, plan: listing.type === 'parking' ? ParkingPlan : Plan }[view] ?? Facade;
   return (
     <svg className={`rp-art ${className}`} viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" {...(alt === '' ? { 'aria-hidden': 'true' } : { role: 'img', 'aria-label': alt ?? `Illustration, vue ${view}` })} focusable="false">
       <Sky id={uid} p={p} night={listing.energyClass === 'G'} />

@@ -3,7 +3,7 @@ import { source, RealEstateError } from './realEstateService';
 import {
   estimateMarketRent, buildSchedule, round2, valueFromMarket, interpolateByMonth, LoanSchedule, Condition, EnergyClass,
 } from '../engine/immo';
-import { RENT_MODEL } from '../config/immoRules';
+import { RENT_MODEL, PARKING_RULES } from '../config/immoRules';
 
 // Petits utilitaires partagés par les services de la vie du bien et des reventes.
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -25,10 +25,12 @@ export const marketFor = async (p: any, year: number) => {
   if (!market || !nbh) throw new RealEstateError('NOT_FOUND', 'Marché introuvable pour ce bien');
   const rent = estimateMarketRent(
     { surfaceSqm: Number(p.surface_sqm), cityRentPerSqm: market.rentPerSqm, neighborhoodRentMultiplier: nbh.rentMultiplier,
-      condition: p.condition as Condition, energyClass: String(p.energy_class).trim() as EnergyClass },
+      condition: p.condition as Condition, energyClass: String(p.energy_class).trim() as EnergyClass,
+      unitRentFactor: p.property_type === 'parking' ? PARKING_RULES.rentFactor : 1 },
     RENT_MODEL
   );
-  return { marketRent: rent.monthlyRent, tension: round2(clamp(market.rentalTension + nbh.tensionOffset, 0, 1)) };
+  const boost = p.property_type === 'parking' ? PARKING_RULES.tensionBoost : 0;
+  return { marketRent: rent.monthlyRent, tension: round2(clamp(market.rentalTension + nbh.tensionOffset + boost, 0, 1)) };
 };
 
 export const scheduleOf = (loan: any): LoanSchedule =>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '@/app/components/ui/Icon';
 import { Button, Card, Modal, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
-import ListingArt, { VIEWS } from './art';
+import ListingArt, { viewsFor } from './art';
 import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
 import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct, eurText } from './api';
 import Coin from '@/app/components/ui/Coin';
@@ -38,7 +38,8 @@ function Signature({ phase, onClose, error }) {
 
 function Gallery({ listing, city, children }) {
   const [view, setView] = useState('facade');
-  const idx = VIEWS.findIndex((v) => v.id === view);
+  const VIEWS = viewsFor(listing);
+  const idx = Math.max(0, VIEWS.findIndex((v) => v.id === view));
   const move = (d) => setView(VIEWS[(idx + d + VIEWS.length) % VIEWS.length].id);
   return (
     <div className="rp-gallery" onKeyDown={(e) => { if (e.key === 'ArrowRight') { e.preventDefault(); move(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); } }}>
@@ -138,6 +139,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
   if (!d) return <div className="rp-detail"><Skeleton height={360} /><Skeleton height={200} style={{ marginTop: 16 }} /></div>;
   const { listing: l, city, neighborhood, economics: ec } = d;
+  const isParking = l.type === 'parking';
   const toggleFav = async () => { const had = fav; setFav(!had); try { await call(`/favorites/${encodeURIComponent(l.id)}`, had ? 'DELETE' : 'PUT'); } catch (e) { setFav(had); notify(e.message, true); } };
 
   const expertise = async () => {
@@ -181,8 +183,8 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
 
           <ul className="rp-keyfacts" aria-label="Chiffres clés">
             <li><Icon name="ruler" size={20} /><strong>{l.surfaceSqm} m²</strong><span>surface</span></li>
-            <li><Icon name="doorOpen" size={20} /><strong>{l.rooms}</strong><span>pièce{l.rooms > 1 ? 's' : ''}</span></li>
-            <li><Dpe cls={l.energyClass} /><strong>DPE {l.energyClass}</strong><span>énergie</span></li>
+            {!isParking && <li><Icon name="doorOpen" size={20} /><strong>{l.rooms}</strong><span>pièce{l.rooms > 1 ? 's' : ''}</span></li>}
+            {!isParking && <li><Dpe cls={l.energyClass} /><strong>DPE {l.energyClass}</strong><span>énergie</span></li>}
             <li><Icon name="trendingUp" size={20} /><strong>{pct(l.grossYieldPct)}</strong><span>rendement brut</span></li>
             <li><Icon name="keyRound" size={20} /><strong>{eur(l.marketRentMonthly)}</strong><span>loyer estimé /mois</span></li>
           </ul>
@@ -192,7 +194,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           <section className="rp-section">
             <h2>Le bien en bref</h2>
             <dl className="rp-facts">
-              <Row label="Type">{TYPE_LABEL[l.type]}</Row><Row label="Surface">{l.surfaceSqm} m²</Row><Row label="Pièces">{l.rooms}</Row>
+              <Row label="Type">{TYPE_LABEL[l.type]}</Row><Row label="Surface">{l.surfaceSqm} m²</Row>{!isParking && <Row label="Pièces">{l.rooms}</Row>}
               <Row label="État">{CONDITION_LABEL[l.condition]}</Row>
               <Row label="Travaux annoncés" help={<HelpTip term="travaux" />}>{l.advertisedWorks > 0 ? eur(l.advertisedWorks) : 'Aucun'}</Row>
               <Row label="Construction">{l.age === 'new' ? 'Neuf' : 'Ancien'}</Row>
@@ -200,8 +202,8 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           </section>
 
           <section className="rp-section">
-            <h2>Diagnostics<HelpTip term="dpe" /></h2>
-            <div className="rp-diag"><Dpe cls={l.energyClass} size="lg" /><div><DpeScale cls={l.energyClass} /><p className="ik-muted">Classe {l.energyClass}. {['E', 'F', 'G'].includes(l.energyClass) ? 'Un logement énergivore perd de la valeur et peut devenir interdit à la location : une rénovation énergétique est possible après l’achat.' : 'Bonne performance : peu de risque de restriction de location.'}</p></div></div>
+            <h2>{isParking ? 'Expertise' : <>Diagnostics<HelpTip term="dpe" /></>}</h2>
+            {isParking ? <p className="ik-muted">Un parking n’a pas de diagnostic énergétique (DPE) : seule l’expertise avant achat te dit s’il y a un défaut caché.</p> : <div className="rp-diag"><Dpe cls={l.energyClass} size="lg" /><div><DpeScale cls={l.energyClass} /><p className="ik-muted">Classe {l.energyClass}. {['E', 'F', 'G'].includes(l.energyClass) ? 'Un logement énergivore perd de la valeur et peut devenir interdit à la location : une rénovation énergétique est possible après l’achat.' : 'Bonne performance : peu de risque de restriction de location.'}</p></div></div>}
             <div className="rp-expert">
               {d.expertise ? (
                 <div className={`rp-expert__result ${d.expertise.hiddenDefects.length ? 'is-bad' : 'is-ok'}`} role="status">

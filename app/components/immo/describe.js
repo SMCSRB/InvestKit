@@ -9,6 +9,7 @@ const pick = (arr, seed) => arr[(seed >>> 0) % arr.length];
 // Annonce rédigée (français soigné) à partir des vrais champs ; plusieurs tournures choisies de façon stable par identifiant.
 export function describeListing(l, city, nbh) {
   const h = hash(l.id);
+  if (l.type === 'parking') return describeParking(l, city, nbh, h);
   const kind = { studio: 'studio', apartment: l.rooms >= 4 ? 'grand appartement' : 'appartement', house: 'maison' }[l.type];
   const place = nbh?.name ? `dans le quartier ${nbh.name.toLowerCase() === 'centre' ? 'du centre' : nbh.name === 'Péricentre' ? 'péricentre' : 'périphérique'}` : '';
   const intro = pick([
@@ -31,3 +32,19 @@ export function describeListing(l, city, nbh) {
   return `${intro} ${state} ${energy} ${market}${urgent}`;
 }
 
+
+// Parking : pas de pièces, pas de DPE, pas de travaux ; on parle de la forme, de la demande et des charges réduites.
+function describeParking(l, city, nbh, h) {
+  const form = l.title.startsWith('Garage') ? 'garage fermé' : l.title.startsWith('Box') ? 'box' : 'place de parking';
+  const place = nbh?.name ? `dans le quartier ${nbh.name.toLowerCase() === 'centre' ? 'du centre' : nbh.name === 'Péricentre' ? 'péricentre' : 'périphérique'}` : '';
+  const intro = pick([
+    `Dans ${city?.name ?? 'cette ville'}, ${form} de ${l.surfaceSqm} m² ${place}.`,
+    `${form[0].toUpperCase()}${form.slice(1)} de ${l.surfaceSqm} m² à ${city?.name ?? 'proximité'}, ${place}.`,
+  ], h);
+  const base = 'Pas de diagnostic énergétique ni de travaux à prévoir : un ticket d’entrée faible et des charges réduites.';
+  const market = l.rentalTension >= 0.7 ? 'La demande de stationnement est forte : il se reloue vite.'
+    : l.rentalTension >= 0.4 ? 'Demande moyenne : il peut rester vide quelques semaines entre deux locataires.'
+      : 'Demande plus faible dans ce quartier : prévoyez des périodes sans locataire.';
+  const urgent = l.urgentSale ? ' Vente pressée : le vendeur souhaite conclure vite, ce qui explique un prix sous celui du marché.' : '';
+  return `${intro} ${base} ${market}${urgent}`;
+}

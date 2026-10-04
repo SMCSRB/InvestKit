@@ -271,7 +271,8 @@ export const realEstateSaleService = {
     const coinsCost = Math.ceil(Math.round(costEuros * 100) / (EUROS_PER_COIN * 100));
     const balance = await investcoinsRepository.getBalance(userId);
     let reason: string | null = null;
-    if (p.status === 'let') reason = 'Impossible de rénover un logement occupé : attends le départ du locataire.';
+    if (p.property_type === 'parking') reason = 'Un parking n\'a pas de diagnostic énergétique : aucune rénovation énergétique possible.';
+    else if (p.status === 'let') reason = 'Impossible de rénover un logement occupé : attends le départ du locataire.';
     else if (Number(p.pending_works_eur) > 0) reason = 'Paie d\'abord les travaux en attente.';
     else if (improved === energy) reason = `Ce logement est déjà en classe ${energy} : rien à gagner.`;
     let bannedFromYear: number | null = null;
@@ -313,6 +314,7 @@ export const realEstateSaleService = {
       const game = await requireGame(userId, c, true);
       const p = (await c.query('SELECT * FROM re_properties WHERE id = $1 AND game_id = $2 FOR UPDATE', [propertyId, game.id])).rows[0];
       if (!p || p.status === 'sold') throw new RealEstateError('NOT_FOUND', 'Bien introuvable');
+      if (p.property_type === 'parking') throw new RealEstateError('INVALID_INPUT', 'Un parking n\'a pas de diagnostic énergétique : aucune rénovation énergétique possible');
       if (p.status === 'let') throw new RealEstateError('INVALID_INPUT', 'Impossible de rénover un logement occupé : attends le départ du locataire');
       if (Number(p.pending_works_eur) > 0) throw new RealEstateError('INVALID_INPUT', 'Paie d\'abord les travaux en attente');
       const energy = String(p.energy_class).trim() as EnergyClass;

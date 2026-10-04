@@ -7,7 +7,7 @@ import { round2 } from './money';
 // (le prix au m² et le rendement brut sont de simples divisions de ses champs).
 // Les filtres viennent du client : ils sont validés ici (types, bornes, valeurs permises).
 // ─────────────────────────────────────────────────────────────────────────
-export const SEARCH_TYPES = ['studio', 'apartment', 'house'] as const;
+export const SEARCH_TYPES = ['studio', 'apartment', 'house', 'parking'] as const;
 export const SEARCH_CONDITIONS = ['good', 'to_refresh', 'to_renovate'] as const;
 export const SEARCH_ENERGY = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const;
 export const SEARCH_AGES = ['new', 'old'] as const;
@@ -132,7 +132,7 @@ export const matchesSearch = (l: Listing, p: SearchParams, place?: Place): boole
   if (p.maxSurface !== undefined && l.surfaceSqm > p.maxSurface) return false;
   if (p.minRooms !== undefined && l.rooms < p.minRooms) return false;
   if (p.conditions && !p.conditions.includes(l.condition)) return false;
-  if (p.energy && !p.energy.includes(l.energyClass)) return false;
+  if (p.energy && (l.type === 'parking' || !p.energy.includes(l.energyClass))) return false;   // un parking n'a pas de DPE
   if (p.minYieldPct !== undefined && grossYieldPct(l) < p.minYieldPct) return false;
   if (p.minRent !== undefined && l.marketRentMonthly < p.minRent) return false;
   if (p.maxRent !== undefined && l.marketRentMonthly > p.maxRent) return false;
