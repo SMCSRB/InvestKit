@@ -8,6 +8,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 // valeurs aussi disponibles en tableau pour les lecteurs d'écran.
 
 import { fmtInt } from '@/app/lib/format';
+import { stackSeries, stackTotals } from '@/app/lib/stack';
 
 const fmtDefault = fmtInt;
 
@@ -217,6 +218,98 @@ export function LineChart({ series, labels, height = 280, format = fmtDefault, y
               <span className="ik-num" style={{ marginLeft: 'auto' }}>
                 {format(s.data[hover])}
               </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <DataTable caption={ariaLabel || 'Valeurs du graphique'} columns={['Période', ...series.map((s) => s.label)]} rows={labels.map((l, i) => [l, ...series.map((s) => format(s.data[i]))])} />
+    </div>
+  );
+}
+
+/**
+ * Aires empilées dans le temps (par exemple le patrimoine par domaine). Une seule échelle, jamais de double axe.
+ * series: [{ label, color, data: number[] }] ; labels: string[]. Les valeurs négatives ne sont pas dessinées (voir app/lib/stack.js).
+ * Un espace de 2 px sépare les aires ; infobulle au survol, au toucher et au clavier (flèches) ; tableau pour les lecteurs d'écran.
+ */
+export function StackedArea({ series, labels, height = 260, format = fmtDefault, xEvery = 1, ariaLabel }) {
+  const [ref, width] = useWidth();
+  const [hover, setHover] = useState(null);
+  const pad = { l: 52, r: 14, t: 14, b: 28 };
+  const w = Math.max(width, 160);
+  const iw = w - pad.l - pad.r;
+  const ih = height - pad.t - pad.b;
+  const n = labels.length;
+  const stacked = useMemo(() => stackSeries(series, n), [series, n]);
+  const totals = useMemo(() => stackTotals(series, n), [series, n]);
+  const max = Math.max(...totals, 1) * 1.08;
+  const x = (i) => pad.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
+  const y = (v) => pad.t + ih - (v / max) * ih;
+  const ticks = [0, 1, 2, 3, 4].map((k) => (max * k) / 4);
+  const area = (st) => {
+    if (n === 0) return '';
+    const top = st.hi.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(v)}`).join(' ');
+    const bottom = st.lo.map((v, i) => `L${x(n - 1 - i)},${y(st.lo[n - 1 - i])}`).join(' ');
+    return `${top} ${bottom} Z`;
+  };
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const px = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    const i = Math.round(((px - pad.l) / (iw || 1)) * (n - 1));
+    setHover(Math.max(0, Math.min(n - 1, i)));
+  };
+  const onKey = (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); setHover((h) => Math.min(n - 1, (h === null ? -1 : h) + 1)); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); setHover((h) => Math.max(0, (h === null ? n : h) - 1)); }
+    else if (e.key === 'Escape') setHover(null);
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      <Legend items={series.map((s) => ({ label: s.label, color: s.color }))} />
+      {width > 0 && n > 0 && (
+        <svg
+          width={w}
+          height={height}
+          role="img"
+          tabIndex={0}
+          aria-label={ariaLabel || 'Graphique en aires empilées'}
+          onMouseMove={onMove}
+          onTouchMove={onMove}
+          onMouseLeave={() => setHover(null)}
+          onTouchEnd={() => setHover(null)}
+          onKeyDown={onKey}
+          onBlur={() => setHover(null)}
+          style={{ display: 'block', touchAction: 'pan-y' }}
+        >
+          {ticks.map((t, k) => (
+            <g key={k}>
+              <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} stroke="var(--ik-grid)" strokeDasharray={k === 0 ? undefined : '3 5'} />
+              <text x={pad.l - 10} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--ik-text-3)">{format(t)}</text>
+            </g>
+          ))}
+          {labels.map((l, i) => (i % xEvery === 0 ? <text key={i} x={x(i)} y={height - 8} textAnchor="middle" fontSize="11" fill="var(--ik-text-3)">{l}</text> : null))}
+          {stacked.map((st, si) => (
+            <path key={si} d={area(st)} fill={series[si].color} fillOpacity="0.85" stroke="var(--ik-surface-1)" strokeWidth="2" strokeLinejoin="round" style={{ animation: 'ik-fade var(--ik-dur-chart) var(--ik-ease) both' }} />
+          ))}
+          {hover !== null && (
+            <g pointerEvents="none">
+              <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={pad.t + ih} stroke="var(--ik-border-strong)" />
+            </g>
+          )}
+        </svg>
+      )}
+      {hover !== null && width > 0 && (
+        <div
+          role="status"
+          style={{ position: 'absolute', top: 34, left: Math.min(Math.max(x(hover) + 12, 8), w - 178), minWidth: 150, padding: '10px 12px', borderRadius: 12, background: 'var(--ik-surface-2)', border: '1px solid var(--ik-border-strong)', boxShadow: 'var(--ik-shadow-pop)', pointerEvents: 'none', fontSize: 'var(--ik-fs-sm)' }}
+        >
+          <div style={{ color: 'var(--ik-text-3)', marginBottom: 4 }}>{labels[hover]}</div>
+          {series.map((s) => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color }} aria-hidden="true" />
+              <span style={{ color: 'var(--ik-text-2)', fontWeight: 600 }}>{s.label}</span>
+              <span className="ik-num" style={{ marginLeft: 'auto' }}>{format(s.data[hover])}</span>
             </div>
           ))}
         </div>

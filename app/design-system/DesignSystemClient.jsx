@@ -4,7 +4,7 @@ import { useState } from 'react';
 import AppShell, { PageHeader } from '@/app/components/shell/AppShell';
 import Icon, { ICON_NAMES } from '@/app/components/ui/Icon';
 import { Button, Card, CardHead, Coin, Delta, EmptyState, Modal, Segmented, Skeleton, StatCard, Switch, Tabs } from '@/app/components/ui/primitives';
-import { Donut, LineChart, SegmentedBar, Sparkline, StackedBars } from '@/app/components/ui/charts';
+import { Donut, LineChart, SegmentedBar, Sparkline, StackedArea, StackedBars } from '@/app/components/ui/charts';
 import { Reveal } from '@/app/components/ui/motion';
 import { useTheme } from '@/app/context/ThemeContext';
 import { fmtInt } from '@/app/lib/format';
@@ -54,6 +54,14 @@ export default function DesignSystemClient() {
           <Card glow>
             <CardHead title="Évolution de la valeur" icon="chart" actions={<Segmented ariaLabel="Période" value={period} onChange={setPeriod} options={['1S', '1M', '3M', '6M', 'YTD', '1A', 'Tout'].map((v) => ({ value: v, label: v }))} />} />
             <LineChart labels={MONTHS} series={[{ label: 'Actions', color: 'var(--ik-series-1)', data: LINE_A }, { label: 'Obligations', color: 'var(--ik-series-2)', data: LINE_B }]} format={(v) => `${fmt(v)} k`} ariaLabel="Évolution de la valeur par mois (exemple)" />
+          </Card>
+        </Reveal>
+        <Reveal index={2} className="ik-span-2">
+          <Card glow>
+            <CardHead title="Patrimoine par domaine (exemple)" icon="chart" />
+            <div data-testid="stacked-area-demo">
+              <StackedArea labels={MONTHS} series={[{ label: 'Liquidités', color: 'var(--ik-series-1)', data: LINE_A }, { label: 'Titres', color: 'var(--ik-series-2)', data: LINE_B }, { label: 'Crypto', color: 'var(--ik-series-3)', data: LINE_B.map((v) => Math.round(v / 2)) }]} format={(v) => `${fmt(v)} k`} ariaLabel="Patrimoine par domaine au fil des mois (exemple)" />
+            </div>
           </Card>
         </Reveal>
         <Reveal index={1}>

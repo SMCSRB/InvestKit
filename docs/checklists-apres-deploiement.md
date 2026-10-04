@@ -978,3 +978,14 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 3. Avec « Privé » : l'autre compte ne te trouve plus en tapant ton Pseudo#tag, mais te trouve avec ton code ami.
 4. Tes amis et ta guilde te voient toujours normalement.
 5. Rebascule en « Public » : tout redevient visible, rien n'a été perdu.
+
+## PR 6g-G2 — Graphique en aires empilées (démo seulement)
+
+Aucune page du jeu ne change. Après déploiement :
+
+1. Ouvre `/design-system` et descends jusqu'à « Patrimoine par domaine (exemple) » : trois aires empilées avec légende.
+2. Survole (ou touche) le graphique : une infobulle donne les valeurs de la date.
+3. Au clavier : Tab jusqu'au graphique puis flèche droite/gauche.
+4. Sur téléphone (390 px) : pas de défilement horizontal.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
