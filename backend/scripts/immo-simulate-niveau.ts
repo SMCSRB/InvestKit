@@ -40,7 +40,7 @@ const main = async () => {
     const s: LevelScenario = { capital, profile, salary: prof.netMonthlyIncome, livingCharges: prof.livingCharges, months, annualRatePct: rate, insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES, loanFees: loanApplicationFee, age, rentYieldPct: yieldPct };
     const ceiling = maxApprovedPrice(s);        // plafond avec le taux de notaire FORFAITAIRE du jeu ; chaque ville a le sien, avec le notaire de son département (voir ci-dessous)
     console.log(`── ${month} · taux ${rate} % · plafond d'achat avec le notaire forfaitaire du jeu : ${ceiling.toLocaleString('fr-FR')} euros ──`);
-    if (age === 'old') console.log('Notaire : calculé par DÉPARTEMENT (droits de mutation à la date, émoluments, TVA, CSI, frais divers) ; sources et doutes dans docs/frais-notaire-fiche-source.md.');
+    if (age === 'old') console.log('Notaire : calculé par DÉPARTEMENT (droits de mutation à la date, émoluments, TVA, CSI ; aucun forfait de frais divers) ; sources et doutes dans docs/frais-notaire-fiche-source.md.');
     console.log('Zone'.padEnd(22) + 'ventes'.padStart(7) + 'prix m² appart.'.padStart(17) + 'prix m² maison'.padStart(16) + UNIT_KINDS.map((k) => k.id.padStart(9)).join(''));
     console.log('(« ~ » = prix de la ville entière (moins de 5 ventes dans la zone, ou écart de plus de 40 % à la ville) ; sans signe : zone seule (30 ventes ou plus) ou zone et ville mélangées (5 à 29 ventes) ; « - » = pas de prix fiable ; colonnes de droite : le bien est-il accepté par la banque, ✓ ou ✗)');
     let anyHousing = 0; let anyParking = 0; let zonesTotal = 0;
