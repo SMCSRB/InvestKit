@@ -1203,6 +1203,13 @@ Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 0
 
 Ordre de fusion : après la PR 2. Méthode : « Create a merge commit ».
 
+## PR Immobilier réel : fiscalité des revenus fonciers, préparation (PR 6)
+
+Rien à tester sur le site (aucun changement pour les joueurs, aucune migration). **Avant tout branchement, relis les chiffres** (`docs/fiscalite-fonciere-fiche-source.md`, liste de 5 lignes). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
+
+1. `npm --prefix backend run immo:simulate-fiscalite` : le tableau compare micro-foncier et régime réel pour les trois profils. Vérifie qu'il affiche bien le rappel « À RELIRE » et envoie-moi la sortie si un chiffre te surprend.
+
+Ordre de fusion : après la PR 5. Méthode : « Create a merge commit ».
 ## PR Immobilier réel : taxe foncière au taux communal réel, préparation (PR 5)
 
 Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 060** crée deux tables vides). **Avant tout import, lis la page du jeu de données** (`docs/taxe-fonciere-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
