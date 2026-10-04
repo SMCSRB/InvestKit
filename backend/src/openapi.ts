@@ -81,6 +81,7 @@ export const ROUTES: Row[] = [
   ['put', '/dashboard-layout', 'Tableau de bord', 'Choisir un modèle (tous) ou ses propres blocs (Pro) ; validé et enregistré par le serveur'],
   ['get', '/xp/badges', 'Progression', 'Mes badges : catalogue et état, attribués par le serveur (rareté réelle masquée sous 50 joueurs)'],
   ['get', '/xp',  'Progression', 'Mon XP : total, niveau avec titre, progression et XP par domaine (calculés par le serveur)'],
+  ['get', '/wealth/history', 'Tableau de bord', 'Historique de mon patrimoine (gratuit : 30 derniers points ; Pro : tout), décidé par le serveur'],
   ['get', '/trading/assets', 'Bourse / Crypto', 'Actifs disponibles'],
   ['get', '/trading/portfolio', 'Bourse / Crypto', 'Portefeuille virtuel'],
   ['get', '/trading/history', 'Bourse / Crypto', 'Historique d\'un titre (borné à l\'année simulée)'],

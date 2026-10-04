@@ -1014,3 +1014,9 @@ Aucun test à faire sur le site (rien ne change).
 2. Réponds aux 4 questions du chapitre 5 (A à D).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR 6g-G3 — Lecture de l'historique du patrimoine (serveur seulement)
+
+Aucun écran ne change. Test technique après déploiement : `GET /api/v1/wealth/history` avec ton compte gratuit renvoie au plus 30 points et `hiddenPoints` ; avec un compte Pro, tout l'historique.
+
+Ordre de fusion : indépendante (après #133, déjà fusionnée). Méthode : « Create a merge commit ».

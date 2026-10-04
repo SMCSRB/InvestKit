@@ -1,4 +1,6 @@
 import { query } from '../utils/db';
+import { hasProAccess } from '../utils/entitlements';
+import { FREE_HISTORY_POINTS, MAX_HISTORY_POINTS } from '../config/wealthHistoryRules';
 import type { Queryable } from '../repositories/investcoinsRepository';
 
 // Historique du patrimoine (6g, G1) : une ligne par joueur et par jour (UTC), écrite par le serveur à partir du portefeuille qu'il vient de calculer.
@@ -46,5 +48,18 @@ export const wealthHistoryService = {
       day: new Date(r.day).toISOString().slice(0, 10), liquidity: Number(r.liquidity), stocks: Number(r.stocks), crypto: Number(r.crypto),
       realEstateNet: Number(r.real_estate_net), debts: Number(r.debts), financial: Number(r.financial), total: Number(r.total), gameClock: r.game_clock,
     }));
+  },
+
+  // Historique tel que le joueur a le droit de le voir : le droit Pro est lu en base ; un compte gratuit ne reçoit que les points récents,
+  // avec le nombre de points masqués pour pouvoir expliquer pourquoi (jamais de pression : simple information).
+  async forPlayer(userId: string, limitRaw?: unknown) {
+    const asked = limitRaw === undefined || limitRaw === '' ? MAX_HISTORY_POINTS : Number(limitRaw);
+    if (!Number.isInteger(asked) || asked < 1) throw new Error('INVALID_LIMIT');
+    const user = (await query('SELECT subscription_tier, pro_override FROM users WHERE id = $1', [userId])).rows[0];
+    const pro = !!user && hasProAccess(user);
+    const total = Number((await query('SELECT COUNT(*)::int AS n FROM wealth_snapshots WHERE user_id = $1', [userId])).rows[0].n);
+    const cap = pro ? MAX_HISTORY_POINTS : FREE_HISTORY_POINTS;
+    const points = await this.series(userId, Math.min(asked, cap));
+    return { points, total, hiddenPoints: pro ? 0 : Math.max(0, total - FREE_HISTORY_POINTS), lockedForFree: !pro, freeLimit: FREE_HISTORY_POINTS };
   },
 };
