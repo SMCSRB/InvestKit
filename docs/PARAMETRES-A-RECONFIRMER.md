@@ -189,3 +189,6 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 
 ## Historique du patrimoine : lecture 30 points / Pro (valeur de jeu, 6g-G3)
 - Nombre de points visibles par un compte gratuit (30) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/wealthHistoryRules.ts`), choix d'équilibrage gratuit / Pro.
+
+## Périodes jouées (6c, accès aux modes)
+- Nombre de mois d'Histoire qui débloquent la période de départ pour le Bac à sable gratuit (12) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`backend/src/config/clockRules.ts`, `PERIOD_UNLOCK_MONTHS`).

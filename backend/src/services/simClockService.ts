@@ -9,6 +9,7 @@ import { source } from './realEstateService';
 import { virtualPortfolioRepository } from '../repositories/virtualPortfolioRepository';
 import { CLOCK_STEPS, ClockStep, isClockStep, parseDay, dayString, addStepMs, addMonthsMs, chunkEnds, yearOf, monthIndex, lastPlayableDay, DAY_MS } from '../engine/clock';
 import { MAX_ADVANCE_DAYS, MAX_ADVANCE_MONTHS } from '../config/clockRules';
+import { modeAccessService } from './modeAccessService';
 
 // Horloge de jeu unique (6c). UNE date par joueur (mode Histoire) ; les trois domaines (Bourse, Crypto, Immobilier) suivent cette date.
 // Le serveur décide de tout : le navigateur n'envoie jamais de date, seulement un pas (jour, semaine, mois, trimestre, année).
@@ -170,6 +171,7 @@ export const simClockService = {
           const why = importantReason(recap);
           if (why && t < target) { recap.stopped = true; recap.stopReason = why; break; }
         }
+        await modeAccessService.recordProgress(userId, clock.startDay, recap.toDay).catch((e) => console.error('Périodes jouées :', e instanceof Error ? e.message : e));   // débloque le Bac à sable pour un compte gratuit
         return { ...recap, currentDay: recap.toDay };
       } finally {
         await lock.query('SELECT pg_advisory_unlock(hashtextextended($1, 0))', [`clock:${userId}`]);
