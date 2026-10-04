@@ -1212,11 +1212,11 @@ Rien à tester sur le site (aucun changement pour les joueurs, aucune migration)
 Ordre de fusion : après la PR 5. Méthode : « Create a merge commit ».
 ## PR Immobilier réel : taxe foncière au taux communal réel, préparation (PR 5)
 
-Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 060** crée deux tables vides). **Avant tout import, lis la page du jeu de données** (`docs/taxe-fonciere-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
+Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 060** crée deux tables vides ; la **migration 061** (PR suivante) remplace la source par « terralyse » et ajoute les colonnes communal, intercommunal et TEOM). **Avant tout import, lis la page du jeu de données** (`docs/taxe-fonciere-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
 
-1. Télécharge **toi-même** le CSV des taux de taxe foncière dans `backend/data/taxe-fonciere-brut/`.
+1. Télécharge **toi-même** le CSV de Terralyse (taux de taxe foncière par commune) dans `backend/data/taxe-fonciere-brut/`.
 2. `npm --prefix backend run immo:import-taxe-fonciere -- --file backend/data/taxe-fonciere-brut/<fichier>.csv --check` : si le format n'est pas celui attendu, le script refuse et affiche les colonnes trouvées (envoie-les-moi) ; sinon compare le taux de chaque ville avec la page et envoie-moi le rapport.
-3. Sans `--check` : écrit `backend/data/taxe-fonciere-dgfip.json`. Puis `npm --prefix backend run immo:load-taxe-fonciere -- --file backend/data/taxe-fonciere-dgfip.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
+3. Sans `--check` : écrit `backend/data/taxe-fonciere-terralyse.json`. Puis `npm --prefix backend run immo:load-taxe-fonciere -- --file backend/data/taxe-fonciere-terralyse.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
 
 Ordre de fusion : après la PR 4. Méthode : « Create a merge commit ».
 

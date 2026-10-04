@@ -1,4 +1,4 @@
-// Taxe foncière RÉELLE (DGFiP, REI) : lecture stricte du fichier, aucun futur, base cadastrale estimée et signalée, garde « le moteur ne le lit pas », scripts, base. Les valeurs ci-dessous sont des VALEURS FABRIQUÉES de test.
+// Taxe foncière RÉELLE (Terralyse, data.gouv.fr) : lecture stricte du fichier, aucun futur, base cadastrale estimée et signalée, garde « le moteur ne le lit pas », scripts, base. Les valeurs ci-dessous sont des VALEURS FABRIQUÉES de test.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createHash } from 'crypto';
 import { execFileSync } from 'child_process';
@@ -15,25 +15,36 @@ import { PROPERTY_TAX_ENABLED, CADASTRAL_BASE_NET_EUR_PER_SQM, TAX_RATE_USABLE_F
 import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
 import { listingDataSources, GAME_VALUE_FIELDS } from '../src/engine/immo/dataSources';
 
-// Fichier fabriqué : 12 communes × 2022-2024, taux 20 + (rang de la commune) + 1 par année, virgule décimale.
-const rateOf = (i: number, year: number): number => 20 + i + (year - 2022);
-const csv = (opts: { sep?: string; skip?: string; header?: string; extra?: string[] } = {}): string => {
+// Fichier fabriqué : 12 communes × 2022-2024. Taux communal 15 + rang + année − 2022 ; intercommunal 5 + rang ; TEOM 8 ; virgule décimale. Paris (rang 0) : taux intercommunal VIDE.
+const communalOf = (i: number, year: number): number => 15 + i + (year - 2022);
+const interOf = (i: number): number => 5 + i;
+const csv = (opts: { sep?: string; skip?: string; header?: string; extra?: string[]; noTeom?: boolean } = {}): string => {
   const sep = opts.sep ?? ';';
-  const lines = [opts.header ?? `Code commune${sep}Libellé${sep}Année${sep}Taux global TFB`];
-  TAX_COMMUNES.forEach((c, i) => { if (c === opts.skip) return; for (const y of [2022, 2023, 2024]) lines.push(`${c}${sep}Ville ${i}${sep}${y}${sep}${String(rateOf(i, y)).replace('.', ',')} %`); });
-  lines.push(`99999${sep}Hors jeu${sep}2022${sep}30`);        // commune hors des 12 villes : ignorée
+  const lines = [opts.header ?? `Code commune${sep}Libellé${sep}Année${sep}Taux commune TFB${sep}Taux intercommunal TFB${sep}Taux TEOM`];
+  TAX_COMMUNES.forEach((c, i) => { if (c === opts.skip) return; for (const y of [2022, 2023, 2024]) lines.push(`${c}${sep}Ville ${i}${sep}${y}${sep}${String(communalOf(i, y)).replace('.', ',')} %${sep}${i === 0 ? '' : String(interOf(i)).replace('.', ',')}${sep}${opts.noTeom ? '' : '8,5'}`); });
+  lines.push(`99999${sep}Hors jeu${sep}2022${sep}30${sep}2${sep}1`);        // commune hors des 12 villes : ignorée
   return [...lines, ...(opts.extra ?? [])].join('\n') + '\n';
 };
+const sorted = [...TAX_COMMUNES].sort();
 
-describe('lecture du fichier de la DGFiP', () => {
-  it('colonnes reconnues par leur nom (accents, casse, BOM), virgule décimale et « % » acceptés, communes hors jeu ignorées, résultat trié', () => {
-    const r = parseReiCsv('﻿' + csv());
+describe('lecture du fichier (Terralyse)', () => {
+  it('colonnes reconnues par leur nom (accents, casse, BOM), virgule décimale et « % » acceptés, communes hors jeu ignorées, résultat trié ; taux global = communal + intercommunal, TEOM à part', () => {
+    const r = parseReiCsv('\ufeff' + csv());
     expect(r.ok).toBe(true);
     expect(r.rows).toHaveLength(12 * 3);
-    expect(r.rows[0]).toEqual({ commune: [...TAX_COMMUNES].sort()[0], year: 2022, ratePct: rateOf(TAX_COMMUNES.indexOf([...TAX_COMMUNES].sort()[0]), 2022) });
+    const i = TAX_COMMUNES.indexOf(sorted[0]);
+    expect(r.rows[0]).toEqual({ commune: sorted[0], year: 2022, communalPct: communalOf(i, 2022), intercommunalPct: i === 0 ? 0 : interOf(i), ratePct: communalOf(i, 2022) + (i === 0 ? 0 : interOf(i)), teomPct: 8.5 });
+    expect(r.rows.every((x) => x.ratePct === Math.round((x.communalPct + x.intercommunalPct) * 10000) / 10000)).toBe(true);
+    expect(r.rows.every((x) => x.ratePct !== x.communalPct + x.intercommunalPct + (x.teomPct ?? 0) || x.teomPct === 0)).toBe(true);   // la TEOM n'entre jamais dans le global
+    expect(r.communesInFile).toBe(13);
     expect(normalizeColumn(' Année ')).toBe('annee');
     expect(parseReiCsv(csv({ sep: ',' }).replace(/ %/g, '')).ok).toBe(true);
-    expect(parseReiCsv('Code commune;Année;Taux global TFB\n' + TAX_COMMUNES.map((c) => `${c};2024;21,5 %`).join('\n')).rows[0].ratePct).toBe(21.5);
+    expect(parseReiCsv(csv({ noTeom: true })).rows[0].teomPct).toBeNull();
+  });
+  it('taux intercommunal vide (ex. Paris) : compté 0 ET signalé', () => {
+    const r = parseReiCsv(csv());
+    expect(r.emptyIntercommunal).toEqual(TAX_COMMUNES.slice(0, 1).flatMap((c) => [2022, 2023, 2024].map((y) => `${c}|${y}`)).sort());
+    expect(r.rows.find((x) => x.commune === TAX_COMMUNES[0])?.intercommunalPct).toBe(0);
   });
   it('Paris, Lyon et Marseille : le taux est celui de la COMMUNE entière (pas de l\'arrondissement)', () => {
     expect(taxCommuneOf('paris')).toBe('75056'); expect(taxCommuneOf('lyon')).toBe('69123'); expect(taxCommuneOf('marseille')).toBe('13055');
@@ -41,24 +52,27 @@ describe('lecture du fichier de la DGFiP', () => {
     expect(TAX_COMMUNES).toHaveLength(DVF_CITIES.length);
   });
   it('refusé en entier, jamais deviné : colonne absente (les colonnes trouvées sont listées), commune absente, taux illisible, hors bornes, deux taux pour une même année', () => {
-    const noRate = parseReiCsv(csv({ header: 'Code commune;Libellé;Année;Autre colonne' }));
+    const noRate = parseReiCsv(csv({ header: 'Code commune;Libellé;Année;Taux commune TFB;Autre;Taux TEOM' }));
     expect(noRate.ok).toBe(false); expect(noRate.rows).toEqual([]);
-    expect(noRate.errors.join()).toMatch(/taux global de taxe foncière bâtie/); expect(noRate.errors.join()).toMatch(/Colonnes trouvées : code_commune \| libelle \| annee \| autre_colonne/);
+    expect(noRate.errors.join()).toMatch(/taux intercommunal/); expect(noRate.errors.join()).toMatch(/Colonnes trouvées : code_commune \| libelle \| annee \| taux_commune_tfb \| autre \| taux_teom/);
     expect(parseReiCsv(csv({ skip: '21231' })).errors.join()).toMatch(/absente\(s\) du fichier : 21231/);
-    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2024;abc'] })).errors.join()).toMatch(/taux illisible/);
-    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2025;999'] })).errors.join()).toMatch(/hors bornes/);
-    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2024;77'] })).errors.join()).toMatch(/deux taux différents/);
+    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2024;abc;3;8'] })).errors.join()).toMatch(/taux communal illisible/);
+    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2024;20;xyz;8'] })).errors.join()).toMatch(/taux intercommunal illisible/);
+    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2025;999;3;8'] })).errors.join()).toMatch(/hors bornes/);
+    expect(parseReiCsv(csv({ extra: ['21231;Dijon;2024;77;3;8'] })).errors.join()).toMatch(/deux taux différents/);
     expect(parseReiCsv('').ok).toBe(false);
   });
   it('fichier JSON préparé : lecture stricte', () => {
-    const rows = parseReiCsv(csv()).rows.map((r) => [r.commune, r.year, r.ratePct]);
-    const good = { source: 'DGFiP : taux', rows };
+    const rows = parseReiCsv(csv()).rows.map((r) => [r.commune, r.year, r.ratePct, r.communalPct, r.intercommunalPct, r.teomPct]);
+    const good = { source: 'Terralyse : taux', rows };
     expect(parseTaxRateFile(good).ok).toBe(true);
     expect(parseTaxRateFile({ ...good, source: 'autre' }).ok).toBe(false);
     expect(parseTaxRateFile({ ...good, rows: [...rows, rows[0]] }).errors.join()).toMatch(/doublon/);
-    expect(parseTaxRateFile({ ...good, rows: [['00000', 2022, 30]] }).errors.join()).toMatch(/commune inconnue/);
-    expect(parseTaxRateFile({ ...good, rows: [[rows[0][0], 2022, 0]] }).errors.join()).toMatch(/taux invalide/);
-    expect(parseTaxRateFile({ source: 'DGFiP', rows: [] }).ok).toBe(false);
+    expect(parseTaxRateFile({ ...good, rows: [['00000', 2022, 30, 20, 10, null]] }).errors.join()).toMatch(/commune inconnue/);
+    expect(parseTaxRateFile({ ...good, rows: [[rows[0][0], 2022, 0, 0, 0, null]] }).errors.join()).toMatch(/taux invalide/);
+    expect(parseTaxRateFile({ ...good, rows: [[rows[0][0], 2022, 30, 20, 5, null]] }).errors.join()).toMatch(/communal \+ intercommunal/);
+    expect(parseTaxRateFile({ ...good, rows: [[rows[0][0], 2022, 30, 20, 10, 99]] }).errors.join()).toMatch(/TEOM invalide/);
+    expect(parseTaxRateFile({ source: 'Terralyse', rows: [] }).ok).toBe(false);
   });
 });
 
@@ -106,7 +120,7 @@ describe('scripts immo:import-taxe-fonciere (fichier fabriqué)', () => {
     const out = path.join(dir, 'taux.json');
     const run = (...a: string[]) => execFileSync('npx', ['ts-node', 'scripts/immo-import-taxe-fonciere.ts', '--file', f, ...a], { cwd, encoding: 'utf8', stdio: 'pipe' });
     const check = run('--check', '--out', out);
-    expect(check).toContain('36 taux retenus'); expect(check).toContain('base ESTIMÉE'); expect(check).toContain('Dijon');
+    expect(check).toContain('36 taux retenus'); expect(check).toContain('13 communes dans le fichier'); expect(check).toContain('base ESTIMÉE'); expect(check).toContain('Dijon'); expect(check).toContain('TEOM 8.5 %'); expect(check).toMatch(/taux intercommunal VIDE.*75056\|2022/);
     expect(existsSync(out)).toBe(false);
     expect(run('--out', out)).toContain('Écrit :');
     const j = JSON.parse(readFileSync(out, 'utf8'));
@@ -121,10 +135,10 @@ describe('scripts immo:import-taxe-fonciere (fichier fabriqué)', () => {
   }, 120_000);
 });
 
-describe.skipIf(!hasDb)('en base (source « dgfip-rei »)', () => {
+describe.skipIf(!hasDb)('en base (source « terralyse »)', () => {
   beforeAll(async () => { await setupDb(); await query('TRUNCATE immo_property_tax_rates, immo_property_tax_imports CASCADE'); }, 60_000);
   afterAll(teardownDb);
-  const rows = parseReiCsv(csv()).rows; const file = { source: 'DGFiP : taux', rows: rows.map((r) => [r.commune, r.year, r.ratePct]) };
+  const rows = parseReiCsv(csv()).rows; const file = { source: 'Terralyse : taux', rows: rows.map((r) => [r.commune, r.year, r.ratePct, r.communalPct, r.intercommunalPct, r.teomPct]) };
   const sum = (o: unknown) => createHash('sha256').update(JSON.stringify(o)).digest('hex');
   it('import rejouable, aucun futur, aucune donnée personnelle dans les tables', async () => {
     const parsed = parseTaxRateFile(file);
@@ -135,7 +149,10 @@ describe.skipIf(!hasDb)('en base (source « dgfip-rei »)', () => {
     expect((await propertyTaxService.rateAt('21231', '2023-12-01'))?.year).toBe(2023);
     expect((await propertyTaxService.series('21231')).map((p) => p.year)).toEqual([2022, 2023, 2024]);
     const cols = (await query(`SELECT column_name FROM information_schema.columns WHERE table_name IN ('immo_property_tax_rates', 'immo_property_tax_imports')`)).rows.map((r) => r.column_name as string);
-    expect(cols.sort()).toEqual(['checksum', 'commune_code', 'first_year', 'id', 'imported_at', 'import_id', 'last_year', 'rate_pct', 'row_count', 'source', 'year'].sort());
+    expect(cols.sort()).toEqual(['checksum', 'commune_code', 'communal_pct', 'first_year', 'id', 'imported_at', 'import_id', 'intercommunal_pct', 'last_year', 'rate_pct', 'row_count', 'source', 'teom_pct', 'year'].sort());
+    const dijon = (await query("SELECT rate_pct, communal_pct, intercommunal_pct, teom_pct FROM immo_property_tax_rates WHERE commune_code = '21231' AND year = 2023")).rows[0];
+    expect([Number(dijon.communal_pct) + Number(dijon.intercommunal_pct), Number(dijon.rate_pct), Number(dijon.teom_pct)]).toEqual([Number(dijon.rate_pct), Number(dijon.rate_pct), 8.5]);   // global = communal + intercommunal, TEOM à part
+    expect((await query('SELECT source FROM immo_property_tax_imports LIMIT 1')).rows[0].source).toBe('terralyse');
   });
   it('un fichier refusé n\'importe rien', async () => {
     await expect(propertyTaxService.importRates(parseTaxRateFile({ source: 'autre', rows: [] }), 'x')).rejects.toThrow(/non validé/);
