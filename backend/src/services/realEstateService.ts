@@ -6,10 +6,10 @@ import { getBuyAccess } from '../utils/entitlements';
 import { getRealEstateDataSource, Listing } from '../data/realEstate';
 import {
   BANK_RULES, NOTARY_RULE, STARTING_PROFILES, LOAN_INSURANCE_RATE_PCT, SUGGESTED_DOWN_PAYMENT_PCT,
-  loanApplicationFee, expertiseCostEuros, RENOVATION_RULES,
+  loanApplicationFee, expertiseCostEuros, RENOVATION_RULES, STANDARD_LOAN_MONTHS,
 } from '../config/immoRules';
 import { EUROS_PER_COIN } from '../config/economy';
-import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees } from '../engine/immo';
+import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees, standardScenario, ScenarioContext } from '../engine/immo';
 import { ownCoins, spendableCoins, monthlyInstalmentCoins } from './bankService';
 import { grantFirstInvestment } from './firstStepsService';
 
@@ -62,13 +62,24 @@ const checkInt = (v: unknown, name: string, min: number, max: number): number =>
 };
 
 // Annonce + champs dérivés pour l'affichage (aucun nouveau chiffre : divisions des champs de l'annonce).
-export const decorateListing = (l: Listing) => ({
-  ...l,
-  pricePerSqm: pricePerSqm(l),
-  grossYieldPct: grossYieldPct(l),
-  priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
-  needsWorks: needsWorks(l),
+// Avec un contexte de scénario (taux de l'année, règles de la banque), l'annonce porte aussi son rendement net et son flux mensuel : voir engine/immo/standardScenario.ts
+// (calcul pur, valable pour n'importe quelle source de catalogue).
+export const scenarioContext = async (year: number): Promise<ScenarioContext> => ({
+  annualRatePct: await source().getLoanRatePct(year, STANDARD_LOAN_MONTHS), standardMonths: STANDARD_LOAN_MONTHS,
+  insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES,
 });
+
+export const decorateListing = (l: Listing, ctx?: ScenarioContext) => {
+  const scenario = ctx ? standardScenario(l, ctx) : null;
+  return {
+    ...l,
+    pricePerSqm: pricePerSqm(l),
+    grossYieldPct: grossYieldPct(l),
+    priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
+    needsWorks: needsWorks(l),
+    ...(scenario ? { netYieldPct: scenario.netYieldPct, monthlyCashFlow: scenario.monthlyCashFlow, scenario } : {}),
+  };
+};
 
 // Rendements estimés d'une annonce AVANT crédit (loyer de marché, vacance attendue, charges du catalogue, frais de notaire) :
 // uniquement le moteur existant (computeIndicators), aucun nouveau calcul.
@@ -276,7 +287,8 @@ export const realEstateService = {
     const places = Object.fromEntries(citiesFull.map((c) => [c.id, { cityName: c.name, region: c.region }]));
     const cities = citiesFull.map((c) => ({ id: c.id, name: c.name, region: c.region, tier: c.tier, description: c.description, tenseZone: c.tenseZone }));
     const found = searchListings(available, params, places);
-    return { year: game.simulated_year, cities, total: available.length, count: found.length, eurosPerCoin: EUROS_PER_COIN, listings: found.map(decorateListing) };
+    const ctx = await scenarioContext(game.simulated_year);
+    return { year: game.simulated_year, cities, total: available.length, count: found.length, eurosPerCoin: EUROS_PER_COIN, listings: found.map((l) => decorateListing(l, ctx)) };
   },
 
   async getListingDetail(userId: string, listingId: unknown) {
@@ -288,7 +300,7 @@ export const realEstateService = {
     ]);
     const exp = await query('SELECT real_works, hidden_defects FROM re_expertises WHERE game_id = $1 AND listing_id = $2 AND year = $3', [game.id, id, game.simulated_year]);
     return {
-      listing: decorateListing(listing), economics: listingEconomics(listing), city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
+      listing: decorateListing(listing, await scenarioContext(game.simulated_year)), economics: listingEconomics(listing), city, market, neighborhood: nbhs.find((n) => n.id === listing.neighborhoodId) ?? null,
       suggestedDownPaymentCoins: Math.ceil((listing.price * SUGGESTED_DOWN_PAYMENT_PCT) / 100 / EUROS_PER_COIN),
       expertiseCostCoins: coinsFor(expertiseCostEuros(listing.price)),
       expertise: exp.rows[0] ? { realWorks: Number(exp.rows[0].real_works), hiddenDefects: exp.rows[0].hidden_defects } : null,

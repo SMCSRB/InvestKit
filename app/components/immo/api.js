@@ -26,6 +26,8 @@ export const eur = (n) => createElement(Fragment, null, fixed0(n), ' ', createEl
 export const eur2 = (n) => createElement(Fragment, null, fixed2(n), ' ', createElement(Coin));
 export const eurText = (n) => `${fixed0(n)} InvestCoins`;
 export const eurText2 = (n) => `${fixed2(n)} InvestCoins`;
+// Flux mensuel : signe explicite (+ ou −), pour qu'un négatif se voie comme tel.
+export const signedEur = (n) => createElement(Fragment, null, Number(n) > 0 ? '+' : '', fixed0(n), ' ', createElement(Coin));
 export const pct = (n, d = 1) => `${Number(n ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d })} %`;
 const coinNumber = (n) => Math.round(Number(n ?? 0)).toLocaleString('fr-FR');
 // Montant en InvestCoins : élément avec l'icône de pièce (à placer dans du JSX) ; coinsText pour une chaîne (info-bulle, message).

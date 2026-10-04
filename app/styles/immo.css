@@ -470,3 +470,4 @@
 .rp-explain { margin-top: 8px; font-size: var(--ik-fs-sm); }
 .rp-explain summary { cursor: pointer; font-weight: 600; }
 .rp-explain p { margin: 6px 0 0; }
+.rp-card__stat--net { flex-wrap: wrap; gap: 4px 8px; }

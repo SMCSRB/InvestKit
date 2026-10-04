@@ -6,7 +6,7 @@ import { Button, Card, Modal, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { viewsFor } from './art';
 import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
-import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct, eurText } from './api';
+import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct, eurText, signedEur } from './api';
 import Coin from '@/app/components/ui/Coin';
 import Link from 'next/link';
 
@@ -245,8 +245,20 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
             <div className="rp-kpis">
               <div><span>Loyer estimé</span><strong>{eur(l.marketRentMonthly)}/mois</strong></div>
               <div><span>Rendement brut<HelpTip term="rendement-brut" /></span><strong>{pct(l.grossYieldPct)}</strong><small>loyer × 12 ÷ prix</small></div>
-              <div><span>Rendement net estimé</span><strong>{ec.netYieldPct === null ? '—' : pct(ec.netYieldPct)}</strong><small>après vacance, charges et frais de notaire</small></div>
+              <div data-testid="sheet-net"><span>Rendement net estimé<HelpTip term="rendement-net" label="Pourquoi le net est plus bas que le brut" /></span><strong data-testid="sheet-net-yield">{ec.netYieldPct === null ? '—' : pct(ec.netYieldPct)}</strong><small>après vacance, charges et frais de notaire</small></div>
+              {l.scenario && (
+                <div data-testid="sheet-flow"><span>Flux mensuel estimé<HelpTip term="cash-flow" /></span>
+                  <strong className={l.scenario.monthlyCashFlow < 0 ? 'ik-down' : 'ik-up'} data-testid="sheet-monthly-flow">{signedEur(l.scenario.monthlyCashFlow)}/mois</strong>
+                  <small>loyer {eur(l.scenario.collectedMonthlyRent)} − charges {eur(l.scenario.monthlyCharges)} − mensualité {eur(l.scenario.monthlyLoanPayment)}</small>
+                </div>
+              )}
             </div>
+            {l.scenario && (
+              <p className="ik-muted" data-testid="sheet-scenario-note" style={{ margin: '8px 0 0', fontSize: 'var(--ik-fs-sm)' }}>
+                Le flux mensuel suppose l’apport minimal de la banque ({eur(l.scenario.downPayment)}) et un prêt de {Math.round(l.scenario.loanMonths / 12)} ans à {pct(l.scenario.annualRatePct, 2)}, assurance comprise. C’est un repère : ta simulation d’achat ci-dessous donne tes vrais chiffres.
+                {l.scenario.netYieldPct != null && l.grossYieldPct != null && l.scenario.netYieldPct < l.grossYieldPct && <> Le net est plus bas que le brut ({pct(l.grossYieldPct)}) parce que la vacance, les charges ({l.scenario.chargesRatioPct != null ? pct(l.scenario.chargesRatioPct, 0) : '—'} des loyers encaissés) et les frais d’achat sont retirés.</>}
+              </p>
+            )}
             {advanced && (
               <dl className="rp-facts rp-facts--adv">
                 <Row label="Coût total (prix + notaire + travaux annoncés)">{eur(ec.totalInvestment)}</Row>

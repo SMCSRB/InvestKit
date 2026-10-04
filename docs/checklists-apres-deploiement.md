@@ -947,3 +947,10 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 2. Fiche d'un bien « à rénover » : « Expertise avant achat » montre des travaux réels au plus égaux à 55 % de la valeur rénovée.
 3. Achète un bien « à rénover » sans expertise, quand il a des défauts cachés (Ternelle) : après l'achat, la valeur de ton bien est entre « non rénové » et « rénové », selon la part des travaux déjà payée. Paie les travaux restants : le bien passe en bon état et sa valeur monte.
 4. Tableau de bord, carte Immobilier : le « Résultat si tu revendais aujourd'hui » de ce cas est moins négatif qu'avant (environ −107 % au lieu de −285 % pour le cas de Ternelle de mes essais).
+
+## Immobilier : rendement net et flux mensuel (carte et fiche)
+1. Immobilier, Chercher : chaque carte d'annonce affiche « Net X % » et « flux ±N /mois » (vert si positif, rouge si négatif), avec un « ? » : « Pourquoi le net est plus bas que le brut ».
+2. Fiche d'un bien, « Loyer et rentabilité » : le rendement net a son « ? », et un nouveau bloc « Flux mensuel estimé » montre loyer − charges − mensualité. Une phrase précise l'hypothèse : apport minimal de la banque, prêt de 25 ans au taux de l'année, assurance comprise.
+3. Compare avec ta simulation d'achat plus bas dans la fiche : tes vrais chiffres dépendent de ton apport et de ta durée ; le flux de la carte n'est qu'un repère.
+4. Favoris : mêmes chiffres que dans la recherche.
+5. Rien n'a changé dans les prix, loyers et charges du catalogue (décision : le catalogue actuel sera remplacé par de vraies villes).

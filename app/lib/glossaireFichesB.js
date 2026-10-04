@@ -10,6 +10,8 @@ export const FICHES_B = {
     vs: [['mensualite', "La mensualité est ce que tu paies à la banque."], ['charges-recuperables', "Les charges récupérables s'ajoutent au loyer sans être un revenu."]] },
   "rendement-brut": { ex: "Un bien à 100 000 € qui rapporte 6 000 € de loyers par an a un rendement brut de 6 %.",
     vs: [['cash-flow', "Le rendement brut oublie crédit, charges et impôts."], ['rendement-metropole', "Le rendement est plus faible dans les grandes villes, où les prix sont plus hauts."]] },
+  "rendement-net": { ex: "Un bien à 100 000 € loué 6 000 € par an affiche 6 % brut. Après 600 € de vacance et 1 500 € de charges, il reste 3 900 € : environ 3,6 % net sur un coût total de 107 500 € avec les frais de notaire.",
+    vs: [['rendement-brut', "Le brut ne compte que le loyer ; le net retire vacance, charges et frais d'achat."], ['cash-flow', "Le flux mensuel retire en plus la mensualité du prêt."]] },
   "rendement-metropole": { ex: "À Paris, un bien se paie très cher pour un loyer qui ne suit pas : le rendement brut y est souvent plus bas qu'en petite ville.",
     vs: [['rendement-brut', "Le rendement brut est le calcul ; ici, on explique pourquoi il varie."]] },
   vacance: { ex: "Si ton bien reste vide 2 mois sur 12, tu perds 2 loyers : le rendement réel baisse d'un sixième.",

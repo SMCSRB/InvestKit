@@ -7,7 +7,7 @@ import HelpTip from '@/app/components/HelpTip';
 import { LazyListingArt } from './art';
 import ListingMap from './ListingMap';
 import { Dpe, Heart, Pill, Portal } from './bits';
-import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct, eurText } from './api';
+import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct, eurText, signedEur } from './api';
 import Coin from '@/app/components/ui/Coin';
 
 export const DEFAULT_SEARCH = { filters: {}, view: 'grid', sort: 'relevance', favOnly: false };
@@ -55,6 +55,13 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
           {rent
             ? <span className="rp-card__stat"><Icon name="ruler" size={14} />{Number(l.rentPerSqm).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} InvestCoins/m²/mois</span>
             : <span className="rp-card__stat rp-card__stat--yield" title="Loyer annuel estimé ÷ prix : avant charges et frais"><Icon name="trendingUp" size={14} />Rendement brut estimé {pct(l.grossYieldPct)}</span>}
+          {!rent && l.netYieldPct != null && (
+            <span className="rp-card__stat rp-card__stat--net" data-testid="card-net">
+              <span data-testid="card-net-yield">Net {pct(l.netYieldPct)}</span>
+              <span className={l.monthlyCashFlow < 0 ? 'ik-down' : 'ik-up'} data-testid="card-monthly-flow" title="Loyer encaissé moins charges moins mensualité (apport minimal, prêt de référence)">flux {signedEur(l.monthlyCashFlow)}/mois</span>
+              <HelpTip term="rendement-net" label="Pourquoi le net est plus bas que le brut" />
+            </span>
+          )}
           <span className="rp-card__stat">{rent ? `${AGE_LABEL[l.age]} · ${CONDITION_LABEL[l.condition]}` : `${eurText(l.pricePerSqm)}/m² · ${CONDITION_LABEL[l.condition]}`}</span>
         </div>
       </div>
