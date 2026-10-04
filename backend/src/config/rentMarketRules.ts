@@ -16,6 +16,9 @@ export const rentSnapshotDate = (vintage: number): string => `${vintage}-${RENT_
 // Avant ce 3e trimestre, c'est donc une approximation, jamais une valeur inventée. Entre deux millésimes : loyer constant (un seul changement par an).
 export const rentFirstUsableDate = (firstVintage: number): string => `${firstVintage}-01-01`;
 export const rentApproximationText = (vintage: number): string => `Estimation ANIL ${vintage}, 3e trimestre (approximation avant cette date)`;
+// Avec l'IRL réel importé, le loyer d'avant le 3e trimestre est recalé sur l'évolution réelle de l'IRL entre la date de jeu et le 3e trimestre du millésime ; la mention le dit.
+export const rentRecalibrationText = (vintage: number, changePct: number): string =>
+  `${rentApproximationText(vintage)}. Loyer recalé sur l'évolution réelle de l'IRL entre la date de jeu et le 3e trimestre ${vintage} (${changePct > 0 ? '+' : changePct < 0 ? '−' : ''}${Math.abs(changePct).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %).`;
 
 // Bornes de plausibilité d'un loyer d'annonce (€/m²/mois, charges comprises) : au-delà, la ligne est refusée (jamais corrigée).
 export const RENT_BOUNDS = { minPerM2: 3, maxPerM2: 80 } as const;

@@ -60,6 +60,8 @@ e2e/rapport/
 backend/data/dvf-brut/
 backend/data/loyers-brut/
 backend/data/loyers-anil-*.json
+backend/data/irl-brut/
+backend/data/irl-insee.json
 backend/data/dvf-brut-*/
 backend/data/dvf-zones-rapport.txt
 backend/data/dvf-marche.json

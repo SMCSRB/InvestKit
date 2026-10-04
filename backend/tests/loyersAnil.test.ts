@@ -13,6 +13,9 @@ import { allCodes } from '../src/data/realEstate/dvf/cities';
 import { rentMarketService, communeOfZone, RENT_VIEW_KEYS } from '../src/services/rentMarketService';
 import { realGrossYield } from '../src/engine/immo/rentYield';
 import { rentGroupOf, rentSnapshotDate, RENT_MARKET_ENABLED, RENT_ATTRIBUTION } from '../src/config/rentMarketRules';
+import { irlService } from '../src/services/irlService';
+import { parseIrlFile } from '../src/data/realEstate/irl/irlFile';
+import { recalibrate, changePct } from '../src/engine/immo/irl';
 
 const WANTED = new Set(allCodes());
 const HEAD = '"id_zone";"INSEE_C";"LIBGEO";"EPCI";"DEP";"REG";"loypredm2";"lwr.IPm2";"upr.IPm2";"TYPPRED";"nbobs_com";"nbobs_mail";"R2_adj"';
@@ -102,7 +105,7 @@ describe('fichier de loyers préparé', () => {
 });
 
 describe.skipIf(!hasDb)('en base (source « anil »)', () => {
-  beforeAll(async () => { await setupDb(); await query('TRUNCATE immo_rent_market, immo_rent_imports CASCADE'); }, 60_000);
+  beforeAll(async () => { await setupDb(); await query('TRUNCATE immo_rent_market, immo_rent_imports, immo_irl, immo_irl_imports CASCADE'); }, 60_000);   // sans IRL : pas de recalage
   afterAll(teardownDb);
   const NOW = new Date('2026-10-04T00:00:00Z');
   const sum = (o: unknown) => createHash('sha256').update(JSON.stringify(o)).digest('hex');
@@ -176,4 +179,51 @@ describe('script immo:import-loyers (fichiers fabriqués)', () => {
     let failed = false; try { run('--out', out2); } catch { failed = true; }
     expect(failed).toBe(true); expect(existsSync(out2)).toBe(false);
   }, 90_000);
+});
+
+// Loyer d'avant le 3e trimestre du premier millésime recalé sur l'IRL RÉEL (valeurs fabriquées de test). Même fichier que les loyers : ils partagent la base de test (aucune course entre fichiers).
+describe.skipIf(!hasDb)('recalage du loyer sur l\'IRL réel', () => {
+  beforeAll(async () => { await setupDb(); await query('TRUNCATE immo_rent_market, immo_rent_imports, immo_irl, immo_irl_imports CASCADE'); }, 60_000);
+  afterAll(teardownDb);
+  const NOW = new Date('2026-10-04T00:00:00Z');
+  const sum = (o: unknown) => createHash('sha256').update(JSON.stringify(o)).digest('hex');
+  const at = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
+  const rentFile = { source: 'ANIL — Carte des loyers', vintage: 2024, snapshotDate: '2024-09-30', rows: [['33063', 'all', 12, 9, 15, 'commune', 100]] };
+  const irlRows = Array.from({ length: 12 }, (_, i) => [2022 + Math.floor(i / 4), (i % 4) + 1, Math.round((130 + 0.8 * i) * 100) / 100]);   // 2022-T1 (130) à 2024-T4 (138,8)
+  const irlFile = { source: 'Insee : IRL', rows: irlRows };
+
+  it('sans IRL importé : mention d\'approximation seule, loyer tel quel ; la table de l\'IRL n\'a aucune donnée personnelle', async () => {
+    await rentMarketService.importRents(parseRentFile(rentFile, NOW), sum(rentFile));
+    const v = (await rentMarketService.rentAt('33063', 'all', at('2024-03-01')))!;
+    expect(v).toMatchObject({ rentEurM2: 12, irlAdjustmentPct: null, approximation: 'Estimation ANIL 2024, 3e trimestre (approximation avant cette date)' });
+    const cols = (await query(`SELECT column_name FROM information_schema.columns WHERE table_name IN ('immo_irl', 'immo_irl_imports')`)).rows.map((r) => r.column_name as string);
+    expect(cols.filter((c) => /user|mail|adresse|nom|ip/i.test(c))).toEqual([]);
+  });
+  it('import de l\'IRL rejouable ; un fichier refusé n\'importe rien', async () => {
+    const parsed = parseIrlFile(irlFile);
+    const a = await irlService.importIrl(parsed, sum(irlFile));
+    expect(a).toMatchObject({ imported: true, rows: 12 });
+    expect(await irlService.importIrl(parsed, sum(irlFile))).toMatchObject({ imported: false, importId: a.importId });
+    await expect(irlService.importIrl(parseIrlFile({ source: 'x', rows: [] }), 'zzz')).rejects.toThrow(/non validé/);
+    expect((await irlService.irlAt('2024-03-01'))).toMatchObject({ year: 2023, quarter: 4, value: 135.6 });   // T4 2023 publié le 16 janvier 2024
+    expect(await irlService.irlAt('2022-03-01')).toBeNull();                                                  // rien avant la première publication de la série fabriquée
+  });
+  it('avant le 3e trimestre du premier millésime : loyer et fourchette recalés sur l\'évolution réelle de l\'IRL entre la date de jeu et ce trimestre, la mention le dit', async () => {
+    const v = (await rentMarketService.rentAt('33063', 'all', at('2024-03-01')))!;
+    const irlDate = 135.6; const irlRef = 138.0;                                  // T4 2023 (publié) et T3 2024 : valeurs fabriquées de la série ci-dessus
+    expect(v.rentEurM2).toBe(recalibrate(12, irlDate, irlRef));
+    expect(v.lowEurM2).toBe(recalibrate(9, irlDate, irlRef));
+    expect(v.highEurM2).toBe(recalibrate(15, irlDate, irlRef));
+    expect(v.irlAdjustmentPct).toBe(changePct(irlDate, irlRef));
+    expect(v.rentEurM2).toBeLessThan(12);                                         // l'IRL du jeu est plus bas que celui du 3e trimestre : le loyer d'avant est plus bas
+    expect(v.approximation).toContain('Estimation ANIL 2024, 3e trimestre (approximation avant cette date)');
+    expect(v.approximation).toContain('Loyer recalé sur l\'évolution réelle de l\'IRL entre la date de jeu et le 3e trimestre 2024');
+    expect(v.approximation).toContain('−1,74 %');
+  });
+  it('à partir du 30 septembre du millésime : loyer du millésime tel quel, plus de mention ; entre deux millésimes : loyer constant', async () => {
+    const after = (await rentMarketService.rentAt('33063', 'all', at('2024-09-30')))!;
+    expect(after).toMatchObject({ rentEurM2: 12, approximation: null, irlAdjustmentPct: null });
+    expect((await rentMarketService.rentAt('33063', 'all', at('2025-06-01')))!.rentEurM2).toBe(12);   // un seul changement par an : pas d'interpolation, pas de dérive avec l'IRL
+    expect(await rentMarketService.rentAt('33063', 'all', at('2023-12-31'))).toBeNull();               // avant janvier du premier millésime : rien
+  });
 });

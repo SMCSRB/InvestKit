@@ -5,7 +5,9 @@
 import { query, getClient } from '../utils/db';
 import { ParsedRentFile } from '../data/realEstate/rents/rentFile';
 import { zoneLabel, cityOfCode, cityOfZone } from '../data/realEstate/dvf/cities';
-import { RENT_SOURCE_ID, RentGroup, RENT_ATTRIBUTION, RENT_NATURE, rentFirstUsableDate, rentApproximationText } from '../config/rentMarketRules';
+import { RENT_SOURCE_ID, RentGroup, RENT_ATTRIBUTION, RENT_NATURE, rentFirstUsableDate, rentApproximationText, rentRecalibrationText } from '../config/rentMarketRules';
+import { irlService } from './irlService';
+import { latestPublished, valueOf, recalibrate, changePct } from '../engine/immo/irl';
 
 export interface RentView {
   source: 'anil';
@@ -22,9 +24,10 @@ export interface RentView {
   observations: number | null;
   attribution: string;
   nature: string;
+  irlAdjustmentPct: number | null;   // recalage sur l'IRL réel (avant le 3e trimestre du premier millésime), en % ; null = loyer du millésime tel quel
   approximation: string | null;  // renseigné quand la date de jeu est AVANT le 3e trimestre du premier millésime : « Estimation ANIL 2022, 3e trimestre (approximation avant cette date) »
 }
-export const RENT_VIEW_KEYS = ['source', 'communeCode', 'communeLabel', 'cityId', 'group', 'vintage', 'snapshotDate', 'rentEurM2', 'lowEurM2', 'highEurM2', 'estimate', 'observations', 'attribution', 'nature', 'approximation'] as const;
+export const RENT_VIEW_KEYS = ['source', 'communeCode', 'communeLabel', 'cityId', 'group', 'vintage', 'snapshotDate', 'rentEurM2', 'lowEurM2', 'highEurM2', 'estimate', 'observations', 'attribution', 'nature', 'approximation', 'irlAdjustmentPct'] as const;
 
 // Code commune (ou arrondissement) d'une zone de prix : les codes postaux d'une ville partagent le loyer de leur commune.
 export const communeOfZone = (zone: string): string | null => {
@@ -71,16 +74,21 @@ export const rentMarketService = {
     const cols = `vintage_year, to_char(snapshot_date, 'YYYY-MM-DD') AS snap, rent_eur_m2, low_eur_m2, high_eur_m2, estimate_kind, observations`;
     let r = (await query(
       `SELECT ${cols} FROM immo_rent_market WHERE commune_code = $1 AND property_group = $2 AND snapshot_date <= $3::date ORDER BY snapshot_date DESC LIMIT 1`, [communeCode, group, dayString(simulatedMs)])).rows[0];
-    let approximation: string | null = null;
+    let approximation: string | null = null; let adjust: number | null = null; let factorNum: number | null = null; let factorDen: number | null = null;
     if (!r) {
       const first = (await query(`SELECT ${cols} FROM immo_rent_market WHERE commune_code = $1 AND property_group = $2 ORDER BY snapshot_date ASC LIMIT 1`, [communeCode, group])).rows[0];
       if (!first || dayString(simulatedMs) < rentFirstUsableDate(Number(first.vintage_year))) return null;   // trop tôt : pas de loyer, donc pas de rentabilité
       r = first; approximation = rentApproximationText(Number(first.vintage_year));
+      // IRL réel disponible : le loyer est recalé sur l'évolution réelle de l'IRL entre la date de jeu (dernière valeur publiée) et le 3e trimestre du millésime ; sinon, tel quel (approximation seule).
+      const series = await irlService.series();
+      const at = latestPublished(series, dayString(simulatedMs)); const ref = valueOf(series, Number(first.vintage_year), 3);
+      if (at && ref !== null) { factorNum = at.value; factorDen = ref; adjust = changePct(at.value, ref); approximation = rentRecalibrationText(Number(first.vintage_year), adjust); }
     }
+    const scale = (v: number): number => (factorNum !== null && factorDen !== null ? recalibrate(v, factorNum, factorDen) : v);
     return {
       source: 'anil', communeCode, communeLabel: label, cityId: city.id, group, vintage: Number(r.vintage_year), snapshotDate: r.snap,
-      rentEurM2: Number(r.rent_eur_m2), lowEurM2: Number(r.low_eur_m2), highEurM2: Number(r.high_eur_m2), estimate: r.estimate_kind,
-      observations: r.observations === null ? null : Number(r.observations), attribution: RENT_ATTRIBUTION, nature: RENT_NATURE, approximation,
+      rentEurM2: scale(Number(r.rent_eur_m2)), lowEurM2: scale(Number(r.low_eur_m2)), highEurM2: scale(Number(r.high_eur_m2)), estimate: r.estimate_kind,
+      observations: r.observations === null ? null : Number(r.observations), attribution: RENT_ATTRIBUTION, nature: RENT_NATURE, approximation, irlAdjustmentPct: adjust,
     };
   },
 };

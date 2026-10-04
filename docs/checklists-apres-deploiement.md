@@ -1184,3 +1184,13 @@ Après `~/deploy-test.sh` (aucune migration), connecté avec un compte Immobilie
 3. **Rien de plus ne change aujourd'hui** : le catalogue reste fictif, donc aucun loyer ANIL n'est affiché. Quand un loyer réel sera branché, la fiche dira « Loyer moyen de la commune » avec la nature du loyer (loyer d'annonce, charges comprises), le millésime, la fourchette et l'attribution ANIL ; avant le 30 septembre du premier millésime, elle ajoutera en gras « Estimation ANIL 2022, 3e trimestre (approximation avant cette date) » ; une commune sans loyer n'affichera **aucune rentabilité** (« Rentabilité non disponible »).
 
 Ordre de fusion : après la PR 1 (loyers ANIL). Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : IRL réel (Insee), préparation (PR 3)
+
+Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 059** crée deux tables vides). **Avant tout import, lis la page de la série** (`docs/loyers-irl-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
+
+1. Télécharge **toi-même** le CSV de la série IRL dans `backend/data/irl-brut/`.
+2. `npm --prefix backend run immo:import-irl -- --file backend/data/irl-brut/<fichier>.csv --check` : si le format n'est pas celui attendu, le script refuse et le dit ; sinon compare les « 3e trimestres récents » avec la page de l'Insee et envoie-moi le rapport.
+3. Sans `--check` : écrit `backend/data/irl-insee.json`. Puis `npm --prefix backend run immo:load-irl -- --file backend/data/irl-insee.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
+
+Ordre de fusion : après la PR 2. Méthode : « Create a merge commit ».

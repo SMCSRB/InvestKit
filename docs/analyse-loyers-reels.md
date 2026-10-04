@@ -51,3 +51,5 @@
 
 ## 6. Avancement du plan (décisions d'Andreja du 5 octobre 2026)
 Plan validé, dans cet ordre : **1) loyers** (PR « préparation » : lecture, import hors ligne, tables, service, règle « pas de loyer, pas de rentabilité ») ; **2) mentions à l'écran** ; 3) IRL ; 4) notaire par département ; 5) taxe foncière ; 6) fiscalité (micro-foncier et réel). Règle pour chaque jeu de données : relire la page officielle (licence, attribution, date) avant tout import et signaler tout doute. Voir `docs/loyers-anil-fiche-source.md`.
+
+**Mise à jour (5 octobre 2026, soir)** : PR 1 (loyers, préparation) fusionnée ; PR 2 (mentions à l'écran + règle du premier millésime) en cours ; PR 3 (IRL réel : import hors ligne, recalage du loyer d'avant le 3e trimestre) en cours. À venir : 4) notaire par département, 5) taxe foncière, 6) fiscalité (micro-foncier et réel). Fiches de sources et lignes à relire par Andreja : `docs/loyers-anil-fiche-source.md` et `docs/loyers-irl-fiche-source.md`.
