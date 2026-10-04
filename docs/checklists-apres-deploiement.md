@@ -1136,3 +1136,12 @@ Rien à tester sur le site (aucun changement pour les joueurs). Sur la copie de 
 4. `npm --prefix backend run immo:simulate-niveau` : le tableau détaille chaque zone (prix au m², ventes, ✓/✗ banque). Envoie-moi la sortie, et celle de `-- --capital 10000 --profile employee`.
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : diagnostic des sauts de médiane
+
+Rien à tester sur le site. Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` (aucune migration) :
+
+1. `npm --prefix backend run immo:jumps -- --city lille --dir backend/data/dvf-brut-cp` : liste chaque saut (zone, mois, prix, ventes, entrées et sorties, cause). Envoie-moi la sortie.
+2. Pour une autre ville : `-- --city bordeaux` (ou toute autre).
+
+Lecture seule, rien n'est écrit. Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
