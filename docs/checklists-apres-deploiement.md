@@ -1189,7 +1189,7 @@ Ordre de fusion : après la PR 1 (loyers ANIL). Méthode : « Create a merge com
 
 Rien à tester sur le site (aucun changement pour les joueurs : le jeu garde 7,5 % et 2,5 % forfaitaires). **Avant de t'y fier, lis `docs/frais-notaire-fiche-source.md`** (tableau des sources et des lignes à relire). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :
 
-1. `npm --prefix backend run immo:simulate-niveau` (et `-- --capital 10000 --profile employee`) : une ligne « Notaire : calculé par DÉPARTEMENT … » et, par ville, le plafond d'achat et le **taux de notaire effectif** de son département. Les prix et les plafonds de l'étudiant à 2 500 pièces **baissent** par rapport à avant (frais fixes sur les petits prix) : lis le tableau de sensibilité de la fiche et dis-moi si tu veux garder 1 000 euros de frais divers.
+1. `npm --prefix backend run immo:simulate-niveau` (et `-- --capital 10000 --profile employee`) : une ligne « Notaire : calculé par DÉPARTEMENT … » et, par ville, le plafond d'achat et le **taux de notaire effectif** de son département. Les prix et les plafonds de l'étudiant à 2 500 pièces **baissent** par rapport à avant (frais de notaire réels, **sans forfait de frais divers** depuis le 6 octobre 2026) : le tableau « avant / après » de la fiche donne les plafonds mesurés.
 2. Envoie-moi la sortie.
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
