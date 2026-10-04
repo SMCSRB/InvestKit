@@ -202,3 +202,7 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 ## Loyers réels (carte des loyers ANIL) : préparation (PR 1, 5 octobre 2026)
 - Loyers au m² par commune et type de bien : **source retenue = Carte des loyers ANIL** (Licence Ouverte 2.0, attribution), import hors ligne prêt (`immo:import-loyers`, `immo:load-loyers`), **non activé** (`RENT_MARKET_ENABLED = false`). **Jusqu'au branchement, les loyers du catalogue fictif restent des valeurs de jeu.** Page à relire avant tout import : `docs/loyers-anil-fiche-source.md`. Plage de plausibilité d'un loyer : 3 à 80 €/m²/mois (`RENT_BOUNDS`) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (garde-fou technique, pas une donnée).
 - Parking, charges de copropriété, vacance hors Paris et Montpellier : **restent « VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER »** (aucune source ouverte).
+
+## IRL réel (Insee) : préparation (PR 3, 5 octobre 2026)
+- IRL : **source retenue = Insee, série trimestrielle** ; import hors ligne prêt (`immo:import-irl`, `immo:load-irl`), **non lu par le moteur actuel** (`IRL_ENABLED = false`) : le catalogue fictif garde sa série fictive de révision annuelle (valeur de jeu). Page à relire : `docs/loyers-irl-fiche-source.md`.
+- Jour de publication de l'IRL (16 du mois suivant le trimestre) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`IRL_PUBLICATION_DAY`, `backend/src/config/irlRules.ts`). Bornes de plausibilité d'un fichier IRL (100 à 400 ; 4 % par trimestre ; 8 trimestres au moins) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (garde-fous techniques).

@@ -13,3 +13,4 @@ Liste des points à régler **avant** d'ouvrir le site au public (hors paramètr
 - [ ] Licences et sources de l'Immobilier réel (DVF : Licence Ouverte 2.0 ; contours de zones à choisir : licence à vérifier).
 - [ ] Relire sur leurs pages d'origine les faits cités dans les scénarios (étiquette **[sûr]** = résumé de recherche, page à relire).
 - [ ] **Carte des loyers (ANIL)** : lire la page de chaque millésime (licence, attribution exacte, trimestre, colonnes) avant l'import, puis recopier l'attribution dans `RENT_ATTRIBUTION` (voir `docs/loyers-anil-fiche-source.md`).
+- [ ] **IRL (Insee)** : lire les conditions de réutilisation et le format du CSV de la série, confirmer les dates de publication (voir `docs/loyers-irl-fiche-source.md`, lignes 8 à 10).
