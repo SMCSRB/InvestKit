@@ -989,6 +989,15 @@ Ordre de fusion : après #130. Méthode : « Create a merge commit ».
 4. Tes amis et ta guilde te voient toujours normalement.
 5. Rebascule en « Public » : tout redevient visible, rien n'a été perdu.
 
+## PR 6g-G2 — Graphique en aires empilées (démo seulement)
+
+Aucune page du jeu ne change. Après déploiement :
+
+1. Ouvre `/design-system` et descends jusqu'à « Patrimoine par domaine (exemple) » : trois aires empilées avec légende.
+2. Survole (ou touche) le graphique : une infobulle donne les valeurs de la date.
+3. Au clavier : Tab jusqu'au graphique puis flèche droite/gauche.
+4. Sur téléphone (390 px) : pas de défilement horizontal.
+
 ## PR 6g-G4 — Disposition du tableau de bord (serveur seulement)
 
 Aucun écran ne change. Après déploiement :
