@@ -3,17 +3,20 @@ import { walletEcho } from '../middleware/walletEcho';
 import { authMiddleware } from '../middleware/auth';
 import { cryptoOrderLimiter } from '../middleware/rateLimiter';
 import { cryptoController } from '../controllers/cryptoController';
+import { clockController, clockGate } from '../controllers/clockController';
 
 // Domaine Crypto (marché simulé). Toutes les routes sont authentifiées ; la date simulée vient du compte (serveur), jamais du navigateur.
 export const cryptoRoutes = Router();
 cryptoRoutes.use(walletEcho);   // chaque action qui réussit renvoie le portefeuille à jour (`wallet`)
+// État et création du compte : AVANT le portail d'horloge (c'est ici que le joueur choisit sa date de départ, une seule fois pour tout le jeu).
 cryptoRoutes.get('/state', authMiddleware, cryptoController.state);
 cryptoRoutes.post('/account', authMiddleware, cryptoController.create);
+cryptoRoutes.use(authMiddleware, clockGate);   // horloge de jeu unique
 cryptoRoutes.get('/assets', authMiddleware, cryptoController.assets);
 cryptoRoutes.get('/assets/:symbol', authMiddleware, cryptoController.asset);
 cryptoRoutes.get('/candles', authMiddleware, cryptoController.candles);
 cryptoRoutes.get('/compare', authMiddleware, cryptoController.compare);
-cryptoRoutes.post('/time/advance', authMiddleware, cryptoController.advance);
+cryptoRoutes.post('/time/advance', authMiddleware, clockController.legacyCrypto);   // ancien bouton : avance l'horloge unique
 cryptoRoutes.get('/quote', authMiddleware, cryptoController.quote);
 cryptoRoutes.get('/portfolio', authMiddleware, cryptoController.portfolio);
 cryptoRoutes.get('/orders', authMiddleware, cryptoController.orders);

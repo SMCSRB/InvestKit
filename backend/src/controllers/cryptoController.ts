@@ -1,4 +1,7 @@
 import { fxService } from '../services/fxService';
+import { START_SCENARIOS } from '../config/cryptoMarketRules';
+import { simClockService, ClockError } from '../services/simClockService';
+import { parseDay } from '../engine/clock';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { cryptoDataService, CryptoDataError } from '../services/crypto/dataService';
@@ -51,6 +54,13 @@ const requireAccount = async (req: AuthRequest) => {
   return acc;
 };
 
+// Départs proposés : toute la liste tant que la partie n'est pas commencée ; ensuite, uniquement celui de la partie (une seule horloge pour tout le jeu).
+const startsFor = async (userId: string) => {
+  const all = await availableStarts();
+  const clock = await simClockService.get(userId);
+  return clock ? all.filter((s) => s.date === clock.startDay) : all;
+};
+
 export const cryptoController = {
   state: wrap('Erreur lors de la lecture de l\'état Crypto', async (req) => {
     const acc = await clockService.get(req.user!.userId);
@@ -61,7 +71,8 @@ export const cryptoController = {
       // Taux de change du jour de jeu (dollars pour 1 InvestCoin = 1 €) : décidé par le serveur ; null = indisponible, l'affichage reste en dollars.
       fx: acc ? fxView(fx) : null,
       account: acc ? { startAt: acc.startAt, simulatedAt: acc.simulatedAt, canAdvance: end !== null && acc.simulatedAt < end, dataEnd: end } : null,
-      starts: acc ? null : await availableStarts(),
+      starts: acc ? null : await startsFor(req.user!.userId),
+      startLocked: !acc && !!(await simClockService.get(req.user!.userId)),   // la date de départ est déjà fixée pour tout le jeu
       timeframes: TIMEFRAMES.map((t) => ({ id: t, label: TF_LABELS[t] })),
       modes: [{ id: 'accelerated', label: 'Accéléré / Historique', available: true }, { id: 'realtime', label: 'Temps réel', ...REALTIME_STATUS }],
       categories: CATEGORY_LABELS, riskLabels: RISK_LABELS, attribution: ATTRIBUTION, disclaimer: DISCLAIMER,
@@ -69,7 +80,17 @@ export const cryptoController = {
   }),
 
   create: wrap('Erreur lors de la création du compte Crypto', async (req) => {
-    const acc = await clockService.create(req.user!.userId, req.body?.start);
+    // La date de départ est choisie UNE fois pour tout le jeu (horloge unique) : le compte Crypto rejoint la date de jeu du joueur.
+    const uid = req.user!.userId;
+    const wanted = req.body?.start;
+    if (wanted !== undefined && wanted !== null && wanted !== '' && !START_SCENARIOS.some((x) => x.id === wanted)) throw new CryptoDataError('INVALID_INPUT', 'Date de départ inconnue');   // liste fermée, même si la partie existe déjà
+    let acc = await clockService.get(uid);
+    if (!acc) {
+      try {
+        const clock = await simClockService.ensure(uid, req.body?.start);
+        acc = await clockService.createAt(uid, parseDay(clock.currentDay)!);
+      } catch (e) { if (e instanceof ClockError) throw new CryptoDataError('INVALID_INPUT', e.message); throw e; }
+    }
     return { success: true, account: { startAt: acc.startAt, simulatedAt: acc.simulatedAt } };
   }),
 

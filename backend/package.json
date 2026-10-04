@@ -21,7 +21,8 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
     "encrypt-totp": "ts-node scripts/encrypt-totp-secrets.ts",
-    "education-abuse": "ts-node scripts/education-abuse.ts"
+    "education-abuse": "ts-node scripts/education-abuse.ts",
+    "cutover:m1": "ts-node scripts/cutover-m1.ts"
   },
   "keywords": [
     "investissement",
