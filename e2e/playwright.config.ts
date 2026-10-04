@@ -67,6 +67,7 @@ export default defineConfig({
   projects: [
     { name: 'connexion', testMatch: /auth\.setup\.ts/ },
     { name: 'mobile-390', testMatch: /mobile\.spec\.ts/, use: { ...devices['Pixel 5'], viewport: { width: 390, height: 844 }, storageState: 'e2e/.etat/session.json' }, dependencies: ['connexion'] },
+    { name: 'crypto', testMatch: /crypto\.spec\.ts/, use: { viewport: { width: 1280, height: 800 }, storageState: 'e2e/.etat/session.json' }, dependencies: ['connexion'] },
     { name: 'bureau', testMatch: /bureau\.spec\.ts/, use: { viewport: { width: 1280, height: 800 }, storageState: 'e2e/.etat/session.json' }, dependencies: ['connexion'] },
   ],
 });

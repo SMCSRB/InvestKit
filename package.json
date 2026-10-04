@@ -13,7 +13,7 @@
     "type-check": "tsc --noEmit",
     "check:site-info": "node scripts/check-site-info.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "e2e": "playwright test -c e2e/playwright.config.ts --project=connexion --project=mobile-390 && playwright test -c e2e/playwright.config.ts --project=connexion --project=bureau",
+    "e2e": "playwright test -c e2e/playwright.config.ts --project=connexion --project=mobile-390 && playwright test -c e2e/playwright.config.ts --project=connexion --project=bureau && playwright test -c e2e/playwright.config.ts --project=connexion --project=crypto",
     "setup:hooks": "git config core.hooksPath scripts/git-hooks && echo \"Hook anti-secrets activé.\""
   },
   "repository": {
