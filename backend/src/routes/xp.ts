@@ -4,3 +4,4 @@ import { xpController } from '../controllers/xpController';
 
 export const xpRoutes = Router();
 xpRoutes.get('/', authMiddleware, xpController.me);
+xpRoutes.get('/badges', authMiddleware, xpController.badges);

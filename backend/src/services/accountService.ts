@@ -44,6 +44,7 @@ export const exportUserData = async (userId: string) => {
       balance: (await one('SELECT balance, updated_at FROM investcoins_balance WHERE user_id = $1'))[0] ?? null,
       transactions: await one('SELECT amount, reason, metadata, domain, nature, created_at FROM investcoins_transactions WHERE user_id = $1 ORDER BY created_at'),
     },
+    badges: await one('SELECT badge_id, earned_at, fact_ref FROM user_badges WHERE user_id = $1 ORDER BY earned_at'),
     xp: await one('SELECT domain, source, event_key, amount, created_at FROM xp_events WHERE user_id = $1 ORDER BY created_at, id'),
     education: { progress: await one('SELECT * FROM education_progress WHERE user_id = $1'), userProgress: await one('SELECT * FROM user_progress WHERE user_id = $1') },
     portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
@@ -55,6 +56,7 @@ export const exportUserData = async (userId: string) => {
       events: await one('SELECT event_key, sim_date, origin, kind, title, message, lesson, created_at FROM crypto_event_log WHERE user_id = $1 ORDER BY sim_date'),
     },
     dashboardLayout: await one('SELECT template, layout, version, updated_at FROM dashboard_layouts WHERE user_id = $1'),
+    wealthHistory: await one('SELECT day, liquidity, stocks, crypto, real_estate_net, debts, financial, total, game_clock FROM wealth_snapshots WHERE user_id = $1 ORDER BY day'),
     leaderboard: await one('SELECT mode, domain, period, performance_pct, capital_committed, leverage, computed_at FROM leaderboard_rankings WHERE user_id = $1'),
     projects: { projects, riskAnalyses: projects.length ? await one('SELECT * FROM risk_analysis WHERE project_id = ANY($1)', [projects.map((p: any) => p.id)]) : [] },
     social: {

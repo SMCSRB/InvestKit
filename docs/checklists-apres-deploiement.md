@@ -961,9 +961,26 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 1. Rien de nouveau à voir dans l'interface. Ton niveau d'éducation, tes classements d'amis et de guilde sont inchangés.
 2. Après déploiement, les joueurs existants ont gardé exactement la même XP (importée une fois depuis leur progression). Valide un chapitre d'éducation sur un compte de test : un nouvel événement apparaît (voir `docs/xp-et-niveaux.md`).
 3. Facultatif : `GET /api/v1/xp` (connecté) renvoie ton XP, ton niveau avec son titre et la progression vers le suivant.
+
+
+
+## 6a-2 : badges attribués par le serveur (rien ne change à l'écran)
+1. Valide un chapitre d'éducation sur un compte de test : une notification « Badge obtenu : Première leçon » apparaît **une seule fois**, même si tu rouvres la page ou revalides.
+2. `GET /api/v1/xp/badges` (connecté) liste les 19 badges, ceux que tu as et la date ; la rareté est vide tant qu'il y a moins de 50 joueurs vérifiés.
+3. L'ancien affichage des badges du tableau de bord n'a pas changé (il sera refait) ; rien n'est gagné en pièces avec les badges.
 ## 6b-lite : textes honnêtes sur les cours et la valeur des InvestCoins
 1. Glossaire, mot « Action » : « Dans le jeu » dit que les cours sont annuels, simplifiés et illustratifs (plus « cours historiques réels »).
 2. Glossaire, mot « InvestCoin » : la phrase « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs » apparaît dans « Dans le jeu ».
+
+## PR 6g-G1 — Historique du patrimoine
+
+Après déploiement (aucun écran ne change) :
+
+1. Connecte-toi et ouvre le tableau de bord : tout s'affiche comme avant.
+2. Dans l'export de ton compte (Paramètres), vérifie la présence de « wealthHistory » avec un point du jour.
+3. Fais un achat, rouvre ton export : toujours un seul point pour aujourd'hui, avec le nouveau total.
+
+Ordre de fusion : après #130. Méthode : « Create a merge commit ».
 
 ## 6a-5 : confidentialité du profil
 1. Profil, rubrique « Confidentialité du profil » : trois choix (Public, Amis, Privé) avec une phrase simple chacun. Par défaut : Public.
@@ -979,5 +996,12 @@ Aucun écran ne change. Après déploiement :
 1. Connecte-toi : le tableau de bord s'affiche comme avant.
 2. Dans l'export de ton compte, vérifie « dashboardLayout » (vide tant que rien n'est enregistré).
 3. (Optionnel, technique) un compte gratuit qui demande une liste de blocs reçoit un refus « plan Pro » ; un compte Pro est accepté.
+
+## PR 6c-analyse — Horloge et modes de jeu (document seulement)
+
+Aucun test à faire sur le site (rien ne change).
+
+1. Ouvre `docs/analyse-horloge-et-modes.md` et lis « En deux phrases » et le tableau du chapitre 1.
+2. Réponds aux 4 questions du chapitre 5 (A à D).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
