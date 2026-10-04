@@ -10,10 +10,16 @@ export type RentSource =
 export const GAME_VALUE_FIELDS = ['rent', 'vacancy', 'tenancy', 'condoFees', 'propertyTax', 'insurance', 'maintenance', 'recoverableCharges'] as const;
 export type GameValueField = (typeof GAME_VALUE_FIELDS)[number];
 
-export interface ListingDataSources { rent: RentSource; gameValues: GameValueField[] }
+// Taxe foncière : valeur de jeu, ou taux communal RÉEL (Terralyse) × base cadastrale ESTIMÉE (jamais la base du vrai bien : valeur de jeu).
+export type TaxSource =
+  | { kind: 'jeu' }
+  | { kind: 'terralyse'; communeLabel: string; ratePct: number; rateYear: number; baseEstimated: true; baseNetEurPerSqm: number; attribution: string };
+
+export interface ListingDataSources { rent: RentSource; propertyTax: TaxSource; gameValues: GameValueField[] }
 
 // Un loyer réel (ou l'absence assumée de loyer) retire « rent » des valeurs de jeu ; tout le reste reste marqué.
-export const listingDataSources = (rent: RentSource = { kind: 'jeu' }): ListingDataSources => ({
+export const listingDataSources = (rent: RentSource = { kind: 'jeu' }, propertyTax: TaxSource = { kind: 'jeu' }): ListingDataSources => ({
   rent,
-  gameValues: GAME_VALUE_FIELDS.filter((f) => !(f === 'rent' && (rent.kind === 'anil' || rent.kind === 'none'))),
+  propertyTax,
+  gameValues: GAME_VALUE_FIELDS.filter((f) => !(f === 'rent' && (rent.kind === 'anil' || rent.kind === 'none')) && !(f === 'propertyTax' && propertyTax.kind === 'terralyse')),
 });

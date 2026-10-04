@@ -1,4 +1,5 @@
 import { withRealRent, ListingRent } from '../engine/immo/listingRent';
+import { withRealTax, ListingTax } from '../engine/immo/listingTax';
 import { getClient, query } from '../utils/db';
 import type { PoolClient } from 'pg';
 import { investcoinsRepository, InsufficientFundsError } from '../repositories/investcoinsRepository';
@@ -72,8 +73,8 @@ export const scenarioContext = async (year: number): Promise<ScenarioContext> =>
 });
 
 // `rent` : undefined = loyer du catalogue (comportement actuel) ; un loyer réel (ListingRent) ou null (source réelle SANS loyer connu : aucune rentabilité, jamais un loyer inventé).
-export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: ListingRent | null) => {
-  const l = rent === undefined ? listing : withRealRent(listing, rent);
+export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: ListingRent | null, tax?: ListingTax | null) => {
+  const l = withRealTax(rent === undefined ? listing : withRealRent(listing, rent), tax ?? null);   // tax absent ou null : taxe du catalogue / valeur de jeu inchangée
   const noRent = l.rentAvailable === false;
   const scenario = ctx && !noRent ? standardScenario(l, ctx) : null;
   return {
@@ -83,7 +84,7 @@ export const decorateListing = (listing: Listing, ctx?: ScenarioContext, rent?: 
     priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
     needsWorks: needsWorks(l),
     // origine des chiffres : catalogue fictif (loyers et charges = valeurs de jeu) ; loyer ANIL réel avec sa mention ; ou « aucun loyer » (pas de rentabilité)
-    dataSources: listingDataSources(rent === undefined ? undefined : rent === null ? { kind: 'none' } : rent.source),
+    dataSources: listingDataSources(rent === undefined ? undefined : rent === null ? { kind: 'none' } : rent.source, tax ? tax.source : undefined),
     ...(scenario ? { netYieldPct: scenario.netYieldPct, monthlyCashFlow: scenario.monthlyCashFlow, scenario } : {}),
   };
 };
