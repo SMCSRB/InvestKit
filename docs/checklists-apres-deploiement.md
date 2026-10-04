@@ -937,3 +937,6 @@ Rien à tester sur le site. Sur la PR, vérifie que le contrôle GitHub **e2e** 
 ## Carte Immobilier du tableau de bord : valeur du bien et résultat de revente séparés
 1. Carte Immobilier : une ligne « **Valeur de tes biens** » (leur prix sur le marché) puis « Valeur nette de revente », « Dette bancaire » et « **Résultat si tu revendais aujourd'hui** ».
 2. Sous ces lignes, une phrase précise que le résultat n'est pas la valeur du bien.
+
+## Note : analyse du catalogue Immobilier (docs seulement)
+Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau par bien : rendement, flux mensuel, résultat de revente à 5 ans et à long terme) pour décider s'il faut rééquilibrer le catalogue.
