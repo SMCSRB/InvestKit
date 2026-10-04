@@ -18,6 +18,7 @@ import { onboardingRoutes, overviewRoutes } from './routes/onboarding';
 import { cryptoRoutes } from './routes/crypto';
 import { profileRoutes } from './routes/profile';
 import { socialRoutes } from './routes/social';
+import { xpRoutes } from './routes/xp';
 import { buildOpenApiSpec } from './openapi';
 import { apiLimiter } from './middleware/rateLimiter';
 
@@ -91,6 +92,7 @@ app.use('/api/bank', bankRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/flags', flagsRoutes);
 app.use('/api/v1', contentRoutes);
+app.use('/api/v1/xp', xpRoutes);
 app.use('/api/v1/tools', toolsRoutes);
 app.use('/api/v1/risk', riskRoutes);
 app.use('/api/v1/notifications', notificationRoutes);

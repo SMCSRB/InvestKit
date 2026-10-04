@@ -25,7 +25,7 @@ export class AccountError extends Error {
 export const DELETE_CONFIRM_PHRASE = 'SUPPRIMER';
 
 const USER_FIELDS = `id, email, first_name, last_name, username, role, subscription_tier, free_domain, pro_override, account_type, interests, language,
-  enable_2fa, last_daily_claim_at, referral_code, referred_by_user_id, verified, created_at, last_login_at, friend_code, bio`;
+  enable_2fa, last_daily_claim_at, referral_code, referred_by_user_id, profile_visibility, verified, created_at, last_login_at, friend_code, bio`;
 
 export const exportUserData = async (userId: string) => {
   const one = async (sql: string, params: any[] = [userId]) => (await query(sql, params)).rows;
@@ -44,6 +44,8 @@ export const exportUserData = async (userId: string) => {
       balance: (await one('SELECT balance, updated_at FROM investcoins_balance WHERE user_id = $1'))[0] ?? null,
       transactions: await one('SELECT amount, reason, metadata, domain, nature, created_at FROM investcoins_transactions WHERE user_id = $1 ORDER BY created_at'),
     },
+    badges: await one('SELECT badge_id, earned_at, fact_ref FROM user_badges WHERE user_id = $1 ORDER BY earned_at'),
+    xp: await one('SELECT domain, source, event_key, amount, created_at FROM xp_events WHERE user_id = $1 ORDER BY created_at, id'),
     education: { progress: await one('SELECT * FROM education_progress WHERE user_id = $1'), userProgress: await one('SELECT * FROM user_progress WHERE user_id = $1') },
     portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
     cryptoMarket: {
