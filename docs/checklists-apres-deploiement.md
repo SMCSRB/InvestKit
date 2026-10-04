@@ -1055,3 +1055,10 @@ Ordre de fusion : dans la même PR que l'horloge unique (#140). Méthode : « Cr
 Aucun écran ne change. Test technique : `GET /api/v1/clock/modes` avec un compte gratuit montre En ligne « Pro » ; après 12 mois d'avance en Histoire, ta période de départ apparaît dans `unlockedPeriods` du Bac à sable. Avec un compte Pro, Bac à sable « all ».
 
 Ordre de fusion : indépendante (après #140, déjà fusionnée). Méthode : « Create a merge commit ».
+
+## Correctif — texte Paramètres > Profil et pseudo pour set-pro
+
+1. Tableau de bord > Paramètres > Profil : le texte dit où régler la visibilité (Profil complet > Paramètres > Compte), plus « arriveront bientôt ».
+2. Sur la copie de test : `npm run set-pro -- <pseudo> on` fonctionne avec un pseudo. Les trois commandes sûres sont dans `docs/commandes-copie-de-test.md`.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».

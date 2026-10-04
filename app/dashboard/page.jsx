@@ -1677,9 +1677,8 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  {/* Réglages de visibilité et d'apprentissage retirés : ils n'étaient enregistrés que dans le navigateur et n'agissaient sur rien
-                      (un profil « privé » ne l'était pas). Ils reviendront quand le serveur les appliquera vraiment. */}
-                  <p className="ik-muted" style={{ margin: 0, fontSize: 13 }}>Les réglages de visibilité du profil (public, privé, masquer mes stats) arriveront bientôt : ils seront appliqués par le serveur, pas seulement affichés.</p>
+                  {/* La visibilité du profil (public, amis, privé) est réglée par le serveur : voir Profil complet > Paramètres > Compte. */}
+                  <p className="ik-muted" style={{ margin: 0, fontSize: 13 }}>La visibilité de ton profil (public, amis ou privé) se règle dans <a href="/profile">Profil complet</a> &gt; Paramètres &gt; Compte. Elle est appliquée par le serveur, dans tous les classements.</p>
                 </div>
               )}
 
