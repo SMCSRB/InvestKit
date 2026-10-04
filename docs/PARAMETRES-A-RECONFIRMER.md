@@ -220,3 +220,10 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 
 ## Branchement 4/6 : taxe foncière réelle dans les annonces (6 octobre 2026)
 - Quand le service d'annonces réelles sera activé : taxe = taux communal Terralyse (commune + intercommunalité, TEOM à part) × base cadastrale **estimée** ; la ligne « Taxe foncière » n'est plus une valeur de jeu **mais la base reste une valeur de jeu** (30 par m² de base nette, identique partout : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**, `CADASTRAL_BASE_NET_EUR_PER_SQM`). Date d'usage d'un taux (1er octobre de l'année) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**.
+
+## Branchement 6/6 : source réelle (copie de test)
+- Années jouables par défaut 2022–2025 (`REAL_DEFAULT_MIN_YEAR`, `REAL_DEFAULT_MAX_YEAR`, `backend/src/config/realSourceRules.ts`) : **à reconfirmer** selon les fichiers importés.
+- Zone tendue par ville (`REGION` dans `backend/src/data/realEstate/dvfSource.ts`) : liste du décret n° 2013-392 **lue de mémoire**, à relire sur la page officielle (Dijon et Saint-Étienne marquées « non tendues »).
+- Tension locative 0,5 et vacance 5 % des villes réelles : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`GAME_TENSION`).
+- Taux de crédit en source réelle : série du catalogue (valeur de jeu) tant que les taux BCE ne sont pas importés par Andreja.
+

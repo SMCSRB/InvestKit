@@ -60,7 +60,7 @@ describe('garde : rien dans le moteur actuel ne reçoit encore de loyer réel', 
     const service = srcFiles().filter((f) => /listingRentService/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f));
     expect(service, 'seul le service des annonces réelles (désactivé, appelé par personne) lit le loyer d\'annonce').toEqual(['realListingService.ts']);
     const pure = srcFiles().filter((f) => /immo\/listingRent'/.test(readFileSync(f, 'utf8')) && !own.test(f)).map((f) => path.basename(f)).sort();
-    expect(pure).toEqual(['realEstateService.ts', 'realListingService.ts']);
+    expect(pure).toEqual(['dvfSource.ts', 'realEstateService.ts', 'realListingService.ts']);      // dvfSource : branchement 6/6, refusé hors base « _test »
   });
   it('aucun appelant ne passe de loyer réel à decorateListing (3e argument) : le catalogue actuel garde son loyer', () => {
     for (const f of srcFiles()) {

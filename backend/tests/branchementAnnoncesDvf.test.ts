@@ -54,7 +54,7 @@ describe('garde : désactivé et non branché', () => {
     const files: string[] = [];
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.ts')) files.push(p); } };
     walk(path.join(__dirname, '..', 'src'));
-    const own = /realListingService\.ts$|engine[\\/]immo[\\/]realListings\.ts$|realListingRules\.ts$/;
+    const own = /realListingService\.ts$|engine[\\/]immo[\\/]realListings\.ts$|realListingRules\.ts$|realEstate[\\/]dvfSource\.ts$/;     // dvfSource : branchement 6/6, refusé hors base « _test » (voir branchementActivation.test.ts)
     const users = files.filter((f) => /realListingService|immo\/realListings'|realListingRules/.test(readFileSync(f, 'utf8')) && !own.test(f));
     expect(users, 'aucune route ni aucun moteur ne doit lire les annonces réelles tant que le drapeau est désactivé').toEqual([]);
   });
