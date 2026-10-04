@@ -387,7 +387,7 @@ function AssetList({ assets, onOpen, filters, setFilters, categories }) {
         </table>
       </div>
       <p data-testid="coverage-note" style={{ margin: 0, padding: '10px 12px', fontSize: 12, color: 'var(--ik-text-3)', borderTop: '1px solid color-mix(in srgb, var(--ik-text) 7%, transparent)' }}>
-        {assets.length} crypto{assets.length > 1 ? 's' : ''} avec des cours réels à ta date de jeu. Le jeu ne propose que les cryptos dont les cours ont été importés ; les autres n&apos;apparaissent pas (pas de prix inventé), et une crypto n&apos;apparaît qu&apos;à partir de sa première cotation.
+        {assets.length} crypto{assets.length > 1 ? 's' : ''} avec un historique de cours importé à ta date de jeu. Le jeu ne propose que les cryptos dont l&apos;historique a été importé ; les autres n&apos;apparaissent pas (pas de prix inventé), et une crypto n&apos;apparaît qu&apos;à partir de sa première cotation.
       </p>
     </div>
   );

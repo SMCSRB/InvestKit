@@ -1132,7 +1132,7 @@ Après `~/deploy-test.sh` (aucune migration), connecté avec un compte Crypto :
 
 1. Accueil : la rangée de chiffres n'affiche plus « 110+ actifs crypto » (trois chiffres : domaines, termes du glossaire, euro réel en jeu).
 2. Page Crypto, écran de départ : le texte parle des cryptos dont les cours ont été importés, pas de « tout le marché ».
-3. Page Crypto, liste : sous le tableau, une ligne indique « N cryptos avec des cours réels à ta date de jeu » (N = nombre de lignes). Les cryptos sans cours n'apparaissent pas.
+3. Page Crypto, liste : sous le tableau, une ligne indique « N cryptos avec un historique de cours importé à ta date de jeu » (N = nombre de lignes). Les cryptos sans cours n'apparaissent pas.
 
 ## PR Immobilier réel : zones fines (code postal) et simulation par zone
 
