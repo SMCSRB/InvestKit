@@ -16,3 +16,4 @@ Liste des points à régler **avant** d'ouvrir le site au public (hors paramètr
 
 - [ ] **Carte des loyers (ANIL)** : lire la page de chaque millésime (licence, attribution exacte, trimestre, colonnes) avant l'import, puis recopier l'attribution dans `RENT_ATTRIBUTION` (voir `docs/loyers-anil-fiche-source.md`).
 - [ ] **IRL (Insee)** : lire les conditions de réutilisation et le format du CSV de la série, confirmer les dates de publication (voir `docs/loyers-irl-fiche-source.md`, lignes 8 à 10).
+- [ ] **Fiscalité des revenus fonciers** : relire sur impots.gouv.fr l'abattement et le plafond du micro-foncier, le plafond du déficit foncier, les prélèvements sociaux (voir `docs/fiscalite-fonciere-fiche-source.md`), puis décider du branchement au moteur.

@@ -206,3 +206,7 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 ## IRL réel (Insee) : préparation (PR 3, 5 octobre 2026)
 - IRL : **source retenue = Insee, série trimestrielle** ; import hors ligne prêt (`immo:import-irl`, `immo:load-irl`), **non lu par le moteur actuel** (`IRL_ENABLED = false`) : le catalogue fictif garde sa série fictive de révision annuelle (valeur de jeu). Page à relire : `docs/loyers-irl-fiche-source.md`.
 - Jour de publication de l'IRL (16 du mois suivant le trimestre) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (`IRL_PUBLICATION_DAY`, `backend/src/config/irlRules.ts`). Bornes de plausibilité d'un fichier IRL (100 à 400 ; 4 % par trimestre ; 8 trimestres au moins) : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** (garde-fous techniques).
+
+## Fiscalité des revenus fonciers : micro-foncier et réel (PR 6, 5 octobre 2026)
+- Règles préparées (`backend/src/config/rentTaxRules.ts`), **non lues par le moteur actuel** (`RENT_TAX_REGIMES_ENABLED = false`) : le moteur garde son impôt simplifié. Page à relire : `docs/fiscalite-fonciere-fiche-source.md`.
+- **Tous à relire, aucun relu sur une page officielle** : abattement du micro-foncier 30 %, plafond 15 000 €, plafond du déficit imputable 10 700 €, report 10 ans, prélèvements sociaux 17,2 %. L'impôt sur le revenu reste la tranche du profil (11 % / 30 %) : **choix de jeu**, pas le barème exact. Les cinq cas types du script `immo:simulate-fiscalite` sont des exemples de calcul : **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**.

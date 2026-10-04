@@ -32,7 +32,8 @@
     "immo:import-loyers": "ts-node scripts/immo-import-loyers.ts",
     "immo:load-loyers": "ts-node scripts/immo-load-loyers.ts",
     "immo:import-irl": "ts-node scripts/immo-import-irl.ts",
-    "immo:load-irl": "ts-node scripts/immo-load-irl.ts"
+    "immo:load-irl": "ts-node scripts/immo-load-irl.ts",
+    "immo:simulate-fiscalite": "ts-node scripts/immo-simulate-fiscalite.ts"
   },
   "keywords": [
     "investissement",
