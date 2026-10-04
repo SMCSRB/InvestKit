@@ -12,6 +12,8 @@ import { assertTestDatabase, isTestDatabaseName } from './test-give-coins';
 import { cryptoDataService } from '../src/services/crypto/dataService';
 import { importDemo } from '../src/services/crypto/importer';
 import { FIRST_STEP_BONUSES } from '../src/config/economy';
+import { realEstateService } from '../src/services/realEstateService';
+import { fictiveDataSource } from '../src/data/realEstate/fictiveCatalog';
 
 export const seedE2e = async (urlForCheck: string | undefined, email: string, password: string): Promise<string> => {
   const database = assertTestDatabase(urlForCheck);
@@ -35,6 +37,16 @@ export const seedE2e = async (urlForCheck: string | undefined, email: string, pa
   for (const [key, coins] of Object.entries(FIRST_STEP_BONUSES)) {
     await query('INSERT INTO first_step_bonuses (user_id, step_key, coins) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [id, key, coins]);
   }
+
+  // Une partie Immobilier avec un bien en bon état, sans travaux : le tableau de bord a de quoi expliquer sa « performance ».
+  await realEstateService.startGame(id, 'employee');
+  let choisi: Awaited<ReturnType<typeof fictiveDataSource.listListings>>[number] | undefined;
+  for (const l of await fictiveDataSource.listListings(2010)) {
+    if (l.type === 'studio' && l.condition === 'good' && l.advertisedWorks === 0 && (await fictiveDataSource.getExpertise(l.id, 2010))!.hiddenDefects.length === 0) { choisi = l; break; }
+  }
+  if (!choisi) throw new Error('Aucune annonce de départ adaptée dans le catalogue.');
+  const apport = Math.ceil(choisi.price * (choisi.age === 'old' ? 0.075 : 0.025) + choisi.price * 0.1) + 50;   // notaire + 10 % du prix, avec une marge
+  await realEstateService.purchase(id, { listingId: choisi.id, downPaymentCoins: apport, months: 240 });
   return database;
 };
 

@@ -925,3 +925,10 @@ Rien à tester sur le site. Lis `docs/sources-cours-bourse.md` et choisis : A (B
 
 ## Parcours navigateur (Playwright) en CI
 Rien à tester sur le site. Sur la PR, vérifie que le contrôle GitHub **e2e** est vert. En local (facultatif) : `docs/tests-navigateur.md`. Si un parcours échoue, le rapport (captures, traces) est joint à l'exécution du job.
+
+
+## Retours de test : performance Immobilier, premiers pas Pro, retour Banque, mention des données illustratives
+1. **Tableau de bord, carte Immobilier** : la ligne s'appelle « Résultat si tu revendais aujourd'hui ». Déplie « Comment est calculé ce pourcentage ? » : tu vois ce que tu as mis (apport avec frais de notaire, frais de dossier, travaux), la valeur de tes biens et le prêt restant, le coût d'une revente (décote d'un bien loué, agence, diagnostics, remboursement anticipé, impôts), puis le gain divisé par ton capital de départ. Le pourcentage n'est plus rouge.
+2. **Tes premiers pas** (compte Pro) : plus d'étape « Choisir ton domaine gratuit », et le compteur d'étapes baisse d'un. Sur un compte gratuit, l'étape reste.
+3. **Banque** : le lien en haut s'appelle « ← » suivi de la page d'où tu viens (Bourse et PEA, Immobilier, Crypto…). Arrivé directement : « ← Tableau de bord ».
+4. **Bourse** : plus de badge « Données illustratives » à côté du titre du graphique. Une courte note (avec « Compris ») apparaît la première fois, puis plus jamais ; la mention reste en petit sous le graphique.

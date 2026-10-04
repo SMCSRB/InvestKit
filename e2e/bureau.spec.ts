@@ -47,3 +47,47 @@ test('Immobilier : les descriptions des six premières annonces n\'affichent jam
     await expect(cartes.first()).toBeVisible();
   }
 });
+
+// ── Retours de test sur la copie de test ──
+test('tableau de bord, carte Immobilier : la performance a un libellé clair et un calcul expliqué', async ({ page }) => {
+  await page.goto('/dashboard');
+  await expect(page.getByText('Résultat si tu revendais aujourd’hui')).toBeVisible();
+  const bloc = page.getByTestId('dash-re-explain');
+  await expect(bloc).toBeVisible();
+  await bloc.locator('summary').click();
+  for (const mot of ['apport', 'frais de notaire', 'prix d’achat', 'décote d’un bien loué', 'capital de départ']) await expect(bloc).toContainText(mot);
+  await expect(bloc).not.toContainText(/undefined|NaN/);
+  await pasDEurosDansLeJeu(page, 'Tableau de bord');
+});
+
+test('« Tes premiers pas » : un compte Pro ne voit pas « Choisir ton domaine gratuit »', async ({ page }) => {
+  await page.goto('/dashboard');
+  await expect(page.getByText(/Tes premiers pas/i).first()).toBeVisible();
+  await expect(page.locator('body')).not.toContainText('Choisir ton domaine gratuit');
+});
+
+test('Banque : le lien retour mène à la page d\'où l\'on vient, sinon au tableau de bord', async ({ page }) => {
+  await page.goto('/banque');                                   // arrivée directe
+  await expect(page.getByTestId('bank-back')).toContainText('Tableau de bord');
+  // Navigation interne depuis l'Immobilier : le menu mène à la Banque.
+  await page.goto('/immobilier');
+  await page.getByRole('link', { name: /Banque et InvestCoins/ }).first().click();
+  await page.waitForURL('**/banque');
+  const retour = page.getByTestId('bank-back');
+  await expect(retour).toContainText('Immobilier');
+  await retour.click();
+  await page.waitForURL('**/immobilier');
+});
+
+test('Bourse : plus de badge « Données illustratives », une note discrète à la première utilisation puis un pied de graphique', async ({ page }) => {
+  await page.goto('/bourse');
+  await expect(page.locator('.ik-chip--example')).toHaveCount(0);
+  const note = page.getByTestId('hist-first-note');
+  await expect(note).toBeVisible();
+  await note.getByRole('button', { name: 'Compris' }).click();
+  await expect(note).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByTestId('advance-year')).toBeVisible();
+  await expect(page.getByTestId('hist-first-note')).toHaveCount(0);                 // plus jamais affichée
+  await expect(page.getByText('Données illustratives : cours de clôture annuels').first()).toBeVisible();   // la mention reste en pied de graphique
+});
