@@ -1071,3 +1071,9 @@ Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 4. Premier achat (compte neuf) : le registre montre l'achat, les frais et « +30 » (bonus premier investissement).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR Lot B — Analyse : carte immobilière avec de vraies villes (document seulement)
+
+Rien à tester sur le site. Lis `docs/analyse-carte-immobiliere-reelle.md` (en deux phrases, puis les chapitres 1 et 2) et réponds aux 4 questions du chapitre 6.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
