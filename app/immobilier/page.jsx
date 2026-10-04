@@ -1,5 +1,6 @@
 'use client';
 
+import { notifyClockAdvanced } from '@/app/lib/gameClock';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -77,7 +78,7 @@ function ImmoInner() {
   const advance = async (months) => {
     setBusy(true);
     try {
-      const r = await call('/time/advance', 'POST', { months });
+      const r = await call('/time/advance', 'POST', { months }); notifyClockAdvanced();
       const warnings = (r.settled || []).flatMap((s) => s.warnings || []);
       await refresh();
       if (warnings.length) notify(warnings[warnings.length - 1].message, true); else notify(months === 1 ? 'Un mois passe : ton bilan est à jour.' : 'Un an passe : de nouvelles annonces sont disponibles.');

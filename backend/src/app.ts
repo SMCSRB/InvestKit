@@ -78,6 +78,12 @@ if (!env.isProd || process.env.DOCS_ENABLED === 'true') {
 // API routes (versionnées dès le départ - /api/v1/...)
 // /api/auth reste disponible en alias pour ne pas casser un frontend
 // déjà déployé pointant vers l'ancienne URL le temps de la transition.
+// Les données de jeu (date simulée, prix, portefeuille, solde) ne doivent JAMAIS être gardées en mémoire par le navigateur ni par un relais :
+// après une avance du temps, la même adresse doit renvoyer la valeur à la nouvelle date.
+app.use(['/api/v1/trading', '/api/v1/crypto', '/api/v1/realestate', '/api/v1/bank', '/api/v1/clock', '/api/v1/economy', '/api/v1/wealth', '/api/v1/xp', '/api/v1/dashboard-layout', '/api/v1/overview'], (req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'GET') res.set('Cache-Control', 'no-store');
+  next();
+});
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/billing', billingRoutes);

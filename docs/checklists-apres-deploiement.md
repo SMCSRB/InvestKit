@@ -1062,3 +1062,12 @@ Ordre de fusion : indépendante (après #140, déjà fusionnée). Méthode : « 
 2. Sur la copie de test : `npm run set-pro -- <pseudo> on` fonctionne avec un pseudo. Les trois commandes sûres sont dans `docs/commandes-copie-de-test.md`.
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## Correctif — Crypto : l'affichage suit la date de jeu
+
+1. Crypto > Marché : clique « +1 mois » plusieurs fois. La liste des actifs reste remplie, les prix changent à chaque fois.
+2. Ouvre la fiche d'un actif, clique « +1 mois » depuis la fiche : le prix de la fiche change tout de suite (sans recharger).
+3. Le bandeau des prix en haut change à chaque avance (aussi quand tu avances depuis Bourse ou Immobilier).
+4. Premier achat (compte neuf) : le registre montre l'achat, les frais et « +30 » (bonus premier investissement).
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
