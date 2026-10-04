@@ -13,8 +13,8 @@ Des tests automatiques ouvrent un vrai navigateur (Chromium), se connectent et p
 - Une seule connexion par exécution pour la plupart des parcours (la session est réutilisée) et une connexion réelle à 390 px : l'API limite les tentatives de connexion (5 par 15 minutes).
 - L'inscription n'est pas testée de bout en bout : elle demande un code d'invitation et le captcha ; on vérifie seulement que la page s'affiche bien sur téléphone.
 
-## Pourquoi trois exécutions
-L'API limite les requêtes (300 par 15 minutes et par adresse). Tous les parcours d'un seul coup dépasseraient cette limite et afficheraient « Trop de requêtes ». `npm run e2e` lance donc **trois exécutions à la suite** (téléphone 390 px, ordinateur, puis le parcours Crypto) : chacune démarre une API neuve, dont le compteur repart de zéro. La limite de l'API n'est jamais modifiée pour les tests.
+## Pourquoi quatre exécutions
+L'API limite les requêtes (300 par 15 minutes et par adresse). Tous les parcours d'un seul coup dépasseraient cette limite et afficheraient « Trop de requêtes ». `npm run e2e` lance donc **quatre exécutions à la suite** (téléphone 390 px, ordinateur, parcours Crypto, puis guide du site) : chacune démarre une API neuve, dont le compteur repart de zéro. La limite de l'API n'est jamais modifiée pour les tests.
 
 ## Lancer en local
 ```

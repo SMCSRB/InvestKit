@@ -10,6 +10,7 @@ import SessionBootstrap from '@/app/components/SessionBootstrap';
 import ImpersonationBanner from '@/app/components/ImpersonationBanner';
 import AnnouncementsBanner from '@/app/components/AnnouncementsBanner';
 import FeedbackWidget from '@/app/components/FeedbackWidget';
+import GuideTour from '@/app/components/guide/GuideTour';
 
 export default function ClientLayoutWrapper({ children }) {
   return (
@@ -25,6 +26,7 @@ export default function ClientLayoutWrapper({ children }) {
           {children}
           <Toast />
           <FeedbackWidget />
+          <GuideTour />
         </UserProvider>
       </EducationProvider>
     </NotificationProvider>

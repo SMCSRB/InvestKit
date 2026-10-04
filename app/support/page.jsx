@@ -1,6 +1,8 @@
-import { redirect } from 'next/navigation';
+import AppShell from '@/app/components/shell/AppShell';
+import SupportContent from './SupportContent';
 
-// Le support passe par la page Contact.
+export const metadata = { title: 'Aide et support' };
+
 export default function SupportPage() {
-  redirect('/contact');
+  return <AppShell><SupportContent /></AppShell>;
 }
