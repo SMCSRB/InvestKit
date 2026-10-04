@@ -1,5 +1,5 @@
-// Charge en base les taux préparés par immo:import-taxe-fonciere (backend/data/taxe-fonciere-dgfip.json). PRÉPARATION : le moteur actuel ne lit pas ces taux (PROPERTY_TAX_ENABLED = false).
-//   npm run immo:load-taxe-fonciere -- --file backend/data/taxe-fonciere-dgfip.json           simulation : valide et affiche, n'écrit RIEN (aucune base n'est ouverte)
+// Charge en base les taux préparés par immo:import-taxe-fonciere (backend/data/taxe-fonciere-terralyse.json). PRÉPARATION : le moteur actuel ne lit pas ces taux (PROPERTY_TAX_ENABLED = false).
+//   npm run immo:load-taxe-fonciere -- --file backend/data/taxe-fonciere-terralyse.json           simulation : valide et affiche, n'écrit RIEN (aucune base n'est ouverte)
 //   npm run immo:load-taxe-fonciere -- --file … --apply                                        écrit en base, SEULEMENT si la base visée se termine par « _test » (sinon refus). Rejouable.
 import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
@@ -12,7 +12,7 @@ const arg = (n: string): string | undefined => { const i = process.argv.indexOf(
 const flag = (n: string) => process.argv.includes(`--${n}`);
 
 const main = async () => {
-  const f = arg('file'); if (!f) throw new Error('Précise le fichier : --file backend/data/taxe-fonciere-dgfip.json');
+  const f = arg('file'); if (!f) throw new Error('Précise le fichier : --file backend/data/taxe-fonciere-terralyse.json');
   const file = path.resolve(f);
   const text = readFileSync(file, 'utf8');
   const parsed = parseTaxRateFile(JSON.parse(text));
@@ -28,7 +28,7 @@ const main = async () => {
   try {
     const r = await propertyTaxService.importRates(parsed, createHash('sha256').update(text).digest('hex'));
     console.log(r.imported ? `Importé : ${r.rows} taux (import n° ${r.importId}).` : `Déjà importé (import n° ${r.importId}) : rien de plus n'a été écrit.`);
-    console.log(`Source « dgfip-rei » en base ; lecture par le moteur : ${PROPERTY_TAX_ENABLED ? 'ACTIVE' : 'NON activée'}.`);
+    console.log(`Source « terralyse » en base ; lecture par le moteur : ${PROPERTY_TAX_ENABLED ? 'ACTIVE' : 'NON activée'}.`);
   } finally { await closePool(); }
 };
 main().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
