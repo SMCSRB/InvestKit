@@ -11,6 +11,7 @@ export interface LevelScenario {
   annualRatePct: number;
   insuranceRatePct: number;
   notaryRule: NotaryFeeRule;
+  notaryPctAt?: (price: number) => number;   // frais de notaire de l'ANCIEN en % du prix, par département et par date (voir la fiche de source des frais de notaire) ; absent : le taux forfaitaire de notaryRule
   bankRules: BankRules;
   loanFees: (principal: number) => number;
   age: PropertyAge;
@@ -20,8 +21,11 @@ export interface LevelScenario {
 export interface Verdict { approved: boolean; reason: string | null; downPayment: number; principal: number; monthly: number }
 
 // Apport maximal possible : tout le capital, moins les frais de dossier (payés comptant). On cherche le plus grand apport qui laisse de quoi payer les frais.
+// Règle de notaire applicable à CE prix : dans l'ancien, le taux réel du département si fourni, sinon le taux forfaitaire.
+const ruleAt = (s: LevelScenario, price: number): NotaryFeeRule => (s.notaryPctAt && s.age === 'old' ? { ...s.notaryRule, oldRatePct: s.notaryPctAt(price) } : s.notaryRule);
 const bestDownPayment = (s: LevelScenario, price: number): number => {
-  const total = price + (s.age === 'old' ? price * s.notaryRule.oldRatePct / 100 : price * s.notaryRule.newRatePct / 100);
+  const rule = ruleAt(s, price);
+  const total = price + (s.age === 'old' ? price * rule.oldRatePct / 100 : price * rule.newRatePct / 100);
   let down = Math.min(s.capital, total);
   for (let i = 0; i < 6; i++) {                       // les frais dépendent du capital emprunté, qui dépend de l'apport : quelques passes suffisent
     const principal = Math.max(0, total - down);
@@ -39,7 +43,7 @@ export const assessPurchase = (s: LevelScenario, price: number): Verdict => {
       household: { profile: s.profile, salary: s.salary, livingCharges: s.livingCharges },
       price, age: s.age, works: 0, projectedMonthlyRent: (price * s.rentYieldPct) / 100 / 12,
       downPayment, loanMonths: s.months, annualRatePct: s.annualRatePct, insuranceRatePct: s.insuranceRatePct,
-      notaryRule: s.notaryRule, bankRules: s.bankRules, loanFees: s.loanFees,
+      notaryRule: ruleAt(s, price), bankRules: s.bankRules, loanFees: s.loanFees,
     });
   } catch (e) { return { approved: false, reason: e instanceof Error ? e.message : 'invalide', downPayment, principal: 0, monthly: 0 }; }
   return { approved: ev.approved, reason: ev.approved ? null : ev.assessment.reasons[0]?.code ?? 'REFUSED', downPayment, principal: ev.principal, monthly: ev.monthlyPaymentWithInsurance };

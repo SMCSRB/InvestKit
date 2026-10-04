@@ -12,6 +12,7 @@ import { DVF_CITIES, zoneLabel } from '../src/data/realEstate/dvf/cities';
 import { BANK_RULES, STARTING_PROFILES, NOTARY_RULE, LOAN_INSURANCE_RATE_PCT, loanApplicationFee } from '../src/config/immoRules';
 import { minOf, maxOf } from '../src/data/realEstate/dvf/arrays';
 import { fictiveDataSource } from '../src/data/realEstate/fictiveCatalog';
+import { notaryFeesOld } from '../src/engine/immo/notaryDepartment';
 import { assessPurchase, maxApprovedPrice, maxSurfaceAt, unitPrice, UNIT_KINDS, LevelScenario } from '../src/engine/immo/levelSimulation';
 import type { ProfileId } from '../src/engine/immo';
 
@@ -37,18 +38,21 @@ const main = async () => {
     const year = Number(month.slice(0, 4));
     const rate = await fictiveDataSource.getLoanRatePct(Math.min(year, 2026), months);
     const s: LevelScenario = { capital, profile, salary: prof.netMonthlyIncome, livingCharges: prof.livingCharges, months, annualRatePct: rate, insuranceRatePct: LOAN_INSURANCE_RATE_PCT, notaryRule: NOTARY_RULE, bankRules: BANK_RULES, loanFees: loanApplicationFee, age, rentYieldPct: yieldPct };
-    const ceiling = maxApprovedPrice(s);
-    console.log(`── ${month} · taux ${rate} % · la banque accepte au plus ${ceiling.toLocaleString('fr-FR')} euros ──`);
+    const ceiling = maxApprovedPrice(s);        // plafond avec le taux de notaire FORFAITAIRE du jeu ; chaque ville a le sien, avec le notaire de son département (voir ci-dessous)
+    console.log(`── ${month} · taux ${rate} % · plafond d'achat avec le notaire forfaitaire du jeu : ${ceiling.toLocaleString('fr-FR')} euros ──`);
+    if (age === 'old') console.log('Notaire : calculé par DÉPARTEMENT (droits de mutation à la date, émoluments, TVA, CSI, frais divers) ; sources et doutes dans docs/frais-notaire-fiche-source.md.');
     console.log('Zone'.padEnd(22) + 'ventes'.padStart(7) + 'prix m² appart.'.padStart(17) + 'prix m² maison'.padStart(16) + UNIT_KINDS.map((k) => k.id.padStart(9)).join(''));
     console.log('(« ~ » = prix de la ville entière (moins de 5 ventes dans la zone, ou écart de plus de 40 % à la ville) ; sans signe : zone seule (30 ventes ou plus) ou zone et ville mélangées (5 à 29 ventes) ; « - » = pas de prix fiable ; colonnes de droite : le bien est-il accepté par la banque, ✓ ou ✗)');
     let anyHousing = 0; let anyParking = 0; let zonesTotal = 0;
     const summary: string[] = [];
     for (const c of DVF_CITIES) {
+      const sc: LevelScenario = age === 'old' ? { ...s, notaryPctAt: (price: number) => notaryFeesOld(price, c.department, `${month}-01`).pct } : s;   // notaire du département de la ville
+      const cityCeiling = maxApprovedPrice(sc);
       const find = (z: string, type: 'apartment' | 'house') => parsed.rows.find((x) => x.zone === z && x.month === month && x.type === type);
       const cityApt = c.zones.map((z) => find(z, 'apartment')).filter((r) => r);
       if (!cityApt.length) { console.log(`${c.name}`.padEnd(22) + 'pas de prix fiable ce mois-là'); continue; }
       const meds = cityApt.map((r) => r!.median); const lo = minOf(meds); const hi = maxOf(meds);
-      console.log(`${c.name} — ${c.zones.length} zone${c.zones.length > 1 ? 's' : ''}, ${Math.round(lo)}${hi !== lo ? ` à ${Math.round(hi)}` : ''} €/m² ; la banque finance ${maxSurfaceAt(ceiling, hi)}${hi !== lo ? ` à ${maxSurfaceAt(ceiling, lo)}` : ''} m² à ce prix`);
+      console.log(`${c.name} — ${c.zones.length} zone${c.zones.length > 1 ? 's' : ''}, ${Math.round(lo)}${hi !== lo ? ` à ${Math.round(hi)}` : ''} €/m² ; la banque finance ${maxSurfaceAt(cityCeiling, hi)}${hi !== lo ? ` à ${maxSurfaceAt(cityCeiling, lo)}` : ''} m² à ce prix (plafond ${cityCeiling.toLocaleString('fr-FR')} €${age === 'old' ? `, notaire ${notaryFeesOld(Math.max(cityCeiling, 1_000), c.department, `${month}-01`).pct.toLocaleString('fr-FR')} %` : ''})`);
       let studioOk = 0; let parkingOk = 0; let priced = 0;
       for (const z of c.zones) {
         const a = find(z, 'apartment'); const h = find(z, 'house');
@@ -56,7 +60,7 @@ const main = async () => {
         const marks = UNIT_KINDS.map((k) => {
           const r = k.marketType === 'a' ? a : h;
           if (!r) return '-'.padStart(9);
-          const ok = assessPurchase(s, unitPrice(k, r.median)).approved;
+          const ok = assessPurchase(sc, unitPrice(k, r.median)).approved;
           if (k.id === 'parking') { if (ok) { anyParking++; parkingOk++; } } else if (ok) anyHousing++;
           if (k.id === 'studio' && ok) studioOk++;
           return (ok ? '✓' : '✗').padStart(9);
@@ -64,7 +68,7 @@ const main = async () => {
         if (a) { zonesTotal++; priced++; }
         console.log('  ' + (zoneLabel(z) ?? z).padEnd(20) + String(a?.salesCount ?? '-').padStart(7) + fmt(a).padStart(17) + fmt(h).padStart(16) + marks.join(''));
       }
-      summary.push(c.name.padEnd(16) + `${Math.round(lo)}${hi !== lo ? ` à ${Math.round(hi)}` : ''}`.padEnd(26) + `${maxSurfaceAt(ceiling, hi)}${hi !== lo ? ` à ${maxSurfaceAt(ceiling, lo)}` : ''}`.padEnd(18) + `${studioOk}/${priced} zones`.padStart(14) + `${parkingOk}/${priced}`.padStart(10));
+      summary.push(c.name.padEnd(16) + `${Math.round(lo)}${hi !== lo ? ` à ${Math.round(hi)}` : ''}`.padEnd(26) + `${maxSurfaceAt(cityCeiling, hi)}${hi !== lo ? ` à ${maxSurfaceAt(cityCeiling, lo)}` : ''}`.padEnd(18) + `${studioOk}/${priced} zones`.padStart(14) + `${parkingOk}/${priced}`.padStart(10));
     }
     console.log('\nPlafond de ce profil, ville par ville (le plus petit bien du catalogue : studio de 17 m², parking de 11 m²) :');
     console.log('Ville'.padEnd(16) + 'prix m² médian (zones)'.padEnd(26) + 'm² finançables'.padEnd(18) + 'studio 17 m²'.padStart(14) + 'parking'.padStart(10));
