@@ -45,6 +45,7 @@ export const ROUTES: Row[] = [
   ['post', '/education/complete-chapter', 'Éducation', 'Ancienne route (410, ne récompense plus)'],
   ['post', '/education/complete-domain', 'Éducation', 'Ancienne route (410, ne récompense plus)'],
   ['get', '/social/me', 'Social', 'Mon code ami et mes compteurs'],
+  ['post', '/social/visibility', 'Social', 'Confidentialité du profil : public, amis ou privé (« Joueur anonyme » dans les classements publics)'],
   ['get', '/social/tag', 'Social', 'Mon identifiant Pseudo#tag (et mes droits de changement)'],
   ['post', '/social/tag', 'Social', 'Choisir mon # (membres Pro : 1 changement par mois, règles vérifiées par le serveur)'],
   ['get', '/social/tag/history', 'Social', 'Historique de mes #'],

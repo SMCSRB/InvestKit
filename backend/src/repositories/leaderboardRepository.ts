@@ -10,7 +10,10 @@ export interface BoardEntry {
   performancePct: number;
   leverage: number | null; // levier utilisé (capital investi / capital propre) ; null = non applicable
   isMe: boolean;
+  anonymous: boolean; // profil non public : nom, photo et indicateur Pro masqués pour les autres joueurs (« Joueur anonyme »)
 }
+
+export const ANONYMOUS_NAME = 'Joueur anonyme';
 
 export interface Board {
   entries: BoardEntry[];
@@ -88,24 +91,26 @@ export const leaderboardRepository = {
     const result = await query(
       `WITH ranked AS (
          SELECT lr.user_id,
-                COALESCE(u.username, 'Investisseur anonyme') AS username,
-                u.avatar_id,
-                ((u.subscription_tier = 'pro' OR u.pro_override = TRUE) AND (u.show_pro_badge = TRUE OR lr.user_id = $6)) AS pro,
+                -- Confidentialité : un profil non public apparaît « Joueur anonyme » (avec son rang), sans nom, photo ni indicateur Pro, sauf pour lui-même.
+                CASE WHEN u.profile_visibility = 'public' OR lr.user_id = $6 THEN COALESCE(u.username, 'Investisseur anonyme') ELSE '${ANONYMOUS_NAME}' END AS username,
+                CASE WHEN u.profile_visibility = 'public' OR lr.user_id = $6 THEN u.avatar_id ELSE NULL END AS avatar_id,
+                ((u.subscription_tier = 'pro' OR u.pro_override = TRUE) AND (u.show_pro_badge = TRUE OR lr.user_id = $6) AND (u.profile_visibility = 'public' OR lr.user_id = $6)) AS pro,
+                (u.profile_visibility <> 'public' AND lr.user_id <> $6) AS anonymous,
                 lr.performance_pct,
                 lr.leverage,
                 RANK() OVER (ORDER BY lr.performance_pct DESC) AS rank,
-                ROW_NUMBER() OVER (ORDER BY lr.performance_pct DESC, (lr.user_id = $6) DESC, u.username, lr.user_id) AS rn
+                ROW_NUMBER() OVER (ORDER BY lr.performance_pct DESC, (lr.user_id = $6) DESC, lr.user_id) AS rn
          FROM leaderboard_rankings lr
          JOIN users u ON u.id = lr.user_id
          WHERE lr.mode = $1 AND lr.domain = $2 AND lr.period = $3
            AND lr.capital_committed >= $4
            AND u.active_days >= $7
        )
-       SELECT user_id, username, avatar_id, pro, performance_pct, leverage, rank,
+       SELECT user_id, username, avatar_id, pro, anonymous, performance_pct, leverage, rank,
               (SELECT COUNT(*) FROM ranked) AS total
        FROM ranked
        WHERE (rank <= $5 AND rn <= $5) OR user_id = $6
-       ORDER BY rank, (user_id = $6) DESC, username`,
+       ORDER BY rank, (user_id = $6) DESC, user_id`,
       [params.mode, params.domain, params.period ?? periodForYear(params.year), params.minCapital, params.limit, params.callerId, RANKING_MIN_ACTIVE_DAYS]
     );
 
@@ -117,6 +122,7 @@ export const leaderboardRepository = {
       performancePct: Number(row.performance_pct),
       leverage: row.leverage === null || row.leverage === undefined ? null : Number(row.leverage),
       isMe: row.user_id === params.callerId,
+      anonymous: row.anonymous === true,
     });
 
     const all = result.rows.map(toEntry);
