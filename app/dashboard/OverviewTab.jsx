@@ -35,6 +35,28 @@ function DomainCard({ icon, name, locked, free, children, action, index }) {
   );
 }
 
+// Explication de la performance Immobilier, avec les chiffres du joueur (mêmes chiffres que le Bilan Immobilier).
+function RealEstateExplain({ re }) {
+  const e = re.performanceExplain;
+  if (!e) return null;
+  const n = (v) => <strong>{fmtInt(v)} <Coin size={13} /></strong>;
+  const s = (v) => <strong>{v > 0 ? '+' : ''}{fmtInt(v)} <Coin size={13} /></strong>;
+  return (
+    <details className="rp-explain" data-testid="dash-re-explain" style={{ marginTop: 6 }}>
+      <summary>Comment est calculé ce pourcentage ?</summary>
+      <p className="ik-muted" style={{ margin: '8px 0 4px' }}>C’est le gain que tu ferais si tu vendais tous tes biens aujourd’hui, divisé par ton capital de départ ({n(e.startingCapitalCoins)}).</p>
+      <ol style={{ margin: '4px 0 8px', paddingLeft: 18, display: 'grid', gap: 4 }}>
+        <li><strong>Ce que tu as mis :</strong> apport {n(e.downPaymentCoins)} (frais de notaire {n(e.notaryFeesCoins)} compris), frais de dossier du prêt {n(e.loanFeesCoins)}, travaux payés {n(e.worksCoins)}.</li>
+        <li><strong>Ce que valent tes biens :</strong> {n(e.marketValueCoins)} (prix d’achat {n(e.purchasePriceCoins)}, évolué avec le marché), moins le prêt immobilier restant {n(e.mortgageDebtCoins)}.</li>
+        <li><strong>Ce que la revente coûterait :</strong> décote d’un bien loué {n(e.occupiedDiscountCoins)}, agence {n(e.agencyFeesCoins)}, diagnostics {n(e.diagnosticsCoins)}, indemnité de remboursement anticipé {n(e.earlyRepaymentCoins)}, impôts {n(e.taxesCoins)}, dépôt de garantie à rendre {n(e.depositCoins)}.</li>
+        <li><strong>Valeur nette de revente :</strong> {n(re.netLiquidationCoins ?? 0)}. À cela s’ajoutent tes loyers encaissés {n(e.rentCollectedCoins)} et tes ventes déjà faites {n(e.salesAlreadyDoneCoins)}, moins les intérêts de prêts personnels {n(e.personalLoanInterestCoins)}, moins ce que tu as mis {n(e.investedTotalCoins)}.</li>
+        <li><strong>Gain :</strong> {s(e.gainCoins)}, soit {String(re.performancePct).replace('.', ',')} % de ton capital de départ.</li>
+      </ol>
+      <p className="ik-muted" style={{ margin: 0 }}>Un chiffre négatif au début est normal : les frais d’achat (notaire, dossier) et de revente sont comptés tout de suite, alors que les loyers n’ont pas encore eu le temps de les compenser. Il redevient positif si le bien prend de la valeur ou si les loyers s’accumulent. Rien ne t’oblige à vendre.</p>
+    </details>
+  );
+}
+
 function Line({ label, value, tone }) {
   return (
     <div className="dash-line">
@@ -190,7 +212,8 @@ export default function OverviewTab({ overview: ov, failed, onRetry, onOpenTab }
               <Line label="Biens" value={re.properties} />
               <Line label="Valeur nette de revente" value={<>{fmtInt(re.netLiquidationCoins ?? 0)} <Coin /></>} />
               <Line label="Dette bancaire" value={<>{fmtInt(re.bankDebtCoins ?? 0)} <Coin /></>} />
-              <Line label="Performance" value={`${re.performancePct > 0 ? '+' : ''}${re.performancePct} %`} tone={re.performancePct >= 0 ? 'ik-up' : 'ik-down'} />
+              <Line label="Résultat si tu revendais aujourd’hui" value={`${re.performancePct > 0 ? '+' : ''}${String(re.performancePct).replace('.', ',')} %`} tone={re.performancePct > 0 ? 'ik-up' : undefined} />
+              <RealEstateExplain re={re} />
             </>
           ) : <p className="ik-muted" style={{ margin: 0 }}>Pas encore commencé : choisis ton profil.</p>}
         </DomainCard>

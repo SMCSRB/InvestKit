@@ -7,14 +7,16 @@ import { notify } from './notificationService';
 import { CHECKLIST_REWARD_COINS, FIRST_STEP_BONUSES } from '../config/economy';
 export { CHECKLIST_REWARD_COINS };
 
-interface StepDef { key: string; title: string; description: string; link: string; done: (userId: string) => Promise<boolean> }
+interface StepDef { key: string; title: string; description: string; link: string; done: (userId: string) => Promise<boolean>; applies?: (userId: string) => Promise<boolean> }   // applies : l'étape n'est montrée (ni comptée, ni récompensée) que si elle concerne le compte
 const exists = async (sql: string, userId: string): Promise<boolean> => (await query(sql, [userId])).rows.length > 0;
 
 export const STEPS: StepDef[] = [
   { key: 'profile', title: 'Remplir ton profil d\'investisseur', description: 'Trois questions pour adapter les conseils à ton niveau et à tes envies.', link: '#profil',
     done: (u) => exists('SELECT 1 FROM investor_profiles WHERE user_id = $1 AND risk_tolerance IS NOT NULL', u) },
   { key: 'free_domain', title: 'Choisir ton domaine gratuit', description: 'Bourse, Crypto ou Immobilier : le domaine où tu joues gratuitement.', link: '/dashboard',
-    done: (u) => exists(`SELECT 1 FROM users WHERE id = $1 AND (free_domain IS NOT NULL OR subscription_tier = 'pro' OR pro_override)`, u) },
+    // Un compte Pro ouvre tous les domaines : il n'a pas de domaine gratuit à choisir, l'étape ne lui est pas montrée.
+    applies: (u) => exists(`SELECT 1 FROM users WHERE id = $1 AND subscription_tier <> 'pro' AND NOT COALESCE(pro_override, FALSE)`, u),
+    done: (u) => exists(`SELECT 1 FROM users WHERE id = $1 AND free_domain IS NOT NULL`, u) },
   { key: 'first_lesson', title: 'Terminer une leçon d\'éducation', description: `Un chapitre pour comprendre les bases. Deux récompenses distinctes : ${CHECKLIST_REWARD_COINS} pièces ici (à récupérer sur cette liste) et, à part, le bonus « première leçon » de ${FIRST_STEP_BONUSES.first_lesson} pièces, versé automatiquement quand tu réussis le quiz d'un chapitre.`, link: '/education',
     done: (u) => exists('SELECT 1 FROM education_progress WHERE user_id = $1', u) },
   { key: 'daily_reward', title: 'Réclamer ta récompense quotidienne', description: 'Une petite récompense fixe, jusqu\'à 3 jours par semaine : aucune série à tenir.', link: '/dashboard',
@@ -62,6 +64,7 @@ export const onboardingService = {
     const claimed = new Map((await query('SELECT step, coins FROM onboarding_rewards WHERE user_id = $1', [userId])).rows.map((r: any) => [r.step, Number(r.coins)]));
     const steps = [];
     for (const s of STEPS) {
+      if (s.applies && !(await s.applies(userId))) continue;
       const done = await s.done(userId);
       steps.push({ key: s.key, title: s.title, description: s.description, link: s.link, done, claimed: claimed.has(s.key), reward: CHECKLIST_REWARD_COINS });
     }

@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { trackPage } from '@/app/lib/backLink';
 import { useTheme } from '@/app/context/ThemeContext';
 import CommandPalette from './CommandPalette';
 import TiltScope from '@/app/components/landing/TiltScope';
@@ -39,6 +40,7 @@ export default function AppShell({ children }) {
   }, []);
 
   useEffect(() => { setMenuOpen(false); }, [pathname, search]);
+  useEffect(() => { trackPage(pathname); }, [pathname]);   // mémorise la page précédente (lien « retour » de la Banque)
 
   // Hauteur réelle de la barre du haut + bande de cours (toutes deux collées en haut de l'écran) : publiée dans --ik-sticky-offset.
   // Elle sert aux ancres (scroll-padding) et aux éléments collants de page, pour que rien ne passe SOUS ces barres.
