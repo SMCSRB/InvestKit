@@ -1,7 +1,7 @@
 import { query } from '../utils/db';
 import { hasProAccess } from '../utils/entitlements';
 import { START_SCENARIOS } from '../config/cryptoMarketRules';
-import { PERIOD_UNLOCK_MONTHS, GAME_MODES } from '../config/clockRules';
+import { PERIOD_UNLOCK_MONTHS, GAME_MODES, MODE_AVAILABILITY } from '../config/clockRules';
 import { decideAccess, scenarioPlayed, AccessDecision } from '../engine/modeAccess';
 import { parseDay } from '../engine/clock';
 
@@ -36,7 +36,7 @@ export const modeAccessService = {
     return {
       modes: GAME_MODES.map((m) => ({
         id: m,
-        available: m === 'history',                                                   // Bac à sable et En ligne : règles d'accès prêtes, jeu pas encore construit
+        available: MODE_AVAILABILITY[m],                                              // Bac à sable et En ligne : règles d'accès prêtes, jeu pas encore construit
         access: m === 'history' ? 'all' : m === 'live' ? 'pro' : pro ? 'all' : 'played_periods',
         allowedForYou: decideAccess({ mode: m, pro, scenarioId: open[0] ?? null, unlockedScenarios: open }).allowed,
         ...(m === 'sandbox' ? { unlockedPeriods: open, anyPeriodAndStart: pro } : {}),

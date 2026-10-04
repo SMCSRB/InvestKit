@@ -25,6 +25,7 @@ export const NAV_MAIN = [
 
 export const NAV_BOTTOM = [
   { id: 'settings', label: 'Paramètres', href: '/dashboard?tab=settings', icon: 'settings' },
+  { id: 'guide', label: 'Guide du site', href: '/guide', icon: 'bookOpen' },
   { id: 'support', label: 'Aide et support', href: '/support', icon: 'help' },
 ];
 
