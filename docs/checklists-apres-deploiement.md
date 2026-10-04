@@ -1170,6 +1170,6 @@ Après `~/deploy-test.sh` (aucune migration), connecté avec un compte Immobilie
 
 1. Ouvre la fiche d'une annonce : dans « Charges et taxes » (copropriété, taxe foncière, assurance, entretien, charges récupérables) et dans « marché locatif » (loyer de référence, vacance attendue, durée d'un bail), chaque ligne porte la petite marque **« valeur de jeu »** ; au survol, elle explique « non sourcée, à reconfirmer ».
 2. Dans « Loyer et rentabilité », « Loyer estimé » porte la même marque. Sur les cartes de la liste, le rendement brut aussi.
-3. **Rien de plus ne change aujourd'hui** : le catalogue reste fictif, donc aucun loyer ANIL n'est affiché. Quand un loyer réel sera branché, la fiche dira « Loyer moyen de la commune » avec la nature du loyer (loyer d'annonce, charges comprises), le millésime, la fourchette et l'attribution ANIL ; une commune sans loyer n'affichera **aucune rentabilité** (« Rentabilité non disponible »).
+3. **Rien de plus ne change aujourd'hui** : le catalogue reste fictif, donc aucun loyer ANIL n'est affiché. Quand un loyer réel sera branché, la fiche dira « Loyer moyen de la commune » avec la nature du loyer (loyer d'annonce, charges comprises), le millésime, la fourchette et l'attribution ANIL ; avant le 30 septembre du premier millésime, elle ajoutera en gras « Estimation ANIL 2022, 3e trimestre (approximation avant cette date) » ; une commune sans loyer n'affichera **aucune rentabilité** (« Rentabilité non disponible »).
 
 Ordre de fusion : après la PR 1 (loyers ANIL). Méthode : « Create a merge commit ».

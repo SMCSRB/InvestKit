@@ -45,6 +45,9 @@ describe('origine des chiffres : textes de l\'écran', () => {
     expect(r.attribution).toMatch(/ANIL/);
     expect(r.attribution).toMatch(/Licence Ouverte 2\.0/);
     expect(r.estimate).toBeNull();
+    expect(r.approximation).toBeNull();
+    const early = rentInfo(listingDataSources({ ...anil, approximation: 'Estimation ANIL 2022, 3e trimestre (approximation avant cette date)' }));
+    expect(early.approximation).toBe('Estimation ANIL 2022, 3e trimestre (approximation avant cette date)');
     expect(rentInfo(listingDataSources({ ...anil, estimate: 'maille' })).estimate).toMatch(/groupe de communes voisines/);
   });
   it('« valeur de jeu » : marqué par défaut (sans information), plus marqué quand une source réelle le remplace', () => {
@@ -66,6 +69,7 @@ describe('origine des chiffres : textes de l\'écran', () => {
     const detail = read('components/immo/Detail.jsx');
     for (const f of GAME_VALUE_FIELDS) expect(detail, f).toContain(`isGameValue(l.dataSources, '${f}')`);
     expect(detail).toContain('data-testid="rent-source"');
+    expect(detail).toContain('data-testid="rent-approximation"');
     expect(detail).toContain('rentSrc.attribution');
     expect(detail).toContain('yieldAvailable(l.grossYieldPct)');
     const search = read('components/immo/Search.jsx');

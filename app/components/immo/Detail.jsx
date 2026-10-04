@@ -256,7 +256,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
               )}
             </div>
             {rentSrc.real && (
-              <p className="rp-source" data-testid="rent-source">{rentSrc.source}{rentSrc.estimate ? ` ${rentSrc.estimate}` : ''} {rentSrc.attribution}</p>
+              <p className="rp-source" data-testid="rent-source">{rentSrc.approximation && <strong data-testid="rent-approximation">{rentSrc.approximation}. </strong>}{rentSrc.source}{rentSrc.estimate ? ` ${rentSrc.estimate}` : ''} {rentSrc.attribution}</p>
             )}
             {l.scenario && (
               <p className="ik-muted" data-testid="sheet-scenario-note" style={{ margin: '8px 0 0', fontSize: 'var(--ik-fs-sm)' }}>

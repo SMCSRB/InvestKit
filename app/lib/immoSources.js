@@ -16,11 +16,12 @@ export const rentInfo = (sources) => {
       real: true,
       label: 'Loyer moyen de la commune',
       source: `${r.nature} Millésime ${r.vintage} (biens mis en location au 3e trimestre ${r.vintage}, observés jusqu'au ${dateFr(r.snapshotDate)}). Fourchette : ${eur1(r.lowEurM2)} à ${eur1(r.highEurM2)} €/m²/mois.`,
+      approximation: r.approximation || null,
       estimate: r.estimate === 'maille' ? 'Estimation sur un groupe de communes voisines (peu d\'annonces dans la commune).' : null,
       attribution: r.attribution,
     };
   }
-  return { real: false, label: 'Loyer de référence', source: null, estimate: null, attribution: null };
+  return { real: false, label: 'Loyer de référence', source: null, approximation: null, estimate: null, attribution: null };
 };
 
 // Rentabilité : jamais affichée sans loyer (pas de loyer ANIL pour la commune).

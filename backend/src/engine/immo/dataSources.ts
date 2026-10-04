@@ -2,7 +2,7 @@
 // Règle d'Andreja (5 octobre 2026) : ce qui n'a pas de source ouverte porte la marque « valeur de jeu » ; un loyer réel porte l'attribution de sa source.
 export type RentSource =
   | { kind: 'jeu' }
-  | { kind: 'anil'; communeLabel: string; vintage: number; snapshotDate: string; estimate: 'commune' | 'maille'; lowEurM2: number; highEurM2: number; attribution: string; nature: string };
+  | { kind: 'anil'; communeLabel: string; vintage: number; snapshotDate: string; estimate: 'commune' | 'maille'; lowEurM2: number; highEurM2: number; attribution: string; nature: string; approximation?: string | null };
 
 // Champs d'une fiche qui restent des VALEURS DE JEU (clé = ce que l'écran marque). À retirer d'ici quand une source réelle est branchée (taxe foncière : PR 5).
 // Charges de copropriété, assurance, entretien, charges récupérables, vacance, durée des baux : aucune source ouverte par commune.

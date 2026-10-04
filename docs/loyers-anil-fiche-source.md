@@ -25,5 +25,6 @@
 - **Aucun loyer inventé** : si une commune n'a pas de loyer ANIL pour la série, **aucune rentabilité n'est affichée** (`realGrossYield` renvoie `null`).
 - Le loyer est un **loyer d'annonce charges comprises** : le rendement est un rendement **brut indicatif**.
 - **Parking** : aucune série, donc aucun loyer ANIL ; reste « VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER ».
-- **Avant le premier millésime** (30 septembre 2022) : aucun loyer, donc aucune rentabilité (à décider : voir le rapport).
+- **Avant le premier millésime** (décision d'Andreja, 5 octobre 2026) : le premier millésime (2022) est utilisable **dès janvier 2022**, avec la mention « Estimation ANIL 2022, 3e trimestre (approximation avant cette date) » (`rentApproximationText`). Avant janvier du premier millésime : aucun loyer, donc aucune rentabilité. Quand l'IRL réel sera importé (PR 3), le loyer d'avant le 3e trimestre est **recalé sur l'évolution réelle de l'IRL** entre la date de jeu et le 3e trimestre 2022, et la mention le dit.
+- **Entre deux millésimes** : loyer constant (un seul changement par an, au 30 septembre), jamais de valeur inventée ni interpolée.
 - **Pas encore branché** : `RENT_MARKET_ENABLED = false`. Le catalogue fictif reste utilisé tant que les annonces réelles (prix DVF) ne sont pas branchées.
