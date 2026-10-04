@@ -1049,3 +1049,9 @@ Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 4. Reconnecte-toi avec un ancien compte : même patrimoine total (barre du haut), plus de positions ni de biens, partie à la date de départ. Vérifie qu'un ordre en attente d'avant est annulé.
 
 Ordre de fusion : dans la même PR que l'horloge unique (#140). Méthode : « Create a merge commit ».
+
+## PR 6c-3 — Accès aux modes (serveur seulement)
+
+Aucun écran ne change. Test technique : `GET /api/v1/clock/modes` avec un compte gratuit montre En ligne « Pro » ; après 12 mois d'avance en Histoire, ta période de départ apparaît dans `unlockedPeriods` du Bac à sable. Avec un compte Pro, Bac à sable « all ».
+
+Ordre de fusion : indépendante (après #140, déjà fusionnée). Méthode : « Create a merge commit ».

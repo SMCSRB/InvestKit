@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { simClockService, ClockError } from '../services/simClockService';
+import { modeAccessService } from '../services/modeAccessService';
 import { CryptoDataError } from '../services/crypto/dataService';
 import { TradingError } from '../services/tradingService';
 import { RealEstateError } from '../services/realEstateService';
@@ -31,6 +32,7 @@ export const clockGate = async (req: AuthRequest, res: Response, next: NextFunct
 };
 
 export const clockController = {
+  modes: run('Erreur lors de la lecture des modes', (_r, uid) => modeAccessService.view(uid)),
   view: run('Erreur lors de la lecture de l\'horloge', (_r, uid) => simClockService.view(uid)),
   start: run('Erreur lors du choix de la date de départ', async (r, uid) => { await simClockService.ensure(uid, r.body?.start); return simClockService.view(uid); }),
   advance: run('Erreur lors de l\'avance du temps', async (r, uid) => {

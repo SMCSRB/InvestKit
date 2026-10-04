@@ -8,5 +8,6 @@ import { profileWriteLimiter } from '../middleware/rateLimiter';
 export const clockRoutes = Router();
 clockRoutes.use(walletEcho);
 clockRoutes.get('/', authMiddleware, c.view);
+clockRoutes.get('/modes', authMiddleware, c.modes);
 clockRoutes.post('/start', authMiddleware, profileWriteLimiter, c.start);
 clockRoutes.post('/advance', authMiddleware, c.advance);

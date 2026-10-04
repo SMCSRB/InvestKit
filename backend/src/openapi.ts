@@ -82,6 +82,7 @@ export const ROUTES: Row[] = [
   ['get', '/xp/badges', 'Progression', 'Mes badges : catalogue et état, attribués par le serveur (rareté réelle masquée sous 50 joueurs)'],
   ['get', '/xp',  'Progression', 'Mon XP : total, niveau avec titre, progression et XP par domaine (calculés par le serveur)'],
   ['get', '/clock', 'Horloge', 'Ma date de jeu unique (décidée par le serveur), dernier jour jouable et départs proposés'],
+  ['get', '/clock/modes', 'Horloge', 'Modes de jeu (Histoire, Bac à sable, En ligne) : accès pour moi, périodes débloquées (décidé par le serveur)'],
   ['post', '/clock/start', 'Horloge', 'Choisir la date de départ de la partie (une seule fois, liste fermée)'],
   ['post', '/clock/advance', 'Horloge', 'Avancer le temps pour tous les domaines : day, week, month, quarter, year ou next_event (récapitulatif et arrêt sur événement important)'],
   ['get', '/wealth/history', 'Tableau de bord', 'Historique de mon patrimoine (gratuit : 30 derniers points ; Pro : tout), décidé par le serveur'],
