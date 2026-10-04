@@ -182,7 +182,7 @@ Règles : français simple, **aucun fait postérieur à la date de départ dans 
 - *À gérer.* La perte de confiance dans un acteur central : diversification, liquidités, ne pas confondre prix et solidité.
 - *Objectif Normal.* ★ terminer ; ★★ finir au-dessus du capital ; ★★★ idem avec une perte maximale d'au plus 30 %. **[à calibrer]**
 
-### 4.2 Bourse (7 scénarios au plus ; **aucun scénario gratuit tant que la source de cours réels n'est pas tranchée**)
+### 4.2 Bourse (4 scénarios ; **aucun scénario gratuit tant que la source de cours réels n'est pas tranchée**)
 *Tous dépendent de vrais cours (et, pour 1999 à 2009, d'une source qui remonte à 1999). Quand la source sera choisie, **le premier scénario que ses données permettent sera le gratuit** (la bulle internet si elle remonte à 1999, sinon la crise de 2008).*
 
 **B1. « La bulle internet »** · 1999-10-01 → 2002-12-31
