@@ -44,6 +44,7 @@ export const exportUserData = async (userId: string) => {
       balance: (await one('SELECT balance, updated_at FROM investcoins_balance WHERE user_id = $1'))[0] ?? null,
       transactions: await one('SELECT amount, reason, metadata, domain, nature, created_at FROM investcoins_transactions WHERE user_id = $1 ORDER BY created_at'),
     },
+    xp: await one('SELECT domain, source, event_key, amount, created_at FROM xp_events WHERE user_id = $1 ORDER BY created_at, id'),
     education: { progress: await one('SELECT * FROM education_progress WHERE user_id = $1'), userProgress: await one('SELECT * FROM user_progress WHERE user_id = $1') },
     portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
     cryptoMarket: {

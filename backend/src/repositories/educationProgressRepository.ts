@@ -1,4 +1,5 @@
 import { query } from '../utils/db';
+import { xpService } from '../services/xpService';
 
 const DOMAIN_COMPLETE_MARKER = '__domain_complete__';
 
@@ -38,6 +39,12 @@ export const educationProgressRepository = {
        RETURNING id`,
       [userId, domainId, chapterId || DOMAIN_COMPLETE_MARKER, score ?? null, xpEarned, coinsEarned]
     );
+    // Journal d'XP (6a) : même montant, une seule fois (clé = ligne d'éducation). Plafonné comme dans les classements (500 par ligne).
+    if (result.rows.length > 0 && xpEarned > 0) {
+      await xpService.grant(userId, {
+        domain: 'education', source: chapterId ? 'quiz' : 'domain_final', key: `ep:${result.rows[0].id}`, amount: Math.min(Math.floor(xpEarned), 500),
+      });
+    }
     return result.rows.length > 0;
   },
 };

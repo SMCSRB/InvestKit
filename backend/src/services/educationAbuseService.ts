@@ -69,7 +69,11 @@ export const educationAbuseService = {
       if (removed > 0) {
         await investcoinsRepository.applyTransaction(userId, -removed, 'admin_adjustment', { reason: 'Correction : récompenses d\'éducation obtenues avec des chapitres inexistants', via: adminLabel }, client);
       }
-      if (bad.length) await client.query('UPDATE education_progress SET coins_earned = 0, xp_earned = 0 WHERE id = ANY($1)', [bad.map((r: any) => r.id)]);
+      if (bad.length) {
+        await client.query('UPDATE education_progress SET coins_earned = 0, xp_earned = 0 WHERE id = ANY($1)', [bad.map((r: any) => r.id)]);
+        // Le journal d'XP suit : les gains des lignes invalides sont retirés (clé « ep:<identifiant de la ligne> »), jamais ceux des autres lignes.
+        await client.query('DELETE FROM xp_events WHERE user_id = $1 AND event_key = ANY($2)', [userId, bad.map((r: any) => `ep:${r.id}`)]);
+      }
       if (bad.length) {
         await auditLog({ userId: null, action: 'education_abuse_corrected', entityType: 'user', entityId: userId, metadata: { removed, unrecovered: owed - removed, rows: bad.length, via: adminLabel } }, client);
         await notify(client, userId, { kind: 'admin_coins', title: removed > 0 ? `${removed} InvestCoins retirés` : 'Correction de ta progression', body: 'Des récompenses d\'éducation obtenues avec des chapitres qui n\'existent pas ont été annulées (faille corrigée).' });

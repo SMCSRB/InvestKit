@@ -55,6 +55,8 @@ Sites officiels utiles : [impots.gouv.fr](https://www.impots.gouv.fr) · [BOFiP]
 | Biens « à rénover » : plafond des travaux annoncés | 35 % de la valeur du bien rénové | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `RENOVATION_BUDGET_CAPS.advertisedPctOfRenovatedValue` |
 | Biens « à rénover » : plafond des travaux réels (défauts cachés compris) | 55 % de la valeur du bien rénové ; jamais moins que les travaux annoncés | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `RENOVATION_BUDGET_CAPS.realPctOfRenovatedValue` |
 | Biens « à rénover » sans expertise : valeur selon les travaux payés | valeur « non rénové » + (valeur rénovée − valeur « non rénové ») × part des travaux payés ; une fois tout payé, le bien est rénové | RÈGLE DE JEU (décision d'Andreja), pas un chiffre sourcé | `valueOfProperty` (`realEstateHelpers.ts`) |
+| XP : courbe des 25 niveaux et titres (Curieux … Maître) | 0, 100, 250, 450, 700, 1000, … 38 600 XP cumulés | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `LEVEL_THRESHOLDS`, `LEVEL_TITLES` (`levelRules.ts`) |
+| XP : plafond quotidien des leçons et des mini-questions | 300 et 100 XP par jour (jour UTC) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `XP_DAILY_CAPS` (`levelRules.ts`) |
 | Parking : prix au m² | 40 % de celui d'un appartement du quartier (±20 % selon garage, box ou place) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.priceFactor` |
 | Parking : loyer au m² | 34 % de celui d'un appartement (rendement brut visé 5 à 9 %) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.rentFactor` |
 | Parking : tension locative | +0,12 (demande de stationnement forte, vacance plus faible) | **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** | `PARKING_RULES.tensionBoost` |
