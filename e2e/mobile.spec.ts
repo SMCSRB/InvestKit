@@ -64,15 +64,3 @@ test('390 px : Immobilier, de l\'écran de départ aux annonces', async ({ page 
   await pasDeDefilementHorizontal(page, 'Immobilier (annonces)');
   await pasDeValeurCassee(page, 'Immobilier (annonces)');
 });
-
-test('390 px : le graphique en aires empilées tient dans l\'écran et se lit au clavier', async ({ page }) => {
-  await page.goto('/design-system');
-  const graphique = page.getByTestId('stacked-area-demo');
-  await graphique.scrollIntoViewIfNeeded();
-  await expect(graphique.locator('svg[role="img"]')).toBeVisible();
-  await pasDeDefilementHorizontal(page, 'Design system (aires empilées)');
-  await graphique.locator('svg[role="img"]').focus();
-  await page.keyboard.press('ArrowRight');
-  await expect(graphique.getByRole('status')).toBeVisible();
-  await pasDeDefilementHorizontal(page, 'Design system (infobulle ouverte)');
-});

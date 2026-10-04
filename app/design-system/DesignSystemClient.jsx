@@ -60,7 +60,7 @@ export default function DesignSystemClient() {
           <Card glow>
             <CardHead title="Patrimoine par domaine (exemple)" icon="chart" />
             <div data-testid="stacked-area-demo">
-              <StackedArea labels={MONTHS} series={[{ label: 'Liquidités', color: 'var(--ik-series-1)', data: LINE_A }, { label: 'Titres', color: 'var(--ik-series-2)', data: LINE_B }, { label: 'Crypto', color: 'var(--ik-series-3)', data: LINE_B.map((v) => Math.round(v / 2)) }]} format={(v) => `${fmt(v)} k`} ariaLabel="Patrimoine par domaine au fil des mois (exemple)" />
+              <StackedArea labels={MONTHS} series={[{ label: 'Liquidités', color: 'var(--ik-series-1)', data: LINE_A }, { label: 'Titres', color: 'var(--ik-series-2)', data: LINE_B }, { label: 'Crypto', color: 'var(--ik-series-3)', data: LINE_B.map((v) => Math.round(v / 2)) }]} format={(v) => `${fmt(v)} k`} xEvery={2} ariaLabel="Patrimoine par domaine au fil des mois (exemple)" />
             </div>
           </Card>
         </Reveal>
