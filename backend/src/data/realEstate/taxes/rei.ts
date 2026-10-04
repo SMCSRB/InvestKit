@@ -15,7 +15,7 @@ export const TAX_COMMUNES: readonly string[] = DVF_CITIES.map((c) => taxCommuneO
 
 const num = (s: string | undefined): number | null => {
   if (s === undefined) return null;
-  const t = s.trim().replace(/[\s  ]/g, '').replace('%', '').replace(',', '.');
+  const t = s.trim().replace(/[\s  ]/g, '').replace(/%/g, '').replace(',', '.');
   if (!/^\d+(\.\d+)?$/.test(t)) return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
