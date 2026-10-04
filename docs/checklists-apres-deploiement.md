@@ -1163,3 +1163,13 @@ Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 0
 3. Sans `--check` : écrit `backend/data/loyers-anil-2025.json`. Puis `npm --prefix backend run immo:load-loyers -- --file backend/data/loyers-anil-2025.json` (simulation) et, sur la copie de test seulement, `-- --apply`.
 
 Ordre de fusion : après les PR de zones (#157, #159). Méthode : « Create a merge commit ».
+
+## PR Immobilier réel : mentions à l'écran (loyers, valeur de jeu), PR 2
+
+Après `~/deploy-test.sh` (aucune migration), connecté avec un compte Immobilier :
+
+1. Ouvre la fiche d'une annonce : dans « Charges et taxes » (copropriété, taxe foncière, assurance, entretien, charges récupérables) et dans « marché locatif » (loyer de référence, vacance attendue, durée d'un bail), chaque ligne porte la petite marque **« valeur de jeu »** ; au survol, elle explique « non sourcée, à reconfirmer ».
+2. Dans « Loyer et rentabilité », « Loyer estimé » porte la même marque. Sur les cartes de la liste, le rendement brut aussi.
+3. **Rien de plus ne change aujourd'hui** : le catalogue reste fictif, donc aucun loyer ANIL n'est affiché. Quand un loyer réel sera branché, la fiche dira « Loyer moyen de la commune » avec la nature du loyer (loyer d'annonce, charges comprises), le millésime, la fourchette et l'attribution ANIL ; une commune sans loyer n'affichera **aucune rentabilité** (« Rentabilité non disponible »).
+
+Ordre de fusion : après la PR 1 (loyers ANIL). Méthode : « Create a merge commit ».

@@ -1,5 +1,6 @@
 'use client';
 
+import { GAME_VALUE_HELP, GAME_VALUE_LABEL } from '@/app/lib/immoSources';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DPE_COLORS, DPE_TEXT } from './api';
@@ -30,8 +31,13 @@ export function Heart({ on, onClick, label }) {
   );
 }
 
-export function Row({ label, children, help }) {
-  return <div className="rp-row"><dt>{label}{help}</dt><dd>{children}</dd></div>;
+export function Row({ label, children, help, game }) {
+  return <div className="rp-row"><dt>{label}{help}{game && <GameValueTag />}</dt><dd>{children}</dd></div>;
+}
+
+// Marque « valeur de jeu » : ce chiffre n'a pas de source ouverte (règle d'Andreja). Texte, pas seulement une couleur.
+export function GameValueTag({ compact }) {
+  return <span className={`rp-gv${compact ? ' rp-gv--compact' : ''}`} title={GAME_VALUE_HELP} data-testid="game-value-tag">{GAME_VALUE_LABEL}</span>;
 }
 
 // Éléments « plein écran » (signature, tiroir de filtres, barre d'achat) : posés directement sur <body>. Dans la page, un parent animé

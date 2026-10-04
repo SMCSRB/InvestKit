@@ -6,7 +6,8 @@ import { Button, EmptyState, Segmented, Skeleton, Switch } from '@/app/component
 import HelpTip from '@/app/components/HelpTip';
 import { LazyListingArt } from './art';
 import ListingMap from './ListingMap';
-import { Dpe, Heart, Pill, Portal } from './bits';
+import { Dpe, Heart, Pill, Portal, GameValueTag } from './bits';
+import { isGameValue, yieldAvailable } from '@/app/lib/immoSources';
 import { CONDITION_LABEL, TYPE_LABEL, call, coins, eur, listingAlt, pct, eurText, signedEur } from './api';
 import Coin from '@/app/components/ui/Coin';
 
@@ -54,7 +55,7 @@ export function ListingCard({ l, city, favorite, onFavorite, onOpen, active, onA
         <div className="rp-card__foot">
           {rent
             ? <span className="rp-card__stat"><Icon name="ruler" size={14} />{Number(l.rentPerSqm).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} InvestCoins/m²/mois</span>
-            : <span className="rp-card__stat rp-card__stat--yield" title="Loyer annuel estimé ÷ prix : avant charges et frais"><Icon name="trendingUp" size={14} />Rendement brut estimé {pct(l.grossYieldPct)}</span>}
+            : <span className="rp-card__stat rp-card__stat--yield" title="Loyer annuel estimé ÷ prix : avant charges et frais"><Icon name="trendingUp" size={14} />{yieldAvailable(l.grossYieldPct) ? <>Rendement brut estimé {pct(l.grossYieldPct)}</> : 'Rentabilité non disponible'}{isGameValue(l.dataSources, 'rent') && <GameValueTag compact />}</span>}
           {!rent && l.netYieldPct != null && (
             <span className="rp-card__stat rp-card__stat--net" data-testid="card-net">
               <span data-testid="card-net-yield">Net {pct(l.netYieldPct)}</span>

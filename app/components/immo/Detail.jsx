@@ -5,7 +5,8 @@ import Icon from '@/app/components/ui/Icon';
 import { Button, Card, Modal, Skeleton } from '@/app/components/ui/primitives';
 import HelpTip from '@/app/components/HelpTip';
 import ListingArt, { viewsFor } from './art';
-import { Dpe, Heart, Pill, Portal, Row, useImmoMode } from './bits';
+import { Dpe, Heart, Pill, Portal, Row, GameValueTag, useImmoMode } from './bits';
+import { isGameValue, rentInfo, yieldAvailable, NO_YIELD_TEXT } from '@/app/lib/immoSources';
 import { CONDITION_LABEL, DPE_COLORS, TYPE_LABEL, call, coins, describeListing, eur, eur2, listingAlt, pct, eurText, signedEur } from './api';
 import Coin from '@/app/components/ui/Coin';
 import Link from 'next/link';
@@ -140,6 +141,7 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
   if (!d) return <div className="rp-detail"><Skeleton height={360} /><Skeleton height={200} style={{ marginTop: 16 }} /></div>;
   const { listing: l, city, neighborhood, economics: ec } = d;
   const isParking = l.type === 'parking';
+  const rentSrc = rentInfo(l.dataSources);
   const toggleFav = async () => { const had = fav; setFav(!had); try { await call(`/favorites/${encodeURIComponent(l.id)}`, had ? 'DELETE' : 'PUT'); } catch (e) { setFav(had); notify(e.message, true); } };
 
   const expertise = async () => {
@@ -221,11 +223,11 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
           <section className="rp-section">
             <h2>Charges et taxes</h2>
             <dl className="rp-facts">
-              <Row label="Copropriété (non récupérable)" help={<HelpTip term="charges-non-recuperables" />}>{eur(l.annualCharges.condoFees)}/an</Row>
-              <Row label="Taxe foncière" help={<HelpTip term="taxe-fonciere" />}>{eur(l.annualCharges.propertyTax)}/an</Row>
-              <Row label="Assurance propriétaire">{eur(l.annualCharges.insurance)}/an</Row>
-              <Row label="Entretien courant">{eur(l.annualCharges.maintenance)}/an</Row>
-              <Row label="Charges récupérables (avancées)">{eur(l.recoverableChargesMonthly)}/mois</Row>
+              <Row label="Copropriété (non récupérable)" help={<HelpTip term="charges-non-recuperables" />} game={isGameValue(l.dataSources, 'condoFees')}>{eur(l.annualCharges.condoFees)}/an</Row>
+              <Row label="Taxe foncière" help={<HelpTip term="taxe-fonciere" />} game={isGameValue(l.dataSources, 'propertyTax')}>{eur(l.annualCharges.propertyTax)}/an</Row>
+              <Row label="Assurance propriétaire" game={isGameValue(l.dataSources, 'insurance')}>{eur(l.annualCharges.insurance)}/an</Row>
+              <Row label="Entretien courant" game={isGameValue(l.dataSources, 'maintenance')}>{eur(l.annualCharges.maintenance)}/an</Row>
+              <Row label="Charges récupérables (avancées)" game={isGameValue(l.dataSources, 'recoverableCharges')}>{eur(l.recoverableChargesMonthly)}/mois</Row>
             </dl>
           </section>
 
@@ -234,17 +236,17 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
             <p className="ik-muted">{city?.description}</p>
             <dl className="rp-facts">
               <Row label="Tension locative"><Tension value={l.rentalTension} /></Row>
-              <Row label="Loyer de référence">{eur2(l.rentPerSqm)}/m²/mois</Row>
-              <Row label="Vacance attendue" help={<HelpTip term="vacance" />}>{pct(l.vacancyPct)} du temps</Row>
-              <Row label="Durée moyenne d’un bail">{l.tenancyMonths} mois</Row>
+              <Row label={rentSrc.label} game={isGameValue(l.dataSources, 'rent')}>{eur2(l.rentPerSqm)}/m²/mois</Row>
+              <Row label="Vacance attendue" help={<HelpTip term="vacance" />} game={isGameValue(l.dataSources, 'vacancy')}>{pct(l.vacancyPct)} du temps</Row>
+              <Row label="Durée moyenne d’un bail" game={isGameValue(l.dataSources, 'tenancy')}>{l.tenancyMonths} mois</Row>
             </dl>
           </section>
 
           <section className="rp-section">
             <h2>Loyer et rentabilité</h2>
             <div className="rp-kpis">
-              <div><span>Loyer estimé</span><strong>{eur(l.marketRentMonthly)}/mois</strong></div>
-              <div><span>Rendement brut<HelpTip term="rendement-brut" /></span><strong>{pct(l.grossYieldPct)}</strong><small>loyer × 12 ÷ prix</small></div>
+              <div><span>{rentSrc.real ? 'Loyer moyen de la commune' : 'Loyer estimé'}{isGameValue(l.dataSources, 'rent') && <GameValueTag compact />}</span><strong>{eur(l.marketRentMonthly)}/mois</strong></div>
+              <div><span>Rendement brut<HelpTip term="rendement-brut" /></span><strong>{yieldAvailable(l.grossYieldPct) ? pct(l.grossYieldPct) : '—'}</strong><small>{yieldAvailable(l.grossYieldPct) ? 'loyer × 12 ÷ prix' : NO_YIELD_TEXT}</small></div>
               <div data-testid="sheet-net"><span>Rendement net estimé<HelpTip term="rendement-net" label="Pourquoi le net est plus bas que le brut" /></span><strong data-testid="sheet-net-yield">{ec.netYieldPct === null ? '—' : pct(ec.netYieldPct)}</strong><small>après vacance, charges et frais de notaire</small></div>
               {l.scenario && (
                 <div data-testid="sheet-flow"><span>Flux mensuel estimé<HelpTip term="cash-flow" /></span>
@@ -253,6 +255,9 @@ export default function Detail({ listingId, game, balance, access, onBack, refre
                 </div>
               )}
             </div>
+            {rentSrc.real && (
+              <p className="rp-source" data-testid="rent-source">{rentSrc.source}{rentSrc.estimate ? ` ${rentSrc.estimate}` : ''} {rentSrc.attribution}</p>
+            )}
             {l.scenario && (
               <p className="ik-muted" data-testid="sheet-scenario-note" style={{ margin: '8px 0 0', fontSize: 'var(--ik-fs-sm)' }}>
                 Le flux mensuel suppose l’apport minimal de la banque ({eur(l.scenario.downPayment)}) et un prêt de {Math.round(l.scenario.loanMonths / 12)} ans à {pct(l.scenario.annualRatePct, 2)}, assurance comprise. C’est un repère : ta simulation d’achat ci-dessous donne tes vrais chiffres.
