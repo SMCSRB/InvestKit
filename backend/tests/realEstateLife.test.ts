@@ -4,7 +4,9 @@ import { query } from '../src/utils/db';
 import { realEstateService as svc, RealEstateError } from '../src/services/realEstateService';
 import { realEstateLifeService as life } from '../src/services/realEstateLifeService';
 import { fictiveDataSource as src } from '../src/data/realEstate/fictiveCatalog';
-import { buildSchedule, reviseRent } from '../src/engine/immo';
+import { buildSchedule, reviseRent, monthTotal } from '../src/engine/immo';
+import { leaseRevision } from '../src/engine/immo/irl';
+import { irlService } from '../src/services/irlService';
 import { EVENT_PARAMS } from '../src/config/immoRules';
 import { EUROS_PER_COIN } from '../src/config/economy';
 
@@ -206,8 +208,11 @@ describe.skipIf(!hasDb)('Immobilier : vie du bien (location, temps, relevés, va
       const revIdx = rows.findIndex((x: any) => x.explanations.some((e: any) => e.code === 'INDEXATION'));
       expect(revIdx).toBe(start + 12); // 12 mois après le début du bail
       expect(listed.askingRent).toBeGreaterThan(0);
-      const irl = await src.getIrlAnnualChangePct(rows[revIdx].year);
-      const expected = reviseRent(listed.askingRent, irl, l.energyClass).newRent;
+      // IRL RÉEL (ici une série fabriquée de test) : trimestre de référence = dernier IRL publié au début du bail.
+      const startTotal = monthTotal(rows[start].year, rows[start].month);
+      const lr = leaseRevision(await irlService.series(), startTotal, startTotal + 12)!;
+      expect(lr).not.toBeNull();
+      const expected = reviseRent(listed.askingRent, lr.pct, l.energyClass).newRent;
       expect(Number(rows[revIdx].lines.rentDue)).toBeCloseTo(expected, 2);
       expect(rows.filter((x: any) => x.explanations.some((e: any) => e.code === 'INDEXATION'))).toHaveLength(1);
     });

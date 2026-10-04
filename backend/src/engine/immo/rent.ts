@@ -158,7 +158,10 @@ export const simulateVacancyMonths = (
 //     à la date anniversaire ;
 //   - elle ne peut pas dépasser la variation annuelle de l'IRL (indice de
 //     référence des loyers, publié chaque trimestre par l'Insee : moyenne sur
-//     12 mois des prix à la consommation hors tabac et hors loyers) ;
+//     12 mois des prix à la consommation hors tabac et hors loyers) ; le jeu
+//     lit l'IRL RÉEL (engine/immo/irl.ts : leaseRevision, trimestre de référence
+//     = dernier IRL publié au début du bail) et applique le bouclier de 3,5 %
+//     de juillet 2022 à juin 2024 ;
 //   - depuis le 24 août 2022, aucune révision à la hausse pour un logement de
 //     classe énergie F ou G (gel des loyers) ; le gel joue aussi à la relocation.
 // Vérifié sur des extraits d'Insee / Légifrance / ministère de la Transition
@@ -175,12 +178,19 @@ export interface RevisionResult {
   previousRent: number;
   newRent: number;
   appliedPct: number;
-  reason: 'APPLIED' | 'FROZEN_ENERGY_F_G' | 'NO_INCREASE';
+  reason: 'APPLIED' | 'FROZEN_ENERGY_F_G' | 'NO_INCREASE' | 'NO_IRL';
+  irl?: { referenceQuarter: string; previousQuarter: string; rawPct: number; capped: boolean };   // IRL réel utilisé (absent si NO_IRL ou gel)
 }
 
 export const FROZEN_ENERGY_CLASSES: EnergyClass[] = ['F', 'G'];
 
-export const reviseRent = (currentRent: number, irlAnnualChangePct: number, energyClass: EnergyClass): RevisionResult => {
+// IRL réel indisponible (non importé, ou valeur manquante / non encore publiée) : aucune révision, jamais de variation inventée.
+export const noIrlRevision = (currentRent: number): RevisionResult => {
+  assertNonNegative(currentRent, 'currentRent');
+  return { applied: false, previousRent: currentRent, newRent: currentRent, appliedPct: 0, reason: 'NO_IRL' };
+};
+
+export const reviseRent = (currentRent: number, irlAnnualChangePct: number, energyClass: EnergyClass, irl?: RevisionResult['irl']): RevisionResult => {
   assertNonNegative(currentRent, 'currentRent');
   assertFinite(irlAnnualChangePct, 'irlAnnualChangePct');
   if (FROZEN_ENERGY_CLASSES.includes(energyClass)) {
@@ -194,6 +204,7 @@ export const reviseRent = (currentRent: number, irlAnnualChangePct: number, ener
     newRent: round2(currentRent * (1 + pct / 100)),
     appliedPct: pct,
     reason: 'APPLIED',
+    ...(irl ? { irl } : {}),
   };
 };
 

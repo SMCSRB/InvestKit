@@ -82,7 +82,7 @@ export interface MonthlyLines {
 }
 
 export type ExplanationCode =
-  | 'INDEXATION' | 'INDEXATION_FROZEN' | 'VACANCY' | 'LATE_PAYMENT' | 'ARREARS'
+  | 'INDEXATION' | 'INDEXATION_FROZEN' | 'INDEXATION_UNAVAILABLE' | 'VACANCY' | 'LATE_PAYMENT' | 'ARREARS'
   | 'CATCH_UP' | 'ARREARS_RECOVERED' | 'NOT_LISTED' | 'PENDING_WORKS' | 'NORMAL'
   | 'GLI_REIMBURSED' | 'DEPOSIT_RECEIVED' | 'DEPOSIT_REFUNDED' | 'REPAIRS' | 'RELET_FEES' | 'UNEXPECTED_WORKS'
   | 'TAX_SETTLED' | 'TENANT_NOTICE' | 'TENANT_LEFT' | 'LANDLORD_NOTICE' | 'DEFAULT_ENDED' | 'EVENT';
@@ -203,10 +203,17 @@ export const buildMonthlyStatement = (input: MonthlyInput): MonthlyStatement => 
   if (input.revision) {
     const r = input.revision;
     if (r.applied) {
+      const irlTxt = r.irl ? ` (IRL du ${r.irl.referenceQuarter.replace('-T', ' trimestre ')} comparé à celui de ${r.irl.previousQuarter.replace('-T', ' trimestre ')}${r.irl.capped ? `, plafonné par le bouclier loyers : l'indice réel était de +${r.irl.rawPct.toFixed(2).replace('.', ',')} %` : ''})` : '';
       explanations.push({
         code: 'INDEXATION',
-        message: `Indexation annuelle (IRL) de +${r.appliedPct.toFixed(2).replace('.', ',')} % : loyer passé de ${eur(r.previousRent)} à ${eur(r.newRent)}. La hausse suit l'indice, tu ne la fixes pas.`,
+        message: `Indexation annuelle (IRL) de +${r.appliedPct.toFixed(2).replace('.', ',')} %${irlTxt} : loyer passé de ${eur(r.previousRent)} à ${eur(r.newRent)}. La hausse suit l'indice, tu ne la fixes pas.`,
         cashFlowImpact: impact(s0, s1),
+      });
+    } else if (r.reason === 'NO_IRL') {
+      explanations.push({
+        code: 'INDEXATION_UNAVAILABLE',
+        message: `Indexation impossible cette année : l'indice de référence des loyers (IRL) réel n'est pas disponible pour cette date. Loyer inchangé (${eur(r.previousRent)}) ; rien n'est inventé.`,
+        cashFlowImpact: 0,
       });
     } else if (r.reason === 'FROZEN_ENERGY_F_G') {
       explanations.push({
