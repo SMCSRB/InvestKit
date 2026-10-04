@@ -20,3 +20,14 @@ La migration `048_xp_events.sql` crée un événement `legacy_import` par ligne 
 Courbe progressive sur 25 niveaux (l'XP cumulée pour atteindre le niveau n est dans `LEVEL_THRESHOLDS`) et un titre par palier : 1 Curieux · 3 Apprenti · 5 Initié · 8 Investisseur · 12 Stratège · 18 Expert · 25 Maître. Tout le contenu d'éducation actuel (2 500 XP) mène au niveau 9 (Investisseur). **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** : la courbe sera ajustée avec le nouveau contenu.
 `GET /xp` renvoie : XP, niveau, titre, progression vers le suivant, titre du prochain palier, XP par domaine et niveau par domaine (seulement ceux où le joueur a de l'XP), les 20 derniers gains.
 L'ancienne formule (500 XP par niveau, `levelFromXp`) reste utilisée par les classements d'amis et de guilde tant que leur affichage n'est pas basculé.
+
+## Badges attribués par le serveur (6a, PR 2)
+- **Définitions en code** (`config/badgeRules.ts`) : 19 badges, chacun avec une **condition pure** qui ne lit que des faits du serveur (chapitres validés, quiz finaux, achats, jours actifs, prêts remboursés, amis, guilde, niveau). **Aucun badge sans règle codée et testée** : les badges de saison, d'événement et « secrets » n'existent pas encore.
+- Catégories : apprentissage, pratique, régularité, prudence, domaine, communauté. Raretés : commun, rare, épique, légendaire (aucun légendaire pour l'instant : pas de règle).
+- Table `user_badges` (migration 049) : clé unique (joueur, badge), avec la **référence du fait déclencheur**. Un badge ne s'obtient qu'une fois, même avec deux onglets.
+- **Récompense** : de l'XP seulement (20 / 50 / 100 / 250 selon la rareté), une fois, par le journal d'XP (clé `badge:<id>`). **Aucune pièce** : `coins` reste à 0 tant que l'équilibrage n'est pas décidé.
+- **Notification unique** à l'attribution (table `notifications`) : le navigateur n'a plus à retenir « annoncé ou non ».
+- **Évaluation** à la lecture (`GET /api/v1/xp/badges`) et après un quiz réussi ; idempotente, et en cascade bornée (l'XP d'un badge peut débloquer un badge de niveau). Une erreur de badge n'empêche jamais une récompense déjà versée.
+- **Rareté réelle** : part des joueurs vérifiés qui ont le badge, **masquée (null) tant qu'il y a moins de 50 joueurs** ; plus aucun faux pourcentage côté serveur. (Le champ `rarity_percent` du tableau de bord actuel n'est affiché nulle part ; il disparaîtra avec la refonte.)
+- **Anciens badges du navigateur** : non importés (non vérifiables) ; ceux que le serveur peut prouver sont **recalculés** à la prochaine lecture, sans rien faire. Les badges impossibles à obtenir (niveaux 10+, saisons inventées) ne sont pas repris.
+- Export de compte : contient les badges. Suppression du compte : badges effacés (cascade).
