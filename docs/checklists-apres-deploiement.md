@@ -1072,6 +1072,10 @@ Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 
+## PR Lot B — Analyse : carte immobilière avec de vraies villes (document seulement)
+
+Rien à tester sur le site. Lis `docs/analyse-carte-immobiliere-reelle.md` (en deux phrases, puis les chapitres 1 et 2) et réponds aux 4 questions du chapitre 6.
+
 ## PR Lot A — Guide du site (parcours de bienvenue, page Guide, Aide et support)
 
 À tester sur la copie de test (téléphone et ordinateur) :
