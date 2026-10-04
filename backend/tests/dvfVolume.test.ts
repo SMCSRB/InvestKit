@@ -7,12 +7,12 @@ import path from 'path';
 import { execFileSync } from 'child_process';
 import { pushAll, minOf, maxOf } from '../src/data/realEstate/dvf/arrays';
 import { buildFromSales, monthBounds } from '../src/data/realEstate/dvf/pipeline';
-import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
+import { DVF_CITIES, allZones } from '../src/data/realEstate/dvf/cities';
 import { DvfSale, trimOutliers } from '../src/data/realEstate/dvf/clean';
 
 const YEARS = [2021, 2022, 2023, 2024, 2025];
 const PER_YEAR = 300_000;
-const ZONES = DVF_CITIES.flatMap((c) => c.codes.map((code, i) => ({ code, base: c.id === 'paris' ? 9_000 + (i % 5) * 500 : c.id === 'saint-etienne' ? 1_300 : 2_000 + ((DVF_CITIES.indexOf(c) * 311 + i * 97) % 3_500) })));
+const ZONES = DVF_CITIES.flatMap((c) => c.zones.map((zone, i) => ({ zone, code: c.districts ? zone : c.codes[0], base: c.id === 'paris' ? 9_000 + (i % 5) * 500 : c.id === 'saint-etienne' ? 1_300 : 2_000 + ((DVF_CITIES.indexOf(c) * 311 + i * 97) % 3_500) })));
 
 // Générateur déterministe (pas d'aléa : le test doit être reproductible).
 const lcg = (seed: number) => { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0x100000000; }; };
@@ -44,7 +44,7 @@ describe('chaîne de préparation sur 1,5 million de ventes (en mémoire)', () =
         const surface = house ? 80 + Math.floor(rnd() * 60) : 20 + Math.floor(rnd() * 80);
         const perM2 = Math.round(z.base * (0.85 + rnd() * 0.3));
         const month = 1 + Math.floor(rnd() * 12);
-        sales.push({ id: `${z.code}-${year}-${i}`, date: `${year}-${String(month).padStart(2, '0')}-${String(1 + Math.floor(rnd() * 28)).padStart(2, '0')}`, code: z.code, type: house ? 'maison' : 'appartement', surface, price: surface * perM2, pricePerM2: perM2, rooms: 2, lon: null, lat: null });
+        sales.push({ id: `${z.zone}-${year}-${i}`, date: `${year}-${String(month).padStart(2, '0')}-${String(1 + Math.floor(rnd() * 28)).padStart(2, '0')}`, code: z.code, zone: z.zone, postal: z.zone, section: '', type: house ? 'maison' : 'appartement', surface, price: surface * perM2, pricePerM2: perM2, rooms: 2, lon: null, lat: null });
       }
     }
     expect(sales).toHaveLength(YEARS.length * PER_YEAR);
@@ -52,11 +52,11 @@ describe('chaîne de préparation sur 1,5 million de ventes (en mémoire)', () =
     const built = buildFromSales(sales, {});
     expect(built.kept.length).toBeGreaterThan(1_400_000);
     expect(built.range).toEqual({ from: '2021-01', to: '2025-12' });
-    expect(built.rows).toHaveLength(54 * 2 * 60);                         // 54 quartiers × 2 types × 60 mois
+    expect(built.rows).toHaveLength(allZones().length * 2 * 60);             // 79 zones × 2 types × 60 mois
     expect(built.report.presentYears).toEqual(YEARS);
     expect(built.report.absentYears).toEqual([2014, 2015, 2016, 2017, 2018, 2019, 2020]);
     expect(built.report.perCity).toHaveLength(12);
-    expect(built.report.perCity.every((c) => c.sales > 20_000)).toBe(true);        // Saint-Étienne n’a qu’un quartier sur 54 : environ 28 000 ventes
+    expect(built.report.perCity.every((c) => c.sales > 15_000)).toBe(true);        // Dijon n’a qu’une zone sur 79 : environ 19 000 ventes
     const paris = built.rows.find((r) => r.key === '75111' && r.month === '2025-06' && r.type === 'appartement')!;
     expect(paris.fallback).toBeNull();
     expect(paris.median!).toBeGreaterThan(7_500); expect(paris.median!).toBeLessThan(11_500);
@@ -73,8 +73,8 @@ describe('script immo:import-dvf sur 1,5 million de lignes (fichiers fabriqués)
   it('écrit dvf-marche.json sans « Maximum call stack size exceeded » ; immo:load-dvf et immo:simulate-niveau le relisent', () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'dvf-volume-'));
     const rnd = lcg(7);
-    const HEAD = 'id_mutation,date_mutation,nature_mutation,valeur_fonciere,code_commune,id_parcelle,nombre_lots,type_local,surface_reelle_bati,nombre_pieces_principales,longitude,latitude';
-    const perFile = Math.floor(PER_YEAR / ZONES.length);                  // environ 5 555 lignes par quartier et par année
+    const HEAD = 'id_mutation,date_mutation,nature_mutation,valeur_fonciere,code_commune,code_postal,id_parcelle,nombre_lots,type_local,surface_reelle_bati,nombre_pieces_principales,longitude,latitude';
+    const perFile = Math.floor(PER_YEAR / ZONES.length);                  // environ 3 800 lignes par zone et par année
     let total = 0;
     for (const year of YEARS) {
       mkdirSync(path.join(dir, String(year)), { recursive: true });
@@ -85,9 +85,9 @@ describe('script immo:import-dvf sur 1,5 million de lignes (fichiers fabriqués)
           const surface = house ? 80 + Math.floor(rnd() * 60) : 20 + Math.floor(rnd() * 80);
           const price = surface * Math.round(z.base * (0.85 + rnd() * 0.3));
           const mm = String(1 + Math.floor(rnd() * 12)).padStart(2, '0'); const dd = String(1 + Math.floor(rnd() * 28)).padStart(2, '0');
-          lines.push(`${z.code}-${year}-${i},${year}-${mm}-${dd},Vente,${price},${z.code},P${i},1,${house ? 'Maison' : 'Appartement'},${surface},3,,`);
+          lines.push(`${z.zone}-${year}-${i},${year}-${mm}-${dd},Vente,${price},${z.code},${z.zone},P${i},1,${house ? 'Maison' : 'Appartement'},${surface},3,,`);
         }
-        writeFileSync(path.join(dir, String(year), `${z.code}.csv`), lines.join('\n') + '\n');
+        writeFileSync(path.join(dir, String(year), `${z.zone}.csv`), lines.join('\n') + '\n');
         total += perFile;
       }
     }
@@ -103,7 +103,7 @@ describe('script immo:import-dvf sur 1,5 million de lignes (fichiers fabriqués)
     expect(imp).toContain('Années présentes : 2021 à 2025. Années absentes : 2014 à 2020');
     expect(existsSync(out)).toBe(true);
     const json = JSON.parse(readFileSync(out, 'utf8'));
-    expect(json.rows).toHaveLength(54 * 2 * 60);
+    expect(json.rows).toHaveLength(allZones().length * 2 * 60);
     expect(json.range).toEqual({ from: '2021-01', to: '2025-12' });
     // Les deux autres commandes relisent ce fichier : mêmes grands volumes, aucun plantage.
     const load = run('scripts/immo-load-dvf.ts', '--file', out);

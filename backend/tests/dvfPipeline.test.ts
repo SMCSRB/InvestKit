@@ -6,7 +6,7 @@ import path from 'path';
 import { execFileSync } from 'child_process';
 import { parseCsv, cleanRows, trimOutliers, DvfSale } from '../src/data/realEstate/dvf/clean';
 import { monthlyMarket, qualityReport, MIN_SALES } from '../src/data/realEstate/dvf/aggregate';
-import { DVF_CITIES, allCodes, dvfUrl } from '../src/data/realEstate/dvf/cities';
+import { DVF_CITIES, allCodes, allZones, cityOfCode, zoneOf, dvfUrl } from '../src/data/realEstate/dvf/cities';
 
 const HEAD = 'id_mutation,date_mutation,numero_disposition,nature_mutation,valeur_fonciere,adresse_numero,adresse_nom_voie,code_postal,code_commune,nom_commune,code_departement,id_parcelle,nombre_lots,code_type_local,type_local,surface_reelle_bati,nombre_pieces_principales,code_nature_culture,surface_terrain,longitude,latitude';
 const line = (o: Partial<Record<string, string | number>>) => {
@@ -55,7 +55,7 @@ describe('nettoyage des ventes', () => {
     expect(clean(line({}), line({})).sales).toHaveLength(1);
   });
   it('écarte une valeur aberrante seulement quand la médiane du groupe est fiable', () => {
-    const mk = (n: number, p: number): DvfSale => ({ id: `s${n}${p}`, date: '2020-05-01', code: '75111', type: 'appartement', surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
+    const mk = (n: number, p: number): DvfSale => ({ id: `s${n}${p}`, date: '2020-05-01', code: '75111', zone: '75111', postal: '', section: '', type: 'appartement', surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
     const many = [...Array.from({ length: 25 }, (_, i) => mk(i, 6000 + i * 10)), mk(99, 60000 / 2 * 1.5), mk(98, 1000)];
     expect(trimOutliers(many).removed).toBe(2);
     const few = [mk(1, 6000), mk(2, 1000)];
@@ -63,7 +63,9 @@ describe('nettoyage des ventes', () => {
   });
 });
 
-const sale = (code: string, date: string, p: number, type: 'appartement' | 'maison' = 'appartement'): DvfSale => ({ id: `${code}${date}${p}${Math.random()}`, date, code, type, surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
+// Dans ces tests, une vente d'un code commune non découpé (ex. 33063) est rangée dans la PREMIÈRE zone de sa ville (ex. 33000).
+const zoneFor = (code: string): string => zoneOf(code, cityOfCode(code)?.zones[0] ?? '');
+const sale = (code: string, date: string, p: number, type: 'appartement' | 'maison' = 'appartement'): DvfSale => ({ id: `${code}${date}${p}${Math.random()}`, date, code, zone: zoneFor(code), postal: '', section: '', type, surface: 50, price: p * 50, pricePerM2: p, rooms: 2, lon: null, lat: null });
 const many = (code: string, ym: string, n: number, p: number) => Array.from({ length: n }, (_, i) => sale(code, `${ym}-${String(1 + (i % 27)).padStart(2, '0')}`, p + i));
 const get = (rows: ReturnType<typeof monthlyMarket>, key: string, month: string) => rows.find((r) => r.key === key && r.month === month && r.type === 'appartement')!;
 
@@ -71,9 +73,9 @@ describe('médianes glissantes', () => {
   it('fenêtre de 12 mois : une vente de plus de 12 mois n\'entre plus', () => {
     const s = [...many('33063', '2020-01', MIN_SALES, 4000), ...many('33063', '2021-02', MIN_SALES, 5000)];
     const rows = monthlyMarket(s, { from: '2020-01', to: '2021-03' });
-    expect(get(rows, '33063', '2020-12').median).toBeLessThan(4100);
-    expect(get(rows, '33063', '2021-01')).toMatchObject({ n: 0, median: null, fallback: 'aucun' });   // la fenêtre de janvier 2021 (févr. 2020 à janv. 2021) n'a plus la vente de janvier 2020 : « aucun », pas un chiffre inventé
-    expect(get(rows, '33063', '2021-02').median).toBeGreaterThan(4900);
+    expect(get(rows, '33000', '2020-12').median).toBeLessThan(4100);
+    expect(get(rows, '33000', '2021-01')).toMatchObject({ n: 0, median: null, fallback: 'aucun' });   // la fenêtre de janvier 2021 (févr. 2020 à janv. 2021) n'a plus la vente de janvier 2020 : « aucun », pas un chiffre inventé
+    expect(get(rows, '33000', '2021-02').median).toBeGreaterThan(4900);
   });
   it('AUCUNE FUITE DU FUTUR : ajouter des ventes plus tard ne change aucun mois antérieur', () => {
     const base = [...many('33063', '2019-03', 15, 4000), ...many('33063', '2019-09', 15, 4200), ...many('75111', '2019-06', 12, 9000)];
@@ -91,11 +93,11 @@ describe('médianes glissantes', () => {
     expect(get(rows, '75101', '2020-02')).toMatchObject({ fallback: 'ville' });
     expect(get(rows, '75101', '2020-02').n).toBeGreaterThanOrEqual(MIN_SALES);
     const none = monthlyMarket(many('33063', '2020-01', 3, 4000), { from: '2020-02', to: '2020-02' });
-    expect(get(none, '33063', '2020-02')).toMatchObject({ fallback: 'aucun', median: null, p25: null });
+    expect(get(none, '33000', '2020-02')).toMatchObject({ fallback: 'aucun', median: null, p25: null });
   });
   it('une ligne par zone, type et mois', () => {
     const rows = monthlyMarket([], { from: '2020-01', to: '2020-03' });
-    const zones = DVF_CITIES.reduce((n, c) => n + (c.districts ? c.codes.length : 1), 0);
+    const zones = DVF_CITIES.reduce((n, c) => n + (c.zones.length), 0);
     expect(rows).toHaveLength(zones * 2 * 3);
     expect(rows.every((r) => r.fallback === 'aucun' && r.median === null)).toBe(true);
   });
@@ -133,7 +135,7 @@ describe('script d\'import (de bout en bout, fichiers fabriqués)', () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'dvf-'));
     mkdirSync(path.join(dir, '2020'), { recursive: true });
     const lines: string[] = [];
-    for (let i = 0; i < 30; i++) lines.push(line({ id_mutation: `B${i}`, date_mutation: `2020-0${1 + (i % 6)}-1${i % 9}`, code_commune: '33063', nom_commune: 'Bordeaux', valeur_fonciere: 200000 + i * 1000, surface_reelle_bati: 50, id_parcelle: `P${i}` }));
+    for (let i = 0; i < 30; i++) lines.push(line({ id_mutation: `B${i}`, date_mutation: `2020-0${1 + (i % 6)}-1${i % 9}`, code_commune: '33063', code_postal: '33000', nom_commune: 'Bordeaux', valeur_fonciere: 200000 + i * 1000, surface_reelle_bati: 50, id_parcelle: `P${i}` }));
     writeFileSync(path.join(dir, '2020', '33063.csv'), csv(...lines));
     const out = path.join(dir, 'marche.json');
     const run = (...a: string[]) => execFileSync('npx', ['ts-node', 'scripts/immo-import-dvf.ts', '--dir', dir, ...a], { cwd: path.join(__dirname, '..'), encoding: 'utf8' });
@@ -145,8 +147,8 @@ describe('script d\'import (de bout en bout, fichiers fabriqués)', () => {
     expect(full).toContain('Écrit :');
     const j = JSON.parse(readFileSync(out, 'utf8'));
     expect(j.source).toContain('Licence Ouverte 2.0');
-    expect(j.rows.length).toBe((20 + 9 + 16 + 9) * 2 * 12);
-    const r = j.rows.find((x: any[]) => x[0] === '33063' && x[1] === '2020-06' && x[2] === 'a');
+    expect(j.rows.length).toBe(allZones().length * 2 * 12);
+    const r = j.rows.find((x: any[]) => x[0] === '33000' && x[1] === '2020-06' && x[2] === 'a');
     expect(r[3]).toBeGreaterThanOrEqual(10);
     expect(r[4]).toBeGreaterThan(3900);
     expect(() => execFileSync('npx', ['ts-node', 'scripts/immo-import-dvf.ts', '--dir', path.join(dir, 'absent')], { cwd: path.join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe' })).toThrow();

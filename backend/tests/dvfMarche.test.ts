@@ -22,7 +22,7 @@ const OK_ROWS = [
   ['75111', '2021-03', 'a', 40, 9000, 8500, 9600, null],
   ['75111', '2021-04', 'a', 42, 9200, 8600, 9800, null],
   ['75101', '2021-04', 'a', 12, 11000, 10000, 12000, 'ville'],
-  ['33063', '2021-01', 'm', 3, null, null, null, 'aucun'],
+  ['33000', '2021-01', 'm', 3, null, null, null, 'aucun'],
 ];
 
 describe('activation', () => {
@@ -81,12 +81,14 @@ describe('aucune adresse nulle part', () => {
     expect(zoneLabel('75101')).toBe('Paris 1er');
     expect(zoneLabel('69383')).toBe('Lyon 3e');
     expect(zoneLabel('13208')).toBe('Marseille 8e');
-    expect(zoneLabel('33063')).toBe('Bordeaux');
+    expect(zoneLabel('33063')).toBe('Bordeaux');            // code commune : la ville entière
+    expect(zoneLabel('33000')).toBe('Bordeaux 33000');      // zone = code postal
+    expect(zoneLabel('06100')).toBe('Nice 06100');
     expect(zoneLabel('99999')).toBeNull();
-    expect(DVF_CITIES.every((c) => c.codes.every((code) => !/\d+ (rue|avenue|boulevard)/i.test(zoneLabel(code)!)))).toBe(true);
+    expect(DVF_CITIES.every((c) => c.zones.every((z) => !/\d+ (rue|avenue|boulevard)/i.test(zoneLabel(z)!)))).toBe(true);
   });
   it('le code du pipeline ne lit ni n\'écrit aucune colonne d\'adresse', () => {
-    expect(STANDARD_COLUMNS.filter((c) => /adresse|voie|numero_voie|no_voie|code_postal/.test(c))).toEqual([]);
+    expect(STANDARD_COLUMNS.filter((c) => /adresse|voie|numero_voie|no_voie/.test(c))).toEqual([]);   // le code postal est gardé : il donne la zone lisible (« Bordeaux 33000 »), jamais la rue
     const dir = path.join(__dirname, '..', 'src', 'data', 'realEstate', 'dvf');
     for (const f of readdirSync(dir).filter((x) => x.endsWith('.ts'))) {
       const code = readFileSync(path.join(dir, f), 'utf8').replace(/\/\/.*$/gm, '');
@@ -154,7 +156,7 @@ describe.skipIf(!hasDb)('en base (source « dvf »)', () => {
   it('script : simulation sans base, refus hors base « _test », puis écriture sur une base de test', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'dvfm-'));
     const f = path.join(dir, 'marche.json');
-    writeFileSync(f, JSON.stringify(file([...OK_ROWS, ['33063', '2021-05', 'a', 30, 4000, 3800, 4300, null]])));
+    writeFileSync(f, JSON.stringify(file([...OK_ROWS, ['33000', '2021-05', 'a', 30, 4000, 3800, 4300, null]])));
     const run = (env: Record<string, string>, ...a: string[]) => execFileSync('npx', ['ts-node', 'scripts/immo-load-dvf.ts', '--file', f, ...a], { cwd: path.join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...env } });
     const dry = run({ DATABASE_URL: '' });
     expect(dry).toContain('Simulation : rien n\'est écrit');

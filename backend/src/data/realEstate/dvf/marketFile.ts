@@ -1,5 +1,5 @@
 // Lecture STRICTE du fichier de médianes écrit par immo:import-dvf (aucun accès base ni disque ici). Tout fichier incohérent est refusé en entier : on n'importe jamais « ce qui a l'air bon ».
-import { allCodes } from './cities';
+import { allZones } from './cities';
 import { BOUNDS } from './clean';
 
 export interface MarketDbRow { zone: string; month: string; type: 'apartment' | 'house'; salesCount: number; median: number; p25: number; p75: number; scope: 'zone' | 'city' }
@@ -24,7 +24,7 @@ export const parseMarketFile = (raw: unknown, now: Date = new Date()): ParsedMar
   if (!Array.isArray(f.rows)) fail('Liste de lignes (rows) absente.');
   if (errors.length) return bad();
   const nowMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-  const zones = new Set(allCodes());
+  const zones = new Set(allZones());
   const seen = new Set<string>();
   const rows: MarketDbRow[] = []; let skipped = 0;
   const from = (range as { from: string }).from; const to = (range as { to: string }).to;

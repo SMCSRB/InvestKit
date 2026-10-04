@@ -33,14 +33,14 @@ const windowStats = (list: { m: number; p: number }[], month: number): { n: numb
 
 // months : [premier, dernier] au format AAAA-MM. Une ligne par (zone, type, mois).
 export const monthlyMarket = (sales: DvfSale[], range: { from: string; to: string }): MarketRow[] => {
-  const zone = bucket(sales, (s) => s.code);
+  const zone = bucket(sales, (s) => s.zone || null);
   const city = bucket(sales, (s) => cityOfCode(s.code)?.id ?? null);
   const a = monthIndex(range.from); const b = monthIndex(range.to);
   const rows: MarketRow[] = [];
   for (const c of DVF_CITIES) {
     for (const type of ['appartement', 'maison'] as const) {
       const cityList = city.get(`${c.id}|${type}`) ?? [];
-      for (const code of c.districts ? c.codes : [c.codes[0]]) {
+      for (const code of c.zones) {
         const own = zone.get(`${code}|${type}`) ?? [];
         for (let m = a; m <= b; m++) {
           const w = windowStats(own, m);
@@ -89,11 +89,11 @@ export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear 
   for (let i = 0; i < sales.length; i++) { const id = cityOfCode(sales[i].code)?.id; if (!id) continue; const l = salesByCity.get(id); if (l) l.push(sales[i]); else salesByCity.set(id, [sales[i]]); }
   const perCity = DVF_CITIES.map((c) => {
     const mine = salesByCity.get(c.id) ?? [];
-    const r = rows.filter((x) => c.codes.includes(x.key) && x.type === 'appartement');
+    const r = rows.filter((x) => c.zones.includes(x.key) && x.type === 'appartement');
     const total = r.length || 1;
     const fb = r.filter((x) => x.fallback === 'ville').length; const none = r.filter((x) => x.fallback === 'aucun').length;
     let jumps = 0;
-    for (const code of c.codes) {
+    for (const code of c.zones) {
       const seq = r.filter((x) => x.key === code && x.median !== null).sort((x, y) => x.month.localeCompare(y.month));
       for (let i = 1; i < seq.length; i++) if (Math.abs(seq[i].median! / seq[i - 1].median! - 1) > 0.15) jumps++;
     }
@@ -108,9 +108,9 @@ export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear 
   const startYears = presentYears.map((year) => ({
     year,
     cities: DVF_CITIES.map((c) => {
-      const jan = rows.filter((x) => c.codes.includes(x.key) && x.month === `${year}-01` && x.median !== null);
+      const jan = rows.filter((x) => c.zones.includes(x.key) && x.month === `${year}-01` && x.median !== null);
       const zones = new Set(jan.map((x) => x.key));
-      return { id: c.id, ok: zones.size >= Math.ceil(c.codes.length / 2) };
+      return { id: c.id, ok: zones.size >= Math.ceil(c.zones.length / 2) };
     }),
   }));
   return { presentYears, absentYears, perCity, startYears, warnings };
@@ -120,14 +120,20 @@ export const qualityReport = (sales: DvfSale[], allRows: MarketRow[], firstYear 
 export interface YearCityStat { year: number; cityId: string; sales: number; zones: number; zonesBelowMin: number; thin: boolean }
 export const yearCityStats = (sales: DvfSale[], years: number[]): YearCityStat[] => {
   // Comptage en UNE passe : (année, quartier) -> nombre de ventes.
-  const count = new Map<string, number>();
-  for (let i = 0; i < sales.length; i++) { const k = `${sales[i].date.slice(0, 4)}|${sales[i].code}`; count.set(k, (count.get(k) ?? 0) + 1); }
+  const count = new Map<string, number>();          // (année, zone) -> ventes
+  const cityCount = new Map<string, number>();      // (année, ville) -> ventes, y compris celles sans zone fine
+  for (let i = 0; i < sales.length; i++) {
+    const y = sales[i].date.slice(0, 4);
+    const id = cityOfCode(sales[i].code)?.id; if (id) { const ck = `${y}|${id}`; cityCount.set(ck, (cityCount.get(ck) ?? 0) + 1); }
+    if (!sales[i].zone) continue;
+    const k = `${y}|${sales[i].zone}`; count.set(k, (count.get(k) ?? 0) + 1);
+  }
   const out: YearCityStat[] = [];
   for (const year of years) {
     for (const c of DVF_CITIES) {
-      const perZone = c.codes.map((code) => count.get(`${year}|${code}`) ?? 0);
-      const total = perZone.reduce((a, b) => a + b, 0);
-      const zones = c.codes.length;
+      const perZone = c.zones.map((code) => count.get(`${year}|${code}`) ?? 0);
+      const total = cityCount.get(`${year}|${c.id}`) ?? 0;
+      const zones = c.zones.length;
       const below = perZone.filter((n) => n < MIN_SALES).length;
       // Année maigre : moins de la moitié des quartiers atteint le seuil sur l'année entière (donc, au mois le mois, la médiane glissante sera souvent en repli).
       out.push({ year, cityId: c.id, sales: total, zones, zonesBelowMin: below, thin: below > zones / 2 });

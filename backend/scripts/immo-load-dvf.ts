@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { parseMarketFile } from '../src/data/realEstate/dvf/marketFile';
-import { cityOfCode, DVF_CITIES } from '../src/data/realEstate/dvf/cities';
+import { cityOfZone, DVF_CITIES } from '../src/data/realEstate/dvf/cities';
 import { assertTestDatabase } from './test-give-coins';
 import { DVF_MARKET_ENABLED } from '../src/config/dvfMarketRules';
 
@@ -21,7 +21,7 @@ const main = async () => {
   const meta = parsed.meta!;
   console.log(`${file}\nPériode ${meta.from} à ${meta.to} · médiane glissante ${meta.windowMonths} mois · au moins ${meta.minSales} ventes · ${parsed.rows.length} lignes avec prix, ${parsed.skippedNoPrice} mois sans prix fiable (non stockés).`);
   console.log('Ligne par ville :');
-  for (const c of DVF_CITIES) console.log(`  ${c.name.padEnd(14)} ${parsed.rows.filter((r) => cityOfCode(r.zone)?.id === c.id).length}`);
+  for (const c of DVF_CITIES) console.log(`  ${c.name.padEnd(14)} ${parsed.rows.filter((r) => cityOfZone(r.zone)?.id === c.id).length}`);
   if (!flag('apply')) { console.log('\nSimulation : rien n\'est écrit. Ajoute --apply pour écrire (base de test seulement).'); return; }
   const database = assertTestDatabase(process.env.DATABASE_URL);        // refuse toute base qui ne finit pas par « _test » AVANT de se connecter
   console.log(`\nBase visée : ${database}`);

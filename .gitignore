@@ -58,5 +58,7 @@ e2e/rapport/
 
 # Données brutes DVF et fichier de marché (générés hors ligne, jamais dans le dépôt)
 backend/data/dvf-brut/
+backend/data/dvf-brut-*/
+backend/data/dvf-zones-rapport.txt
 backend/data/dvf-marche.json
 backend/data/dvf-rapport-telechargement.txt
