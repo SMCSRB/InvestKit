@@ -10,7 +10,7 @@ Le tableau de bord (vue d'ensemble, solde partagé du site), la checklist d'accu
 | `walletService` (barre du haut, carte Patrimoine, valeur après chaque action) | idem | idem (`cryptoSummary`) |
 | `onboardingService` (étape « premier achat ») | `virtual_portfolios.total_bought` | **ou** un achat dans `crypto_fills` |
 | Classement Crypto et progression « x / 2 500 » | déjà sur `crypto_market` (la page Classements appelle `/crypto/leaderboard`) | inchangé, **testé** |
-| `riskService` / analyse de risque du tableau de bord | ancienne Crypto seulement | **inchangé** : l'analyse ne lit que la Bourse et l'ancienne Crypto (pas encore branchée sur le nouveau marché, à faire) |
+| `riskService` / analyse de risque du tableau de bord | ancienne Crypto seulement | **branché sur le nouveau marché** : domaine `crypto_market` (positions en pièces au taux du jour de jeu, dette du prêt `crypto_market`) ; la carte du tableau de bord prend le domaine le plus gros parmi Bourse, ancienne Crypto et nouveau marché |
 | `accountService` (export des données du compte) | `virtual_portfolios` seulement | **inchangé**, à compléter avant l'ouverture au public |
 
 Fusion plutôt que remplacement : si un joueur a des positions dans les deux, elles s'additionnent.
@@ -26,3 +26,6 @@ Chaque position est valorisée au prix du jour de jeu converti avec le taux BCE 
 
 ## Tests
 `tests/tableauDeBordCrypto.test.ts` : un achat de 150 apparaît dans le patrimoine, « Titres », « Capital investi », la carte Crypto, le solde partagé, la checklist et la progression du classement (150 < 2 500 : non classé ; 2 600 : classé) ; vente (gain négatif, jamais gratuit) ; sans taux de change ; fusion ancienne + nouvelle ; patrimoine total avec un bien immobilier ; plus de « € » dans `OverviewTab`/`DashHero`.
+
+
+L'export de compte (`accountService.exportUserData`) contient aussi une section `cryptoMarket` : compte, positions, ordres, exécutions, événements du journal.

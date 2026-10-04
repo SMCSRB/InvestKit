@@ -896,3 +896,9 @@ Avec un compte de test (jamais le tien) : Paramètres > Données > « Supprimer 
 2. Achète un titre : une ligne « Achat » (prix, quantité, enveloppe PEA/CTO, montant négatif) et une ligne « Frais de courtage ».
 3. Vends-le : « Vente » en positif, « Frais de courtage » et, s'il y a un gain, « Impôt sur la plus-value ».
 4. Le total des lignes correspond à la variation de ton solde. Tout est en pièces, sans « € ».
+
+## Risque et export de compte sur le nouveau marché Crypto
+1. Page Crypto, onglet **Mon portefeuille** : après un achat, un encadré « Risque du portefeuille » apparaît (score sur 100, allocation, pire crise). Sans position : message « Aucune position ».
+2. Tableau de bord, carte de risque : elle apparaît aussi quand tu n'as que le nouveau marché Crypto.
+3. Profil / Mes données, bouton d'export : le fichier contient une section **cryptoMarket** (compte, positions, ordres, exécutions, événements). Aucun mot de passe ni secret.
+4. Si le taux de change du jour de jeu manque, la position est ignorée dans le risque (jamais une valeur devinée).
