@@ -50,3 +50,8 @@ backups/
 start-dev.sh
 *.secret
 backend/mail-preview/
+
+# Parcours navigateur (Playwright) : fichiers produits à chaque exécution
+e2e/.etat/
+e2e/resultats/
+e2e/rapport/

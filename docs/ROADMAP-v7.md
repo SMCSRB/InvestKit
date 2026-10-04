@@ -44,7 +44,7 @@
 8. **Modération et signalement** (obligatoire avant d'ouvrir amis/guildes au public) : bouton « Signaler » (joueur, nom de guilde), file de signalements dans l'administration, suppression/renommage d'un nom de guilde offensant, suspension d'un joueur depuis un signalement, historique des décisions, délai de réponse affiché. Blocage entre joueurs : déjà fait. Messagerie : seulement **après** ces outils.
 9. **hCaptcha** : tester une vraie inscription (décision : on le garde).
 10. **Sessions** : mettre `SESSION_TOKEN_IN_BODY=false`, puis retirer la compatibilité « jeton dans le corps » (`docs/sessions-cookies.md`).
-11. **Tests de parcours dans le navigateur** (Playwright) intégrés à la CI : aujourd'hui ils tournent hors dépôt.
+11. ~~**Tests de parcours dans le navigateur** (Playwright) intégrés à la CI~~ **Fait** : `docs/tests-navigateur.md` (390 px et bureau, job `e2e`).
 12. Vérifier visuellement l'écran `/admin` complet et `/onboarding`.
 
 ### P2 — produit

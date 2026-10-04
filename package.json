@@ -13,6 +13,7 @@
     "type-check": "tsc --noEmit",
     "check:site-info": "node scripts/check-site-info.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
     "setup:hooks": "git config core.hooksPath scripts/git-hooks && echo \"Hook anti-secrets activé.\""
   },
   "repository": {
@@ -44,5 +45,8 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "5.x"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
   }
 }

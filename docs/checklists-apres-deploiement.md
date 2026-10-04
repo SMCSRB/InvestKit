@@ -921,3 +921,7 @@ Rien à tester sur le site. Lis `docs/sources-cours-bourse.md` et choisis : A (B
 2. Carte « Risque de ton portefeuille » : « Voir l'analyse » mène à /bourse, ou à /crypto si ton plus gros portefeuille est en Crypto.
 3. Un vieux lien `/dashboard?tab=trading` arrive toujours sur /bourse.
 4. Le reste du tableau de bord (vue d'ensemble, marché, éducation, amis, notifications, paramètres) fonctionne comme avant.
+
+
+## Parcours navigateur (Playwright) en CI
+Rien à tester sur le site. Sur la PR, vérifie que le contrôle GitHub **e2e** est vert. En local (facultatif) : `docs/tests-navigateur.md`. Si un parcours échoue, le rapport (captures, traces) est joint à l'exécution du job.
