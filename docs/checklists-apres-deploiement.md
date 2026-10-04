@@ -939,6 +939,9 @@ Rien à tester sur le site. Sur la PR, vérifie que le contrôle GitHub **e2e** 
 2. Sous ces lignes, une phrase précise que le résultat n'est pas la valeur du bien.
 
 
+## Note : analyse du catalogue Immobilier (docs seulement)
+Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau par bien : rendement, flux mensuel, résultat de revente à 5 ans et à long terme) pour décider s'il faut rééquilibrer le catalogue.
+
 ## Biens « à rénover » : valeur selon les travaux payés et plafond des travaux
 1. Immobilier, Chercher : les annonces « à rénover » des petites villes (ex. Ternelle) ont des travaux annoncés nettement plus bas qu'avant (au plus 35 % de la valeur du bien une fois rénové). Les grandes villes (Marvelle) ne changent pas.
 2. Fiche d'un bien « à rénover » : « Expertise avant achat » montre des travaux réels au plus égaux à 55 % de la valeur rénovée.
