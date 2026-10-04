@@ -1154,6 +1154,17 @@ Rien à tester sur le site. Sur la copie de test, dans `~/InvestKit-design`, apr
 
 Lecture seule, rien n'est écrit. Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 
+## PR Immobilier réel : lissage par crédibilité et plausibilité des prix de zone
+
+Rien à tester sur le site. Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` (aucune migration) :
+
+1. `npm --prefix backend run immo:jumps -- --all --dir backend/data/dvf-brut-cp` : tableau « avant / après » du nombre de sauts de plus de 15 % par ville (mois à partir de 2022-01). Envoie-le-moi.
+2. `npm --prefix backend run immo:jumps -- --city lille --dir backend/data/dvf-brut-cp` : il doit ne plus rester de saut d'Euralille de plus de 15 %.
+3. `npm --prefix backend run immo:import-dvf -- --dir backend/data/dvf-brut-cp` : regarde la ligne « Lignes : … zone seule · … mélangées · … ville (~), dont … pour écart de plus de 40 % ». Envoie-la-moi.
+4. `npm --prefix backend run immo:simulate-niveau` (et `-- --capital 10000 --profile employee`) : nouveau tableau « Plafond de ce profil, ville par ville ». Envoie-moi la sortie.
+
+Lecture seule pour 1, 2 et 4 ; 3 écrit `backend/data/dvf-marche.json` (le fichier est refusé s'il est incohérent). Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
 ## PR Immobilier réel : loyers ANIL (préparation, PR 1)
 
 Rien à tester sur le site (aucun changement pour les joueurs ; la **migration 058** crée deux tables vides). **Avant tout import, lis la page du jeu de données** (`docs/loyers-anil-fiche-source.md`). Sur la copie de test, dans `~/InvestKit-design`, après `~/deploy-test.sh` :

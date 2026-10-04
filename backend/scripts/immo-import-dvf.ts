@@ -5,7 +5,7 @@
 // Options : --dir <dossier des fichiers bruts> · --out <fichier> · --from AAAA-MM · --to AAAA-MM (défaut : 2014-01 à la dernière vente lue)
 import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import { yearCityStats, compressYears, WINDOW_MONTHS, MIN_SALES } from '../src/data/realEstate/dvf/aggregate';
+import { yearCityStats, compressYears, WINDOW_MONTHS, MIN_SALES, CREDIBILITY_FULL, CREDIBILITY_FLOOR, PLAUSIBILITY_BAND } from '../src/data/realEstate/dvf/aggregate';
 import { loadSalesFromDir, buildFromSales } from '../src/data/realEstate/dvf/pipeline';
 import { DVF_CITIES } from '../src/data/realEstate/dvf/cities';
 
@@ -20,7 +20,9 @@ const main = () => {
 
   console.log(`${files} fichier(s), ${mutations} mutations lues, ${trimmed.kept.length} ventes retenues.`);
   console.log('Rejets : ' + (Object.entries(rejected).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(', ') || 'aucun'));
-  console.log(`Médiane glissante sur ${WINDOW_MONTHS} mois, au moins ${MIN_SALES} ventes, sinon repli sur la ville.\n`);
+  console.log(`Médiane glissante sur ${WINDOW_MONTHS} mois. Prix de zone lissé par crédibilité : ${CREDIBILITY_FULL} ventes ou plus = zone seule ; de ${CREDIBILITY_FLOOR} à ${CREDIBILITY_FULL - 1} = mélange (n/${CREDIBILITY_FULL} zone + le reste ville) ; moins de ${CREDIBILITY_FLOOR} = ville seule (~). Écart maximal à la ville : ${PLAUSIBILITY_BAND * 100} % (au-delà : ville, ~).`);
+  { const count = (f: (r: (typeof rows)[number]) => boolean) => rows.filter(f).length;
+    console.log(`Lignes : ${count((r) => r.median !== null && r.fallback === null)} zone seule · ${count((r) => r.fallback === 'mixte')} mélangées · ${count((r) => r.fallback === 'ville')} ville (~), dont ${count((r) => !!r.capped)} pour écart de plus de ${PLAUSIBILITY_BAND * 100} % · ${count((r) => r.fallback === 'aucun')} sans prix fiable.\n`); }
   console.log('Ville                 ventes  appart.  maisons  fiable  repli  aucun  sauts  min–max (€/m², appart.)');
   for (const c of rep.perCity) console.log(`${c.name.padEnd(20)} ${String(c.sales).padStart(7)} ${String(c.byType.appartement).padStart(8)} ${String(c.byType.maison).padStart(8)} ${(c.coveredShare * 100 - c.fallbackShare * 100).toFixed(0).padStart(6)}% ${(c.fallbackShare * 100).toFixed(0).padStart(5)}% ${(c.noneShare * 100).toFixed(0).padStart(5)}% ${String(c.jumps).padStart(6)}  ${c.minPerM2 ?? '-'}–${c.maxPerM2 ?? '-'}`);
   console.log('\nDépart en janvier de l\'année (ok = médianes fiables sur au moins la moitié des quartiers) :');
@@ -50,7 +52,7 @@ const main = () => {
   const out = path.resolve(arg('out') ?? path.join(__dirname, '..', 'data', 'dvf-marche.json'));
   mkdirSync(path.dirname(out), { recursive: true });
   writeFileSync(out, JSON.stringify({
-    source: 'DVF géolocalisées (DGFiP, via data.gouv.fr), Licence Ouverte 2.0', windowMonths: WINDOW_MONTHS, minSales: MIN_SALES, range,
+    source: 'DVF géolocalisées (DGFiP, via data.gouv.fr), Licence Ouverte 2.0', windowMonths: WINDOW_MONTHS, minSales: CREDIBILITY_FLOOR, credibilityFull: CREDIBILITY_FULL, plausibilityBand: PLAUSIBILITY_BAND, range,
     columns: ['zone', 'mois', 'type', 'ventes', 'médiane €/m²', 'quartile 1', 'quartile 3', 'repli'],
     rows: rows.map((r) => [r.key, r.month, r.type === 'appartement' ? 'a' : 'm', r.n, r.median, r.p25, r.p75, r.fallback]),
   }));

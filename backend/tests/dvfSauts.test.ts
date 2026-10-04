@@ -22,7 +22,7 @@ describe('sauts de médiane glissante', () => {
   });
   it('bascule : la zone passe sous 10 ventes, sa médiane laisse la place à celle de la ville', () => {
     const s = [...mk('59260', '2021-01', 14, 2500), ...mk('59000', '2021-01', 100, 4500), ...mk('59000', '2021-06', 100, 4500)];
-    const rows = monthlyMarket(s, { from: '2021-02', to: '2022-03' });
+    const rows = monthlyMarket(s, { from: '2021-02', to: '2022-03' }, 'seuil');   // ancienne règle : la bascule existe
     const j = explainJumps(s, rows, 'lille').filter((x) => x.zone === '59260');
     expect(j.some((x) => x.cause === 'bascule' && x.prevFallback === null && x.fallback === 'ville')).toBe(true);
   });

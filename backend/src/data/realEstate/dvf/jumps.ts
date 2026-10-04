@@ -18,7 +18,7 @@ export interface Jump {
 const monthIndex = (ym: string): number => Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5, 7)) - 1;
 const med = (v: number[]): number | null => (v.length ? Math.round(median(v)) : null);
 
-export const explainJumps = (sales: readonly DvfSale[], rows: readonly MarketRow[], cityId: string, threshold = 0.15): Jump[] => {
+export const explainJumps = (sales: readonly DvfSale[], rows: readonly MarketRow[], cityId: string, threshold = 0.15, since = '0000-00'): Jump[] => {
   const city = DVF_CITIES.find((c) => c.id === cityId);
   if (!city) throw new Error(`Ville inconnue : ${cityId}`);
   // Prix par mois, pour les appartements : par zone, et pour la ville entière (repli).
@@ -36,7 +36,7 @@ export const explainJumps = (sales: readonly DvfSale[], rows: readonly MarketRow
     for (let i = 1; i < seq.length; i++) {
       const a = seq[i - 1]; const b = seq[i];
       const delta = b.median! / a.median! - 1;
-      if (Math.abs(delta) <= threshold) continue;
+      if (Math.abs(delta) <= threshold || b.month < since) continue;
       const pm = monthIndex(a.month); const nm = monthIndex(b.month);
       // Ventes sorties (mois pm-11 à nm-12) et entrées (mois pm+1 à nm) de la fenêtre, sur la série réellement utilisée au mois b.
       const src = b.fallback === 'ville' ? cityAll : byZone.get(zone) ?? new Map<number, number[]>();
@@ -50,12 +50,26 @@ export const explainJumps = (sales: readonly DvfSale[], rows: readonly MarketRow
   return out;
 };
 
-const CAUSE: Record<JumpCause, string> = { bascule: 'BASCULE zone ↔ ville', bruit: 'BRUIT (peu de ventes)', marche: 'MARCHÉ (volume suffisant)' };
+const CAUSE: Record<JumpCause, string> = { bascule: 'BASCULE (repli, mélange ou ville)', bruit: 'BRUIT (peu de ventes)', marche: 'MARCHÉ (volume suffisant)' };
 export const renderJumps = (cityId: string, jumps: Jump[], threshold = 0.15): string => {
   const out = [`Sauts de plus de ${Math.round(threshold * 100)} % sur la médiane glissante (appartements), ${cityId} : ${jumps.length}`, `(seuil de fiabilité ${MIN_SALES} ventes ; « bruit » = moins de ${NOISE_BELOW} ventes dans la fenêtre de ${WINDOW_MONTHS} mois)`];
   for (const j of jumps) {
-    out.push(`- ${j.zone} · ${j.prevMonth} → ${j.month} : ${j.prevMedian} → ${j.median} €/m² (${j.deltaPct > 0 ? '+' : ''}${j.deltaPct} %) · ventes dans la fenêtre ${j.nPrev} → ${j.n}${j.prevFallback !== j.fallback ? ` · repli ${j.prevFallback ?? 'aucun'} → ${j.fallback ?? 'aucun'}` : j.fallback === 'ville' ? ' · repli sur la ville' : ''}`);
+    out.push(`- ${j.zone} · ${j.prevMonth} → ${j.month} : ${j.prevMedian} → ${j.median} €/m² (${j.deltaPct > 0 ? '+' : ''}${j.deltaPct} %) · ventes dans la fenêtre ${j.nPrev} → ${j.n}${j.prevFallback !== j.fallback ? ` · repli ${j.prevFallback ?? 'zone seule'} → ${j.fallback ?? 'zone seule'}` : j.fallback === 'ville' ? ' · repli sur la ville' : ''}`);
     out.push(`    entrées ${j.entering}${j.enteringMedian ? ` (médiane ${j.enteringMedian})` : ''} · sorties ${j.leaving}${j.leavingMedian ? ` (médiane ${j.leavingMedian})` : ''} → ${CAUSE[j.cause]}`);
   }
   return out.join('\n');
+};
+
+// Nombre de sauts de plus de `threshold` (appartements, mois >= since) par ville : même définition que le rapport qualité de immo:import-dvf, pour comparer deux méthodes de calcul.
+export const countJumps = (rows: readonly MarketRow[], threshold = 0.15, since = '0000-00'): Record<string, number> => {
+  const out: Record<string, number> = {};
+  for (const c of DVF_CITIES) {
+    let n = 0;
+    for (const zone of c.zones) {
+      const seq = rows.filter((r) => r.key === zone && r.type === 'appartement' && r.median !== null).sort((a, b) => a.month.localeCompare(b.month));
+      for (let i = 1; i < seq.length; i++) if (seq[i].month >= since && Math.abs(seq[i].median! / seq[i - 1].median! - 1) > threshold) n++;
+    }
+    out[c.id] = n;
+  }
+  return out;
 };

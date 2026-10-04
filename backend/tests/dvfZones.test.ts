@@ -65,14 +65,14 @@ describe('lecture du code postal et de la section', () => {
 });
 
 describe('chaque zone a SON prix', () => {
-  it('deux codes postaux de Bordeaux, deux prix ; une zone avec moins de 10 ventes prend la médiane de la ville', () => {
+  it('deux codes postaux de Bordeaux, deux prix ; une zone avec moins de 5 ventes prend la médiane de la ville', () => {
     const s = [...many('33063', '33000', '2022-01', 15, 5000), ...many('33063', '33100', '2022-01', 15, 3500), ...many('33063', '33200', '2022-01', 4, 9999)];
     const rows = monthlyMarket(s, { from: '2022-02', to: '2022-02' });
     const get = (z: string) => rows.find((r) => r.key === z && r.type === 'appartement')!;
-    expect(get('33000')).toMatchObject({ fallback: null, n: 15 });
-    expect(get('33100')).toMatchObject({ fallback: null, n: 15 });
-    expect(get('33000').median!).toBeGreaterThan(get('33100').median! + 1000);
-    expect(get('33200')).toMatchObject({ fallback: 'ville' });                                    // 4 ventes : sous le seuil
+    expect(get('33000')).toMatchObject({ fallback: 'mixte', n: 15 });                              // 15 ventes : moitié zone, moitié ville
+    expect(get('33100')).toMatchObject({ fallback: 'mixte', n: 15 });
+    expect(get('33000').median!).toBeGreaterThan(get('33100').median! + 500);                      // chaque zone garde SON niveau de prix
+    expect(get('33200')).toMatchObject({ fallback: 'ville' });                                    // 4 ventes : moins de 5, la ville seule
     expect(get('33200').n).toBeGreaterThanOrEqual(MIN_SALES);                                     // …donc médiane de la ville entière (34 ventes)
     expect(get('33300')).toMatchObject({ fallback: 'ville' });                                    // zone sans aucune vente : la ville
   });
