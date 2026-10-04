@@ -954,3 +954,8 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 3. Compare avec ta simulation d'achat plus bas dans la fiche : tes vrais chiffres dépendent de ton apport et de ta durée ; le flux de la carte n'est qu'un repère.
 4. Favoris : mêmes chiffres que dans la recherche.
 5. Rien n'a changé dans les prix, loyers et charges du catalogue (décision : le catalogue actuel sera remplacé par de vraies villes).
+
+
+## 6b-lite : textes honnêtes sur les cours et la valeur des InvestCoins
+1. Glossaire, mot « Action » : « Dans le jeu » dit que les cours sont annuels, simplifiés et illustratifs (plus « cours historiques réels »).
+2. Glossaire, mot « InvestCoin » : la phrase « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs » apparaît dans « Dans le jeu ».

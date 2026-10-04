@@ -10,8 +10,7 @@ import { wealthBreakdown } from '../engine/wealth';
 import { marketFor, num, toAccount } from './crypto/core';
 
 // Vue d'ensemble RÉELLE du joueur (remplace les chiffres fictifs du tableau de bord). Chaque domaine garde son unité :
-// Bourse et Crypto en pièces (InvestCoins ≈ 1 € de cours dans le jeu), Immobilier en euros (1 InvestCoin = 20 €) — volontairement non additionnés
-// tant que l'unification des unités n'est pas faite (voir docs/banque.md).
+// Tous les domaines sont en InvestCoins (1 InvestCoin = 1 € de jeu, voir config/economy.ts). Le Crypto passe des dollars aux pièces par le taux BCE du jour de jeu.
 export const tradingSummary = async (userId: string, domainId: 'stocks' | 'crypto') => {
   const domain = getDomain(domainId)!;
   const row = (await query(`SELECT positions, simulated_year, total_bought, total_proceeds, tax_state FROM virtual_portfolios WHERE user_id = $1 AND mode = 'accelerated' AND domain = $2`, [userId, domainId])).rows[0];
