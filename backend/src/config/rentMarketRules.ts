@@ -12,6 +12,11 @@ export const RENT_NATURE = 'Loyer moyen de la commune : loyer d\'annonce, charge
 export const RENT_SNAPSHOT_MONTH_DAY = '09-30';
 export const rentSnapshotDate = (vintage: number): string => `${vintage}-${RENT_SNAPSHOT_MONTH_DAY}`;
 
+// Décision d'Andreja (5 octobre 2026) : le PREMIER millésime est utilisable dès janvier de son année (à défaut de loyer plus ancien), avec une mention claire d'approximation.
+// Avant ce 3e trimestre, c'est donc une approximation, jamais une valeur inventée. Entre deux millésimes : loyer constant (un seul changement par an).
+export const rentFirstUsableDate = (firstVintage: number): string => `${firstVintage}-01-01`;
+export const rentApproximationText = (vintage: number): string => `Estimation ANIL ${vintage}, 3e trimestre (approximation avant cette date)`;
+
 // Bornes de plausibilité d'un loyer d'annonce (€/m²/mois, charges comprises) : au-delà, la ligne est refusée (jamais corrigée).
 export const RENT_BOUNDS = { minPerM2: 3, maxPerM2: 80 } as const;
 

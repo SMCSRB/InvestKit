@@ -122,10 +122,14 @@ describe.skipIf(!hasDb)('en base (source « anil »)', () => {
     expect((await query('SELECT DISTINCT source FROM immo_rent_imports')).rows).toEqual([{ source: 'anil' }]);
     expect(Number((await query('SELECT COUNT(*)::int AS n FROM immo_rent_market')).rows[0].n)).toBe(4);
   });
-  it('AUCUN FUTUR : le loyer d\'un millésime n\'existe qu\'à partir du 30 septembre de son année ; avant le premier millésime, aucun loyer', async () => {
+  it('loyer constant entre deux millésimes (un seul changement par an) ; le premier millésime est utilisable dès janvier de son année, avec la mention d\'approximation ; avant, aucun loyer', async () => {
     const at = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
-    expect(await rentMarketService.rentAt('33063', 'all', at('2024-09-29'))).toBeNull();            // le millésime 2024 n'est pas encore « arrivé »
-    expect((await rentMarketService.rentAt('33063', 'all', at('2024-09-30')))!.vintage).toBe(2024);
+    expect(await rentMarketService.rentAt('33063', 'all', at('2023-12-31'))).toBeNull();            // avant janvier du premier millésime : rien, donc aucune rentabilité
+    const early = (await rentMarketService.rentAt('33063', 'all', at('2024-01-01')))!;              // dès janvier : le millésime 2024, marqué approximation
+    expect(early).toMatchObject({ vintage: 2024, rentEurM2: 12, approximation: 'Estimation ANIL 2024, 3e trimestre (approximation avant cette date)' });
+    expect((await rentMarketService.rentAt('33063', 'all', at('2024-09-29')))!.approximation).toMatch(/approximation avant cette date/);
+    const ok = (await rentMarketService.rentAt('33063', 'all', at('2024-09-30')))!;                  // le 30 septembre : la mention disparaît
+    expect(ok.vintage).toBe(2024); expect(ok.approximation).toBeNull();
     expect((await rentMarketService.rentAt('33063', 'all', at('2025-09-29')))!.rentEurM2).toBe(12);  // encore le millésime 2024
     expect((await rentMarketService.rentAt('33063', 'all', at('2025-09-30')))!.rentEurM2).toBe(14);
     expect((await rentMarketService.rentAt('33063', 'all', at('2026-06-01')))!.vintage).toBe(2025);

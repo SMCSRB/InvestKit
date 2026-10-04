@@ -471,3 +471,8 @@
 .rp-explain summary { cursor: pointer; font-weight: 600; }
 .rp-explain p { margin: 6px 0 0; }
 .rp-card__stat--net { flex-wrap: wrap; gap: 4px 8px; }
+
+/* Marque « valeur de jeu » : chiffre sans source ouverte */
+.rp-gv { display: inline-block; margin-left: 8px; padding: 1px 7px; border: 1px solid var(--ik-border-strong); border-radius: 999px; font-size: 11px; font-weight: 500; line-height: 1.5; color: var(--ik-text-3); background: transparent; white-space: nowrap; vertical-align: middle; cursor: help; }
+.rp-gv--compact { margin-left: 6px; padding: 0 6px; font-size: 10px; }
+.rp-source { margin: 10px 0 0; font-size: var(--ik-fs-sm); color: var(--ik-text-3); line-height: 1.5; }

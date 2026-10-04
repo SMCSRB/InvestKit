@@ -5,7 +5,7 @@
 import { query, getClient } from '../utils/db';
 import { ParsedRentFile } from '../data/realEstate/rents/rentFile';
 import { zoneLabel, cityOfCode, cityOfZone } from '../data/realEstate/dvf/cities';
-import { RENT_SOURCE_ID, RentGroup, RENT_ATTRIBUTION, RENT_NATURE } from '../config/rentMarketRules';
+import { RENT_SOURCE_ID, RentGroup, RENT_ATTRIBUTION, RENT_NATURE, rentFirstUsableDate, rentApproximationText } from '../config/rentMarketRules';
 
 export interface RentView {
   source: 'anil';
@@ -22,8 +22,9 @@ export interface RentView {
   observations: number | null;
   attribution: string;
   nature: string;
+  approximation: string | null;  // renseigné quand la date de jeu est AVANT le 3e trimestre du premier millésime : « Estimation ANIL 2022, 3e trimestre (approximation avant cette date) »
 }
-export const RENT_VIEW_KEYS = ['source', 'communeCode', 'communeLabel', 'cityId', 'group', 'vintage', 'snapshotDate', 'rentEurM2', 'lowEurM2', 'highEurM2', 'estimate', 'observations', 'attribution', 'nature'] as const;
+export const RENT_VIEW_KEYS = ['source', 'communeCode', 'communeLabel', 'cityId', 'group', 'vintage', 'snapshotDate', 'rentEurM2', 'lowEurM2', 'highEurM2', 'estimate', 'observations', 'attribution', 'nature', 'approximation'] as const;
 
 // Code commune (ou arrondissement) d'une zone de prix : les codes postaux d'une ville partagent le loyer de leur commune.
 export const communeOfZone = (zone: string): string | null => {
@@ -62,20 +63,24 @@ export const rentMarketService = {
     } finally { client.release(); }
   },
 
-  // Loyer connu à la date simulée : dernier millésime dont le 3e trimestre est terminé AVANT ou LE jour de la date. Aucun millésime = null (pas de loyer, pas de rentabilité).
+  // Loyer connu à la date simulée : dernier millésime dont le 3e trimestre est terminé AVANT ou LE jour de la date (loyer constant entre deux millésimes : un seul changement par an).
+  // Exception décidée par Andreja : AVANT le premier millésime, on utilise ce premier millésime dès janvier de son année, avec la mention d'approximation. Avant cette date, ou sans loyer pour la commune : null.
   async rentAt(communeCode: string, group: RentGroup, simulatedMs: number): Promise<RentView | null> {
     const city = cityOfCode(communeCode); const label = zoneLabel(communeCode);
     if (!city || !label) return null;
-    const r = (await query(
-      `SELECT vintage_year, to_char(snapshot_date, 'YYYY-MM-DD') AS snap, rent_eur_m2, low_eur_m2, high_eur_m2, estimate_kind, observations
-         FROM immo_rent_market
-        WHERE commune_code = $1 AND property_group = $2 AND snapshot_date <= $3::date
-        ORDER BY snapshot_date DESC LIMIT 1`, [communeCode, group, dayString(simulatedMs)])).rows[0];
-    if (!r) return null;
+    const cols = `vintage_year, to_char(snapshot_date, 'YYYY-MM-DD') AS snap, rent_eur_m2, low_eur_m2, high_eur_m2, estimate_kind, observations`;
+    let r = (await query(
+      `SELECT ${cols} FROM immo_rent_market WHERE commune_code = $1 AND property_group = $2 AND snapshot_date <= $3::date ORDER BY snapshot_date DESC LIMIT 1`, [communeCode, group, dayString(simulatedMs)])).rows[0];
+    let approximation: string | null = null;
+    if (!r) {
+      const first = (await query(`SELECT ${cols} FROM immo_rent_market WHERE commune_code = $1 AND property_group = $2 ORDER BY snapshot_date ASC LIMIT 1`, [communeCode, group])).rows[0];
+      if (!first || dayString(simulatedMs) < rentFirstUsableDate(Number(first.vintage_year))) return null;   // trop tôt : pas de loyer, donc pas de rentabilité
+      r = first; approximation = rentApproximationText(Number(first.vintage_year));
+    }
     return {
       source: 'anil', communeCode, communeLabel: label, cityId: city.id, group, vintage: Number(r.vintage_year), snapshotDate: r.snap,
       rentEurM2: Number(r.rent_eur_m2), lowEurM2: Number(r.low_eur_m2), highEurM2: Number(r.high_eur_m2), estimate: r.estimate_kind,
-      observations: r.observations === null ? null : Number(r.observations), attribution: RENT_ATTRIBUTION, nature: RENT_NATURE,
+      observations: r.observations === null ? null : Number(r.observations), attribution: RENT_ATTRIBUTION, nature: RENT_NATURE, approximation,
     };
   },
 };

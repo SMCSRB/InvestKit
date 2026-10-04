@@ -9,6 +9,7 @@ import {
   loanApplicationFee, expertiseCostEuros, RENOVATION_RULES, STANDARD_LOAN_MONTHS,
 } from '../config/immoRules';
 import { EUROS_PER_COIN } from '../config/economy';
+import { listingDataSources } from '../engine/immo/dataSources';
 import { evaluatePurchase, PurchaseEvaluation, ProfileId, applyRenovation, parseSearch, searchListings, SearchInputError, pricePerSqm, grossYieldPct, needsWorks, computeIndicators, computeNotaryFees, standardScenario, ScenarioContext } from '../engine/immo';
 import { ownCoins, spendableCoins, monthlyInstalmentCoins } from './bankService';
 import { grantFirstInvestment } from './firstStepsService';
@@ -77,6 +78,7 @@ export const decorateListing = (l: Listing, ctx?: ScenarioContext) => {
     grossYieldPct: grossYieldPct(l),
     priceCoins: Math.round((l.price / EUROS_PER_COIN) * 100) / 100,
     needsWorks: needsWorks(l),
+    dataSources: listingDataSources(),            // origine des chiffres : aujourd'hui le catalogue fictif (loyers et charges = valeurs de jeu) ; un loyer réel (ANIL) s'y branchera
     ...(scenario ? { netYieldPct: scenario.netYieldPct, monthlyCashFlow: scenario.monthlyCashFlow, scenario } : {}),
   };
 };
