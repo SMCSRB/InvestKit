@@ -2,6 +2,8 @@
 
 *4 octobre 2026. Idée d'Andreja : pour chaque domaine (Bourse, Crypto, Immobilier), plusieurs scénarios tirés de faits réels, en mode Histoire seulement ; choisir un scénario met l'horloge à la date du scénario. Ce document est complémentaire du travail sur l'Immobilier réel (`docs/immobilier-reel-preparation.md`, `docs/analyse-immobilier-reel-et-horloge.md`) et n'y touche pas. Les étiquettes : **[sûr]** = vérifié dans le code du dépôt, **[connu]** = fait que je connais mais que je n'ai pas revérifié ici (pas d'accès aux sources), **[à vérifier]** = chiffre ou date à contrôler avant de l'écrire dans le jeu.*
 
+> **Décisions d'Andreja du 4 octobre 2026 (soir)** : trois niveaux (Normal gratuit, Difficile et Expert Pro ; « Découverte » plus tard si besoin) ; bonus de départ Pro retiré des parties de scénario (il reste pour les parties libres et le Bac à sable) ; partie libre des comptes gratuits actuels validée ; Bourse : aucun scénario gratuit tant que la source de cours réels n'est pas tranchée ; seuils de classement = une part du capital du niveau ; **niveau Expert Immobilier NON figé** tant que la simulation (chapitre 8) n'est pas lue ; priorité de livraison : fondation des parties, puis scénarios Crypto et Immobilier, puis le reste. Les autres décisions du chapitre 7 sont **proposées** (à valider à la relecture).
+
 > **Mise à jour du 4 octobre 2026 (soir) : la règle d'accès par plan est REMPLACÉE** (nouveau chapitre 2). Gratuit : tous les domaines, mais seulement le **premier scénario de chaque domaine, au niveau Normal** ; une partie active par domaine. Pro : tous les scénarios, tous les niveaux, plusieurs parties en parallèle. L'ancienne règle « un seul domaine gratuit au choix » est retirée (ce que ça change : chapitre 2.4). Les niveaux de difficulté viennent des **conditions de départ réelles** du scénario, jamais de règles truquées (chapitre 2.3).
 
 ## En trois phrases
@@ -59,7 +61,7 @@ Le Pro garde ses autres avantages. Le « premier scénario » n'est **pas** « l
 ### 2.3 Niveaux de difficulté : des conditions réelles, jamais des règles truquées
 **Principe.** Les règles de la plateforme sont **les mêmes à tous les niveaux** : frais, écarts d'achat et de vente, glissement de prix, taux de référence de l'époque, règles de la banque (plafond d'emprunt, seuils d'appel de marge), cours et événements réels. Rendre un niveau « plus dur » en durcissant ces règles serait de la triche envers le joueur. Un niveau change donc seulement **d'où l'on part**, comme dans la vraie vie.
 
-Je propose **trois niveaux** : **Normal** (gratuit), **Difficile**, **Expert** (Pro). *Variante possible : un quatrième niveau « Découverte » plus facile, gratuit ou non, à décider.*
+Je propose **trois niveaux** : **Normal** (gratuit), **Difficile**, **Expert** (Pro). *Décidé : trois niveaux. Un quatrième niveau « Découverte » plus facile ne viendra que plus tard, si besoin.*
 
 | Paramètre qui varie | Normal | Difficile | Expert | Pourquoi c'est « réel » |
 |---|---|---|---|---|
@@ -72,9 +74,10 @@ Je propose **trois niveaux** : **Normal** (gratuit), **Difficile**, **Expert** (
 **Ce qui ne varie JAMAIS entre niveaux** : frais et écarts (`cryptoMarketRules`, `tradingRules`), taux de référence et marges de la banque (`bankRules`), règles de l'immobilier (`immoRules`), cours, événements, nombre de jours entre deux avances du temps. Les événements réels du scénario arrivent **à tous les niveaux**, aux mêmes dates.
 
 **Conséquences à traiter**
-- Les **seuils de classement** (`RANKING_MIN_INVESTED` = 2 500 pièces, `RANKING_MIN_ACTIVE_DAYS`) deviennent une **part du capital du niveau** (sinon un capital de 2 500 ne pourrait jamais être « assez investi »).
+- **Décidé** : les **seuils de classement** (`RANKING_MIN_INVESTED` = 2 500 pièces, `RANKING_MIN_ACTIVE_DAYS`) deviennent une **part du capital du niveau** (sinon un capital de 2 500 ne pourrait jamais être « assez investi »). La part exacte reste à fixer (aujourd'hui 25 % du capital de 10 000) et sera marquée **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER**.
+- **Le niveau Expert de l'Immobilier n'est pas figé** : la simulation du chapitre 8 montre que le tableau ci-dessus ne marche pas tel quel pour ce domaine.
 - **Classement par niveau** : un classement par *(scénario, niveau)* ; on ne compare jamais Normal et Expert.
-- **Bonus de départ du Pro** (`PRO_STARTING_BONUS` = 10 000, aujourd'hui « une seule fois ») : il est **incompatible** avec des classements équitables (un Pro avec 20 000 contre un gratuit avec 10 000 sur le même tableau). *Proposition* : le bonus ne s'applique plus aux parties de scénario (même capital pour tous, à niveau égal) et reste acquis aux comptes qui l'ont déjà eu ; la valeur du Pro devient « tous les scénarios, tous les niveaux, plusieurs parties ». *À décider.*
+- **Bonus de départ du Pro** (`PRO_STARTING_BONUS` = 10 000, aujourd'hui « une seule fois ») : il est **incompatible** avec des classements équitables (un Pro avec 20 000 contre un gratuit avec 10 000 sur le même tableau). **Décidé** : le bonus ne s'applique plus aux parties de scénario (même capital pour tous, à niveau égal) ; il **reste pour les parties libres et le Bac à sable**, et reste acquis aux comptes qui l'ont déjà eu. La valeur du Pro devient « tous les scénarios, tous les niveaux, plusieurs parties ».
 - Tous ces chiffres sont des **valeurs de jeu non sourcées** : marquées **VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER** et ajoutées à `docs/PARAMETRES-A-RECONFIRMER.md`. Les niveaux se testent comme le reste (la partie Expert doit rester **gagnable** : simulation de contrôle avant ouverture).
 
 ### 2.4 Retirer proprement l'ancienne règle « un seul domaine gratuit »
@@ -184,16 +187,60 @@ Estimation globale : **environ 48 jours (± 30 %)** (40 avant la nouvelle règle
 
 **Risques** : refonte large mais mécanique (tout service qui reçoit `userId`) ; anti-accès à la donnée d'autrui à tester partout ; invariants du registre de pièces (totaux par partie) ; migration des comptes existants ; limite de requêtes de l'API (les écrans de parties ne doivent pas multiplier les appels).
 
-## 7. À décider avant tout code
-*(Remplace la liste précédente ; la décision « limites par plan » est tranchée par le chapitre 2.)*
-1. **Niveaux** : trois (Normal, Difficile, Expert) ou quatre avec « Découverte » ? Valeurs proposées : capital 10 000 / 5 000 / 2 500, position héritée, prêt de départ, profil de revenus (chapitre 2.3). *Recommandé : trois niveaux.*
-2. **Bonus de départ du Pro** (+10 000, une fois) : le retirer des parties de scénario pour des classements équitables, en gardant ce que les comptes ont déjà reçu ? *(recommandé)*
-3. **Partie libre des comptes gratuits actuels** : elle garde l'ancienne règle d'achat, ne compte pas dans « une partie active par domaine », et se termine quand le joueur veut ? *(recommandé)*
-4. **Fin d'abonnement Pro** : les parties déjà commencées restent jouables, seules les nouvelles suivent la règle gratuite ? *(recommandé)*
-5. **Classement** : seule la **première** partie d'un scénario (par niveau) est classée, les suivantes « libres » ? Pour un compte gratuit qui termine et recommence, la deuxième partie est donc libre. *(recommandé)*
-6. **XP et badges** au joueur, jamais regagnés en recommençant ? *(recommandé)*
-7. **Récompenses en pièces** : quota par joueur, crédit dans la partie active ? *(recommandé)*
-8. **Bourse** : veux-tu qu'on cherche une source de **cours réels** (options et licences présentées, sans rien dépenser) ou qu'on garde la Bourse en simulation, clairement étiquetée, sans scénarios « faits réels » ? Tant que ce n'est pas tranché, **le premier scénario gratuit de la Bourse n'existe pas**.
-9. **Comptes existants** : ta partie actuelle devient la « partie libre » n°1 (aucune perte) ? *(recommandé)*
-10. **Immobilier** : ses scénarios commencent en 2022 ? (et la décision horloge de l'Immobilier s'en trouve réglée)
-11. **Étape « Choisir ton domaine gratuit »** de la liste de premiers pas : la supprimer (les pièces déjà gagnées restent acquises) ? *(recommandé)*
+## 7. Décisions (état au 4 octobre 2026, soir)
+**Validées par Andreja** : trois niveaux ; bonus de départ Pro retiré des parties de scénario (conservé pour les parties libres et le Bac à sable) ; partie libre des comptes gratuits actuels ; Bourse sans scénario gratuit tant que la source de cours réels n'est pas tranchée ; seuils de classement en part du capital du niveau ; priorité de livraison (fondation, puis Crypto et Immobilier, puis le reste).
+
+**Proposées (ma recommandation, à valider à la relecture)** :
+| # | Décision proposée |
+|---|---|
+| P1 | **Fin d'abonnement Pro** : les parties déjà commencées restent jouables, seules les nouvelles parties suivent la règle gratuite |
+| P2 | **Classement** : seule la **première** partie d'un scénario (par niveau) est classée, les suivantes sont « libres » (un compte gratuit qui termine et recommence joue donc une partie libre la deuxième fois) |
+| P3 | **XP et badges** au joueur, jamais regagnés en recommençant (événements d'XP de scénario : une fois par joueur et par scénario) |
+| P4 | **Récompenses en pièces** : quota par joueur, crédit dans la partie active |
+| P5 | **Comptes existants** : la partie actuelle devient la « partie libre » n°1, avec le même identifiant que le joueur (aucune perte) |
+| P6 | **Immobilier** : ses scénarios commencent en 2022 ; la décision horloge de l'Immobilier s'en trouve réglée |
+| P7 | **Étape « Choisir ton domaine gratuit »** de la liste de premiers pas : supprimée (pièces déjà gagnées conservées) |
+| P8 | **Colonnes `free_domain*`** : ignorées d'abord, supprimées dans une PR séparée plus tard |
+
+**Ouvertes** : niveau Expert de l'Immobilier (chapitre 8) ; source de cours réels pour la Bourse.
+
+## 8. Simulation : le niveau Expert de l'Immobilier est-il jouable ?
+*Demande : simuler « étudiant sans apport, 2 500 de capital, nos règles de banque (10 % d'apport, notaire, 35 %) » avec les vrais prix DVF, ville par ville. Le niveau n'est **pas figé** avant ta lecture.*
+
+**Ce qui est fait.** Un outil en lecture seule, `npm --prefix backend run immo:simulate-niveau` (PR à part, aucun effet sur le jeu), applique **exactement** l'évaluation d'achat et les règles de banque du jeu (`evaluatePurchase`, `BANK_RULES`, `STARTING_PROFILES`) aux médianes du fichier `backend/data/dvf-marche.json` : pour chaque ville et chaque quartier, le prix au m², la surface finançable, et pour cinq types de bien (parking, studio, T2, T3, maison) combien de quartiers sont acceptés par la banque. Il se lance sur le serveur, là où sont les vrais prix : **je n'ai pas pu le faire tourner sur les vraies données depuis ma session** (réseau fermé), donc le tableau « ville par ville » avec les vrais prix est à produire par toi (une commande).
+
+**Ce que les règles donnent déjà, sans les prix (calcul réel, moteur du jeu).** Prix d'achat maximum accepté (euros, bien ancien, prêt de 25 ans, aucun loyer retenu), selon le taux de crédit 2 % puis 4 % :
+
+| Profil | 2 500 pièces | 5 000 pièces | 10 000 pièces |
+|---|---|---|---|
+| Étudiant | 13 100 / 13 100 | 24 900 / 21 100 | 29 600 / 25 800 |
+| Salarié ou cadre | 13 100 / 13 100 | 27 400 / 27 400 | 56 000 / 56 000 |
+
+Dans le neuf (frais de notaire plus bas), 2 500 pièces permettent environ **18 400 euros**. Ce qui limite :
+- **L'apport minimal** (frais de notaire en entier + 10 % du prix) : avec 2 500 pièces, tout le capital y passe ; **« sans apport » ne peut pas exister** avec ces règles, car l'apport est obligatoire. L'apport est le seul frein pour un salarié ou un cadre (plafond d'environ 5,6 fois le capital dans l'ancien).
+- **Le reste à vivre de l'étudiant** (500 euros exigés ; revenus 900, charges 300) : la mensualité plafonne vers 100 euros par mois, donc environ 20 000 à 30 000 euros empruntés **quel que soit le capital**. Un étudiant n'achètera jamais de vrai logement, même avec 10 000 pièces, sauf avec un loyer prévisionnel retenu par la banque (à 5 % brut, le plafond d'un étudiant à 5 000 pièces monte à 27 000 à 38 000 euros).
+
+**Conclusion provisoire.** Pour juger avec les vrais prix, il faudra ta commande ; mais l'ordre de grandeur suffit déjà : avec **13 000 euros**, il faut un prix au m² **inférieur à environ 760 euros** pour acheter le plus petit studio du jeu (17 m²). Les villes les moins chères de la liste sont, à ma connaissance, autour de 1 000 à 1 500 euros du m² **[connu, à vérifier : c'est précisément ce que la commande mesurera]**. Donc, **au niveau Expert tel qu'il est défini, la banque refuserait tout logement ; seuls des parkings dans les villes les moins chères seraient accessibles** (parking du jeu : 11 m² à 40 % du prix au m²). Ce n'est pas un niveau « difficile mais gagnable » : c'est un niveau presque injouable pour l'apprentissage de l'achat.
+
+**Pistes (je ne choisis pas à ta place ; rien n'est figé)**
+1. **Expert Immobilier = autre levier que le capital** : garder 10 000 pièces et le profil de revenus de Normal, durcir **l'objectif** (étoiles : rendement net minimal, ne jamais descendre sous un certain reste à vivre) et imposer un **bien hérité à rénover** comme situation de départ.
+2. **Capital 5 000 pour Expert, salarié** (plafond environ 27 000 euros) : encore pas de logement dans la plupart des villes, à confirmer par la commande.
+3. **Garder 2 500 pièces mais sur le thème « parkings »** : un niveau assumé comme « premier investissement locatif minuscule » (ticket d'entrée faible, objectif de rendement), à condition de le dire clairement à l'écran.
+4. **Ne pas décliner les niveaux Immobilier par le capital** : niveaux Normal, Difficile, Expert différents seulement par le profil et les objectifs, jamais par un capital qui bloque la banque.
+La commande à lancer (lecture seule, sur le serveur, ne touche aucune base) : `npm --prefix backend run immo:simulate-niveau`. Autres niveaux : `-- --capital 5000 --profile employee` ; avec un loyer retenu : `-- --yield 5`.
+
+## 9. Fondation des parties : ce que je teste (avant tout code)
+*Périmètre : PR 1, 2a à 2e et migration M2 du chapitre 6, sans aucun changement visible pour les joueurs. Je ne code rien avant ta validation de cette liste.*
+
+1. **Filet de sécurité principal** : les **1 290 tests actuels passent sans être modifiés** (le joueur est la partie n°1), ainsi que les 4 parcours navigateur (téléphone, bureau, Crypto, guide). Les réponses de l'API gardent exactement leur forme (test de contrat sur la documentation de l'API).
+2. **Migration M2 (comptes existants)** : simulation par défaut ; pour chaque famille de tables de jeu, **mêmes nombres de lignes avant et après**, mêmes soldes, même total du registre ; chaque joueur a une partie n°1 **dont l'identifiant est le sien** ; rejouable sans effet ; refus d'écrire sans `--apply` et sans sauvegarde ; essai sur la copie de test d'abord.
+3. **Invariants des pièces** : somme du registre = solde, pour **chaque partie** ; aucune pièce créée ni détruite par la migration ; les statistiques de pièces s'additionnent par partie.
+4. **Isolation entre parties** : test « propriété » : toute opération dans la partie 1 laisse la partie 2 **strictement inchangée** (pièces, positions, prêts, horloge, relevés, classement) ; un joueur ne peut ni lire ni agir sur la partie d'un autre (réponse identique à « introuvable », comme pour le reste de l'API) ; une partie qui n'est pas la sienne ou pas active est refusée.
+5. **Horloge** : une horloge par partie, jamais en arrière ; deux onglets qui avancent la même partie en même temps ne la doublent pas (verrou par partie) ; les anciens boutons d'avance et la porte de l'horloge utilisent la partie active ; le cas « partie à migrer » reste géré.
+6. **XP, badges, bonus de premiers pas** : restent au joueur ; créer une deuxième partie ne donne **aucun** bonus ni XP en double (test).
+7. **Limites** : un compte gratuit ne peut pas avoir deux parties actives dans un domaine, **même avec deux demandes simultanées** (contrainte en base et verrou) ; un compte Pro peut en avoir plusieurs.
+8. **Suppression de compte et export** : les parties partent avec le joueur, les totaux anonymes sont archivés comme avant, l'export de données contient les parties.
+9. **Performance et limite de requêtes** : la résolution de la partie active se fait **une fois par requête** (aucune requête de plus par appel dans les parcours existants : mesure avant et après) ; aucune modification des limites de l'API.
+10. **Marche arrière** : méthode « agrandir puis réduire » (expand/contract) : d'abord ajouter les nouvelles colonnes et la table des parties en gardant les anciennes, basculer les lectures, ne supprimer l'ancien qu'ensuite dans une PR séparée ; chaque PR est verte seule et revenable.
+
+**Priorité de livraison** (décidée) : 1) fondation des parties ; 2) scénarios Crypto et Immobilier ; 3) le reste. **La Bourse attend sa source de cours réels.**
