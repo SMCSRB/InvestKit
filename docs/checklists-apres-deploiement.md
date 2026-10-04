@@ -1032,3 +1032,14 @@ Ordre de fusion : après #138 et #139. Méthode : « Create a merge commit ».
 Rien à tester sur le site. Relis le chapitre 5 de `docs/analyse-horloge-et-modes.md` : il doit refléter tes décisions.
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR 6c-2 — Migration M1 des parties existantes
+
+À faire sur la COPIE DE TEST, base sauvegardée avant :
+
+1. Déploie, puis essaie de jouer avec un compte qui avait une partie : message « ta partie doit être migrée ».
+2. Lance la simulation : `cd backend \&\& npm run cutover:m1`. Lis le rapport : chaque ligne doit montrer « patrimoine X → solde X » (ou le capital de départ si X était plus petit).
+3. Si tout est bon : `npm run cutover:m1 -- --apply --i-have-a-backup`.
+4. Reconnecte-toi avec un ancien compte : même patrimoine total (barre du haut), plus de positions ni de biens, partie à la date de départ. Vérifie qu'un ordre en attente d'avant est annulé.
+
+Ordre de fusion : dans la même PR que l'horloge unique (#140). Méthode : « Create a merge commit ».
