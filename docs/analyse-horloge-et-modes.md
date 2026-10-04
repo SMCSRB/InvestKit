@@ -43,8 +43,22 @@ Le plan en 9 étapes (~27 jours) reste valable ; ce que cette analyse change :
 3. **En ligne reste hors plan** tant que la source de cours n'est pas choisie (analyse séparée, comme `docs/sources-cours-bourse.md`).
 4. **Le basculement (6c) reste lié à 6b-fin et à la migration M1** (valeur neutre : personne ne gagne ni ne perd de valeur).
 
-## 5. À décider (rien n'est bloquant pour la suite du lot)
-- **A.** Bac à sable : périodes déjà passées seulement (recommandé) ou libres ?
-- **B.** Bac à sable gratuit pour tous ? En ligne réservé au Pro ?
-- **C.** Noms définitifs des modes (Histoire / En ligne / Bac à sable ?).
-- **D.** En ligne : valider d'abord le choix d'une source de cours (licence, coût) avant toute conception détaillée.
+## 5. Décisions d'Andreja (4 octobre 2026)
+
+**Noms** : Histoire, En ligne, Bac à sable (validés).
+
+| Mode | Qui peut jouer | Règles vérifiées côté serveur |
+|---|---|---|
+| **Histoire** | Tous | Mode de base : classement, XP, badges. |
+| **En ligne** | **Comptes Pro seulement** | Bourse et Crypto. Classement et portefeuille séparés. |
+| **Bac à sable** | Tous | **Gratuit** : seulement les périodes déjà jouées en Histoire (une période se débloque en jouant son scénario). **Pro** : choix libre de la période et de la date de départ. |
+
+- **Toutes ces limites sont vérifiées par le serveur**, jamais seulement par l'interface (le droit Pro se lit en base, la liste des périodes débloquées aussi).
+- **À prévoir dans l'architecture (ne pas coder maintenant)** : plus tard, un joueur gratuit pourra voir le classement et les événements d'En ligne **en lecture seule**, sans y participer. Conséquence de conception : les lectures d'En ligne (classement, événements) passent par des routes séparées des routes d'action, avec un contrôle d'accès distinct (`lecture` ouverte à tous, `participation` réservée au Pro).
+- **Question A** : Bac à sable limité aux périodes jouées (sauf Pro). **Question B** : remplacée par le tableau ci-dessus. **Question C** : noms validés. **Question D** : la source de cours en direct sera choisie **juste avant** le mode En ligne, qui vient **en dernier** ; rien à faire maintenant.
+- **Bonus « premier essai » (+50 XP)** : ne pas l'importer.
+
+### Conséquences sur le plan 6c
+1. `sim_clocks.mode` : `history` (utilisé), `sandbox` et `live` (réservés, créés plus tard).
+2. Les périodes jouées en Histoire sont enregistrées par le serveur (table dédiée) : une période est « débloquée » dès que le joueur a **terminé son scénario** (règle exacte à fixer avec le scénario : VALEUR DE JEU, NON SOURCÉE, À RECONFIRMER).
+3. Ordre de construction : horloge Histoire (6c) → Bac à sable → En ligne (en dernier, après choix de la source).
