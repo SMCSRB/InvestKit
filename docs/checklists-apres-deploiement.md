@@ -959,3 +959,13 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 ## 6b-lite : textes honnêtes sur les cours et la valeur des InvestCoins
 1. Glossaire, mot « Action » : « Dans le jeu » dit que les cours sont annuels, simplifiés et illustratifs (plus « cours historiques réels »).
 2. Glossaire, mot « InvestCoin » : la phrase « Les InvestCoins n'ont aucune valeur réelle : on ne peut ni les acheter, ni les retirer, ni les échanger entre joueurs » apparaît dans « Dans le jeu ».
+
+## PR 6g-G1 — Historique du patrimoine
+
+Après déploiement (aucun écran ne change) :
+
+1. Connecte-toi et ouvre le tableau de bord : tout s'affiche comme avant.
+2. Dans l'export de ton compte (Paramètres), vérifie la présence de « wealthHistory » avec un point du jour.
+3. Fais un achat, rouvre ton export : toujours un seul point pour aujourd'hui, avec le nouveau total.
+
+Ordre de fusion : après #130. Méthode : « Create a merge commit ».

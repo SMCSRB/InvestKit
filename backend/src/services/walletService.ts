@@ -6,6 +6,7 @@ import { getActiveDays } from './activityService';
 import { outstandingCoins } from './bankService';
 import { tradingSummary, cryptoSummary, realEstateNetCoins } from './overviewService';
 import { wealthBreakdown } from '../engine/wealth';
+import { wealthHistoryService } from './wealthHistoryService';
 
 // Portefeuille du joueur : l'UNIQUE source des chiffres d'InvestCoins affichés par le site (barre du haut, menu, carte Patrimoine,
 // Liquidités). Renvoyé par GET /economy/balance et ajouté à la réponse de chaque action qui peut changer les pièces
@@ -36,6 +37,12 @@ export const walletService = {
     const debtCoins = await outstandingCoins(db as any, userId);
     const tradingValue = stocks.marketValue + crypto.marketValue;
     const wealth = wealthBreakdown({ coins: balance, tradingValue, debtCoins, realEstateNetCoins: await realEstateNetCoins(userId) });
+    // Historique du patrimoine (6g) : le serveur garde un point par jour. Une erreur d'écriture n'empêche jamais l'affichage du portefeuille.
+    const reNet = wealth.realEstateNet;
+    await wealthHistoryService.record(userId, {
+      liquidity: balance, stocks: stocks.marketValue, crypto: crypto.marketValue, realEstateNet: reNet, debts: debtCoins, financial: wealth.financial, total: wealth.total,
+      gameClock: { stocks: stocks.simulatedYear, crypto: crypto.simulatedYear },
+    }, db).catch((e) => console.error('Historique du patrimoine :', e instanceof Error ? e.message : e));
     return {
       balance, tradingValue, debtCoins, netWorth: wealth.financial, financialWealth: wealth.financial, realEstateNet: wealth.realEstateNet, totalWealth: wealth.total,
       activeDays, canClaimToday: reward.canClaim, dailyRewardCoins: reward.coins, claimedThisWeek: reward.claimedThisWeek,
