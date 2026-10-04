@@ -23,8 +23,8 @@
 
 ## Ce que tu dois relire toi-même (aucune page n'est ouvrable depuis ma session)
 ### Carte des loyers (ANIL) : `docs/loyers-anil-fiche-source.md`
-1. **Licence** : le champ « licence » de la page du millésime : est-ce bien « Licence Ouverte 2.0 » ? Aucune restriction d'usage commercial ?
-2. **Attribution** : la phrase exacte à citer (recopie-la dans `RENT_ATTRIBUTION`, fichier `backend/src/config/rentMarketRules.ts`).
+1. ~~**Licence**~~ ✓ **Licence Ouverte 2.0, confirmée par Andreja le 6 octobre 2026.**
+2. ~~**Attribution**~~ ✓ **« Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin »**, déjà dans `RENT_ATTRIBUTION`.
 3. **Trimestre de référence** de chaque millésime (3e trimestre ?) et **date de publication** : elles fixent le 30 septembre.
 4. **Noms des fichiers et des colonnes** des quatre séries (appartements, T1-T2, T3 et plus, maisons).
 5. **Arrondissements** : Paris (75101 à 75120), Lyon (69381 à 69389), Marseille (13201 à 13216) y figurent-ils ?
