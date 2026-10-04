@@ -70,12 +70,7 @@ const NATIONAL_PRICE_CYCLE: Record<number, number> = {
   2019: 4.5, 2020: 5.0, 2021: 6.5, 2022: 3.0, 2023: -3.0, 2024: -4.0, 2025: -1.0, 2026: 1.5,
 };
 
-// Variation annuelle FICTIVE de l'IRL (%), net de plafonnement. Les vraies
-// valeurs de l'Insee pourront remplacer cette série via la même interface.
-const IRL_ANNUAL_CHANGE: Record<number, number> = {
-  2010: 0.9, 2011: 1.8, 2012: 2.0, 2013: 1.2, 2014: 0.6, 2015: 0.1, 2016: 0.2, 2017: 0.9, 2018: 1.3,
-  2019: 1.7, 2020: 0.7, 2021: 0.4, 2022: 2.5, 2023: 3.5, 2024: 3.3, 2025: 1.4, 2026: 1.1,
-};
+// L'IRL (indice de référence des loyers) n'est plus fictif : le moteur lit la série RÉELLE de l'Insee (table immo_irl).
 
 // Taux nominal FICTIF des crédits sur 20 ans (%, hors assurance).
 const LOAN_RATE_20Y: Record<number, number> = {
@@ -339,11 +334,6 @@ export const fictiveDataSource: RealEstateDataSource = {
 
   async listNeighborhoods(cityId: string): Promise<Neighborhood[]> {
     return CITIES.some((c) => c.id === cityId) ? neighborhoodsOf(cityId) : [];
-  },
-
-  async getIrlAnnualChangePct(year: number): Promise<number> {
-    assertYear(year);
-    return IRL_ANNUAL_CHANGE[year];
   },
 
   async getMarket(cityId: string, year: number): Promise<CityMarket | null> {

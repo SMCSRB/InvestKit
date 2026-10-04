@@ -13,6 +13,16 @@ export const setupDb = async (): Promise<void> => {
   initDatabase();
   await executeSchema(); // schema.sql + migrations (idempotents)
   await resetPlayers();
+  await seedTestIrl();
+};
+
+// IRL FABRIQUÉ pour les tests (le jeu lit l'IRL réel de l'Insee, absent d'une base de test) : 1999-T1 à 2026-T4, +0,5 par trimestre à partir de 100 (variation annuelle d'environ 1,5 %).
+// Aucune valeur réelle. Posé seulement si la table est vide ; loyersAnil.test.ts la vide puis la repose lui-même.
+export const seedTestIrl = async (): Promise<void> => {
+  if (Number((await query('SELECT COUNT(*) AS n FROM immo_irl')).rows[0].n) > 0) return;
+  const imp = (await query(`INSERT INTO immo_irl_imports (first_quarter, last_quarter, row_count, checksum) VALUES ('1999-T1', '2026-T4', 112, 'fixture-irl-fabriquee') ON CONFLICT (checksum) DO UPDATE SET row_count = 112 RETURNING id`)).rows[0];
+  await query(`INSERT INTO immo_irl (year, quarter, value, import_id)
+               SELECT 1999 + i / 4, (i % 4) + 1, 100 + 0.5 * i, $1 FROM generate_series(0, 111) AS i ON CONFLICT (year, quarter) DO NOTHING`, [imp.id]);
 };
 
 // La base de test est PARTAGÉE et n'était jamais vidée : chaque exécution y laissait ses joueurs (plus de 33 000 après

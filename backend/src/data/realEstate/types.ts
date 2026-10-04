@@ -108,8 +108,6 @@ export interface RealEstateDataSource {
   getMarket(cityId: string, year: number): Promise<CityMarket | null>;
   // Taux nominal des crédits (%, hors assurance) proposé cette année-là pour une durée en mois.
   getLoanRatePct(year: number, months: number): Promise<number>;
-  // Variation annuelle (%) de l'indice de référence des loyers (IRL), net de tout plafonnement légal.
-  getIrlAnnualChangePct(year: number): Promise<number>;
   // Estimation de la valeur d'un bien (€) selon le marché de l'année ; sans bruit propre à une annonce.
   estimateValue(input: ValuationInput, year: number): Promise<number>;
   listListings(year: number, filter?: ListingFilter): Promise<Listing[]>;
