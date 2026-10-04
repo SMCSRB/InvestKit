@@ -409,6 +409,9 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
      FROM re_properties p LEFT JOIN re_loans l ON l.id = p.loan_id WHERE p.game_id = $1`, [game.id])).rows;
   const y = game.simulated_year, m = game.simulated_month;
   let invested = 0, investedCurrent = 0, equity = 0, liquidation = 0;
+  // Détail du calcul (biens encore possédés), pour l'expliquer au joueur : achat, valeur, dette et coûts d'une revente immédiate.
+  const detail = { purchasePriceEuros: 0, notaryFeesEuros: 0, downPaymentEuros: 0, loanFeesEuros: 0, worksEuros: 0, marketValueEuros: 0, mortgageDebtEuros: 0,
+    occupiedDiscountEuros: 0, agencyFeesEuros: 0, diagnosticsEuros: 0, earlyRepaymentEuros: 0, taxesEuros: 0, depositEuros: 0 };
   for (const p of props) {
     const put = Number(p.down_payment) + Number(p.l_fees ?? 0) + Number(p.extra_invested_eur);
     invested += put;
@@ -426,6 +429,11 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
         salePrice: round2(value * (1 - occupied / 100)), forced: false, proceedingCosts: 0, y, m,
       });
       liquidation += closing.netProceeds;
+      detail.purchasePriceEuros += Number(p.purchase_price); detail.notaryFeesEuros += Number(p.notary_fees); detail.downPaymentEuros += Number(p.down_payment);
+      detail.loanFeesEuros += Number(p.l_fees ?? 0); detail.worksEuros += Number(p.extra_invested_eur);
+      detail.marketValueEuros += value; detail.mortgageDebtEuros += debt; detail.occupiedDiscountEuros += value * occupied / 100;
+      detail.agencyFeesEuros += closing.agencyFees; detail.diagnosticsEuros += closing.diagnostics + closing.energyAudit; detail.earlyRepaymentEuros += closing.earlyRepaymentFee;
+      detail.taxesEuros += closing.capitalGain.totalTax + closing.rentalTaxSettled; detail.depositEuros += closing.depositTransferred;
     }
   }
   const cash = Number((await q('SELECT COALESCE(SUM(net_cash_flow), 0) AS s FROM re_statements WHERE game_id = $1', [game.id])).rows[0].s);
@@ -445,7 +453,8 @@ export async function wealthMetrics(db: { query: PoolClient['query'] }, game: Ga
   const performancePct = invested > 0 ? Math.round(((gainLiquidation / (startingCapitalCoins * EUROS_PER_COIN)) * 100) * 1e4) / 1e4 : 0;
   return { investedEuros: round2(invested), investedCurrentEuros: round2(investedCurrent), equity: round2(equity), liquidationValueEuros: round2(liquidation), cumulativeCashFlow: round2(cash), saleNetProceeds: round2(Number(sold)),
     bankDebtEuros: round2(debtEuros), bankInterestPaidEuros: round2(interestEuros), leverage: net.leverage, ownCapitalEuros: net.ownCapital,
-    startingCapitalCoins, gainLiquidationEuros: round2(gainLiquidation), performancePct };
+    startingCapitalCoins, gainLiquidationEuros: round2(gainLiquidation), performancePct,
+    detail: Object.fromEntries(Object.entries(detail).map(([k, v]) => [k, round2(v)])) as typeof detail };
 }
 
 export async function snapshotLeaderboard(c: PoolClient, game: GameRow, userId: string): Promise<void> {

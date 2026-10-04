@@ -7,6 +7,7 @@ import HelpTip from '../components/HelpTip';
 import AppShell from '@/app/components/shell/AppShell';
 import Coin from '@/app/components/ui/Coin';
 import Icon from '@/app/components/ui/Icon';
+import { backTarget } from '@/app/lib/backLink';
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/bank`;
 const TRADING_API = `${process.env.NEXT_PUBLIC_API_URL}/trading`;
@@ -209,6 +210,8 @@ function PortfolioLoanCard({ loan, view, onDone, notify }) {
 export default function BanquePage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [back, setBack] = useState({ href: '/dashboard', label: 'Tableau de bord' });
+  useEffect(() => { setBack(backTarget('/banque')); }, []);
   const [data, setData] = useState(null);
   const [events, setEvents] = useState([]);
   const [views, setViews] = useState({});
@@ -245,7 +248,7 @@ export default function BanquePage() {
     <AppShell>
     <div style={{ color: 'var(--ik-text-2)', minWidth: 0 }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        <Link href="/immobilier" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← Immobilier</Link>
+        <Link href={back.href} data-testid="bank-back" style={{ color: 'var(--ik-accent)', fontSize: 14 }}>← {back.label}</Link>
         <h1 style={{ margin: '6px 0 4px', color: 'var(--ik-text)', fontSize: 'clamp(24px, 5vw, 32px)' }}>Ma banque</h1>
         <p style={{ color: 'var(--ik-text-3)', marginTop: 0, fontSize: 14 }}>Les pièces ne servent que dans le jeu : elles ne s&apos;échangent pas entre joueurs et ne s&apos;achètent pas avec de l&apos;argent réel. Les taux sont fictifs, calés sur l&apos;histoire (à titre pédagogique).</p>
         {toast && <div role="status" style={{ ...card, marginBottom: 14, borderColor: toast.isError ? 'var(--ik-negative)' : 'var(--ik-positive)' }}>{toast.msg}</div>}

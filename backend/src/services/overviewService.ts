@@ -102,6 +102,13 @@ export const overviewService = {
         // Tout en InvestCoins (1 pièce = 1 €) : valeur nette de revente, fonds propres, investi, dette.
         netLiquidationCoins: Math.round(w.liquidationValueEuros / EUROS_PER_COIN), equityCoins: Math.round(w.equity / EUROS_PER_COIN),
         investedCoins: Math.round(w.investedCurrentEuros / EUROS_PER_COIN), bankDebtCoins: Math.round(w.bankDebtEuros / EUROS_PER_COIN),
+        // Explication de la performance (en pièces) : gain net de revente ÷ capital de départ ; mêmes chiffres que le Bilan Immobilier.
+        performanceExplain: {
+          startingCapitalCoins: w.startingCapitalCoins, gainCoins: Math.round(w.gainLiquidationEuros / EUROS_PER_COIN),
+          investedTotalCoins: Math.round(w.investedEuros / EUROS_PER_COIN), rentCollectedCoins: Math.round(w.cumulativeCashFlow / EUROS_PER_COIN),
+          salesAlreadyDoneCoins: Math.round(w.saleNetProceeds / EUROS_PER_COIN), personalLoanInterestCoins: Math.round(w.bankInterestPaidEuros / EUROS_PER_COIN),
+          ...Object.fromEntries(Object.entries(w.detail).map(([k, v]) => [k.replace('Euros', 'Coins'), Math.round((v as number) / EUROS_PER_COIN)])),
+        },
       };
     }
 

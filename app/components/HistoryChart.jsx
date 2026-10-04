@@ -11,6 +11,21 @@ import Coin from '@/app/components/ui/Coin';
 const API = process.env.NEXT_PUBLIC_API_URL;
 const fr = (n) => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
 
+// Mention discrète, une seule fois par navigateur (confort d'affichage : rien n'est envoyé au serveur).
+const NOTE_KEY = 'ik:histNoteSeen';
+function FirstUseNote() {
+  const [show, setShow] = useState(false);
+  useEffect(() => { try { setShow(localStorage.getItem(NOTE_KEY) !== '1'); } catch { setShow(false); } }, []);
+  if (!show) return null;
+  const close = () => { try { localStorage.setItem(NOTE_KEY, '1'); } catch { /* ignore */ } setShow(false); };
+  return (
+    <p className="ik-muted" role="note" data-testid="hist-first-note" style={{ fontSize: 'var(--ik-fs-xs)', margin: '0 0 8px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <span>Ces cours sont illustratifs : un jeu de données pédagogique, pas de vrais cours de Bourse.</span>
+      <button type="button" className="ik-link" onClick={close} style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer' }}>Compris</button>
+    </p>
+  );
+}
+
 export default function HistoryChart({ domain, symbol, simulatedYear, enabled = true }) {
   const theme = useChartTheme();
   const boxRef = useRef(null);
@@ -65,8 +80,8 @@ export default function HistoryChart({ domain, symbol, simulatedYear, enabled = 
     <section className="ik-card" style={{ marginBottom: 24 }} aria-label={`Historique de ${symbol}`}>
       <div className="ik-card__head">
         <h3 className="ik-card__title">Historique · {symbol}</h3>
-        <span className="ik-chip ik-chip--example">Données illustratives</span>
       </div>
+      <FirstUseNote />
       {error && <p className="ik-muted" role="status">{error}</p>}
       {!error && !data && <div className="ik-skeleton" style={{ height: 240, borderRadius: 12 }} aria-hidden="true" />}
       {data && pts.length < 2 && <p className="ik-muted" style={{ margin: '0 0 8px' }}>Une seule année de cours pour l&apos;instant : avance dans le temps pour voir l&apos;évolution se dessiner.</p>}
@@ -88,7 +103,7 @@ export default function HistoryChart({ domain, symbol, simulatedYear, enabled = 
         </>
       )}
       <p className="ik-muted" style={{ fontSize: 'var(--ik-fs-xs)', margin: '8px 0 0' }}>
-        Cours de clôture annuels, jusqu&apos;à ton année de jeu. Graphique :{' '}
+        Données illustratives : cours de clôture annuels, jusqu&apos;à ton année de jeu. Graphique :{' '}
         <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer" className="ik-link">TradingView Lightweight Charts™</a>.
       </p>
     </section>
