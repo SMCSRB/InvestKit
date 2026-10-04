@@ -1026,3 +1026,9 @@ Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
 5. Ouvre deux onglets, avance dans l'un puis dans l'autre : le second refuse (« ta date de jeu a changé »).
 
 Ordre de fusion : après #138 et #139. Méthode : « Create a merge commit ».
+
+## PR 6c-décisions — Analyse horloge et modes mise à jour (document seulement)
+
+Rien à tester sur le site. Relis le chapitre 5 de `docs/analyse-horloge-et-modes.md` : il doit refléter tes décisions.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
