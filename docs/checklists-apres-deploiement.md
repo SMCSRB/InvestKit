@@ -978,3 +978,12 @@ Rien à tester sur le site. Lis `docs/analyse-catalogue-immobilier.md` (tableau 
 3. Avec « Privé » : l'autre compte ne te trouve plus en tapant ton Pseudo#tag, mais te trouve avec ton code ami.
 4. Tes amis et ta guilde te voient toujours normalement.
 5. Rebascule en « Public » : tout redevient visible, rien n'a été perdu.
+
+## PR 6c-analyse — Horloge et modes de jeu (document seulement)
+
+Aucun test à faire sur le site (rien ne change).
+
+1. Ouvre `docs/analyse-horloge-et-modes.md` et lis « En deux phrases » et le tableau du chapitre 1.
+2. Réponds aux 4 questions du chapitre 5 (A à D).
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
