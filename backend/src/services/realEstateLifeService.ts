@@ -9,7 +9,7 @@ import {
   RealEstateError, RE_DOMAIN, GameRow, requireGame, source, tx,
 } from './realEstateService';
 import {
-  expectedVacancyMonths, expectedCappedVacancyMonths, monthlyLetProbability, vacancyCapMonths, isTenantFound, clampAskingRentRatio, reviseRent, buildMonthlyStatement,
+  expectedVacancyMonths, expectedCappedVacancyMonths, monthlyLetProbability, vacancyCapMonths, isTenantFound, clampAskingRentRatio, reviseRent, noIrlRevision, buildMonthlyStatement,
   toCents, convertEurosToCoins, nextMonth, monthTotal,
   remainingBalance, round2, MonthlyStatement, TenantStatus, Condition, EnergyClass,
   pickTenantType, departureHazard, noticeFor, isLatePayment, startsDefaulting, resolveDefault, rollDamage, reletFees,
@@ -19,6 +19,8 @@ import { settleMonth as settleBankMonth } from './bankService';
 import { describeSale, processSaleSearch, processDistress, snapshotLeaderboard } from './realEstateSaleService';
 import { VACANCY_MODEL, RENT_TAX_RATE_BY_PROFILE, EVENT_PARAMS, GLI_PARAMS, inWinterTruce } from '../config/immoRules';
 import { EUROS_PER_COIN } from '../config/economy';
+import { irlService } from './irlService';
+import { leaseRevision } from '../engine/immo/irl';
 
 // ─────────────────────────────────────────────────────────────────────────
 // VIE DU BIEN : mise en location, mois qui passent, relevés, valorisation.
@@ -330,7 +332,7 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
   const loans = new Map<string, any>();
   if (loanIds.length) for (const l of (await c.query('SELECT * FROM re_loans WHERE id = ANY($1) FOR UPDATE', [loanIds])).rows) loans.set(l.id, l);
   const taxRate = RENT_TAX_RATE_BY_PROFILE[game.profile];
-  const irl = await source().getIrlAnnualChangePct(y);
+  const irlSeries = await irlService.series();      // IRL RÉEL de l'Insee (immo_irl) : vide tant qu'aucun fichier n'est importé, alors aucune révision n'a lieu
   const results: { propertyId: string; title: string; statement: MonthlyStatement; coinsDelta: number; hint: string | null; events: string[] }[] = [];
 
   for (const p of props) {
@@ -429,7 +431,8 @@ async function processMonth(c: PoolClient, game: GameRow, userId: string) {
       if (leaseStart !== null) {
         const age = total - leaseStart;
         if (age > 0 && age % 12 === 0) {
-          revision = reviseRent(currentRent, irl, energy);
+          const lr = leaseRevision(irlSeries, leaseStart, total);      // trimestre de référence = dernier IRL publié au début du bail ; bouclier de 3,5 % de juillet 2022 à juin 2024
+          revision = lr ? reviseRent(currentRent, lr.pct, energy, { referenceQuarter: lr.referenceQuarter, previousQuarter: lr.previousQuarter, rawPct: lr.rawPct, capped: lr.capped }) : ((energy === 'F' || energy === 'G') ? reviseRent(currentRent, 0, energy) : noIrlRevision(currentRent));
           currentRent = revision.newRent; nextRent = revision.newRent;
         }
       }

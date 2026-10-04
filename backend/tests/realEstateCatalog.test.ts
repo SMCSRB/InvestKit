@@ -274,15 +274,6 @@ describe('catalogue : loyer calculé à partir du lieu, jamais figé', () => {
       expect(l.annualCharges).not.toHaveProperty('recoverable');
     }
   });
-
-  it('IRL : une valeur plausible pour chaque année, hors plage refusée', async () => {
-    for (const year of YEARS) {
-      const v = await src.getIrlAnnualChangePct(year);
-      expect(v).toBeGreaterThanOrEqual(0);
-      expect(v).toBeLessThanOrEqual(3.5);
-    }
-    await expect(src.getIrlAnnualChangePct(2009)).rejects.toThrow(RangeError);
-  });
 });
 
 describe('catalogue fictif : annonces proches de l\'équilibre', () => {
