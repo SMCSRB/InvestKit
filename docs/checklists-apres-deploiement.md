@@ -1014,3 +1014,9 @@ Aucun test à faire sur le site (rien ne change).
 2. Réponds aux 4 questions du chapitre 5 (A à D).
 
 Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
+
+## PR 6c-décisions — Analyse horloge et modes mise à jour (document seulement)
+
+Rien à tester sur le site. Relis le chapitre 5 de `docs/analyse-horloge-et-modes.md` : il doit refléter tes décisions.
+
+Ordre de fusion : indépendante. Méthode : « Create a merge commit ».
