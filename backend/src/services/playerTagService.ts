@@ -125,6 +125,13 @@ export const playerTagService = {
     return { history: rows.map((r: any) => ({ oldTag: r.old_tag, newTag: r.new_tag, reason: r.reason, changedAt: r.changed_at })) };
   },
 
+  // Confidentialité du profil : « public », « amis » ou « prive » (voir migration 050). Décidée par le serveur, valeur validée dans une liste fermée.
+  async setProfileVisibility(userId: string, visibility: unknown) {
+    if (visibility !== 'public' && visibility !== 'amis' && visibility !== 'prive') throw new SocialError('INVALID_INPUT', 'Choisis public, amis ou privé');
+    await query('UPDATE users SET profile_visibility = $2 WHERE id = $1', [userId, visibility]);
+    return { profileVisibility: visibility };
+  },
+
   async setProBadgeVisible(userId: string, visible: unknown) {
     if (typeof visible !== 'boolean') throw new SocialError('INVALID_INPUT', 'Valeur invalide');
     await query('UPDATE users SET show_pro_badge = $2 WHERE id = $1', [userId, visible]);
