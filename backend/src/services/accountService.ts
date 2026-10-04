@@ -46,6 +46,13 @@ export const exportUserData = async (userId: string) => {
     },
     education: { progress: await one('SELECT * FROM education_progress WHERE user_id = $1'), userProgress: await one('SELECT * FROM user_progress WHERE user_id = $1') },
     portfolios: await one('SELECT domain, mode, positions, simulated_year, total_bought, total_proceeds, tax_state, started_at FROM virtual_portfolios WHERE user_id = $1'),
+    cryptoMarket: {
+      account: (await one('SELECT mode, start_at, simulated_at, tax_state, created_at FROM crypto_accounts WHERE user_id = $1'))[0] ?? null,
+      positions: await one('SELECT a.symbol, p.* FROM crypto_positions p JOIN crypto_assets a ON a.id = p.asset_id WHERE p.user_id = $1'),
+      orders: await one('SELECT * FROM crypto_orders WHERE user_id = $1 ORDER BY created_at'),
+      fills: await one('SELECT * FROM crypto_fills WHERE user_id = $1 ORDER BY created_at'),
+      events: await one('SELECT event_key, sim_date, origin, kind, title, message, lesson, created_at FROM crypto_event_log WHERE user_id = $1 ORDER BY sim_date'),
+    },
     leaderboard: await one('SELECT mode, domain, period, performance_pct, capital_committed, leverage, computed_at FROM leaderboard_rankings WHERE user_id = $1'),
     projects: { projects, riskAnalyses: projects.length ? await one('SELECT * FROM risk_analysis WHERE project_id = ANY($1)', [projects.map((p: any) => p.id)]) : [] },
     social: {
