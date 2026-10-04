@@ -26,8 +26,9 @@ describe('finitions de l\'économie', () => {
     const page = read('app/dashboard/page.jsx');
     expect(page).not.toContain('> Immobilier →');
     expect(page).not.toContain('Marché Crypto →');
-    expect(page).toMatch(/Solde InvestCoins', value: <>/);
     expect(page).not.toMatch(/\d\s?€|\} €/);
+    expect(page).not.toMatch(/tradingPortfolio|loadTradingData/);   // l'ancien onglet Bourse du tableau de bord est supprimé (page /bourse)
+    expect(read('app/bourse/page.jsx')).toMatch(/label="Solde" value=\{p\.cashBalance\} unit=\{<Coin/);
   });
   it('marché Crypto : la colonne « Capi. » (et le tri) disparaît quand aucune capitalisation n\'est importée', () => {
     const page = read('app/crypto/page.jsx');

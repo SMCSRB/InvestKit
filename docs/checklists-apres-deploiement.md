@@ -906,3 +906,9 @@ Rien à tester sur le site. Lis `docs/sources-cours-bourse.md` et choisis : A (B
 2. Tableau de bord, carte de risque : elle apparaît aussi quand tu n'as que le nouveau marché Crypto.
 3. Profil / Mes données, bouton d'export : le fichier contient une section **cryptoMarket** (compte, positions, ordres, exécutions, événements). Aucun mot de passe ni secret.
 4. Si le taux de change du jour de jeu manque, la position est ignorée dans le risque (jamais une valeur devinée).
+
+## Ménage : ancien onglet Bourse du tableau de bord supprimé
+1. Tableau de bord, carte « Bourse » : le bouton ouvre la page **/bourse** (ou « Voir l'offre Pro » si le domaine est verrouillé).
+2. Carte « Risque de ton portefeuille » : « Voir l'analyse » mène à /bourse, ou à /crypto si ton plus gros portefeuille est en Crypto.
+3. Un vieux lien `/dashboard?tab=trading` arrive toujours sur /bourse.
+4. Le reste du tableau de bord (vue d'ensemble, marché, éducation, amis, notifications, paramètres) fonctionne comme avant.
