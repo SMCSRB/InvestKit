@@ -1,20 +1,35 @@
-# Mises à jour de sécurité et de version automatiques : une PR par lot, le lundi.
+# Mises à jour automatiques : mineures et correctifs groupés, une PR par lot, le lundi.
+# Pendant la refonte du design, les versions MAJEURES sont ignorées (ex. Next 16, React 19 types,
+# TypeScript 7, ESLint 10, Vitest 5) : elles cassent des choses et se feront à part, volontairement.
+# Les mises à jour de SÉCURITÉ ne sont pas concernées par ces règles : GitHub les propose quand même.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly, day: monday }
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /backend
     schedule: { interval: weekly, day: monday }
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
